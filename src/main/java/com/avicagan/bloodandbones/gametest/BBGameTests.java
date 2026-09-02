@@ -242,6 +242,50 @@ public class BBGameTests {
         });
     }
 
+    /** Looking at a leg from the side must hit that leg's cell, so the Meat Hook can grab any limb. */
+    @GameTest(template = "empty", timeoutTicks = 200)
+    public static void raycastHitsLegs(GameTestHelper helper) {
+        ServerLevel level = helper.getLevel();
+        Cow cow = helper.spawn(EntityType.COW, new BlockPos(5, 2, 5));
+        Vec3 cowPos = cow.position();
+        if (!CarcassAssembler.assemble(cow, null)) {
+            helper.fail("Carcass assembly returned false");
+        }
+        cow.discard();
+        helper.runAfterDelay(10, () -> {
+            CarcassSavedData.Carcass carcass = onlyCarcass(helper, level);
+            Map<String, ServerSubLevel> bones = liveBones(helper, level, carcass);
+            StringBuilder report = new StringBuilder();
+            int hits = 0;
+            for (String bone : List.of("left_front_leg", "right_hind_leg", "head", "body")) {
+                ServerSubLevel target = bones.get(bone);
+                org.joml.Vector3d com = target.logicalPose().position();
+                // shoot from 3 blocks out on the limb's own side of the cow at its center of mass
+                double side = com.x >= cowPos.x ? 3.0 : -3.0;
+                Vec3 from = new Vec3(com.x + side, com.y, com.z);
+                Vec3 to = new Vec3(com.x, com.y, com.z);
+                net.minecraft.world.phys.BlockHitResult hit = level.clip(new net.minecraft.world.level.ClipContext(from, to,
+                        net.minecraft.world.level.ClipContext.Block.OUTLINE, net.minecraft.world.level.ClipContext.Fluid.NONE, cow));
+                String got = "miss";
+                if (hit.getType() == net.minecraft.world.phys.HitResult.Type.BLOCK
+                        && level.getBlockEntity(hit.getBlockPos()) instanceof com.avicagan.bloodandbones.carcass.CarcassPartBlockEntity part) {
+                    got = part.bone();
+                    if (got.equals(bone)) {
+                        hits++;
+                    }
+                } else if (hit.getType() == net.minecraft.world.phys.HitResult.Type.BLOCK) {
+                    got = "block " + level.getBlockState(hit.getBlockPos()).getBlock().getName().getString() + " at " + hit.getBlockPos();
+                }
+                report.append(' ').append(bone).append("->").append(got);
+            }
+            BloodAndBones.LOGGER.info("[raycast test]{}", report);
+            if (hits != 4) {
+                helper.fail("Raycasts did not hit the aimed limbs:" + report);
+            }
+            helper.succeed();
+        });
+    }
+
     private static CarcassSavedData.Carcass onlyCarcass(GameTestHelper helper, ServerLevel level) {
         CarcassSavedData data = CarcassSavedData.get(level);
         List<CarcassSavedData.Carcass> nearby = new ArrayList<>();

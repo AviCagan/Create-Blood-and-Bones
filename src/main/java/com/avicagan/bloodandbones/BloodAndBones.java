@@ -4,6 +4,7 @@ import com.avicagan.bloodandbones.config.BBClientConfig;
 import com.avicagan.bloodandbones.datagen.BBDatagen;
 import com.avicagan.bloodandbones.event.CarcassEvents;
 import com.avicagan.bloodandbones.gametest.BBGameTests;
+import com.avicagan.bloodandbones.network.BBNetwork;
 import com.avicagan.bloodandbones.registry.BBBlockEntities;
 import com.avicagan.bloodandbones.registry.BBBlocks;
 import com.avicagan.bloodandbones.registry.BBCreativeTabs;
@@ -41,6 +42,7 @@ public class BloodAndBones {
         NeoForge.EVENT_BUS.register(CarcassEvents.class);
         modEventBus.addListener(BBDatagen::gatherData);
         modEventBus.addListener(BBGameTests::register);
+        modEventBus.addListener(BBNetwork::register);
 
         LOGGER.info("Create: Blood & Bones loaded");
     }

@@ -3,6 +3,8 @@ package com.avicagan.bloodandbones.carcass;
 import com.avicagan.bloodandbones.BloodAndBones;
 import com.avicagan.bloodandbones.carcass.rig.Rig;
 import com.avicagan.bloodandbones.carcass.rig.RigManager;
+import com.avicagan.bloodandbones.network.DragSyncPayload;
+import net.neoforged.neoforge.network.PacketDistributor;
 import dev.ryanhcode.sable.Sable;
 import dev.ryanhcode.sable.api.physics.PhysicsPipeline;
 import dev.ryanhcode.sable.api.physics.constraint.ConstraintJointAxis;
@@ -36,7 +38,7 @@ import java.util.concurrent.ConcurrentHashMap;
  * front of your feet, moved every tick. Heavier carcasses slow you down more and yank harder.
  */
 public final class CarcassDrag {
-    private static final double HOLD_DISTANCE = 1.6;
+    private static final double HOLD_DISTANCE = 1.1;
     private static final double MAX_DISTANCE = 6.0;
     private static final net.minecraft.resources.ResourceLocation SLOWDOWN_ID = BloodAndBones.asResource("dragging");
 
@@ -120,6 +122,7 @@ public final class CarcassDrag {
         }
         DRAGS.put(player.getUUID(), drag);
         applySlowdown(player, dragPenalty(carcass, weight));
+        PacketDistributor.sendToPlayersInDimension(level, new DragSyncPayload(player.getUUID(), Optional.of(drag.subLevel), new Vector3d(drag.anchorPlot)));
         return true;
     }
 
@@ -128,6 +131,9 @@ public final class CarcassDrag {
         removeSlowdown(player);
         if (drag != null && drag.handle != null && drag.handle.isValid()) {
             drag.handle.remove();
+        }
+        if (drag != null) {
+            PacketDistributor.sendToPlayersInDimension(level, DragSyncPayload.ended(player.getUUID()));
         }
     }
 
@@ -173,6 +179,9 @@ public final class CarcassDrag {
         }
         // A resting limb goes to sleep in the physics engine; moving its tether must wake it.
         container.physicsSystem().getPipeline().wakeUp(serverSubLevel);
+        if (level.getGameTime() % 40 == 0) {
+            PacketDistributor.sendToPlayersInDimension(level, new DragSyncPayload(player.getUUID(), Optional.of(drag.subLevel), new Vector3d(drag.anchorPlot)));
+        }
     }
 
     private static void aim(Drag drag, Vector3d target) {
@@ -201,9 +210,9 @@ public final class CarcassDrag {
             return false;
         }
         double mass = Math.max(0.05, subLevel.getMassTracker().getMass());
-        drag.stiffness = 60.0 * mass;
-        drag.damping = 10.0 * mass;
-        drag.maxForce = 40.0 * Math.max(mass, drag.weight * 0.5);
+        drag.stiffness = 140.0 * mass;
+        drag.damping = 18.0 * mass;
+        drag.maxForce = 70.0 * Math.max(mass, drag.weight * 0.5);
         for (ConstraintJointAxis axis : ConstraintJointAxis.ANGULAR) {
             handle.setMotor(axis, 0.0, 0.0, 0.5 * mass, false, 0.0);
         }

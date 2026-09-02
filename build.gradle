@@ -99,6 +99,14 @@ dependencies {
     implementation("plus.dragons.createdragonsplus:create-dragons-plus-${minecraft_version}:${cdp_version}")
     implementation("maven.modrinth:create-diesel-generators:${cdg_version}")
 
+    // JEI: compile against the API, run with the full mod (optional at runtime)
+    compileOnly("mezz.jei:jei-${minecraft_version}-neoforge-api:${jei_version}")
+    runtimeOnly("mezz.jei:jei-${minecraft_version}-neoforge:${jei_version}")
+
+    // Dev-runtime only: not dependencies of the mod, just useful in the test client
+    runtimeOnly("maven.modrinth:cubes-without-borders:${cubes_without_borders_version}")
+    runtimeOnly("maven.modrinth:create-aeronautics:${create_aeronautics_version}")
+
     // Apply Create's *published* access transformers to the dev-time Minecraft jar (MDG "accessTransformers"
     // configuration, see ModDevGradle README "Access Transformers"). Create publishes them as the
     // 'accesstransformer' classifier / accessTransformersElements variant of its maven artifact.

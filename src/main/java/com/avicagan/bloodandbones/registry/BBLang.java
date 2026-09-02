@@ -8,6 +8,12 @@ import com.avicagan.bloodandbones.BloodAndBones;
  */
 public class BBLang {
     public static void register() {
+        // JEI information pages
+        BloodAndBones.REGISTRATE.addRawLang("bloodandbones.jei.meat_hook.1",
+                "PH: The Meat Hook is how carcasses enter the pipeline. Kill an animal with it and the whole body stays behind as a physics carcass instead of dropping loot.");
+        BloodAndBones.REGISTRATE.addRawLang("bloodandbones.jei.meat_hook.2",
+                "PH: Right-click a limb to hook it and drag the carcass behind you. Heavier animals slow you down more. Right-click again to let go.");
+
         item("meat_hook",
                 "PH: Kill an animal with this and it leaves a whole carcass instead of loot. Right-click a carcass to drag it, right-click again to let go.",
                 "PH: Dragging slows you down. Heavier animals slow you more.",

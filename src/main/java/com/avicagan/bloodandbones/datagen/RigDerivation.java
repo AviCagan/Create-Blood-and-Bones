@@ -102,13 +102,15 @@ public final class RigDerivation {
     private static JointSpec jointFor(String name) {
         String lower = name.toLowerCase();
         if (lower.contains("head") || lower.contains("neck")) {
-            return new JointSpec(new Vector3f(-40, -60, -20), new Vector3f(45, 60, 20), 1.5F, 0.0F);
+            // a neck: little nodding down so the head cannot fold into the body, some turning, hardly any roll
+            return new JointSpec(new Vector3f(-20, -45, -10), new Vector3f(35, 45, 10), 4.0F, 6.0F);
         }
         if (lower.contains("leg") || lower.contains("arm")) {
-            return new JointSpec(new Vector3f(-70, -15, -15), new Vector3f(70, 15, 15), 1.5F, 0.0F);
+            // limbs swing fore and aft, barely sideways; damped so they settle instead of flailing
+            return new JointSpec(new Vector3f(-60, -10, -10), new Vector3f(60, 10, 10), 4.0F, 2.0F);
         }
         if (lower.contains("tail") || lower.contains("wing") || lower.contains("ear")) {
-            return new JointSpec(new Vector3f(-45, -45, -45), new Vector3f(45, 45, 45), 1.0F, 0.0F);
+            return new JointSpec(new Vector3f(-45, -45, -45), new Vector3f(45, 45, 45), 2.0F, 1.0F);
         }
         return JointSpec.DEFAULT;
     }

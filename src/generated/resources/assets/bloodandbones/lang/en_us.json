@@ -1,5 +1,7 @@
 {
   "block.bloodandbones.carcass_part": "Carcass",
+  "bloodandbones.jei.meat_hook.1": "PH: The Meat Hook is how carcasses enter the pipeline. Kill an animal with it and the whole body stays behind as a physics carcass instead of dropping loot.",
+  "bloodandbones.jei.meat_hook.2": "PH: Right-click a limb to hook it and drag the carcass behind you. Heavier animals slow you down more. Right-click again to let go.",
   "item.bloodandbones.meat_hook": "Meat Hook",
   "item.bloodandbones.meat_hook.tooltip": "MEAT HOOK",
   "item.bloodandbones.meat_hook.tooltip.behaviour1": "PH: Dragging slows you down. Heavier animals slow you more.",
