@@ -94,20 +94,30 @@ public final class CarcassRest {
     /** Carcasses that have earned their rest this tick, folded from the level tick. */
     private static final Map<ServerLevel, java.util.Set<UUID>> PENDING = new java.util.WeakHashMap<>();
 
-    /** End of level tick: fold whatever went still. */
+    /** End of level tick: fold whatever went still, unfold whatever lost its footing. */
     public static void levelTick(ServerLevel level) {
         java.util.Set<UUID> pending = PENDING.get(level);
-        if (pending == null || pending.isEmpty()) {
-            return;
-        }
-        CarcassSavedData data = CarcassSavedData.get(level);
-        for (UUID id : List.copyOf(pending)) {
-            CarcassSavedData.Carcass carcass = data.carcass(id);
-            if (carcass != null && !carcass.resting && !isHeld(level, carcass)) {
-                rest(level, carcass);
+        if (pending != null && !pending.isEmpty()) {
+            CarcassSavedData data = CarcassSavedData.get(level);
+            for (UUID id : List.copyOf(pending)) {
+                CarcassSavedData.Carcass carcass = data.carcass(id);
+                if (carcass != null && !carcass.resting && !isHeld(level, carcass)) {
+                    rest(level, carcass);
+                }
             }
+            pending.clear();
         }
-        pending.clear();
+        java.util.Set<UUID> pendingSplit = PENDING_SPLIT.get(level);
+        if (pendingSplit != null && !pendingSplit.isEmpty()) {
+            CarcassSavedData data = CarcassSavedData.get(level);
+            for (UUID id : List.copyOf(pendingSplit)) {
+                CarcassSavedData.Carcass carcass = data.carcass(id);
+                if (carcass != null && carcass.resting) {
+                    split(level, carcass);
+                }
+            }
+            pendingSplit.clear();
+        }
     }
 
     /** True while a player drags any limb or a hook holds the carcass. */
@@ -159,6 +169,7 @@ public final class CarcassRest {
         BlockPos center = torso.getPlot().getCenterBlock();
         LevelPlot plot = torso.getPlot();
         Map<BlockPos, int[]> cellSizes = new LinkedHashMap<>();
+        Map<BlockPos, Bone> cellBones = new LinkedHashMap<>();
 
         for (Bone bone : rig.bones()) {
             if (bone == torsoBone) {
@@ -177,29 +188,17 @@ public final class CarcassRest {
             mergedParts.add(new CarcassPartBlockEntity.MergedPart(bone.name(),
                     new Vector3f((float) relPos.x, (float) relPos.y, (float) relPos.z), new Quaternionf(relRot)));
 
-            // coarse collision cells in the torso's plot where the limb's box mostly fills a block
+            // coarse collision cells in the torso's plot: every block the limb's box reaches into
             Vector3d torsoOriginOffset = CarcassAssembler.originOffset(torsoBone);
-            Vector3d boneMin = new Vector3d(bone.boxMin()).div(16.0);
-            Vector3d boneMax = new Vector3d(bone.boxMax()).div(16.0);
-            Vector3d[] corners = new Vector3d[8];
-            Vector3d lo = new Vector3d(Double.MAX_VALUE);
-            Vector3d hi = new Vector3d(-Double.MAX_VALUE);
-            for (int i = 0; i < 8; i++) {
-                Vector3d c = new Vector3d((i & 1) == 0 ? boneMin.x : boneMax.x, (i & 2) == 0 ? boneMin.y : boneMax.y, (i & 4) == 0 ? boneMin.z : boneMax.z);
-                relRot.transform(c).add(relPos).add(torsoOriginOffset).add(center.getX(), center.getY(), center.getZ());
-                corners[i] = c;
-                lo.min(c);
-                hi.max(c);
-            }
-            Quaterniond relInverse = new Quaterniond(relRot).invert();
-            for (int x = (int) Math.floor(lo.x); x <= (int) Math.floor(hi.x); x++) {
-                for (int y = (int) Math.floor(lo.y); y <= (int) Math.floor(hi.y); y++) {
-                    for (int z = (int) Math.floor(lo.z); z <= (int) Math.floor(hi.z); z++) {
+            Obb box = Obb.of(bone, relPos, relRot, new Vector3d(torsoOriginOffset).add(center.getX(), center.getY(), center.getZ()));
+            for (int x = (int) Math.floor(box.lo.x); x <= (int) Math.floor(box.hi.x); x++) {
+                for (int y = (int) Math.floor(box.lo.y); y <= (int) Math.floor(box.hi.y); y++) {
+                    for (int z = (int) Math.floor(box.lo.z); z <= (int) Math.floor(box.hi.z); z++) {
                         BlockPos cell = new BlockPos(x, y, z);
                         if (!level.getBlockState(cell).isAir()) {
                             continue; // one of the torso's own cells
                         }
-                        int[] extent = extent(cell, relPos, relInverse, torsoOriginOffset, center, boneMin, boneMax);
+                        int[] extent = box.extentIn(cell);
                         if (extent == null) {
                             continue;
                         }
@@ -207,6 +206,7 @@ public final class CarcassRest {
                         if (existing == null) {
                             carcass.restCells.add(cell);
                             cellSizes.put(cell, extent);
+                            cellBones.put(cell, bone);
                         } else {
                             // two limbs share this cell (a pair of legs): the cell covers both
                             existing[0] = Math.max(existing[0], extent[0]);
@@ -229,7 +229,8 @@ public final class CarcassRest {
             int[] size = cellSizes.getOrDefault(cell, new int[]{16, 16, 16});
             level.setBlock(cell, CarcassPartBlock.stateFor(block, size[0], size[1], size[2]), Block.UPDATE_ALL);
             if (level.getBlockEntity(cell) instanceof CarcassPartBlockEntity be) {
-                be.configureFiller(carcass.id, torsoBone);
+                // named after the limb, so a stray cell can be told from the torso's own cells later
+                be.configureFiller(carcass.id, cellBones.getOrDefault(cell, torsoBone));
             }
         }
         if (!carcass.restCells.isEmpty()) {
@@ -237,11 +238,12 @@ public final class CarcassRest {
             CarcassAssembler.bindColliders(level, torso);
         }
 
-        // drop the limb bodies
+        // drop the limb bodies; the rest poses now stand in for them
         data.mergingLimbs = true;
         try {
             for (ServerSubLevel limb : toRemove) {
                 container.removeSubLevel(limb, SubLevelRemovalReason.REMOVED);
+                carcass.bones.values().remove(limb.getUniqueId());
             }
         } finally {
             data.mergingLimbs = false;
@@ -260,37 +262,194 @@ public final class CarcassRest {
         return true;
     }
 
-    /**
-     * The part of this block cell the limb's box fills, sampled on a 4x4x4 grid, as a box size in pixels from
-     * the cell's minimum corner (a cell's collision shape always starts at that corner). Null when the limb
-     * does not reach into the cell.
-     */
-    @Nullable
-    private static int[] extent(BlockPos cell, Vector3d relPos, Quaterniond relInverse, Vector3d torsoOriginOffset, BlockPos center,
-                                Vector3d boneMin, Vector3d boneMax) {
-        int maxI = -1;
-        int maxJ = -1;
-        int maxK = -1;
-        Vector3d p = new Vector3d();
-        for (int i = 0; i < 4; i++) {
-            for (int j = 0; j < 4; j++) {
-                for (int k = 0; k < 4; k++) {
-                    p.set(cell.getX() + (i + 0.5) / 4.0, cell.getY() + (j + 0.5) / 4.0, cell.getZ() + (k + 0.5) / 4.0);
-                    // torso plot -> torso bone frame -> limb bone frame
-                    p.sub(center.getX(), center.getY(), center.getZ()).sub(torsoOriginOffset).sub(relPos);
-                    relInverse.transform(p);
-                    if (p.x >= boneMin.x && p.x <= boneMax.x && p.y >= boneMin.y && p.y <= boneMax.y && p.z >= boneMin.z && p.z <= boneMax.z) {
-                        maxI = Math.max(maxI, i);
-                        maxJ = Math.max(maxJ, j);
-                        maxK = Math.max(maxK, k);
+    /** A limb's box in the torso plot's space: an oriented box, for exact overlap tests with block cells. */
+    static final class Obb {
+        final Vector3d center = new Vector3d();
+        final Vector3d[] axes = {new Vector3d(), new Vector3d(), new Vector3d()};
+        final double[] half = new double[3];
+        final Vector3d lo = new Vector3d();
+        final Vector3d hi = new Vector3d();
+
+        /** @param origin the limb bone frame's origin offset in plot space (torso origin + plot corner) */
+        static Obb of(Bone bone, Vector3d relPos, Quaterniond relRot, Vector3d origin) {
+            Obb obb = new Obb();
+            Vector3d min = new Vector3d(bone.boxMin()).div(16.0);
+            Vector3d max = new Vector3d(bone.boxMax()).div(16.0);
+            Vector3d localCenter = new Vector3d(min).add(max).mul(0.5);
+            obb.half[0] = (max.x - min.x) * 0.5;
+            obb.half[1] = (max.y - min.y) * 0.5;
+            obb.half[2] = (max.z - min.z) * 0.5;
+            relRot.transform(localCenter, obb.center).add(relPos).add(origin);
+            relRot.transform(new Vector3d(1, 0, 0), obb.axes[0]);
+            relRot.transform(new Vector3d(0, 1, 0), obb.axes[1]);
+            relRot.transform(new Vector3d(0, 0, 1), obb.axes[2]);
+            double rx = 0;
+            double ry = 0;
+            double rz = 0;
+            for (int i = 0; i < 3; i++) {
+                rx += Math.abs(obb.axes[i].x) * obb.half[i];
+                ry += Math.abs(obb.axes[i].y) * obb.half[i];
+                rz += Math.abs(obb.axes[i].z) * obb.half[i];
+            }
+            obb.lo.set(obb.center).sub(rx, ry, rz);
+            obb.hi.set(obb.center).add(rx, ry, rz);
+            return obb;
+        }
+
+        /**
+         * The box, in pixels from the cell's minimum corner, that this cell needs to cover the part of the
+         * limb inside it (a cell's collision shape always starts at that corner), or null when the limb
+         * does not reach into the cell at all.
+         */
+        @Nullable
+        int[] extentIn(BlockPos cell) {
+            Vector3d cellCenter = new Vector3d(cell.getX() + 0.5, cell.getY() + 0.5, cell.getZ() + 0.5);
+            if (!overlaps(cellCenter)) {
+                return null;
+            }
+            // clip the box's own bounds to the cell
+            double ex = Math.min(hi.x, cell.getX() + 1.0) - cell.getX();
+            double ey = Math.min(hi.y, cell.getY() + 1.0) - cell.getY();
+            double ez = Math.min(hi.z, cell.getZ() + 1.0) - cell.getZ();
+            return new int[]{pixels(ex), pixels(ey), pixels(ez)};
+        }
+
+        private static int pixels(double blocks) {
+            return Math.max(1, Math.min(16, (int) Math.ceil(blocks * 16.0 - 1.0E-6)));
+        }
+
+        /** Separating axis test between this box and the unit cube centred at {@code c}. */
+        private boolean overlaps(Vector3d c) {
+            Vector3d d = new Vector3d(center).sub(c);
+            Vector3d[] world = {new Vector3d(1, 0, 0), new Vector3d(0, 1, 0), new Vector3d(0, 0, 1)};
+            for (Vector3d axis : world) {
+                if (separated(axis, d)) {
+                    return false;
+                }
+            }
+            for (Vector3d axis : axes) {
+                if (separated(axis, d)) {
+                    return false;
+                }
+            }
+            for (Vector3d a : world) {
+                for (Vector3d b : axes) {
+                    Vector3d axis = new Vector3d(a).cross(b);
+                    if (axis.lengthSquared() > 1.0E-8 && separated(axis, d)) {
+                        return false;
                     }
                 }
             }
+            return true;
         }
-        if (maxI < 0) {
-            return null;
+
+        private boolean separated(Vector3d axis, Vector3d d) {
+            double cube = 0.5 * (Math.abs(axis.x) + Math.abs(axis.y) + Math.abs(axis.z));
+            double box = 0;
+            for (int i = 0; i < 3; i++) {
+                box += Math.abs(axes[i].dot(axis)) * half[i];
+            }
+            return Math.abs(d.dot(axis)) > cube + box;
         }
-        return new int[]{(maxI + 1) * 4, (maxJ + 1) * 4, (maxK + 1) * 4};
+    }
+
+    /** Cells in the torso's plot that belong to this carcass but are named after a limb: rest cells. */
+    private static List<BlockPos> strayCells(ServerLevel level, ServerSubLevel torso, CarcassSavedData.Carcass carcass, Bone torsoBone) {
+        List<BlockPos> stray = new ArrayList<>();
+        for (var holder : torso.getPlot().getLoadedChunks()) {
+            for (var entry : holder.getChunk().getBlockEntities().entrySet()) {
+                if (entry.getValue() instanceof CarcassPartBlockEntity be && carcass.id.equals(be.carcassId())
+                        && !be.bone().equals(torsoBone.name()) && level.getBlockState(entry.getKey()).is(BBBlocks.CARCASS_PART.get())) {
+                    stray.add(entry.getKey().immutable());
+                }
+            }
+        }
+        return stray;
+    }
+
+    /** Ticks between looks at whether the resting body still has something under it. */
+    private static final int SUPPORT_INTERVAL = 20;
+
+    /**
+     * While resting the body is pinned in place; if the ground under it goes (mined out, exploded), it
+     * unfolds so gravity can have it again.
+     */
+    public static void tickResting(ServerLevel level, CarcassSavedData.Carcass carcass, ServerSubLevel torso) {
+        if (Math.floorMod(level.getGameTime() + carcass.id.hashCode(), SUPPORT_INTERVAL) != 0) {
+            return;
+        }
+        if (!isSupported(level, carcass, torso)) {
+            // like the fold, the unfold must not run inside Sable's walk over its bodies
+            BloodAndBones.LOGGER.debug("Carcass {} lost its support, unfolding", carcass.id);
+            PENDING_SPLIT.computeIfAbsent(level, l -> new java.util.LinkedHashSet<>()).add(carcass.id);
+        }
+    }
+
+    /** Resting carcasses that lost their footing this tick, unfolded from the level tick. */
+    private static final Map<ServerLevel, java.util.Set<UUID>> PENDING_SPLIT = new java.util.WeakHashMap<>();
+
+    /**
+     * Something solid within a fifth of a block under the lowest corner of the body or its rest cells.
+     * (A carcass propped up on folded legs rests on its leg cells, so those count.)
+     */
+    static boolean isSupported(ServerLevel level, CarcassSavedData.Carcass carcass, ServerSubLevel torso) {
+        Optional<Rig> maybeRig = RigManager.forEntity(carcass.entity);
+        if (maybeRig.isEmpty()) {
+            return true;
+        }
+        Bone torsoBone = maybeRig.get().root();
+        Pose3d pose = torso.logicalPose();
+        BlockPos center = torso.getPlot().getCenterBlock();
+        List<Vector3d> corners = new ArrayList<>();
+        Vector3d min = new Vector3d(torsoBone.boxMin()).div(16.0).add(CarcassAssembler.originOffset(torsoBone)).add(center.getX(), center.getY(), center.getZ());
+        Vector3d max = new Vector3d(torsoBone.boxMax()).div(16.0).add(CarcassAssembler.originOffset(torsoBone)).add(center.getX(), center.getY(), center.getZ());
+        addCorners(corners, pose, min, max);
+        for (BlockPos cell : carcass.restCells) {
+            BlockState state = level.getBlockState(cell);
+            if (state.getBlock() instanceof CarcassPartBlock) {
+                addCorners(corners, pose, new Vector3d(cell.getX(), cell.getY(), cell.getZ()),
+                        new Vector3d(cell.getX() + CarcassPartBlock.sizeX(state) / 16.0, cell.getY() + CarcassPartBlock.sizeY(state) / 16.0, cell.getZ() + CarcassPartBlock.sizeZ(state) / 16.0));
+            }
+        }
+        double lowest = Double.MAX_VALUE;
+        for (Vector3d corner : corners) {
+            lowest = Math.min(lowest, corner.y);
+        }
+        for (Vector3d corner : corners) {
+            if (corner.y > lowest + 0.25) {
+                continue;
+            }
+            BlockPos below = BlockPos.containing(corner.x, corner.y - 0.2, corner.z);
+            if (!level.getBlockState(below).getCollisionShape(level, below).isEmpty()) {
+                return true;
+            }
+        }
+        return false;
+    }
+
+    private static void addCorners(List<Vector3d> out, Pose3d pose, Vector3d min, Vector3d max) {
+        for (int i = 0; i < 8; i++) {
+            Vector3d c = new Vector3d((i & 1) == 0 ? min.x : max.x, (i & 2) == 0 ? min.y : max.y, (i & 4) == 0 ? min.z : max.z);
+            out.add(pose.transformPosition(c, new Vector3d()));
+        }
+    }
+
+    /**
+     * A resting carcass was hit: unfold it and shove the limb that took the blow.
+     *
+     * @return true if it unfolded
+     */
+    public static boolean disturb(ServerLevel level, CarcassSavedData.Carcass carcass, String bone, Vector3d direction, double speed) {
+        Map<String, ServerSubLevel> bodies = split(level, carcass);
+        if (bodies == null) {
+            return false;
+        }
+        ServerSubLevelContainer container = SubLevelContainer.getContainer(level);
+        ServerSubLevel hit = bodies.getOrDefault(bone, bodies.get(carcass.rootBone));
+        if (container != null && hit != null && !hit.isRemoved()) {
+            container.physicsSystem().getPhysicsHandle(hit).addLinearAndAngularVelocity(new Vector3d(direction).normalize().mul(speed), new Vector3d());
+        }
+        return true;
     }
 
     /**
@@ -320,7 +479,7 @@ public final class CarcassRest {
         }
     }
 
-    private static void unlock(CarcassSavedData.Carcass carcass) {
+    public static void unlock(CarcassSavedData.Carcass carcass) {
         if (carcass.restLock != null && carcass.restLock.isValid()) {
             carcass.restLock.remove();
         }
@@ -359,22 +518,28 @@ public final class CarcassRest {
         PhysicsPipeline pipeline = container.physicsSystem().getPipeline();
         CarcassSavedData data = CarcassSavedData.get(level);
 
+        Pose3d torsoPose = torso.logicalPose();
+        Vector3d torsoOriginWorld = torsoPose.transformPosition(CarcassAssembler.boneOriginInPlot(torso, torsoBone), new Vector3d());
+        // find room for the limbs before taking anything apart, so a failure leaves the rest intact
+        BlockPos staging = CarcassAssembler.findStaging(level, BlockPos.containing(torsoOriginWorld.x, torsoOriginWorld.y, torsoOriginWorld.z), rig);
+        if (staging == null) {
+            BloodAndBones.LOGGER.warn("No staging space to unfold carcass {}", carcass.id);
+            return null;
+        }
+
         unlock(carcass);
-        // the rest cells go first so the torso is back to its own shape
+        // the rest cells go first so the torso is back to its own shape; also any cell named after a limb
+        // that the saved list does not know about (older saves lost the list)
         for (BlockPos cell : carcass.restCells) {
             if (level.getBlockState(cell).is(BBBlocks.CARCASS_PART.get())) {
                 level.setBlock(cell, Blocks.AIR.defaultBlockState(), Block.UPDATE_ALL);
             }
         }
         carcass.restCells.clear();
-
-        Pose3d torsoPose = torso.logicalPose();
-        Vector3d torsoOriginWorld = torsoPose.transformPosition(CarcassAssembler.boneOriginInPlot(torso, torsoBone), new Vector3d());
-        BlockPos staging = CarcassAssembler.findStaging(level, BlockPos.containing(torsoOriginWorld.x, torsoOriginWorld.y, torsoOriginWorld.z), rig);
-        if (staging == null) {
-            BloodAndBones.LOGGER.warn("No staging space to unfold carcass {}", carcass.id);
-            return null;
+        for (BlockPos cell : strayCells(level, torso, carcass, torsoBone)) {
+            level.setBlock(cell, Blocks.AIR.defaultBlockState(), Block.UPDATE_ALL);
         }
+
         for (Bone bone : rig.bones()) {
             if (bone == torsoBone) {
                 continue;
@@ -385,12 +550,18 @@ public final class CarcassRest {
             }
             ServerSubLevel limb = CarcassAssembler.assembleBone(level, staging, carcass.id, rig, bone, carcass.look);
             if (limb == null) {
+                // the limb is lost: forget it and its joints rather than keep a dead reference
                 BloodAndBones.LOGGER.warn("Could not re-assemble {} of carcass {}", bone.name(), carcass.id);
+                carcass.bones.remove(bone.name());
+                carcass.joints.removeIf(joint -> joint.parent().equals(bone.name()) || joint.child().equals(bone.name()));
                 continue;
             }
             Vector3d origin = new Vector3d(torsoPose.orientation().transform(new Vector3d(rest.position()))).add(torsoOriginWorld);
             Quaterniond orientation = new Quaterniond(torsoPose.orientation()).mul(rest.orientation());
             CarcassAssembler.pose(pipeline, limb, bone, origin, orientation);
+            if (level.getBlockEntity(limb.getPlot().getCenterBlock()) instanceof CarcassPartBlockEntity limbRoot) {
+                limbRoot.setFreshness(carcass.freshness);
+            }
             subLevels.put(bone.name(), limb);
             carcass.bones.put(bone.name(), limb.getUniqueId());
         }

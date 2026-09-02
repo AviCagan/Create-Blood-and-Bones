@@ -51,14 +51,17 @@ public final class CarcassRot {
             carcass.rotSampleTicks = 0;
             carcass.rotRate = rateAround(level, center);
         }
+        long now = level.getGameTime();
         if (carcass.rotRate <= 0.0F) {
+            // preserved: time passes without counting, and none of it is owed later
+            carcass.rotClock = now;
             return;
         }
         int rotTime = RigManager.forEntity(carcass.entity).map(Rig::rotTime).orElse(Rig.DEFAULT_ROT_TIME);
-        // count game time rather than ticks seen, so time spent in an unloaded chunk still rots the meat
-        long now = level.getGameTime();
+        // count game time rather than ticks seen, so time spent in an unloaded chunk still rots the meat;
+        // a long absence is paid off a day per tick rather than all at once
         long elapsed = carcass.rotClock < 0 ? 1L : Math.max(1L, Math.min(now - carcass.rotClock, MAX_CATCH_UP));
-        carcass.rotClock = now;
+        carcass.rotClock = carcass.rotClock < 0 ? now : Math.min(now, carcass.rotClock + elapsed);
         float before = carcass.freshness;
         carcass.freshness = Math.max(0.0F, before - carcass.rotRate * elapsed / rotTime);
         boolean turnedRotten = carcass.freshness <= 0.0F;
@@ -72,13 +75,20 @@ public final class CarcassRot {
         }
     }
 
-    /** Tell clients the current freshness through the torso's root cell. */
+    /** Tell clients the current freshness through every loaded limb's root cell. */
     public static void sync(ServerLevel level, CarcassSavedData.Carcass carcass, ServerSubLevel torso) {
-        BlockPos root = torso.getPlot().getCenterBlock();
-        if (level.getBlockEntity(root) instanceof CarcassPartBlockEntity be && Math.abs(be.freshness() - carcass.freshness) > 1.0E-4F) {
-            be.setFreshness(carcass.freshness);
-            be.setChanged();
-            level.sendBlockUpdated(root, level.getBlockState(root), level.getBlockState(root), Block.UPDATE_CLIENTS);
+        dev.ryanhcode.sable.api.sublevel.ServerSubLevelContainer container = dev.ryanhcode.sable.api.sublevel.SubLevelContainer.getContainer(level);
+        for (java.util.UUID id : carcass.bones.values()) {
+            dev.ryanhcode.sable.sublevel.SubLevel subLevel = container == null ? null : container.getSubLevel(id);
+            if (!(subLevel instanceof ServerSubLevel limb) || limb.isRemoved()) {
+                continue;
+            }
+            BlockPos root = limb.getPlot().getCenterBlock();
+            if (level.getBlockEntity(root) instanceof CarcassPartBlockEntity be && Math.abs(be.freshness() - carcass.freshness) > 1.0E-4F) {
+                be.setFreshness(carcass.freshness);
+                be.setChanged();
+                level.sendBlockUpdated(root, level.getBlockState(root), level.getBlockState(root), Block.UPDATE_CLIENTS);
+            }
         }
     }
 

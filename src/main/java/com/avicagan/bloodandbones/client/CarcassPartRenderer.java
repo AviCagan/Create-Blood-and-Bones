@@ -21,7 +21,6 @@ import net.minecraft.client.renderer.texture.OverlayTexture;
 import net.minecraft.core.BlockPos;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.util.FastColor;
-import net.minecraft.world.phys.AABB;
 import org.jetbrains.annotations.Nullable;
 import org.joml.Vector3f;
 
@@ -104,7 +103,7 @@ public class CarcassPartRenderer implements BlockEntityRenderer<CarcassPartBlock
             }
         }
         try {
-            drawPart(part, poseStack, buffer, packedLight, color);
+            drawPart(part, poseStack, buffer, packedLight, color, rig.scale());
         } finally {
             for (ModelPart child : hidden) {
                 child.visible = true;
@@ -118,17 +117,20 @@ public class CarcassPartRenderer implements BlockEntityRenderer<CarcassPartBlock
             poseStack.pushPose();
             poseStack.translate(extra.offset().x / 16.0F, extra.offset().y / 16.0F, extra.offset().z / 16.0F);
             poseStack.mulPose(extra.rotation());
-            drawPart(other, poseStack, buffer, packedLight, color);
+            drawPart(other, poseStack, buffer, packedLight, color, rig.scale());
             poseStack.popPose();
         }
     }
 
-    private static void drawPart(ModelPart part, PoseStack poseStack, VertexConsumer buffer, int packedLight, int color) {
+    private static void drawPart(ModelPart part, PoseStack poseStack, VertexConsumer buffer, int packedLight, int color, float scale) {
         PartPose saved = part.storePose();
         part.loadPose(PartPose.ZERO);
+        poseStack.pushPose();
+        poseStack.scale(scale, scale, scale);
         try {
             part.render(poseStack, buffer, packedLight, OverlayTexture.NO_OVERLAY, color);
         } finally {
+            poseStack.popPose();
             part.loadPose(saved);
         }
     }
@@ -169,14 +171,12 @@ public class CarcassPartRenderer implements BlockEntityRenderer<CarcassPartBlock
         return part;
     }
 
+    /**
+     * Sable draws sub-level block entities itself, outside vanilla's frustum test, so the only visibility
+     * rule that applies is the view distance; a resting carcass drawn from its torso cell needs a bit more.
+     */
     @Override
-    public AABB getRenderBoundingBox(CarcassPartBlockEntity be) {
-        BlockPos pos = be.getBlockPos();
-        Vector3f size = be.boxSize();
-        // the resting form draws the whole animal from the torso's root cell
-        double reach = be.merged().isEmpty() ? 0.0 : 3.0;
-        return new AABB(pos.getX() - reach, pos.getY() - reach, pos.getZ() - reach,
-                pos.getX() + Math.max(1.0, size.x / 16.0) + reach, pos.getY() + Math.max(1.0, size.y / 16.0) + reach,
-                pos.getZ() + Math.max(1.0, size.z / 16.0) + reach);
+    public int getViewDistance() {
+        return 96;
     }
 }

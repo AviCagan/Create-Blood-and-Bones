@@ -45,6 +45,18 @@ public class CarcassPartBlock extends Block implements EntityBlock, BlockSubLeve
         registerDefaultState(stateDefinition.any().setValue(SIZE_X, 16).setValue(SIZE_Y, 16).setValue(SIZE_Z, 16));
     }
 
+    public static int sizeX(BlockState state) {
+        return state.getValue(SIZE_X);
+    }
+
+    public static int sizeY(BlockState state) {
+        return state.getValue(SIZE_Y);
+    }
+
+    public static int sizeZ(BlockState state) {
+        return state.getValue(SIZE_Z);
+    }
+
     public static BlockState stateFor(Block block, int sizeX, int sizeY, int sizeZ) {
         return block.defaultBlockState()
                 .setValue(SIZE_X, clamp(sizeX))
@@ -108,6 +120,20 @@ public class CarcassPartBlock extends Block implements EntityBlock, BlockSubLeve
     @Override
     public BlockEntity newBlockEntity(BlockPos pos, BlockState state) {
         return new CarcassPartBlockEntity(BBBlockEntities.CARCASS_PART.get(), pos, state);
+    }
+
+    /** A punch on a resting carcass wakes it: it unfolds and the struck limb gets a nudge. */
+    @Override
+    protected void attack(BlockState state, Level level, BlockPos pos, Player player) {
+        if (!(level instanceof ServerLevel serverLevel) || !(level.getBlockEntity(pos) instanceof CarcassPartBlockEntity be) || be.carcassId() == null) {
+            return;
+        }
+        CarcassSavedData.Carcass carcass = CarcassSavedData.get(serverLevel).carcass(be.carcassId());
+        if (carcass == null || !carcass.resting) {
+            return;
+        }
+        net.minecraft.world.phys.Vec3 look = player.getLookAngle();
+        CarcassRest.disturb(serverLevel, carcass, be.bone(), new org.joml.Vector3d(look.x, look.y + 0.3, look.z), 1.2);
     }
 
     @Override

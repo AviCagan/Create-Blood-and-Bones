@@ -102,7 +102,7 @@ public class CarcassSavedData extends SavedData {
             return true;
         }
 
-        CompoundTag save() {
+        public CompoundTag save() {
             CompoundTag tag = new CompoundTag();
             tag.putUUID("Id", id);
             tag.putString("Entity", entity.toString());
@@ -148,7 +148,7 @@ public class CarcassSavedData extends SavedData {
             return tag;
         }
 
-        static Carcass load(CompoundTag tag) {
+        public static Carcass load(CompoundTag tag) {
             Carcass carcass = new Carcass(tag.getUUID("Id"), ResourceLocation.parse(tag.getString("Entity")), tag.getString("Root"));
             for (Tag t : tag.getList("Bones", Tag.TAG_COMPOUND)) {
                 CompoundTag b = (CompoundTag) t;
@@ -175,8 +175,12 @@ public class CarcassSavedData extends SavedData {
                 CompoundTag r = (CompoundTag) t;
                 carcass.restPoses.put(r.getString("Name"), RestPose.load(r));
             }
-            for (Tag t : tag.getList("RestCells", Tag.TAG_COMPOUND)) {
-                net.minecraft.nbt.NbtUtils.readBlockPos((CompoundTag) t, "").ifPresent(carcass.restCells::add);
+            // NbtUtils.writeBlockPos makes int arrays, so the list must be read as int arrays
+            for (Tag t : tag.getList("RestCells", Tag.TAG_INT_ARRAY)) {
+                int[] xyz = ((net.minecraft.nbt.IntArrayTag) t).getAsIntArray();
+                if (xyz.length == 3) {
+                    carcass.restCells.add(new net.minecraft.core.BlockPos(xyz[0], xyz[1], xyz[2]));
+                }
             }
             return carcass;
         }
@@ -238,23 +242,30 @@ public class CarcassSavedData extends SavedData {
             CarcassRot.tick(rootSubLevel.getLevel(), carcass, rootSubLevel);
         }
         if (carcass.resting) {
-            if (torso && (carcass.restLock == null || !carcass.restLock.isValid())) {
-                CarcassRest.lock(rootSubLevel.getLevel(), carcass, rootSubLevel);
+            if (torso) {
+                if (carcass.restLock == null || !carcass.restLock.isValid()) {
+                    CarcassRest.lock(rootSubLevel.getLevel(), carcass, rootSubLevel);
+                }
+                CarcassRest.tickResting(rootSubLevel.getLevel(), carcass, rootSubLevel);
             }
             return;
         }
         if (torso) {
             CarcassRest.tick(rootSubLevel.getLevel(), carcass);
         }
-        if (carcass.resting || carcass.jointsValid()) {
+        if (carcass.resting) {
+            return;
+        }
+        // joints saved by an older build could not be read; with none at all jointsValid() would say fine
+        if (torso && carcass.joints.size() < carcass.bones.size() - 1) {
+            rebuildJointSpecs(carcass);
+        }
+        if (carcass.jointsValid()) {
             return;
         }
         ServerSubLevelContainer container = SubLevelContainer.getContainer(rootSubLevel.getLevel());
         if (container == null) {
             return;
-        }
-        if (carcass.joints.size() < carcass.bones.size() - 1) {
-            rebuildJointSpecs(carcass);
         }
         Map<String, ServerSubLevel> loaded = new LinkedHashMap<>();
         for (Map.Entry<String, UUID> bone : carcass.bones.entrySet()) {
@@ -290,6 +301,8 @@ public class CarcassSavedData extends SavedData {
         if (rig == null) {
             return;
         }
+        int before = carcass.joints.size();
+        java.util.List<String> had = new ArrayList<>(carcass.bones.keySet());
         carcass.joints.clear();
         for (com.avicagan.bloodandbones.carcass.rig.Bone bone : rig.bones()) {
             if (bone.parent().isEmpty() || !carcass.bones.containsKey(bone.name()) || !carcass.bones.containsKey(bone.parent().get())) {
@@ -298,7 +311,7 @@ public class CarcassSavedData extends SavedData {
             rig.bone(bone.parent().get()).ifPresent(parent -> carcass.joints.add(CarcassAssembler.jointSpec(parent, bone)));
         }
         setDirty();
-        BloodAndBones.LOGGER.info("Rebuilt {} joints of carcass {} from its rig", carcass.joints.size(), carcass.id);
+        BloodAndBones.LOGGER.debug("Rebuilt {} joints (had {}) of {} carcass {} with bones {}", carcass.joints.size(), before, carcass.entity, carcass.id, had);
     }
 
     /**
@@ -329,6 +342,13 @@ public class CarcassSavedData extends SavedData {
             String removedBone = bone;
             carcass.bones.remove(removedBone);
             carcass.joints.removeIf(joint -> joint.parent().equals(removedBone) || joint.child().equals(removedBone));
+            if (removedBone.equals(carcass.rootBone) && carcass.resting) {
+                // the merged body itself is gone: the folded limbs went with it
+                CarcassRest.unlock(carcass);
+                carcass.resting = false;
+                carcass.restPoses.clear();
+                carcass.restCells.clear();
+            }
             // Sable only notices a joint's body is gone on its next physics tick, so isValid() still says yes
             // here; drop every live joint and let the root tick rebuild the survivors
             for (PhysicsConstraintHandle handle : carcass.liveJoints) {

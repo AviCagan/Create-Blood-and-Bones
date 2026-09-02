@@ -11,6 +11,6 @@ public class BBNetwork {
         registrar.playToClient(DragSyncPayload.TYPE, DragSyncPayload.STREAM_CODEC,
                 (payload, context) -> context.enqueueWork(() -> ClientDragState.handle(payload)));
         registrar.playToClient(RigSyncPayload.TYPE, RigSyncPayload.STREAM_CODEC,
-                (payload, context) -> context.enqueueWork(() -> com.avicagan.bloodandbones.carcass.rig.RigManager.setClientRigs(payload.rigs())));
+                (payload, context) -> context.enqueueWork(() -> com.avicagan.bloodandbones.carcass.rig.RigManager.receiveClientRigs(payload.rigs())));
     }
 }

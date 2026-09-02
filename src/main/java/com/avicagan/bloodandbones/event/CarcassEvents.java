@@ -54,8 +54,18 @@ public class CarcassEvents {
     /** Hand every joining or reloading player the rigs, the way vanilla hands out recipes and tags. */
     @SubscribeEvent
     public static void onDatapackSync(net.neoforged.neoforge.event.OnDatapackSyncEvent event) {
-        com.avicagan.bloodandbones.network.RigSyncPayload payload = new com.avicagan.bloodandbones.network.RigSyncPayload(RigManager.all());
-        event.getRelevantPlayers().forEach(player -> net.neoforged.neoforge.network.PacketDistributor.sendToPlayer(player, payload));
+        // one packet per rig keeps each well under the frame limit however many mobs get rigs;
+        // the channel is optional, so a client without the mod must not be sent any of them
+        java.util.List<com.avicagan.bloodandbones.network.RigSyncPayload> payloads = new java.util.ArrayList<>();
+        RigManager.all().forEach((id, rig) -> payloads.add(new com.avicagan.bloodandbones.network.RigSyncPayload(java.util.Map.of(id, rig))));
+        event.getRelevantPlayers()
+                .filter(player -> player.connection.hasChannel(com.avicagan.bloodandbones.network.RigSyncPayload.TYPE))
+                .forEach(player -> {
+                    net.neoforged.neoforge.network.PacketDistributor.sendToPlayer(player, com.avicagan.bloodandbones.network.RigSyncPayload.RESET);
+                    for (com.avicagan.bloodandbones.network.RigSyncPayload payload : payloads) {
+                        net.neoforged.neoforge.network.PacketDistributor.sendToPlayer(player, payload);
+                    }
+                });
     }
 
     @SubscribeEvent

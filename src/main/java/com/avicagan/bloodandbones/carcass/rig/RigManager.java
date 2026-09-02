@@ -59,8 +59,15 @@ public class RigManager extends SimpleJsonResourceReloadListener {
         return Optional.ofNullable(clientRigs.get(entityId));
     }
 
-    public static void setClientRigs(Map<ResourceLocation, Rig> received) {
-        clientRigs = Map.copyOf(received);
-        BloodAndBones.LOGGER.debug("Received {} carcass rigs", clientRigs.size());
+    /** An empty map clears what we had; otherwise the rigs are added to it. */
+    public static void receiveClientRigs(Map<ResourceLocation, Rig> received) {
+        if (received.isEmpty()) {
+            clientRigs = Map.of();
+            return;
+        }
+        Map<ResourceLocation, Rig> merged = new HashMap<>(clientRigs);
+        merged.putAll(received);
+        clientRigs = Map.copyOf(merged);
+        BloodAndBones.LOGGER.debug("Client now knows {} carcass rigs", clientRigs.size());
     }
 }

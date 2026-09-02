@@ -152,3 +152,8 @@ idea {
         downloadJavadoc = true
     }
 }
+
+// every game test run starts from a fresh world, or carcasses from earlier runs pile up around the arenas
+tasks.named('runGameTestServer').configure {
+    doFirst { project.delete(file('run/world')) }
+}

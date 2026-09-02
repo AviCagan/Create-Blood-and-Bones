@@ -46,12 +46,51 @@ public final class RigDerivation {
         }
         List<String> bonePaths = new ArrayList<>();
         for (Seen s : seen) {
-            if (s.cubes() && !isMerged(target, s.path()) && !target.attach().containsKey(s.path())) {
+            if (s.cubes() && !isMerged(target, s.path()) && !isAttached(target, s.path())) {
                 bonePaths.add(s.path());
             }
         }
         if (bonePaths.isEmpty()) {
             throw new IllegalStateException("Model " + target.model() + " has no parts with cubes");
+        }
+        // every name the target uses must be real, or a typo silently changes the animal
+        for (String path : target.merge()) {
+            if (!byPath.containsKey(path)) {
+                throw new IllegalStateException("Merged part " + path + " of " + target.entity() + " does not exist");
+            }
+            if (enclosingBone(path, bonePaths) == null) {
+                throw new IllegalStateException("Merged part " + path + " of " + target.entity() + " has no bone above it to draw it");
+            }
+        }
+        for (String path : target.hidden()) {
+            String parentPath = path.contains("/") ? path.substring(0, path.lastIndexOf('/')) : "";
+            boolean known = byPath.containsKey(path) || (!parentPath.isEmpty() && byPath.containsKey(parentPath)) || parentPath.isEmpty();
+            if (!known) {
+                throw new IllegalStateException("Hidden part " + path + " of " + target.entity() + " does not exist");
+            }
+        }
+        for (Map.Entry<String, String> attach : target.attach().entrySet()) {
+            if (!byPath.containsKey(attach.getKey())) {
+                throw new IllegalStateException("Attached part " + attach.getKey() + " of " + target.entity() + " does not exist");
+            }
+            if (!bonePaths.contains(attach.getValue())) {
+                throw new IllegalStateException("Part " + attach.getKey() + " of " + target.entity() + " is attached to " + attach.getValue() + ", which is not a bone; bones are " + bonePaths);
+            }
+        }
+        for (String key : target.parents().keySet()) {
+            if (!bonePaths.contains(key)) {
+                throw new IllegalStateException("parents names " + key + " of " + target.entity() + ", which is not a bone; bones are " + bonePaths);
+            }
+        }
+        for (String key : target.boxes().keySet()) {
+            if (!bonePaths.contains(key)) {
+                throw new IllegalStateException("boxes names " + key + " of " + target.entity() + ", which is not a bone; bones are " + bonePaths);
+            }
+        }
+        for (String key : target.joints().keySet()) {
+            if (!bonePaths.contains(key)) {
+                throw new IllegalStateException("joints names " + key + " of " + target.entity() + ", which is not a bone; bones are " + bonePaths);
+            }
         }
 
         // the torso: named, or the biggest bone with no bone above it
@@ -111,18 +150,13 @@ public final class RigDerivation {
             }
             ordered.add(bone(target, byPath.get(path), Optional.of(parents.get(path)), bonePaths, byPath));
         }
-        for (String attached : target.attach().keySet()) {
-            if (!byPath.containsKey(attached)) {
-                throw new IllegalStateException("Attached part " + attached + " of " + target.entity() + " does not exist");
-            }
-        }
         float weight = 0.0F;
         for (Bone bone : ordered) {
             Vector3f size = bone.boxSize();
             weight += (size.x / 16.0F) * (size.y / 16.0F) * (size.z / 16.0F) * FLESH_DENSITY;
         }
         return new Rig(target.entity(), target.model(), target.layer(), target.texture(), target.variantNames(), target.passes(),
-                weight, target.rotTime(), ordered);
+                target.scale(), weight, target.rotTime(), ordered);
     }
 
     private static Bone bone(RigTarget target, Seen s, Optional<String> parent, List<String> bonePaths, Map<String, Seen> byPath) {
@@ -136,6 +170,9 @@ public final class RigDerivation {
             min = new Vector3f(s.biggest().minX, s.biggest().minY, s.biggest().minZ);
             max = new Vector3f(s.biggest().maxX, s.biggest().maxY, s.biggest().maxZ);
         }
+        // rig pixels are render pixels: the renderer's model scale is baked in here and undone when drawing
+        min.mul(target.scale());
+        max.mul(target.scale());
         // descendants that draw on their own (other bones) or not at all (hidden) are hidden while drawing this bone
         List<String> hide = new ArrayList<>();
         String prefix = s.path() + "/";
@@ -160,14 +197,14 @@ public final class RigDerivation {
             if (extra == null) {
                 throw new IllegalStateException("Attached part " + part + " of " + target.entity() + " does not exist");
             }
-            Vector3f offset = new Vector3f(extra.offset()).sub(s.offset());
+            Vector3f offset = new Vector3f(extra.offset()).sub(s.offset()).mul(target.scale());
             inverse.transform(offset);
             Quaternionf rotation = new Quaternionf(inverse).mul(extra.rotation());
             extras.add(new ExtraPart(part, offset, rotation));
         });
         Optional<JointSpec> joint = parent.isEmpty() ? Optional.empty()
                 : Optional.of(target.joints().getOrDefault(s.path(), jointFor(s.path())));
-        return new Bone(s.path(), s.path(), parent, s.offset(), s.rotation(), min, max, joint, hide, extras);
+        return new Bone(s.path(), s.path(), parent, new Vector3f(s.offset()).mul(target.scale()), s.rotation(), min, max, joint, hide, extras);
     }
 
     private static Vector3f boxSize(RigTarget target, Seen s) {
@@ -177,6 +214,16 @@ public final class RigDerivation {
         }
         ModelPart.Cube c = s.biggest();
         return new Vector3f(c.maxX - c.minX, c.maxY - c.minY, c.maxZ - c.minZ);
+    }
+
+    /** An attached part, or anything under one, rides along with a bone instead of being one. */
+    private static boolean isAttached(RigTarget target, String path) {
+        for (String attached : target.attach().keySet()) {
+            if (path.equals(attached) || path.startsWith(attached + "/")) {
+                return true;
+            }
+        }
+        return false;
     }
 
     /** A merged part, or anything under one, draws with the bone above it instead of being a bone. */
@@ -214,7 +261,7 @@ public final class RigDerivation {
             Quaternionf childRotation = new Quaternionf(rotation).mul(local);
 
             ModelPart.Cube biggest = null;
-            float best = -1;
+            float best = 0; // a flat cube (a saddle line, a cape) is no body
             for (ModelPart.Cube cube : child.cubes) {
                 float volume = (cube.maxX - cube.minX) * (cube.maxY - cube.minY) * (cube.maxZ - cube.minZ);
                 if (volume > best) {

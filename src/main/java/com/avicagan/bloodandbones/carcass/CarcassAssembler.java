@@ -109,7 +109,8 @@ public final class CarcassAssembler {
 
         UUID carcassId = UUID.randomUUID();
         Vec3 feet = entity.position();
-        Vector3d base = new Vector3d(feet.x, feet.y + 1.501, feet.z);
+        // vanilla's 1.501 lift is applied after the renderer's model scale, so it scales too
+        Vector3d base = new Vector3d(feet.x, feet.y + 1.501 * rig.scale(), feet.z);
         Quaterniond g = new Quaterniond().rotationY(Math.toRadians(180.0 - entity.yBodyRot)).rotateZ(Math.PI);
 
         CarcassLook appearance = CarcassLook.of(entity, rig);

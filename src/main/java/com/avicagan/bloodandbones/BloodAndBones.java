@@ -40,7 +40,10 @@ public class BloodAndBones {
 
         modContainer.registerConfig(ModConfig.Type.CLIENT, BBClientConfig.SPEC);
         NeoForge.EVENT_BUS.register(CarcassEvents.class);
-        modEventBus.addListener(BBDatagen::gatherData);
+        if (net.neoforged.fml.loading.FMLEnvironment.dist.isClient()) {
+            // the rig exporter reads client-only model classes; a dedicated server must never link it
+            modEventBus.addListener(BBDatagen::gatherData);
+        }
         modEventBus.addListener(BBGameTests::register);
         modEventBus.addListener(BBNetwork::register);
 

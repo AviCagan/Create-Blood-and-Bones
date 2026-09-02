@@ -95,6 +95,15 @@ public final class CarcassDrag {
         return start(level, player, plotPos, hitLocation);
     }
 
+    /** To every player in the level whose client has the mod; the channel is optional, so others get nothing. */
+    private static void broadcast(ServerLevel level, net.minecraft.network.protocol.common.custom.CustomPacketPayload payload) {
+        for (net.minecraft.server.level.ServerPlayer player : level.players()) {
+            if (player.connection.hasChannel(payload.type())) {
+                PacketDistributor.sendToPlayer(player, payload);
+            }
+        }
+    }
+
     public static boolean isDraggingCarcass(UUID carcassId) {
         for (Drag drag : DRAGS.values()) {
             if (drag.carcass.equals(carcassId)) {
@@ -139,7 +148,7 @@ public final class CarcassDrag {
             drag.playerEntity = player;
             DRAGS.put(player.getUUID(), drag);
             applySlowdown(player, dragPenalty(carcass, weight));
-            PacketDistributor.sendToPlayersInDimension(level, new DragSyncPayload(player.getUUID(), Optional.of(drag.subLevel), new Vector3d(drag.anchorPlot)));
+            broadcast(level, new DragSyncPayload(player.getUUID(), Optional.of(drag.subLevel), new Vector3d(drag.anchorPlot)));
             return true;
         }
         float weight = RigManager.all().values().stream()
@@ -157,7 +166,7 @@ public final class CarcassDrag {
         drag.playerEntity = player;
         DRAGS.put(player.getUUID(), drag);
         applySlowdown(player, dragPenalty(carcass, weight));
-        PacketDistributor.sendToPlayersInDimension(level, new DragSyncPayload(player.getUUID(), Optional.of(drag.subLevel), new Vector3d(drag.anchorPlot)));
+        broadcast(level, new DragSyncPayload(player.getUUID(), Optional.of(drag.subLevel), new Vector3d(drag.anchorPlot)));
         return true;
     }
 
@@ -165,7 +174,7 @@ public final class CarcassDrag {
         Drag drag = DRAGS.remove(player.getUUID());
         removeSlowdown(player);
         if (drag != null) {
-            PacketDistributor.sendToPlayersInDimension(level, DragSyncPayload.ended(player.getUUID()));
+            broadcast(level, DragSyncPayload.ended(player.getUUID()));
         }
     }
 
@@ -197,7 +206,7 @@ public final class CarcassDrag {
             return;
         }
         if (level.getGameTime() % 40 == 0) {
-            PacketDistributor.sendToPlayersInDimension(level, new DragSyncPayload(player.getUUID(), Optional.of(drag.subLevel), new Vector3d(drag.anchorPlot)));
+            broadcast(level, new DragSyncPayload(player.getUUID(), Optional.of(drag.subLevel), new Vector3d(drag.anchorPlot)));
         }
     }
 

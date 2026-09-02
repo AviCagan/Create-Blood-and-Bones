@@ -677,14 +677,167 @@ public class BBGameTests {
         });
     }
 
+    /** What a carcass remembers survives a save: rest cells, rest poses, joints, look, rot. */
+    @GameTest(template = "empty", timeoutTicks = 100)
+    public static void carcassRecordRoundTrips(GameTestHelper helper) {
+        ServerLevel level = helper.getLevel();
+        Cow cow = helper.spawn(EntityType.COW, new BlockPos(5, 2, 5));
+        if (!CarcassAssembler.assemble(cow, null)) {
+            helper.fail("Carcass assembly returned false");
+        }
+        cow.discard();
+        helper.runAfterDelay(5, () -> {
+            CarcassSavedData.Carcass carcass = onlyCarcass(helper, level);
+            carcass.restCells.add(new BlockPos(1, -2, 3));
+            carcass.restCells.add(new BlockPos(-4, 5, 6));
+            carcass.restPoses.put("head", new CarcassSavedData.RestPose(new Vector3d(0.5, 0.25, -0.75), new org.joml.Quaterniond(0, 0.7071, 0, 0.7071)));
+            carcass.freshness = 0.5F;
+            carcass.rotClock = 1234L;
+            CarcassSavedData.Carcass copy = CarcassSavedData.Carcass.load(carcass.save());
+            if (!copy.restCells.equals(carcass.restCells)) {
+                helper.fail("Rest cells did not survive a save: " + copy.restCells);
+            }
+            if (copy.restPoses.size() != 1 || copy.restPoses.get("head").position().distance(0.5, 0.25, -0.75) > 1.0E-9) {
+                helper.fail("Rest poses did not survive a save: " + copy.restPoses);
+            }
+            if (copy.joints.size() != carcass.joints.size() || copy.bones.size() != carcass.bones.size()) {
+                helper.fail("Joints or bones did not survive a save");
+            }
+            if (copy.freshness != 0.5F || copy.rotClock != 1234L || !copy.look.texture().equals(carcass.look.texture())) {
+                helper.fail("Rot or look did not survive a save");
+            }
+            helper.succeed();
+        });
+    }
+
+    /** A punch on any cell of a resting carcass unfolds it. */
+    @GameTest(template = "empty", timeoutTicks = 300)
+    public static void punchWakesRestingCarcass(GameTestHelper helper) {
+        ServerLevel level = helper.getLevel();
+        Cow cow = helper.spawn(EntityType.COW, new BlockPos(5, 2, 5));
+        if (!CarcassAssembler.assemble(cow, null)) {
+            helper.fail("Carcass assembly returned false");
+        }
+        cow.discard();
+        UUID[] id = new UUID[1];
+        helper.runAfterDelay(5, () -> id[0] = onlyCarcass(helper, level).id);
+        int folded = 30 + com.avicagan.bloodandbones.carcass.CarcassRest.STILL_TICKS + 40;
+        helper.runAfterDelay(folded, () -> {
+            CarcassSavedData.Carcass carcass = CarcassSavedData.get(level).carcass(id[0]);
+            if (carcass == null || !carcass.resting) {
+                helper.fail("Carcass should be resting");
+                return;
+            }
+            if (carcass.bones.size() != 1) {
+                helper.fail("A resting carcass should remember only its torso body, found " + carcass.bones.keySet());
+            }
+            if (carcass.restCells.isEmpty()) {
+                helper.fail("A resting cow should have collision cells for its limbs");
+            }
+            ServerSubLevelContainer container = SubLevelContainer.getContainer(level);
+            SubLevel torso = container.getSubLevel(carcass.bones.get(carcass.rootBone));
+            BlockPos cell = carcass.restCells.get(0);
+            Player player = helper.makeMockPlayer(GameType.SURVIVAL);
+            player.setPos(Vec3.atBottomCenterOf(helper.absolutePos(new BlockPos(5, 2, 5))));
+            player.setOldPosAndRot();
+            level.getBlockState(cell).attack(level, cell, player);
+        });
+        helper.runAfterDelay(folded + 10, () -> {
+            CarcassSavedData.Carcass carcass = CarcassSavedData.get(level).carcass(id[0]);
+            if (carcass.resting) {
+                helper.fail("A punched carcass should have unfolded");
+            }
+            if (liveBones(helper, level, carcass).size() != 6) {
+                helper.fail("Expected 6 bodies after the punch");
+            }
+            if (!carcass.restCells.isEmpty()) {
+                helper.fail("Rest cells should be gone");
+            }
+            helper.succeed();
+        });
+    }
+
+    /** Mining the floor out from under a resting carcass lets it fall again. */
+    @GameTest(template = "empty", timeoutTicks = 300)
+    public static void restingCarcassFallsWhenUnsupported(GameTestHelper helper) {
+        ServerLevel level = helper.getLevel();
+        // a one-block-high stone platform on top of the floor, so there is somewhere to fall to
+        for (int x = 2; x <= 8; x++) {
+            for (int z = 2; z <= 8; z++) {
+                helper.setBlock(new BlockPos(x, 2, z), net.minecraft.world.level.block.Blocks.STONE);
+            }
+        }
+        Cow cow = helper.spawn(EntityType.COW, new BlockPos(5, 3, 5));
+        if (!CarcassAssembler.assemble(cow, null)) {
+            helper.fail("Carcass assembly returned false");
+        }
+        cow.discard();
+        UUID[] id = new UUID[1];
+        double[] restY = new double[1];
+        helper.runAfterDelay(5, () -> id[0] = nearestCarcass(helper, level, new BlockPos(5, 3, 5)).id);
+        int folded = 30 + com.avicagan.bloodandbones.carcass.CarcassRest.STILL_TICKS + 40;
+        helper.runAfterDelay(folded, () -> {
+            CarcassSavedData.Carcass carcass = CarcassSavedData.get(level).carcass(id[0]);
+            if (carcass == null || !carcass.resting) {
+                helper.fail("Carcass should be resting on the platform");
+                return;
+            }
+            ServerSubLevelContainer container = SubLevelContainer.getContainer(level);
+            restY[0] = container.getSubLevel(carcass.bones.get(carcass.rootBone)).logicalPose().position().y();
+            for (int x = 2; x <= 8; x++) {
+                for (int z = 2; z <= 8; z++) {
+                    helper.setBlock(new BlockPos(x, 2, z), net.minecraft.world.level.block.Blocks.AIR);
+                }
+            }
+        });
+        for (int k = 1; k <= 5; k++) {
+            int at = folded + k * 20;
+            helper.runAfterDelay(at, () -> {
+                CarcassSavedData.Carcass carcass = CarcassSavedData.get(level).carcass(id[0]);
+                if (carcass == null) {
+                    return;
+                }
+                ServerSubLevelContainer container = SubLevelContainer.getContainer(level);
+                StringBuilder trace = new StringBuilder();
+                for (Map.Entry<String, UUID> bone : carcass.bones.entrySet()) {
+                    SubLevel s = container.getSubLevel(bone.getValue());
+                    trace.append(' ').append(bone.getKey()).append('=').append(s == null ? "?" : String.format("%.2f", s.logicalPose().position().y()));
+                }
+                com.avicagan.bloodandbones.BloodAndBones.LOGGER.info("[support test] +{} resting {} lock {} cells {}:{}", at - folded, carcass.resting,
+                        carcass.restLock == null ? "none" : carcass.restLock.isValid(), carcass.restCells.size(), trace);
+            });
+        }
+        helper.runAfterDelay(folded + 100, () -> {
+            CarcassSavedData.Carcass carcass = CarcassSavedData.get(level).carcass(id[0]);
+            if (carcass == null) {
+                helper.fail("Carcass vanished");
+                return;
+            }
+            // by now it has unfolded, fallen and may well have gone still and folded again on the lower floor;
+            // the ragdoll may also land on its feet, so judge the fall by its lowest body
+            double lowest = Double.MAX_VALUE;
+            for (ServerSubLevel bone : liveBones(helper, level, carcass).values()) {
+                lowest = Math.min(lowest, bone.logicalPose().position().y());
+            }
+            if (lowest > restY[0] - 0.75) {
+                helper.fail("The carcass should have fallen to the lower floor: torso rested at " + restY[0] + ", lowest body now " + lowest + ", resting=" + carcass.resting);
+            }
+            helper.succeed();
+        });
+    }
+
     /** The carcass whose root limb is nearest this test's arena center; tests are placed side by side. */
     private static CarcassSavedData.Carcass onlyCarcass(GameTestHelper helper, ServerLevel level) {
+        return nearestCarcass(helper, level, new BlockPos(5, 2, 5));
+    }
+
+    private static CarcassSavedData.Carcass nearestCarcass(GameTestHelper helper, ServerLevel level, BlockPos relative) {
         CarcassSavedData data = CarcassSavedData.get(level);
         ServerSubLevelContainer container = SubLevelContainer.getContainer(level);
         if (container == null) {
             helper.fail("No Sable container");
         }
-        Vec3 origin = Vec3.atCenterOf(helper.absolutePos(new BlockPos(5, 2, 5)));
+        Vec3 origin = Vec3.atCenterOf(helper.absolutePos(relative));
         CarcassSavedData.Carcass nearest = null;
         double best = 6.0;
         for (CarcassSavedData.Carcass carcass : data.all()) {

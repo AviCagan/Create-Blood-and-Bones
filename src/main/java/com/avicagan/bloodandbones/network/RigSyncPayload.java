@@ -10,9 +10,13 @@ import net.minecraft.resources.ResourceLocation;
 
 import java.util.Map;
 
-/** The server's rigs, sent whenever data packs (re)load, so the client can draw carcasses by rig. */
+/**
+ * The server's rigs, sent one per packet whenever data packs (re)load, so the client can draw carcasses by
+ * rig. An empty map means "start over" and precedes the batch.
+ */
 public record RigSyncPayload(Map<ResourceLocation, Rig> rigs) implements CustomPacketPayload {
     public static final Type<RigSyncPayload> TYPE = new Type<>(BloodAndBones.asResource("rig_sync"));
+    public static final RigSyncPayload RESET = new RigSyncPayload(Map.of());
 
     public static final StreamCodec<RegistryFriendlyByteBuf, RigSyncPayload> STREAM_CODEC = StreamCodec.composite(
             ByteBufCodecs.map(java.util.HashMap::new, ResourceLocation.STREAM_CODEC, ByteBufCodecs.fromCodec(Rig.CODEC)), RigSyncPayload::rigs,

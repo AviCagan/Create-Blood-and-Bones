@@ -513,9 +513,13 @@ pipes; chain clearance = hanging length + 1 block.
   (`bindColliders`) or they collide a few ticks late.
 - The merged body is **pinned by a world joint with all six axes locked**. Without it the torso, having
   lost the legs that propped it up, settled 0.75 blocks lower and the remembered limb poses no longer
-  matched. Pinning also means a resting carcass is inert until disturbed: the Meat Hook on any cell
-  splits it (`CarcassRest.split`) by re-assembling each limb at torso-pose × rest-pose and re-attaching the
-  joints, which now live in bone-local terms (`CarcassJoints.Spec`) so they survive new plots.
+  matched. Pinning also means a resting carcass is inert until disturbed: the Meat Hook on any cell, a
+  punch on any cell (`CarcassPartBlock.attack`), or losing whatever was under it (checked every second:
+  nothing solid within a fifth of a block under its lowest corner) splits it (`CarcassRest.split`) by
+  re-assembling each limb at torso-pose × rest-pose and re-attaching the joints, which now live in
+  bone-local terms (`CarcassJoints.Spec`) so they survive new plots. Rest cells are found by an exact
+  oriented-box test against each block, so 2 px wolf legs get cells too, and each cell is named after its
+  limb so an unfold can sweep up cells an older save forgot.
 - The fold itself runs from `LevelTickEvent.Post`, not from the root cell's `sable$tick`: that callback
   fires inside Sable's loop over every sub-level, and removing bodies there mutates the list being walked.
   Only the torso's root cell counts stillness; every limb's first cell ticks, and counting from all of
@@ -548,8 +552,8 @@ pipes; chain clearance = hanging length + 1 block.
   mouth fold into the neck), sibling parts attached to a bone (a chicken's beak and wattle, a zombie's
   hat), parent overrides (a wolf's head and front legs hang off the chest, the chest off the rear body),
   physics box overrides and joint overrides. Everything else follows the old rules.
-- Rigs are **sent to clients** on join and data pack reload (`RigSyncPayload`), the way vanilla sends
-  recipes. Root cells store only the mob id, the bone name and the resolved look; the renderer reads part
+- Rigs are **sent to clients** on join and data pack reload (`RigSyncPayload`, one packet per rig after a
+  reset packet, only to clients that negotiated the optional channel), the way vanilla sends recipes. Root cells store only the mob id, the bone name and the resolved look; the renderer reads part
   paths, hidden children and attached parts from the client's copy of the rig.
 - `CarcassLook` captures what the dying mob wore before it is gone: a sheep's wool colour
   (`Sheep.getColor`) and sheared flag, a horse's variant and markings, a wolf's variant texture (tame or
