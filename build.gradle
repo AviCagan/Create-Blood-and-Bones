@@ -23,6 +23,10 @@ repositories {
     maven { url = "https://maven.blamejared.com" }             // Veil (Sable dependency)
     maven { url = "https://maven.dragons.plus/releases" }      // Create Enchantment Industry, Create: Dragons Plus
     exclusiveContent {
+        forRepository { maven { url = "https://maven.fallenbreath.me/releases" } } // Conditional Mixin, runtime dependency of the Dragons Plus mods
+        filter { includeGroup "me.fallenbreath" }
+    }
+    exclusiveContent {
         forRepository { maven { url = "https://api.modrinth.com/maven" } }
         filter { includeGroup "maven.modrinth" }
     }
@@ -123,6 +127,8 @@ var generateModMetadata = tasks.register("generateModMetadata", ProcessResources
     into "build/generated/sources/modMetadata"
 }
 sourceSets.main.resources.srcDir generateModMetadata
+sourceSets.main.resources.srcDir 'src/generated/resources'
+sourceSets.main.resources.exclude '.cache/**'
 neoForge.ideSyncTask generateModMetadata
 
 tasks.withType(JavaCompile).configureEach {

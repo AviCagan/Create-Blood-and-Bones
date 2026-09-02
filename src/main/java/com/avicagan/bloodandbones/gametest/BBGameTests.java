@@ -30,7 +30,7 @@ public class BBGameTests {
         event.register(BBGameTests.class);
     }
 
-    @GameTest(template = "bloodandbones:empty", timeoutTicks = 200)
+    @GameTest(template = "empty", timeoutTicks = 200)
     public static void cowCarcassAssembles(GameTestHelper helper) {
         ServerLevel level = helper.getLevel();
         Cow cow = helper.spawn(EntityType.COW, new BlockPos(2, 1, 2));

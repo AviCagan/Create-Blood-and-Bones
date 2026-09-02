@@ -8,11 +8,12 @@ import net.minecraft.world.item.CreativeModeTab;
 public class BBCreativeTabs {
     public static final RegistryEntry<CreativeModeTab, CreativeModeTab> MAIN = BloodAndBones.REGISTRATE
             .defaultCreativeTab("main", builder -> builder
-                    .title(Component.translatable("itemGroup.bloodandbones.main"))
+                    .title(Component.translatable("itemGroup.bloodandbones.title"))
                     .icon(() -> BBItems.MEAT_HOOK.asStack()))
             .register();
 
     public static void register() {
-        BloodAndBones.REGISTRATE.addRawLang("itemGroup.bloodandbones.main", "Create: Blood & Bones");
+        // Registrate already generates "itemGroup.bloodandbones.main"; the tab shows this longer name instead.
+        BloodAndBones.REGISTRATE.addRawLang("itemGroup.bloodandbones.title", "Create: Blood & Bones");
     }
 }
