@@ -34,7 +34,7 @@ how to build it on what Create and Sable actually provide.
 - Create `com.simibubi.create:create-1.21.1:6.0.11-300` from `maven.createmod.net` (Jenkins build of 6.0.11; there is no unsuffixed release coordinate). Ponder `1.0.85+mc1.21.1`, Flywheel `1.0.6` (api compileOnly, impl runtime), Registrate `MC1.21-1.3.0+67`.
 - Sable `dev.ryanhcode.sable:sable-neoforge-1.21.1:2.0.5` from `maven.ryanhcode.dev/releases`. Veil, Sable Companion and the Rapier natives are nested inside the Sable jar; we must not bundle them.
 - Build tool: **ModDevGradle 2.0.146** single module (Create and Aeronautics both use MDG). Create's access transformer is applied via MDG's `accessTransformers` configuration so `ModelPart.cubes/children` are usable at compile time exactly as they are at runtime.
-- Dependencies declared in `neoforge.mods.toml`: create (required, BOTH), sable (required, BOTH), flywheel (required, CLIENT).
+- Dependencies declared in `neoforge.mods.toml`: create (required, BOTH), sable (required, BOTH), flywheel (required, CLIENT). Catnip (Create's config and render helpers) is not a separate mod; it ships inside the Ponder jar that Create bundles, so nothing extra is declared.
 - Licences: Sable is PolyForm Shield (addons are fine; we are not competing with it). Sable Player Ragdoll and Sable Ragdoll Corpse are reference-only. Ragdoll mob corpses and Aeronautics *code* are MIT (reusable with attribution); Aeronautics *assets* are not.
 
 ---
@@ -337,8 +337,11 @@ removal without mixins requires a `FrogportBlockEntity` subclass.
 
 - **Shackled carcass item** = `PackageItem` subclass with its own `PackageStyle` and rigging model
   (the shackle). Registered per archetype × weight class so the chain shows the right hanging model
-  (the map is keyed by item id; a component-driven model would need our own renderer hook). Removed
-  from `PackageStyles.STANDARD_BOXES/ALL_BOXES` after registration so packagers never emit it.
+  (the map is keyed by item id; a component-driven model would need our own renderer hook). Being a
+  `PackageItem` is not enough on its own: at client init we must also put our box and shackle models
+  into Create's two public partial-model maps under our item ids, or the chain renderer crashes
+  (verified). Removed from `PackageStyles.STANDARD_BOXES/ALL_BOXES` after registration so packagers
+  never emit it.
   Address component set to a reserved namespace (`bnb:carcass/*`) so ordinary frogports do not steal it.
 - **Shackle Hook** (on-ramp): a `PackagePortBlockEntity` subclass targeting the chain with Create's own
   `ChainConveyorFrogportTarget`, so capacity/speed/reversal/routing come for free. Hanging a carcass
@@ -399,6 +402,9 @@ Three processing paths stay distinct by yield tables, not by code paths.
   Create's mixer/press/fan only run their own types: `create:mixing` (heated) congeal → `create:haunting`
   (fan over soul fire) → `create:mixing` (superheated) re-melt. Trickle path: bleeding rack recipes for
   nether mobs output soul blood directly.
+- All recipe JSON is produced by datagen through Create's builders, never hand-written: Create's fluid
+  ingredient format requires a `type` field that NeoForge's own format omits, and the codec is marked
+  for removal, so generated files are the only safe form (verified).
 - Blood Steel: `create:filling` (iron ingot + 250 mB blood). Blood Diamond and Soul-Blood Netherite:
   `create:sequenced_assembly` with `create:filling` steps (blood/soul blood 1000 mB, liquid XP
   1000 mB) and a transitional item. Liquid XP: question 9.
@@ -415,8 +421,10 @@ Three processing paths stay distinct by yield tables, not by code paths.
 A `ConfigBool` in a CLIENT `ConfigBase` (Create's pattern), read only from client code. Every
 renderer, particle spawn and sound call goes through one `Presentation` facade
 (`Presentation.gore()` / `Presentation.blood(fluid)` / `Presentation.lang(key)`), which picks the organic
-or mechanical variant. Verified: all of Create's particle spawning is client-side already, so
-particles and sounds need no server involvement. Names and descriptions have no Create hook: our items
+or mechanical variant. Our particles implement the toggle inside their client-side particle
+providers (returning the sanitized variant), not only at spawn call sites, because some particles
+arrive from the server as packets and would bypass a call-site check (verified against Create's own
+server-sent particles). Names and descriptions have no Create hook: our items
 override their display name client-side and our tooltip modifier re-reads the toggle (Create's own
 modifier caches per language, so we ship our own). Lang keys are duplicated under a `bloodless.`
 prefix. No logic path ever branches on it. Wired into the first vertical slice so the facade exists
@@ -432,8 +440,10 @@ before any content.
   with `clientPacket` handled (inside a contraption the client only sees the update tag, and there is
   no server-side block entity at all, so nothing processes while moving unless it is an actor).
 - Blocks with an empty collision shape (wall Meat Hook, Gut Chain, Specimen Jar) must be tagged
-  `create:movable_empty_collider` or contraptions leave them behind; wall/ceiling-mounted blocks get
-  `create:brittle` plus an attached-check toward their support face; blocks with custom orientation
+  `create:movable_empty_collider` or contraptions leave them behind. Wall/ceiling-mounted blocks
+  register both an attached-check toward their support face and a brittle-check in code: there is no
+  attachment tag, and tagging a block brittle without the attached-check makes it non-supportive and
+  still leaves it behind on bearings and gantries (verified). Blocks with custom orientation
   properties implement `TransformableBlock` or they mis-rotate on bearings.
 - Storage: any block exposing an item handler is silently mounted by Create's fallback storage and
   becomes contraption inventory; machines and hooks are tagged
