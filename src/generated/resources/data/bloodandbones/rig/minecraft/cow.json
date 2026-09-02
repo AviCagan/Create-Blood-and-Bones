@@ -218,5 +218,6 @@
   ],
   "entity": "minecraft:cow",
   "model": "minecraft:cow",
-  "texture": "minecraft:textures/entity/cow/cow.png"
+  "texture": "minecraft:textures/entity/cow/cow.png",
+  "weight": 0.80859375
 }

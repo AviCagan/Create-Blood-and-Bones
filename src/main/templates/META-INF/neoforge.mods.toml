@@ -65,3 +65,6 @@ Create addon: physics-driven mob carcasses (via Sable), butchery machines, blood
     versionRange="[${cdg_version},)"
     ordering="AFTER"
     side="BOTH"
+
+[[mixins]]
+config = "bloodandbones.mixins.json"

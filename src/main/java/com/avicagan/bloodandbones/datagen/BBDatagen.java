@@ -7,5 +7,6 @@ public class BBDatagen {
     public static void gatherData(GatherDataEvent event) {
         DataGenerator generator = event.getGenerator();
         generator.addProvider(event.includeServer(), new RigExportProvider(generator.getPackOutput()));
+        generator.addProvider(event.includeServer(), new PhysicsPropertiesProvider(generator.getPackOutput()));
     }
 }

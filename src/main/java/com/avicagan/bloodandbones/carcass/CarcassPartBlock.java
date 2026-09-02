@@ -2,7 +2,13 @@ package com.avicagan.bloodandbones.carcass;
 
 import com.avicagan.bloodandbones.registry.BBBlockEntities;
 import dev.ryanhcode.sable.api.block.BlockSubLevelCollisionShape;
+import com.avicagan.bloodandbones.registry.BBItems;
 import net.minecraft.core.BlockPos;
+import net.minecraft.server.level.ServerLevel;
+import net.minecraft.world.InteractionHand;
+import net.minecraft.world.ItemInteractionResult;
+import net.minecraft.world.item.ItemStack;
+import net.minecraft.world.phys.BlockHitResult;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.level.BlockGetter;
@@ -102,6 +108,17 @@ public class CarcassPartBlock extends Block implements EntityBlock, BlockSubLeve
     @Override
     public BlockEntity newBlockEntity(BlockPos pos, BlockState state) {
         return new CarcassPartBlockEntity(BBBlockEntities.CARCASS_PART.get(), pos, state);
+    }
+
+    @Override
+    protected ItemInteractionResult useItemOn(ItemStack stack, BlockState state, Level level, BlockPos pos, Player player, InteractionHand hand, BlockHitResult hitResult) {
+        if (!stack.is(BBItems.MEAT_HOOK.get())) {
+            return ItemInteractionResult.PASS_TO_DEFAULT_BLOCK_INTERACTION;
+        }
+        if (level instanceof ServerLevel serverLevel) {
+            CarcassDrag.toggle(serverLevel, player, pos, hitResult.getLocation());
+        }
+        return ItemInteractionResult.sidedSuccess(level.isClientSide());
     }
 
     @Override

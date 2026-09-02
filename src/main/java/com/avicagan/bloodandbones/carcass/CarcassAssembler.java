@@ -18,6 +18,10 @@ import dev.ryanhcode.sable.sublevel.ServerSubLevel;
 import dev.ryanhcode.sable.sublevel.storage.SubLevelRemovalReason;
 import dev.ryanhcode.sable.sublevel.system.SubLevelPhysicsSystem;
 import net.minecraft.core.BlockPos;
+import net.minecraft.world.level.chunk.LevelChunkSection;
+import net.minecraft.world.level.chunk.LevelChunk;
+import net.minecraft.world.level.ChunkPos;
+import dev.ryanhcode.sable.sublevel.plot.PlotChunkHolder;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.LivingEntity;
@@ -49,7 +53,33 @@ import java.util.UUID;
  * minimum corner sits on the corner of the plot's center block, matching {@link CarcassPartBlock}.
  */
 public final class CarcassAssembler {
+    /** Shove speed for a cow-sized animal, in blocks per second. */
+    private static final double SHOVE_SPEED = 2.0;
+    /** A cow's weight in Sable mass units; lighter animals get shoved faster, heavier ones slower. */
+    private static final double REFERENCE_WEIGHT = 0.8;
+
     private CarcassAssembler() {
+    }
+
+    /** The bone whose origin lies closest to the attacker's line of sight: where the killing blow landed. */
+    private static String boneNearestRay(Entity attacker, Map<String, Vector3d> origins) {
+        Vec3 eye = attacker.getEyePosition();
+        Vec3 look = attacker.getLookAngle().normalize();
+        String best = null;
+        double bestDistance = Double.MAX_VALUE;
+        for (Map.Entry<String, Vector3d> entry : origins.entrySet()) {
+            Vector3d o = entry.getValue();
+            double rx = o.x - eye.x;
+            double ry = o.y - eye.y;
+            double rz = o.z - eye.z;
+            double along = rx * look.x + ry * look.y + rz * look.z;
+            double perpendicular = Math.sqrt(Math.max(0.0, rx * rx + ry * ry + rz * rz - along * along));
+            if (perpendicular < bestDistance) {
+                bestDistance = perpendicular;
+                best = entry.getKey();
+            }
+        }
+        return best;
     }
 
     public static boolean assemble(LivingEntity entity, @Nullable Entity attacker) {
@@ -83,6 +113,7 @@ public final class CarcassAssembler {
         Quaterniond g = new Quaterniond().rotationY(Math.toRadians(180.0 - entity.yBodyRot)).rotateZ(Math.PI);
 
         Map<String, ServerSubLevel> subLevels = new LinkedHashMap<>();
+        Map<String, Vector3d> origins = new LinkedHashMap<>();
         for (Bone bone : rig.bones()) {
             ServerSubLevel subLevel = assembleBone(level, staging, carcassId, rig, bone);
             if (subLevel == null) {
@@ -103,6 +134,7 @@ public final class CarcassAssembler {
             subLevel.updateLastPose();
 
             subLevels.put(bone.name(), subLevel);
+            origins.put(bone.name(), origin);
         }
 
         CarcassSavedData.Carcass carcass = new CarcassSavedData.Carcass(carcassId, rig.entity(), rig.root().name());
@@ -127,14 +159,18 @@ public final class CarcassAssembler {
             }
         }
 
-        Vec3 velocity = entity.getDeltaMovement().scale(20.0);
+        // Starting motion: a shove sized by the animal's weight, strongest on the limb the killing blow hit.
+        // The mob's own hit knockback is deliberately not carried over; it would launch light carcasses.
         if (attacker != null) {
-            velocity = velocity.add(attacker.getLookAngle().scale(3.0));
-        }
-        Vector3d linear = new Vector3d(velocity.x, velocity.y, velocity.z);
-        for (ServerSubLevel subLevel : subLevels.values()) {
-            RigidBodyHandle handle = physics.getPhysicsHandle(subLevel);
-            handle.addLinearAndAngularVelocity(linear, new Vector3d());
+            Vec3 look = attacker.getLookAngle();
+            Vec3 dir = new Vec3(look.x, Math.max(look.y, 0.0) + 0.15, look.z).normalize();
+            double speed = Math.max(0.5, Math.min(5.0, SHOVE_SPEED / Math.sqrt(Math.max(rig.weight(), 0.01) / REFERENCE_WEIGHT)));
+            String hitBone = boneNearestRay(attacker, origins);
+            for (Map.Entry<String, ServerSubLevel> entry : subLevels.entrySet()) {
+                double share = entry.getKey().equals(hitBone) ? 1.0 : 0.35;
+                Vector3d velocity = new Vector3d(dir.x, dir.y, dir.z).mul(speed * share);
+                physics.getPhysicsHandle(entry.getValue()).addLinearAndAngularVelocity(velocity, new Vector3d());
+            }
         }
 
         CarcassSavedData.get(level).add(carcass);
@@ -145,6 +181,33 @@ public final class CarcassAssembler {
     /**
      * Plot-space point of the bone's own origin: the box minimum corner sits on the plot center block's corner.
      */
+    /**
+     * Freshly assembled blocks are uploaded to the physics engine before the new body owns them, so a limb
+     * can spend a few ticks without any collider and fall through the floor. Sable's own plot loading and
+     * recovery code re-uploads every section bound to the body; do the same right after assembly.
+     */
+    private static void bindColliders(ServerLevel level, ServerSubLevel subLevel) {
+        SubLevelPhysicsSystem physics = SubLevelPhysicsSystem.get(level);
+        if (physics == null) {
+            return;
+        }
+        PhysicsPipeline pipeline = physics.getPipeline();
+        for (PlotChunkHolder holder : subLevel.getPlot().getLoadedChunks()) {
+            LevelChunk chunk = holder.getChunk();
+            ChunkPos global = chunk.getPos();
+            LevelChunkSection[] sections = chunk.getSections();
+            for (int i = 0; i < chunk.getSectionsCount(); i++) {
+                LevelChunkSection section = sections[i];
+                if (!section.hasOnlyAir()) {
+                    int sectionY = chunk.getSectionYFromSectionIndex(i);
+                    pipeline.handleChunkSectionAddition(section, global.x, sectionY, global.z, true);
+                }
+            }
+        }
+        subLevel.updateMergedMassData(1.0F);
+        pipeline.onStatsChanged(subLevel);
+    }
+
     private static Vector3d boneOriginInPlot(ServerSubLevel subLevel, Bone bone) {
         BlockPos anchor = subLevel.getPlot().getCenterBlock();
         Vector3f min = bone.boxMin();
@@ -202,6 +265,9 @@ public final class CarcassAssembler {
         ServerSubLevel subLevel;
         try {
             subLevel = SubLevelAssemblyHelper.assembleBlocks(level, staging, blocks, bounds);
+            if (subLevel != null && !subLevel.isRemoved()) {
+                bindColliders(level, subLevel);
+            }
         } catch (RuntimeException e) {
             BloodAndBones.LOGGER.error("Sable failed to assemble bone {} of {}", bone.name(), rig.entity(), e);
             subLevel = null;

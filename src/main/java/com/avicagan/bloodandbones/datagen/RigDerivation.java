@@ -22,6 +22,9 @@ import java.util.Optional;
  * the torso. The physics box is the bone's biggest cube. Joint limits come from the part name.
  */
 public final class RigDerivation {
+    /** Mass of one cubic block of animal, in Sable units where a plain solid block is 1.0. */
+    public static final float FLESH_DENSITY = 1.0F;
+
     private RigDerivation() {
     }
 
@@ -56,7 +59,12 @@ public final class RigDerivation {
             ordered.add(new Bone(bone.name(), bone.part(), parent, bone.offset(), bone.rotation(),
                     bone.boxMin(), bone.boxMax(), Optional.of(jointFor(bone.name()))));
         }
-        return new Rig(entity, layer.getModel(), layer.getLayer(), texture, ordered);
+        float weight = 0.0F;
+        for (Bone bone : ordered) {
+            Vector3f size = bone.boxSize();
+            weight += (size.x / 16.0F) * (size.y / 16.0F) * (size.z / 16.0F) * FLESH_DENSITY;
+        }
+        return new Rig(entity, layer.getModel(), layer.getLayer(), texture, weight, ordered);
     }
 
     private static void walk(ModelPart part, String path, Vector3f translation, Quaternionf rotation,

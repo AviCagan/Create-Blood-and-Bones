@@ -1,6 +1,12 @@
 {
   "block.bloodandbones.carcass_part": "Carcass",
   "item.bloodandbones.meat_hook": "Meat Hook",
+  "item.bloodandbones.meat_hook.tooltip": "MEAT HOOK",
+  "item.bloodandbones.meat_hook.tooltip.behaviour1": "PH: Dragging slows you down. Heavier animals slow you more.",
+  "item.bloodandbones.meat_hook.tooltip.behaviour2": "PH: Where you hook matters: the limb you grab is the one that gets pulled.",
+  "item.bloodandbones.meat_hook.tooltip.condition1": "PH: Note 1",
+  "item.bloodandbones.meat_hook.tooltip.condition2": "PH: Note 2",
+  "item.bloodandbones.meat_hook.tooltip.summary": "PH: Kill an animal with this and it leaves a whole carcass instead of loot. Right-click a carcass to drag it, right-click again to let go.",
   "itemGroup.bloodandbones.main": "Main",
   "itemGroup.bloodandbones.title": "Create: Blood & Bones"
 }

@@ -119,8 +119,10 @@ public final class CarcassJoints {
         handle.setLimit(ConstraintJointAxis.ANGULAR_Y, spec.limitMin().y, spec.limitMax().y);
         handle.setLimit(ConstraintJointAxis.ANGULAR_Z, spec.limitMin().z, spec.limitMax().z);
         if (spec.damping() > 0 || spec.stiffness() > 0) {
+            // Motor gains are per unit of limb mass, so a light leg and a heavy body feel the same.
+            double mass = Math.max(0.01, child.getMassTracker().getMass());
             for (ConstraintJointAxis axis : ConstraintJointAxis.ANGULAR) {
-                handle.setMotor(axis, 0.0, spec.stiffness(), spec.damping(), false, 0.0);
+                handle.setMotor(axis, 0.0, spec.stiffness() * mass, spec.damping() * mass, false, 0.0);
             }
         }
         return handle;

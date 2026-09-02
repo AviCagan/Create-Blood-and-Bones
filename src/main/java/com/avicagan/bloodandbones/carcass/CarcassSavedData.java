@@ -173,6 +173,39 @@ public class CarcassSavedData extends SavedData {
     }
 
     /**
+     * Sable removed a body for good (not merely unloaded it): forget that limb and any joints that used it,
+     * and forget the whole carcass once nothing is left of it.
+     */
+    public void onSubLevelRemoved(UUID subLevelId) {
+        boolean changed = false;
+        var iterator = carcasses.values().iterator();
+        while (iterator.hasNext()) {
+            Carcass carcass = iterator.next();
+            String bone = null;
+            for (Map.Entry<String, UUID> entry : carcass.bones.entrySet()) {
+                if (entry.getValue().equals(subLevelId)) {
+                    bone = entry.getKey();
+                    break;
+                }
+            }
+            if (bone == null) {
+                continue;
+            }
+            String removedBone = bone;
+            carcass.bones.remove(removedBone);
+            carcass.joints.removeIf(joint -> joint.parent().equals(removedBone) || joint.child().equals(removedBone));
+            carcass.liveJoints.removeIf(handle -> !handle.isValid());
+            if (carcass.bones.isEmpty()) {
+                iterator.remove();
+            }
+            changed = true;
+        }
+        if (changed) {
+            setDirty();
+        }
+    }
+
+    /**
      * The other limbs of a carcass, for Sable's load-together dependencies.
      */
     @Nullable

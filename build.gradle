@@ -57,6 +57,8 @@ neoForge {
         gameTestServer {
             type = "gameTestServer"
             systemProperty 'neoforge.enabledGameTestNamespaces', project.mod_id
+            // pass -Dbloodandbones.debug.* switches from the gradle command line into the test server
+            System.getProperties().each { k, v -> if (k.toString().startsWith('bloodandbones.debug.')) systemProperty k.toString(), v.toString() }
         }
         data {
             data()

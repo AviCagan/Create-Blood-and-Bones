@@ -8,8 +8,11 @@ import com.avicagan.bloodandbones.registry.BBBlockEntities;
 import com.avicagan.bloodandbones.registry.BBBlocks;
 import com.avicagan.bloodandbones.registry.BBCreativeTabs;
 import com.avicagan.bloodandbones.registry.BBItems;
+import com.avicagan.bloodandbones.registry.BBLang;
 import com.mojang.logging.LogUtils;
 import com.simibubi.create.foundation.data.CreateRegistrate;
+import com.simibubi.create.foundation.item.ItemDescription;
+import net.createmod.catnip.lang.FontHelper;
 import net.minecraft.resources.ResourceLocation;
 import net.neoforged.bus.api.IEventBus;
 import net.neoforged.fml.ModContainer;
@@ -26,11 +29,13 @@ public class BloodAndBones {
 
     public BloodAndBones(IEventBus modEventBus, ModContainer modContainer) {
         REGISTRATE.registerEventListeners(modEventBus);
+        REGISTRATE.setTooltipModifierFactory(item -> new ItemDescription.Modifier(item, FontHelper.Palette.STANDARD_CREATE));
 
         BBCreativeTabs.register();
         BBBlocks.register();
         BBItems.register();
         BBBlockEntities.register();
+        BBLang.register();
 
         modContainer.registerConfig(ModConfig.Type.CLIENT, BBClientConfig.SPEC);
         NeoForge.EVENT_BUS.register(CarcassEvents.class);

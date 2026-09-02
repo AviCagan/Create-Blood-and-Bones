@@ -1,6 +1,12 @@
 {
   "block.bloodandbones.carcass_part": "ssɐɔɹɐƆ",
   "item.bloodandbones.meat_hook": "ʞooH ʇɐǝW",
+  "item.bloodandbones.meat_hook.tooltip": "ʞOOH ⟘ⱯƎW",
+  "item.bloodandbones.meat_hook.tooltip.behaviour1": "˙ǝɹoɯ noʎ ʍoןs sןɐɯıuɐ ɹǝıʌɐǝH ˙uʍop noʎ sʍoןs buıbbɐɹᗡ :HԀ",
+  "item.bloodandbones.meat_hook.tooltip.behaviour2": "˙pǝןןnd sʇǝb ʇɐɥʇ ǝuo ǝɥʇ sı qɐɹb noʎ qɯıן ǝɥʇ :sɹǝʇʇɐɯ ʞooɥ noʎ ǝɹǝɥM :HԀ",
+  "item.bloodandbones.meat_hook.tooltip.condition1": "Ɩ ǝʇoN :HԀ",
+  "item.bloodandbones.meat_hook.tooltip.condition2": "ᄅ ǝʇoN :HԀ",
+  "item.bloodandbones.meat_hook.tooltip.summary": "˙ob ʇǝן oʇ uıɐbɐ ʞɔıןɔ-ʇɥbıɹ 'ʇı bɐɹp oʇ ssɐɔɹɐɔ ɐ ʞɔıןɔ-ʇɥbıᴚ ˙ʇooן ɟo pɐǝʇsuı ssɐɔɹɐɔ ǝןoɥʍ ɐ sǝʌɐǝן ʇı puɐ sıɥʇ ɥʇıʍ ןɐɯıuɐ uɐ ןןıʞ :HԀ",
   "itemGroup.bloodandbones.main": "uıɐW",
   "itemGroup.bloodandbones.title": "sǝuoᗺ & pooןᗺ :ǝʇɐǝɹƆ"
 }
