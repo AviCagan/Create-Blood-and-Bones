@@ -39,7 +39,7 @@ it on what Create, Sable and the other addons actually provide.
 - Create Aeronautics is **not** a dependency, but the mod must work on and with it (§3).
 - Licences: Sable is PolyForm Shield (fine for addons). Enchantment Industry and Dragons Plus are
   LGPL-3.0; we only depend on them, we do not copy code. Diesel Generators is MIT. Sable Player Ragdoll
-  is reference only. Our own licence: placeholder All Rights Reserved until chosen (§12).
+  is reference only. Our own licence: MIT (*decided*: others may build on it with credit).
 
 ---
 
@@ -253,7 +253,15 @@ the override files.
 - **Later, not never**: warden (has a body plan; deferred as boss-tier), ender dragon, wither, blaze,
   breeze. They stay on a deny tag until then and drop loot normally.
 
-### 4.5 Texture
+### 4.5 Babies (*decided*: a baby carcass looks exactly like the living baby)
+
+Vanilla scales baby models in four different ways (per-model head/body groups, uniform, llama's
+per-axis groups, horse's separate baby legs). Rather than re-implement each, the rig exporter captures
+the model twice, adult and baby, by rendering it into a capturing vertex consumer, so every part's
+real rendered position and size is recorded for both. A baby carcass uses the baby rig and the baby
+render transform; nothing changes visually at the moment of death.
+
+### 4.6 Texture
 
 Carcass rendering keeps vanilla cubes with their baked UVs and uses the entity renderer's texture for
 the variant. Secondary layers (sheep wool, pig saddle, llama decor, horse armor) are separate baked
@@ -291,9 +299,9 @@ mods join. At full rot the carcass melts away, leaving a stain.
   Create's two public partial-model maps under our item ids (verified necessary). Removed from
   `PackageStyles.STANDARD_BOXES/ALL_BOXES` so packagers never emit it. Routable by ordinary frogports
   and addresses like any package.
-- **Ground clearance** (*decided*): a carcass only leaves a hook onto a chain, and only passes a chain
-  segment, if the chain's height above the ground along that segment leaves at least the carcass's
-  hanging length plus 1 block clear (per weight class). The Shackle Hook checks the target segment
+- **Ground clearance** (*decided*: hanging length plus one block): a carcass only leaves a hook onto
+  a chain, and only passes a chain segment, if the chain's height above the ground along that segment
+  leaves at least the carcass's hanging length plus 1 block clear (hanging length per weight class). The Shackle Hook checks the target segment
   before exporting; segments that are too low refuse the package, so it waits at the hook.
 - **Shackle Hook** (on-ramp): a `PackagePortBlockEntity` subclass using Create's own
   `ChainConveyorFrogportTarget`, so capacity, speed, reversal and routing come for free.
@@ -345,17 +353,18 @@ blocks) built with Create's casing builder and our own sprites, plus a small blo
   Enchantment Industry **super experience block**.
 - Cold: Dragons Plus bulk freezing (`create_dragons_plus:freezing` recipes and its freezer tag) is
   the cold source for carcass preservation and any "frozen" recipes we add.
-- **Fluid Backtank** (*decided*, replaces "Blood Backtank"): a generic wearable tank in tiers following
-  armor material tiers (leather/copper → iron → blood steel → blood diamond → soul-blood netherite, to
-  be tuned), holding any fluid in the game. Refilled from a port block (below). Holding blood powers
+- **Fluid Backtank** (*decided*, replaces "Blood Backtank"): a generic wearable tank holding any fluid
+  in the game, in tiers (buckets): copper 2, gold 3, iron 4, diamond 6, blood steel 8, blood diamond 16,
+  **soul netherite** 32 (the material is renamed "soul netherite"). Refilled from a port block (below)
+  or by placing the backtank as a block next to a pipe with a pump. Holding blood powers
   organic prosthetics; holding soul blood powers cybernetics. A cybernetic module ("Vent Arm", name
   open) sprays the tank's contents as an effect chosen by fluid tag: experience gives XP, lava and
   anything tagged as fuel is a flamethrower, water/potions splash, others just spill. Effects are a
   data map from fluid tag to effect, so other mods' fluids slot in.
-- **Backtank Port** (*decided*): a placeable block like a pump with a direction; a player wearing a
-  backtank who stands at it (or interacts) pushes fluid out of their tank into the pipe network, or
-  pulls from the network into the tank, depending on the port's direction. Implemented as a fluid
-  handler on the block plus a per-tick transfer to the nearby player's tank.
+- **Backtank Port** (*decided*): a placeable block like a pump with a direction. A player with the
+  port cybernetic must stand next to it; fluid then flows out of the worn tank into the pipe network
+  or from the network into the tank depending on the port's direction. A backtank placed as a block
+  also connects to pipes directly (pump toward it to fill, away to empty).
 - All recipe JSON is produced by datagen through the builders, never hand-written.
 
 ---
@@ -421,19 +430,11 @@ fluid backtank with tiers, vent cybernetic and port block; frogport-routable car
 clearance; rot by game time; cold via Dragons Plus; Spit Roast with a top shaft input; Gut Chain
 texture swap first; bloodless as client toggle plus gamerule.
 
-**Still open** (plain-English versions):
+**Resolved in the second review**: physics-engine failure → carcasses appear as stiff statues that
+can still be butchered; rigs are generated automatically from the game's own models, starting with the
+**cow only** until the system is proven, then the rest; baby carcasses look exactly like the living
+baby; licence MIT; backtank tiers copper 2 / gold 3 / iron 4 / diamond 6 / blood steel 8 / blood
+diamond 16 / soul netherite 32; port block works with an adjacent wearer and with a placed backtank on
+pipes; chain clearance = hanging length + 1 block.
 
-1. If the physics engine fails to start on someone's computer, should carcasses still appear as stiff
-   statues that can be butchered, or should the mod refuse to load? (I'd do statues.)
-2. Rig source: build every vanilla animal's skeleton ahead of time (safe on servers), and for animals
-   from other mods start with a generic skeleton until a player's game has seen the animal, then
-   upgrade. OK? (I'd do this.)
-3. Baby animals: a baby carcass is just a shrunken adult carcass, or should it match the baby's bigger
-   head? (I'd do shrunken adult.)
-4. Mod licence: All Rights Reserved means nobody may redistribute or fork it; MIT or LGPL let others
-   build on it with credit. Which do you want? (Placeholder stays ARR until you say.)
-5. Fluid backtank tiers: which fluids at which tier, and capacities? Proposal: copper 4 buckets, iron
-   8, blood steel 16, blood diamond 32, soul-blood netherite 64; any fluid in any tier.
-6. The port block: should it fill a backtank only while the wearer stands next to it, or also pipe
-   into a backtank placed as a block?
-7. Chain clearance: is "hanging length plus one block" the rule, or a flat one block for everything?
+**Still open**: nothing blocking. Slice 1 (cow) is in progress.
