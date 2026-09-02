@@ -174,7 +174,7 @@ public final class CarcassRest {
             Vector3d relPos = torsoInverse.transform(new Vector3d(originWorld).sub(torsoOriginWorld));
             Quaterniond relRot = new Quaterniond(torsoInverse).mul(limbPose.orientation());
             carcass.restPoses.put(bone.name(), new CarcassSavedData.RestPose(relPos, relRot));
-            mergedParts.add(new CarcassPartBlockEntity.MergedPart(bone.name(), bone.part(), new Vector3f(bone.boxMin()),
+            mergedParts.add(new CarcassPartBlockEntity.MergedPart(bone.name(),
                     new Vector3f((float) relPos.x, (float) relPos.y, (float) relPos.z), new Quaternionf(relRot)));
 
             // coarse collision cells in the torso's plot where the limb's box mostly fills a block
@@ -383,7 +383,7 @@ public final class CarcassRest {
             if (rest == null) {
                 continue;
             }
-            ServerSubLevel limb = CarcassAssembler.assembleBone(level, staging, carcass.id, rig, bone);
+            ServerSubLevel limb = CarcassAssembler.assembleBone(level, staging, carcass.id, rig, bone, carcass.look);
             if (limb == null) {
                 BloodAndBones.LOGGER.warn("Could not re-assemble {} of carcass {}", bone.name(), carcass.id);
                 continue;

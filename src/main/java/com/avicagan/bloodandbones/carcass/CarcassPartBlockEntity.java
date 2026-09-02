@@ -8,6 +8,8 @@ import dev.ryanhcode.sable.sublevel.SubLevel;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.HolderLookup;
 import net.minecraft.nbt.CompoundTag;
+import net.minecraft.nbt.ListTag;
+import net.minecraft.nbt.Tag;
 import net.minecraft.network.protocol.Packet;
 import net.minecraft.network.protocol.game.ClientGamePacketListener;
 import net.minecraft.network.protocol.game.ClientboundBlockEntityDataPacket;
@@ -17,13 +19,16 @@ import net.minecraft.world.level.block.entity.BlockEntity;
 import net.minecraft.world.level.block.entity.BlockEntityType;
 import net.minecraft.world.level.block.state.BlockState;
 import org.jetbrains.annotations.Nullable;
+import org.joml.Quaternionf;
 import org.joml.Vector3f;
 
+import java.util.ArrayList;
+import java.util.List;
 import java.util.UUID;
 
 /**
  * Per-cell data of a carcass limb. The root cell (the one at the limb's box minimum corner) also carries
- * everything the client needs to draw the limb: which model part, which texture, where the box sits.
+ * everything the client needs to draw the limb: which mob's rig and bone, what it wore, where the box sits.
  */
 public class CarcassPartBlockEntity extends BlockEntity implements BlockEntitySubLevelActor {
     @Nullable
@@ -31,21 +36,21 @@ public class CarcassPartBlockEntity extends BlockEntity implements BlockEntitySu
     private String bone = "";
     private boolean root;
 
-    private ResourceLocation model = ResourceLocation.withDefaultNamespace("cow");
-    private String layer = "main";
-    private String partPath = "";
+    private ResourceLocation entity = ResourceLocation.withDefaultNamespace("cow");
     private ResourceLocation texture = ResourceLocation.withDefaultNamespace("textures/entity/cow/cow.png");
+    private final List<CarcassLook.Coat> passes = new ArrayList<>();
     private final Vector3f boxMin = new Vector3f();
     private final Vector3f boxSize = new Vector3f(16, 16, 16);
     /** Resting form: other limbs drawn by this root cell, posed relative to this bone's frame. */
-    private final java.util.List<MergedPart> merged = new java.util.ArrayList<>();
+    private final List<MergedPart> merged = new ArrayList<>();
     /** 1.0 fresh, 0.0 rotten; drives the rot tint. */
     private float freshness = 1.0F;
 
-    public record MergedPart(String bone, String partPath, Vector3f boxMin, org.joml.Vector3f position, org.joml.Quaternionf orientation) {
+    /** A merged limb: which bone, and its origin and orientation in this bone's frame (blocks). */
+    public record MergedPart(String bone, Vector3f position, Quaternionf orientation) {
     }
 
-    public java.util.List<MergedPart> merged() {
+    public List<MergedPart> merged() {
         return merged;
     }
 
@@ -57,7 +62,7 @@ public class CarcassPartBlockEntity extends BlockEntity implements BlockEntitySu
         this.freshness = value;
     }
 
-    public void setMerged(java.util.List<MergedPart> parts) {
+    public void setMerged(List<MergedPart> parts) {
         merged.clear();
         merged.addAll(parts);
         setChanged();
@@ -67,14 +72,14 @@ public class CarcassPartBlockEntity extends BlockEntity implements BlockEntitySu
         super(type, pos, state);
     }
 
-    public void configureRoot(UUID carcassId, Rig rig, Bone bone) {
+    public void configureRoot(UUID carcassId, Rig rig, Bone bone, CarcassLook look) {
         this.carcassId = carcassId;
         this.bone = bone.name();
         this.root = true;
-        this.model = rig.model();
-        this.layer = rig.layer();
-        this.partPath = bone.part();
-        this.texture = rig.texture();
+        this.entity = rig.entity();
+        this.texture = look.texture();
+        this.passes.clear();
+        this.passes.addAll(look.passes());
         this.boxMin.set(bone.boxMin());
         this.boxSize.set(bone.boxSize());
         setChanged();
@@ -100,20 +105,20 @@ public class CarcassPartBlockEntity extends BlockEntity implements BlockEntitySu
         return root;
     }
 
-    public ResourceLocation model() {
-        return model;
-    }
-
-    public String layer() {
-        return layer;
-    }
-
-    public String partPath() {
-        return partPath;
+    public ResourceLocation entity() {
+        return entity;
     }
 
     public ResourceLocation texture() {
         return texture;
+    }
+
+    public List<CarcassLook.Coat> passes() {
+        return passes;
+    }
+
+    public CarcassLook look() {
+        return new CarcassLook(texture, List.copyOf(passes));
     }
 
     public Vector3f boxMin() {
@@ -133,19 +138,24 @@ public class CarcassPartBlockEntity extends BlockEntity implements BlockEntitySu
         tag.putString("Bone", bone);
         tag.putBoolean("Root", root);
         if (root) {
-            tag.putString("Model", model.toString());
-            tag.putString("Layer", layer);
-            tag.putString("Part", partPath);
+            tag.putString("Entity", entity.toString());
             tag.putString("Texture", texture.toString());
+            ListTag passList = new ListTag();
+            for (CarcassLook.Coat pass : passes) {
+                CompoundTag p = new CompoundTag();
+                p.putString("Layer", pass.layer());
+                p.putString("Texture", pass.texture().toString());
+                p.putInt("Tint", pass.tint());
+                passList.add(p);
+            }
+            tag.put("Passes", passList);
             putVec(tag, "BoxMin", boxMin);
             putVec(tag, "BoxSize", boxSize);
             tag.putFloat("Freshness", freshness);
-            net.minecraft.nbt.ListTag list = new net.minecraft.nbt.ListTag();
+            ListTag list = new ListTag();
             for (MergedPart part : merged) {
                 CompoundTag m = new CompoundTag();
                 m.putString("Bone", part.bone());
-                m.putString("Part", part.partPath());
-                putVec(m, "BoxMin", part.boxMin());
                 putVec(m, "Pos", part.position());
                 m.putFloat("QX", part.orientation().x);
                 m.putFloat("QY", part.orientation().y);
@@ -164,22 +174,23 @@ public class CarcassPartBlockEntity extends BlockEntity implements BlockEntitySu
         bone = tag.getString("Bone");
         root = tag.getBoolean("Root");
         if (root) {
-            model = ResourceLocation.parse(tag.getString("Model"));
-            layer = tag.getString("Layer");
-            partPath = tag.getString("Part");
+            entity = ResourceLocation.parse(tag.getString("Entity"));
             texture = ResourceLocation.parse(tag.getString("Texture"));
+            passes.clear();
+            for (Tag t : tag.getList("Passes", Tag.TAG_COMPOUND)) {
+                CompoundTag p = (CompoundTag) t;
+                passes.add(new CarcassLook.Coat(p.getString("Layer"), ResourceLocation.parse(p.getString("Texture")), p.getInt("Tint")));
+            }
             getVec(tag, "BoxMin", boxMin);
             getVec(tag, "BoxSize", boxSize);
             freshness = tag.contains("Freshness") ? tag.getFloat("Freshness") : 1.0F;
             merged.clear();
-            for (net.minecraft.nbt.Tag t : tag.getList("Merged", net.minecraft.nbt.Tag.TAG_COMPOUND)) {
+            for (Tag t : tag.getList("Merged", Tag.TAG_COMPOUND)) {
                 CompoundTag m = (CompoundTag) t;
-                Vector3f min = new Vector3f();
-                getVec(m, "BoxMin", min);
                 Vector3f pos = new Vector3f();
                 getVec(m, "Pos", pos);
-                merged.add(new MergedPart(m.getString("Bone"), m.getString("Part"), min, pos,
-                        new org.joml.Quaternionf(m.getFloat("QX"), m.getFloat("QY"), m.getFloat("QZ"), m.getFloat("QW"))));
+                merged.add(new MergedPart(m.getString("Bone"), pos,
+                        new Quaternionf(m.getFloat("QX"), m.getFloat("QY"), m.getFloat("QZ"), m.getFloat("QW"))));
             }
         }
     }

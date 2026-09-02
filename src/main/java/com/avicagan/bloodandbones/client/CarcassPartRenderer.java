@@ -1,8 +1,14 @@
 package com.avicagan.bloodandbones.client;
 
 import com.avicagan.bloodandbones.BloodAndBones;
+import com.avicagan.bloodandbones.carcass.CarcassLook;
 import com.avicagan.bloodandbones.carcass.CarcassPartBlockEntity;
+import com.avicagan.bloodandbones.carcass.rig.Bone;
+import com.avicagan.bloodandbones.carcass.rig.ExtraPart;
+import com.avicagan.bloodandbones.carcass.rig.Rig;
+import com.avicagan.bloodandbones.carcass.rig.RigManager;
 import com.mojang.blaze3d.vertex.PoseStack;
+import com.mojang.blaze3d.vertex.VertexConsumer;
 import net.minecraft.client.model.geom.EntityModelSet;
 import net.minecraft.client.model.geom.ModelLayerLocation;
 import net.minecraft.client.model.geom.ModelPart;
@@ -13,17 +19,22 @@ import net.minecraft.client.renderer.blockentity.BlockEntityRenderer;
 import net.minecraft.client.renderer.blockentity.BlockEntityRendererProvider;
 import net.minecraft.client.renderer.texture.OverlayTexture;
 import net.minecraft.core.BlockPos;
+import net.minecraft.resources.ResourceLocation;
+import net.minecraft.util.FastColor;
 import net.minecraft.world.phys.AABB;
 import org.jetbrains.annotations.Nullable;
 import org.joml.Vector3f;
 
+import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 
 /**
- * Draws one limb: the vanilla model part the bone came from, wearing the mob's texture, placed so the
- * part's box lines up with the physics box of the block cells.
+ * Draws one limb: the vanilla model part the bone came from, wearing the mob's texture and any coats over
+ * it, placed so the part's box lines up with the physics box of the block cells. Parts under this one that
+ * are bones of their own are hidden while drawing, and parts the rig attaches (a beak, a hat) ride along.
  */
 public class CarcassPartRenderer implements BlockEntityRenderer<CarcassPartBlockEntity> {
     private final EntityModelSet modelSet;
@@ -38,34 +49,78 @@ public class CarcassPartRenderer implements BlockEntityRenderer<CarcassPartBlock
         if (!be.isRoot()) {
             return;
         }
-        ModelPart part = resolve(be);
-        if (part == null) {
+        Rig rig = RigManager.clientRig(be.entity()).orElse(null);
+        if (rig == null) {
             return;
         }
-        Vector3f min = be.boxMin();
-        int color = rotColor(be.freshness());
-        var buffer = buffers.getBuffer(RenderType.entityCutoutNoCull(be.texture()));
+        Bone bone = rig.bone(be.bone()).orElse(null);
+        if (bone == null) {
+            return;
+        }
+        int rot = rotColor(be.freshness());
+        Vector3f min = bone.boxMin();
         poseStack.pushPose();
         // The block cell's minimum corner is the box's minimum corner, and the part's own origin sits
         // at -boxMin from there (in pixels).
         poseStack.translate(-min.x / 16.0F, -min.y / 16.0F, -min.z / 16.0F);
-        drawPart(part, poseStack, buffer, packedLight, color);
+        drawBone(rig, bone, be, poseStack, buffers, packedLight, rot);
         // resting form: the other limbs, posed relative to this bone's frame
         for (CarcassPartBlockEntity.MergedPart mergedPart : be.merged()) {
-            ModelPart other = resolve(be, mergedPart.partPath());
+            Bone other = rig.bone(mergedPart.bone()).orElse(null);
             if (other == null) {
                 continue;
             }
             poseStack.pushPose();
             poseStack.translate(mergedPart.position().x, mergedPart.position().y, mergedPart.position().z);
             poseStack.mulPose(mergedPart.orientation());
-            drawPart(other, poseStack, buffer, packedLight, color);
+            drawBone(rig, other, be, poseStack, buffers, packedLight, rot);
             poseStack.popPose();
         }
         poseStack.popPose();
     }
 
-    private static void drawPart(ModelPart part, PoseStack poseStack, com.mojang.blaze3d.vertex.VertexConsumer buffer, int packedLight, int color) {
+    /** The skin, then each coat, for the bone's own part and everything attached to it. */
+    private void drawBone(Rig rig, Bone bone, CarcassPartBlockEntity be, PoseStack poseStack, MultiBufferSource buffers, int packedLight, int rot) {
+        drawPass(rig, bone, rig.layer(), be.texture(), rot, poseStack, buffers, packedLight);
+        for (CarcassLook.Coat coat : be.passes()) {
+            int color = coat.tint() == -1 ? rot : FastColor.ARGB32.multiply(coat.tint() | 0xFF000000, rot);
+            drawPass(rig, bone, coat.layer(), coat.texture(), color, poseStack, buffers, packedLight);
+        }
+    }
+
+    private void drawPass(Rig rig, Bone bone, String layer, ResourceLocation texture, int color, PoseStack poseStack, MultiBufferSource buffers, int packedLight) {
+        ModelLayerLocation location = new ModelLayerLocation(rig.model(), layer);
+        ModelPart part = resolve(location, bone.part());
+        if (part == null) {
+            return;
+        }
+        VertexConsumer buffer = buffers.getBuffer(RenderType.entityCutoutNoCull(texture));
+        List<ModelPart> hidden = new ArrayList<>();
+        for (String path : bone.hide()) {
+            ModelPart child = descend(part, path);
+            if (child != null && child.visible) {
+                child.visible = false;
+                hidden.add(child);
+            }
+        }
+        drawPart(part, poseStack, buffer, packedLight, color);
+        for (ModelPart child : hidden) {
+            child.visible = true;
+        }
+        for (ExtraPart extra : bone.extras()) {
+            ModelPart other = resolve(location, extra.part());
+            if (other == null) {
+                continue;
+            }
+            poseStack.pushPose();
+            poseStack.translate(extra.offset().x / 16.0F, extra.offset().y / 16.0F, extra.offset().z / 16.0F);
+            poseStack.mulPose(extra.rotation());
+            drawPart(other, poseStack, buffer, packedLight, color);
+            poseStack.popPose();
+        }
+    }
+
+    private static void drawPart(ModelPart part, PoseStack poseStack, VertexConsumer buffer, int packedLight, int color) {
         PartPose saved = part.storePose();
         part.loadPose(PartPose.ZERO);
         part.render(poseStack, buffer, packedLight, OverlayTexture.NO_OVERLAY, color);
@@ -78,17 +133,11 @@ public class CarcassPartRenderer implements BlockEntityRenderer<CarcassPartBlock
         float r = 1.0F - 0.45F * (1.0F - f);
         float g = 1.0F - 0.30F * (1.0F - f);
         float b = 1.0F - 0.50F * (1.0F - f);
-        return net.minecraft.util.FastColor.ARGB32.colorFromFloat(1.0F, r, g, b);
+        return FastColor.ARGB32.colorFromFloat(1.0F, r, g, b);
     }
 
     @Nullable
-    private ModelPart resolve(CarcassPartBlockEntity be) {
-        return resolve(be, be.partPath());
-    }
-
-    @Nullable
-    private ModelPart resolve(CarcassPartBlockEntity be, String partPath) {
-        ModelLayerLocation layer = new ModelLayerLocation(be.model(), be.layer());
+    private ModelPart resolve(ModelLayerLocation layer, String partPath) {
         Optional<ModelPart> root = roots.computeIfAbsent(layer, l -> {
             try {
                 return Optional.of(modelSet.bakeLayer(l));
@@ -97,10 +146,11 @@ public class CarcassPartRenderer implements BlockEntityRenderer<CarcassPartBlock
                 return Optional.empty();
             }
         });
-        if (root.isEmpty()) {
-            return null;
-        }
-        ModelPart part = root.get();
+        return root.map(r -> descend(r, partPath)).orElse(null);
+    }
+
+    @Nullable
+    private static ModelPart descend(ModelPart part, String partPath) {
         for (String segment : partPath.split("/")) {
             if (segment.isEmpty()) {
                 continue;
@@ -117,7 +167,10 @@ public class CarcassPartRenderer implements BlockEntityRenderer<CarcassPartBlock
     public AABB getRenderBoundingBox(CarcassPartBlockEntity be) {
         BlockPos pos = be.getBlockPos();
         Vector3f size = be.boxSize();
-        return new AABB(pos.getX(), pos.getY(), pos.getZ(),
-                pos.getX() + Math.max(1.0, size.x / 16.0), pos.getY() + Math.max(1.0, size.y / 16.0), pos.getZ() + Math.max(1.0, size.z / 16.0));
+        // the resting form draws the whole animal from the torso's root cell
+        double reach = be.merged().isEmpty() ? 0.0 : 3.0;
+        return new AABB(pos.getX() - reach, pos.getY() - reach, pos.getZ() - reach,
+                pos.getX() + Math.max(1.0, size.x / 16.0) + reach, pos.getY() + Math.max(1.0, size.y / 16.0) + reach,
+                pos.getZ() + Math.max(1.0, size.z / 16.0) + reach);
     }
 }

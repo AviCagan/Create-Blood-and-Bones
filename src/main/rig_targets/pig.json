@@ -1,0 +1,9 @@
+{
+  "entity": "minecraft:pig",
+  "model": "minecraft:pig",
+  "texture": "minecraft:textures/entity/pig/pig.png",
+  "rot_time": 20000,
+  "joints": {
+    "head": {"min_degrees": [-10, -25, -8], "max_degrees": [30, 25, 8], "damping": 4.0, "stiffness": 2.0, "contacts": false}
+  }
+}

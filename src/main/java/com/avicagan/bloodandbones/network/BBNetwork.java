@@ -10,5 +10,7 @@ public class BBNetwork {
         PayloadRegistrar registrar = event.registrar(BloodAndBones.MOD_ID).versioned("1").optional();
         registrar.playToClient(DragSyncPayload.TYPE, DragSyncPayload.STREAM_CODEC,
                 (payload, context) -> context.enqueueWork(() -> ClientDragState.handle(payload)));
+        registrar.playToClient(RigSyncPayload.TYPE, RigSyncPayload.STREAM_CODEC,
+                (payload, context) -> context.enqueueWork(() -> com.avicagan.bloodandbones.carcass.rig.RigManager.setClientRigs(payload.rigs())));
     }
 }

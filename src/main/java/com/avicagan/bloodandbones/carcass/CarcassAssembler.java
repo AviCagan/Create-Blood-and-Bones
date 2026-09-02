@@ -112,10 +112,11 @@ public final class CarcassAssembler {
         Vector3d base = new Vector3d(feet.x, feet.y + 1.501, feet.z);
         Quaterniond g = new Quaterniond().rotationY(Math.toRadians(180.0 - entity.yBodyRot)).rotateZ(Math.PI);
 
+        CarcassLook appearance = CarcassLook.of(entity, rig);
         Map<String, ServerSubLevel> subLevels = new LinkedHashMap<>();
         Map<String, Vector3d> origins = new LinkedHashMap<>();
         for (Bone bone : rig.bones()) {
-            ServerSubLevel subLevel = assembleBone(level, staging, carcassId, rig, bone);
+            ServerSubLevel subLevel = assembleBone(level, staging, carcassId, rig, bone, appearance);
             if (subLevel == null) {
                 for (ServerSubLevel created : subLevels.values()) {
                     container.removeSubLevel(created, SubLevelRemovalReason.REMOVED);
@@ -132,6 +133,7 @@ public final class CarcassAssembler {
         }
 
         CarcassSavedData.Carcass carcass = new CarcassSavedData.Carcass(carcassId, rig.entity(), rig.root().name());
+        carcass.look = appearance;
         subLevels.forEach((name, subLevel) -> carcass.bones.put(name, subLevel.getUniqueId()));
 
         for (Bone bone : rig.bones()) {
@@ -248,7 +250,7 @@ public final class CarcassAssembler {
      * Places the bone's block cells in the world at the staging spot and hands them to Sable.
      */
     @Nullable
-    public static ServerSubLevel assembleBone(ServerLevel level, BlockPos staging, UUID carcassId, Rig rig, Bone bone) {
+    public static ServerSubLevel assembleBone(ServerLevel level, BlockPos staging, UUID carcassId, Rig rig, Bone bone, CarcassLook look) {
         int[] cells = cellCounts(bone);
         int sx = pixels(bone.boxSize().x);
         int sy = pixels(bone.boxSize().y);
@@ -264,7 +266,7 @@ public final class CarcassAssembler {
                     level.setBlock(pos, state, Block.UPDATE_ALL);
                     if (level.getBlockEntity(pos) instanceof CarcassPartBlockEntity be) {
                         if (i == 0 && j == 0 && k == 0) {
-                            be.configureRoot(carcassId, rig, bone);
+                            be.configureRoot(carcassId, rig, bone, look);
                         } else {
                             be.configureFiller(carcassId, bone);
                         }

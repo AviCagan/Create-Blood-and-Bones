@@ -1,0 +1,296 @@
+{
+  "bones": [
+    {
+      "box_max": [
+        5.0,
+        2.0,
+        5.0
+      ],
+      "box_min": [
+        -5.0,
+        -8.0,
+        -17.0
+      ],
+      "hide": [
+        "tail",
+        "saddle"
+      ],
+      "name": "body",
+      "offset": [
+        0.0,
+        11.0,
+        5.0
+      ],
+      "part": "body",
+      "rotation": [
+        0.0,
+        0.0,
+        0.0,
+        1.0
+      ]
+    },
+    {
+      "parent": "body",
+      "box_max": [
+        3.0,
+        9.99,
+        2.1
+      ],
+      "box_min": [
+        -1.0,
+        -1.01,
+        -1.9
+      ],
+      "joint": {
+        "damping": 4.0,
+        "max_degrees": [
+          75.0,
+          10.0,
+          15.0
+        ],
+        "min_degrees": [
+          -75.0,
+          -10.0,
+          -15.0
+        ],
+        "stiffness": 0.3
+      },
+      "name": "right_front_leg",
+      "offset": [
+        -4.0,
+        14.0,
+        -12.0
+      ],
+      "part": "right_front_leg",
+      "rotation": [
+        0.0,
+        0.0,
+        0.0,
+        1.0
+      ]
+    },
+    {
+      "parent": "body",
+      "box_max": [
+        3.0,
+        9.99,
+        3.0
+      ],
+      "box_min": [
+        -1.0,
+        -1.01,
+        -1.0
+      ],
+      "joint": {
+        "damping": 4.0,
+        "max_degrees": [
+          75.0,
+          10.0,
+          15.0
+        ],
+        "min_degrees": [
+          -75.0,
+          -10.0,
+          -15.0
+        ],
+        "stiffness": 0.3
+      },
+      "name": "right_hind_leg",
+      "offset": [
+        -4.0,
+        14.0,
+        7.0
+      ],
+      "part": "right_hind_leg",
+      "rotation": [
+        0.0,
+        0.0,
+        0.0,
+        1.0
+      ]
+    },
+    {
+      "parent": "body",
+      "box_max": [
+        3.0,
+        6.0,
+        7.0
+      ],
+      "box_min": [
+        -3.0,
+        -11.0,
+        -7.0
+      ],
+      "hide": [
+        "left_saddle_mouth",
+        "right_saddle_mouth",
+        "left_saddle_line",
+        "right_saddle_line",
+        "head_saddle",
+        "mouth_saddle_wrap"
+      ],
+      "joint": {
+        "contacts": true,
+        "damping": 4.0,
+        "max_degrees": [
+          75.0,
+          35.0,
+          15.0
+        ],
+        "min_degrees": [
+          -25.0,
+          -35.0,
+          -15.0
+        ],
+        "stiffness": 1.0
+      },
+      "name": "head_parts",
+      "offset": [
+        0.0,
+        4.0,
+        -12.0
+      ],
+      "part": "head_parts",
+      "rotation": [
+        0.25881904,
+        0.0,
+        0.0,
+        0.9659258
+      ]
+    },
+    {
+      "parent": "body",
+      "box_max": [
+        1.0,
+        9.99,
+        3.0
+      ],
+      "box_min": [
+        -3.0,
+        -1.01,
+        -1.0
+      ],
+      "joint": {
+        "damping": 4.0,
+        "max_degrees": [
+          75.0,
+          10.0,
+          15.0
+        ],
+        "min_degrees": [
+          -75.0,
+          -10.0,
+          -15.0
+        ],
+        "stiffness": 0.3
+      },
+      "name": "left_hind_leg",
+      "offset": [
+        4.0,
+        14.0,
+        7.0
+      ],
+      "part": "left_hind_leg",
+      "rotation": [
+        0.0,
+        0.0,
+        0.0,
+        1.0
+      ]
+    },
+    {
+      "parent": "body",
+      "box_max": [
+        1.5,
+        14.0,
+        4.0
+      ],
+      "box_min": [
+        -1.5,
+        0.0,
+        0.0
+      ],
+      "joint": {
+        "damping": 2.0,
+        "max_degrees": [
+          60.0,
+          45.0,
+          20.0
+        ],
+        "min_degrees": [
+          -30.0,
+          -45.0,
+          -20.0
+        ],
+        "stiffness": 1.0
+      },
+      "name": "body/tail",
+      "offset": [
+        0.0,
+        6.0,
+        7.0
+      ],
+      "part": "body/tail",
+      "rotation": [
+        0.25881904,
+        0.0,
+        0.0,
+        0.9659258
+      ]
+    },
+    {
+      "parent": "body",
+      "box_max": [
+        1.0,
+        9.99,
+        2.1
+      ],
+      "box_min": [
+        -3.0,
+        -1.01,
+        -1.9
+      ],
+      "joint": {
+        "damping": 4.0,
+        "max_degrees": [
+          75.0,
+          10.0,
+          15.0
+        ],
+        "min_degrees": [
+          -75.0,
+          -10.0,
+          -15.0
+        ],
+        "stiffness": 0.3
+      },
+      "name": "left_front_leg",
+      "offset": [
+        4.0,
+        14.0,
+        -12.0
+      ],
+      "part": "left_front_leg",
+      "rotation": [
+        0.0,
+        0.0,
+        0.0,
+        1.0
+      ]
+    }
+  ],
+  "entity": "minecraft:horse",
+  "model": "minecraft:horse",
+  "passes": [
+    {
+      "texture": "minecraft:textures/entity/horse/horse_markings_{markings}.png",
+      "unless": "no_markings"
+    }
+  ],
+  "rot_time": 36000,
+  "texture": "minecraft:textures/entity/horse/horse_{variant}.png",
+  "variant_names": {
+    "dark_brown": "darkbrown"
+  },
+  "weight": 1.0986328
+}

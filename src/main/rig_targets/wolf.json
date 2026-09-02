@@ -1,0 +1,17 @@
+{
+  "entity": "minecraft:wolf",
+  "model": "minecraft:wolf",
+  "texture": "{wolf_texture}",
+  "rot_time": 18000,
+  "torso": "body",
+  "parents": {
+    "head/real_head": "upper_body",
+    "right_front_leg": "upper_body",
+    "left_front_leg": "upper_body"
+  },
+  "joints": {
+    "upper_body": {"min_degrees": [-20, -15, -10], "max_degrees": [20, 15, 10], "damping": 4.0, "stiffness": 2.0, "contacts": false},
+    "head/real_head": {"min_degrees": [-20, -35, -10], "max_degrees": [30, 35, 10], "damping": 4.0, "stiffness": 2.0, "contacts": false},
+    "tail/real_tail": {"min_degrees": [-45, -30, -30], "max_degrees": [45, 30, 30], "damping": 2.0, "stiffness": 1.0, "contacts": false}
+  }
+}

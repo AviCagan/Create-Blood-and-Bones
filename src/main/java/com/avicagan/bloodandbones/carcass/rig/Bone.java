@@ -5,6 +5,7 @@ import com.mojang.serialization.codecs.RecordCodecBuilder;
 import org.joml.Quaternionf;
 import org.joml.Vector3f;
 
+import java.util.List;
 import java.util.Optional;
 
 /**
@@ -18,9 +19,11 @@ import java.util.Optional;
  * @param boxMin   physics box minimum corner in part-local pixels
  * @param boxMax   physics box maximum corner in part-local pixels
  * @param joint    swing limits of the joint to the parent
+ * @param hide     descendant part paths (relative to this part) not to draw with it: other bones, hidden parts
+ * @param extras   other parts drawn along with this bone
  */
 public record Bone(String name, String part, Optional<String> parent, Vector3f offset, Quaternionf rotation,
-                   Vector3f boxMin, Vector3f boxMax, Optional<JointSpec> joint) {
+                   Vector3f boxMin, Vector3f boxMax, Optional<JointSpec> joint, List<String> hide, List<ExtraPart> extras) {
     public static final Codec<Bone> CODEC = RecordCodecBuilder.create(i -> i.group(
             Codec.STRING.fieldOf("name").forGetter(Bone::name),
             Codec.STRING.fieldOf("part").forGetter(Bone::part),
@@ -29,8 +32,15 @@ public record Bone(String name, String part, Optional<String> parent, Vector3f o
             RigCodecs.QUAT.fieldOf("rotation").forGetter(Bone::rotation),
             RigCodecs.VEC3.fieldOf("box_min").forGetter(Bone::boxMin),
             RigCodecs.VEC3.fieldOf("box_max").forGetter(Bone::boxMax),
-            JointSpec.CODEC.optionalFieldOf("joint").forGetter(Bone::joint)
+            JointSpec.CODEC.optionalFieldOf("joint").forGetter(Bone::joint),
+            Codec.STRING.listOf().optionalFieldOf("hide", List.of()).forGetter(Bone::hide),
+            ExtraPart.CODEC.listOf().optionalFieldOf("extras", List.of()).forGetter(Bone::extras)
     ).apply(i, Bone::new));
+
+    public Bone(String name, String part, Optional<String> parent, Vector3f offset, Quaternionf rotation,
+                Vector3f boxMin, Vector3f boxMax, Optional<JointSpec> joint) {
+        this(name, part, parent, offset, rotation, boxMin, boxMax, joint, List.of(), List.of());
+    }
 
     public Vector3f boxSize() {
         return new Vector3f(boxMax).sub(boxMin);

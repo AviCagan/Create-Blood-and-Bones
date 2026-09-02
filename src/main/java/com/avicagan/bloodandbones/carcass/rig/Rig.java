@@ -5,21 +5,24 @@ import com.mojang.serialization.codecs.RecordCodecBuilder;
 import net.minecraft.resources.ResourceLocation;
 
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
 
 /**
  * The physics skeleton of one mob: which model parts become rigid bodies and how they connect.
  *
- * @param entity  entity type this rig is for
- * @param model   model layer id (the entity model registered under this id, layer {@code layer})
- * @param layer   model layer name, usually "main"
- * @param texture texture the carcass wears
- * @param weight  total mass in Sable units (a full solid block is about 1.0); drives shove, drag and floating
- * @param rotTime ticks for a carcass to go from fresh to rotten in a temperate place; cold stretches it
- * @param bones   bones, torso first
+ * @param entity       entity type this rig is for
+ * @param model        model layer id (the entity model registered under this id, layer {@code layer})
+ * @param layer        model layer name, usually "main"
+ * @param texture      skin texture path; may hold placeholders like {@code {variant}} filled in at death
+ * @param variantNames how a mob's variant name maps onto the texture file name where they differ
+ * @param passes       extra coats drawn over the skin
+ * @param weight       total mass in Sable units (a full solid block is about 1.0); drives shove, drag and floating
+ * @param rotTime      ticks for a carcass to go from fresh to rotten in a temperate place; cold stretches it
+ * @param bones        bones, torso first
  */
-public record Rig(ResourceLocation entity, ResourceLocation model, String layer, ResourceLocation texture, float weight, int rotTime,
-                  List<Bone> bones) {
+public record Rig(ResourceLocation entity, ResourceLocation model, String layer, String texture, Map<String, String> variantNames,
+                  List<RenderPass> passes, float weight, int rotTime, List<Bone> bones) {
     /** One Minecraft day. */
     public static final int DEFAULT_ROT_TIME = 24000;
 
@@ -27,7 +30,9 @@ public record Rig(ResourceLocation entity, ResourceLocation model, String layer,
             ResourceLocation.CODEC.fieldOf("entity").forGetter(Rig::entity),
             ResourceLocation.CODEC.fieldOf("model").forGetter(Rig::model),
             Codec.STRING.optionalFieldOf("layer", "main").forGetter(Rig::layer),
-            ResourceLocation.CODEC.fieldOf("texture").forGetter(Rig::texture),
+            Codec.STRING.fieldOf("texture").forGetter(Rig::texture),
+            Codec.unboundedMap(Codec.STRING, Codec.STRING).optionalFieldOf("variant_names", Map.of()).forGetter(Rig::variantNames),
+            RenderPass.CODEC.listOf().optionalFieldOf("passes", List.of()).forGetter(Rig::passes),
             Codec.FLOAT.optionalFieldOf("weight", 1.0F).forGetter(Rig::weight),
             Codec.intRange(1, Integer.MAX_VALUE).optionalFieldOf("rot_time", DEFAULT_ROT_TIME).forGetter(Rig::rotTime),
             Bone.CODEC.listOf().fieldOf("bones").forGetter(Rig::bones)

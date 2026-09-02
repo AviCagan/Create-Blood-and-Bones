@@ -51,6 +51,13 @@ public class CarcassEvents {
         event.addListener(RigManager.INSTANCE);
     }
 
+    /** Hand every joining or reloading player the rigs, the way vanilla hands out recipes and tags. */
+    @SubscribeEvent
+    public static void onDatapackSync(net.neoforged.neoforge.event.OnDatapackSyncEvent event) {
+        com.avicagan.bloodandbones.network.RigSyncPayload payload = new com.avicagan.bloodandbones.network.RigSyncPayload(RigManager.all());
+        event.getRelevantPlayers().forEach(player -> net.neoforged.neoforge.network.PacketDistributor.sendToPlayer(player, payload));
+    }
+
     @SubscribeEvent
     public static void onDeath(LivingDeathEvent event) {
         LivingEntity entity = event.getEntity();

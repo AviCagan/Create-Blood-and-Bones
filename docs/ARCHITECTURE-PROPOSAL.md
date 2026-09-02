@@ -495,5 +495,68 @@ pipes; chain clearance = hanging length + 1 block.
   and a sagging line to the player's hand, using Sable's client-side interpolated pose for the limb.
 - **JEI.** `BBJeiPlugin` registers an information page per item (placeholder text). Recipe categories
   come with the machines. JEI is compile-only for the mod and present in the dev runtime.
-- **Dev runtime extras** (not mod dependencies): Create Aeronautics for its physics staff, Cubes Without
-  Borders for borderless fullscreen. The game tests pass with Aeronautics loaded.
+- **Dev runtime extras** (not mod dependencies): Create Aeronautics for its physics staff, Concentration
+  for borderless fullscreen (Cubes Without Borders ships a multi-loader jar NeoForge refuses). The game
+  tests pass with Aeronautics loaded.
+
+### 13.2 Resting form (verified)
+
+- A carcass that has lain still for 60 ticks (every body under 0.05 blocks/s and 0.1 rad/s, nobody
+  dragging it, no hook holding it) **folds into one body**: the joints are removed, each limb's origin and
+  orientation relative to the torso bone are remembered (`RestPose`, saved), coarse collision cells for the
+  limbs are added to the torso's plot (one cell per block the limb reaches into, sized from the cell's
+  minimum corner to the furthest sampled point, two legs sharing a block share a cell), the limb bodies are
+  removed for good, and the torso's root cell draws every part from a `MergedPart` list.
+- Sable has **no merge primitive** and `SubLevelAssemblyHelper.moveBlocks` only rotates in 90° steps, so
+  rasterising is the only way to get limb collision into the torso; a plain `level.setBlock` into a plot
+  works once the plot chunk exists (`plot.newEmptyChunk`), and new sections need their colliders bound
+  (`bindColliders`) or they collide a few ticks late.
+- The merged body is **pinned by a world joint with all six axes locked**. Without it the torso, having
+  lost the legs that propped it up, settled 0.75 blocks lower and the remembered limb poses no longer
+  matched. Pinning also means a resting carcass is inert until disturbed: the Meat Hook on any cell
+  splits it (`CarcassRest.split`) by re-assembling each limb at torso-pose × rest-pose and re-attaching the
+  joints, which now live in bone-local terms (`CarcassJoints.Spec`) so they survive new plots.
+- The fold itself runs from `LevelTickEvent.Post`, not from the root cell's `sable$tick`: that callback
+  fires inside Sable's loop over every sub-level, and removing bodies there mutates the list being walked.
+  Only the torso's root cell counts stillness; every limb's first cell ticks, and counting from all of
+  them folded a cow six times too fast.
+- Sable's `PhysicsConstraintHandle.isValid()` stays true for a joint whose body was just removed until the
+  next physics tick, so losing a limb tears down every live joint explicitly and lets the root tick
+  rebuild the survivors.
+
+### 13.3 Rot (verified)
+
+- `Carcass.freshness` runs from 1 to 0 over the rig's `rot_time` (a day for a cow, 5 minutes for a zombie,
+  two days for a skeleton). It is driven by **game time, not ticks seen**, so a carcass in an unloaded
+  chunk catches up (at most a day at once) when it loads again. The torso's root cell is told the value
+  every five seconds and the renderer multiplies every pass by a grey-green tint.
+- Surroundings are sampled every second within two blocks of the torso in the **world**, never in the
+  plot (plot chunks keep the biome frozen at spawn). Anything in `bloodandbones:preserves` (packed and
+  blue ice) or any block Create: Dragons Plus's `BlockFreezer.findFreeze` rates FROZEN or colder stops rot;
+  anything in `bloodandbones:chills` (ice, snow, powder snow, plus CDP's `passive_block_freezers` tag) or a
+  PASSIVE freezer quarters it. The biome's own `coldEnoughToSnow(pos)` rule gives 40%, a base temperature
+  under 0.5 gives 70%, 1.5 and up gives 150%.
+- There is no cold `HeatLevel` anywhere in Create or its addons; CDP's `BlockFreezer` is the exact cold
+  mirror of Create's `BoilerHeater` and is what we build on.
+
+### 13.4 Data-driven rigs for more mobs (verified)
+
+- Rigs are still generated from the vanilla models, but **what to generate comes from
+  `src/main/rig_targets/<mob>.json`** (read by the data run through the `bloodandbones.rig_targets`
+  system property): texture (with `{variant}`-style placeholders), extra render passes, rot time, torso,
+  hidden parts (saddles, baby legs), parts merged into the bone above them (a horse's head, mane and
+  mouth fold into the neck), sibling parts attached to a bone (a chicken's beak and wattle, a zombie's
+  hat), parent overrides (a wolf's head and front legs hang off the chest, the chest off the rear body),
+  physics box overrides and joint overrides. Everything else follows the old rules.
+- Rigs are **sent to clients** on join and data pack reload (`RigSyncPayload`), the way vanilla sends
+  recipes. Root cells store only the mob id, the bone name and the resolved look; the renderer reads part
+  paths, hidden children and attached parts from the client's copy of the rig.
+- `CarcassLook` captures what the dying mob wore before it is gone: a sheep's wool colour
+  (`Sheep.getColor`) and sheared flag, a horse's variant and markings, a wolf's variant texture (tame or
+  wild). A rig's `passes` say which of those they use (`"tint": "wool"`, `"unless": "sheared"`), so a
+  coat is data plus a small fixed vocabulary of things the code knows how to read off a mob.
+- Facts that shaped the targets: the pig's and sheep's head boxes overlap their torsos by 2 px at rest
+  (pig: neck contacts off; sheep: head box trimmed to the torso's face so contacts can stay on); the
+  wolf's chest cube is bigger than its rear body, so the torso is named; horse head parts are a nested
+  tree under `head_parts` whose union box is 6×17×14 px (two cells tall); humanoid `hat` and chicken
+  `beak`/`red_thing` are top-level siblings of `head` with the same pivot.

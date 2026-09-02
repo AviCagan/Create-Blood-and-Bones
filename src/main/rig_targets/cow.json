@@ -1,0 +1,6 @@
+{
+  "entity": "minecraft:cow",
+  "model": "minecraft:cow",
+  "texture": "minecraft:textures/entity/cow/cow.png",
+  "rot_time": 24000
+}

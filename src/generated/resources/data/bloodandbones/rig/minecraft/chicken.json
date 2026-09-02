@@ -1,0 +1,264 @@
+{
+  "bones": [
+    {
+      "box_max": [
+        3.0,
+        4.0,
+        3.0
+      ],
+      "box_min": [
+        -3.0,
+        -4.0,
+        -3.0
+      ],
+      "name": "body",
+      "offset": [
+        0.0,
+        16.0,
+        0.0
+      ],
+      "part": "body",
+      "rotation": [
+        0.70710677,
+        0.0,
+        0.0,
+        0.70710677
+      ]
+    },
+    {
+      "parent": "body",
+      "box_max": [
+        2.0,
+        0.0,
+        0.0
+      ],
+      "box_min": [
+        -2.0,
+        -6.0,
+        -2.0
+      ],
+      "extras": [
+        {
+          "offset": [
+            0.0,
+            0.0,
+            0.0
+          ],
+          "part": "beak",
+          "rotation": [
+            0.0,
+            0.0,
+            0.0,
+            1.0
+          ]
+        },
+        {
+          "offset": [
+            0.0,
+            0.0,
+            0.0
+          ],
+          "part": "red_thing",
+          "rotation": [
+            0.0,
+            0.0,
+            0.0,
+            1.0
+          ]
+        }
+      ],
+      "joint": {
+        "damping": 3.0,
+        "max_degrees": [
+          40.0,
+          40.0,
+          10.0
+        ],
+        "min_degrees": [
+          -20.0,
+          -40.0,
+          -10.0
+        ],
+        "stiffness": 1.5
+      },
+      "name": "head",
+      "offset": [
+        0.0,
+        15.0,
+        -4.0
+      ],
+      "part": "head",
+      "rotation": [
+        0.0,
+        0.0,
+        0.0,
+        1.0
+      ]
+    },
+    {
+      "parent": "body",
+      "box_max": [
+        2.0,
+        5.0,
+        0.0
+      ],
+      "box_min": [
+        -1.0,
+        0.0,
+        -3.0
+      ],
+      "joint": {
+        "damping": 4.0,
+        "max_degrees": [
+          60.0,
+          10.0,
+          10.0
+        ],
+        "min_degrees": [
+          -60.0,
+          -10.0,
+          -10.0
+        ],
+        "stiffness": 0.3
+      },
+      "name": "left_leg",
+      "offset": [
+        1.0,
+        19.0,
+        1.0
+      ],
+      "part": "left_leg",
+      "rotation": [
+        0.0,
+        0.0,
+        0.0,
+        1.0
+      ]
+    },
+    {
+      "parent": "body",
+      "box_max": [
+        2.0,
+        5.0,
+        0.0
+      ],
+      "box_min": [
+        -1.0,
+        0.0,
+        -3.0
+      ],
+      "joint": {
+        "damping": 4.0,
+        "max_degrees": [
+          60.0,
+          10.0,
+          10.0
+        ],
+        "min_degrees": [
+          -60.0,
+          -10.0,
+          -10.0
+        ],
+        "stiffness": 0.3
+      },
+      "name": "right_leg",
+      "offset": [
+        -2.0,
+        19.0,
+        1.0
+      ],
+      "part": "right_leg",
+      "rotation": [
+        0.0,
+        0.0,
+        0.0,
+        1.0
+      ]
+    },
+    {
+      "parent": "body",
+      "box_max": [
+        1.0,
+        4.0,
+        3.0
+      ],
+      "box_min": [
+        -1.0,
+        0.0,
+        -3.0
+      ],
+      "joint": {
+        "damping": 2.0,
+        "max_degrees": [
+          15.0,
+          10.0,
+          90.0
+        ],
+        "min_degrees": [
+          -15.0,
+          -10.0,
+          -5.0
+        ],
+        "stiffness": 0.5
+      },
+      "name": "right_wing",
+      "offset": [
+        -4.0,
+        13.0,
+        0.0
+      ],
+      "part": "right_wing",
+      "rotation": [
+        0.0,
+        0.0,
+        0.0,
+        1.0
+      ]
+    },
+    {
+      "parent": "body",
+      "box_max": [
+        1.0,
+        4.0,
+        3.0
+      ],
+      "box_min": [
+        -1.0,
+        0.0,
+        -3.0
+      ],
+      "joint": {
+        "damping": 2.0,
+        "max_degrees": [
+          15.0,
+          10.0,
+          5.0
+        ],
+        "min_degrees": [
+          -15.0,
+          -10.0,
+          -90.0
+        ],
+        "stiffness": 0.5
+      },
+      "name": "left_wing",
+      "offset": [
+        4.0,
+        13.0,
+        0.0
+      ],
+      "part": "left_wing",
+      "rotation": [
+        0.0,
+        0.0,
+        0.0,
+        1.0
+      ]
+    }
+  ],
+  "entity": "minecraft:chicken",
+  "model": "minecraft:chicken",
+  "rot_time": 12000,
+  "texture": "minecraft:textures/entity/chicken.png",
+  "weight": 0.1274414
+}

@@ -17,13 +17,16 @@ import java.util.Map;
 import java.util.Optional;
 
 /**
- * Loads {@code data/<namespace>/rig/<entity namespace>/<entity path>.json} files.
+ * Loads {@code data/<namespace>/rig/<entity namespace>/<entity path>.json} files on the server and keeps the
+ * copy the server sends to each client, which the renderer reads.
  */
 public class RigManager extends SimpleJsonResourceReloadListener {
     private static final Gson GSON = new GsonBuilder().create();
     public static final RigManager INSTANCE = new RigManager();
 
     private volatile Map<ResourceLocation, Rig> rigs = Map.of();
+    /** what the server last sent us; on an integrated server this is a separate copy of the same data */
+    private static volatile Map<ResourceLocation, Rig> clientRigs = Map.of();
 
     private RigManager() {
         super(GSON, "rig");
@@ -40,7 +43,7 @@ public class RigManager extends SimpleJsonResourceReloadListener {
     }
 
     public static Optional<Rig> forEntity(EntityType<?> type) {
-        return Optional.ofNullable(INSTANCE.rigs.get(BuiltInRegistries.ENTITY_TYPE.getKey(type)));
+        return forEntity(BuiltInRegistries.ENTITY_TYPE.getKey(type));
     }
 
     public static Optional<Rig> forEntity(ResourceLocation entityId) {
@@ -49,5 +52,15 @@ public class RigManager extends SimpleJsonResourceReloadListener {
 
     public static Map<ResourceLocation, Rig> all() {
         return INSTANCE.rigs;
+    }
+
+    /** Client side: the rig the server told us about for this mob. */
+    public static Optional<Rig> clientRig(ResourceLocation entityId) {
+        return Optional.ofNullable(clientRigs.get(entityId));
+    }
+
+    public static void setClientRigs(Map<ResourceLocation, Rig> received) {
+        clientRigs = Map.copyOf(received);
+        BloodAndBones.LOGGER.debug("Received {} carcass rigs", clientRigs.size());
     }
 }

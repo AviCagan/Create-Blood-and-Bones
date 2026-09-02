@@ -1,0 +1,95 @@
+{
+  "entity": "minecraft:chicken",
+  "model": "minecraft:chicken",
+  "texture": "minecraft:textures/entity/chicken.png",
+  "rot_time": 12000,
+  "attach": {
+    "beak": "head",
+    "red_thing": "head"
+  },
+  "joints": {
+    "head": {
+      "min_degrees": [
+        -20,
+        -40,
+        -10
+      ],
+      "max_degrees": [
+        40,
+        40,
+        10
+      ],
+      "damping": 3.0,
+      "stiffness": 1.5,
+      "contacts": false
+    },
+    "right_wing": {
+      "min_degrees": [
+        -15,
+        -10,
+        -5
+      ],
+      "max_degrees": [
+        15,
+        10,
+        90
+      ],
+      "damping": 2.0,
+      "stiffness": 0.5,
+      "contacts": false
+    },
+    "left_wing": {
+      "min_degrees": [
+        -15,
+        -10,
+        -90
+      ],
+      "max_degrees": [
+        15,
+        10,
+        5
+      ],
+      "damping": 2.0,
+      "stiffness": 0.5,
+      "contacts": false
+    }
+  },
+  "boxes": {
+    "head": {
+      "min": [
+        -2,
+        -6,
+        -2
+      ],
+      "max": [
+        2,
+        0,
+        0
+      ]
+    },
+    "right_wing": {
+      "min": [
+        -1,
+        0,
+        -3
+      ],
+      "max": [
+        1,
+        4,
+        3
+      ]
+    },
+    "left_wing": {
+      "min": [
+        -1,
+        0,
+        -3
+      ],
+      "max": [
+        1,
+        4,
+        3
+      ]
+    }
+  }
+}

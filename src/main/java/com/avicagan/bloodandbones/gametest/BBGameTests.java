@@ -542,6 +542,141 @@ public class BBGameTests {
         });
     }
 
+    @GameTest(template = "empty", timeoutTicks = 200)
+    public static void pigCarcassAssembles(GameTestHelper helper) {
+        animalTest(helper, EntityType.PIG, 6);
+    }
+
+    @GameTest(template = "empty", timeoutTicks = 200)
+    public static void sheepCarcassAssembles(GameTestHelper helper) {
+        animalTest(helper, EntityType.SHEEP, 6);
+    }
+
+    @GameTest(template = "empty", timeoutTicks = 200)
+    public static void chickenCarcassAssembles(GameTestHelper helper) {
+        animalTest(helper, EntityType.CHICKEN, 6);
+    }
+
+    @GameTest(template = "empty", timeoutTicks = 200)
+    public static void horseCarcassAssembles(GameTestHelper helper) {
+        animalTest(helper, EntityType.HORSE, 7);
+    }
+
+    @GameTest(template = "empty", timeoutTicks = 200)
+    public static void wolfCarcassAssembles(GameTestHelper helper) {
+        animalTest(helper, EntityType.WOLF, 8);
+    }
+
+    @GameTest(template = "empty", timeoutTicks = 200)
+    public static void zombieCarcassAssembles(GameTestHelper helper) {
+        animalTest(helper, EntityType.ZOMBIE, 6);
+    }
+
+    @GameTest(template = "empty", timeoutTicks = 200)
+    public static void skeletonCarcassAssembles(GameTestHelper helper) {
+        animalTest(helper, EntityType.SKELETON, 6);
+    }
+
+    /** Every rigged mob: the right number of bodies and joints, all of them near the spawn, none in the floor. */
+    private static void animalTest(GameTestHelper helper, EntityType<? extends net.minecraft.world.entity.Mob> type, int bones) {
+        ServerLevel level = helper.getLevel();
+        net.minecraft.world.entity.Mob mob = helper.spawn(type, new BlockPos(5, 2, 5));
+        mob.setBaby(false);
+        Vec3 pos = mob.position();
+        if (!CarcassAssembler.assemble(mob, null)) {
+            helper.fail("Carcass assembly returned false for " + type);
+        }
+        mob.discard();
+        helper.runAfterDelay(SETTLE_TICKS, () -> {
+            CarcassSavedData.Carcass carcass = onlyCarcass(helper, level);
+            if (carcass.bones.size() != bones) {
+                helper.fail("Expected " + bones + " bones for " + type + ", found " + carcass.bones.keySet());
+            }
+            requireLiveJoints(helper, carcass, bones - 1);
+            for (Map.Entry<String, ServerSubLevel> bone : liveBones(helper, level, carcass).entrySet()) {
+                Vector3d p = bone.getValue().logicalPose().position();
+                double distance = p.distance(pos.x, pos.y, pos.z);
+                if (distance > 4.0) {
+                    helper.fail("Bone " + bone.getKey() + " of " + type + " ended up " + distance + " blocks away at " + p);
+                }
+                if (p.y < pos.y - 0.2) {
+                    helper.fail("Bone " + bone.getKey() + " of " + type + " sank into the floor to " + p);
+                }
+                if (p.y > pos.y + 2.6) {
+                    helper.fail("Bone " + bone.getKey() + " of " + type + " is floating at " + p);
+                }
+            }
+            helper.succeed();
+        });
+    }
+
+    /** A sheep keeps its wool colour; a sheared one has no wool coat at all. */
+    @GameTest(template = "empty", timeoutTicks = 200)
+    public static void sheepCarcassKeepsWool(GameTestHelper helper) {
+        ServerLevel level = helper.getLevel();
+        net.minecraft.world.entity.animal.Sheep sheep = helper.spawn(EntityType.SHEEP, new BlockPos(5, 2, 5));
+        sheep.setColor(net.minecraft.world.item.DyeColor.RED);
+        if (!CarcassAssembler.assemble(sheep, null)) {
+            helper.fail("Carcass assembly returned false");
+        }
+        sheep.discard();
+        helper.runAfterDelay(SETTLE_TICKS, () -> {
+            CarcassSavedData.Carcass carcass = onlyCarcass(helper, level);
+            ServerSubLevel torso = liveBones(helper, level, carcass).get(carcass.rootBone);
+            BlockPos center = torso.getPlot().getCenterBlock();
+            if (!(level.getBlockEntity(center) instanceof com.avicagan.bloodandbones.carcass.CarcassPartBlockEntity root)) {
+                helper.fail("No root cell");
+                return;
+            }
+            if (root.passes().size() != 1) {
+                helper.fail("A woolly sheep should have one wool coat, found " + root.passes().size());
+            }
+            int expected = net.minecraft.world.entity.animal.Sheep.getColor(net.minecraft.world.item.DyeColor.RED);
+            if (root.passes().get(0).tint() != expected || !root.passes().get(0).layer().equals("fur")) {
+                helper.fail("Wool coat should be red on the fur layer, got " + root.passes().get(0));
+            }
+            if (!root.texture().getPath().endsWith("sheep/sheep.png")) {
+                helper.fail("Sheep skin texture wrong: " + root.texture());
+            }
+            helper.succeed();
+        });
+    }
+
+    /** A horse's carcass wears its own coat colour and markings. */
+    @GameTest(template = "empty", timeoutTicks = 200)
+    public static void horseCarcassKeepsVariant(GameTestHelper helper) {
+        ServerLevel level = helper.getLevel();
+        net.minecraft.world.entity.animal.horse.Horse horse = helper.spawn(EntityType.HORSE, new BlockPos(5, 2, 5));
+        horse.setBaby(false);
+        horse.setVariant(net.minecraft.world.entity.animal.horse.Variant.DARK_BROWN);
+        net.minecraft.world.entity.animal.horse.Markings markings = horse.getMarkings();
+        if (!CarcassAssembler.assemble(horse, null)) {
+            helper.fail("Carcass assembly returned false");
+        }
+        horse.discard();
+        helper.runAfterDelay(SETTLE_TICKS, () -> {
+            CarcassSavedData.Carcass carcass = onlyCarcass(helper, level);
+            ServerSubLevel torso = liveBones(helper, level, carcass).get(carcass.rootBone);
+            BlockPos center = torso.getPlot().getCenterBlock();
+            if (!(level.getBlockEntity(center) instanceof com.avicagan.bloodandbones.carcass.CarcassPartBlockEntity root)) {
+                helper.fail("No root cell");
+                return;
+            }
+            if (!root.texture().getPath().equals("textures/entity/horse/horse_darkbrown.png")) {
+                helper.fail("Dark brown horse should wear horse_darkbrown.png, got " + root.texture());
+            }
+            if (markings == net.minecraft.world.entity.animal.horse.Markings.NONE) {
+                if (!root.passes().isEmpty()) {
+                    helper.fail("An unmarked horse should have no markings coat, got " + root.passes());
+                }
+            } else if (root.passes().size() != 1 || !root.passes().get(0).texture().getPath().startsWith("textures/entity/horse/horse_markings_")
+                    || root.passes().get(0).texture().getPath().contains("{")) {
+                helper.fail("A marked horse (" + markings + ") should have one markings coat, got " + root.passes());
+            }
+            helper.succeed();
+        });
+    }
+
     /** The carcass whose root limb is nearest this test's arena center; tests are placed side by side. */
     private static CarcassSavedData.Carcass onlyCarcass(GameTestHelper helper, ServerLevel level) {
         CarcassSavedData data = CarcassSavedData.get(level);

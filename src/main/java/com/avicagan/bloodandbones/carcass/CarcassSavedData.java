@@ -68,6 +68,8 @@ public class CarcassSavedData extends SavedData {
         /** resting form: the world joint that pins the merged body in place, not saved */
         @Nullable
         public PhysicsConstraintHandle restLock;
+        /** what the mob wore, so re-assembled limbs draw the same */
+        public CarcassLook look = new CarcassLook(ResourceLocation.withDefaultNamespace("textures/entity/cow/cow.png"), List.of());
         /** rot: 1.0 fresh, 0.0 rotten */
         public float freshness = 1.0F;
         /** game time the rot was last applied, so time spent unloaded still counts; -1 until first tick */
@@ -121,6 +123,16 @@ public class CarcassSavedData extends SavedData {
             tag.putBoolean("Resting", resting);
             tag.putFloat("Freshness", freshness);
             tag.putLong("RotClock", rotClock);
+            tag.putString("Texture", look.texture().toString());
+            ListTag passList = new ListTag();
+            for (CarcassLook.Coat pass : look.passes()) {
+                CompoundTag p = new CompoundTag();
+                p.putString("Layer", pass.layer());
+                p.putString("Texture", pass.texture().toString());
+                p.putInt("Tint", pass.tint());
+                passList.add(p);
+            }
+            tag.put("Passes", passList);
             ListTag restList = new ListTag();
             restPoses.forEach((name, pose) -> {
                 CompoundTag r = pose.save();
@@ -148,6 +160,14 @@ public class CarcassSavedData extends SavedData {
             carcass.resting = tag.getBoolean("Resting");
             carcass.freshness = tag.contains("Freshness") ? tag.getFloat("Freshness") : 1.0F;
             carcass.rotClock = tag.contains("RotClock") ? tag.getLong("RotClock") : -1L;
+            if (tag.contains("Texture")) {
+                List<CarcassLook.Coat> passes = new ArrayList<>();
+                for (Tag t : tag.getList("Passes", Tag.TAG_COMPOUND)) {
+                    CompoundTag p = (CompoundTag) t;
+                    passes.add(new CarcassLook.Coat(p.getString("Layer"), ResourceLocation.parse(p.getString("Texture")), p.getInt("Tint")));
+                }
+                carcass.look = new CarcassLook(ResourceLocation.parse(tag.getString("Texture")), passes);
+            }
             for (Tag t : tag.getList("RestPoses", Tag.TAG_COMPOUND)) {
                 CompoundTag r = (CompoundTag) t;
                 carcass.restPoses.put(r.getString("Name"), RestPose.load(r));
