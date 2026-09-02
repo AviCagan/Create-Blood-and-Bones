@@ -70,6 +70,17 @@ public class CarcassSavedData extends SavedData {
         public PhysicsConstraintHandle restLock;
         /** rot: 1.0 fresh, 0.0 rotten */
         public float freshness = 1.0F;
+        /** game time the rot was last applied, so time spent unloaded still counts; -1 until first tick */
+        public long rotClock = -1L;
+        /** rot speed multiplier from the surroundings, re-sampled now and then; not saved */
+        public float rotRate = 1.0F;
+        /** ticks since the surroundings were sampled / the clients were told the freshness; not saved */
+        public int rotSampleTicks = Integer.MAX_VALUE;
+        public int rotSyncTicks;
+
+        public boolean isRotten() {
+            return freshness <= 0.0F;
+        }
 
         public Carcass(UUID id, ResourceLocation entity, String rootBone) {
             this.id = id;
@@ -109,6 +120,7 @@ public class CarcassSavedData extends SavedData {
             tag.put("Joints", jointList);
             tag.putBoolean("Resting", resting);
             tag.putFloat("Freshness", freshness);
+            tag.putLong("RotClock", rotClock);
             ListTag restList = new ListTag();
             restPoses.forEach((name, pose) -> {
                 CompoundTag r = pose.save();
@@ -135,6 +147,7 @@ public class CarcassSavedData extends SavedData {
             }
             carcass.resting = tag.getBoolean("Resting");
             carcass.freshness = tag.contains("Freshness") ? tag.getFloat("Freshness") : 1.0F;
+            carcass.rotClock = tag.contains("RotClock") ? tag.getLong("RotClock") : -1L;
             for (Tag t : tag.getList("RestPoses", Tag.TAG_COMPOUND)) {
                 CompoundTag r = (CompoundTag) t;
                 carcass.restPoses.put(r.getString("Name"), RestPose.load(r));
@@ -198,6 +211,9 @@ public class CarcassSavedData extends SavedData {
         // every limb's first cell ticks; only the torso's counts stillness, or the carcass folds N times too fast
         UUID torsoId = carcass.bones.get(carcass.rootBone);
         boolean torso = torsoId != null && torsoId.equals(rootSubLevel.getUniqueId());
+        if (torso) {
+            CarcassRot.tick(rootSubLevel.getLevel(), carcass, rootSubLevel);
+        }
         if (carcass.resting) {
             if (torso && (carcass.restLock == null || !carcass.restLock.isValid())) {
                 CarcassRest.lock(rootSubLevel.getLevel(), carcass, rootSubLevel);
@@ -270,7 +286,14 @@ public class CarcassSavedData extends SavedData {
             String removedBone = bone;
             carcass.bones.remove(removedBone);
             carcass.joints.removeIf(joint -> joint.parent().equals(removedBone) || joint.child().equals(removedBone));
-            carcass.liveJoints.removeIf(handle -> !handle.isValid());
+            // Sable only notices a joint's body is gone on its next physics tick, so isValid() still says yes
+            // here; drop every live joint and let the root tick rebuild the survivors
+            for (PhysicsConstraintHandle handle : carcass.liveJoints) {
+                if (handle.isValid()) {
+                    handle.remove();
+                }
+            }
+            carcass.liveJoints.clear();
             if (carcass.bones.isEmpty()) {
                 iterator.remove();
             }

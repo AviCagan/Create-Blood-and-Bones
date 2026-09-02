@@ -29,6 +29,10 @@ public final class RigDerivation {
     }
 
     public static Rig derive(ResourceLocation entity, ModelLayerLocation layer, ResourceLocation texture, ModelPart root) {
+        return derive(entity, layer, texture, Rig.DEFAULT_ROT_TIME, root);
+    }
+
+    public static Rig derive(ResourceLocation entity, ModelLayerLocation layer, ResourceLocation texture, int rotTime, ModelPart root) {
         List<Bone> bones = new ArrayList<>();
         walk(root, "", new Vector3f(), new Quaternionf(), null, bones);
         if (bones.isEmpty()) {
@@ -64,7 +68,7 @@ public final class RigDerivation {
             Vector3f size = bone.boxSize();
             weight += (size.x / 16.0F) * (size.y / 16.0F) * (size.z / 16.0F) * FLESH_DENSITY;
         }
-        return new Rig(entity, layer.getModel(), layer.getLayer(), texture, weight, ordered);
+        return new Rig(entity, layer.getModel(), layer.getLayer(), texture, weight, rotTime, ordered);
     }
 
     private static void walk(ModelPart part, String path, Vector3f translation, Quaternionf rotation,

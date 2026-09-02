@@ -43,6 +43,10 @@ public class RigManager extends SimpleJsonResourceReloadListener {
         return Optional.ofNullable(INSTANCE.rigs.get(BuiltInRegistries.ENTITY_TYPE.getKey(type)));
     }
 
+    public static Optional<Rig> forEntity(ResourceLocation entityId) {
+        return Optional.ofNullable(INSTANCE.rigs.get(entityId));
+    }
+
     public static Map<ResourceLocation, Rig> all() {
         return INSTANCE.rigs;
     }

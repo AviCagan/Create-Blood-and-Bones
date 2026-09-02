@@ -81,6 +81,13 @@ public class CarcassEvents {
     }
 
     @SubscribeEvent
+    public static void onLevelTick(net.neoforged.neoforge.event.tick.LevelTickEvent.Post event) {
+        if (event.getLevel() instanceof ServerLevel level) {
+            com.avicagan.bloodandbones.carcass.CarcassRest.levelTick(level);
+        }
+    }
+
+    @SubscribeEvent
     public static void onPlayerTick(PlayerTickEvent.Post event) {
         if (event.getEntity().level() instanceof ServerLevel level) {
             CarcassDrag.tick(level, event.getEntity());

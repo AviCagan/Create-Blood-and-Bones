@@ -85,8 +85,29 @@ public final class CarcassRest {
         }
         carcass.stillTicks++;
         if (carcass.stillTicks >= STILL_TICKS) {
-            rest(level, carcass);
+            // this runs inside Sable's loop over every sub-level; removing bodies here would mutate that
+            // list mid-walk, so the fold itself waits for the end of the level tick
+            PENDING.computeIfAbsent(level, l -> new java.util.LinkedHashSet<>()).add(carcass.id);
         }
+    }
+
+    /** Carcasses that have earned their rest this tick, folded from the level tick. */
+    private static final Map<ServerLevel, java.util.Set<UUID>> PENDING = new java.util.WeakHashMap<>();
+
+    /** End of level tick: fold whatever went still. */
+    public static void levelTick(ServerLevel level) {
+        java.util.Set<UUID> pending = PENDING.get(level);
+        if (pending == null || pending.isEmpty()) {
+            return;
+        }
+        CarcassSavedData data = CarcassSavedData.get(level);
+        for (UUID id : List.copyOf(pending)) {
+            CarcassSavedData.Carcass carcass = data.carcass(id);
+            if (carcass != null && !carcass.resting && !isHeld(level, carcass)) {
+                rest(level, carcass);
+            }
+        }
+        pending.clear();
     }
 
     /** True while a player drags any limb or a hook holds the carcass. */
@@ -104,7 +125,7 @@ public final class CarcassRest {
         if (carcass.resting) {
             return true;
         }
-        Optional<Rig> maybeRig = RigManager.all().values().stream().filter(r -> r.entity().equals(carcass.entity)).findFirst();
+        Optional<Rig> maybeRig = RigManager.forEntity(carcass.entity);
         ServerSubLevelContainer container = SubLevelContainer.getContainer(level);
         if (maybeRig.isEmpty() || container == null) {
             return false;
@@ -211,6 +232,10 @@ public final class CarcassRest {
                 be.configureFiller(carcass.id, torsoBone);
             }
         }
+        if (!carcass.restCells.isEmpty()) {
+            // cells in brand-new plot sections do not collide until their section is uploaded
+            CarcassAssembler.bindColliders(level, torso);
+        }
 
         // drop the limb bodies
         data.mergingLimbs = true;
@@ -310,7 +335,7 @@ public final class CarcassRest {
     @Nullable
     public static Map<String, ServerSubLevel> split(ServerLevel level, CarcassSavedData.Carcass carcass) {
         ServerSubLevelContainer container = SubLevelContainer.getContainer(level);
-        Optional<Rig> maybeRig = RigManager.all().values().stream().filter(r -> r.entity().equals(carcass.entity)).findFirst();
+        Optional<Rig> maybeRig = RigManager.forEntity(carcass.entity);
         if (container == null || maybeRig.isEmpty()) {
             return null;
         }

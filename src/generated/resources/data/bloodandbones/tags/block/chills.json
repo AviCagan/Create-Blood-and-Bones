@@ -1,0 +1,13 @@
+{
+  "values": [
+    "minecraft:ice",
+    "minecraft:frosted_ice",
+    "minecraft:snow_block",
+    "minecraft:powder_snow",
+    "minecraft:snow",
+    {
+      "id": "#create_dragons_plus:passive_block_freezers",
+      "required": false
+    }
+  ]
+}

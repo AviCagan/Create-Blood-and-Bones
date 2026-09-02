@@ -15,15 +15,21 @@ import java.util.Optional;
  * @param layer   model layer name, usually "main"
  * @param texture texture the carcass wears
  * @param weight  total mass in Sable units (a full solid block is about 1.0); drives shove, drag and floating
+ * @param rotTime ticks for a carcass to go from fresh to rotten in a temperate place; cold stretches it
  * @param bones   bones, torso first
  */
-public record Rig(ResourceLocation entity, ResourceLocation model, String layer, ResourceLocation texture, float weight, List<Bone> bones) {
+public record Rig(ResourceLocation entity, ResourceLocation model, String layer, ResourceLocation texture, float weight, int rotTime,
+                  List<Bone> bones) {
+    /** One Minecraft day. */
+    public static final int DEFAULT_ROT_TIME = 24000;
+
     public static final Codec<Rig> CODEC = RecordCodecBuilder.create(i -> i.group(
             ResourceLocation.CODEC.fieldOf("entity").forGetter(Rig::entity),
             ResourceLocation.CODEC.fieldOf("model").forGetter(Rig::model),
             Codec.STRING.optionalFieldOf("layer", "main").forGetter(Rig::layer),
             ResourceLocation.CODEC.fieldOf("texture").forGetter(Rig::texture),
             Codec.FLOAT.optionalFieldOf("weight", 1.0F).forGetter(Rig::weight),
+            Codec.intRange(1, Integer.MAX_VALUE).optionalFieldOf("rot_time", DEFAULT_ROT_TIME).forGetter(Rig::rotTime),
             Bone.CODEC.listOf().fieldOf("bones").forGetter(Rig::bones)
     ).apply(i, Rig::new));
 

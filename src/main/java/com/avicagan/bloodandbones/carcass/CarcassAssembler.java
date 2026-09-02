@@ -180,7 +180,7 @@ public final class CarcassAssembler {
      * can spend a few ticks without any collider and fall through the floor. Sable's own plot loading and
      * recovery code re-uploads every section bound to the body; do the same right after assembly.
      */
-    private static void bindColliders(ServerLevel level, ServerSubLevel subLevel) {
+    public static void bindColliders(ServerLevel level, ServerSubLevel subLevel) {
         SubLevelPhysicsSystem physics = SubLevelPhysicsSystem.get(level);
         if (physics == null) {
             return;

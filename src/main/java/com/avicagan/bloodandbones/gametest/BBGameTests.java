@@ -450,6 +450,98 @@ public class BBGameTests {
         });
     }
 
+    /** Freshness falls at the rig's rate, keeps falling once the carcass is resting, and reaches the torso's root cell. */
+    @GameTest(template = "empty", timeoutTicks = 300)
+    public static void carcassRots(GameTestHelper helper) {
+        ServerLevel level = helper.getLevel();
+        Cow cow = helper.spawn(EntityType.COW, new BlockPos(5, 2, 5));
+        if (!CarcassAssembler.assemble(cow, null)) {
+            helper.fail("Carcass assembly returned false");
+        }
+        cow.discard();
+        UUID[] id = new UUID[1];
+        float[] early = new float[1];
+        helper.runAfterDelay(20, () -> {
+            CarcassSavedData.Carcass carcass = onlyCarcass(helper, level);
+            id[0] = carcass.id;
+            early[0] = carcass.freshness;
+            if (carcass.freshness > 1.0F || carcass.freshness < 0.99F) {
+                helper.fail("A fresh carcass should start near 1.0, got " + carcass.freshness);
+            }
+        });
+        helper.runAfterDelay(160, () -> {
+            CarcassSavedData.Carcass carcass = CarcassSavedData.get(level).carcass(id[0]);
+            if (carcass == null) {
+                helper.fail("Carcass vanished");
+                return;
+            }
+            if (!carcass.resting) {
+                helper.fail("Carcass should be resting by now");
+            }
+            float rate = com.avicagan.bloodandbones.carcass.CarcassRot.biomeRate(level.getBiome(helper.absolutePos(new BlockPos(5, 2, 5))).value(), helper.absolutePos(new BlockPos(5, 2, 5)));
+            float expected = rate * 140.0F / com.avicagan.bloodandbones.carcass.rig.Rig.DEFAULT_ROT_TIME;
+            float drop = early[0] - carcass.freshness;
+            if (drop < expected * 0.6F || drop > expected * 1.4F) {
+                helper.fail("Freshness fell by " + drop + " over 140 ticks, expected about " + expected);
+            }
+            ServerSubLevelContainer container = SubLevelContainer.getContainer(level);
+            SubLevel torso = container.getSubLevel(carcass.bones.get(carcass.rootBone));
+            BlockPos center = torso.getPlot().getCenterBlock();
+            if (!(level.getBlockEntity(center) instanceof com.avicagan.bloodandbones.carcass.CarcassPartBlockEntity root)) {
+                helper.fail("No root cell for the torso");
+                return;
+            }
+            if (root.freshness() >= 1.0F) {
+                helper.fail("The torso's root cell was never told the freshness (still " + root.freshness() + ")");
+            }
+            helper.succeed();
+        });
+    }
+
+    /** Blue ice under the carcass stops rot outright; plain ice only slows it. */
+    @GameTest(template = "empty", timeoutTicks = 400)
+    public static void coldSlowsAndStopsRot(GameTestHelper helper) {
+        ServerLevel level = helper.getLevel();
+        for (int x = 3; x <= 7; x++) {
+            for (int z = 3; z <= 7; z++) {
+                helper.setBlock(new BlockPos(x, 1, z), net.minecraft.world.level.block.Blocks.BLUE_ICE);
+            }
+        }
+        Cow cow = helper.spawn(EntityType.COW, new BlockPos(5, 2, 5));
+        if (!CarcassAssembler.assemble(cow, null)) {
+            helper.fail("Carcass assembly returned false");
+        }
+        cow.discard();
+        UUID[] id = new UUID[1];
+        float[] afterIce = new float[1];
+        helper.runAfterDelay(5, () -> id[0] = onlyCarcass(helper, level).id);
+        helper.runAfterDelay(120, () -> {
+            CarcassSavedData.Carcass carcass = CarcassSavedData.get(level).carcass(id[0]);
+            if (carcass.freshness != 1.0F) {
+                helper.fail("Blue ice should stop rot, freshness is " + carcass.freshness);
+            }
+            for (int x = 3; x <= 7; x++) {
+                for (int z = 3; z <= 7; z++) {
+                    helper.setBlock(new BlockPos(x, 1, z), net.minecraft.world.level.block.Blocks.ICE);
+                }
+            }
+            afterIce[0] = carcass.freshness;
+        });
+        helper.runAfterDelay(260, () -> {
+            CarcassSavedData.Carcass carcass = CarcassSavedData.get(level).carcass(id[0]);
+            float drop = afterIce[0] - carcass.freshness;
+            float rate = com.avicagan.bloodandbones.carcass.CarcassRot.biomeRate(level.getBiome(helper.absolutePos(new BlockPos(5, 2, 5))).value(), helper.absolutePos(new BlockPos(5, 2, 5)));
+            float plain = rate * 140.0F / com.avicagan.bloodandbones.carcass.rig.Rig.DEFAULT_ROT_TIME;
+            if (drop <= 0.0F) {
+                helper.fail("Ice should only slow rot, but freshness did not fall at all");
+            }
+            if (drop > plain * 0.5F) {
+                helper.fail("Ice should slow rot to a quarter, but freshness fell by " + drop + " against " + plain + " in the open");
+            }
+            helper.succeed();
+        });
+    }
+
     /** The carcass whose root limb is nearest this test's arena center; tests are placed side by side. */
     private static CarcassSavedData.Carcass onlyCarcass(GameTestHelper helper, ServerLevel level) {
         CarcassSavedData data = CarcassSavedData.get(level);

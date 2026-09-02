@@ -8,5 +8,6 @@ public class BBDatagen {
         DataGenerator generator = event.getGenerator();
         generator.addProvider(event.includeServer(), new RigExportProvider(generator.getPackOutput()));
         generator.addProvider(event.includeServer(), new PhysicsPropertiesProvider(generator.getPackOutput()));
+        generator.addProvider(event.includeServer(), new BBBlockTagsProvider(generator.getPackOutput(), event.getLookupProvider(), event.getExistingFileHelper()));
     }
 }
