@@ -21,6 +21,7 @@ repositories {
     maven { url = "https://maven.ithundxr.dev/snapshots" }     // Registrate
     maven { url = "https://maven.ryanhcode.dev/releases" }     // Sable, Sable Companion
     maven { url = "https://maven.blamejared.com" }             // Veil (Sable dependency)
+    maven { url = "https://maven.dragons.plus/releases" }      // Create Enchantment Industry, Create: Dragons Plus
     exclusiveContent {
         forRepository { maven { url = "https://api.modrinth.com/maven" } }
         filter { includeGroup "maven.modrinth" }
@@ -83,6 +84,11 @@ dependencies {
     implementation("dev.ryanhcode.sable:sable-neoforge-${minecraft_version}:${sable_version}")
     implementation("dev.ryanhcode.sable-companion:sable-companion-common-${minecraft_version}:${sable_companion_version}")
 
+    // --- Create addons this mod builds on ---
+    implementation("plus.dragons.createenchantmentindustry:create-enchantment-industry-${minecraft_version}:${cei_version}")
+    implementation("plus.dragons.createdragonsplus:create-dragons-plus-${minecraft_version}:${cdp_version}")
+    implementation("maven.modrinth:create-diesel-generators:${cdg_version}")
+
     // Apply Create's *published* access transformers to the dev-time Minecraft jar (MDG "accessTransformers"
     // configuration, see ModDevGradle README "Access Transformers"). Create publishes them as the
     // 'accesstransformer' classifier / accessTransformersElements variant of its maven artifact.
@@ -103,6 +109,9 @@ var generateModMetadata = tasks.register("generateModMetadata", ProcessResources
             create_version_range   : create_version_range,
             flywheel_version_range : flywheel_version_range,
             sable_version          : sable_version,
+            cei_version            : cei_version,
+            cdp_version            : cdp_version,
+            cdg_version            : cdg_version,
     ]
     inputs.properties replaceProperties
     expand replaceProperties

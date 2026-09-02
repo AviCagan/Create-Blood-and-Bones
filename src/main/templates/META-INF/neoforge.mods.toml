@@ -44,3 +44,24 @@ Create addon: physics-driven mob carcasses (via Sable), butchery machines, blood
     versionRange="${flywheel_version_range}"
     ordering="AFTER"
     side="CLIENT"
+
+[[dependencies.${mod_id}]]
+    modId="create_enchantment_industry"
+    type="required"
+    versionRange="[${cei_version},)"
+    ordering="AFTER"
+    side="BOTH"
+
+[[dependencies.${mod_id}]]
+    modId="create_dragons_plus"
+    type="required"
+    versionRange="[${cdp_version},)"
+    ordering="AFTER"
+    side="BOTH"
+
+[[dependencies.${mod_id}]]
+    modId="createdieselgenerators"
+    type="required"
+    versionRange="[${cdg_version},)"
+    ordering="AFTER"
+    side="BOTH"
