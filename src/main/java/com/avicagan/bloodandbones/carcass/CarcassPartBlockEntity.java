@@ -174,7 +174,8 @@ public class CarcassPartBlockEntity extends BlockEntity implements BlockEntitySu
         bone = tag.getString("Bone");
         root = tag.getBoolean("Root");
         if (root) {
-            entity = ResourceLocation.parse(tag.getString("Entity"));
+            // cells saved before rigs were data-driven carried a model id instead; those were all cows
+            entity = tag.contains("Entity") ? ResourceLocation.parse(tag.getString("Entity")) : ResourceLocation.withDefaultNamespace("cow");
             texture = ResourceLocation.parse(tag.getString("Texture"));
             passes.clear();
             for (Tag t : tag.getList("Passes", Tag.TAG_COMPOUND)) {

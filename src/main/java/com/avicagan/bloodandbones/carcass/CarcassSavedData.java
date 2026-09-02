@@ -155,7 +155,10 @@ public class CarcassSavedData extends SavedData {
                 carcass.bones.put(b.getString("Name"), b.getUUID("SubLevel"));
             }
             for (Tag t : tag.getList("Joints", Tag.TAG_COMPOUND)) {
-                carcass.joints.add(CarcassJoints.Spec.load((CompoundTag) t));
+                CarcassJoints.Spec joint = CarcassJoints.Spec.load((CompoundTag) t);
+                if (joint != null) {
+                    carcass.joints.add(joint);
+                }
             }
             carcass.resting = tag.getBoolean("Resting");
             carcass.freshness = tag.contains("Freshness") ? tag.getFloat("Freshness") : 1.0F;
@@ -250,6 +253,9 @@ public class CarcassSavedData extends SavedData {
         if (container == null) {
             return;
         }
+        if (carcass.joints.size() < carcass.bones.size() - 1) {
+            rebuildJointSpecs(carcass);
+        }
         Map<String, ServerSubLevel> loaded = new LinkedHashMap<>();
         for (Map.Entry<String, UUID> bone : carcass.bones.entrySet()) {
             SubLevel subLevel = container.getSubLevel(bone.getValue());
@@ -276,6 +282,23 @@ public class CarcassSavedData extends SavedData {
             }
         }
         BloodAndBones.LOGGER.debug("Re-attached {} joints for carcass {}", carcass.liveJoints.size(), id);
+    }
+
+    /** Joints saved by an older build cannot be read; make them again from the rig for the bones still here. */
+    private void rebuildJointSpecs(Carcass carcass) {
+        com.avicagan.bloodandbones.carcass.rig.Rig rig = com.avicagan.bloodandbones.carcass.rig.RigManager.forEntity(carcass.entity).orElse(null);
+        if (rig == null) {
+            return;
+        }
+        carcass.joints.clear();
+        for (com.avicagan.bloodandbones.carcass.rig.Bone bone : rig.bones()) {
+            if (bone.parent().isEmpty() || !carcass.bones.containsKey(bone.name()) || !carcass.bones.containsKey(bone.parent().get())) {
+                continue;
+            }
+            rig.bone(bone.parent().get()).ifPresent(parent -> carcass.joints.add(CarcassAssembler.jointSpec(parent, bone)));
+        }
+        setDirty();
+        BloodAndBones.LOGGER.info("Rebuilt {} joints of carcass {} from its rig", carcass.joints.size(), carcass.id);
     }
 
     /**

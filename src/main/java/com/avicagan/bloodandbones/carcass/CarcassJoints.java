@@ -71,7 +71,12 @@ public final class CarcassJoints {
             return tag;
         }
 
+        /** Null for a joint saved by an older build in world terms; the root tick rebuilds those from the rig. */
+        @Nullable
         public static Spec load(CompoundTag tag) {
+            if (!tag.contains("ParentOrigin")) {
+                return null;
+            }
             return new Spec(
                     tag.getString("Parent"),
                     tag.getString("Child"),
