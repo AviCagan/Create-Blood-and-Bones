@@ -75,7 +75,7 @@ public class CarcassEvents {
 
     @SubscribeEvent
     public static void onPrePhysicsTick(ForgeSablePrePhysicsTickEvent event) {
-        CarcassDrag.physicsTick(event.getPhysicsSystem().getLevel(), event.getPhysicsSystem().getPartialPhysicsTick());
+        CarcassDrag.physicsTick(event.getPhysicsSystem().getLevel(), event.getPhysicsSystem().getPartialPhysicsTick(), event.getTimeStep());
     }
 
     @SubscribeEvent

@@ -6,11 +6,10 @@ import com.avicagan.bloodandbones.carcass.rig.RigManager;
 import com.avicagan.bloodandbones.network.DragSyncPayload;
 import net.neoforged.neoforge.network.PacketDistributor;
 import dev.ryanhcode.sable.Sable;
-import dev.ryanhcode.sable.api.physics.PhysicsPipeline;
-import dev.ryanhcode.sable.api.physics.constraint.ConstraintJointAxis;
-import dev.ryanhcode.sable.api.physics.constraint.FreeConstraintConfiguration;
-import dev.ryanhcode.sable.api.physics.constraint.FreeConstraintHandle;
-import dev.ryanhcode.sable.companion.math.JOMLConversion;
+import dev.ryanhcode.sable.api.physics.force.ForceGroups;
+import dev.ryanhcode.sable.api.physics.handle.RigidBodyHandle;
+import dev.ryanhcode.sable.companion.math.Pose3d;
+import dev.ryanhcode.sable.sublevel.system.SubLevelPhysicsSystem;
 import dev.ryanhcode.sable.api.sublevel.ServerSubLevelContainer;
 import dev.ryanhcode.sable.api.sublevel.SubLevelContainer;
 import dev.ryanhcode.sable.sublevel.ServerSubLevel;
@@ -41,6 +40,10 @@ import java.util.concurrent.ConcurrentHashMap;
 public final class CarcassDrag {
     private static final double HOLD_DISTANCE = 1.1;
     private static final double MAX_DISTANCE = 6.0;
+    /** Spring gains per unit of carcass weight (a solid block weighs 1.0). */
+    private static final double STIFFNESS = 120.0;
+    private static final double DAMPING = 16.0;
+    private static final double MAX_FORCE = 60.0;
     private static final net.minecraft.resources.ResourceLocation SLOWDOWN_ID = BloodAndBones.asResource("dragging");
 
     public static final class Drag {
@@ -50,11 +53,9 @@ public final class CarcassDrag {
         public final UUID subLevel;
         public final Vector3d anchorPlot;
         public final float weight;
+        /** The dragging player, refreshed every tick; not looked up by UUID because test players are not in the level. */
         @Nullable
-        public FreeConstraintHandle handle;
-        double stiffness;
-        double damping;
-        double maxForce;
+        Player playerEntity;
 
         Drag(UUID player, UUID carcass, String bone, UUID subLevel, Vector3d anchorPlot, float weight) {
             this.player = player;
@@ -118,9 +119,7 @@ public final class CarcassDrag {
         }
 
         Drag drag = new Drag(player.getUUID(), carcass.id, part.bone(), serverSubLevel.getUniqueId(), anchor, weight);
-        if (!attach(level, player, drag, serverSubLevel, 1.0)) {
-            return false;
-        }
+        drag.playerEntity = player;
         DRAGS.put(player.getUUID(), drag);
         applySlowdown(player, dragPenalty(carcass, weight));
         PacketDistributor.sendToPlayersInDimension(level, new DragSyncPayload(player.getUUID(), Optional.of(drag.subLevel), new Vector3d(drag.anchorPlot)));
@@ -130,9 +129,6 @@ public final class CarcassDrag {
     public static void stop(ServerLevel level, Player player) {
         Drag drag = DRAGS.remove(player.getUUID());
         removeSlowdown(player);
-        if (drag != null && drag.handle != null && drag.handle.isValid()) {
-            drag.handle.remove();
-        }
         if (drag != null) {
             PacketDistributor.sendToPlayersInDimension(level, DragSyncPayload.ended(player.getUUID()));
         }
@@ -152,6 +148,7 @@ public final class CarcassDrag {
             stop(level, player);
             return;
         }
+        drag.playerEntity = player;
         ServerSubLevel subLevel = resolve(level, drag);
         ServerSubLevelContainer container = SubLevelContainer.getContainer(level);
         if (subLevel == null || container == null) {
@@ -164,54 +161,32 @@ public final class CarcassDrag {
             stop(level, player);
             return;
         }
-        // The joint is rebuilt here, once per game tick outside the physics step; the substep hook below only
-        // refreshes its target. Rebuilding inside the physics step has been verified not to move anything.
-        if (drag.handle != null && drag.handle.isValid()) {
-            drag.handle.remove();
-        }
-        drag.handle = null;
-        if (!attach(level, player, drag, subLevel, 1.0)) {
-            stop(level, player);
-            return;
-        }
-        container.physicsSystem().getPipeline().wakeUp(subLevel);
         if (level.getGameTime() % 40 == 0) {
             PacketDistributor.sendToPlayersInDimension(level, new DragSyncPayload(player.getUUID(), Optional.of(drag.subLevel), new Vector3d(drag.anchorPlot)));
         }
     }
 
-    /**
-     * Called every physics substep. The tether joint is rebuilt each time with the player's position
-     * interpolated to the substep, the way Aeronautics' physics staff does it: motor targets only take
-     * effect on a freshly made joint, and a target that only moves at game-tick rate stutters.
-     */
-    public static void physicsTick(ServerLevel level, double partial) {
+    /** Called every physics substep with the player's position interpolated to the substep. */
+    public static void physicsTick(ServerLevel level, double partial, double timeStep) {
         if (DRAGS.isEmpty()) {
             return;
         }
-        ServerSubLevelContainer container = SubLevelContainer.getContainer(level);
-        if (container == null) {
+        SubLevelPhysicsSystem physics = SubLevelPhysicsSystem.get(level);
+        if (physics == null) {
             return;
         }
         for (Drag drag : DRAGS.values()) {
-            Player player = level.getPlayerByUUID(drag.player);
-            if (player == null) {
+            Player player = drag.playerEntity != null ? drag.playerEntity : level.getPlayerByUUID(drag.player);
+            if (player == null || player.level() != level) {
                 continue;
             }
             ServerSubLevel subLevel = resolve(level, drag);
             if (subLevel == null) {
                 continue;
             }
-            if (drag.handle != null && drag.handle.isValid()) {
-                aim(drag, target(player, partial));
-            }
+            pull(drag, subLevel, player, partial, timeStep, physics);
+            physics.getPipeline().wakeUp(subLevel);
         }
-    }
-
-    private static void aim(Drag drag, Vector3d target) {
-        drag.handle.setMotor(ConstraintJointAxis.LINEAR_X, target.x, drag.stiffness, drag.damping, true, drag.maxForce);
-        drag.handle.setMotor(ConstraintJointAxis.LINEAR_Y, target.y, drag.stiffness, drag.damping, true, drag.maxForce);
-        drag.handle.setMotor(ConstraintJointAxis.LINEAR_Z, target.z, drag.stiffness, drag.damping, true, drag.maxForce);
     }
 
     @Nullable
@@ -224,38 +199,36 @@ public final class CarcassDrag {
         return subLevel instanceof ServerSubLevel serverSubLevel && !serverSubLevel.isRemoved() ? serverSubLevel : null;
     }
 
-    private static boolean attach(ServerLevel level, Player player, Drag drag, ServerSubLevel subLevel, double partial) {
-        ServerSubLevelContainer container = SubLevelContainer.getContainer(level);
-        if (container == null) {
-            return false;
-        }
-        PhysicsPipeline pipeline = container.physicsSystem().getPipeline();
-        // Same shape as Aeronautics' physics staff: a free joint between the world origin and the hooked point.
-        // The linear motors then drive the hooked point toward absolute world coordinates.
-        FreeConstraintConfiguration config = new FreeConstraintConfiguration(JOMLConversion.ZERO, drag.anchorPlot, new Quaterniond());
-        FreeConstraintHandle handle;
-        try {
-            handle = pipeline.addConstraint(null, subLevel, config);
-        } catch (IllegalArgumentException e) {
-            BloodAndBones.LOGGER.warn("Could not tether carcass limb: {}", e.getMessage());
-            return false;
-        }
-        if (handle == null) {
-            return false;
-        }
-        // Sized by the whole carcass, not the grabbed limb: hooking a leg still has to pull the body.
+    /**
+     * The tether is a spring applied as impulses every physics substep, not a joint: Sable's
+     * {@code applyImpulseAtPoint} takes an impulse in the body's local frame at a plot-space point
+     * (verified by the impulse probe test), which gives a smooth, fully predictable pull.
+     */
+    private static void pull(Drag drag, ServerSubLevel subLevel, Player player, double partial, double timeStep, SubLevelPhysicsSystem physics) {
+        RigidBodyHandle handle = physics.getPhysicsHandle(subLevel);
+        Pose3d pose = subLevel.logicalPose();
+        Vector3d target = target(player, partial);
+        Vector3d hook = pose.transformPosition(drag.anchorPlot, new Vector3d());
+        // velocity of the hooked point: body velocity plus spin about the center of mass
+        Vector3d linear = handle.getLinearVelocity(new Vector3d());
+        Vector3d angular = handle.getAngularVelocity(new Vector3d());
+        Vector3d arm = new Vector3d(hook).sub(pose.position());
+        Vector3d hookVelocity = new Vector3d(angular).cross(arm).add(linear);
+
         double weight = Math.max(0.05, drag.weight);
-        double mass = Math.max(0.02, subLevel.getMassTracker().getMass());
-        drag.stiffness = 120.0 * weight;
-        drag.damping = 16.0 * weight;
-        drag.maxForce = 60.0 * weight;
-        for (ConstraintJointAxis axis : ConstraintJointAxis.ANGULAR) {
-            handle.setMotor(axis, 0.0, 0.0, 0.5 * mass, false, 0.0);
+        double stiffness = STIFFNESS * weight;
+        double damping = DAMPING * weight;
+        double maxForce = MAX_FORCE * weight;
+        Vector3d force = new Vector3d(target).sub(hook).mul(stiffness).sub(new Vector3d(hookVelocity).mul(damping));
+        double magnitude = force.length();
+        if (magnitude > maxForce) {
+            force.mul(maxForce / magnitude);
         }
-        drag.handle = handle;
-        aim(drag, target(player, partial));
-        drag.handle = handle;
-        return true;
+        // impulse over this substep, queued through Sable's force groups (the path its own lift blocks use),
+        // expressed in the body's local frame at the hooked plot point
+        Vector3d impulse = force.mul(timeStep);
+        pose.orientation().transformInverse(impulse);
+        subLevel.getOrCreateQueuedForceGroup(ForceGroups.PROPULSION.get()).applyAndRecordPointForce(drag.anchorPlot, impulse);
     }
 
     /** A point a little in front of the player's feet, so the carcass drags on the ground behind you. */

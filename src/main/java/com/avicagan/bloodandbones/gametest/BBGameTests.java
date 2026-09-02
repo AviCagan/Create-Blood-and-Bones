@@ -302,6 +302,61 @@ public class BBGameTests {
         });
     }
 
+    /** Hang a carcass on a Shackle Hook under a ceiling block: the hooked limb stays at the tip, the body dangles. */
+    @GameTest(template = "empty", timeoutTicks = 400)
+    public static void shackleHookHangsCarcass(GameTestHelper helper) {
+        ServerLevel level = helper.getLevel();
+        Cow cow = helper.spawn(EntityType.COW, new BlockPos(5, 2, 5));
+        if (!CarcassAssembler.assemble(cow, null)) {
+            helper.fail("Carcass assembly returned false");
+        }
+        cow.discard();
+        // ceiling block with the hook under it, 4 blocks up
+        helper.setBlock(new BlockPos(5, 6, 5), net.minecraft.world.level.block.Blocks.STONE);
+        helper.setBlock(new BlockPos(5, 5, 5), com.avicagan.bloodandbones.registry.BBBlocks.SHACKLE_HOOK.get().defaultBlockState()
+                .setValue(com.avicagan.bloodandbones.carcass.ShackleHookBlock.FACING, net.minecraft.core.Direction.UP));
+        Player player = helper.makeMockPlayer(GameType.SURVIVAL);
+        player.setItemInHand(InteractionHand.MAIN_HAND, new ItemStack(BBItems.MEAT_HOOK.get()));
+        player.setPos(Vec3.atBottomCenterOf(helper.absolutePos(new BlockPos(5, 2, 5))));
+        player.setOldPosAndRot();
+        helper.runAfterDelay(10, () -> {
+            CarcassSavedData.Carcass carcass = onlyCarcass(helper, level);
+            ServerSubLevel leg = liveBones(helper, level, carcass).get("right_hind_leg");
+            if (!CarcassDrag.start(level, player, leg.getPlot().getCenterBlock(), null)) {
+                helper.fail("Could not start dragging");
+            }
+            if (!(level.getBlockEntity(helper.absolutePos(new BlockPos(5, 5, 5))) instanceof com.avicagan.bloodandbones.carcass.ShackleHookBlockEntity hook)) {
+                helper.fail("No shackle hook block entity");
+                return;
+            }
+            hook.toggle(level, player);
+            if (!hook.isOccupied() || CarcassDrag.isDragging(player)) {
+                helper.fail("Hook did not take the dragged limb");
+            }
+        });
+        helper.runAfterDelay(90, () -> {
+            com.avicagan.bloodandbones.carcass.ShackleHookBlockEntity hook = (com.avicagan.bloodandbones.carcass.ShackleHookBlockEntity) level.getBlockEntity(helper.absolutePos(new BlockPos(5, 5, 5)));
+            CarcassSavedData.Carcass carcass = onlyCarcass(helper, level);
+            Map<String, ServerSubLevel> bones = liveBones(helper, level, carcass);
+            ServerSubLevel leg = bones.get("right_hind_leg");
+            Vec3 tip = com.avicagan.bloodandbones.carcass.ShackleHookBlock.tip(helper.absolutePos(new BlockPos(5, 5, 5)), hook.getBlockState());
+            org.joml.Vector3d hooked = leg.logicalPose().transformPosition(hook.hookedAnchor(), new org.joml.Vector3d());
+            double gap = hooked.distance(tip.x, tip.y, tip.z);
+            if (gap > 0.35) {
+                helper.fail("Hooked limb is " + gap + " blocks from the hook tip");
+            }
+            org.joml.Vector3d body = bones.get(carcass.rootBone).logicalPose().position();
+            if (body.y > tip.y - 0.5) {
+                helper.fail("Body should hang below the hook, it is at " + body.y + " vs tip " + tip.y);
+            }
+            hook.release(level);
+            if (hook.isOccupied()) {
+                helper.fail("Hook did not release");
+            }
+            helper.succeed();
+        });
+    }
+
     /** The carcass whose root limb is nearest this test's arena center; tests are placed side by side. */
     private static CarcassSavedData.Carcass onlyCarcass(GameTestHelper helper, ServerLevel level) {
         CarcassSavedData data = CarcassSavedData.get(level);

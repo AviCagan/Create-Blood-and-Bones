@@ -14,15 +14,30 @@ public class BBLang {
         BloodAndBones.REGISTRATE.addRawLang("bloodandbones.jei.meat_hook.2",
                 "PH: Right-click a limb to hook it and drag the carcass behind you. Heavier animals slow you down more. Right-click again to let go.");
 
+        block("shackle_hook",
+                "PH: Hangs a carcass. Drag one up to it and click the hook with the Meat Hook to hang it by the limb you are holding.",
+                "PH: A hanging carcass keeps swinging and can be worked on from all sides.",
+                "PH: Click the hook again, or with an empty hand, to let it down.");
+        BloodAndBones.REGISTRATE.addRawLang("bloodandbones.jei.shackle_hook.1",
+                "PH: Mount the Shackle Hook under a ceiling or on a wall. Drag a carcass close and click the hook with the Meat Hook to hang it.");
+        BloodAndBones.REGISTRATE.addRawLang("bloodandbones.jei.shackle_hook.2",
+                "PH: Hanging carcasses stay ragdolls, so they swing, and will be routable along chain conveyors.");
         item("meat_hook",
                 "PH: Kill an animal with this and it leaves a whole carcass instead of loot. Right-click a carcass to drag it, right-click again to let go.",
                 "PH: Dragging slows you down. Heavier animals slow you more.",
                 "PH: Where you hook matters: the limb you grab is the one that gets pulled.");
     }
 
+    private static void block(String id, String summary, String... notes) {
+        describe("block." + BloodAndBones.MOD_ID + "." + id + ".tooltip", id, summary, notes);
+    }
+
     /** Create's description keys: a summary line plus any number of behaviour/condition pairs. */
     private static void item(String id, String summary, String... notes) {
-        String base = "item." + BloodAndBones.MOD_ID + "." + id + ".tooltip";
+        describe("item." + BloodAndBones.MOD_ID + "." + id + ".tooltip", id, summary, notes);
+    }
+
+    private static void describe(String base, String id, String summary, String... notes) {
         BloodAndBones.REGISTRATE.addRawLang(base, id.replace('_', ' ').toUpperCase());
         BloodAndBones.REGISTRATE.addRawLang(base + ".summary", summary);
         for (int i = 0; i < notes.length; i++) {

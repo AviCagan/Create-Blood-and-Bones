@@ -95,6 +95,11 @@ public class DragRenderer {
                 z - Math.sin(yaw) * side + Math.cos(yaw) * forward);
     }
 
+    /** Chain between two world points, in a pose stack already at world origin. */
+    public static void drawChainSegment(PoseStack poseStack, MultiBufferSource buffers, Vec3 from, Vec3 to) {
+        drawChain(poseStack, buffers, null, from, to);
+    }
+
     private static void drawChain(PoseStack poseStack, MultiBufferSource buffers, ClientLevel level, Vec3 from, Vec3 to) {
         VertexConsumer lines = buffers.getBuffer(RenderType.lines());
         Matrix4f matrix = poseStack.last().pose();
@@ -134,11 +139,11 @@ public class DragRenderer {
         poseStack.translate(hook.x, hook.y, hook.z);
         // rotate model +Y onto the chain direction
         poseStack.mulPose(new org.joml.Quaternionf().rotationTo(new Vector3f(0.0F, 1.0F, 0.0F), dir));
-        float scale = 0.55F;
+        float scale = 0.6F;
         poseStack.scale(scale, scale, scale);
-        // FIXED display puts the model's (8,8,8) at the origin; lift it so the bend (y=1px) is on the anchor
-        // and the point (y about 6px, 4px back) is inside the limb
-        poseStack.translate(0.0, 7.0 / 16.0, 0.0);
+        // FIXED display puts the model's (8,8,8) at the origin. Slide the model down the chain so the
+        // bend sits 3px inside the flesh and the point is buried: model y=4 lands on the anchor.
+        poseStack.translate(0.0, 4.0 / 16.0, 0.0);
         BlockPos at = BlockPos.containing(hook.x, hook.y, hook.z);
         int light = LightTexture.pack(level.getBrightness(net.minecraft.world.level.LightLayer.BLOCK, at), level.getBrightness(net.minecraft.world.level.LightLayer.SKY, at));
         minecraft.getItemRenderer().renderStatic(new ItemStack(BBItems.MEAT_HOOK.get()), ItemDisplayContext.FIXED, light,

@@ -1,6 +1,7 @@
 package com.avicagan.bloodandbones.compat.jei;
 
 import com.avicagan.bloodandbones.BloodAndBones;
+import com.avicagan.bloodandbones.registry.BBBlocks;
 import com.avicagan.bloodandbones.registry.BBItems;
 import mezz.jei.api.IModPlugin;
 import mezz.jei.api.JeiPlugin;
@@ -26,5 +27,8 @@ public class BBJeiPlugin implements IModPlugin {
         registration.addIngredientInfo(BBItems.MEAT_HOOK.get(),
                 Component.translatable("bloodandbones.jei.meat_hook.1"),
                 Component.translatable("bloodandbones.jei.meat_hook.2"));
+        registration.addIngredientInfo(BBBlocks.SHACKLE_HOOK.get(),
+                Component.translatable("bloodandbones.jei.shackle_hook.1"),
+                Component.translatable("bloodandbones.jei.shackle_hook.2"));
     }
 }

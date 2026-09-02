@@ -54,11 +54,11 @@ import java.util.UUID;
  */
 public final class CarcassAssembler {
     /** Shove speed for a cow-sized animal, in blocks per second. */
-    private static final double SHOVE_SPEED = 2.0;
+    private static final double SHOVE_SPEED = 1.5;
     /** A cow's weight in Sable mass units; lighter animals get shoved faster, heavier ones slower. */
     private static final double REFERENCE_WEIGHT = 0.8;
     /** Topple spin for a cow-sized animal, radians per second. */
-    private static final double TOPPLE_SPIN = 3.0;
+    private static final double TOPPLE_SPIN = 2.0;
 
     private CarcassAssembler() {
     }
@@ -175,14 +175,18 @@ public final class CarcassAssembler {
             double weightRatio = Math.max(rig.weight(), 0.01) / REFERENCE_WEIGHT;
             double speed = Math.max(0.5, Math.min(5.0, SHOVE_SPEED / Math.sqrt(weightRatio)));
             String hitBone = attacker != null ? boneNearestRay(attacker, origins) : rig.root().name();
-            // topple away from the blow: spin about the horizontal axis perpendicular to it
+            // topple away from the blow: the whole carcass spins as one body about the torso's center,
+            // so each limb gets the spin plus the matching sideways velocity, not a spin of its own
             Vector3d toppleAxis = new Vector3d(-flat.z, 0.0, flat.x).normalize();
-            double spin = Math.max(1.5, Math.min(6.0, TOPPLE_SPIN / Math.sqrt(weightRatio)));
-            double roll = (level.random.nextDouble() - 0.5) * spin;
+            double spin = Math.max(1.0, Math.min(4.0, TOPPLE_SPIN / Math.sqrt(weightRatio)));
+            Vector3d angular = new Vector3d(toppleAxis).mul(spin).add(flat.x, 0.0, flat.z).mul(1.0, 1.0, 1.0);
+            angular.set(toppleAxis).mul(spin).fma((level.random.nextDouble() - 0.5) * spin, new Vector3d(flat.x, 0.0, flat.z));
+            Vector3d pivot = subLevels.get(rig.root().name()).logicalPose().position();
             for (Map.Entry<String, ServerSubLevel> entry : subLevels.entrySet()) {
-                double share = entry.getKey().equals(hitBone) ? 1.0 : 0.6;
+                double share = entry.getKey().equals(hitBone) ? 1.0 : 0.7;
                 Vector3d velocity = new Vector3d(dir.x, dir.y, dir.z).mul(speed * share);
-                Vector3d angular = new Vector3d(toppleAxis).mul(spin).add(flat.x * roll, 0.0, flat.z * roll);
+                Vector3d arm = new Vector3d(entry.getValue().logicalPose().position()).sub(pivot);
+                velocity.add(new Vector3d(angular).cross(arm));
                 physics.getPhysicsHandle(entry.getValue()).addLinearAndAngularVelocity(velocity, angular);
             }
         }
