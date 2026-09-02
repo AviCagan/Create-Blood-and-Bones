@@ -239,15 +239,48 @@ Resolver, first match wins on the full part path:
 - Joint type and limits come from the **archetype** file, keyed by bone role (hip = cone 60°, knee =
   hinge 0..120°, neck = cone 45°, jaw = hinge 0..30°, …), not from the model.
 
-### 4.3 Known exceptions (verified from the survey; these get override files)
+### 4.3 Known exceptions (verified from the survey of all vanilla mobs; these get override files)
 
-Wolf (empty `head`/`tail` wrappers, `upper_body` second torso, asymmetric leg cubes), horse family
-(`head_parts` is the neck; eight saddle parts; duplicate baby legs), rabbit (haunch + foot siblings
-sharing a pivot: foot re-parented to haunch), ocelot/cat (`tail2` is a sibling of `tail1`), goat (`nose`
-is the skull; body unrotated; hind-leg cubes start 4 px below the pivot), sniffer (six legs), strider
-(two legs, no head, humanoid leg names), armadillo (rolled-up alternative geometry), llama (custom
-non-uniform baby scaling). Humanoid, arthropod and aquatic surveys are still running and will add to
-this list.
+Three derivation rules cover most of the mess, and are applied before any override:
+
+- **Virtual parent for flat trees.** Most vanilla models put every part directly under the root
+  (all `QuadrupedModel` mobs, humanoids, fish, spider, chicken…). Legs/head/tail are re-parented to
+  the torso by name; only bat, phantom, dolphin, warden, camel, sniffer, armadillo, bee express real
+  parent links.
+- **Joint at the child's pivot, with a fallback.** When a child's pivot coincides with the parent's
+  (cod/salmon head vs body, guardian tail, wither heads, iron golem arms), the joint moves to the face of
+  the child's cube nearest the parent's cube.
+- **Rest pose from the model, not from `PartPose` alone.** Spider leg splay, parrot body tilt and wing
+  fold, bee wings/legs and blaze rods are set in `setupAnim` every frame, not in the rest pose. The
+  datagen exporter therefore runs `prepareMobModel`/`setupAnim` with zero limb swing on a baked model
+  before reading pivots. Zero-thickness cubes (fins, wings, bristles, tack straps) get a minimum
+  collider thickness and never become bodies of their own.
+
+Per-mob override files are needed for (all verified): wolf (empty `head`/`tail` wrappers, `upper_body`
+second torso, asymmetric leg cubes), horse family (`head_parts` is the neck, eight saddle parts,
+duplicate baby legs, renderer scale), rabbit (haunch + foot siblings sharing a pivot, model-internal
+0.6 scale), ocelot/cat (`tail2` sibling of `tail1`, cat renderer scale), goat (`nose` is the skull, body
+unrotated, hind-leg cubes 4 px below the pivot), sniffer (six legs under `bone`), strider (two legs, no
+head), armadillo (alternative rolled-up geometry), llama (non-uniform baby scaling), polar bear
+(renderer scale 1.2, off-centre body pivot), ravager (real neck→head→jaw chain), villager/wandering
+trader/witch (arms are one folded `arms` block), illagers (both `arms` and separate arms; use the
+separate ones), iron golem (degenerate arm pivots), creeper (quadruped leg names on a biped torso,
+cross-wired Java fields), enderman (whole model shifted −14, negative-grow hat), warden (nested
+Blockbench tree), allay/vex (`root()` is a child group, no legs), spider/cave spider (three unlinked
+body segments, coded leg splay, 0.7 renderer scale), bee (per-pair leg strips, non-hierarchical),
+chicken/parrot (coded rest pose), bat (head sibling of body), phantom (size scale + translate),
+axolotl/turtle/frog/tadpole (mixed naming and parenting; no `root()`), guardian (spikes animate
+position, tail at origin), squid (custom renderer transform, radial tentacles), pufferfish (three
+models by puff state), tropical fish (two bodies × pattern layer), wither (flat, 2× scale).
+
+Mobs with no plausible body plan are excluded by default via a deny tag rather than forced: blaze,
+breeze, ghast, slime, magma cube, shulker, snow golem, ender dragon (multipart), wither, warden
+(boss-tier). Exclusion means they drop loot normally and never become carcasses; the tag is data.
+
+Renderer-level scale is not in any model (horse 1.1, donkey 0.87, mule 0.92, cat 0.8, polar bear 1.2,
+husk 1.0625, wither skeleton 1.2, giant 6, cave spider 0.7, ghast 4.5, elder guardian 2.35, player and
+villagers 0.9375, plus the generic scale attribute), so the generated rig carries an explicit
+`render_scale`, read from a small per-entity table seeded at datagen and overridable in data.
 
 ### 4.4 Texture
 
