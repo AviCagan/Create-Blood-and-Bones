@@ -38,18 +38,19 @@
         -6.0
       ],
       "joint": {
+        "contacts": true,
         "damping": 4.0,
         "max_degrees": [
-          35.0,
-          45.0,
-          10.0
+          25.0,
+          30.0,
+          6.0
         ],
         "min_degrees": [
-          -20.0,
-          -45.0,
-          -10.0
+          -15.0,
+          -30.0,
+          -6.0
         ],
-        "stiffness": 6.0
+        "stiffness": 2.0
       },
       "name": "head",
       "offset": [
@@ -89,7 +90,7 @@
           -10.0,
           -10.0
         ],
-        "stiffness": 2.0
+        "stiffness": 0.3
       },
       "name": "right_front_leg",
       "offset": [
@@ -129,7 +130,7 @@
           -10.0,
           -10.0
         ],
-        "stiffness": 2.0
+        "stiffness": 0.3
       },
       "name": "right_hind_leg",
       "offset": [
@@ -169,7 +170,7 @@
           -10.0,
           -10.0
         ],
-        "stiffness": 2.0
+        "stiffness": 0.3
       },
       "name": "left_hind_leg",
       "offset": [
@@ -209,7 +210,7 @@
           -10.0,
           -10.0
         ],
-        "stiffness": 2.0
+        "stiffness": 0.3
       },
       "name": "left_front_leg",
       "offset": [

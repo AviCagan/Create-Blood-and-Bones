@@ -102,15 +102,17 @@ public final class RigDerivation {
     private static JointSpec jointFor(String name) {
         String lower = name.toLowerCase();
         if (lower.contains("head") || lower.contains("neck")) {
-            // a neck: little nodding down so the head cannot fold into the body, some turning, hardly any roll
-            return new JointSpec(new Vector3f(-20, -45, -10), new Vector3f(35, 45, 10), 4.0F, 6.0F);
+            // a neck: modest nod and turn, no roll, and the head keeps colliding with the body so its corners
+            // cannot sink into the torso when the carcass rolls over
+            return new JointSpec(new Vector3f(-15, -30, -6), new Vector3f(25, 30, 6), 4.0F, 2.0F, true);
         }
         if (lower.contains("leg") || lower.contains("arm")) {
-            // limbs swing fore and aft, barely sideways; damped so they settle instead of flailing
-            return new JointSpec(new Vector3f(-60, -10, -10), new Vector3f(60, 10, 10), 4.0F, 2.0F);
+            // limbs swing fore and aft, barely sideways; damped so they settle instead of flailing, and with
+            // almost no pull back toward standing, so a dead animal collapses instead of standing dead
+            return new JointSpec(new Vector3f(-60, -10, -10), new Vector3f(60, 10, 10), 4.0F, 0.3F, false);
         }
         if (lower.contains("tail") || lower.contains("wing") || lower.contains("ear")) {
-            return new JointSpec(new Vector3f(-45, -45, -45), new Vector3f(45, 45, 45), 2.0F, 1.0F);
+            return new JointSpec(new Vector3f(-45, -45, -45), new Vector3f(45, 45, 45), 2.0F, 1.0F, false);
         }
         return JointSpec.DEFAULT;
     }

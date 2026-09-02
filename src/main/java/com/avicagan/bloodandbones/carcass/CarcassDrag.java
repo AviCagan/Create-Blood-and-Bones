@@ -17,6 +17,7 @@ import dev.ryanhcode.sable.sublevel.ServerSubLevel;
 import dev.ryanhcode.sable.sublevel.SubLevel;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.registries.BuiltInRegistries;
+import net.minecraft.util.Mth;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.world.entity.ai.attributes.AttributeInstance;
 import net.minecraft.world.entity.ai.attributes.AttributeModifier;
@@ -50,7 +51,7 @@ public final class CarcassDrag {
         public final Vector3d anchorPlot;
         public final float weight;
         @Nullable
-        FreeConstraintHandle handle;
+        public FreeConstraintHandle handle;
         double stiffness;
         double damping;
         double maxForce;
@@ -117,7 +118,7 @@ public final class CarcassDrag {
         }
 
         Drag drag = new Drag(player.getUUID(), carcass.id, part.bone(), serverSubLevel.getUniqueId(), anchor, weight);
-        if (!attach(level, player, drag, serverSubLevel)) {
+        if (!attach(level, player, drag, serverSubLevel, 1.0)) {
             return false;
         }
         DRAGS.put(player.getUUID(), drag);
@@ -141,7 +142,7 @@ public final class CarcassDrag {
         DRAGS.clear();
     }
 
-    /** Called once per server tick for every player. Moves the tether target and enforces the release rules. */
+    /** Called once per server tick for every player: release rules and client sync. */
     public static void tick(ServerLevel level, Player player) {
         Drag drag = DRAGS.get(player.getUUID());
         if (drag == null) {
@@ -151,36 +152,59 @@ public final class CarcassDrag {
             stop(level, player);
             return;
         }
+        ServerSubLevel subLevel = resolve(level, drag);
         ServerSubLevelContainer container = SubLevelContainer.getContainer(level);
-        if (container == null) {
+        if (subLevel == null || container == null) {
             stop(level, player);
             return;
         }
-        SubLevel subLevel = container.getSubLevel(drag.subLevel);
-        if (!(subLevel instanceof ServerSubLevel serverSubLevel) || serverSubLevel.isRemoved()) {
-            stop(level, player);
-            return;
-        }
-        Vector3d target = target(player);
-        Vector3d hookWorld = serverSubLevel.logicalPose().transformPosition(drag.anchorPlot, new Vector3d());
+        Vector3d target = target(player, 1.0);
+        Vector3d hookWorld = subLevel.logicalPose().transformPosition(drag.anchorPlot, new Vector3d());
         if (hookWorld.distance(target) > MAX_DISTANCE) {
             stop(level, player);
             return;
         }
-        // Motor targets only take effect on a freshly made joint, so the tether is rebuilt every tick,
-        // the same way Aeronautics' physics staff and handle do it.
+        // The joint is rebuilt here, once per game tick outside the physics step; the substep hook below only
+        // refreshes its target. Rebuilding inside the physics step has been verified not to move anything.
         if (drag.handle != null && drag.handle.isValid()) {
             drag.handle.remove();
         }
         drag.handle = null;
-        if (!attach(level, player, drag, serverSubLevel)) {
+        if (!attach(level, player, drag, subLevel, 1.0)) {
             stop(level, player);
             return;
         }
-        // A resting limb goes to sleep in the physics engine; moving its tether must wake it.
-        container.physicsSystem().getPipeline().wakeUp(serverSubLevel);
+        container.physicsSystem().getPipeline().wakeUp(subLevel);
         if (level.getGameTime() % 40 == 0) {
             PacketDistributor.sendToPlayersInDimension(level, new DragSyncPayload(player.getUUID(), Optional.of(drag.subLevel), new Vector3d(drag.anchorPlot)));
+        }
+    }
+
+    /**
+     * Called every physics substep. The tether joint is rebuilt each time with the player's position
+     * interpolated to the substep, the way Aeronautics' physics staff does it: motor targets only take
+     * effect on a freshly made joint, and a target that only moves at game-tick rate stutters.
+     */
+    public static void physicsTick(ServerLevel level, double partial) {
+        if (DRAGS.isEmpty()) {
+            return;
+        }
+        ServerSubLevelContainer container = SubLevelContainer.getContainer(level);
+        if (container == null) {
+            return;
+        }
+        for (Drag drag : DRAGS.values()) {
+            Player player = level.getPlayerByUUID(drag.player);
+            if (player == null) {
+                continue;
+            }
+            ServerSubLevel subLevel = resolve(level, drag);
+            if (subLevel == null) {
+                continue;
+            }
+            if (drag.handle != null && drag.handle.isValid()) {
+                aim(drag, target(player, partial));
+            }
         }
     }
 
@@ -190,7 +214,17 @@ public final class CarcassDrag {
         drag.handle.setMotor(ConstraintJointAxis.LINEAR_Z, target.z, drag.stiffness, drag.damping, true, drag.maxForce);
     }
 
-    private static boolean attach(ServerLevel level, Player player, Drag drag, ServerSubLevel subLevel) {
+    @Nullable
+    private static ServerSubLevel resolve(ServerLevel level, Drag drag) {
+        ServerSubLevelContainer container = SubLevelContainer.getContainer(level);
+        if (container == null) {
+            return null;
+        }
+        SubLevel subLevel = container.getSubLevel(drag.subLevel);
+        return subLevel instanceof ServerSubLevel serverSubLevel && !serverSubLevel.isRemoved() ? serverSubLevel : null;
+    }
+
+    private static boolean attach(ServerLevel level, Player player, Drag drag, ServerSubLevel subLevel, double partial) {
         ServerSubLevelContainer container = SubLevelContainer.getContainer(level);
         if (container == null) {
             return false;
@@ -209,33 +243,39 @@ public final class CarcassDrag {
         if (handle == null) {
             return false;
         }
-        double mass = Math.max(0.05, subLevel.getMassTracker().getMass());
-        drag.stiffness = 140.0 * mass;
-        drag.damping = 18.0 * mass;
-        drag.maxForce = 70.0 * Math.max(mass, drag.weight * 0.5);
+        // Sized by the whole carcass, not the grabbed limb: hooking a leg still has to pull the body.
+        double weight = Math.max(0.05, drag.weight);
+        double mass = Math.max(0.02, subLevel.getMassTracker().getMass());
+        drag.stiffness = 120.0 * weight;
+        drag.damping = 16.0 * weight;
+        drag.maxForce = 60.0 * weight;
         for (ConstraintJointAxis axis : ConstraintJointAxis.ANGULAR) {
             handle.setMotor(axis, 0.0, 0.0, 0.5 * mass, false, 0.0);
         }
         drag.handle = handle;
-        aim(drag, target(player));
+        aim(drag, target(player, partial));
         drag.handle = handle;
         return true;
     }
 
-    public static Vector3d debugTarget(Player player) {
-        return target(player);
-    }
-
     /** A point a little in front of the player's feet, so the carcass drags on the ground behind you. */
-    private static Vector3d target(Player player) {
+    private static Vector3d target(Player player, double partial) {
+        double px = Mth.lerp(partial, player.xo, player.getX());
+        double py = Mth.lerp(partial, player.yo, player.getY());
+        double pz = Mth.lerp(partial, player.zo, player.getZ());
         Vec3 look = player.getLookAngle();
         Vec3 flat = new Vec3(look.x, 0.0, look.z);
         if (flat.lengthSqr() < 1.0e-4) {
             flat = Vec3.directionFromRotation(0.0F, player.getYRot());
         }
         flat = flat.normalize().scale(HOLD_DISTANCE);
-        double y = player.getY() + 0.7 + Math.max(-0.4, Math.min(0.6, look.y));
-        return new Vector3d(player.getX() + flat.x, y, player.getZ() + flat.z);
+        double y = py + 0.7 + Math.max(-0.4, Math.min(0.6, look.y));
+        return new Vector3d(px + flat.x, y, pz + flat.z);
+    }
+
+
+    public static Vector3d debugTarget(Player player) {
+        return target(player, 1.0);
     }
 
     private static float dragPenalty(CarcassSavedData.Carcass carcass, float weight) {

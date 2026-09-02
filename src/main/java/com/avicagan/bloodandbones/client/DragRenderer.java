@@ -118,24 +118,29 @@ public class DragRenderer {
         lines.addVertex(matrix, (float) b.x, (float) b.y, (float) b.z).setColor(shade, shade, shade, 1.0F).setNormal(pose, normal.x, normal.y, normal.z);
     }
 
-    /** The Meat Hook item, stuck point-first into the limb, its shank pointing back along the chain. */
+    /**
+     * The Meat Hook model buried in the limb. The model's shank runs up the +Y axis with the bend at
+     * model height 1/16 and the eye at the top; rotate +Y onto the chain direction so the eye faces the
+     * player's hand and the point sits inside the flesh.
+     */
     private static void drawHook(PoseStack poseStack, MultiBufferSource buffers, ClientLevel level, Pose3dc limbPose, Vector3d hook, Vec3 hand) {
         Minecraft minecraft = Minecraft.getInstance();
         Vec3 toHand = hand.subtract(hook.x, hook.y, hook.z);
         if (toHand.lengthSqr() < 1.0e-4) {
             return;
         }
-        toHand = toHand.normalize();
+        Vector3f dir = new Vector3f((float) toHand.x, (float) toHand.y, (float) toHand.z).normalize();
         poseStack.pushPose();
         poseStack.translate(hook.x, hook.y, hook.z);
-        float yaw = (float) Math.atan2(toHand.x, toHand.z);
-        float pitch = (float) -Math.asin(toHand.y);
-        poseStack.mulPose(new org.joml.Quaternionf().rotationY(yaw).rotateX(pitch));
-        // the item texture's hook curve is at the top left; tilt it so the point buries into the limb
-        poseStack.mulPose(new org.joml.Quaternionf().rotationX((float) Math.toRadians(-90.0)).rotateZ((float) Math.toRadians(45.0)));
-        poseStack.scale(0.6F, 0.6F, 0.6F);
-        int light = LightTexture.pack(level.getBrightness(net.minecraft.world.level.LightLayer.BLOCK, BlockPos.containing(hook.x, hook.y, hook.z)),
-                level.getBrightness(net.minecraft.world.level.LightLayer.SKY, BlockPos.containing(hook.x, hook.y, hook.z)));
+        // rotate model +Y onto the chain direction
+        poseStack.mulPose(new org.joml.Quaternionf().rotationTo(new Vector3f(0.0F, 1.0F, 0.0F), dir));
+        float scale = 0.55F;
+        poseStack.scale(scale, scale, scale);
+        // FIXED display puts the model's (8,8,8) at the origin; lift it so the bend (y=1px) is on the anchor
+        // and the point (y about 6px, 4px back) is inside the limb
+        poseStack.translate(0.0, 7.0 / 16.0, 0.0);
+        BlockPos at = BlockPos.containing(hook.x, hook.y, hook.z);
+        int light = LightTexture.pack(level.getBrightness(net.minecraft.world.level.LightLayer.BLOCK, at), level.getBrightness(net.minecraft.world.level.LightLayer.SKY, at));
         minecraft.getItemRenderer().renderStatic(new ItemStack(BBItems.MEAT_HOOK.get()), ItemDisplayContext.FIXED, light,
                 OverlayTexture.NO_OVERLAY, poseStack, buffers, level, 0);
         poseStack.popPose();

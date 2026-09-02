@@ -141,7 +141,16 @@ public class BBGameTests {
 
     /** Dragging: hook the body, walk away, the carcass follows; let go and it stops following. */
     @GameTest(template = "empty", timeoutTicks = 400)
-    public static void meatHookDragsCarcass(GameTestHelper helper) {
+    public static void meatHookDragsByLeg(GameTestHelper helper) {
+        dragTest(helper, "left_front_leg");
+    }
+
+    @GameTest(template = "empty", timeoutTicks = 400)
+    public static void meatHookDragsByBody(GameTestHelper helper) {
+        dragTest(helper, "body");
+    }
+
+    private static void dragTest(GameTestHelper helper, String grabBone) {
         ServerLevel level = helper.getLevel();
         Cow cow = helper.spawn(EntityType.COW, new BlockPos(5, 2, 5));
         if (!CarcassAssembler.assemble(cow, null)) {
@@ -157,9 +166,11 @@ public class BBGameTests {
         helper.runAfterDelay(20, () -> {
             CarcassSavedData.Carcass carcass = onlyCarcass(helper, level);
             ServerSubLevel body = liveBones(helper, level, carcass).get(carcass.rootBone);
-            BlockPos rootCell = body.getPlot().getCenterBlock();
-            if (!CarcassDrag.start(level, player, rootCell, null)) {
-                helper.fail("Could not start dragging the body");
+            // grab by a leg: the whole carcass must still follow
+            ServerSubLevel leg = liveBones(helper, level, carcass).get(grabBone);
+            BlockPos legCell = leg.getPlot().getCenterBlock();
+            if (!CarcassDrag.start(level, player, legCell, null)) {
+                helper.fail("Could not start dragging the leg");
             }
             if (!CarcassDrag.isDragging(player)) {
                 helper.fail("Player is not marked as dragging");
@@ -167,6 +178,7 @@ public class BBGameTests {
             // stand 3 blocks away, facing away from the carcass, and keep ticking the tether
             player.setPos(start.add(3.0, 0.0, 0.0));
             player.setYRot(-90.0F);
+            player.setOldPosAndRot(); // mock players never tick, so refresh the previous-tick position the tether interpolates from
             hookedDistance[0] = body.logicalPose().position().distance(player.getX(), player.getY(), player.getZ());
         });
         helper.onEachTick(() -> {
@@ -187,10 +199,14 @@ public class BBGameTests {
                 return;
             }
             ServerSubLevel body = liveBones(helper, level, carcass).get(carcass.rootBone);
-            org.joml.Vector3d hook = body.logicalPose().transformPosition(CarcassDrag.current(player).anchorPlot, new org.joml.Vector3d());
+            CarcassDrag.Drag current = CarcassDrag.current(player);
+            ServerSubLevel hooked = (ServerSubLevel) SubLevelContainer.getContainer(level).getSubLevel(current.subLevel);
+            org.joml.Vector3d hook = hooked.logicalPose().transformPosition(current.anchorPlot, new org.joml.Vector3d());
             org.joml.Vector3d target = CarcassDrag.debugTarget(player);
             double gap = hook.distance(target);
-            if (gap > 1.0) {
+            // a grabbed leg cannot fully align with the target because the hip joint holds it, so allow slack there
+            double allowed = grabBone.equals("body") ? 0.5 : 1.5;
+            if (gap > allowed) {
                 helper.fail("Hooked point did not reach the tether target: still " + gap + " blocks away (started " + hookedDistance[0] + " from the player)");
             }
             if (!CarcassDrag.isDragging(player)) {
@@ -286,34 +302,31 @@ public class BBGameTests {
         });
     }
 
+    /** The carcass whose root limb is nearest this test's arena center; tests are placed side by side. */
     private static CarcassSavedData.Carcass onlyCarcass(GameTestHelper helper, ServerLevel level) {
         CarcassSavedData data = CarcassSavedData.get(level);
-        List<CarcassSavedData.Carcass> nearby = new ArrayList<>();
         ServerSubLevelContainer container = SubLevelContainer.getContainer(level);
         if (container == null) {
             helper.fail("No Sable container");
         }
         Vec3 origin = Vec3.atCenterOf(helper.absolutePos(new BlockPos(5, 2, 5)));
+        CarcassSavedData.Carcass nearest = null;
+        double best = 6.0;
         for (CarcassSavedData.Carcass carcass : data.all()) {
             UUID rootId = carcass.bones.get(carcass.rootBone);
             SubLevel root = rootId == null ? null : container.getSubLevel(rootId);
-            if (root instanceof ServerSubLevel serverRoot && !serverRoot.isRemoved()
-                    && serverRoot.logicalPose().position().distance(origin.x, origin.y, origin.z) < 4.0) {
-                nearby.add(carcass);
+            if (root instanceof ServerSubLevel serverRoot && !serverRoot.isRemoved()) {
+                double distance = serverRoot.logicalPose().position().distance(origin.x, origin.y, origin.z);
+                if (distance < best) {
+                    best = distance;
+                    nearest = carcass;
+                }
             }
         }
-        if (nearby.size() != 1) {
-            StringBuilder sb = new StringBuilder();
-            for (CarcassSavedData.Carcass carcass : data.all()) {
-                UUID rootId = carcass.bones.get(carcass.rootBone);
-                SubLevel root = rootId == null ? null : container.getSubLevel(rootId);
-                sb.append(String.format(" [%s root=%s removed=%s dist=%.1f]", carcass.id.toString().substring(0, 8),
-                        root == null ? "unloaded" : "loaded", root != null && root.isRemoved(),
-                        root == null ? -1.0 : root.logicalPose().position().distance(origin.x, origin.y, origin.z)));
-            }
-            helper.fail("Expected exactly 1 carcass near this test at tick " + helper.getTick() + ", found " + nearby.size() + "; all:" + sb);
+        if (nearest == null) {
+            helper.fail("No loaded carcass within 6 blocks of this test at tick " + helper.getTick());
         }
-        return nearby.get(0);
+        return nearest;
     }
 
     private static void requireLiveJoints(GameTestHelper helper, CarcassSavedData.Carcass carcass, int expected) {

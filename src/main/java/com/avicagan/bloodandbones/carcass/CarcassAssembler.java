@@ -57,6 +57,8 @@ public final class CarcassAssembler {
     private static final double SHOVE_SPEED = 2.0;
     /** A cow's weight in Sable mass units; lighter animals get shoved faster, heavier ones slower. */
     private static final double REFERENCE_WEIGHT = 0.8;
+    /** Topple spin for a cow-sized animal, radians per second. */
+    private static final double TOPPLE_SPIN = 3.0;
 
     private CarcassAssembler() {
     }
@@ -159,17 +161,29 @@ public final class CarcassAssembler {
             }
         }
 
-        // Starting motion: a shove sized by the animal's weight, strongest on the limb the killing blow hit.
-        // The mob's own hit knockback is deliberately not carried over; it would launch light carcasses.
-        if (attacker != null) {
-            Vec3 look = attacker.getLookAngle();
-            Vec3 dir = new Vec3(look.x, Math.max(look.y, 0.0) + 0.15, look.z).normalize();
-            double speed = Math.max(0.5, Math.min(5.0, SHOVE_SPEED / Math.sqrt(Math.max(rig.weight(), 0.01) / REFERENCE_WEIGHT)));
-            String hitBone = boneNearestRay(attacker, origins);
+        // Starting motion: a shove sized by the animal's weight, strongest on the limb the killing blow hit,
+        // plus a topple so the body keels over instead of standing there dead. The mob's own hit knockback
+        // is deliberately not carried over; it would launch light carcasses.
+        {
+            Vec3 look = attacker != null ? attacker.getLookAngle() : Vec3.directionFromRotation(0.0F, entity.getYRot());
+            Vec3 flat = new Vec3(look.x, 0.0, look.z);
+            if (flat.lengthSqr() < 1.0e-4) {
+                flat = new Vec3(1.0, 0.0, 0.0);
+            }
+            flat = flat.normalize();
+            Vec3 dir = new Vec3(flat.x, 0.25, flat.z).normalize();
+            double weightRatio = Math.max(rig.weight(), 0.01) / REFERENCE_WEIGHT;
+            double speed = Math.max(0.5, Math.min(5.0, SHOVE_SPEED / Math.sqrt(weightRatio)));
+            String hitBone = attacker != null ? boneNearestRay(attacker, origins) : rig.root().name();
+            // topple away from the blow: spin about the horizontal axis perpendicular to it
+            Vector3d toppleAxis = new Vector3d(-flat.z, 0.0, flat.x).normalize();
+            double spin = Math.max(1.5, Math.min(6.0, TOPPLE_SPIN / Math.sqrt(weightRatio)));
+            double roll = (level.random.nextDouble() - 0.5) * spin;
             for (Map.Entry<String, ServerSubLevel> entry : subLevels.entrySet()) {
-                double share = entry.getKey().equals(hitBone) ? 1.0 : 0.35;
+                double share = entry.getKey().equals(hitBone) ? 1.0 : 0.6;
                 Vector3d velocity = new Vector3d(dir.x, dir.y, dir.z).mul(speed * share);
-                physics.getPhysicsHandle(entry.getValue()).addLinearAndAngularVelocity(velocity, new Vector3d());
+                Vector3d angular = new Vector3d(toppleAxis).mul(spin).add(flat.x * roll, 0.0, flat.z * roll);
+                physics.getPhysicsHandle(entry.getValue()).addLinearAndAngularVelocity(velocity, angular);
             }
         }
 
@@ -229,7 +243,7 @@ public final class CarcassAssembler {
         Vector3f min = new Vector3f(joint.minDegrees()).mul((float) (Math.PI / 180.0));
         Vector3f max = new Vector3f(joint.maxDegrees()).mul((float) (Math.PI / 180.0));
         return new CarcassJoints.Spec(parent.name(), child.name(), anchorParent, anchorChild, frame1, frame2,
-                min, max, joint.damping(), joint.stiffness());
+                min, max, joint.damping(), joint.stiffness(), joint.contacts());
     }
 
     /**

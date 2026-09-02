@@ -31,10 +31,11 @@ public final class CarcassJoints {
      * @param limitMax     maximum swing per axis, radians
      * @param damping      motor damping (resists motion)
      * @param stiffness    motor stiffness (pulls back to rest)
+     * @param contacts     whether the two limbs collide with each other
      */
     public record Spec(String parent, String child, Vector3d anchorParent, Vector3d anchorChild,
                        Quaterniond frame1, Quaterniond frame2, Vector3f limitMin, Vector3f limitMax,
-                       float damping, float stiffness) {
+                       float damping, float stiffness, boolean contacts) {
 
         public CompoundTag save() {
             CompoundTag tag = new CompoundTag();
@@ -48,6 +49,7 @@ public final class CarcassJoints {
             tag.put("LimitMax", vec(limitMax));
             tag.putFloat("Damping", damping);
             tag.putFloat("Stiffness", stiffness);
+            tag.putBoolean("Contacts", contacts);
             return tag;
         }
 
@@ -62,7 +64,8 @@ public final class CarcassJoints {
                     vec3f(tag.getList("LimitMin", Tag.TAG_DOUBLE)),
                     vec3f(tag.getList("LimitMax", Tag.TAG_DOUBLE)),
                     tag.getFloat("Damping"),
-                    tag.getFloat("Stiffness"));
+                    tag.getFloat("Stiffness"),
+                    tag.getBoolean("Contacts"));
         }
 
         private static ListTag vec(Vector3d v) {
@@ -114,7 +117,7 @@ public final class CarcassJoints {
         if (handle == null) {
             return null;
         }
-        handle.setContactsEnabled(false);
+        handle.setContactsEnabled(spec.contacts());
         handle.setLimit(ConstraintJointAxis.ANGULAR_X, spec.limitMin().x, spec.limitMax().x);
         handle.setLimit(ConstraintJointAxis.ANGULAR_Y, spec.limitMin().y, spec.limitMax().y);
         handle.setLimit(ConstraintJointAxis.ANGULAR_Z, spec.limitMin().z, spec.limitMax().z);
