@@ -89,6 +89,20 @@ public class ShackleHookBlockEntity extends BlockEntity {
         handle.applyLinearAndAngularImpulse(new Vector3d(), impulse);
     }
 
+    /** True if any loaded hook in the level holds this carcass. */
+    public static boolean isHanging(ServerLevel level, UUID carcassId) {
+        java.util.Set<ShackleHookBlockEntity> hooks = ACTIVE.get(level);
+        if (hooks == null) {
+            return false;
+        }
+        for (ShackleHookBlockEntity hook : hooks) {
+            if (!hook.isRemoved() && carcassId.equals(hook.carcassId)) {
+                return true;
+            }
+        }
+        return false;
+    }
+
     private void activate(ServerLevel level) {
         ACTIVE.computeIfAbsent(level, l -> java.util.Collections.newSetFromMap(new java.util.concurrent.ConcurrentHashMap<>())).add(this);
     }
@@ -118,18 +132,19 @@ public class ShackleHookBlockEntity extends BlockEntity {
      * The torso-side anchor of the head joint: where the neck meets the body. Falls back to the torso's
      * own center for rigs without a head.
      */
-    private static Vector3d neckJunction(CarcassSavedData.Carcass carcass) {
+    private static Vector3d neckJunction(CarcassSavedData.Carcass carcass, ServerSubLevel torso) {
         for (CarcassJoints.Spec joint : carcass.joints) {
             if (joint.parent().equals(carcass.rootBone) && joint.child().toLowerCase().contains("head")) {
-                return new Vector3d(joint.anchorParent());
+                return joint.anchorParent(torso);
             }
         }
         for (CarcassJoints.Spec joint : carcass.joints) {
             if (joint.parent().equals(carcass.rootBone)) {
-                return new Vector3d(joint.anchorParent());
+                return joint.anchorParent(torso);
             }
         }
-        return new Vector3d();
+        BlockPos c = torso.getPlot().getCenterBlock();
+        return new Vector3d(c.getX() + 0.5, c.getY() + 0.5, c.getZ() + 0.5);
     }
 
     /**
@@ -181,12 +196,17 @@ public class ShackleHookBlockEntity extends BlockEntity {
             return;
         }
         CarcassDrag.stop(level, player);
+        ServerSubLevelContainer container = SubLevelContainer.getContainer(level);
+        SubLevel torsoSubLevel = container == null ? null : container.getSubLevel(carcass.bones.get(carcass.rootBone));
+        if (!(torsoSubLevel instanceof ServerSubLevel torso) || torso.isRemoved()) {
+            return;
+        }
         // Always hang by the torso, hooked where the neck meets it, belly facing out from the mount
         // (or toward whoever hung it on a ceiling hook).
         carcassId = carcass.id;
         subLevelId = carcass.bones.get(carcass.rootBone);
         bone = carcass.rootBone;
-        anchorPlot.set(neckJunction(carcass));
+        anchorPlot.set(neckJunction(carcass, torso));
         net.minecraft.core.Direction mount = getBlockState().getValue(ShackleHookBlock.FACING);
         Vec3 out;
         if (mount.getAxis().isHorizontal()) {

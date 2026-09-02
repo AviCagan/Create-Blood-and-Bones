@@ -373,6 +373,83 @@ public class BBGameTests {
         });
     }
 
+    /** A still carcass folds into one body; grabbing it unfolds it at the same poses with its joints back. */
+    @GameTest(template = "empty", timeoutTicks = 600)
+    public static void restingFormFoldsAndUnfolds(GameTestHelper helper) {
+        ServerLevel level = helper.getLevel();
+        Cow cow = helper.spawn(EntityType.COW, new BlockPos(5, 2, 5));
+        if (!CarcassAssembler.assemble(cow, null)) {
+            helper.fail("Carcass assembly returned false");
+        }
+        cow.discard();
+        UUID[] id = new UUID[1];
+        Map<String, org.joml.Vector3d> before = new java.util.HashMap<>();
+        helper.runAfterDelay(30, () -> {
+            CarcassSavedData.Carcass carcass = onlyCarcass(helper, level);
+            id[0] = carcass.id;
+            for (Map.Entry<String, ServerSubLevel> e : liveBones(helper, level, carcass).entrySet()) {
+                before.put(e.getKey(), new org.joml.Vector3d(e.getValue().logicalPose().position()));
+            }
+        });
+        // stillness (60 ticks) plus a margin
+        helper.runAfterDelay(30 + com.avicagan.bloodandbones.carcass.CarcassRest.STILL_TICKS + 40, () -> {
+            CarcassSavedData.Carcass carcass = CarcassSavedData.get(level).carcass(id[0]);
+            if (carcass == null || !carcass.resting) {
+                helper.fail("Carcass should be resting after standing still, resting=" + (carcass != null && carcass.resting));
+                return;
+            }
+            ServerSubLevelContainer container = SubLevelContainer.getContainer(level);
+            int loaded = 0;
+            for (UUID sub : carcass.bones.values()) {
+                if (container.getSubLevel(sub) != null) {
+                    loaded++;
+                }
+            }
+            if (loaded != 1) {
+                helper.fail("A resting carcass should be one body, found " + loaded);
+            }
+            if (carcass.restPoses.size() != 5) {
+                helper.fail("Expected 5 remembered limb poses, got " + carcass.restPoses.size());
+            }
+            SubLevel torso = container.getSubLevel(carcass.bones.get(carcass.rootBone));
+            BlockPos center = torso.getPlot().getCenterBlock();
+            if (!(level.getBlockEntity(center) instanceof com.avicagan.bloodandbones.carcass.CarcassPartBlockEntity root) || root.merged().size() != 5) {
+                helper.fail("Torso root cell should carry 5 merged parts for rendering");
+            }
+            // now grab it: it must unfold
+            Player player = helper.makeMockPlayer(GameType.SURVIVAL);
+            player.setItemInHand(InteractionHand.MAIN_HAND, new ItemStack(BBItems.MEAT_HOOK.get()));
+            player.setPos(Vec3.atBottomCenterOf(helper.absolutePos(new BlockPos(5, 2, 5))));
+            player.setOldPosAndRot();
+            if (!CarcassDrag.start(level, player, center, null)) {
+                helper.fail("Could not grab the resting carcass");
+            }
+            CarcassDrag.stop(level, player);
+        });
+        helper.runAfterDelay(30 + com.avicagan.bloodandbones.carcass.CarcassRest.STILL_TICKS + 45, () -> {
+            CarcassSavedData.Carcass carcass = CarcassSavedData.get(level).carcass(id[0]);
+            if (carcass.resting) {
+                helper.fail("Carcass should have unfolded when grabbed");
+            }
+            Map<String, ServerSubLevel> bones = liveBones(helper, level, carcass);
+            if (bones.size() != 6) {
+                helper.fail("Expected 6 bodies after unfolding, got " + bones.size());
+            }
+            requireLiveJoints(helper, carcass, 5);
+            for (Map.Entry<String, ServerSubLevel> e : bones.entrySet()) {
+                org.joml.Vector3d was = before.get(e.getKey());
+                double moved = was == null ? 0 : was.distance(e.getValue().logicalPose().position());
+                if (moved > 0.35) {
+                    helper.fail("Bone " + e.getKey() + " moved " + moved + " blocks through fold/unfold");
+                }
+            }
+            if (!carcass.restCells.isEmpty()) {
+                helper.fail("Rest cells should be gone after unfolding");
+            }
+            helper.succeed();
+        });
+    }
+
     /** The carcass whose root limb is nearest this test's arena center; tests are placed side by side. */
     private static CarcassSavedData.Carcass onlyCarcass(GameTestHelper helper, ServerLevel level) {
         CarcassSavedData data = CarcassSavedData.get(level);

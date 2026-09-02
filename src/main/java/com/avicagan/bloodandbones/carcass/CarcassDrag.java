@@ -95,6 +95,15 @@ public final class CarcassDrag {
         return start(level, player, plotPos, hitLocation);
     }
 
+    public static boolean isDraggingCarcass(UUID carcassId) {
+        for (Drag drag : DRAGS.values()) {
+            if (drag.carcass.equals(carcassId)) {
+                return true;
+            }
+        }
+        return false;
+    }
+
     public static boolean start(ServerLevel level, Player player, BlockPos plotPos, @Nullable Vec3 hitLocation) {
         if (!(level.getBlockEntity(plotPos) instanceof CarcassPartBlockEntity part) || part.carcassId() == null) {
             return false;
@@ -106,6 +115,32 @@ public final class CarcassDrag {
         CarcassSavedData.Carcass carcass = CarcassSavedData.get(level).carcass(part.carcassId());
         if (carcass == null) {
             return false;
+        }
+        if (carcass.resting) {
+            // unfold first; the click lands on the torso, so hook the torso where it was clicked
+            Vector3d hitWorld = hitLocation != null && serverSubLevel.getPlot().contains(hitLocation)
+                    ? serverSubLevel.logicalPose().transformPosition(new Vector3d(hitLocation.x, hitLocation.y, hitLocation.z), new Vector3d())
+                    : serverSubLevel.logicalPose().transformPosition(new Vector3d(plotPos.getX() + 0.5, plotPos.getY() + 0.5, plotPos.getZ() + 0.5), new Vector3d());
+            java.util.Map<String, ServerSubLevel> unfolded = CarcassRest.split(level, carcass);
+            if (unfolded == null) {
+                return false;
+            }
+            ServerSubLevel torso = unfolded.get(carcass.rootBone);
+            if (torso == null) {
+                return false;
+            }
+            Vector3d anchor = torso.logicalPose().transformPositionInverse(hitWorld, new Vector3d());
+            if (!torso.getPlot().contains(anchor)) {
+                BlockPos c = torso.getPlot().getCenterBlock();
+                anchor.set(c.getX() + 0.5, c.getY() + 0.5, c.getZ() + 0.5);
+            }
+            float weight = RigManager.all().values().stream().filter(rig -> rig.entity().equals(carcass.entity)).map(Rig::weight).findFirst().orElse(1.0F);
+            Drag drag = new Drag(player.getUUID(), carcass.id, carcass.rootBone, torso.getUniqueId(), anchor, weight);
+            drag.playerEntity = player;
+            DRAGS.put(player.getUUID(), drag);
+            applySlowdown(player, dragPenalty(carcass, weight));
+            PacketDistributor.sendToPlayersInDimension(level, new DragSyncPayload(player.getUUID(), Optional.of(drag.subLevel), new Vector3d(drag.anchorPlot)));
+            return true;
         }
         float weight = RigManager.all().values().stream()
                 .filter(rig -> rig.entity().equals(carcass.entity))

@@ -29,6 +29,26 @@ import java.util.UUID;
 public class CarcassSavedData extends SavedData {
     private static final String NAME = BloodAndBones.MOD_ID + "_carcasses";
 
+    /** A merged limb's bone origin and orientation relative to the torso bone's frame, in blocks. */
+    public record RestPose(org.joml.Vector3d position, org.joml.Quaterniond orientation) {
+        CompoundTag save() {
+            CompoundTag tag = new CompoundTag();
+            tag.putDouble("X", position.x);
+            tag.putDouble("Y", position.y);
+            tag.putDouble("Z", position.z);
+            tag.putDouble("QX", orientation.x);
+            tag.putDouble("QY", orientation.y);
+            tag.putDouble("QZ", orientation.z);
+            tag.putDouble("QW", orientation.w);
+            return tag;
+        }
+
+        static RestPose load(CompoundTag tag) {
+            return new RestPose(new org.joml.Vector3d(tag.getDouble("X"), tag.getDouble("Y"), tag.getDouble("Z")),
+                    new org.joml.Quaterniond(tag.getDouble("QX"), tag.getDouble("QY"), tag.getDouble("QZ"), tag.getDouble("QW")));
+        }
+    }
+
     public static final class Carcass {
         public final UUID id;
         public final ResourceLocation entity;
@@ -38,6 +58,18 @@ public class CarcassSavedData extends SavedData {
         public final List<CarcassJoints.Spec> joints = new ArrayList<>();
         /** live joint handles, not saved */
         public final List<PhysicsConstraintHandle> liveJoints = new ArrayList<>();
+        /** Resting form: limbs merged into the torso's sub-level; poses relative to the torso bone frame. */
+        public boolean resting;
+        public final Map<String, RestPose> restPoses = new LinkedHashMap<>();
+        /** plot positions of the cells added to the torso plot for the merged limbs */
+        public final List<net.minecraft.core.BlockPos> restCells = new ArrayList<>();
+        /** consecutive ticks the whole carcass has been still, not saved */
+        public int stillTicks;
+        /** resting form: the world joint that pins the merged body in place, not saved */
+        @Nullable
+        public PhysicsConstraintHandle restLock;
+        /** rot: 1.0 fresh, 0.0 rotten */
+        public float freshness = 1.0F;
 
         public Carcass(UUID id, ResourceLocation entity, String rootBone) {
             this.id = id;
@@ -75,6 +107,20 @@ public class CarcassSavedData extends SavedData {
                 jointList.add(joint.save());
             }
             tag.put("Joints", jointList);
+            tag.putBoolean("Resting", resting);
+            tag.putFloat("Freshness", freshness);
+            ListTag restList = new ListTag();
+            restPoses.forEach((name, pose) -> {
+                CompoundTag r = pose.save();
+                r.putString("Name", name);
+                restList.add(r);
+            });
+            tag.put("RestPoses", restList);
+            ListTag cellList = new ListTag();
+            for (net.minecraft.core.BlockPos cell : restCells) {
+                cellList.add(net.minecraft.nbt.NbtUtils.writeBlockPos(cell));
+            }
+            tag.put("RestCells", cellList);
             return tag;
         }
 
@@ -86,6 +132,15 @@ public class CarcassSavedData extends SavedData {
             }
             for (Tag t : tag.getList("Joints", Tag.TAG_COMPOUND)) {
                 carcass.joints.add(CarcassJoints.Spec.load((CompoundTag) t));
+            }
+            carcass.resting = tag.getBoolean("Resting");
+            carcass.freshness = tag.contains("Freshness") ? tag.getFloat("Freshness") : 1.0F;
+            for (Tag t : tag.getList("RestPoses", Tag.TAG_COMPOUND)) {
+                CompoundTag r = (CompoundTag) t;
+                carcass.restPoses.put(r.getString("Name"), RestPose.load(r));
+            }
+            for (Tag t : tag.getList("RestCells", Tag.TAG_COMPOUND)) {
+                net.minecraft.nbt.NbtUtils.readBlockPos((CompoundTag) t, "").ifPresent(carcass.restCells::add);
             }
             return carcass;
         }
@@ -137,7 +192,22 @@ public class CarcassSavedData extends SavedData {
      */
     public void tickRoot(UUID id, ServerSubLevel rootSubLevel) {
         Carcass carcass = carcasses.get(id);
-        if (carcass == null || carcass.jointsValid()) {
+        if (carcass == null) {
+            return;
+        }
+        // every limb's first cell ticks; only the torso's counts stillness, or the carcass folds N times too fast
+        UUID torsoId = carcass.bones.get(carcass.rootBone);
+        boolean torso = torsoId != null && torsoId.equals(rootSubLevel.getUniqueId());
+        if (carcass.resting) {
+            if (torso && (carcass.restLock == null || !carcass.restLock.isValid())) {
+                CarcassRest.lock(rootSubLevel.getLevel(), carcass, rootSubLevel);
+            }
+            return;
+        }
+        if (torso) {
+            CarcassRest.tick(rootSubLevel.getLevel(), carcass);
+        }
+        if (carcass.resting || carcass.jointsValid()) {
             return;
         }
         ServerSubLevelContainer container = SubLevelContainer.getContainer(rootSubLevel.getLevel());
@@ -176,7 +246,13 @@ public class CarcassSavedData extends SavedData {
      * Sable removed a body for good (not merely unloaded it): forget that limb and any joints that used it,
      * and forget the whole carcass once nothing is left of it.
      */
+    /** Set while the resting form deliberately removes limb sub-levels, so they are not forgotten. */
+    public boolean mergingLimbs;
+
     public void onSubLevelRemoved(UUID subLevelId) {
+        if (mergingLimbs) {
+            return;
+        }
         boolean changed = false;
         var iterator = carcasses.values().iterator();
         while (iterator.hasNext()) {
@@ -211,7 +287,7 @@ public class CarcassSavedData extends SavedData {
     @Nullable
     public Iterable<SubLevel> siblings(UUID id, String selfBone) {
         Carcass carcass = carcasses.get(id);
-        if (carcass == null) {
+        if (carcass == null || carcass.resting) {
             return null;
         }
         ServerSubLevelContainer container = null;

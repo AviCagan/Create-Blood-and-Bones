@@ -5,6 +5,7 @@ import dev.ryanhcode.sable.api.physics.constraint.ConstraintJointAxis;
 import dev.ryanhcode.sable.api.physics.constraint.GenericConstraintConfiguration;
 import dev.ryanhcode.sable.api.physics.constraint.GenericConstraintHandle;
 import dev.ryanhcode.sable.sublevel.ServerSubLevel;
+import net.minecraft.core.BlockPos;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.nbt.ListTag;
 import net.minecraft.nbt.Tag;
@@ -21,10 +22,14 @@ import java.util.EnumSet;
  */
 public final class CarcassJoints {
     /**
+     * A joint between two bones, stored in bone-local terms so it can be re-created after the limbs are
+     * re-assembled into new plots (the resting form splits and re-joins limbs).
+     *
      * @param parent       bone name on the parent side
      * @param child        bone name on the child side
-     * @param anchorParent joint point in the parent's plot space
-     * @param anchorChild  joint point in the child's plot space
+     * @param parentOrigin offset from the parent plot's center-block corner to the parent bone origin (blocks)
+     * @param childOrigin  same for the child bone
+     * @param localParent  joint point in the parent bone's local frame (blocks); the child's own origin is the child point
      * @param frame1       joint frame relative to the parent body
      * @param frame2       joint frame relative to the child body
      * @param limitMin     minimum swing per axis, radians
@@ -33,16 +38,29 @@ public final class CarcassJoints {
      * @param stiffness    motor stiffness (pulls back to rest)
      * @param contacts     whether the two limbs collide with each other
      */
-    public record Spec(String parent, String child, Vector3d anchorParent, Vector3d anchorChild,
+    public record Spec(String parent, String child, Vector3d parentOrigin, Vector3d childOrigin, Vector3d localParent,
                        Quaterniond frame1, Quaterniond frame2, Vector3f limitMin, Vector3f limitMax,
                        float damping, float stiffness, boolean contacts) {
+
+        /** Plot-space joint point on the parent side, for the parent bone's current sub-level. */
+        public Vector3d anchorParent(ServerSubLevel parentSubLevel) {
+            BlockPos c = parentSubLevel.getPlot().getCenterBlock();
+            return new Vector3d(c.getX(), c.getY(), c.getZ()).add(parentOrigin).add(localParent);
+        }
+
+        /** Plot-space joint point on the child side (its bone origin), for the child bone's current sub-level. */
+        public Vector3d anchorChild(ServerSubLevel childSubLevel) {
+            BlockPos c = childSubLevel.getPlot().getCenterBlock();
+            return new Vector3d(c.getX(), c.getY(), c.getZ()).add(childOrigin);
+        }
 
         public CompoundTag save() {
             CompoundTag tag = new CompoundTag();
             tag.putString("Parent", parent);
             tag.putString("Child", child);
-            tag.put("AnchorParent", vec(anchorParent));
-            tag.put("AnchorChild", vec(anchorChild));
+            tag.put("ParentOrigin", vec(parentOrigin));
+            tag.put("ChildOrigin", vec(childOrigin));
+            tag.put("LocalParent", vec(localParent));
             tag.put("Frame1", quat(frame1));
             tag.put("Frame2", quat(frame2));
             tag.put("LimitMin", vec(limitMin));
@@ -57,8 +75,9 @@ public final class CarcassJoints {
             return new Spec(
                     tag.getString("Parent"),
                     tag.getString("Child"),
-                    vec3d(tag.getList("AnchorParent", Tag.TAG_DOUBLE)),
-                    vec3d(tag.getList("AnchorChild", Tag.TAG_DOUBLE)),
+                    vec3d(tag.getList("ParentOrigin", Tag.TAG_DOUBLE)),
+                    vec3d(tag.getList("ChildOrigin", Tag.TAG_DOUBLE)),
+                    vec3d(tag.getList("LocalParent", Tag.TAG_DOUBLE)),
                     quat(tag.getList("Frame1", Tag.TAG_DOUBLE)),
                     quat(tag.getList("Frame2", Tag.TAG_DOUBLE)),
                     vec3f(tag.getList("LimitMin", Tag.TAG_DOUBLE)),
@@ -111,7 +130,7 @@ public final class CarcassJoints {
     @Nullable
     public static GenericConstraintHandle attach(PhysicsPipeline pipeline, ServerSubLevel parent, ServerSubLevel child, Spec spec) {
         GenericConstraintConfiguration config = new GenericConstraintConfiguration(
-                spec.anchorParent(), spec.anchorChild(), spec.frame1(), spec.frame2(),
+                spec.anchorParent(parent), spec.anchorChild(child), spec.frame1(), spec.frame2(),
                 EnumSet.of(ConstraintJointAxis.LINEAR_X, ConstraintJointAxis.LINEAR_Y, ConstraintJointAxis.LINEAR_Z));
         GenericConstraintHandle handle = pipeline.addConstraint(parent, child, config);
         if (handle == null) {

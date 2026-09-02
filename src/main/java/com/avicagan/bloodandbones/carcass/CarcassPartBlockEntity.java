@@ -37,6 +37,31 @@ public class CarcassPartBlockEntity extends BlockEntity implements BlockEntitySu
     private ResourceLocation texture = ResourceLocation.withDefaultNamespace("textures/entity/cow/cow.png");
     private final Vector3f boxMin = new Vector3f();
     private final Vector3f boxSize = new Vector3f(16, 16, 16);
+    /** Resting form: other limbs drawn by this root cell, posed relative to this bone's frame. */
+    private final java.util.List<MergedPart> merged = new java.util.ArrayList<>();
+    /** 1.0 fresh, 0.0 rotten; drives the rot tint. */
+    private float freshness = 1.0F;
+
+    public record MergedPart(String bone, String partPath, Vector3f boxMin, org.joml.Vector3f position, org.joml.Quaternionf orientation) {
+    }
+
+    public java.util.List<MergedPart> merged() {
+        return merged;
+    }
+
+    public float freshness() {
+        return freshness;
+    }
+
+    public void setFreshness(float value) {
+        this.freshness = value;
+    }
+
+    public void setMerged(java.util.List<MergedPart> parts) {
+        merged.clear();
+        merged.addAll(parts);
+        setChanged();
+    }
 
     public CarcassPartBlockEntity(BlockEntityType<?> type, BlockPos pos, BlockState state) {
         super(type, pos, state);
@@ -114,6 +139,21 @@ public class CarcassPartBlockEntity extends BlockEntity implements BlockEntitySu
             tag.putString("Texture", texture.toString());
             putVec(tag, "BoxMin", boxMin);
             putVec(tag, "BoxSize", boxSize);
+            tag.putFloat("Freshness", freshness);
+            net.minecraft.nbt.ListTag list = new net.minecraft.nbt.ListTag();
+            for (MergedPart part : merged) {
+                CompoundTag m = new CompoundTag();
+                m.putString("Bone", part.bone());
+                m.putString("Part", part.partPath());
+                putVec(m, "BoxMin", part.boxMin());
+                putVec(m, "Pos", part.position());
+                m.putFloat("QX", part.orientation().x);
+                m.putFloat("QY", part.orientation().y);
+                m.putFloat("QZ", part.orientation().z);
+                m.putFloat("QW", part.orientation().w);
+                list.add(m);
+            }
+            tag.put("Merged", list);
         }
     }
 
@@ -130,6 +170,17 @@ public class CarcassPartBlockEntity extends BlockEntity implements BlockEntitySu
             texture = ResourceLocation.parse(tag.getString("Texture"));
             getVec(tag, "BoxMin", boxMin);
             getVec(tag, "BoxSize", boxSize);
+            freshness = tag.contains("Freshness") ? tag.getFloat("Freshness") : 1.0F;
+            merged.clear();
+            for (net.minecraft.nbt.Tag t : tag.getList("Merged", net.minecraft.nbt.Tag.TAG_COMPOUND)) {
+                CompoundTag m = (CompoundTag) t;
+                Vector3f min = new Vector3f();
+                getVec(m, "BoxMin", min);
+                Vector3f pos = new Vector3f();
+                getVec(m, "Pos", pos);
+                merged.add(new MergedPart(m.getString("Bone"), m.getString("Part"), min, pos,
+                        new org.joml.Quaternionf(m.getFloat("QX"), m.getFloat("QY"), m.getFloat("QZ"), m.getFloat("QW"))));
+            }
         }
     }
 

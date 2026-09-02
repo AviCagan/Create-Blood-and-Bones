@@ -125,13 +125,7 @@ public final class CarcassAssembler {
 
             Quaterniond orientation = new Quaterniond(g).mul(new Quaterniond(bone.rotation()));
             Vector3d origin = g.transform(new Vector3d(bone.offset()).div(16.0)).add(base);
-
-            Pose3d pose = subLevel.logicalPose();
-            pose.orientation().set(orientation);
-            Vector3d current = pose.transformPosition(boneOriginInPlot(subLevel, bone), new Vector3d());
-            pose.position().add(origin.sub(current));
-            pipeline.teleport(subLevel, pose.position(), pose.orientation());
-            subLevel.updateLastPose();
+            pose(pipeline, subLevel, bone, origin, orientation);
 
             subLevels.put(bone.name(), subLevel);
             origins.put(bone.name(), origin);
@@ -149,7 +143,7 @@ public final class CarcassAssembler {
                 BloodAndBones.LOGGER.warn("Rig {}: bone {} has unknown parent {}", rig.entity(), bone.name(), bone.parent().get());
                 continue;
             }
-            CarcassJoints.Spec spec = jointSpec(parent, subLevels.get(parent.name()), bone, subLevels.get(bone.name()));
+            CarcassJoints.Spec spec = jointSpec(parent, bone);
             carcass.joints.add(spec);
             PhysicsConstraintHandle handle = CarcassJoints.attach(pipeline, subLevels.get(parent.name()), subLevels.get(bone.name()), spec);
             if (handle != null) {
@@ -208,18 +202,23 @@ public final class CarcassAssembler {
         pipeline.onStatsChanged(subLevel);
     }
 
-    private static Vector3d boneOriginInPlot(ServerSubLevel subLevel, Bone bone) {
+    public static Vector3d boneOriginInPlot(ServerSubLevel subLevel, Bone bone) {
         BlockPos anchor = subLevel.getPlot().getCenterBlock();
         Vector3f min = bone.boxMin();
         return new Vector3d(anchor.getX() - min.x / 16.0, anchor.getY() - min.y / 16.0, anchor.getZ() - min.z / 16.0);
     }
 
-    private static CarcassJoints.Spec jointSpec(Bone parent, ServerSubLevel parentSubLevel, Bone child, ServerSubLevel childSubLevel) {
-        // Child pivot expressed in the parent's part-local pixels, then in the parent's plot space.
+    /** Offset from a plot's center-block corner to the bone's origin: the box minimum corner sits on that corner. */
+    public static Vector3d originOffset(Bone bone) {
+        Vector3f min = bone.boxMin();
+        return new Vector3d(-min.x / 16.0, -min.y / 16.0, -min.z / 16.0);
+    }
+
+    public static CarcassJoints.Spec jointSpec(Bone parent, Bone child) {
+        // Child pivot expressed in the parent's part-local frame, in blocks.
         Vector3d relative = new Vector3d(child.offset()).sub(new Vector3d(parent.offset()));
         new Quaterniond(parent.rotation()).invert().transform(relative);
-        Vector3d anchorParent = boneOriginInPlot(parentSubLevel, parent).add(relative.div(16.0));
-        Vector3d anchorChild = boneOriginInPlot(childSubLevel, child);
+        relative.div(16.0);
 
         // Joint frame = the child's rest frame. Relative to the parent that is parentRot^-1 * childRot.
         Quaterniond frame1 = new Quaterniond(parent.rotation()).invert().mul(new Quaterniond(child.rotation()));
@@ -228,15 +227,28 @@ public final class CarcassAssembler {
         JointSpec joint = child.jointOrDefault();
         Vector3f min = new Vector3f(joint.minDegrees()).mul((float) (Math.PI / 180.0));
         Vector3f max = new Vector3f(joint.maxDegrees()).mul((float) (Math.PI / 180.0));
-        return new CarcassJoints.Spec(parent.name(), child.name(), anchorParent, anchorChild, frame1, frame2,
-                min, max, joint.damping(), joint.stiffness(), joint.contacts());
+        return new CarcassJoints.Spec(parent.name(), child.name(), originOffset(parent), originOffset(child), relative,
+                frame1, frame2, min, max, joint.damping(), joint.stiffness(), joint.contacts());
+    }
+
+    /**
+     * Moves a freshly assembled bone sub-level so that its bone origin lands at {@code origin} with
+     * orientation {@code orientation}.
+     */
+    public static void pose(PhysicsPipeline pipeline, ServerSubLevel subLevel, Bone bone, Vector3d origin, Quaterniond orientation) {
+        Pose3d pose = subLevel.logicalPose();
+        pose.orientation().set(orientation);
+        Vector3d current = pose.transformPosition(boneOriginInPlot(subLevel, bone), new Vector3d());
+        pose.position().add(new Vector3d(origin).sub(current));
+        pipeline.teleport(subLevel, pose.position(), pose.orientation());
+        subLevel.updateLastPose();
     }
 
     /**
      * Places the bone's block cells in the world at the staging spot and hands them to Sable.
      */
     @Nullable
-    private static ServerSubLevel assembleBone(ServerLevel level, BlockPos staging, UUID carcassId, Rig rig, Bone bone) {
+    public static ServerSubLevel assembleBone(ServerLevel level, BlockPos staging, UUID carcassId, Rig rig, Bone bone) {
         int[] cells = cellCounts(bone);
         int sx = pixels(bone.boxSize().x);
         int sy = pixels(bone.boxSize().y);
@@ -300,7 +312,7 @@ public final class CarcassAssembler {
      * them into their own plot.
      */
     @Nullable
-    private static BlockPos findStaging(ServerLevel level, BlockPos near, Rig rig) {
+    public static BlockPos findStaging(ServerLevel level, BlockPos near, Rig rig) {
         int span = 1;
         for (Bone bone : rig.bones()) {
             int[] cells = cellCounts(bone);
