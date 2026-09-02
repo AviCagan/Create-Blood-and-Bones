@@ -23,7 +23,7 @@ git checkout $Branch
 git reset --hard "origin/$Branch"   # discards local edits in this folder
 
 Write-Host "== Stopping stale Gradle daemons ==" -ForegroundColor Cyan
-.\gradlew.bat --stop | Out-Null
+.\gradlew.bat --stop
 
 if ($CleanWorld) {
     Write-Host "== Deleting dev worlds ==" -ForegroundColor Yellow
