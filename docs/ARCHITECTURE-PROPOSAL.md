@@ -438,3 +438,34 @@ diamond 16 / soul netherite 32; port block works with an adjacent wearer and wit
 pipes; chain clearance = hanging length + 1 block.
 
 **Still open**: nothing blocking. Slice 1 (cow) is in progress.
+
+## 13. Slice 1 implementation notes (what is actually built, verified by the headless game tests)
+
+- **Limb colliders.** Sable bakes a physics collider once per *block state*, with a fake level and no
+  block entity, so a limb's shape must live in the state. `carcass_part` has `size_x/y/z` (1–16) and its
+  box always fills `[0, size]` pixels from the block's minimum corner. A limb wider than 16 px on an
+  axis is split into cells along that axis that hug the same corner, so the cells form one box
+  (cow body 12×18×10 = two cells stacked on Y). 4096 states, one multipart blockstate applying an empty
+  model. Mass, friction and restitution come from `physics_block_properties/carcass_part.json`.
+- **Rig files** are generated at datagen from the vanilla baked model tree
+  (`data/bloodandbones/rig/<ns>/<mob>.json`): every part with cubes is a bone, its biggest cube is
+  the physics box, the biggest top-level bone is the torso and other top-level bones hang off it.
+  Joint limits are picked by part name and can be hand-edited afterwards.
+- **Placement math.** Vanilla draws model pixel `P` at `feet + (0, 1.501, 0) + G·P/16` with
+  `G = rotY(180° − bodyYaw)·rotZ(180°)`. Each limb sub-level gets orientation `G·partRotation` and is
+  moved so the part origin lands at `feet + (0, 1.501, 0) + G·partOffset/16`; the box minimum corner
+  sits on the corner of the plot's center block. The renderer draws the part with its pose zeroed,
+  translated by `−boxMin/16`, so the drawn cubes match the physics box exactly.
+- **Assembly.** Limb cells are placed for one tick in free air near the top of the world above the
+  mob, handed to `SubLevelAssemblyHelper.assembleBlocks`, then teleported into pose. Joints are
+  `Generic` constraints with all three linear axes locked (a ball joint), contacts between the two
+  limbs disabled, angular limits from the rig, and a light damping motor. Anchors are plot-space,
+  frames are `parentRot⁻¹·childRot` on the parent and identity on the child.
+- **Persistence.** Sable saves sub-levels but not joints. `CarcassSavedData` (per level) stores
+  bone → sub-level id plus every joint spec; the root limb's `sable$tick` re-creates joints whenever
+  the live handles are missing or invalid (world reload, chunk unload). Limbs list each other as
+  Sable connection dependencies so they load and unload together.
+- **Meat Hook kills**: `LivingDeathEvent` → assemble → cancel `LivingDropsEvent` and
+  `LivingExperienceDropEvent` → discard the entity. Babies fall through to a normal death for now.
+- **Not yet verified visually**: the renderer runs only on a real client. Everything above is
+  covered by `runGameTestServer`.

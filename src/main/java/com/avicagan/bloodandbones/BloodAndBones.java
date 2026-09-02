@@ -1,5 +1,6 @@
 package com.avicagan.bloodandbones;
 
+import com.avicagan.bloodandbones.config.BBClientConfig;
 import com.avicagan.bloodandbones.datagen.BBDatagen;
 import com.avicagan.bloodandbones.event.CarcassEvents;
 import com.avicagan.bloodandbones.gametest.BBGameTests;
@@ -13,6 +14,7 @@ import net.minecraft.resources.ResourceLocation;
 import net.neoforged.bus.api.IEventBus;
 import net.neoforged.fml.ModContainer;
 import net.neoforged.fml.common.Mod;
+import net.neoforged.fml.config.ModConfig;
 import net.neoforged.neoforge.common.NeoForge;
 import org.slf4j.Logger;
 
@@ -30,6 +32,7 @@ public class BloodAndBones {
         BBItems.register();
         BBBlockEntities.register();
 
+        modContainer.registerConfig(ModConfig.Type.CLIENT, BBClientConfig.SPEC);
         NeoForge.EVENT_BUS.register(CarcassEvents.class);
         modEventBus.addListener(BBDatagen::gatherData);
         modEventBus.addListener(BBGameTests::register);
