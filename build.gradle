@@ -104,7 +104,7 @@ dependencies {
     runtimeOnly("mezz.jei:jei-${minecraft_version}-neoforge:${jei_version}")
 
     // Dev-runtime only: not dependencies of the mod, just useful in the test client
-    runtimeOnly("maven.modrinth:cubes-without-borders:${cubes_without_borders_version}")
+    runtimeOnly("maven.modrinth:concentration:${concentration_version}") // borderless fullscreen; Cubes Without Borders ships a jar NeoForge refuses
     runtimeOnly("maven.modrinth:create-aeronautics:${create_aeronautics_version}")
 
     // Apply Create's *published* access transformers to the dev-time Minecraft jar (MDG "accessTransformers"
