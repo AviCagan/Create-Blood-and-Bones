@@ -4,12 +4,84 @@
   "texture": "minecraft:textures/entity/skeleton/skeleton.png",
   "rot_time": 48000,
   "torso": "body",
-  "attach": {"hat": "head"},
+  "attach": {
+    "hat": "head"
+  },
   "joints": {
-    "head": {"min_degrees": [-30, -60, -20], "max_degrees": [40, 60, 20], "damping": 4.0, "stiffness": 1.5, "contacts": true},
-    "right_arm": {"min_degrees": [-90, -20, -80], "max_degrees": [90, 20, 10], "damping": 3.0, "stiffness": 0.3, "contacts": false},
-    "left_arm": {"min_degrees": [-90, -20, -10], "max_degrees": [90, 20, 80], "damping": 3.0, "stiffness": 0.3, "contacts": false},
-    "right_leg": {"min_degrees": [-70, -10, -30], "max_degrees": [70, 10, 10], "damping": 3.0, "stiffness": 0.3, "contacts": false},
-    "left_leg": {"min_degrees": [-70, -10, -10], "max_degrees": [70, 10, 30], "damping": 3.0, "stiffness": 0.3, "contacts": false}
+    "head": {
+      "min_degrees": [
+        -30,
+        -60,
+        -20
+      ],
+      "max_degrees": [
+        40,
+        60,
+        20
+      ],
+      "damping": 4.0,
+      "stiffness": 1.5,
+      "contacts": true
+    },
+    "right_arm": {
+      "min_degrees": [
+        -90,
+        -20,
+        -10
+      ],
+      "max_degrees": [
+        90,
+        20,
+        80
+      ],
+      "damping": 3.0,
+      "stiffness": 0.3,
+      "contacts": false
+    },
+    "left_arm": {
+      "min_degrees": [
+        -90,
+        -20,
+        -80
+      ],
+      "max_degrees": [
+        90,
+        20,
+        10
+      ],
+      "damping": 3.0,
+      "stiffness": 0.3,
+      "contacts": false
+    },
+    "right_leg": {
+      "min_degrees": [
+        -70,
+        -10,
+        -10
+      ],
+      "max_degrees": [
+        70,
+        10,
+        30
+      ],
+      "damping": 3.0,
+      "stiffness": 0.3,
+      "contacts": false
+    },
+    "left_leg": {
+      "min_degrees": [
+        -70,
+        -10,
+        -30
+      ],
+      "max_degrees": [
+        70,
+        10,
+        10
+      ],
+      "damping": 3.0,
+      "stiffness": 0.3,
+      "contacts": false
+    }
   }
 }

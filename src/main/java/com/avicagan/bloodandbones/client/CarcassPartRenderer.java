@@ -103,9 +103,12 @@ public class CarcassPartRenderer implements BlockEntityRenderer<CarcassPartBlock
                 hidden.add(child);
             }
         }
-        drawPart(part, poseStack, buffer, packedLight, color);
-        for (ModelPart child : hidden) {
-            child.visible = true;
+        try {
+            drawPart(part, poseStack, buffer, packedLight, color);
+        } finally {
+            for (ModelPart child : hidden) {
+                child.visible = true;
+            }
         }
         for (ExtraPart extra : bone.extras()) {
             ModelPart other = resolve(location, extra.part());
@@ -123,8 +126,11 @@ public class CarcassPartRenderer implements BlockEntityRenderer<CarcassPartBlock
     private static void drawPart(ModelPart part, PoseStack poseStack, VertexConsumer buffer, int packedLight, int color) {
         PartPose saved = part.storePose();
         part.loadPose(PartPose.ZERO);
-        part.render(poseStack, buffer, packedLight, OverlayTexture.NO_OVERLAY, color);
-        part.loadPose(saved);
+        try {
+            part.render(poseStack, buffer, packedLight, OverlayTexture.NO_OVERLAY, color);
+        } finally {
+            part.loadPose(saved);
+        }
     }
 
     /** Fresh meat is untinted; as it rots it greys and greens. */
