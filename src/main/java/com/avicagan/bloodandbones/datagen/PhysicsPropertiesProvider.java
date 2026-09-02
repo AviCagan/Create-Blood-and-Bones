@@ -26,7 +26,7 @@ public class PhysicsPropertiesProvider implements DataProvider {
         root.addProperty("selector", BloodAndBones.MOD_ID + ":carcass_part");
         JsonObject defaults = new JsonObject();
         defaults.addProperty("sable:mass", RigDerivation.FLESH_DENSITY);
-        defaults.addProperty("sable:friction", 1.2);
+        defaults.addProperty("sable:friction", 0.45); // wet flesh slides; high friction makes dragging stick-slip
         defaults.addProperty("sable:restitution", 0.0);
         root.add("properties", defaults);
 

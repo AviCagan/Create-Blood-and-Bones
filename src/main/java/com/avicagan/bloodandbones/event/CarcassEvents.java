@@ -3,6 +3,7 @@ package com.avicagan.bloodandbones.event;
 import com.avicagan.bloodandbones.carcass.CarcassAssembler;
 import com.avicagan.bloodandbones.carcass.CarcassDrag;
 import com.avicagan.bloodandbones.carcass.CarcassSavedData;
+import com.avicagan.bloodandbones.carcass.ShackleHookBlockEntity;
 import dev.ryanhcode.sable.api.sublevel.SubLevelObserver;
 import dev.ryanhcode.sable.neoforge.event.ForgeSablePrePhysicsTickEvent;
 import dev.ryanhcode.sable.neoforge.event.ForgeSableSubLevelContainerReadyEvent;
@@ -76,6 +77,7 @@ public class CarcassEvents {
     @SubscribeEvent
     public static void onPrePhysicsTick(ForgeSablePrePhysicsTickEvent event) {
         CarcassDrag.physicsTick(event.getPhysicsSystem().getLevel(), event.getPhysicsSystem().getPartialPhysicsTick(), event.getTimeStep());
+        ShackleHookBlockEntity.physicsTick(event.getPhysicsSystem().getLevel(), event.getTimeStep());
     }
 
     @SubscribeEvent

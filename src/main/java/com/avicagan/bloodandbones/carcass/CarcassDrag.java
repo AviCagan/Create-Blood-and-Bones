@@ -42,7 +42,7 @@ public final class CarcassDrag {
     private static final double MAX_DISTANCE = 6.0;
     /** Spring gains per unit of carcass weight (a solid block weighs 1.0). */
     private static final double STIFFNESS = 120.0;
-    private static final double DAMPING = 16.0;
+    private static final double DAMPING = 24.0; // about critical damping for the spring above, so no bounce
     private static final double MAX_FORCE = 60.0;
     private static final net.minecraft.resources.ResourceLocation SLOWDOWN_ID = BloodAndBones.asResource("dragging");
 

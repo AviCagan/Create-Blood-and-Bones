@@ -35,6 +35,9 @@ public class ShackleHookRenderer implements BlockEntityRenderer<ShackleHookBlock
         Vector3d limb = pose.transformPosition(hook.hookedAnchor(), new Vector3d());
         BlockPos pos = hook.getBlockPos();
         Vec3 tip = ShackleHookBlock.tip(pos, hook.getBlockState());
+        if (tip.distanceToSqr(limb.x, limb.y, limb.z) < 0.3 * 0.3) {
+            return; // the neck sits on the hook itself; no chain to draw
+        }
         poseStack.pushPose();
         poseStack.translate(-pos.getX(), -pos.getY(), -pos.getZ());
         DragRenderer.drawChainSegment(poseStack, buffers, tip, new Vec3(limb.x, limb.y, limb.z));

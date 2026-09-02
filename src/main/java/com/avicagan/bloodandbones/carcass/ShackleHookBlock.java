@@ -33,7 +33,13 @@ import org.jetbrains.annotations.Nullable;
  * A hook hanging from a ceiling. Drag a carcass up to it and right-click the hook with the Meat Hook to
  * hang the hooked limb from it; right-click again to let it down. The carcass stays a ragdoll while hanging.
  */
-public class ShackleHookBlock extends BaseEntityBlock {
+public class ShackleHookBlock extends BaseEntityBlock implements dev.ryanhcode.sable.api.block.BlockSubLevelCollisionShape {
+    /** Hanging carcasses pass through the hook itself; only the player collides with it. */
+    @Override
+    public VoxelShape getSubLevelCollisionShape(BlockGetter blockGetter, BlockState state) {
+        return net.minecraft.world.phys.shapes.Shapes.empty();
+    }
+
     /** The block face this hook hangs from: UP means it hangs from the ceiling above. */
     public static final DirectionProperty FACING = BlockStateProperties.FACING;
 
@@ -100,9 +106,9 @@ public class ShackleHookBlock extends BaseEntityBlock {
     /** Where the carcass hangs from, in world space. */
     public static Vec3 tip(BlockPos pos, BlockState state) {
         return switch (state.getValue(FACING)) {
-            case UP -> Vec3.atLowerCornerOf(pos).add(0.5, 0.25, 0.5);
+            case UP -> Vec3.atLowerCornerOf(pos).add(0.5, 0.2, 0.5);
             case DOWN -> Vec3.atLowerCornerOf(pos).add(0.5, 0.75, 0.5);
-            default -> Vec3.atLowerCornerOf(pos).add(0.5, 0.3, 0.5);
+            default -> Vec3.atLowerCornerOf(pos).add(0.5, 0.25, 0.5);
         };
     }
 

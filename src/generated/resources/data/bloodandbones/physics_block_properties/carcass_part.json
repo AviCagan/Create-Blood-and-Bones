@@ -12290,7 +12290,7 @@
     }
   },
   "properties": {
-    "sable:friction": 1.2,
+    "sable:friction": 0.45,
     "sable:mass": 1.0,
     "sable:restitution": 0.0
   },

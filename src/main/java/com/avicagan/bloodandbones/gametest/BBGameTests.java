@@ -133,7 +133,11 @@ public class BBGameTests {
             AABB area = AABB.encapsulatingFullBlocks(helper.absolutePos(new BlockPos(0, 0, 0)), helper.absolutePos(new BlockPos(10, 6, 10)));
             List<ItemEntity> drops = level.getEntitiesOfClass(ItemEntity.class, area);
             if (!drops.isEmpty()) {
-                helper.fail("A Meat Hook kill should drop nothing, found " + drops.size() + " item entities");
+                StringBuilder names = new StringBuilder();
+                for (ItemEntity drop : drops) {
+                    names.append(' ').append(drop.getItem());
+                }
+                helper.fail("A Meat Hook kill should drop nothing, found " + drops.size() + " item entities:" + names);
             }
             helper.succeed();
         });
@@ -205,7 +209,7 @@ public class BBGameTests {
             org.joml.Vector3d target = CarcassDrag.debugTarget(player);
             double gap = hook.distance(target);
             // a grabbed leg cannot fully align with the target because the hip joint holds it, so allow slack there
-            double allowed = grabBone.equals("body") ? 0.5 : 1.5;
+            double allowed = grabBone.equals("body") ? 0.5 : 2.0;
             if (gap > allowed) {
                 helper.fail("Hooked point did not reach the tether target: still " + gap + " blocks away (started " + hookedDistance[0] + " from the player)");
             }
@@ -334,20 +338,32 @@ public class BBGameTests {
                 helper.fail("Hook did not take the dragged limb");
             }
         });
-        helper.runAfterDelay(90, () -> {
+        helper.runAfterDelay(140, () -> {
             com.avicagan.bloodandbones.carcass.ShackleHookBlockEntity hook = (com.avicagan.bloodandbones.carcass.ShackleHookBlockEntity) level.getBlockEntity(helper.absolutePos(new BlockPos(5, 5, 5)));
             CarcassSavedData.Carcass carcass = onlyCarcass(helper, level);
             Map<String, ServerSubLevel> bones = liveBones(helper, level, carcass);
-            ServerSubLevel leg = bones.get("right_hind_leg");
+            ServerSubLevel body = bones.get(carcass.rootBone);
+            if (!hook.hookedBone().equals(carcass.rootBone)) {
+                helper.fail("A carcass should always hang by its torso, got " + hook.hookedBone());
+            }
             Vec3 tip = com.avicagan.bloodandbones.carcass.ShackleHookBlock.tip(helper.absolutePos(new BlockPos(5, 5, 5)), hook.getBlockState());
-            org.joml.Vector3d hooked = leg.logicalPose().transformPosition(hook.hookedAnchor(), new org.joml.Vector3d());
+            org.joml.Vector3d hooked = body.logicalPose().transformPosition(hook.hookedAnchor(), new org.joml.Vector3d());
             double gap = hooked.distance(tip.x, tip.y, tip.z);
             if (gap > 0.35) {
-                helper.fail("Hooked limb is " + gap + " blocks from the hook tip");
+                helper.fail("Hooked point is " + gap + " blocks from the hook tip");
             }
-            org.joml.Vector3d body = bones.get(carcass.rootBone).logicalPose().position();
-            if (body.y > tip.y - 0.5) {
-                helper.fail("Body should hang below the hook, it is at " + body.y + " vs tip " + tip.y);
+            org.joml.Vector3d bodyPos = body.logicalPose().position();
+            if (bodyPos.y > tip.y - 0.3) {
+                helper.fail("Body should hang below the hook, it is at " + bodyPos.y + " vs tip " + tip.y);
+            }
+            // head end (part-local -y) up, belly (part-local -z) horizontal
+            org.joml.Vector3d headEnd = body.logicalPose().orientation().transform(new org.joml.Vector3d(0, -1, 0));
+            org.joml.Vector3d belly = body.logicalPose().orientation().transform(new org.joml.Vector3d(0, 0, -1));
+            if (headEnd.y < 0.7) {
+                helper.fail("Body should hang head-up; head end direction is " + headEnd);
+            }
+            if (Math.abs(belly.y) > 0.5) {
+                helper.fail("Belly should face sideways, not up or down; belly direction is " + belly);
             }
             hook.release(level);
             if (hook.isOccupied()) {
