@@ -1,0 +1,8 @@
+{
+  "selector": "bloodandbones:carcass_part",
+  "properties": {
+    "sable:mass": 4.0,
+    "sable:friction": 1.2,
+    "sable:restitution": 0.0
+  }
+}
