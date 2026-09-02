@@ -374,6 +374,18 @@ through `BlockStressValues.IMPACTS.registerProvider(...)` backed by our own Catn
 | Surgery Table | One block, attachment items swap a blockstate and the recipe set. Its recipes implement `IAssemblyRecipe` and the table calls `SequencedAssemblyRecipe.getRecipe(...)` first, so minion assembly and organ extraction can be sequenced-assembly chains. Player surgery UI later. |
 | Specimen Jar, Steel Table/Rack, wall Meat Hook | Plain decorative blocks; the wall hook renders the carcass item/part with the same renderer as the entity. |
 
+**Filters.** Create's plain filter compares item type only and ignores data components (verified), so
+"pull the hide off a mixed line" cannot key on carcass state through a plain filter. Two measures:
+one carcass item per archetype × weight class (which the chain renderer needs anyway, §6), and custom
+item attributes registered in Create's attribute registry (`has part: hide`, `archetype: quadruped`,
+`quality: intact`, `fresh`) so attribute filters and list filters with "respect NBT" work on every
+machine and on Create's own funnels and frogports.
+
+**Decoration.** Create 6 has no "cladding"; the visual wrap families are casings (connected-texture
+blocks) and palettes. Blood-stained variants are new casing blocks built with Create's casing builder
+and our own connected-texture sprites, plus a small blood-stained palette family generated the way
+Create generates its stone palettes.
+
 Three processing paths stay distinct by yield tables, not by code paths.
 
 ---
@@ -403,8 +415,11 @@ Three processing paths stay distinct by yield tables, not by code paths.
 A `ConfigBool` in a CLIENT `ConfigBase` (Create's pattern), read only from client code. Every
 renderer, particle spawn and sound call goes through one `Presentation` facade
 (`Presentation.gore()` / `Presentation.blood(fluid)` / `Presentation.lang(key)`), which picks the organic
-or mechanical variant. Lang keys are duplicated under a `bloodless.` prefix and resolved at display
-time. No logic path ever branches on it. Wired into the first vertical slice so the facade exists
+or mechanical variant. Verified: all of Create's particle spawning is client-side already, so
+particles and sounds need no server involvement. Names and descriptions have no Create hook: our items
+override their display name client-side and our tooltip modifier re-reads the toggle (Create's own
+modifier caches per language, so we ship our own). Lang keys are duplicated under a `bloodless.`
+prefix. No logic path ever branches on it. Wired into the first vertical slice so the facade exists
 before any content.
 
 ---
@@ -493,8 +508,10 @@ Content decisions that affect data formats
 14. Spit Roast: integrated crank (turn the block itself) as proposed, or a plain shaft consumer that
     works with Create's Hand Crank block?
 15. Gut Chain: texture swap on the conveyor's chain (a mixin) or physical decorations riding the chain?
+16. Bloodless mode: client-only toggle (each player chooses) as proposed, or additionally a server
+    gamerule that forces it for everyone on a server?
 
 Process
-16. The verified build skeleton (`build.gradle`, mod class, mods.toml) is committed alongside this
-    document so slice 1 starts from something that compiles; the mod licence in `gradle.properties`
-    is a placeholder (All Rights Reserved) until you pick one.
+17. Mod licence: `gradle.properties` carries a placeholder (All Rights Reserved) until you pick one.
+    The verified build skeleton (`build.gradle`, mod class, mods.toml) is committed alongside this
+    document so slice 1 starts from something that compiles.
