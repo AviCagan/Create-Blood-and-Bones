@@ -158,7 +158,14 @@ The Shackle Hook is the transition point in both directions.
 - Ordinary Create contraption (gantry, piston, bearing, train): contact/friction carry, verified to be
   what Sable already does; when the carcass rests on one for N ticks we freeze it *parented* to the
   contraption block it sits on (poses stored contraption-local), so it survives being moved far away
-  and wakes when the contraption stops or something touches it.
+  and wakes when the contraption stops or something touches it. Create's collider also carries free
+  entities standing on a contraption, provided the entity has a normal push reaction (verified).
+- A carcass hanging on a hook that is picked up by a contraption: Create has **no API to attach an
+  entity to a contraption block** (only seats, which require a `SeatBlock`). So on pickup the hook's
+  block entity serialises the carcass record plus its last pose into its own NBT and the entity is
+  removed; the hook's renderer draws it from that data (block entity renderers do run inside
+  contraptions, verified), and the entity is re-spawned when the contraption disassembles. This is the
+  same "entity ↔ data" transition the Shackle Hook already does for chains.
 - Aeronautics simulated contraption: it is a Sable sub-level; boxes collide with it natively, and a
   hook on it can joint to it directly. The carcass entity needs the `sable:retain_in_sub_level` tag so
   it is not kicked out of the plot when hung there.
@@ -404,17 +411,29 @@ before any content.
 
 ## 10. Contraption safety (proposed checklist, verified against Create 6)
 
-- Every block: no full-cube assumptions in `getShape`; `MovementBehaviour` registered via
-  `.onRegister(movementBehaviour(...))` where the block does something while moving; block entity data
-  round-trips through `write/read` with `clientPacket` handled; `MountedItemStorageType` /
-  `MountedFluidStorageType` registered for blocks with inventories/tanks so vaults, hooks and racks keep
-  contents on contraptions.
+- Every block: no full-cube assumptions in `getShape`; shape methods must work with Create's wrapper
+  level and no block entity; `MovementBehaviour` registered via `.onRegister(movementBehaviour(...))`
+  where the block does something while moving; block entity data round-trips through `write/read`
+  with `clientPacket` handled (inside a contraption the client only sees the update tag, and there is
+  no server-side block entity at all, so nothing processes while moving unless it is an actor).
+- Blocks with an empty collision shape (wall Meat Hook, Gut Chain, Specimen Jar) must be tagged
+  `create:movable_empty_collider` or contraptions leave them behind; wall/ceiling-mounted blocks get
+  `create:brittle` plus an attached-check toward their support face; blocks with custom orientation
+  properties implement `TransformableBlock` or they mis-rotate on bearings.
+- Storage: any block exposing an item handler is silently mounted by Create's fallback storage and
+  becomes contraption inventory; machines and hooks are tagged
+  `create:fallback_mounted_storage_blacklist`, and tanks (Bleeding Rack, blood tank) register a
+  `MountedFluidStorageType` because there is no fluid fallback.
 - Carcass items on contraptions are items in mounted storage: nothing special.
-- Hooks with a hanging carcass entity inside a contraption: entity parented to the contraption entity
-  (Create's seat pattern), physics frozen while moving, re-woken on disassembly.
+- Hooks with a hanging carcass inside a contraption: carcass becomes hook data (see §3.3), rendered by
+  the hook's renderer, re-spawned on disassembly. Hooks are never tagged `create:seats`.
+- Contraption actors that cut or hook mobs (a mounted Guillotine or Meat Hook) subclass Create's
+  `BlockBreakingMovementBehaviour` for its entity-damage path, which Sable already patches for
+  sub-levels.
 - Our own blocks on Aeronautics sub-levels: implement `BlockEntitySubLevelActor` only where a block
   needs per-physics-tick behaviour (hooks), ship `physics_block_properties` for mass, and route any
   world-position logic through `Sable.HELPER.projectOutOfSubLevel`.
+- Creative tab: Create's tabs only list Create's own registrate entries, so the mod ships its own tab.
 
 ---
 
