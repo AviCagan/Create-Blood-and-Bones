@@ -87,8 +87,8 @@
         10,
         15
       ],
-      "damping": 4.0,
-      "stiffness": 0.3,
+      "damping": 3.0,
+      "stiffness": 0.1,
       "contacts": false
     },
     "right_hind_leg": {
@@ -102,8 +102,8 @@
         10,
         15
       ],
-      "damping": 4.0,
-      "stiffness": 0.3,
+      "damping": 3.0,
+      "stiffness": 0.1,
       "contacts": false
     },
     "left_front_leg": {
@@ -117,8 +117,8 @@
         10,
         15
       ],
-      "damping": 4.0,
-      "stiffness": 0.3,
+      "damping": 3.0,
+      "stiffness": 0.1,
       "contacts": false
     },
     "right_front_leg": {
@@ -132,8 +132,8 @@
         10,
         15
       ],
-      "damping": 4.0,
-      "stiffness": 0.3,
+      "damping": 3.0,
+      "stiffness": 0.1,
       "contacts": false
     }
   },

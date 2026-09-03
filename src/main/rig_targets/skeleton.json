@@ -35,7 +35,7 @@
         80
       ],
       "damping": 3.0,
-      "stiffness": 0.3,
+      "stiffness": 0.1,
       "contacts": false
     },
     "left_arm": {
@@ -50,7 +50,7 @@
         10
       ],
       "damping": 3.0,
-      "stiffness": 0.3,
+      "stiffness": 0.1,
       "contacts": false
     },
     "right_leg": {
@@ -65,7 +65,7 @@
         30
       ],
       "damping": 3.0,
-      "stiffness": 0.3,
+      "stiffness": 0.1,
       "contacts": false
     },
     "left_leg": {
@@ -80,7 +80,7 @@
         10
       ],
       "damping": 3.0,
-      "stiffness": 0.3,
+      "stiffness": 0.1,
       "contacts": false
     }
   }

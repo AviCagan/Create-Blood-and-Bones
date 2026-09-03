@@ -286,7 +286,7 @@ public final class RigDerivation {
         if (lower.contains("leg") || lower.contains("arm")) {
             // limbs swing fore and aft, barely sideways; damped so they settle instead of flailing, and with
             // almost no pull back toward standing, so a dead animal collapses instead of standing dead
-            return new JointSpec(new Vector3f(-60, -10, -10), new Vector3f(60, 10, 10), 4.0F, 0.3F, false);
+            return new JointSpec(new Vector3f(-75, -10, -15), new Vector3f(75, 10, 15), 3.0F, 0.1F, false);
         }
         if (lower.contains("tail") || lower.contains("wing") || lower.contains("ear")) {
             return new JointSpec(new Vector3f(-45, -45, -45), new Vector3f(45, 45, 45), 2.0F, 1.0F, false);

@@ -42,7 +42,7 @@
         -2.09
       ],
       "joint": {
-        "damping": 4.0,
+        "damping": 3.0,
         "max_degrees": [
           75.0,
           10.0,
@@ -53,7 +53,7 @@
           -10.0,
           -15.0
         ],
-        "stiffness": 0.3
+        "stiffness": 0.1
       },
       "name": "right_front_leg",
       "offset": [
@@ -82,7 +82,7 @@
         -1.1
       ],
       "joint": {
-        "damping": 4.0,
+        "damping": 3.0,
         "max_degrees": [
           75.0,
           10.0,
@@ -93,7 +93,7 @@
           -10.0,
           -15.0
         ],
-        "stiffness": 0.3
+        "stiffness": 0.1
       },
       "name": "right_hind_leg",
       "offset": [
@@ -170,7 +170,7 @@
         -1.1
       ],
       "joint": {
-        "damping": 4.0,
+        "damping": 3.0,
         "max_degrees": [
           75.0,
           10.0,
@@ -181,7 +181,7 @@
           -10.0,
           -15.0
         ],
-        "stiffness": 0.3
+        "stiffness": 0.1
       },
       "name": "left_hind_leg",
       "offset": [
@@ -250,7 +250,7 @@
         -2.09
       ],
       "joint": {
-        "damping": 4.0,
+        "damping": 3.0,
         "max_degrees": [
           75.0,
           10.0,
@@ -261,7 +261,7 @@
           -10.0,
           -15.0
         ],
-        "stiffness": 0.3
+        "stiffness": 0.1
       },
       "name": "left_front_leg",
       "offset": [

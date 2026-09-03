@@ -151,6 +151,15 @@ public class DragRenderer {
         poseStack.popPose();
     }
 
+    /** A carcass is meat, not a block: no cube outline when you look at it. */
+    @SubscribeEvent
+    public static void onBlockHighlight(net.neoforged.neoforge.client.event.RenderHighlightEvent.Block event) {
+        net.minecraft.client.multiplayer.ClientLevel level = net.minecraft.client.Minecraft.getInstance().level;
+        if (level != null && level.getBlockState(event.getTarget().getBlockPos()).getBlock() instanceof com.avicagan.bloodandbones.carcass.CarcassPartBlock) {
+            event.setCanceled(true);
+        }
+    }
+
     @SubscribeEvent
     public static void onLogout(ClientPlayerNetworkEvent.LoggingOut event) {
         ClientDragState.clear();

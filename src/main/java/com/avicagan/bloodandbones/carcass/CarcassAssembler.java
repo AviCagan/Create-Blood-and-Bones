@@ -90,6 +90,15 @@ public final class CarcassAssembler {
      */
     @Nullable
     public static CarcassSavedData.Carcass assemble(LivingEntity entity, @Nullable Entity attacker) {
+        return assemble(entity, attacker, true);
+    }
+
+    /**
+     * @param drawNow whether the cells are told what to draw right away; a handover leaves them blank until
+     *                the dead mob goes, so the client never sees both at once
+     */
+    @Nullable
+    public static CarcassSavedData.Carcass assemble(LivingEntity entity, @Nullable Entity attacker, boolean drawNow) {
         if (!(entity.level() instanceof ServerLevel level)) {
             return null;
         }
@@ -124,7 +133,7 @@ public final class CarcassAssembler {
         Map<String, ServerSubLevel> subLevels = new LinkedHashMap<>();
         Map<String, Vector3d> origins = new LinkedHashMap<>();
         for (Bone bone : rig.bones()) {
-            ServerSubLevel subLevel = assembleBone(level, staging, carcassId, rig, bone, appearance);
+            ServerSubLevel subLevel = assembleBone(level, staging, carcassId, rig, bone, appearance, drawNow);
             if (subLevel == null) {
                 for (ServerSubLevel created : subLevels.values()) {
                     container.removeSubLevel(created, SubLevelRemovalReason.REMOVED);
@@ -275,6 +284,11 @@ public final class CarcassAssembler {
      */
     @Nullable
     public static ServerSubLevel assembleBone(ServerLevel level, BlockPos staging, UUID carcassId, Rig rig, Bone bone, CarcassLook look) {
+        return assembleBone(level, staging, carcassId, rig, bone, look, true);
+    }
+
+    @Nullable
+    public static ServerSubLevel assembleBone(ServerLevel level, BlockPos staging, UUID carcassId, Rig rig, Bone bone, CarcassLook look, boolean drawNow) {
         int[] cells = cellCounts(bone);
         int sx = pixels(bone.boxSize().x);
         int sy = pixels(bone.boxSize().y);
@@ -299,19 +313,8 @@ public final class CarcassAssembler {
             if (subLevel != null && !subLevel.isRemoved()) {
                 // the cells are configured only now that they are in their plot: for the tick they spend at
                 // the staging spot high above the mob nothing must draw there
-                BlockPos center = subLevel.getPlot().getCenterBlock();
-                for (int i = 0; i < cells[0]; i++) {
-                    for (int j = 0; j < cells[1]; j++) {
-                        for (int k = 0; k < cells[2]; k++) {
-                            if (level.getBlockEntity(center.offset(i, j, k)) instanceof CarcassPartBlockEntity be) {
-                                if (i == 0 && j == 0 && k == 0) {
-                                    be.configureRoot(carcassId, rig, bone, look);
-                                } else {
-                                    be.configureFiller(carcassId, bone);
-                                }
-                            }
-                        }
-                    }
+                if (drawNow) {
+                    configureCells(level, subLevel, carcassId, rig, bone, look, false);
                 }
                 bindColliders(level, subLevel);
             }
@@ -328,6 +331,44 @@ public final class CarcassAssembler {
             return null;
         }
         return subLevel;
+    }
+
+    /** Tell a limb's cells which carcass, bone and look they are; optionally push that to clients now. */
+    public static void configureCells(ServerLevel level, ServerSubLevel subLevel, UUID carcassId, Rig rig, Bone bone, CarcassLook look, boolean notify) {
+        int[] cells = cellCounts(bone);
+        BlockPos center = subLevel.getPlot().getCenterBlock();
+        for (int i = 0; i < cells[0]; i++) {
+            for (int j = 0; j < cells[1]; j++) {
+                for (int k = 0; k < cells[2]; k++) {
+                    BlockPos pos = center.offset(i, j, k);
+                    if (level.getBlockEntity(pos) instanceof CarcassPartBlockEntity be) {
+                        if (i == 0 && j == 0 && k == 0) {
+                            be.configureRoot(carcassId, rig, bone, look);
+                        } else {
+                            be.configureFiller(carcassId, bone);
+                        }
+                        if (notify) {
+                            level.sendBlockUpdated(pos, level.getBlockState(pos), level.getBlockState(pos), Block.UPDATE_CLIENTS);
+                        }
+                    }
+                }
+            }
+        }
+    }
+
+    /** Configure every limb of a carcass whose cells were left blank at assembly. */
+    public static void configureCells(ServerLevel level, CarcassSavedData.Carcass carcass) {
+        ServerSubLevelContainer container = SubLevelContainer.getContainer(level);
+        Rig rig = RigManager.forEntity(carcass.entity).orElse(null);
+        if (container == null || rig == null) {
+            return;
+        }
+        for (Map.Entry<String, UUID> entry : carcass.bones.entrySet()) {
+            Bone bone = rig.bone(entry.getKey()).orElse(null);
+            if (bone != null && container.getSubLevel(entry.getValue()) instanceof ServerSubLevel subLevel && !subLevel.isRemoved()) {
+                configureCells(level, subLevel, carcass.id, rig, bone, carcass.look, true);
+            }
+        }
     }
 
     private static int pixels(float size) {

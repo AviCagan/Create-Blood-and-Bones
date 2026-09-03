@@ -89,7 +89,7 @@ public class CarcassEvents {
             event.setCanceled(true);
             return;
         }
-        CarcassSavedData.Carcass carcass = CarcassAssembler.assemble(entity, killer);
+        CarcassSavedData.Carcass carcass = CarcassAssembler.assemble(entity, killer, false);
         if (carcass != null) {
             // the mob stays a few ticks, frozen, so the client never sees an empty gap before the carcass
             CARCASS_DEATHS.add(entity.getUUID());
