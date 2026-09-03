@@ -65,6 +65,9 @@ public class CarcassSavedData extends SavedData {
         public final List<net.minecraft.core.BlockPos> restCells = new ArrayList<>();
         /** consecutive ticks the whole carcass has been still, not saved */
         public int stillTicks;
+        /** cleaver cuts per limb, and limbs whose joint to the body has been cut through */
+        public final Map<String, Integer> cuts = new LinkedHashMap<>();
+        public final java.util.Set<String> severed = new java.util.LinkedHashSet<>();
         /** the limb the killing blow landed on, for the shove; not saved */
         @Nullable
         public String hitBone;
@@ -124,6 +127,14 @@ public class CarcassSavedData extends SavedData {
             }
             tag.put("Joints", jointList);
             tag.putBoolean("Resting", resting);
+            CompoundTag cutTag = new CompoundTag();
+            cuts.forEach(cutTag::putInt);
+            tag.put("Cuts", cutTag);
+            ListTag severedList = new ListTag();
+            for (String bone : severed) {
+                severedList.add(net.minecraft.nbt.StringTag.valueOf(bone));
+            }
+            tag.put("Severed", severedList);
             tag.putFloat("Freshness", freshness);
             tag.putLong("RotClock", rotClock);
             tag.putString("Texture", look.texture().toString());
@@ -164,6 +175,13 @@ public class CarcassSavedData extends SavedData {
                 }
             }
             carcass.resting = tag.getBoolean("Resting");
+            CompoundTag cutTag = tag.getCompound("Cuts");
+            for (String key : cutTag.getAllKeys()) {
+                carcass.cuts.put(key, cutTag.getInt(key));
+            }
+            for (Tag t : tag.getList("Severed", Tag.TAG_STRING)) {
+                carcass.severed.add(t.getAsString());
+            }
             carcass.freshness = tag.contains("Freshness") ? tag.getFloat("Freshness") : 1.0F;
             carcass.rotClock = tag.contains("RotClock") ? tag.getLong("RotClock") : -1L;
             if (tag.contains("Texture")) {
@@ -271,7 +289,7 @@ public class CarcassSavedData extends SavedData {
             return;
         }
         // joints saved by an older build could not be read; with none at all jointsValid() would say fine
-        if (torso && carcass.joints.size() < carcass.bones.size() - 1) {
+        if (torso && carcass.joints.size() < carcass.bones.size() - 1 - carcass.severed.size()) {
             rebuildJointSpecs(carcass);
         }
         if (carcass.jointsValid()) {
@@ -319,7 +337,8 @@ public class CarcassSavedData extends SavedData {
         java.util.List<String> had = new ArrayList<>(carcass.bones.keySet());
         carcass.joints.clear();
         for (com.avicagan.bloodandbones.carcass.rig.Bone bone : rig.bones()) {
-            if (bone.parent().isEmpty() || !carcass.bones.containsKey(bone.name()) || !carcass.bones.containsKey(bone.parent().get())) {
+            if (bone.parent().isEmpty() || !carcass.bones.containsKey(bone.name()) || !carcass.bones.containsKey(bone.parent().get())
+                    || carcass.severed.contains(bone.name())) {
                 continue;
             }
             rig.bone(bone.parent().get()).ifPresent(parent -> carcass.joints.add(CarcassAssembler.jointSpec(parent, bone)));

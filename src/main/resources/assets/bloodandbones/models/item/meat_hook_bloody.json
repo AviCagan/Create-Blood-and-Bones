@@ -3,7 +3,8 @@
   "textures": {
     "steel": "bloodandbones:item/meat_hook_steel",
     "dark": "bloodandbones:item/meat_hook_steel_dark",
-    "point": "bloodandbones:item/meat_hook_point_clean",
+    "gore": "bloodandbones:item/meat_hook_gore",
+    "point": "bloodandbones:item/meat_hook_point",
     "particle": "bloodandbones:item/meat_hook_steel"
   },
   "elements": [
@@ -148,22 +149,22 @@
       ],
       "faces": {
         "north": {
-          "texture": "#steel"
+          "texture": "#gore"
         },
         "south": {
-          "texture": "#steel"
+          "texture": "#gore"
         },
         "east": {
-          "texture": "#steel"
+          "texture": "#gore"
         },
         "west": {
-          "texture": "#steel"
+          "texture": "#gore"
         },
         "up": {
-          "texture": "#steel"
+          "texture": "#gore"
         },
         "down": {
-          "texture": "#steel"
+          "texture": "#gore"
         }
       }
     },
@@ -212,22 +213,22 @@
       ],
       "faces": {
         "north": {
-          "texture": "#steel"
+          "texture": "#gore"
         },
         "south": {
-          "texture": "#steel"
+          "texture": "#gore"
         },
         "east": {
-          "texture": "#steel"
+          "texture": "#gore"
         },
         "west": {
-          "texture": "#steel"
+          "texture": "#gore"
         },
         "up": {
-          "texture": "#steel"
+          "texture": "#gore"
         },
         "down": {
-          "texture": "#steel"
+          "texture": "#gore"
         }
       },
       "rotation": {
@@ -253,22 +254,22 @@
       ],
       "faces": {
         "north": {
-          "texture": "#steel"
+          "texture": "#gore"
         },
         "south": {
-          "texture": "#steel"
+          "texture": "#gore"
         },
         "east": {
-          "texture": "#steel"
+          "texture": "#gore"
         },
         "west": {
-          "texture": "#steel"
+          "texture": "#gore"
         },
         "up": {
-          "texture": "#steel"
+          "texture": "#gore"
         },
         "down": {
-          "texture": "#steel"
+          "texture": "#gore"
         }
       },
       "rotation": {
@@ -294,22 +295,22 @@
       ],
       "faces": {
         "north": {
-          "texture": "#steel"
+          "texture": "#gore"
         },
         "south": {
-          "texture": "#steel"
+          "texture": "#gore"
         },
         "east": {
-          "texture": "#steel"
+          "texture": "#gore"
         },
         "west": {
-          "texture": "#steel"
+          "texture": "#gore"
         },
         "up": {
-          "texture": "#steel"
+          "texture": "#gore"
         },
         "down": {
-          "texture": "#steel"
+          "texture": "#gore"
         }
       },
       "rotation": {
@@ -335,22 +336,22 @@
       ],
       "faces": {
         "north": {
-          "texture": "#steel"
+          "texture": "#gore"
         },
         "south": {
-          "texture": "#steel"
+          "texture": "#gore"
         },
         "east": {
-          "texture": "#steel"
+          "texture": "#gore"
         },
         "west": {
-          "texture": "#steel"
+          "texture": "#gore"
         },
         "up": {
-          "texture": "#steel"
+          "texture": "#gore"
         },
         "down": {
-          "texture": "#steel"
+          "texture": "#gore"
         }
       },
       "rotation": {

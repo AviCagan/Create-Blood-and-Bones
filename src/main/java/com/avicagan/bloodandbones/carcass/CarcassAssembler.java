@@ -356,6 +356,20 @@ public final class CarcassAssembler {
         }
     }
 
+    /** World position of a bone's body (its centre of mass), or null if it is not loaded. */
+    @Nullable
+    public static Vector3d boneWorldPosition(ServerLevel level, CarcassSavedData.Carcass carcass, @Nullable String bone) {
+        ServerSubLevelContainer container = SubLevelContainer.getContainer(level);
+        UUID id = bone == null ? null : carcass.bones.get(bone);
+        if (id == null) {
+            id = carcass.bones.get(carcass.rootBone);
+        }
+        if (container == null || id == null || !(container.getSubLevel(id) instanceof ServerSubLevel subLevel) || subLevel.isRemoved()) {
+            return null;
+        }
+        return new Vector3d(subLevel.logicalPose().position());
+    }
+
     /** Configure every limb of a carcass whose cells were left blank at assembly. */
     public static void configureCells(ServerLevel level, CarcassSavedData.Carcass carcass) {
         ServerSubLevelContainer container = SubLevelContainer.getContainer(level);

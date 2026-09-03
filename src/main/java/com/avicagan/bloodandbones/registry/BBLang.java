@@ -22,6 +22,14 @@ public class BBLang {
                 "PH: Mount the Shackle Hook under a ceiling or on a wall. Drag a carcass close and click the hook with the Meat Hook to hang it.");
         BloodAndBones.REGISTRATE.addRawLang("bloodandbones.jei.shackle_hook.2",
                 "PH: Hanging carcasses stay ragdolls, so they swing, and will be routable along chain conveyors.");
+        BloodAndBones.REGISTRATE.addRawLang("bloodandbones.jei.cleaver.1",
+                "PH: The Cleaver takes a carcass apart. Right-click a limb three times to cut through the joint; the limb comes free as its own piece.");
+        BloodAndBones.REGISTRATE.addRawLang("bloodandbones.jei.cleaver.2",
+                "PH: Severed limbs can still be hooked and dragged on their own. The body cannot be cut through, only its limbs.");
+        item("cleaver",
+                "PH: Right-click a limb of a carcass to cut into it. Three cuts sever the joint and the limb comes off.",
+                "PH: The body itself cannot be cut through.",
+                "PH: A severed limb is its own piece: hook it, drag it, hang it.");
         item("meat_hook",
                 "PH: Kill an animal with this and it leaves a whole carcass instead of loot. Right-click a carcass to drag it, right-click again to let go.",
                 "PH: Dragging slows you down. Heavier animals slow you more.",

@@ -171,6 +171,7 @@ public final class CarcassDrag {
         DRAGS.put(player.getUUID(), drag);
         applySlowdown(player, dragPenalty(carcass, weight));
         broadcast(level, sync(drag));
+        Blood.burst(level, serverSubLevel.logicalPose().transformPosition(anchor, new Vector3d()), 10);
         return true;
     }
 
@@ -224,6 +225,9 @@ public final class CarcassDrag {
         if (level.getGameTime() % 40 == 0) {
             broadcast(level, sync(drag));
         }
+        if (level.getGameTime() % 6 == 0) {
+            Blood.drip(level, subLevel.logicalPose().transformPosition(drag.anchorPlot, new Vector3d()));
+        }
     }
 
     /** Called every physics substep with the player's position interpolated to the substep. */
@@ -248,6 +252,7 @@ public final class CarcassDrag {
                 continue; // no pulling the ground out from under your own feet, or riding the carcass
             }
             pull(drag, subLevel, player, partial, timeStep, physics);
+            aim(level, drag, subLevel, player, partial, timeStep, physics);
             physics.getPipeline().wakeUp(subLevel);
         }
     }
@@ -313,6 +318,53 @@ public final class CarcassDrag {
         Vector3d impulse = force.mul(timeStep);
         pose.orientation().transformInverse(impulse);
         subLevel.getOrCreateQueuedForceGroup(ForceGroups.PROPULSION.get()).applyAndRecordPointForce(drag.anchorPlot, impulse);
+    }
+
+    /** Torque per unit mass turning the hooked limb to point at the hand, and killing its swing. */
+    private static final double AIM_STIFFNESS = 25.0;
+    private static final double AIM_DAMPING = 6.0;
+
+    /**
+     * The grabbed limb leads: a torque spring turns it so the line from its own joint to the hook points at
+     * the tether target, and heavy angular damping stops it flailing about the joint. The rest of the body
+     * then follows the limb through the joints. The torso has no joint above it and only gets the damping.
+     */
+    private static void aim(ServerLevel level, Drag drag, ServerSubLevel subLevel, Player player, double partial, double timeStep, SubLevelPhysicsSystem physics) {
+        RigidBodyHandle handle = physics.getPhysicsHandle(subLevel);
+        Pose3d pose = subLevel.logicalPose();
+        double mass = Math.max(0.02, subLevel.getMassTracker().getMass());
+        Vector3d angular = handle.getAngularVelocity(new Vector3d());
+        Vector3d torque = new Vector3d(angular).mul(-AIM_DAMPING * mass);
+
+        CarcassSavedData.Carcass carcass = CarcassSavedData.get(level).carcass(drag.carcass);
+        CarcassJoints.Spec spec = null;
+        if (carcass != null) {
+            for (CarcassJoints.Spec joint : carcass.joints) {
+                if (joint.child().equals(drag.bone)) {
+                    spec = joint;
+                    break;
+                }
+            }
+        }
+        if (spec != null) {
+            Vector3d joint = pose.transformPosition(spec.anchorChild(subLevel), new Vector3d());
+            Vector3d hook = pose.transformPosition(drag.anchorPlot, new Vector3d());
+            Vector3d now = new Vector3d(hook).sub(joint);
+            Vector3d want = target(player, partial).sub(joint);
+            if (now.lengthSquared() > 1.0e-4 && want.lengthSquared() > 1.0e-4) {
+                now.normalize();
+                want.normalize();
+                Vector3d axis = new Vector3d(now).cross(want);
+                double angle = Math.acos(Math.max(-1.0, Math.min(1.0, now.dot(want))));
+                if (axis.lengthSquared() > 1.0e-8) {
+                    axis.normalize();
+                    torque.add(new Vector3d(axis).mul(angle * AIM_STIFFNESS * mass));
+                }
+            }
+        }
+        Vector3d impulse = torque.mul(timeStep);
+        pose.orientation().transformInverse(impulse); // local frame
+        handle.applyLinearAndAngularImpulse(new Vector3d(), impulse);
     }
 
     /** A point a little in front of the player's feet, so the carcass drags on the ground behind you. */

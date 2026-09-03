@@ -13,6 +13,13 @@ public class BBItems {
             .lang("Meat Hook")
             .register();
 
+    public static final ItemEntry<com.avicagan.bloodandbones.item.CleaverItem> CLEAVER = BloodAndBones.REGISTRATE
+            .item("cleaver", com.avicagan.bloodandbones.item.CleaverItem::new)
+            .properties(p -> p.stacksTo(1))
+            .model(NonNullBiConsumer.noop()) // hand-made handheld model in assets/bloodandbones/models/item
+            .lang("Cleaver")
+            .register();
+
     public static void register() {
     }
 }

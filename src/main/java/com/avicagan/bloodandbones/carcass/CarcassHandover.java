@@ -9,6 +9,7 @@ import net.minecraft.server.level.ServerLevel;
 import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.entity.Mob;
 import net.minecraft.world.phys.Vec3;
+import org.joml.Vector3d;
 
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -26,7 +27,7 @@ import java.util.WeakHashMap;
  */
 public final class CarcassHandover {
     /** Ticks the dead mob stays visible while the client catches up. */
-    public static final int TICKS = 4;
+    public static final int TICKS = 3;
 
     private record Pending(LivingEntity entity, UUID carcassId, Vec3 look, int[] ticksLeft, Map<UUID, Pose3d> poses) {
     }
@@ -118,6 +119,10 @@ public final class CarcassHandover {
                 // the cells learn what to draw only now, in the same tick the mob goes
                 CarcassAssembler.configureCells(level, carcass);
                 CarcassAssembler.shove(level, carcass, pending.look());
+                Vector3d wound = CarcassAssembler.boneWorldPosition(level, carcass, carcass.hitBone);
+                if (wound != null) {
+                    Blood.spray(level, wound, new Vector3d(pending.look().x, pending.look().y, pending.look().z), 24);
+                }
             }
         }
     }

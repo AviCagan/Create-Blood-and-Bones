@@ -731,12 +731,12 @@ public class BBGameTests {
             if (carcass.bones.size() != 1) {
                 helper.fail("A resting carcass should remember only its torso body, found " + carcass.bones.keySet());
             }
-            if (carcass.restCells.isEmpty()) {
-                helper.fail("A resting cow should have collision cells for its limbs");
+            if (!carcass.restCells.isEmpty()) {
+                helper.fail("A resting carcass should be the torso body alone, no extra cells");
             }
             ServerSubLevelContainer container = SubLevelContainer.getContainer(level);
             SubLevel torso = container.getSubLevel(carcass.bones.get(carcass.rootBone));
-            BlockPos cell = carcass.restCells.get(0);
+            BlockPos cell = torso.getPlot().getCenterBlock();
             Player player = helper.makeMockPlayer(GameType.SURVIVAL);
             player.setPos(Vec3.atBottomCenterOf(helper.absolutePos(new BlockPos(5, 2, 5))));
             player.setOldPosAndRot();
@@ -847,6 +847,43 @@ public class BBGameTests {
         helper.runAfterDelay(com.avicagan.bloodandbones.carcass.CarcassHandover.TICKS + 2, () -> {
             if (!cow.isRemoved()) {
                 helper.fail("The cow should be gone once the carcass has taken over");
+            }
+            helper.succeed();
+        });
+    }
+
+    /** Three Cleaver cuts take a leg off: one joint fewer, the leg still a body of the carcass. */
+    @GameTest(template = "empty", timeoutTicks = 200)
+    public static void cleaverSeversLeg(GameTestHelper helper) {
+        ServerLevel level = helper.getLevel();
+        Cow cow = helper.spawn(EntityType.COW, new BlockPos(5, 2, 5));
+        if (CarcassAssembler.assemble(cow, null) == null) {
+            helper.fail("Carcass assembly returned false");
+        }
+        cow.discard();
+        UUID[] id = new UUID[1];
+        helper.runAfterDelay(SETTLE_TICKS, () -> {
+            CarcassSavedData.Carcass carcass = onlyCarcass(helper, level);
+            id[0] = carcass.id;
+            for (int i = 0; i < com.avicagan.bloodandbones.carcass.CarcassButchery.CUTS_TO_SEVER - 1; i++) {
+                com.avicagan.bloodandbones.carcass.CarcassButchery.cut(level, null, carcass, "left_front_leg", null);
+            }
+            if (carcass.joints.size() != 5 || !carcass.severed.isEmpty()) {
+                helper.fail("Two cuts should not sever yet");
+            }
+            com.avicagan.bloodandbones.carcass.CarcassButchery.cut(level, null, carcass, "left_front_leg", null);
+            if (carcass.joints.size() != 4 || !carcass.severed.contains("left_front_leg")) {
+                helper.fail("Three cuts should sever the leg: joints " + carcass.joints.size() + ", severed " + carcass.severed);
+            }
+            if (com.avicagan.bloodandbones.carcass.CarcassButchery.cut(level, null, carcass, "body", null)) {
+                helper.fail("The body must not be cuttable");
+            }
+        });
+        helper.runAfterDelay(SETTLE_TICKS + 30, () -> {
+            CarcassSavedData.Carcass carcass = CarcassSavedData.get(level).carcass(id[0]);
+            requireLiveJoints(helper, carcass, 4);
+            if (liveBones(helper, level, carcass).size() != 6) {
+                helper.fail("The severed leg should still be a body of the carcass");
             }
             helper.succeed();
         });

@@ -39,10 +39,11 @@ import java.util.Optional;
 import java.util.UUID;
 
 /**
- * The resting form. A carcass that has lain still for a while folds its limbs into the torso's sub-level:
- * the limb bodies are removed, their poses relative to the torso are remembered, coarse collision cells
- * for them are added to the torso's plot, and the torso's root cell draws every part. Hooking, dragging
- * or hitting it splits it back into a ragdoll at exactly the remembered poses.
+ * The resting form. A carcass that has lain still for a while folds into one body: the limb bodies are
+ * removed, their poses relative to the torso are remembered, and the torso's root cell draws every part.
+ * Only the torso's own cells collide while it rests (extra cells for the limbs looked like blocks and
+ * were not worth it). Hooking, punching or losing its footing splits it back into a ragdoll at exactly
+ * the remembered poses.
  */
 public final class CarcassRest {
     /** Ticks of stillness before folding. */
@@ -168,8 +169,6 @@ public final class CarcassRest {
         carcass.restCells.clear();
         BlockPos center = torso.getPlot().getCenterBlock();
         LevelPlot plot = torso.getPlot();
-        Map<BlockPos, int[]> cellSizes = new LinkedHashMap<>();
-        Map<BlockPos, Bone> cellBones = new LinkedHashMap<>();
 
         for (Bone bone : rig.bones()) {
             if (bone == torsoBone) {
@@ -188,54 +187,7 @@ public final class CarcassRest {
             mergedParts.add(new CarcassPartBlockEntity.MergedPart(bone.name(),
                     new Vector3f((float) relPos.x, (float) relPos.y, (float) relPos.z), new Quaternionf(relRot)));
 
-            // coarse collision cells in the torso's plot: every block the limb's box reaches into
-            Vector3d torsoOriginOffset = CarcassAssembler.originOffset(torsoBone);
-            Obb box = Obb.of(bone, relPos, relRot, new Vector3d(torsoOriginOffset).add(center.getX(), center.getY(), center.getZ()));
-            for (int x = (int) Math.floor(box.lo.x); x <= (int) Math.floor(box.hi.x); x++) {
-                for (int y = (int) Math.floor(box.lo.y); y <= (int) Math.floor(box.hi.y); y++) {
-                    for (int z = (int) Math.floor(box.lo.z); z <= (int) Math.floor(box.hi.z); z++) {
-                        BlockPos cell = new BlockPos(x, y, z);
-                        if (!level.getBlockState(cell).isAir()) {
-                            continue; // one of the torso's own cells
-                        }
-                        int[] extent = box.extentIn(cell);
-                        if (extent == null) {
-                            continue;
-                        }
-                        int[] existing = cellSizes.get(cell);
-                        if (existing == null) {
-                            carcass.restCells.add(cell);
-                            cellSizes.put(cell, extent);
-                            cellBones.put(cell, bone);
-                        } else {
-                            // two limbs share this cell (a pair of legs): the cell covers both
-                            existing[0] = Math.max(existing[0], extent[0]);
-                            existing[1] = Math.max(existing[1], extent[1]);
-                            existing[2] = Math.max(existing[2], extent[2]);
-                        }
-                    }
-                }
-            }
             toRemove.add(limb);
-        }
-
-        // place the cells (creating plot chunks as needed)
-        Block block = BBBlocks.CARCASS_PART.get();
-        for (BlockPos cell : carcass.restCells) {
-            ChunkPos chunk = new ChunkPos(cell);
-            if (plot.getChunkHolder(plot.toLocal(chunk)) == null) {
-                plot.newEmptyChunk(chunk);
-            }
-            int[] size = cellSizes.getOrDefault(cell, new int[]{16, 16, 16});
-            level.setBlock(cell, CarcassPartBlock.stateFor(block, size[0], size[1], size[2]), Block.UPDATE_ALL);
-            if (level.getBlockEntity(cell) instanceof CarcassPartBlockEntity be) {
-                // named after the limb, so a stray cell can be told from the torso's own cells later
-                be.configureFiller(carcass.id, cellBones.getOrDefault(cell, torsoBone));
-            }
-        }
-        if (!carcass.restCells.isEmpty()) {
-            // cells in brand-new plot sections do not collide until their section is uploaded
-            CarcassAssembler.bindColliders(level, torso);
         }
 
         // drop the limb bodies; the rest poses now stand in for them
@@ -404,11 +356,19 @@ public final class CarcassRest {
         Vector3d min = new Vector3d(torsoBone.boxMin()).div(16.0).add(CarcassAssembler.originOffset(torsoBone)).add(center.getX(), center.getY(), center.getZ());
         Vector3d max = new Vector3d(torsoBone.boxMax()).div(16.0).add(CarcassAssembler.originOffset(torsoBone)).add(center.getX(), center.getY(), center.getZ());
         addCorners(corners, pose, min, max);
-        for (BlockPos cell : carcass.restCells) {
-            BlockState state = level.getBlockState(cell);
-            if (state.getBlock() instanceof CarcassPartBlock) {
-                addCorners(corners, pose, new Vector3d(cell.getX(), cell.getY(), cell.getZ()),
-                        new Vector3d(cell.getX() + CarcassPartBlock.sizeX(state) / 16.0, cell.getY() + CarcassPartBlock.sizeY(state) / 16.0, cell.getZ() + CarcassPartBlock.sizeZ(state) / 16.0));
+        // the folded limbs have no cells of their own, but a carcass propped on its legs rests on them
+        Vector3d torsoOriginPlot = CarcassAssembler.boneOriginInPlot(torso, torsoBone);
+        for (Map.Entry<String, CarcassSavedData.RestPose> entry : carcass.restPoses.entrySet()) {
+            Bone bone = maybeRig.get().bone(entry.getKey()).orElse(null);
+            if (bone == null) {
+                continue;
+            }
+            Vector3d bMin = new Vector3d(bone.boxMin()).div(16.0);
+            Vector3d bMax = new Vector3d(bone.boxMax()).div(16.0);
+            for (int i = 0; i < 8; i++) {
+                Vector3d c = new Vector3d((i & 1) == 0 ? bMin.x : bMax.x, (i & 2) == 0 ? bMin.y : bMax.y, (i & 4) == 0 ? bMin.z : bMax.z);
+                entry.getValue().orientation().transform(c).add(entry.getValue().position()).add(torsoOriginPlot);
+                corners.add(pose.transformPosition(c, new Vector3d()));
             }
         }
         double lowest = Double.MAX_VALUE;

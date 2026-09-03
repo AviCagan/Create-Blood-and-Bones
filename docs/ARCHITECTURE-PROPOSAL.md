@@ -581,3 +581,25 @@ pipes; chain clearance = hanging length + 1 block.
   stays clean; steel needs a highlight and a shadow band to read as metal at 16 px. With auto box UVs
   every face samples the middle columns of its texture, so the textures put their bands there and the
   model uses different textures per face direction and per hook segment rather than hand-painted UVs.
+
+### 13.5 Death handover, the hook in the meat, butchering (verified)
+
+- **Death handover.** The carcass is built the instant the mob dies, but discarding the mob at once left a
+  frame or two with nothing drawn. The mob now stays three ticks, frozen and untouchable (death event
+  cancelled, health set to 1, no AI, no gravity, head turned to the body), while every carcass body is
+  teleported back to its built pose each tick and its cells are left blank; then the mob goes, the cells
+  get their look, and the kill shove lands, all in one tick.
+- **The hook is drawn by the limb it is in** (`CarcassPartRenderer.drawHook`) from the anchor and entry
+  direction the server sends (`DragSyncPayload`), buried to its curl along the way it went in, using a
+  separate bloodied model (`item/meat_hook_bloody`, registered as a standalone model). No tether is drawn.
+  The hand model is clean. Hand transforms were derived from the real hand frames: third person +Y is
+  forward out of the fist and +Z up, first person is camera space; left-hand entries are omitted so the
+  engine's own mirroring applies.
+- **Dragging by a limb**: besides the tether, a torque spring turns the hooked limb so its joint-to-hook
+  line points at the tether target and damps its spin (`CarcassDrag.aim`), so the grabbed limb leads and
+  the body follows through the joints instead of the limb flailing.
+- **Resting form keeps only the torso body.** The coarse limb cells were dropped; the support check uses
+  the remembered limb poses instead.
+- **Cleaver** (`CarcassButchery`): three cuts on a limb sever its joint (spec removed, `severed` set
+  saved); the limb stays in the carcass record as a free body. The torso cannot be cut. Blood particles
+  (`Blood`) on the kill, on a hook going in, dripping while dragged, on cuts.
