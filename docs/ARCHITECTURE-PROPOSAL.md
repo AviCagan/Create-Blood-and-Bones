@@ -564,3 +564,20 @@ pipes; chain clearance = hanging length + 1 block.
   wolf's chest cube is bigger than its rear body, so the torso is named; horse head parts are a nested
   tree under `head_parts` whose union box is 6×17×14 px (two cells tall); humanoid `hat` and chicken
   `beak`/`red_thing` are top-level siblings of `head` with the same pivot.
+
+### 13.5 The Meat Hook in the meat (verified in tests; look still to be judged in game)
+
+- The hook is drawn **by the limb it is stuck in** (`CarcassPartRenderer.drawHook`), inside the limb's own
+  frame, so it moves exactly as the meat does; the old world-space line-and-hook drawn from
+  `RenderLevelStageEvent` lagged the limb by a frame. The drag packet carries the hook point and the
+  direction it went in (the player's look at the grab, in the limb's plot frame); the model's shank is
+  turned to point back out along that direction and buried to its curl.
+- There is no visible tether while dragging: the pull is invisible on purpose.
+- Item display frames, checked against `ItemInHandLayer` and `ItemInHandRenderer`: third person +Y is
+  forward out of the fist and +Z up; first person is camera space; rotation and scale pivot on model
+  (8,8,8); left-hand entries must be left out because the engine mirrors the right-hand ones (declaring
+  mirrored copies double-negates and gives the left hand the right-hand pose, which the old model did).
+- Art notes from real butcher hooks: blood belongs on the point and the lower shank only, the grip end
+  stays clean; steel needs a highlight and a shadow band to read as metal at 16 px. With auto box UVs
+  every face samples the middle columns of its texture, so the textures put their bands there and the
+  model uses different textures per face direction and per hook segment rather than hand-painted UVs.

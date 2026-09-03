@@ -52,6 +52,8 @@ public final class CarcassDrag {
         public final String bone;
         public final UUID subLevel;
         public final Vector3d anchorPlot;
+        /** which way the hook went in, in plot space: the player's look at the moment of the grab */
+        public final Vector3d entryPlot = new Vector3d(0, -1, 0);
         public final float weight;
         /** The dragging player, refreshed every tick; not looked up by UUID because test players are not in the level. */
         @Nullable
@@ -146,9 +148,10 @@ public final class CarcassDrag {
             float weight = RigManager.all().values().stream().filter(rig -> rig.entity().equals(carcass.entity)).map(Rig::weight).findFirst().orElse(1.0F);
             Drag drag = new Drag(player.getUUID(), carcass.id, carcass.rootBone, torso.getUniqueId(), anchor, weight);
             drag.playerEntity = player;
+            drag.entryPlot.set(entryDirection(torso, player));
             DRAGS.put(player.getUUID(), drag);
             applySlowdown(player, dragPenalty(carcass, weight));
-            broadcast(level, new DragSyncPayload(player.getUUID(), Optional.of(drag.subLevel), new Vector3d(drag.anchorPlot)));
+            broadcast(level, sync(drag));
             return true;
         }
         float weight = RigManager.all().values().stream()
@@ -164,10 +167,23 @@ public final class CarcassDrag {
 
         Drag drag = new Drag(player.getUUID(), carcass.id, part.bone(), serverSubLevel.getUniqueId(), anchor, weight);
         drag.playerEntity = player;
+        drag.entryPlot.set(entryDirection(serverSubLevel, player));
         DRAGS.put(player.getUUID(), drag);
         applySlowdown(player, dragPenalty(carcass, weight));
-        broadcast(level, new DragSyncPayload(player.getUUID(), Optional.of(drag.subLevel), new Vector3d(drag.anchorPlot)));
+        broadcast(level, sync(drag));
         return true;
+    }
+
+    /** The player's look direction, turned into the limb's own frame: the way the hook was pushed in. */
+    private static Vector3d entryDirection(ServerSubLevel subLevel, Player player) {
+        Vec3 look = player.getLookAngle();
+        Vector3d entry = new Vector3d(look.x, look.y, look.z);
+        subLevel.logicalPose().orientation().transformInverse(entry);
+        return entry.normalize();
+    }
+
+    private static DragSyncPayload sync(Drag drag) {
+        return new DragSyncPayload(drag.player, Optional.of(drag.subLevel), new Vector3d(drag.anchorPlot), new Vector3d(drag.entryPlot));
     }
 
     public static void stop(ServerLevel level, Player player) {
@@ -206,7 +222,7 @@ public final class CarcassDrag {
             return;
         }
         if (level.getGameTime() % 40 == 0) {
-            broadcast(level, new DragSyncPayload(player.getUUID(), Optional.of(drag.subLevel), new Vector3d(drag.anchorPlot)));
+            broadcast(level, sync(drag));
         }
     }
 

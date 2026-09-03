@@ -33,67 +33,13 @@ import java.util.Map;
 import java.util.UUID;
 
 /**
- * Draws the Meat Hook stuck in the hooked limb and a chain from it to the dragging player's hand.
+ * Client odds and ends for dragging: the chain a Shackle Hook hangs a carcass by, and no block outline
+ * on meat. The Meat Hook itself is drawn by the limb it is stuck in (CarcassPartRenderer), and the pull
+ * has no visible tether.
  */
 @EventBusSubscriber(modid = BloodAndBones.MOD_ID, value = Dist.CLIENT)
 public class DragRenderer {
     private static final int LINKS_PER_BLOCK = 4;
-
-    @SubscribeEvent
-    public static void onRenderLevel(RenderLevelStageEvent event) {
-        if (event.getStage() != RenderLevelStageEvent.Stage.AFTER_TRANSLUCENT_BLOCKS) {
-            return;
-        }
-        Map<UUID, ClientDragState.Drag> drags = ClientDragState.all();
-        if (drags.isEmpty()) {
-            return;
-        }
-        Minecraft minecraft = Minecraft.getInstance();
-        ClientLevel level = minecraft.level;
-        if (level == null) {
-            return;
-        }
-        float partialTick = event.getPartialTick().getGameTimeDeltaPartialTick(false);
-        Vec3 camera = event.getCamera().getPosition();
-        PoseStack poseStack = event.getPoseStack();
-        MultiBufferSource.BufferSource buffers = minecraft.renderBuffers().bufferSource();
-
-        for (Map.Entry<UUID, ClientDragState.Drag> entry : drags.entrySet()) {
-            Player player = level.getPlayerByUUID(entry.getKey());
-            if (player == null) {
-                continue;
-            }
-            SubLevel subLevel = SubLevelContainer.getContainer(level) == null ? null : SubLevelContainer.getContainer(level).getSubLevel(entry.getValue().subLevel());
-            if (subLevel == null || subLevel.isRemoved()) {
-                continue;
-            }
-            Pose3dc pose = ((LevelPoseProviderExtension) level).sable$getPose(subLevel);
-            Vector3d hook = pose.transformPosition(entry.getValue().anchor(), new Vector3d());
-            Vec3 hand = handPosition(player, partialTick);
-
-            poseStack.pushPose();
-            poseStack.translate(-camera.x, -camera.y, -camera.z);
-            drawChain(poseStack, buffers, level, hand, new Vec3(hook.x, hook.y, hook.z));
-            drawHook(poseStack, buffers, level, pose, hook, hand);
-            poseStack.popPose();
-        }
-        buffers.endBatch();
-    }
-
-    /** Roughly where the player's main hand is. */
-    private static Vec3 handPosition(Player player, float partialTick) {
-        double x = net.minecraft.util.Mth.lerp(partialTick, player.xo, player.getX());
-        double y = net.minecraft.util.Mth.lerp(partialTick, player.yo, player.getY());
-        double z = net.minecraft.util.Mth.lerp(partialTick, player.zo, player.getZ());
-        float yaw = (float) Math.toRadians(net.minecraft.util.Mth.lerp(partialTick, player.yBodyRotO, player.yBodyRot));
-        // right hand: 0.35 to the body's right, a little forward, at hip height
-        double side = 0.35;
-        double forward = 0.15;
-        return new Vec3(
-                x - Math.cos(yaw) * side - Math.sin(yaw) * forward,
-                y + 0.9,
-                z - Math.sin(yaw) * side + Math.cos(yaw) * forward);
-    }
 
     /** Chain between two world points, in a pose stack already at world origin. */
     public static void drawChainSegment(PoseStack poseStack, MultiBufferSource buffers, Vec3 from, Vec3 to) {
@@ -121,34 +67,6 @@ public class DragRenderer {
         Vector3f normal = new Vector3f((float) dir.x, (float) dir.y, (float) dir.z);
         lines.addVertex(matrix, (float) a.x, (float) a.y, (float) a.z).setColor(shade, shade, shade, 1.0F).setNormal(pose, normal.x, normal.y, normal.z);
         lines.addVertex(matrix, (float) b.x, (float) b.y, (float) b.z).setColor(shade, shade, shade, 1.0F).setNormal(pose, normal.x, normal.y, normal.z);
-    }
-
-    /**
-     * The Meat Hook model buried in the limb. The model's shank runs up the +Y axis with the bend at
-     * model height 1/16 and the eye at the top; rotate +Y onto the chain direction so the eye faces the
-     * player's hand and the point sits inside the flesh.
-     */
-    private static void drawHook(PoseStack poseStack, MultiBufferSource buffers, ClientLevel level, Pose3dc limbPose, Vector3d hook, Vec3 hand) {
-        Minecraft minecraft = Minecraft.getInstance();
-        Vec3 toHand = hand.subtract(hook.x, hook.y, hook.z);
-        if (toHand.lengthSqr() < 1.0e-4) {
-            return;
-        }
-        Vector3f dir = new Vector3f((float) toHand.x, (float) toHand.y, (float) toHand.z).normalize();
-        poseStack.pushPose();
-        poseStack.translate(hook.x, hook.y, hook.z);
-        // rotate model +Y onto the chain direction
-        poseStack.mulPose(new org.joml.Quaternionf().rotationTo(new Vector3f(0.0F, 1.0F, 0.0F), dir));
-        float scale = 0.6F;
-        poseStack.scale(scale, scale, scale);
-        // FIXED display puts the model's (8,8,8) at the origin. Slide the model down the chain so the
-        // bend sits 3px inside the flesh and the point is buried: model y=4 lands on the anchor.
-        poseStack.translate(0.0, 4.0 / 16.0, 0.0);
-        BlockPos at = BlockPos.containing(hook.x, hook.y, hook.z);
-        int light = LightTexture.pack(level.getBrightness(net.minecraft.world.level.LightLayer.BLOCK, at), level.getBrightness(net.minecraft.world.level.LightLayer.SKY, at));
-        minecraft.getItemRenderer().renderStatic(new ItemStack(BBItems.MEAT_HOOK.get()), ItemDisplayContext.FIXED, light,
-                OverlayTexture.NO_OVERLAY, poseStack, buffers, level, 0);
-        poseStack.popPose();
     }
 
     /** A carcass is meat, not a block: no cube outline when you look at it. */

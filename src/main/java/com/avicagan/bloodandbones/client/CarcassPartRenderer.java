@@ -76,6 +76,46 @@ public class CarcassPartRenderer implements BlockEntityRenderer<CarcassPartBlock
             poseStack.popPose();
         }
         poseStack.popPose();
+        drawHook(be, poseStack, buffers, packedLight);
+    }
+
+    /** How deep the hook's bend sits inside the meat, in model pixels along the shank. */
+    private static final float HOOK_DEPTH_PX = 6.5F;
+    private static final float HOOK_SCALE = 0.6F;
+
+    /**
+     * The Meat Hook buried in this limb, drawn in the limb's own frame so it moves exactly with the meat.
+     * The model's shank runs up +Y with the point at the bottom; +Y is turned to face back the way the hook
+     * went in, so the point is inside and the eye faces the player.
+     */
+    private void drawHook(CarcassPartBlockEntity be, PoseStack poseStack, MultiBufferSource buffers, int packedLight) {
+        if (be.getLevel() == null) {
+            return;
+        }
+        dev.ryanhcode.sable.sublevel.SubLevel subLevel = dev.ryanhcode.sable.Sable.HELPER.getContaining(be.getLevel(), be.getBlockPos());
+        if (subLevel == null) {
+            return;
+        }
+        ClientDragState.Drag drag = ClientDragState.hookIn(subLevel.getUniqueId());
+        if (drag == null) {
+            return;
+        }
+        BlockPos pos = be.getBlockPos();
+        Vector3f out = new Vector3f((float) -drag.entry().x, (float) -drag.entry().y, (float) -drag.entry().z);
+        if (out.lengthSquared() < 1.0E-6F) {
+            out.set(0, 1, 0);
+        }
+        out.normalize();
+        poseStack.pushPose();
+        poseStack.translate(drag.anchor().x - pos.getX(), drag.anchor().y - pos.getY(), drag.anchor().z - pos.getZ());
+        poseStack.mulPose(new org.joml.Quaternionf().rotationTo(new Vector3f(0.0F, 1.0F, 0.0F), out));
+        poseStack.scale(HOOK_SCALE, HOOK_SCALE, HOOK_SCALE);
+        // FIXED display centres the model on (8,8,8); slide it so the bend sits inside the flesh
+        poseStack.translate(0.0, HOOK_DEPTH_PX / 16.0, 0.0);
+        net.minecraft.client.Minecraft.getInstance().getItemRenderer().renderStatic(
+                new net.minecraft.world.item.ItemStack(com.avicagan.bloodandbones.registry.BBItems.MEAT_HOOK.get()),
+                net.minecraft.world.item.ItemDisplayContext.FIXED, packedLight, OverlayTexture.NO_OVERLAY, poseStack, buffers, be.getLevel(), 0);
+        poseStack.popPose();
     }
 
     /** The skin, then each coat, for the bone's own part and everything attached to it. */

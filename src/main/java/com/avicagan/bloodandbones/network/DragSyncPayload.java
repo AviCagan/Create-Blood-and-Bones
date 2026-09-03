@@ -17,8 +17,9 @@ import java.util.UUID;
  * @param player   the dragging player
  * @param subLevel the hooked limb's sub-level, empty when the drag ended
  * @param anchor   hook point in the limb's plot space
+ * @param entry    the direction the hook went into the meat, in the limb's plot space
  */
-public record DragSyncPayload(UUID player, Optional<UUID> subLevel, Vector3d anchor) implements CustomPacketPayload {
+public record DragSyncPayload(UUID player, Optional<UUID> subLevel, Vector3d anchor, Vector3d entry) implements CustomPacketPayload {
     public static final Type<DragSyncPayload> TYPE = new Type<>(BloodAndBones.asResource("drag_sync"));
 
     private static final StreamCodec<RegistryFriendlyByteBuf, Vector3d> VEC3D = StreamCodec.composite(
@@ -28,10 +29,11 @@ public record DragSyncPayload(UUID player, Optional<UUID> subLevel, Vector3d anc
             UUIDUtil.STREAM_CODEC, DragSyncPayload::player,
             ByteBufCodecs.optional(UUIDUtil.STREAM_CODEC), DragSyncPayload::subLevel,
             VEC3D, DragSyncPayload::anchor,
+            VEC3D, DragSyncPayload::entry,
             DragSyncPayload::new);
 
     public static DragSyncPayload ended(UUID player) {
-        return new DragSyncPayload(player, Optional.empty(), new Vector3d());
+        return new DragSyncPayload(player, Optional.empty(), new Vector3d(), new Vector3d());
     }
 
     @Override

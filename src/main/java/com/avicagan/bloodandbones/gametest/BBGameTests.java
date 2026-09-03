@@ -588,7 +588,7 @@ public class BBGameTests {
         }
         mob.discard();
         helper.runAfterDelay(SETTLE_TICKS, () -> {
-            CarcassSavedData.Carcass carcass = onlyCarcass(helper, level);
+            CarcassSavedData.Carcass carcass = nearestCarcass(helper, level, new BlockPos(5, 2, 5), type);
             if (carcass.bones.size() != bones) {
                 helper.fail("Expected " + bones + " bones for " + type + ", found " + carcass.bones.keySet());
             }
@@ -621,7 +621,7 @@ public class BBGameTests {
         }
         sheep.discard();
         helper.runAfterDelay(SETTLE_TICKS, () -> {
-            CarcassSavedData.Carcass carcass = onlyCarcass(helper, level);
+            CarcassSavedData.Carcass carcass = nearestCarcass(helper, level, new BlockPos(5, 2, 5), EntityType.SHEEP);
             ServerSubLevel torso = liveBones(helper, level, carcass).get(carcass.rootBone);
             BlockPos center = torso.getPlot().getCenterBlock();
             if (!(level.getBlockEntity(center) instanceof com.avicagan.bloodandbones.carcass.CarcassPartBlockEntity root)) {
@@ -655,7 +655,7 @@ public class BBGameTests {
         }
         horse.discard();
         helper.runAfterDelay(SETTLE_TICKS, () -> {
-            CarcassSavedData.Carcass carcass = onlyCarcass(helper, level);
+            CarcassSavedData.Carcass carcass = nearestCarcass(helper, level, new BlockPos(5, 2, 5), EntityType.HORSE);
             ServerSubLevel torso = liveBones(helper, level, carcass).get(carcass.rootBone);
             BlockPos center = torso.getPlot().getCenterBlock();
             if (!(level.getBlockEntity(center) instanceof com.avicagan.bloodandbones.carcass.CarcassPartBlockEntity root)) {
@@ -858,6 +858,11 @@ public class BBGameTests {
     }
 
     private static CarcassSavedData.Carcass nearestCarcass(GameTestHelper helper, ServerLevel level, BlockPos relative) {
+        return nearestCarcass(helper, level, relative, null);
+    }
+
+    /** Tests sit side by side and carcasses travel, so when the animal is known only its own kind counts. */
+    private static CarcassSavedData.Carcass nearestCarcass(GameTestHelper helper, ServerLevel level, BlockPos relative, @org.jetbrains.annotations.Nullable EntityType<?> type) {
         CarcassSavedData data = CarcassSavedData.get(level);
         ServerSubLevelContainer container = SubLevelContainer.getContainer(level);
         if (container == null) {
@@ -867,6 +872,9 @@ public class BBGameTests {
         CarcassSavedData.Carcass nearest = null;
         double best = 6.0;
         for (CarcassSavedData.Carcass carcass : data.all()) {
+            if (type != null && !carcass.entity.equals(net.minecraft.core.registries.BuiltInRegistries.ENTITY_TYPE.getKey(type))) {
+                continue;
+            }
             UUID rootId = carcass.bones.get(carcass.rootBone);
             SubLevel root = rootId == null ? null : container.getSubLevel(rootId);
             if (root instanceof ServerSubLevel serverRoot && !serverRoot.isRemoved()) {
