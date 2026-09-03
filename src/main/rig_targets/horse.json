@@ -59,7 +59,7 @@
       ],
       "damping": 4.0,
       "stiffness": 1.0,
-      "contacts": true
+      "contacts": false
     },
     "body/tail": {
       "min_degrees": [

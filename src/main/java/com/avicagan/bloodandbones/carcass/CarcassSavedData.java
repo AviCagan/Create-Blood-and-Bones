@@ -65,6 +65,9 @@ public class CarcassSavedData extends SavedData {
         public final List<net.minecraft.core.BlockPos> restCells = new ArrayList<>();
         /** consecutive ticks the whole carcass has been still, not saved */
         public int stillTicks;
+        /** the limb the killing blow landed on, for the shove; not saved */
+        @Nullable
+        public String hitBone;
         /** resting form: the world joint that pins the merged body in place, not saved */
         @Nullable
         public PhysicsConstraintHandle restLock;
@@ -225,6 +228,17 @@ public class CarcassSavedData extends SavedData {
 
     public Collection<Carcass> all() {
         return carcasses.values();
+    }
+
+    /** The carcass one of whose limbs is this sub-level. */
+    @Nullable
+    public Carcass carcassOfSubLevel(UUID subLevelId) {
+        for (Carcass carcass : carcasses.values()) {
+            if (carcass.bones.containsValue(subLevelId)) {
+                return carcass;
+            }
+        }
+        return null;
     }
 
     /**

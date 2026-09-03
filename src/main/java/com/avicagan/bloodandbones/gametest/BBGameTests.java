@@ -56,7 +56,7 @@ public class BBGameTests {
         cow.setNoAi(true);
 
         helper.runAfterDelay(SETTLE_TICKS, () -> {
-            if (!CarcassAssembler.assemble(cow, null)) {
+            if (CarcassAssembler.assemble(cow, null) == null) {
                 helper.fail("Carcass assembly returned false");
             }
             cow.discard();
@@ -93,7 +93,7 @@ public class BBGameTests {
     public static void cowCarcassJointsRestore(GameTestHelper helper) {
         ServerLevel level = helper.getLevel();
         Cow cow = helper.spawn(EntityType.COW, new BlockPos(5, 2, 5));
-        if (!CarcassAssembler.assemble(cow, null)) {
+        if (CarcassAssembler.assemble(cow, null) == null) {
             helper.fail("Carcass assembly returned false");
         }
         cow.discard();
@@ -157,7 +157,7 @@ public class BBGameTests {
     private static void dragTest(GameTestHelper helper, String grabBone) {
         ServerLevel level = helper.getLevel();
         Cow cow = helper.spawn(EntityType.COW, new BlockPos(5, 2, 5));
-        if (!CarcassAssembler.assemble(cow, null)) {
+        if (CarcassAssembler.assemble(cow, null) == null) {
             helper.fail("Carcass assembly returned false");
         }
         cow.discard();
@@ -230,7 +230,7 @@ public class BBGameTests {
     public static void removedLimbsAreForgotten(GameTestHelper helper) {
         ServerLevel level = helper.getLevel();
         Cow cow = helper.spawn(EntityType.COW, new BlockPos(5, 2, 5));
-        if (!CarcassAssembler.assemble(cow, null)) {
+        if (CarcassAssembler.assemble(cow, null) == null) {
             helper.fail("Carcass assembly returned false");
         }
         cow.discard();
@@ -268,7 +268,7 @@ public class BBGameTests {
         ServerLevel level = helper.getLevel();
         Cow cow = helper.spawn(EntityType.COW, new BlockPos(5, 2, 5));
         Vec3 cowPos = cow.position();
-        if (!CarcassAssembler.assemble(cow, null)) {
+        if (CarcassAssembler.assemble(cow, null) == null) {
             helper.fail("Carcass assembly returned false");
         }
         cow.discard();
@@ -311,7 +311,7 @@ public class BBGameTests {
     public static void shackleHookHangsCarcass(GameTestHelper helper) {
         ServerLevel level = helper.getLevel();
         Cow cow = helper.spawn(EntityType.COW, new BlockPos(5, 2, 5));
-        if (!CarcassAssembler.assemble(cow, null)) {
+        if (CarcassAssembler.assemble(cow, null) == null) {
             helper.fail("Carcass assembly returned false");
         }
         cow.discard();
@@ -378,7 +378,7 @@ public class BBGameTests {
     public static void restingFormFoldsAndUnfolds(GameTestHelper helper) {
         ServerLevel level = helper.getLevel();
         Cow cow = helper.spawn(EntityType.COW, new BlockPos(5, 2, 5));
-        if (!CarcassAssembler.assemble(cow, null)) {
+        if (CarcassAssembler.assemble(cow, null) == null) {
             helper.fail("Carcass assembly returned false");
         }
         cow.discard();
@@ -455,7 +455,7 @@ public class BBGameTests {
     public static void carcassRots(GameTestHelper helper) {
         ServerLevel level = helper.getLevel();
         Cow cow = helper.spawn(EntityType.COW, new BlockPos(5, 2, 5));
-        if (!CarcassAssembler.assemble(cow, null)) {
+        if (CarcassAssembler.assemble(cow, null) == null) {
             helper.fail("Carcass assembly returned false");
         }
         cow.discard();
@@ -508,7 +508,7 @@ public class BBGameTests {
             }
         }
         Cow cow = helper.spawn(EntityType.COW, new BlockPos(5, 2, 5));
-        if (!CarcassAssembler.assemble(cow, null)) {
+        if (CarcassAssembler.assemble(cow, null) == null) {
             helper.fail("Carcass assembly returned false");
         }
         cow.discard();
@@ -583,7 +583,7 @@ public class BBGameTests {
         net.minecraft.world.entity.Mob mob = helper.spawn(type, new BlockPos(5, 2, 5));
         mob.setBaby(false);
         Vec3 pos = mob.position();
-        if (!CarcassAssembler.assemble(mob, null)) {
+        if (CarcassAssembler.assemble(mob, null) == null) {
             helper.fail("Carcass assembly returned false for " + type);
         }
         mob.discard();
@@ -616,7 +616,7 @@ public class BBGameTests {
         ServerLevel level = helper.getLevel();
         net.minecraft.world.entity.animal.Sheep sheep = helper.spawn(EntityType.SHEEP, new BlockPos(5, 2, 5));
         sheep.setColor(net.minecraft.world.item.DyeColor.RED);
-        if (!CarcassAssembler.assemble(sheep, null)) {
+        if (CarcassAssembler.assemble(sheep, null) == null) {
             helper.fail("Carcass assembly returned false");
         }
         sheep.discard();
@@ -650,7 +650,7 @@ public class BBGameTests {
         horse.setBaby(false);
         horse.setVariant(net.minecraft.world.entity.animal.horse.Variant.DARK_BROWN);
         net.minecraft.world.entity.animal.horse.Markings markings = horse.getMarkings();
-        if (!CarcassAssembler.assemble(horse, null)) {
+        if (CarcassAssembler.assemble(horse, null) == null) {
             helper.fail("Carcass assembly returned false");
         }
         horse.discard();
@@ -682,7 +682,7 @@ public class BBGameTests {
     public static void carcassRecordRoundTrips(GameTestHelper helper) {
         ServerLevel level = helper.getLevel();
         Cow cow = helper.spawn(EntityType.COW, new BlockPos(5, 2, 5));
-        if (!CarcassAssembler.assemble(cow, null)) {
+        if (CarcassAssembler.assemble(cow, null) == null) {
             helper.fail("Carcass assembly returned false");
         }
         cow.discard();
@@ -715,7 +715,7 @@ public class BBGameTests {
     public static void punchWakesRestingCarcass(GameTestHelper helper) {
         ServerLevel level = helper.getLevel();
         Cow cow = helper.spawn(EntityType.COW, new BlockPos(5, 2, 5));
-        if (!CarcassAssembler.assemble(cow, null)) {
+        if (CarcassAssembler.assemble(cow, null) == null) {
             helper.fail("Carcass assembly returned false");
         }
         cow.discard();
@@ -768,7 +768,7 @@ public class BBGameTests {
             }
         }
         Cow cow = helper.spawn(EntityType.COW, new BlockPos(5, 3, 5));
-        if (!CarcassAssembler.assemble(cow, null)) {
+        if (CarcassAssembler.assemble(cow, null) == null) {
             helper.fail("Carcass assembly returned false");
         }
         cow.discard();
@@ -821,6 +821,32 @@ public class BBGameTests {
             }
             if (lowest > restY[0] - 0.75) {
                 helper.fail("The carcass should have fallen to the lower floor: torso rested at " + restY[0] + ", lowest body now " + lowest + ", resting=" + carcass.resting);
+            }
+            helper.succeed();
+        });
+    }
+
+    /** A Meat Hook kill keeps the mob visible and frozen for a few ticks, then swaps it for the carcass. */
+    @GameTest(template = "empty", timeoutTicks = 100)
+    public static void meatHookKillHandsOver(GameTestHelper helper) {
+        ServerLevel level = helper.getLevel();
+        Cow cow = helper.spawn(EntityType.COW, new BlockPos(5, 2, 5));
+        Vec3 start = cow.position();
+        Player player = helper.makeMockPlayer(GameType.SURVIVAL);
+        player.setItemInHand(InteractionHand.MAIN_HAND, new ItemStack(BBItems.MEAT_HOOK.get()));
+        cow.hurt(level.damageSources().playerAttack(player), 1000.0F);
+        helper.runAfterDelay(1, () -> {
+            if (cow.isRemoved() || cow.isDeadOrDying()) {
+                helper.fail("The cow should still be standing there for a moment after the kill");
+            }
+            if (cow.position().distanceTo(start) > 0.01) {
+                helper.fail("The dying cow moved: " + cow.position() + " from " + start);
+            }
+            onlyCarcass(helper, level);
+        });
+        helper.runAfterDelay(com.avicagan.bloodandbones.carcass.CarcassHandover.TICKS + 2, () -> {
+            if (!cow.isRemoved()) {
+                helper.fail("The cow should be gone once the carcass has taken over");
             }
             helper.succeed();
         });

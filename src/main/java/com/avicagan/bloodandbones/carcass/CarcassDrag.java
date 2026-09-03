@@ -228,9 +228,33 @@ public final class CarcassDrag {
             if (subLevel == null) {
                 continue;
             }
+            if (isStandingOnCarcass(level, player, drag)) {
+                continue; // no pulling the ground out from under your own feet, or riding the carcass
+            }
             pull(drag, subLevel, player, partial, timeStep, physics);
             physics.getPipeline().wakeUp(subLevel);
         }
+    }
+
+    /** The player's feet are on (or in) one of the carcass's bodies. */
+    private static boolean isStandingOnCarcass(ServerLevel level, Player player, Drag drag) {
+        if (!player.onGround()) {
+            return false;
+        }
+        CarcassSavedData.Carcass carcass = CarcassSavedData.get(level).carcassOfSubLevel(drag.subLevel);
+        ServerSubLevelContainer container = SubLevelContainer.getContainer(level);
+        if (carcass == null || container == null) {
+            return false;
+        }
+        net.minecraft.world.phys.AABB feet = new net.minecraft.world.phys.AABB(player.getX() - 0.3, player.getY() - 0.2, player.getZ() - 0.3,
+                player.getX() + 0.3, player.getY() + 0.1, player.getZ() + 0.3);
+        for (UUID id : carcass.bones.values()) {
+            SubLevel bone = container.getSubLevel(id);
+            if (bone instanceof ServerSubLevel serverBone && !serverBone.isRemoved() && serverBone.boundingBox().intersects(feet)) {
+                return true;
+            }
+        }
+        return false;
     }
 
     @Nullable

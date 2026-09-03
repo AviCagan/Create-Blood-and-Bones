@@ -85,9 +85,24 @@ public class CarcassEvents {
         if (!killer.getMainHandItem().is(BBItems.MEAT_HOOK.get())) {
             return;
         }
-        if (CarcassAssembler.assemble(entity, killer)) {
+        if (com.avicagan.bloodandbones.carcass.CarcassHandover.isHandingOver(entity)) {
+            event.setCanceled(true);
+            return;
+        }
+        CarcassSavedData.Carcass carcass = CarcassAssembler.assemble(entity, killer);
+        if (carcass != null) {
+            // the mob stays a few ticks, frozen, so the client never sees an empty gap before the carcass
             CARCASS_DEATHS.add(entity.getUUID());
-            entity.discard();
+            event.setCanceled(true);
+            com.avicagan.bloodandbones.carcass.CarcassHandover.begin((ServerLevel) entity.level(), entity, carcass, killer.getLookAngle());
+        }
+    }
+
+    /** A mob mid-handover takes no more damage. */
+    @SubscribeEvent
+    public static void onHurt(net.neoforged.neoforge.event.entity.living.LivingIncomingDamageEvent event) {
+        if (!event.getEntity().level().isClientSide() && com.avicagan.bloodandbones.carcass.CarcassHandover.isHandingOver(event.getEntity())) {
+            event.setCanceled(true);
         }
     }
 
@@ -100,6 +115,7 @@ public class CarcassEvents {
     @SubscribeEvent
     public static void onLevelTick(net.neoforged.neoforge.event.tick.LevelTickEvent.Post event) {
         if (event.getLevel() instanceof ServerLevel level) {
+            com.avicagan.bloodandbones.carcass.CarcassHandover.tick(level);
             com.avicagan.bloodandbones.carcass.CarcassRest.levelTick(level);
         }
     }
@@ -121,6 +137,7 @@ public class CarcassEvents {
     @SubscribeEvent
     public static void onServerStopping(ServerStoppingEvent event) {
         CarcassDrag.stopAll();
+        com.avicagan.bloodandbones.carcass.CarcassHandover.clear();
     }
 
     @SubscribeEvent

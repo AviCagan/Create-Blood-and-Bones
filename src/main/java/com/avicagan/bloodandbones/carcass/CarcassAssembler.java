@@ -82,21 +82,28 @@ public final class CarcassAssembler {
         return best;
     }
 
-    public static boolean assemble(LivingEntity entity, @Nullable Entity attacker) {
+    /**
+     * Builds the carcass where the mob stands, at rest. The kill shove is applied separately by
+     * {@link #shove} once the client has had a moment to see the carcass (see {@link CarcassHandover}).
+     *
+     * @return the carcass record, or null if this mob has no rig or there was no room
+     */
+    @Nullable
+    public static CarcassSavedData.Carcass assemble(LivingEntity entity, @Nullable Entity attacker) {
         if (!(entity.level() instanceof ServerLevel level)) {
-            return false;
+            return null;
         }
         if (entity.isBaby()) {
-            return false;
+            return null;
         }
         Optional<Rig> maybeRig = RigManager.forEntity(entity.getType());
         if (maybeRig.isEmpty()) {
-            return false;
+            return null;
         }
         Rig rig = maybeRig.get();
         ServerSubLevelContainer container = SubLevelContainer.getContainer(level);
         if (container == null) {
-            return false;
+            return null;
         }
         SubLevelPhysicsSystem physics = container.physicsSystem();
         PhysicsPipeline pipeline = physics.getPipeline();
@@ -104,7 +111,7 @@ public final class CarcassAssembler {
         BlockPos staging = findStaging(level, entity.blockPosition(), rig);
         if (staging == null) {
             BloodAndBones.LOGGER.warn("No free staging space above {} for a carcass", entity.blockPosition());
-            return false;
+            return null;
         }
 
         UUID carcassId = UUID.randomUUID();
@@ -122,7 +129,7 @@ public final class CarcassAssembler {
                 for (ServerSubLevel created : subLevels.values()) {
                     container.removeSubLevel(created, SubLevelRemovalReason.REMOVED);
                 }
-                return false;
+                return null;
             }
 
             Quaterniond orientation = new Quaterniond(g).mul(new Quaterniond(bone.rotation()));
@@ -156,23 +163,39 @@ public final class CarcassAssembler {
             }
         }
 
-        // Starting motion: a shove sized by the animal's weight, strongest on the limb the killing blow hit.
-        // The mob's own hit knockback is deliberately not carried over; it would launch light carcasses.
         if (attacker != null) {
-            Vec3 look = attacker.getLookAngle();
-            Vec3 dir = new Vec3(look.x, Math.max(look.y, 0.0) + 0.2, look.z).normalize();
-            double speed = Math.max(0.5, Math.min(5.0, SHOVE_SPEED / Math.sqrt(Math.max(rig.weight(), 0.01) / REFERENCE_WEIGHT)));
-            String hitBone = boneNearestRay(attacker, origins);
-            for (Map.Entry<String, ServerSubLevel> entry : subLevels.entrySet()) {
-                double share = entry.getKey().equals(hitBone) ? 1.0 : 0.5;
-                Vector3d velocity = new Vector3d(dir.x, dir.y, dir.z).mul(speed * share);
-                physics.getPhysicsHandle(entry.getValue()).addLinearAndAngularVelocity(velocity, new Vector3d());
-            }
+            carcass.hitBone = boneNearestRay(attacker, origins);
         }
 
         CarcassSavedData.get(level).add(carcass);
         BloodAndBones.LOGGER.debug("Assembled {} carcass {} with {} bones and {} joints", rig.entity(), carcassId, subLevels.size(), carcass.liveJoints.size());
-        return true;
+        return carcass;
+    }
+
+    /**
+     * Starting motion: a shove sized by the animal's weight, strongest on the limb the killing blow hit.
+     * The mob's own hit knockback is deliberately not carried over; it would launch light carcasses.
+     *
+     * @param look the killer's look direction
+     */
+    public static void shove(ServerLevel level, CarcassSavedData.Carcass carcass, Vec3 look) {
+        ServerSubLevelContainer container = SubLevelContainer.getContainer(level);
+        Rig rig = RigManager.forEntity(carcass.entity).orElse(null);
+        if (container == null || rig == null) {
+            return;
+        }
+        SubLevelPhysicsSystem physics = container.physicsSystem();
+        Vec3 dir = new Vec3(look.x, Math.max(look.y, 0.0) + 0.2, look.z).normalize();
+        double speed = Math.max(0.5, Math.min(5.0, SHOVE_SPEED / Math.sqrt(Math.max(rig.weight(), 0.01) / REFERENCE_WEIGHT)));
+        for (Map.Entry<String, UUID> entry : carcass.bones.entrySet()) {
+            if (!(container.getSubLevel(entry.getValue()) instanceof ServerSubLevel subLevel) || subLevel.isRemoved()) {
+                continue;
+            }
+            double share = entry.getKey().equals(carcass.hitBone) ? 1.0 : 0.5;
+            Vector3d velocity = new Vector3d(dir.x, dir.y, dir.z).mul(speed * share);
+            physics.getPhysicsHandle(subLevel).addLinearAndAngularVelocity(velocity, new Vector3d());
+            physics.getPipeline().wakeUp(subLevel);
+        }
     }
 
     /**
@@ -265,13 +288,6 @@ public final class CarcassAssembler {
                     BlockState state = CarcassPartBlock.stateFor(block,
                             Math.min(16, sx - 16 * i), Math.min(16, sy - 16 * j), Math.min(16, sz - 16 * k));
                     level.setBlock(pos, state, Block.UPDATE_ALL);
-                    if (level.getBlockEntity(pos) instanceof CarcassPartBlockEntity be) {
-                        if (i == 0 && j == 0 && k == 0) {
-                            be.configureRoot(carcassId, rig, bone, look);
-                        } else {
-                            be.configureFiller(carcassId, bone);
-                        }
-                    }
                     blocks.add(pos);
                 }
             }
@@ -281,6 +297,22 @@ public final class CarcassAssembler {
         try {
             subLevel = SubLevelAssemblyHelper.assembleBlocks(level, staging, blocks, bounds);
             if (subLevel != null && !subLevel.isRemoved()) {
+                // the cells are configured only now that they are in their plot: for the tick they spend at
+                // the staging spot high above the mob nothing must draw there
+                BlockPos center = subLevel.getPlot().getCenterBlock();
+                for (int i = 0; i < cells[0]; i++) {
+                    for (int j = 0; j < cells[1]; j++) {
+                        for (int k = 0; k < cells[2]; k++) {
+                            if (level.getBlockEntity(center.offset(i, j, k)) instanceof CarcassPartBlockEntity be) {
+                                if (i == 0 && j == 0 && k == 0) {
+                                    be.configureRoot(carcassId, rig, bone, look);
+                                } else {
+                                    be.configureFiller(carcassId, bone);
+                                }
+                            }
+                        }
+                    }
+                }
                 bindColliders(level, subLevel);
             }
         } catch (RuntimeException e) {
