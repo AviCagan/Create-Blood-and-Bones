@@ -1,0 +1,7 @@
+{
+  "parent": "minecraft:block/block",
+  "textures": {
+    "particle": "bloodandbones:item/meat_hook_steel"
+  },
+  "elements": []
+}

@@ -142,7 +142,7 @@ public final class CarcassRest {
             return false;
         }
         Rig rig = maybeRig.get();
-        Bone torsoBone = rig.root();
+        Bone torsoBone = rig.bone(carcass.rootBone).orElse(rig.root());
         SubLevel torsoSub = container.getSubLevel(carcass.bones.get(torsoBone.name()));
         if (!(torsoSub instanceof ServerSubLevel torso) || torso.isRemoved()) {
             return false;
@@ -349,7 +349,7 @@ public final class CarcassRest {
         if (maybeRig.isEmpty()) {
             return true;
         }
-        Bone torsoBone = maybeRig.get().root();
+        Bone torsoBone = maybeRig.get().bone(carcass.rootBone).orElse(maybeRig.get().root());
         Pose3d pose = torso.logicalPose();
         BlockPos center = torso.getPlot().getCenterBlock();
         List<Vector3d> corners = new ArrayList<>();
@@ -392,6 +392,20 @@ public final class CarcassRest {
             Vector3d c = new Vector3d((i & 1) == 0 ? min.x : max.x, (i & 2) == 0 ? min.y : max.y, (i & 4) == 0 ? min.z : max.z);
             out.add(pose.transformPosition(c, new Vector3d()));
         }
+    }
+
+    /** A player punched the drawn limbs of a resting carcass (reported by their client). */
+    public static void punch(ServerLevel level, net.minecraft.world.entity.player.Player player, UUID carcassId) {
+        CarcassSavedData.Carcass carcass = CarcassSavedData.get(level).carcass(carcassId);
+        if (carcass == null || !carcass.resting) {
+            return;
+        }
+        Vector3d torso = CarcassAssembler.boneWorldPosition(level, carcass, carcass.rootBone);
+        if (torso == null || torso.distance(player.getX(), player.getY(), player.getZ()) > 6.0) {
+            return;
+        }
+        net.minecraft.world.phys.Vec3 look = player.getLookAngle();
+        disturb(level, carcass, carcass.rootBone, new Vector3d(look.x, look.y + 0.3, look.z), 1.2);
     }
 
     /**
@@ -459,7 +473,7 @@ public final class CarcassRest {
             return null;
         }
         Rig rig = maybeRig.get();
-        Bone torsoBone = rig.root();
+        Bone torsoBone = rig.bone(carcass.rootBone).orElse(rig.root());
         SubLevel torsoSub = container.getSubLevel(carcass.bones.get(torsoBone.name()));
         if (!(torsoSub instanceof ServerSubLevel torso) || torso.isRemoved()) {
             return null;

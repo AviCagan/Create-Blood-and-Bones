@@ -872,8 +872,8 @@ public class BBGameTests {
                 helper.fail("Two cuts should not sever yet");
             }
             com.avicagan.bloodandbones.carcass.CarcassButchery.cut(level, null, carcass, "left_front_leg", null);
-            if (carcass.joints.size() != 4 || !carcass.severed.contains("left_front_leg")) {
-                helper.fail("Three cuts should sever the leg: joints " + carcass.joints.size() + ", severed " + carcass.severed);
+            if (carcass.joints.size() != 4 || carcass.bones.containsKey("left_front_leg")) {
+                helper.fail("Three cuts should sever the leg into its own record: joints " + carcass.joints.size() + ", bones " + carcass.bones.keySet());
             }
             if (com.avicagan.bloodandbones.carcass.CarcassButchery.cut(level, null, carcass, "body", null)) {
                 helper.fail("The body must not be cuttable");
@@ -882,8 +882,43 @@ public class BBGameTests {
         helper.runAfterDelay(SETTLE_TICKS + 30, () -> {
             CarcassSavedData.Carcass carcass = CarcassSavedData.get(level).carcass(id[0]);
             requireLiveJoints(helper, carcass, 4);
-            if (liveBones(helper, level, carcass).size() != 6) {
-                helper.fail("The severed leg should still be a body of the carcass");
+            if (liveBones(helper, level, carcass).size() != 5 || carcass.bones.containsKey("left_front_leg")) {
+                helper.fail("The severed leg should have left the cow's record, bones now " + carcass.bones.keySet());
+            }
+            // the leg is a carcass of its own now
+            CarcassSavedData.Carcass leg = null;
+            for (CarcassSavedData.Carcass other : CarcassSavedData.get(level).all()) {
+                if (other.rootBone.equals("left_front_leg") && other.entity.equals(carcass.entity) && other.look.texture().equals(carcass.look.texture())) {
+                    leg = other;
+                }
+            }
+            if (leg == null || leg.bones.size() != 1) {
+                helper.fail("Expected a one-bone carcass record for the severed leg");
+                return;
+            }
+            // light and loose: it can be picked up, and put back down
+            Player player = helper.makeMockPlayer(GameType.SURVIVAL);
+            player.setPos(Vec3.atBottomCenterOf(helper.absolutePos(new BlockPos(5, 2, 5))));
+            if (!com.avicagan.bloodandbones.carcass.CarcassButchery.canPickUp(level, leg, "left_front_leg")) {
+                helper.fail("A cow leg should be light enough to pick up");
+            }
+            if (com.avicagan.bloodandbones.carcass.CarcassButchery.canPickUp(level, carcass, "body")) {
+                helper.fail("A cow body should be too heavy to pick up");
+            }
+            if (!com.avicagan.bloodandbones.carcass.CarcassButchery.pickUp(level, player, leg, "left_front_leg")) {
+                helper.fail("Could not pick up the leg");
+            }
+            ItemStack held = player.getInventory().getItem(0);
+            com.avicagan.bloodandbones.item.CarcassPieceItem.Piece piece = com.avicagan.bloodandbones.item.CarcassPieceItem.piece(held);
+            if (piece == null || !piece.bone().equals("left_front_leg") || !piece.entity().equals(carcass.entity)) {
+                helper.fail("Picking up should give a piece item for the cow leg, got " + held);
+                return;
+            }
+            com.avicagan.bloodandbones.carcass.rig.Rig rig = com.avicagan.bloodandbones.carcass.rig.RigManager.forEntity(piece.entity()).orElseThrow();
+            CarcassSavedData.Carcass placed = CarcassAssembler.assemblePiece(level, rig, rig.bone("left_front_leg").orElseThrow(), piece.look(), piece.freshness(),
+                    Vec3.atBottomCenterOf(helper.absolutePos(new BlockPos(2, 2, 2))), 0.0F);
+            if (placed == null || placed.bones.size() != 1 || !placed.rootBone.equals("left_front_leg")) {
+                helper.fail("Putting the piece down should make a one-bone carcass");
             }
             helper.succeed();
         });

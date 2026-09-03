@@ -10,6 +10,12 @@ public class BBNetwork {
         PayloadRegistrar registrar = event.registrar(BloodAndBones.MOD_ID).versioned("1").optional();
         registrar.playToClient(DragSyncPayload.TYPE, DragSyncPayload.STREAM_CODEC,
                 (payload, context) -> context.enqueueWork(() -> ClientDragState.handle(payload)));
+        registrar.playToServer(PunchCarcassPayload.TYPE, PunchCarcassPayload.STREAM_CODEC,
+                (payload, context) -> context.enqueueWork(() -> {
+                    if (context.player() instanceof net.minecraft.server.level.ServerPlayer player) {
+                        com.avicagan.bloodandbones.carcass.CarcassRest.punch(player.serverLevel(), player, payload.carcass());
+                    }
+                }));
         registrar.playToClient(RigSyncPayload.TYPE, RigSyncPayload.STREAM_CODEC,
                 (payload, context) -> context.enqueueWork(() -> com.avicagan.bloodandbones.carcass.rig.RigManager.receiveClientRigs(payload.rigs())));
     }

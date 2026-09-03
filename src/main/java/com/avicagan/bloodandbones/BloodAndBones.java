@@ -46,6 +46,8 @@ public class BloodAndBones {
         }
         modEventBus.addListener(BBGameTests::register);
         modEventBus.addListener(BBNetwork::register);
+        com.avicagan.bloodandbones.registry.BBDataComponents.COMPONENTS.register(modEventBus);
+        com.avicagan.bloodandbones.registry.BBParticles.PARTICLES.register(modEventBus);
 
         LOGGER.info("Create: Blood & Bones loaded");
     }

@@ -6,6 +6,7 @@ import com.avicagan.bloodandbones.registry.BBItems;
 import net.minecraft.core.BlockPos;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.world.InteractionHand;
+import net.minecraft.world.InteractionResult;
 import net.minecraft.world.ItemInteractionResult;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.phys.BlockHitResult;
@@ -160,6 +161,22 @@ public class CarcassPartBlock extends Block implements EntityBlock, BlockSubLeve
             CarcassDrag.toggle(serverLevel, player, pos, hitResult.getLocation());
         }
         return ItemInteractionResult.sidedSuccess(level.isClientSide());
+    }
+
+    /** Shift-right-click with an empty hand picks up a light, loose piece. */
+    @Override
+    protected InteractionResult useWithoutItem(BlockState state, Level level, BlockPos pos, Player player, BlockHitResult hitResult) {
+        if (!player.isShiftKeyDown() || !player.getMainHandItem().isEmpty()) {
+            return InteractionResult.PASS;
+        }
+        if (level instanceof ServerLevel serverLevel && level.getBlockEntity(pos) instanceof CarcassPartBlockEntity be && be.carcassId() != null) {
+            CarcassSavedData.Carcass carcass = CarcassSavedData.get(serverLevel).carcass(be.carcassId());
+            if (carcass != null && CarcassButchery.pickUp(serverLevel, player, carcass, be.bone())) {
+                return InteractionResult.CONSUME;
+            }
+            return InteractionResult.FAIL;
+        }
+        return InteractionResult.sidedSuccess(level.isClientSide());
     }
 
     @Override

@@ -30,6 +30,11 @@ public class BBLang {
                 "PH: Right-click a limb of a carcass to cut into it. Three cuts sever the joint and the limb comes off.",
                 "PH: The body itself cannot be cut through.",
                 "PH: A severed limb is its own piece: hook it, drag it, hang it.");
+        BloodAndBones.REGISTRATE.addRawLang("item.bloodandbones.carcass_piece.named", "%s %s");
+        item("carcass_piece",
+                "PH: A piece of carcass light enough to carry. Right-click the ground to put it back down as a body.",
+                "PH: Shift-right-click a head, a leg or a whole small animal with an empty hand to pick it up.",
+                "PH: A piece still attached to a body has to be cut off first.");
         item("meat_hook",
                 "PH: Kill an animal with this and it leaves a whole carcass instead of loot. Right-click a carcass to drag it, right-click again to let go.",
                 "PH: Dragging slows you down. Heavier animals slow you more.",

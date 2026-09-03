@@ -82,8 +82,56 @@ public final class CarcassButchery {
             Blood.burst(level, at, 30);
             level.playSound(null, at.x, at.y, at.z, SoundEvents.BONE_BLOCK_BREAK, SoundSource.BLOCKS, 1.0F, 0.6F);
         }
+        // the piece is a carcass of its own from here: it rests, rots and is hooked on its own terms
+        CarcassSavedData.get(level).splitOff(level, carcass, bone);
         CarcassSavedData.get(level).setDirty();
         BloodAndBones.LOGGER.debug("Severed {} from carcass {}", bone, carcass.id);
+    }
+
+    /** A body no heavier than this (Sable mass units) can be picked up by hand: heads, legs, a whole chicken. */
+    public static final double LIGHT_MASS = 0.13;
+
+    /** Whether a bone of a carcass is light enough to carry. */
+    public static boolean canPickUp(ServerLevel level, CarcassSavedData.Carcass carcass, String bone) {
+        ServerSubLevelContainer container = SubLevelContainer.getContainer(level);
+        UUID id = carcass.bones.get(bone);
+        if (container == null || id == null || !(container.getSubLevel(id) instanceof ServerSubLevel body) || body.isRemoved()) {
+            return false;
+        }
+        return body.getMassTracker().getMass() <= LIGHT_MASS;
+    }
+
+    /**
+     * Take a light piece into the hand as an item. The piece must be a whole carcass record of its own
+     * (a severed limb, or a light animal's single-bone remains), or the bone must be free of joints.
+     */
+    public static boolean pickUp(ServerLevel level, Player player, CarcassSavedData.Carcass carcass, String bone) {
+        if (carcass.resting) {
+            if (CarcassRest.split(level, carcass) == null) {
+                return false;
+            }
+        }
+        if (!canPickUp(level, carcass, bone)) {
+            return false;
+        }
+        for (CarcassJoints.Spec joint : carcass.joints) {
+            if (joint.child().equals(bone) || joint.parent().equals(bone)) {
+                return false; // still attached: cut it off first
+            }
+        }
+        ServerSubLevelContainer container = SubLevelContainer.getContainer(level);
+        UUID id = carcass.bones.get(bone);
+        if (container == null || !(container.getSubLevel(id) instanceof ServerSubLevel body) || body.isRemoved()) {
+            return false;
+        }
+        net.minecraft.world.item.ItemStack stack = com.avicagan.bloodandbones.item.CarcassPieceItem.of(carcass, bone);
+        if (!player.getInventory().add(stack)) {
+            player.drop(stack, false);
+        }
+        Vector3d at = new Vector3d(body.logicalPose().position());
+        container.removeSubLevel(body, dev.ryanhcode.sable.sublevel.storage.SubLevelRemovalReason.REMOVED);
+        level.playSound(null, at.x, at.y, at.z, SoundEvents.SLIME_BLOCK_PLACE, SoundSource.BLOCKS, 0.6F, 0.8F);
+        return true;
     }
 
     /** How many joints a carcass still has to hold it together. */

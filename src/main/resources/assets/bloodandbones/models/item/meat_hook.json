@@ -553,5 +553,13 @@
         1
       ]
     }
-  }
+  },
+  "overrides": [
+    {
+      "predicate": {
+        "bloodandbones:dragging": 1.0
+      },
+      "model": "bloodandbones:item/meat_hook_empty"
+    }
+  ]
 }

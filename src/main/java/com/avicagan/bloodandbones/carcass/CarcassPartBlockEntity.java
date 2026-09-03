@@ -97,6 +97,12 @@ public class CarcassPartBlockEntity extends BlockEntity implements BlockEntitySu
         return carcassId;
     }
 
+    /** A limb moved to another carcass record (a severed piece). */
+    public void setCarcassId(UUID id) {
+        this.carcassId = id;
+        setChanged();
+    }
+
     public String bone() {
         return bone;
     }

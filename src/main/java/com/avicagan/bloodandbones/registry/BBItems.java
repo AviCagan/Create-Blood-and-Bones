@@ -20,6 +20,13 @@ public class BBItems {
             .lang("Cleaver")
             .register();
 
+    public static final ItemEntry<com.avicagan.bloodandbones.item.CarcassPieceItem> CARCASS_PIECE = BloodAndBones.REGISTRATE
+            .item("carcass_piece", com.avicagan.bloodandbones.item.CarcassPieceItem::new)
+            .properties(p -> p.stacksTo(1))
+            .model(NonNullBiConsumer.noop())
+            .lang("Carcass Piece")
+            .register();
+
     public static void register() {
     }
 }

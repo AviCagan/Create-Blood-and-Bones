@@ -356,6 +356,53 @@ public final class CarcassAssembler {
         }
     }
 
+    /**
+     * A single bone as a carcass of its own, put down at a world point (a piece carried in the hand).
+     *
+     * @return the new record, or null if there was no room
+     */
+    @Nullable
+    public static CarcassSavedData.Carcass assemblePiece(ServerLevel level, Rig rig, Bone bone, CarcassLook look, float freshness, Vec3 at, float yaw) {
+        ServerSubLevelContainer container = SubLevelContainer.getContainer(level);
+        if (container == null) {
+            return null;
+        }
+        BlockPos staging = findStaging(level, BlockPos.containing(at), rig);
+        if (staging == null) {
+            return null;
+        }
+        UUID carcassId = UUID.randomUUID();
+        ServerSubLevel subLevel = assembleBone(level, staging, carcassId, rig, bone, look, true);
+        if (subLevel == null) {
+            return null;
+        }
+        PhysicsPipeline pipeline = container.physicsSystem().getPipeline();
+        // lay it down the way it hung on the animal, facing the way the player faces, box bottom at the point
+        Quaterniond g = new Quaterniond().rotationY(Math.toRadians(180.0 - yaw)).rotateZ(Math.PI);
+        Quaterniond orientation = new Quaterniond(g).mul(new Quaterniond(bone.rotation()));
+        Vector3d origin = new Vector3d(at.x, at.y, at.z);
+        pose(pipeline, subLevel, bone, origin, orientation);
+        // lift so the lowest corner of the box sits on the point
+        Vector3d min = new Vector3d(bone.boxMin()).div(16.0);
+        Vector3d max = new Vector3d(bone.boxMax()).div(16.0);
+        double lowest = Double.MAX_VALUE;
+        for (int i = 0; i < 8; i++) {
+            Vector3d c = new Vector3d((i & 1) == 0 ? min.x : max.x, (i & 2) == 0 ? min.y : max.y, (i & 4) == 0 ? min.z : max.z);
+            lowest = Math.min(lowest, orientation.transform(c).y);
+        }
+        origin.y += -lowest + 0.02;
+        pose(pipeline, subLevel, bone, origin, orientation);
+        if (level.getBlockEntity(subLevel.getPlot().getCenterBlock()) instanceof CarcassPartBlockEntity root) {
+            root.setFreshness(freshness);
+        }
+        CarcassSavedData.Carcass carcass = new CarcassSavedData.Carcass(carcassId, rig.entity(), bone.name());
+        carcass.look = look;
+        carcass.freshness = freshness;
+        carcass.bones.put(bone.name(), subLevel.getUniqueId());
+        CarcassSavedData.get(level).add(carcass);
+        return carcass;
+    }
+
     /** World position of a bone's body (its centre of mass), or null if it is not loaded. */
     @Nullable
     public static Vector3d boneWorldPosition(ServerLevel level, CarcassSavedData.Carcass carcass, @Nullable String bone) {

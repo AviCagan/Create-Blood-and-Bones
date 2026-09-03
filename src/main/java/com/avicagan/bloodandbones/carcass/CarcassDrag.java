@@ -145,7 +145,7 @@ public final class CarcassDrag {
                 BlockPos c = torso.getPlot().getCenterBlock();
                 anchor.set(c.getX() + 0.5, c.getY() + 0.5, c.getZ() + 0.5);
             }
-            float weight = RigManager.all().values().stream().filter(rig -> rig.entity().equals(carcass.entity)).map(Rig::weight).findFirst().orElse(1.0F);
+            float weight = attachedMass(SubLevelContainer.getContainer(level), carcass);
             Drag drag = new Drag(player.getUUID(), carcass.id, carcass.rootBone, torso.getUniqueId(), anchor, weight);
             drag.playerEntity = player;
             drag.entryPlot.set(entryDirection(torso, player));
@@ -154,9 +154,7 @@ public final class CarcassDrag {
             broadcast(level, sync(drag));
             return true;
         }
-        float weight = RigManager.all().values().stream()
-                .filter(rig -> rig.entity().equals(carcass.entity))
-                .map(Rig::weight).findFirst().orElse(1.0F);
+        float weight = attachedMass(SubLevelContainer.getContainer(level), carcass);
 
         Vector3d anchor;
         if (hitLocation != null && serverSubLevel.getPlot().contains(hitLocation)) {
@@ -173,6 +171,20 @@ public final class CarcassDrag {
         broadcast(level, sync(drag));
         Blood.burst(level, serverSubLevel.logicalPose().transformPosition(anchor, new Vector3d()), 10);
         return true;
+    }
+
+    /** What the hook is really pulling: the mass of the bodies in this record (a severed leg is not a cow). */
+    private static float attachedMass(ServerSubLevelContainer container, CarcassSavedData.Carcass carcass) {
+        double total = 0.0;
+        for (UUID id : carcass.bones.values()) {
+            if (container.getSubLevel(id) instanceof ServerSubLevel body && !body.isRemoved()) {
+                total += body.getMassTracker().getMass();
+            }
+        }
+        if (total <= 0.0) {
+            return RigManager.forEntity(carcass.entity).map(Rig::weight).orElse(1.0F);
+        }
+        return (float) total;
     }
 
     /** The player's look direction, turned into the limb's own frame: the way the hook was pushed in. */
@@ -248,13 +260,18 @@ public final class CarcassDrag {
             if (subLevel == null) {
                 continue;
             }
-            if (isStandingOnCarcass(level, player, drag)) {
-                continue; // no pulling the ground out from under your own feet, or riding the carcass
+            if (isStandingOnCarcass(level, player, drag) || isAgainstPlayer(subLevel, player)) {
+                continue; // no pulling the ground out from under your own feet, riding it, or pulling it into yourself
             }
             pull(drag, subLevel, player, partial, timeStep, physics);
             aim(level, drag, subLevel, player, partial, timeStep, physics);
             physics.getPipeline().wakeUp(subLevel);
         }
+    }
+
+    /** The hooked body is already touching the player: pulling any harder would only shove them. */
+    private static boolean isAgainstPlayer(ServerSubLevel subLevel, Player player) {
+        return subLevel.boundingBox().intersects(player.getBoundingBox().inflate(0.15));
     }
 
     /** The player's feet are on (or in) one of the carcass's bodies. */
@@ -308,6 +325,10 @@ public final class CarcassDrag {
         double stiffness = STIFFNESS * weight;
         double damping = DAMPING * weight;
         double maxForce = MAX_FORCE * weight;
+        double gap = target.distance(hook);
+        if (gap < 0.6) {
+            damping *= 2.0; // settle instead of overshooting into the player
+        }
         Vector3d force = new Vector3d(target).sub(hook).mul(stiffness).sub(new Vector3d(hookVelocity).mul(damping));
         double magnitude = force.length();
         if (magnitude > maxForce) {

@@ -69,6 +69,77 @@ public class DragRenderer {
         lines.addVertex(matrix, (float) b.x, (float) b.y, (float) b.z).setColor(shade, shade, shade, 1.0F).setNormal(pose, normal.x, normal.y, normal.z);
     }
 
+    /**
+     * A punch that hit nothing: check whether it went through a limb drawn on a resting carcass (those
+     * limbs have no cells of their own) and tell the server.
+     */
+    @SubscribeEvent
+    public static void onLeftClickEmpty(net.neoforged.neoforge.event.entity.player.PlayerInteractEvent.LeftClickEmpty event) {
+        net.minecraft.client.multiplayer.ClientLevel level = Minecraft.getInstance().level;
+        Player player = event.getEntity();
+        if (level == null || SubLevelContainer.getContainer(level) == null) {
+            return;
+        }
+        Vec3 eye = player.getEyePosition();
+        Vec3 dir = player.getLookAngle();
+        double best = 6.0;
+        java.util.UUID hit = null;
+        for (SubLevel subLevel : SubLevelContainer.getContainer(level).getAllSubLevels()) {
+            if (subLevel.isRemoved() || !(subLevel instanceof dev.ryanhcode.sable.sublevel.ClientSubLevel client)) {
+                continue;
+            }
+            for (var holder : subLevel.getPlot().getLoadedChunks()) {
+                for (var entry : holder.getChunk().getBlockEntities().entrySet()) {
+                    if (!(entry.getValue() instanceof com.avicagan.bloodandbones.carcass.CarcassPartBlockEntity be) || !be.isRoot() || be.merged().isEmpty() || be.carcassId() == null) {
+                        continue;
+                    }
+                    com.avicagan.bloodandbones.carcass.rig.Rig rig = com.avicagan.bloodandbones.carcass.rig.RigManager.clientRig(be.entity()).orElse(null);
+                    com.avicagan.bloodandbones.carcass.rig.Bone torsoBone = rig == null ? null : rig.bone(be.bone()).orElse(null);
+                    if (torsoBone == null) {
+                        continue;
+                    }
+                    Pose3dc pose = client.renderPose();
+                    org.joml.Vector3d torsoOrigin = new org.joml.Vector3d(entry.getKey().getX(), entry.getKey().getY(), entry.getKey().getZ())
+                            .sub(torsoBone.boxMin().x / 16.0, torsoBone.boxMin().y / 16.0, torsoBone.boxMin().z / 16.0);
+                    for (com.avicagan.bloodandbones.carcass.CarcassPartBlockEntity.MergedPart part : be.merged()) {
+                        com.avicagan.bloodandbones.carcass.rig.Bone bone = rig.bone(part.bone()).orElse(null);
+                        if (bone == null) {
+                            continue;
+                        }
+                        // a sphere around the limb's box is plenty for a punch
+                        org.joml.Vector3d centre = new org.joml.Vector3d(bone.boxMin()).add(bone.boxMax()).mul(0.5 / 16.0);
+                        Vector3f turned = part.orientation().transform(new Vector3f((float) centre.x, (float) centre.y, (float) centre.z));
+                        centre.set(turned.x, turned.y, turned.z).add(part.position()).add(torsoOrigin);
+                        org.joml.Vector3d world = pose.transformPosition(centre, new org.joml.Vector3d());
+                        double radius = new org.joml.Vector3d(bone.boxMax()).sub(new org.joml.Vector3d(bone.boxMin())).length() / 32.0 + 0.1;
+                        double t = raySphere(eye, dir, world, radius);
+                        if (t >= 0 && t < best) {
+                            best = t;
+                            hit = be.carcassId();
+                        }
+                    }
+                }
+            }
+        }
+        if (hit != null) {
+            net.neoforged.neoforge.network.PacketDistributor.sendToServer(new com.avicagan.bloodandbones.network.PunchCarcassPayload(hit));
+        }
+    }
+
+    private static double raySphere(Vec3 origin, Vec3 dir, org.joml.Vector3d centre, double radius) {
+        double ox = origin.x - centre.x;
+        double oy = origin.y - centre.y;
+        double oz = origin.z - centre.z;
+        double b = 2.0 * (ox * dir.x + oy * dir.y + oz * dir.z);
+        double c = ox * ox + oy * oy + oz * oz - radius * radius;
+        double disc = b * b - 4.0 * c;
+        if (disc < 0) {
+            return -1;
+        }
+        double t = (-b - Math.sqrt(disc)) / 2.0;
+        return t >= 0 ? t : -1;
+    }
+
     /** A carcass is meat, not a block: no cube outline when you look at it. */
     @SubscribeEvent
     public static void onBlockHighlight(net.neoforged.neoforge.client.event.RenderHighlightEvent.Block event) {

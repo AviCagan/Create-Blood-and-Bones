@@ -248,6 +248,65 @@ public class CarcassSavedData extends SavedData {
         return carcasses.values();
     }
 
+    /**
+     * Move a bone and everything hanging off it into a carcass record of its own, with the bone as its
+     * root. The new record keeps the look, freshness and any joints among the moved bones.
+     */
+    public Carcass splitOff(ServerLevel level, Carcass from, String bone) {
+        java.util.Set<String> moving = new java.util.LinkedHashSet<>();
+        moving.add(bone);
+        boolean grew = true;
+        while (grew) {
+            grew = false;
+            for (CarcassJoints.Spec joint : from.joints) {
+                if (moving.contains(joint.parent()) && moving.add(joint.child())) {
+                    grew = true;
+                }
+            }
+        }
+        Carcass piece = new Carcass(UUID.randomUUID(), from.entity, bone);
+        piece.look = from.look;
+        piece.freshness = from.freshness;
+        piece.rotClock = from.rotClock;
+        for (String name : moving) {
+            UUID id = from.bones.remove(name);
+            if (id != null) {
+                piece.bones.put(name, id);
+            }
+            from.severed.remove(name);
+            Integer cuts = from.cuts.remove(name);
+            if (cuts != null) {
+                piece.cuts.put(name, cuts);
+            }
+        }
+        var iterator = from.joints.iterator();
+        while (iterator.hasNext()) {
+            CarcassJoints.Spec joint = iterator.next();
+            if (moving.contains(joint.child()) && moving.contains(joint.parent())) {
+                piece.joints.add(joint);
+                iterator.remove();
+            }
+        }
+        // the cells of the moved limbs answer to the new record
+        ServerSubLevelContainer container = SubLevelContainer.getContainer(level);
+        if (container != null) {
+            for (UUID id : piece.bones.values()) {
+                if (container.getSubLevel(id) instanceof ServerSubLevel subLevel && !subLevel.isRemoved()) {
+                    for (var holder : subLevel.getPlot().getLoadedChunks()) {
+                        for (var entry : holder.getChunk().getBlockEntities().entrySet()) {
+                            if (entry.getValue() instanceof CarcassPartBlockEntity be && from.id.equals(be.carcassId())) {
+                                be.setCarcassId(piece.id);
+                            }
+                        }
+                    }
+                }
+            }
+        }
+        carcasses.put(piece.id, piece);
+        setDirty();
+        return piece;
+    }
+
     /** The carcass one of whose limbs is this sub-level. */
     @Nullable
     public Carcass carcassOfSubLevel(UUID subLevelId) {
