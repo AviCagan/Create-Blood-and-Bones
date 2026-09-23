@@ -57,7 +57,7 @@ public class BabyTests {
         for (Bone bone : grown.bones()) {
             Bone baby = small.bone(bone.name()).orElseThrow();
             float f = shape.isHead(bone.name()) ? shape.headScale() : shape.bodyScale();
-            Vector3f expected = bone.boxSize().mul(f);
+            Vector3f expected = shape.extension(bone.name()).mul(grown.scale()).add(bone.boxSize()).mul(f);
             if (baby.boxSize().distance(expected) > 1.0E-3F) {
                 helper.fail("Baby " + type + " bone " + bone.name() + " is " + baby.boxSize() + ", expected " + expected);
                 return;
@@ -172,15 +172,55 @@ public class BabyTests {
         helper.succeed();
     }
 
-    /** A kind with no baby shape (a horse foal) still dies as it always did. */
+    /** Foals: the head and body shrink as usual, but the game draws them on their own long legs. */
+    @GameTest(template = "empty", timeoutTicks = 200)
+    public static void foalCarcass(GameTestHelper helper) {
+        babyTest(helper, EntityType.HORSE);
+    }
+
+    @GameTest(template = "empty", timeoutTicks = 200)
+    public static void babyDonkeyCarcass(GameTestHelper helper) {
+        babyTest(helper, EntityType.DONKEY);
+    }
+
+    @GameTest(template = "empty", timeoutTicks = 200)
+    public static void babyMuleCarcass(GameTestHelper helper) {
+        babyTest(helper, EntityType.MULE);
+    }
+
+    /**
+     * A foal's legs are its baby legs: 22 px drawn at half size, the top 5.5 px hidden in the body, so what
+     * shows (and the box) is three quarters of a grown horse's leg, though the body is half the size.
+     */
     @GameTest(template = "empty", timeoutTicks = 20)
-    public static void foalDiesAsUsual(GameTestHelper helper) {
-        Mob foal = helper.spawn(EntityType.HORSE, new BlockPos(5, 2, 5));
-        foal.setBaby(true);
-        if (CarcassAssembler.assemble(foal, null) != null) {
-            helper.fail("A foal has no baby rig yet and should not become a carcass");
+    public static void foalStandsOnLongLegs(GameTestHelper helper) {
+        net.minecraft.resources.ResourceLocation id = net.minecraft.resources.ResourceLocation.withDefaultNamespace("horse");
+        Rig grown = RigManager.forEntity(id).orElseThrow();
+        Rig foal = RigManager.forEntity(id, true).orElseThrow();
+        Bone grownLeg = grown.bone("right_hind_leg").orElseThrow();
+        Bone foalLeg = foal.bone("right_hind_leg").orElseThrow();
+        if (!foalLeg.part().equals("right_hind_baby_leg")) {
+            helper.fail("A foal's leg should be drawn with the baby leg part, got " + foalLeg.part());
         }
-        foal.discard();
+        float ratio = foalLeg.boxSize().y / grownLeg.boxSize().y;
+        if (Math.abs(ratio - 0.75F) > 0.03F) {
+            helper.fail("A foal's leg should be three quarters as long as a grown horse's, got " + ratio + " of it");
+        }
+        if (foal.bone("body").orElseThrow().boxSize().y > 0.6F * grown.bone("body").orElseThrow().boxSize().y) {
+            helper.fail("A foal's body should be about half a grown horse's");
+        }
+        helper.succeed();
+    }
+
+    /** A kind with no baby shape (a llama cria, drawn squashed unevenly) still dies as it always did. */
+    @GameTest(template = "empty", timeoutTicks = 20)
+    public static void criaDiesAsUsual(GameTestHelper helper) {
+        Mob cria = helper.spawn(EntityType.LLAMA, new BlockPos(5, 2, 5));
+        cria.setBaby(true);
+        if (CarcassAssembler.assemble(cria, null) != null) {
+            helper.fail("A cria has no baby rig yet and should not become a carcass");
+        }
+        cria.discard();
         helper.succeed();
     }
 }

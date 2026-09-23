@@ -254,6 +254,9 @@ public final class DevShowcase {
         carcass(level, EntityType.COW, o.offset(-4, 0, 2), true, true);
         carcass(level, EntityType.PIG, o.offset(-1, 0, 2), true, true);
         carcass(level, EntityType.VILLAGER, o.offset(3, 0, 2), true, true);
+        // and a foal on its long legs, beside a grown horse
+        carcass(level, EntityType.HORSE, o.offset(7, 0, 2), false, true);
+        carcass(level, EntityType.HORSE, o.offset(10, 0, 3), false, false);
 
         // off to the side: the biggest and the smallest odd ones
         witherShown = carcass(level, EntityType.WITHER, o.offset(-17, 0, 6));
@@ -362,6 +365,8 @@ public final class DevShowcase {
                 new View(o.getX() + 11.5, eye + 1.5, o.getZ() + 13.5, 0, 12),
                 // the wither and the pufferfish
                 new View(o.getX() - 18.0, eye + 1.0, o.getZ() + 0.5, 0, 25),
+                // the foal beside a grown horse
+                new View(o.getX() + 8.5, eye + 1.2, o.getZ() - 2.0, 0, 18),
                 // bloody casing and butcher's hooks
                 new View(o.getX() - 1.0, eye + 1.0, wallZ - 4.0, 0, 8));
         BloodAndBones.LOGGER.info("[showcase] built at {}", o);

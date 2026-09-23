@@ -130,5 +130,46 @@
       "contacts": false
     }
   },
-  "scale": 0.92
+  "scale": 0.92,
+  "baby": {
+    "head": [
+      "head_parts"
+    ],
+    "head_scale": 0.55001,
+    "head_offset": [
+      0,
+      16.2,
+      1.36
+    ],
+    "body_scale": 0.5,
+    "body_offset": 20,
+    "parts": {
+      "right_hind_leg": "right_hind_baby_leg",
+      "left_hind_leg": "left_hind_baby_leg",
+      "right_front_leg": "right_front_baby_leg",
+      "left_front_leg": "left_front_baby_leg"
+    },
+    "extend": {
+      "right_hind_leg": [
+        0,
+        5.5,
+        0
+      ],
+      "left_hind_leg": [
+        0,
+        5.5,
+        0
+      ],
+      "right_front_leg": [
+        0,
+        5.5,
+        0
+      ],
+      "left_front_leg": [
+        0,
+        5.5,
+        0
+      ]
+    }
+  }
 }

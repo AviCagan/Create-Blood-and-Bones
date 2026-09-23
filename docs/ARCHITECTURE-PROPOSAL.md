@@ -737,15 +737,18 @@ pipes; chain clearance = hanging length + 1 block.
   scale (`Bone.scale`), weight from the new boxes. `RigManager.forCarcass` / `forEntity(id, baby)` /
   `clientRig(id, baby)` hand it out (cached, cleared on reload). The record, the root cells and carried
   pieces remember `baby`; butchery gives as much less as the baby weighs less.
-- 28 kinds so far (cow, mooshroom, pig, sheep, chicken, wolf, goat, polar bear, panda, ocelot, cat, fox,
-  hoglin, zoglin, zombie, husk, drowned, zombie villager, piglin, villager, turtle, rabbit, and, shrunk
-  whole around the feet, axolotl, bee, sniffer, armadillo, camel, strider). The rabbit draws its baby by
+- 31 kinds so far (cow, mooshroom, pig, sheep, chicken, wolf, goat, polar bear, panda, ocelot, cat, fox,
+  hoglin, zoglin, zombie, husk, drowned, zombie villager, piglin, villager, turtle, rabbit, horse, donkey,
+  mule, and, shrunk whole around the feet, axolotl, bee, sniffer, armadillo, camel, strider). The rabbit draws its baby by
   hand (`RabbitModel#renderToBuffer`), in the same form: the scales are vanilla's divided by the grown
   rabbit's 0.6, and the offsets leave out the grown rabbit's own 16 px lift, which the rig does not store
   (the assembler's 1.501 × 0.6 happens to equal 1.501 − 0.6): head 22 − 16·0.6/0.5667, body 36 − 16·0.6/0.4.
-  `babyRabbitSitsWhereTheGameDrawsIt` checks both against vanilla's numbers. Others with babies die as usual until they get a shape. Two kinds do not fit
-  the shape: the llama squashes its baby's head, body and legs by different amounts along each axis, and
-  horses, donkeys and mules swap in separate, longer baby legs and lower the body.
+  `babyRabbitSitsWhereTheGameDrawsIt` checks both against vanilla's numbers. Others with babies die as usual until they get a shape. Foals (horse, donkey, mule) use two
+  more fields of the shape: `parts` draws a bone with another part of the same model (the
+  `*_baby_leg` parts), and `extend` adds model pixels to the far end of its box (the baby legs are the
+  grown ones grown 5.5 px at each end; the top end hides in the body, so only the bottom is added,
+  which keeps the leg box clear of the body's). The llama does not fit: it squashes its baby's head,
+  body and legs by different amounts along each axis.
 - Assembly lifts a body so no box starts below the feet: the ghast's tentacles hang below its feet in
   the model and used to start stuck through the ground. Its tentacle collision boxes are short (drawn
   full length) so the body does not end up on stilts.
