@@ -146,7 +146,7 @@ public class BBBlocks {
                     .modelFile(p.models().getExistingFile(p.modLoc("block/butcher_hook")))
                     .rotationY(((int) state.getValue(net.minecraft.world.level.block.HorizontalDirectionalBlock.FACING).toYRot() + 180) % 360)
                     .build()))
-            .tag(net.minecraft.tags.BlockTags.MINEABLE_WITH_PICKAXE)
+            .tag(net.minecraft.tags.BlockTags.MINEABLE_WITH_PICKAXE, com.simibubi.create.AllTags.AllBlockTags.MOVABLE_EMPTY_COLLIDER.tag)
             .lang("Butcher's Hook")
             .item().model((c, p) -> p.withExistingParent(c.getName(), p.modLoc("block/butcher_hook"))).build()
             .register();

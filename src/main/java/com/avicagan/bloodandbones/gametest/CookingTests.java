@@ -134,4 +134,33 @@ public class CookingTests {
             });
         });
     }
+
+    /**
+     * On a Create contraption both hooks go with the block they hang from and are brittle, and a wall
+     * Shackle Hook turned with its wall stays on that wall.
+     */
+    @GameTest(template = "empty", timeoutTicks = 20)
+    public static void hooksRideContraptions(GameTestHelper helper) {
+        net.minecraft.world.level.block.state.BlockState butcher = BBBlocks.BUTCHER_HOOK.getDefaultState()
+                .setValue(net.minecraft.world.level.block.HorizontalDirectionalBlock.FACING, Direction.EAST);
+        net.minecraft.world.level.block.state.BlockState shackle = BBBlocks.SHACKLE_HOOK.getDefaultState()
+                .setValue(com.avicagan.bloodandbones.carcass.ShackleHookBlock.FACING, Direction.NORTH);
+        BlockPos pos = helper.absolutePos(new BlockPos(3, 2, 3));
+        var level = helper.getLevel();
+        if (!com.simibubi.create.api.contraption.BlockMovementChecks.isBlockAttachedTowards(butcher, level, pos, Direction.WEST)
+                || com.simibubi.create.api.contraption.BlockMovementChecks.isBlockAttachedTowards(butcher, level, pos, Direction.EAST)) {
+            helper.fail("A butcher's hook pointing east should be attached to the block west of it, and only that one");
+        }
+        if (!com.simibubi.create.api.contraption.BlockMovementChecks.isBlockAttachedTowards(shackle, level, pos, Direction.NORTH)
+                || com.simibubi.create.api.contraption.BlockMovementChecks.isBlockAttachedTowards(shackle, level, pos, Direction.UP)) {
+            helper.fail("A shackle hook on a north wall should be attached to that wall, and only that one");
+        }
+        if (!com.simibubi.create.api.contraption.BlockMovementChecks.isBrittle(butcher) || !com.simibubi.create.api.contraption.BlockMovementChecks.isBrittle(shackle)) {
+            helper.fail("Both hooks should be brittle on a contraption");
+        }
+        if (shackle.rotate(net.minecraft.world.level.block.Rotation.CLOCKWISE_90).getValue(com.avicagan.bloodandbones.carcass.ShackleHookBlock.FACING) != Direction.EAST) {
+            helper.fail("A shackle hook on a north wall, turned a quarter clockwise, should be on the east wall");
+        }
+        helper.succeed();
+    }
 }

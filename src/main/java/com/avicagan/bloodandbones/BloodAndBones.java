@@ -41,6 +41,7 @@ public class BloodAndBones {
         com.avicagan.bloodandbones.registry.BBEntities.register();
         BBLang.register();
         com.avicagan.bloodandbones.registry.BBGameRules.register();
+        com.avicagan.bloodandbones.registry.BBMovementChecks.register();
 
         modContainer.registerConfig(ModConfig.Type.CLIENT, BBClientConfig.SPEC);
         modContainer.registerConfig(ModConfig.Type.SERVER, com.avicagan.bloodandbones.config.BBServerConfig.SPEC);

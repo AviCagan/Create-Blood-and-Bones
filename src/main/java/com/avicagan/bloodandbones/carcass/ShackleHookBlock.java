@@ -73,6 +73,17 @@ public class ShackleHookBlock extends BaseEntityBlock implements dev.ryanhcode.s
         return defaultBlockState().setValue(FACING, mount);
     }
 
+    /** Turned (by a structure or a contraption), a wall hook stays on the wall it was on. */
+    @Override
+    protected BlockState rotate(BlockState state, net.minecraft.world.level.block.Rotation rotation) {
+        return state.setValue(FACING, rotation.rotate(state.getValue(FACING)));
+    }
+
+    @Override
+    protected BlockState mirror(BlockState state, net.minecraft.world.level.block.Mirror mirror) {
+        return state.rotate(mirror.getRotation(state.getValue(FACING)));
+    }
+
     @Override
     protected boolean canSurvive(BlockState state, LevelReader level, BlockPos pos) {
         Direction mount = state.getValue(FACING);
