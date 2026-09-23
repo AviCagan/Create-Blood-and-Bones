@@ -437,6 +437,14 @@ baby; licence MIT; backtank tiers copper 2 / gold 3 / iron 4 / diamond 6 / blood
 diamond 16 / soul netherite 32; port block works with an adjacent wearer and with a placed backtank on
 pipes; chain clearance = hanging length + 1 block.
 
+**Resolved in the third review (Block 11, the body)**: the Surgery Table takes anyone: you, another
+player, a mob or a carcass, and it works by hand with tools or powered like Create's machines. Players
+really lose limbs, but only by choice at the table: nothing takes one at random, and surgery cannot go
+wrong. Minions are built on the table from carcass parts, limbs and organs; what they are given decides
+what they do, across a wide range of jobs. Cybernetics cover every body part. A prosthetic or cybernetic
+that runs on the backtank stops working when the tank runs dry. The Fluid Backtank is worn in the chest
+slot and has armour variants. The plan for building it is §14.
+
 **Still open** (as of the latest build): everything up to and including machines, materials,
 cooking, display and decoration is built and tested (§13). What remains needs design decisions
 before code: the body-horror progression (Block 11: Surgery Table, prosthetics, minions,
@@ -878,3 +886,50 @@ dragon and tropical fish, middle-sized (size 2) slimes, and final art.
   about 52 KB for 77 mobs) alongside the rigs on `OnDatapackSyncEvent`. JEI may start before they arrive,
   so on arrival the plugin hides the pages it had and adds fresh ones. `NetworkTests` writes the rig and
   butchery packets to bytes and back, since a single-player world never serialises them.
+
+---
+
+## 14. Block 11: the body (*decided* above; this is the build plan)
+
+Decisions from the third review are in §12. Details the review left open are filled in here with
+defaults, marked *default*, to be changed freely.
+
+**The body.** Every player carries a body record (a NeoForge data attachment, saved, sent to the
+player's client and to anyone watching, and kept through death: a lost arm stays lost). It lists
+parts, each natural, missing, or fitted with an implant (an item). Limbs first (both arms, both legs),
+then organs (eyes, heart, lungs, stomach) with the cybernetics. Mobs and minions use the same record
+later. The head and torso cannot be taken.
+
+**What a missing part does** (*default*):
+- An arm: nothing can be used, placed or swung in that hand, and breaking blocks is slow with the main
+  arm gone. The empty hand still works the Surgery Table, so an armless player can always get help.
+- A leg: slower walking (about 40% per leg) and a weaker jump; no sprinting with none.
+- Drawn on the player: the limb and its sleeve are hidden, in third person and first person; a fitted
+  implant is drawn in the limb's place.
+
+**Implants, in three kinds:**
+1. Basic prosthetics, unpowered, the safety floor: a peg leg, a hook hand. They always work, a little
+   worse than flesh (*default*: a peg leg walks at 90%, a hook hand breaks blocks at 70%).
+2. Organic prosthetics run on blood from the backtank; cybernetics run on Soul Blood. Better than flesh
+   while the tank has the fluid, and dead weight (as good as missing) once it is dry.
+3. Cybernetics for every part (§8's Vent Arm and port among them).
+
+**The Surgery Table** (slice 11a builds the hand-worked, self-surgery part):
+- It holds one item on its top, like the Butcher's Table: a blade, an implant or a severed limb.
+- Right-click it with an empty hand to lie on it (a seat entity; lying drawn as sitting for now). A
+  screen shows your body; for each part it offers what the item on the table allows: a blade takes a
+  natural limb off (you get it as a severed limb item); an implant or a severed limb is fitted where a
+  part is missing; an empty hand unclips an implant and hands it back. Nothing can fail.
+- Later: a powered table (a shaft and a Deployer's tools, as Create's sequenced assembly), surgery on
+  another player, a mob or a carcass (organs out), and minion building.
+
+**Slices:**
+- 11a: the body record, limbs lost and fitted at a hand-worked table, basic prosthetics, the effects,
+  drawing, tests.
+- 11b: the Fluid Backtank in its tiers (copper 2, gold 3, iron 4, diamond 6, blood steel 8, blood diamond
+  16, soul netherite 32 buckets), worn in the chest slot with the armour of its tier, filled from pipes as
+  a placed block, and the Backtank Port.
+- 11c: organic prosthetics and cybernetics, drawing on the tank, dead when it is dry; organs.
+- 11d: the powered table; surgery on other players, mobs and carcasses; organs out of carcasses.
+- 11e: minions from parts, with jobs from what they are given.
+
