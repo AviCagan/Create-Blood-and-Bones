@@ -26,8 +26,20 @@ public class BBLang {
                 "PH: The Cleaver takes a carcass apart. Right-click a limb three times to cut through the joint; the limb comes free as its own piece.");
         BloodAndBones.REGISTRATE.addRawLang("bloodandbones.jei.cleaver.2",
                 "PH: Severed limbs can still be hooked and dragged on their own. The body cannot be cut through, only its limbs.");
+        BloodAndBones.REGISTRATE.addRawLang("bloodandbones.jei.flensing_knife.1",
+                "PH: The Flensing Knife takes the hide off a carcass. Right-click any part of it four times; the hide drops and the carcass shows bare meat.");
+        BloodAndBones.REGISTRATE.addRawLang("bloodandbones.jei.flensing_knife.2",
+                "PH: Skin before you butcher: a piece cut down with its hide still on loses the hide. An unsheared sheep gives its wool too. Rot spoils hides.");
+        item("flensing_knife",
+                "PH: Right-click a carcass to skin it. A few strokes take the whole hide off.",
+                "PH: Skin before butchering, or the hide is lost.",
+                "PH: A rotting carcass gives a poorer hide, a rotten one none.");
+        BloodAndBones.REGISTRATE.addRawLang("bloodandbones.jei.butchery.1",
+                "PH: Cut a limb off with the Cleaver, then keep cutting the loose piece: it breaks down into meat, bone, and from the body offal and fat.");
+        BloodAndBones.REGISTRATE.addRawLang("bloodandbones.jei.butchery.2",
+                "PH: Bigger pieces give more. Fresh meat is whole; half-rotten meat gives half; badly rotten meat turns to rotten flesh.");
         item("cleaver",
-                "PH: Right-click a limb of a carcass to cut into it. Three cuts sever the joint and the limb comes off.",
+                "PH: Right-click a limb of a carcass to cut into it. Three cuts sever the joint and the limb comes off; three more on a loose piece butcher it.",
                 "PH: The body itself cannot be cut through.",
                 "PH: A severed limb is its own piece: hook it, drag it, hang it.");
         BloodAndBones.REGISTRATE.addRawLang("item.bloodandbones.carcass_piece.named", "%s %s");

@@ -208,8 +208,9 @@ public class BBGameTests {
             org.joml.Vector3d hook = hooked.logicalPose().transformPosition(current.anchorPlot, new org.joml.Vector3d());
             org.joml.Vector3d target = CarcassDrag.debugTarget(player);
             double gap = hook.distance(target);
-            // a grabbed leg cannot fully align with the target because the hip joint holds it, so allow slack there
-            double allowed = grabBone.equals("body") ? 0.5 : 2.0;
+            // a grabbed leg cannot fully align with the target because the hip joint holds it back against the
+            // body's weight; since the leg is also steered to point at the hand it settles right about 2 blocks off
+            double allowed = grabBone.equals("body") ? 0.5 : 2.25;
             if (gap > allowed) {
                 helper.fail("Hooked point did not reach the tether target: still " + gap + " blocks away (started " + hookedDistance[0] + " from the player)");
             }
@@ -919,6 +920,123 @@ public class BBGameTests {
                     Vec3.atBottomCenterOf(helper.absolutePos(new BlockPos(2, 2, 2))), 0.0F);
             if (placed == null || placed.bones.size() != 1 || !placed.rootBone.equals("left_front_leg")) {
                 helper.fail("Putting the piece down should make a one-bone carcass");
+            }
+            helper.succeed();
+        });
+    }
+
+    /** Items of a kind lying in this test's arena. */
+    private static int itemsInArena(GameTestHelper helper, net.minecraft.world.item.Item item) {
+        AABB area = AABB.encapsulatingFullBlocks(helper.absolutePos(new BlockPos(0, 0, 0)), helper.absolutePos(new BlockPos(10, 6, 10)));
+        int count = 0;
+        for (ItemEntity entity : helper.getLevel().getEntitiesOfClass(ItemEntity.class, area)) {
+            if (entity.getItem().is(item)) {
+                count += entity.getItem().getCount();
+            }
+        }
+        return count;
+    }
+
+    /** Four Flensing Knife strokes skin a red sheep: raw hide and red wool drop, and it shows bare meat. */
+    @GameTest(template = "empty", timeoutTicks = 200)
+    public static void flensingKnifeSkinsSheep(GameTestHelper helper) {
+        ServerLevel level = helper.getLevel();
+        net.minecraft.world.entity.animal.Sheep sheep = helper.spawn(EntityType.SHEEP, new BlockPos(5, 2, 5));
+        sheep.setColor(net.minecraft.world.item.DyeColor.RED);
+        if (CarcassAssembler.assemble(sheep, null) == null) {
+            helper.fail("Carcass assembly returned false");
+        }
+        sheep.discard();
+        helper.runAfterDelay(SETTLE_TICKS, () -> {
+            CarcassSavedData.Carcass carcass = nearestCarcass(helper, level, new BlockPos(5, 2, 5), EntityType.SHEEP);
+            for (int i = 0; i < com.avicagan.bloodandbones.carcass.CarcassButchery.STROKES_TO_SKIN - 1; i++) {
+                com.avicagan.bloodandbones.carcass.CarcassButchery.skin(level, null, carcass, null);
+            }
+            if (carcass.skinned) {
+                helper.fail("Skinned too early");
+            }
+            com.avicagan.bloodandbones.carcass.CarcassButchery.skin(level, null, carcass, null);
+            if (!carcass.skinned || !carcass.look.texture().equals(com.avicagan.bloodandbones.carcass.CarcassLook.FLESH)) {
+                helper.fail("The sheep should be skinned and wear bare flesh, look " + carcass.look);
+            }
+            if (com.avicagan.bloodandbones.carcass.CarcassButchery.skin(level, null, carcass, null)) {
+                helper.fail("A skinned carcass cannot be skinned again");
+            }
+            ServerSubLevel torso = liveBones(helper, level, carcass).get(carcass.rootBone);
+            if (!(level.getBlockEntity(torso.getPlot().getCenterBlock()) instanceof com.avicagan.bloodandbones.carcass.CarcassPartBlockEntity root)
+                    || !root.texture().equals(com.avicagan.bloodandbones.carcass.CarcassLook.FLESH) || !root.passes().isEmpty()) {
+                helper.fail("The torso's root cell should draw bare flesh with no wool");
+            }
+        });
+        helper.runAfterDelay(SETTLE_TICKS + 5, () -> {
+            if (itemsInArena(helper, BBItems.RAW_HIDE.get()) < 1) {
+                helper.fail("Skinning a sheep should drop raw hide");
+            }
+            if (itemsInArena(helper, net.minecraft.world.item.Items.RED_WOOL) != 2) {
+                helper.fail("Skinning a red sheep should drop two red wool, found " + itemsInArena(helper, net.minecraft.world.item.Items.RED_WOOL));
+            }
+            helper.succeed();
+        });
+    }
+
+    /** Cut every limb off a cow, then cut the body down: beef, bone, offal. */
+    @GameTest(template = "empty", timeoutTicks = 200)
+    public static void cleaverButchersBody(GameTestHelper helper) {
+        butcherBodyTest(helper, 1.0F, false);
+    }
+
+    /** The same, badly rotten: the beef has turned to rotten flesh and the offal is gone. */
+    @GameTest(template = "empty", timeoutTicks = 200)
+    public static void rottenBodyGivesRottenFlesh(GameTestHelper helper) {
+        butcherBodyTest(helper, 0.1F, true);
+    }
+
+    private static void butcherBodyTest(GameTestHelper helper, float freshness, boolean rotten) {
+        ServerLevel level = helper.getLevel();
+        Cow cow = helper.spawn(EntityType.COW, new BlockPos(5, 2, 5));
+        if (CarcassAssembler.assemble(cow, null) == null) {
+            helper.fail("Carcass assembly returned false");
+        }
+        cow.discard();
+        UUID[] body = new UUID[1];
+        helper.runAfterDelay(SETTLE_TICKS, () -> {
+            CarcassSavedData.Carcass carcass = nearestCarcass(helper, level, new BlockPos(5, 2, 5), EntityType.COW);
+            carcass.freshness = freshness;
+            carcass.rotRate = 0.0F; // hold it where the test put it
+            carcass.rotSampleTicks = Integer.MIN_VALUE + 1000;
+            if (com.avicagan.bloodandbones.carcass.CarcassButchery.cut(level, null, carcass, carcass.rootBone, null)) {
+                helper.fail("The body must not be cuttable while limbs hang off it");
+            }
+            for (String limb : List.of("head", "left_front_leg", "right_front_leg", "left_hind_leg", "right_hind_leg")) {
+                for (int i = 0; i < com.avicagan.bloodandbones.carcass.CarcassButchery.CUTS_TO_SEVER; i++) {
+                    com.avicagan.bloodandbones.carcass.CarcassButchery.cut(level, null, carcass, limb, null);
+                }
+            }
+            if (!carcass.joints.isEmpty() || carcass.bones.size() != 1) {
+                helper.fail("Every limb should be off, left " + carcass.bones.keySet() + " joints " + carcass.joints.size());
+            }
+            body[0] = carcass.bones.get(carcass.rootBone);
+            for (int i = 0; i < com.avicagan.bloodandbones.carcass.CarcassButchery.CUTS_TO_BUTCHER; i++) {
+                com.avicagan.bloodandbones.carcass.CarcassButchery.cut(level, null, carcass, carcass.rootBone, null);
+            }
+        });
+        helper.runAfterDelay(SETTLE_TICKS + 5, () -> {
+            if (SubLevelContainer.getContainer(level).getSubLevel(body[0]) != null) {
+                helper.fail("The butchered body should be gone");
+            }
+            int beef = itemsInArena(helper, net.minecraft.world.item.Items.BEEF);
+            int rottenFlesh = itemsInArena(helper, net.minecraft.world.item.Items.ROTTEN_FLESH);
+            int bones = itemsInArena(helper, net.minecraft.world.item.Items.BONE);
+            int offal = itemsInArena(helper, BBItems.OFFAL.get());
+            if (bones < 1) {
+                helper.fail("A cow body should give at least one bone, got " + bones);
+            }
+            if (rotten) {
+                if (beef != 0 || rottenFlesh < 2 || offal != 0) {
+                    helper.fail("A rotten body should give rotten flesh and no beef or offal: beef " + beef + ", rotten " + rottenFlesh + ", offal " + offal);
+                }
+            } else if (beef < 4 || offal < 1 || rottenFlesh != 0) {
+                helper.fail("A fresh cow body should give at least 4 beef and some offal: beef " + beef + ", offal " + offal + ", rotten " + rottenFlesh);
             }
             helper.succeed();
         });

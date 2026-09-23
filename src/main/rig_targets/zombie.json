@@ -83,5 +83,11 @@
       "stiffness": 0.1,
       "contacts": false
     }
+  },
+  "butchery": {
+    "meat": "minecraft:rotten_flesh",
+    "hide": "none",
+    "offal_per_weight": 0.0,
+    "fat_per_weight": 0.0
   }
 }

@@ -154,6 +154,21 @@ public class CarcassPartBlock extends Block implements EntityBlock, BlockSubLeve
             }
             return ItemInteractionResult.sidedSuccess(level.isClientSide());
         }
+        if (stack.is(BBItems.FLENSING_KNIFE.get())) {
+            if (level instanceof ServerLevel serverLevel && level.getBlockEntity(pos) instanceof CarcassPartBlockEntity be && be.carcassId() != null) {
+                CarcassSavedData.Carcass carcass = CarcassSavedData.get(serverLevel).carcass(be.carcassId());
+                dev.ryanhcode.sable.sublevel.SubLevel subLevel = dev.ryanhcode.sable.Sable.HELPER.getContaining(level, pos);
+                org.joml.Vector3d hitWorld = null;
+                if (subLevel != null) {
+                    net.minecraft.world.phys.Vec3 hit = hitResult.getLocation();
+                    hitWorld = subLevel.logicalPose().transformPosition(new org.joml.Vector3d(hit.x, hit.y, hit.z), new org.joml.Vector3d());
+                }
+                if (carcass != null && CarcassButchery.skin(serverLevel, player, carcass, hitWorld)) {
+                    player.getCooldowns().addCooldown(stack.getItem(), 6);
+                }
+            }
+            return ItemInteractionResult.sidedSuccess(level.isClientSide());
+        }
         if (!stack.is(BBItems.MEAT_HOOK.get())) {
             return ItemInteractionResult.PASS_TO_DEFAULT_BLOCK_INTERACTION;
         }

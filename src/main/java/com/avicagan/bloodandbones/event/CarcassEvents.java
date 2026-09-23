@@ -49,6 +49,7 @@ public class CarcassEvents {
     @SubscribeEvent
     public static void onReload(AddReloadListenerEvent event) {
         event.addListener(RigManager.INSTANCE);
+        event.addListener(com.avicagan.bloodandbones.carcass.butchery.ButcheryManager.INSTANCE);
     }
 
     /** Hand every joining or reloading player the rigs, the way vanilla hands out recipes and tags. */

@@ -27,6 +27,14 @@ public class BBJeiPlugin implements IModPlugin {
         registration.addIngredientInfo(BBItems.MEAT_HOOK.get(),
                 Component.translatable("bloodandbones.jei.meat_hook.1"),
                 Component.translatable("bloodandbones.jei.meat_hook.2"));
+        registration.addIngredientInfo(BBItems.FLENSING_KNIFE.get(),
+                Component.translatable("bloodandbones.jei.flensing_knife.1"),
+                Component.translatable("bloodandbones.jei.flensing_knife.2"));
+        registration.addIngredientInfo(java.util.List.of(new net.minecraft.world.item.ItemStack(BBItems.RAW_MEAT.get()), new net.minecraft.world.item.ItemStack(BBItems.OFFAL.get()),
+                        new net.minecraft.world.item.ItemStack(BBItems.ANIMAL_FAT.get()), new net.minecraft.world.item.ItemStack(BBItems.RAW_HIDE.get())),
+                mezz.jei.api.constants.VanillaTypes.ITEM_STACK,
+                Component.translatable("bloodandbones.jei.butchery.1"),
+                Component.translatable("bloodandbones.jei.butchery.2"));
         registration.addIngredientInfo(BBItems.CLEAVER.get(),
                 Component.translatable("bloodandbones.jei.cleaver.1"),
                 Component.translatable("bloodandbones.jei.cleaver.2"));

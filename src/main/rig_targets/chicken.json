@@ -91,5 +91,10 @@
         3
       ]
     }
+  },
+  "butchery": {
+    "meat": "minecraft:chicken",
+    "hide": "minecraft:feather",
+    "hide_per_weight": 16.0
   }
 }

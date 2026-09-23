@@ -35,13 +35,16 @@ public class CarcassPieceItem extends Item {
         ).apply(i, Coat::new));
     }
 
-    public record Piece(ResourceLocation entity, String bone, ResourceLocation texture, List<Coat> coats, float freshness) {
+    public record Piece(ResourceLocation entity, String bone, ResourceLocation texture, List<Coat> coats, float freshness,
+                        boolean skinned, java.util.Map<String, String> traits) {
         public static final Codec<Piece> CODEC = RecordCodecBuilder.create(i -> i.group(
                 ResourceLocation.CODEC.fieldOf("entity").forGetter(Piece::entity),
                 Codec.STRING.fieldOf("bone").forGetter(Piece::bone),
                 ResourceLocation.CODEC.fieldOf("texture").forGetter(Piece::texture),
                 Coat.CODEC.listOf().optionalFieldOf("coats", List.of()).forGetter(Piece::coats),
-                Codec.FLOAT.optionalFieldOf("freshness", 1.0F).forGetter(Piece::freshness)
+                Codec.FLOAT.optionalFieldOf("freshness", 1.0F).forGetter(Piece::freshness),
+                Codec.BOOL.optionalFieldOf("skinned", false).forGetter(Piece::skinned),
+                Codec.unboundedMap(Codec.STRING, Codec.STRING).optionalFieldOf("traits", java.util.Map.of()).forGetter(Piece::traits)
         ).apply(i, Piece::new));
 
         public CarcassLook look() {
@@ -56,7 +59,8 @@ public class CarcassPieceItem extends Item {
     public static ItemStack of(CarcassSavedData.Carcass carcass, String bone) {
         ItemStack stack = new ItemStack(com.avicagan.bloodandbones.registry.BBItems.CARCASS_PIECE.get());
         List<Coat> coats = carcass.look.passes().stream().map(c -> new Coat(c.layer(), c.texture(), c.tint())).toList();
-        stack.set(BBDataComponents.PIECE.get(), new Piece(carcass.entity, bone, carcass.look.texture(), coats, carcass.freshness));
+        stack.set(BBDataComponents.PIECE.get(), new Piece(carcass.entity, bone, carcass.look.texture(), coats, carcass.freshness,
+                carcass.skinned, java.util.Map.copyOf(carcass.traits)));
         return stack;
     }
 
@@ -93,6 +97,8 @@ public class CarcassPieceItem extends Item {
         if (carcass == null) {
             return InteractionResult.FAIL;
         }
+        carcass.skinned = piece.skinned();
+        carcass.traits.putAll(piece.traits());
         if (!context.getPlayer().getAbilities().instabuild) {
             context.getItemInHand().shrink(1);
         }

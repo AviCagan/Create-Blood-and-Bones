@@ -11,7 +11,7 @@
     "body": [
       {
         "count": 4.22,
-        "item": "bloodandbones:raw_meat",
+        "item": "minecraft:beef",
         "kind": "meat"
       },
       {
@@ -33,7 +33,7 @@
     "head": [
       {
         "count": 0.75,
-        "item": "bloodandbones:raw_meat",
+        "item": "minecraft:beef",
         "kind": "meat"
       },
       {
@@ -45,7 +45,7 @@
     "left_front_leg": [
       {
         "count": 0.38,
-        "item": "bloodandbones:raw_meat",
+        "item": "minecraft:beef",
         "kind": "meat"
       },
       {
@@ -57,7 +57,7 @@
     "left_hind_leg": [
       {
         "count": 0.38,
-        "item": "bloodandbones:raw_meat",
+        "item": "minecraft:beef",
         "kind": "meat"
       },
       {
@@ -69,7 +69,7 @@
     "right_front_leg": [
       {
         "count": 0.38,
-        "item": "bloodandbones:raw_meat",
+        "item": "minecraft:beef",
         "kind": "meat"
       },
       {
@@ -81,7 +81,7 @@
     "right_hind_leg": [
       {
         "count": 0.38,
-        "item": "bloodandbones:raw_meat",
+        "item": "minecraft:beef",
         "kind": "meat"
       },
       {

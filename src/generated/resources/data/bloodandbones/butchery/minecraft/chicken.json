@@ -2,7 +2,8 @@
   "entity": "minecraft:chicken",
   "hide": [
     {
-      "item": "bloodandbones:raw_hide",
+      "count": 2.04,
+      "item": "minecraft:feather",
       "kind": "hide"
     }
   ],
@@ -10,7 +11,7 @@
     "body": [
       {
         "count": 0.56,
-        "item": "bloodandbones:raw_meat",
+        "item": "minecraft:chicken",
         "kind": "meat"
       },
       {
@@ -32,7 +33,7 @@
     "head": [
       {
         "count": 0.09,
-        "item": "bloodandbones:raw_meat",
+        "item": "minecraft:chicken",
         "kind": "meat"
       },
       {
@@ -44,7 +45,7 @@
     "left_leg": [
       {
         "count": 0.09,
-        "item": "bloodandbones:raw_meat",
+        "item": "minecraft:chicken",
         "kind": "meat"
       },
       {
@@ -56,7 +57,7 @@
     "left_wing": [
       {
         "count": 0.09,
-        "item": "bloodandbones:raw_meat",
+        "item": "minecraft:chicken",
         "kind": "meat"
       },
       {
@@ -68,7 +69,7 @@
     "right_leg": [
       {
         "count": 0.09,
-        "item": "bloodandbones:raw_meat",
+        "item": "minecraft:chicken",
         "kind": "meat"
       },
       {
@@ -80,7 +81,7 @@
     "right_wing": [
       {
         "count": 0.09,
-        "item": "bloodandbones:raw_meat",
+        "item": "minecraft:chicken",
         "kind": "meat"
       },
       {

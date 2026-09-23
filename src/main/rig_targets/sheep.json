@@ -4,12 +4,52 @@
   "texture": "minecraft:textures/entity/sheep/sheep.png",
   "rot_time": 20000,
   "passes": [
-    {"layer": "fur", "texture": "minecraft:textures/entity/sheep/sheep_fur.png", "tint": "wool", "unless": "sheared"}
+    {
+      "layer": "fur",
+      "texture": "minecraft:textures/entity/sheep/sheep_fur.png",
+      "tint": "wool",
+      "unless": "sheared"
+    }
   ],
   "boxes": {
-    "head": {"min": [-3, -4, -6], "max": [3, 2, 0]}
+    "head": {
+      "min": [
+        -3,
+        -4,
+        -6
+      ],
+      "max": [
+        3,
+        2,
+        0
+      ]
+    }
   },
   "joints": {
-    "head": {"min_degrees": [-20, -30, -10], "max_degrees": [40, 30, 10], "damping": 4.0, "stiffness": 2.0, "contacts": true}
+    "head": {
+      "min_degrees": [
+        -20,
+        -30,
+        -10
+      ],
+      "max_degrees": [
+        40,
+        30,
+        10
+      ],
+      "damping": 4.0,
+      "stiffness": 2.0,
+      "contacts": true
+    }
+  },
+  "butchery": {
+    "meat": "minecraft:mutton",
+    "hide_extras": [
+      {
+        "item": "minecraft:{wool}_wool",
+        "count": 2.0,
+        "kind": "hide"
+      }
+    ]
   }
 }

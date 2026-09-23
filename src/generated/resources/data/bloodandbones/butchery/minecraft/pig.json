@@ -11,7 +11,7 @@
     "body": [
       {
         "count": 2.5,
-        "item": "bloodandbones:raw_meat",
+        "item": "minecraft:porkchop",
         "kind": "meat"
       },
       {
@@ -32,7 +32,7 @@
     ],
     "head": [
       {
-        "item": "bloodandbones:raw_meat",
+        "item": "minecraft:porkchop",
         "kind": "meat"
       },
       {
@@ -44,7 +44,7 @@
     "left_front_leg": [
       {
         "count": 0.19,
-        "item": "bloodandbones:raw_meat",
+        "item": "minecraft:porkchop",
         "kind": "meat"
       },
       {
@@ -56,7 +56,7 @@
     "left_hind_leg": [
       {
         "count": 0.19,
-        "item": "bloodandbones:raw_meat",
+        "item": "minecraft:porkchop",
         "kind": "meat"
       },
       {
@@ -68,7 +68,7 @@
     "right_front_leg": [
       {
         "count": 0.19,
-        "item": "bloodandbones:raw_meat",
+        "item": "minecraft:porkchop",
         "kind": "meat"
       },
       {
@@ -80,7 +80,7 @@
     "right_hind_leg": [
       {
         "count": 0.19,
-        "item": "bloodandbones:raw_meat",
+        "item": "minecraft:porkchop",
         "kind": "meat"
       },
       {

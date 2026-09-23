@@ -5,13 +5,18 @@
       "count": 1.28,
       "item": "bloodandbones:raw_hide",
       "kind": "hide"
+    },
+    {
+      "count": 2.0,
+      "item": "minecraft:{wool}_wool",
+      "kind": "hide"
     }
   ],
   "parts": {
     "body": [
       {
         "count": 1.5,
-        "item": "bloodandbones:raw_meat",
+        "item": "minecraft:mutton",
         "kind": "meat"
       },
       {
@@ -33,7 +38,7 @@
     "head": [
       {
         "count": 0.42,
-        "item": "bloodandbones:raw_meat",
+        "item": "minecraft:mutton",
         "kind": "meat"
       },
       {
@@ -45,7 +50,7 @@
     "left_front_leg": [
       {
         "count": 0.38,
-        "item": "bloodandbones:raw_meat",
+        "item": "minecraft:mutton",
         "kind": "meat"
       },
       {
@@ -57,7 +62,7 @@
     "left_hind_leg": [
       {
         "count": 0.38,
-        "item": "bloodandbones:raw_meat",
+        "item": "minecraft:mutton",
         "kind": "meat"
       },
       {
@@ -69,7 +74,7 @@
     "right_front_leg": [
       {
         "count": 0.38,
-        "item": "bloodandbones:raw_meat",
+        "item": "minecraft:mutton",
         "kind": "meat"
       },
       {
@@ -81,7 +86,7 @@
     "right_hind_leg": [
       {
         "count": 0.38,
-        "item": "bloodandbones:raw_meat",
+        "item": "minecraft:mutton",
         "kind": "meat"
       },
       {
