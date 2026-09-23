@@ -125,4 +125,49 @@ public class BloodStainTests {
             helper.succeed();
         });
     }
+
+    /**
+     * A fresh cut over Bleeding Racks pours into them instead of onto the floor; a skeleton's cut arm shows
+     * no raw wound.
+     */
+    @GameTest(template = "empty", timeoutTicks = 200)
+    public static void freshCutPoursIntoARack(GameTestHelper helper) {
+        ServerLevel level = helper.getLevel();
+        for (int x = 2; x <= 8; x++) {
+            for (int z = 2; z <= 8; z++) {
+                helper.setBlock(new BlockPos(x, 1, z), BBBlocks.BLEEDING_RACK.getDefaultState());
+            }
+        }
+        Cow cow = helper.spawn(EntityType.COW, new BlockPos(5, 2, 5));
+        CarcassSavedData.Carcass carcass = CarcassAssembler.assemble(cow, null);
+        cow.discard();
+        Skeleton skeleton = helper.spawn(EntityType.SKELETON, new BlockPos(9, 2, 1));
+        CarcassSavedData.Carcass bones = CarcassAssembler.assemble(skeleton, null);
+        skeleton.discard();
+        if (carcass == null || bones == null) {
+            helper.fail("Carcass assembly returned null");
+            return;
+        }
+        helper.runAfterDelay(10, () -> {
+            com.avicagan.bloodandbones.carcass.CarcassButchery.sever(level, carcass, "right_front_leg", null);
+            com.avicagan.bloodandbones.carcass.CarcassButchery.sever(level, bones, "right_arm", null);
+            if (!com.avicagan.bloodandbones.carcass.CarcassRot.cuts(bones).isEmpty()) {
+                helper.fail("A skeleton's cut ends should be dry, got " + com.avicagan.bloodandbones.carcass.CarcassRot.cuts(bones));
+            }
+        });
+        helper.runAfterDelay(160, () -> {
+            int caught = 0;
+            for (int x = 2; x <= 8; x++) {
+                for (int z = 2; z <= 8; z++) {
+                    if (level.getBlockEntity(helper.absolutePos(new BlockPos(x, 1, z))) instanceof com.avicagan.bloodandbones.bleeding.BleedingRackBlockEntity rack) {
+                        caught += rack.getFluid().getAmount();
+                    }
+                }
+            }
+            if (caught <= 0) {
+                helper.fail("A fresh cut over racks should pour into them");
+            }
+            helper.succeed();
+        });
+    }
 }

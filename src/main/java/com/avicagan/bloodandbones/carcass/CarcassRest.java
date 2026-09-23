@@ -557,6 +557,8 @@ public final class CarcassRest {
         carcass.restPoses.clear();
         carcass.resting = false;
         carcass.stillTicks = 0;
+        // the limbs' cells are new: they need the look, freshness and cut ends now, not at the next refresh
+        CarcassRot.sync(level, carcass, null);
 
         for (PhysicsConstraintHandle handle : carcass.liveJoints) {
             if (handle.isValid()) {

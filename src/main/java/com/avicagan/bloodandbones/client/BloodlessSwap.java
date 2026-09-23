@@ -38,7 +38,7 @@ public final class BloodlessSwap extends BakedModelWrapper<BakedModel> {
     private final Map<ResourceLocation, ResourceLocation> swaps;
     /** Resolved on first use: the block atlas is only ready once baking is over. */
     @Nullable
-    private Map<TextureAtlasSprite, TextureAtlasSprite> sprites;
+    private volatile Map<TextureAtlasSprite, TextureAtlasSprite> sprites;
 
     public BloodlessSwap(BakedModel model, Map<ResourceLocation, ResourceLocation> swaps) {
         super(model);
@@ -63,16 +63,26 @@ public final class BloodlessSwap extends BakedModelWrapper<BakedModel> {
         return List.of(this);
     }
 
+    /** Likewise here: the item renderer carries on with whatever model this returns. */
+    @Override
+    public BakedModel applyTransform(net.minecraft.world.item.ItemDisplayContext context, com.mojang.blaze3d.vertex.PoseStack poseStack, boolean leftHand) {
+        originalModel.applyTransform(context, poseStack, leftHand);
+        return this;
+    }
+
     private List<BakedQuad> swap(List<BakedQuad> quads) {
-        if (sprites == null) {
+        // chunk builder threads get here too: build the map whole, then publish it
+        Map<TextureAtlasSprite, TextureAtlasSprite> map = sprites;
+        if (map == null) {
             TextureAtlas atlas = Minecraft.getInstance().getModelManager().getAtlas(TextureAtlas.LOCATION_BLOCKS);
             Map<TextureAtlasSprite, TextureAtlasSprite> resolved = new HashMap<>();
             swaps.forEach((from, to) -> resolved.put(atlas.getSprite(from), atlas.getSprite(to)));
-            sprites = resolved;
+            map = Map.copyOf(resolved);
+            sprites = map;
         }
         List<BakedQuad> out = new ArrayList<>(quads.size());
         for (BakedQuad quad : quads) {
-            TextureAtlasSprite to = sprites.get(quad.getSprite());
+            TextureAtlasSprite to = map.get(quad.getSprite());
             out.add(to == null ? quad : retexture(quad, to));
         }
         return out;

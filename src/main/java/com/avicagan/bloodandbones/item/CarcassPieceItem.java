@@ -124,6 +124,8 @@ public class CarcassPieceItem extends Item {
         carcass.bloodMax = piece.bloodMax();
         carcass.decay = piece.decay();
         carcass.baby = piece.baby();
+        // the cells were just made: tell clients its cut ends at once
+        com.avicagan.bloodandbones.carcass.CarcassRot.sync(level, carcass, null);
         if (!context.getPlayer().getAbilities().instabuild) {
             context.getItemInHand().shrink(1);
         }

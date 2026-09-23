@@ -41,7 +41,7 @@ public final class WoundCaps {
             String parent = cut.substring(0, split);
             String child = cut.substring(split + 1);
             if (child.equals(bone.name())) {
-                cap(bone, false, color, poseStack, buffers, packedLight);
+                cap(bone, rig.bone(parent).orElse(null), false, color, poseStack, buffers, packedLight);
             } else if (parent.equals(bone.name())) {
                 Bone limb = rig.bone(child).orElse(null);
                 if (limb == null) {
@@ -53,35 +53,56 @@ public final class WoundCaps {
                 poseStack.pushPose();
                 poseStack.translate(at.x / 16.0F, at.y / 16.0F, at.z / 16.0F);
                 poseStack.mulPose(new Quaternionf(inverse).mul(limb.rotation()));
-                cap(limb, true, color, poseStack, buffers, packedLight);
+                cap(limb, bone, true, color, poseStack, buffers, packedLight);
                 poseStack.popPose();
             }
         }
     }
 
     /**
-     * One wound over the face of {@code limb}'s box nearest its pivot, in the limb's frame: outside the box
-     * for the limb's own cut end, inside it for the stump left where the limb was.
+     * One wound over the face of {@code limb}'s box that faces its parent (the face whose outward normal
+     * points most toward the parent's pivot; if the two pivots coincide, the face nearest the limb's own
+     * pivot), in the limb's frame: outside the box for the limb's own cut end, inside it for the stump.
      */
-    private static void cap(Bone limb, boolean stump, int color, PoseStack poseStack, MultiBufferSource buffers, int packedLight) {
+    private static void cap(Bone limb, @org.jetbrains.annotations.Nullable Bone parent, boolean stump, int color, PoseStack poseStack, MultiBufferSource buffers, int packedLight) {
         Vector3f min = limb.boxMin();
         Vector3f max = limb.boxMax();
-        // the face whose plane passes nearest the pivot (the part's origin)
+        Vector3f toParent = parent == null ? new Vector3f()
+                : new Quaternionf(limb.rotation()).invert().transform(new Vector3f(parent.offset()).sub(limb.offset()));
         int axis = 0;
         boolean high = false;
-        float best = Float.MAX_VALUE;
-        for (int a = 0; a < 3; a++) {
-            float lo = Math.abs(min.get(a));
-            float hi = Math.abs(max.get(a));
-            if (lo < best) {
-                best = lo;
-                axis = a;
-                high = false;
+        if (toParent.lengthSquared() > 1.0E-4F) {
+            // the face pointing most toward the parent
+            float best = -Float.MAX_VALUE;
+            for (int a = 0; a < 3; a++) {
+                float along = toParent.get(a);
+                if (along > best) {
+                    best = along;
+                    axis = a;
+                    high = true;
+                }
+                if (-along > best) {
+                    best = -along;
+                    axis = a;
+                    high = false;
+                }
             }
-            if (hi < best) {
-                best = hi;
-                axis = a;
-                high = true;
+        } else {
+            // the face whose plane passes nearest the pivot (the part's origin)
+            float best = Float.MAX_VALUE;
+            for (int a = 0; a < 3; a++) {
+                float lo = Math.abs(min.get(a));
+                float hi = Math.abs(max.get(a));
+                if (lo < best) {
+                    best = lo;
+                    axis = a;
+                    high = false;
+                }
+                if (hi < best) {
+                    best = hi;
+                    axis = a;
+                    high = true;
+                }
             }
         }
         float outward = high ? 1.0F : -1.0F;

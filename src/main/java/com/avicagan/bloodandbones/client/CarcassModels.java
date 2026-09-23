@@ -131,14 +131,19 @@ public final class CarcassModels {
         }
         drawBone(rig, bone, piece.texture(), coats, color, poseStack, buffers, packedLight);
         // a piece was cut from its parent, and anything that hung off it is gone: every end is a wound
+        // (unless the mob has no blood: a skeleton's cut ends are dry)
         List<String> cuts = new ArrayList<>();
+        boolean bloody = net.minecraft.core.registries.BuiltInRegistries.ENTITY_TYPE.getOptional(piece.entity())
+                .map(type -> !type.is(com.avicagan.bloodandbones.registry.BBTags.BLOODLESS)).orElse(true);
         bone.parent().ifPresent(parent -> cuts.add(parent + ">" + bone.name()));
         for (Bone other : rig.bones()) {
             if (other.parent().filter(bone.name()::equals).isPresent()) {
                 cuts.add(bone.name() + ">" + other.name());
             }
         }
-        WoundCaps.draw(rig, bone, cuts, color, poseStack, buffers, packedLight);
+        if (bloody) {
+            WoundCaps.draw(rig, bone, cuts, color, poseStack, buffers, packedLight);
+        }
         poseStack.popPose();
     }
 

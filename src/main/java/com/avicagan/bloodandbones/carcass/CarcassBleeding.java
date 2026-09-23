@@ -162,11 +162,18 @@ public final class CarcassBleeding {
             if (left > GUSH_TICKS / 2) {
                 Blood.drip(level, at);
             }
-            if ((left / INTERVAL) % 4 == 0) {
-                Blood.stain(level, at, 1);
-            }
+            // a stump drains the body; what pours onto a rack is kept, the rest stains the floor
+            BleedingRackBlockEntity rack = rackBelow(level, at, HANGING_REACH);
             if (carcass.bones.containsKey(parent) && carcass.blood > 0.0F) {
-                carcass.blood = Math.max(0.0F, carcass.blood - carcass.bloodMax * GUSH_SHARE);
+                int amount = (int) Math.ceil(Math.min(carcass.blood, carcass.bloodMax * GUSH_SHARE));
+                if (rack != null) {
+                    amount = rack.collect(new FluidStack(BBFluids.blood(), amount), IFluidHandler.FluidAction.EXECUTE);
+                }
+                carcass.blood = Math.max(0.0F, carcass.blood - amount);
+                CarcassSavedData.get(level).setDirty();
+            }
+            if (rack == null && (left / INTERVAL) % 4 == 0) {
+                Blood.stain(level, at, 1);
             }
         }
     }

@@ -129,7 +129,8 @@ public final class CarcassRot {
      */
     public static java.util.List<String> cuts(CarcassSavedData.Carcass carcass) {
         Rig rig = RigManager.forCarcass(carcass).orElse(null);
-        if (rig == null) {
+        // a skeleton's or a golem's cut ends are dry: no raw wounds
+        if (rig == null || !Blood.bloody(carcass)) {
             return java.util.List.of();
         }
         java.util.Set<String> here = pieces(carcass);
