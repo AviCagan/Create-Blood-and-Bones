@@ -293,7 +293,7 @@ public class CarcassMachineBlockEntity extends KineticBlockEntity implements Cle
                 store(new ItemStack(skull));
             }
         }
-        level.playSound(null, target.at().x, target.at().y, target.at().z, SoundEvents.ANVIL_LAND, SoundSource.BLOCKS, 0.4F, heads ? 1.4F : 0.8F);
+        level.playSound(null, target.at().x, target.at().y, target.at().z, com.avicagan.bloodandbones.registry.BBSounds.MACHINE_BLADE.get(), SoundSource.BLOCKS, 0.4F, heads ? 1.4F : 0.8F);
         return true;
     }
 

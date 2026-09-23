@@ -1,0 +1,82 @@
+{
+  "carcass.cut": {
+    "subtitle": "subtitles.bloodandbones.carcass.cut",
+    "sounds": [
+      {
+        "name": "minecraft:block.slime_block.break",
+        "type": "event"
+      }
+    ]
+  },
+  "carcass.sever": {
+    "subtitle": "subtitles.bloodandbones.carcass.sever",
+    "sounds": [
+      {
+        "name": "minecraft:block.bone_block.break",
+        "type": "event"
+      }
+    ]
+  },
+  "carcass.skin": {
+    "subtitle": "subtitles.bloodandbones.carcass.skin",
+    "sounds": [
+      {
+        "name": "minecraft:entity.slime.squish_small",
+        "type": "event"
+      }
+    ]
+  },
+  "carcass.pick_up": {
+    "subtitle": "subtitles.bloodandbones.carcass.pick_up",
+    "sounds": [
+      {
+        "name": "minecraft:block.slime_block.place",
+        "type": "event"
+      }
+    ]
+  },
+  "carcass.thud": {
+    "subtitle": "subtitles.bloodandbones.carcass.thud",
+    "sounds": [
+      {
+        "name": "minecraft:block.slime_block.fall",
+        "type": "event"
+      },
+      {
+        "name": "minecraft:block.honey_block.fall",
+        "type": "event"
+      }
+    ]
+  },
+  "carcass.clatter": {
+    "subtitle": "subtitles.bloodandbones.carcass.clatter",
+    "sounds": [
+      {
+        "name": "minecraft:block.bone_block.fall",
+        "type": "event"
+      }
+    ]
+  },
+  "carcass.crumble": {
+    "subtitle": "subtitles.bloodandbones.carcass.crumble",
+    "sounds": [
+      {
+        "name": "minecraft:entity.slime.squish",
+        "type": "event"
+      },
+      {
+        "name": "minecraft:block.bone_block.break",
+        "type": "event"
+      }
+    ]
+  },
+  "machine.blade": {
+    "subtitle": "subtitles.bloodandbones.machine.blade",
+    "sounds": [
+      {
+        "name": "minecraft:block.anvil.land",
+        "type": "event"
+      }
+    ]
+  }
+}

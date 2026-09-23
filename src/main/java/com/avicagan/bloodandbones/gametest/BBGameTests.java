@@ -1426,6 +1426,18 @@ public class BBGameTests {
         helper.succeed();
     }
 
+    /** The mod's own sounds are registered (their subtitles and the vanilla sounds they play are client data). */
+    @GameTest(template = "empty", timeoutTicks = 20)
+    public static void soundsRegistered(GameTestHelper helper) {
+        for (String name : new String[]{"carcass.cut", "carcass.sever", "carcass.skin", "carcass.pick_up", "carcass.thud",
+                "carcass.clatter", "carcass.crumble", "machine.blade"}) {
+            if (!net.minecraft.core.registries.BuiltInRegistries.SOUND_EVENT.containsKey(com.avicagan.bloodandbones.BloodAndBones.asResource(name))) {
+                helper.fail("Sound " + name + " is not registered");
+            }
+        }
+        helper.succeed();
+    }
+
     /** Every advancement parsed and loaded. */
     @GameTest(template = "empty", timeoutTicks = 20)
     public static void advancementsLoad(GameTestHelper helper) {

@@ -57,7 +57,7 @@ public final class CarcassButchery {
         }
         if (at != null) {
             Blood.wound(level, carcass, at, 8, 1);
-            level.playSound(null, at.x, at.y, at.z, SoundEvents.SLIME_BLOCK_BREAK, SoundSource.BLOCKS, 0.8F, 0.7F);
+            level.playSound(null, at.x, at.y, at.z, com.avicagan.bloodandbones.registry.BBSounds.CARCASS_CUT.get(), SoundSource.BLOCKS, 0.8F, 0.7F);
         }
         if (attached && cuts >= CUTS_TO_SEVER) {
             sever(level, carcass, bone, at);
@@ -116,7 +116,7 @@ public final class CarcassButchery {
             CarcassRot.sync(level, carcass, null);
         }
         Blood.wound(level, carcass, where, 24, 3);
-        level.playSound(null, where.x, where.y, where.z, SoundEvents.SLIME_BLOCK_BREAK, SoundSource.BLOCKS, 1.0F, 0.5F);
+        level.playSound(null, where.x, where.y, where.z, com.avicagan.bloodandbones.registry.BBSounds.CARCASS_CUT.get(), SoundSource.BLOCKS, 1.0F, 0.5F);
         data.setDirty();
         BloodAndBones.LOGGER.debug("Butchered {} of carcass {}", bone, carcass.id);
     }
@@ -149,7 +149,7 @@ public final class CarcassButchery {
             Blood.bloody(blade(player, com.avicagan.bloodandbones.item.FlensingKnifeItem.class), level);
         }
         Blood.wound(level, carcass, where, 4, 0);
-        level.playSound(null, where.x, where.y, where.z, SoundEvents.SLIME_SQUISH_SMALL, SoundSource.BLOCKS, 0.8F, 1.2F);
+        level.playSound(null, where.x, where.y, where.z, com.avicagan.bloodandbones.registry.BBSounds.CARCASS_SKIN.get(), SoundSource.BLOCKS, 0.8F, 1.2F);
         if (carcass.skinStrokes < STROKES_TO_SKIN) {
             return true;
         }
@@ -323,7 +323,7 @@ public final class CarcassButchery {
         }
         if (at != null) {
             Blood.wound(level, carcass, at, 30, 3);
-            level.playSound(null, at.x, at.y, at.z, SoundEvents.BONE_BLOCK_BREAK, SoundSource.BLOCKS, 1.0F, 0.6F);
+            level.playSound(null, at.x, at.y, at.z, com.avicagan.bloodandbones.registry.BBSounds.CARCASS_SEVER.get(), SoundSource.BLOCKS, 1.0F, 0.6F);
         }
         // the piece is a carcass of its own from here: it rests, rots and is hooked on its own terms
         CarcassSavedData.Carcass piece = CarcassSavedData.get(level).splitOff(level, carcass, bone);
@@ -386,7 +386,7 @@ public final class CarcassButchery {
         }
         Vector3d at = new Vector3d(body.logicalPose().position());
         container.removeSubLevel(body, dev.ryanhcode.sable.sublevel.storage.SubLevelRemovalReason.REMOVED);
-        level.playSound(null, at.x, at.y, at.z, SoundEvents.SLIME_BLOCK_PLACE, SoundSource.BLOCKS, 0.6F, 0.8F);
+        level.playSound(null, at.x, at.y, at.z, com.avicagan.bloodandbones.registry.BBSounds.CARCASS_PICK_UP.get(), SoundSource.BLOCKS, 0.6F, 0.8F);
         return true;
     }
 

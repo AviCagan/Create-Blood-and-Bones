@@ -276,6 +276,14 @@
   "item.bloodandbones.soul_blood_bucket": "Soul Blood Bucket",
   "itemGroup.bloodandbones.main": "Main",
   "itemGroup.bloodandbones.title": "Create: Blood & Bones",
+  "subtitles.bloodandbones.carcass.clatter": "Bones clatter",
+  "subtitles.bloodandbones.carcass.crumble": "Carcass falls apart",
+  "subtitles.bloodandbones.carcass.cut": "Meat is cut",
+  "subtitles.bloodandbones.carcass.pick_up": "Meat is picked up",
+  "subtitles.bloodandbones.carcass.sever": "Bone snaps",
+  "subtitles.bloodandbones.carcass.skin": "Hide peels",
+  "subtitles.bloodandbones.carcass.thud": "Carcass thuds",
+  "subtitles.bloodandbones.machine.blade": "Blade falls",
   "tag.fluid.c.blood": "Blood",
   "tag.item.c.buckets.blood": "Blood Buckets"
 }

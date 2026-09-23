@@ -82,11 +82,10 @@ public final class CarcassThuds {
             float volume = (float) Mth.clamp(impact / 8.0 * (0.5 + Math.sqrt(mass)), 0.25, 1.2);
             float pitch = (float) Mth.clamp(1.25 - Math.sqrt(mass) * 0.6, 0.55, 1.25);
             if (Blood.bloody(carcass)) {
-                level.playSound(null, at.x, at.y, at.z, SoundEvents.SLIME_BLOCK_FALL, SoundSource.NEUTRAL, volume, pitch);
-                level.playSound(null, at.x, at.y, at.z, SoundEvents.HONEY_BLOCK_FALL, SoundSource.NEUTRAL, volume * 0.6F, pitch * 0.8F);
+                level.playSound(null, at.x, at.y, at.z, com.avicagan.bloodandbones.registry.BBSounds.CARCASS_THUD.get(), SoundSource.NEUTRAL, volume, pitch);
             } else {
                 // a skeleton or a golem clatters rather than squelches
-                level.playSound(null, at.x, at.y, at.z, SoundEvents.BONE_BLOCK_FALL, SoundSource.NEUTRAL, volume, pitch);
+                level.playSound(null, at.x, at.y, at.z, com.avicagan.bloodandbones.registry.BBSounds.CARCASS_CLATTER.get(), SoundSource.NEUTRAL, volume, pitch);
             }
             if (impact >= SPLAT && Blood.bloody(carcass)) {
                 Blood.burst(level, new Vector3d(at), 6);

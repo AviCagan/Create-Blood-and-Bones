@@ -59,6 +59,7 @@ public class BloodAndBones {
         com.avicagan.bloodandbones.registry.BBDataComponents.COMPONENTS.register(modEventBus);
         com.avicagan.bloodandbones.registry.BBParticles.PARTICLES.register(modEventBus);
         com.avicagan.bloodandbones.registry.BBItemAttributes.register(modEventBus);
+        com.avicagan.bloodandbones.registry.BBSounds.register(modEventBus);
 
         LOGGER.info("Create: Blood & Bones loaded");
     }

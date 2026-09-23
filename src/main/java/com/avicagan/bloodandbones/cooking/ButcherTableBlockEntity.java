@@ -90,7 +90,7 @@ public class ButcherTableBlockEntity extends SpecimenJarBlockEntity {
             item.setDeltaMovement(level.random.triangle(0.0, 0.08), 0.15, level.random.triangle(0.0, 0.08));
             level.addFreshEntity(item);
         }
-        level.playSound(null, top.x, top.y, top.z, SoundEvents.SLIME_BLOCK_BREAK, SoundSource.BLOCKS, 0.9F, 0.7F);
+        level.playSound(null, top.x, top.y, top.z, com.avicagan.bloodandbones.registry.BBSounds.CARCASS_CUT.get(), SoundSource.BLOCKS, 0.9F, 0.7F);
         boolean bleeds = BuiltInRegistries.ENTITY_TYPE.getOptional(piece.entity()).map(type -> !type.is(BBTags.BLOODLESS)).orElse(true);
         if (bleeds) {
             Blood.burst(level, top, 10);

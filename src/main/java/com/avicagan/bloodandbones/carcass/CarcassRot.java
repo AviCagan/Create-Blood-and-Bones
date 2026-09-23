@@ -202,8 +202,7 @@ public final class CarcassRot {
             level.sendParticles(ParticleTypes.SQUID_INK, at.x, at.y, at.z, 3, 0.15, 0.1, 0.15, 0.02);
         }
         Vector3dc middle = torso.logicalPose().position();
-        level.playSound(null, middle.x(), middle.y(), middle.z(), SoundEvents.SLIME_SQUISH, SoundSource.BLOCKS, 1.0F, 0.6F);
-        level.playSound(null, middle.x(), middle.y(), middle.z(), SoundEvents.BONE_BLOCK_BREAK, SoundSource.BLOCKS, 0.8F, 0.8F);
+        level.playSound(null, middle.x(), middle.y(), middle.z(), com.avicagan.bloodandbones.registry.BBSounds.CARCASS_CRUMBLE.get(), SoundSource.BLOCKS, 1.0F, 0.6F);
         // forget the record first, so taking the bodies away does not split what is left into new ones
         CarcassSavedData.get(level).forget(carcass);
         CarcassRest.unlock(carcass);
