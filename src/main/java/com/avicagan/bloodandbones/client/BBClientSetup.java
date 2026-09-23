@@ -111,5 +111,6 @@ public final class BBClientSetup {
     public static void onParticles(RegisterParticleProvidersEvent event) {
         event.registerSpriteSet(BBParticles.BLOOD_DROP.get(), BloodDropParticle.Provider::new);
         event.registerSpriteSet(BBParticles.FLY.get(), FlyParticle.Provider::new);
+        event.registerSpriteSet(BBParticles.GIB.get(), GibParticle.Provider::new);
     }
 }

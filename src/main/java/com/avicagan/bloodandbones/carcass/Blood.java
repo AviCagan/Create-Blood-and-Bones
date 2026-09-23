@@ -67,12 +67,23 @@ public final class Blood {
         }
     }
 
-    /** A wound: a burst of drops and a stain under it, for a mob that bleeds. */
+    /** Scraps of meat thrown out from a point, for a piece hacked or ground apart. */
+    public static void gibs(ServerLevel level, Vector3d at, int amount) {
+        for (int i = 0; i < amount; i++) {
+            level.sendParticles(BBParticles.GIB.get(), at.x, at.y, at.z, 0,
+                    (RANDOM.nextDouble() - 0.5) * 0.5, 0.2 + RANDOM.nextDouble() * 0.35, (RANDOM.nextDouble() - 0.5) * 0.5, 1.0);
+        }
+    }
+
+    /** A wound: a burst of drops and a stain under it, for a mob that bleeds; big ones throw scraps of meat. */
     public static void wound(ServerLevel level, CarcassSavedData.Carcass carcass, Vector3d at, int drops, int stain) {
         if (!bloody(carcass)) {
             return;
         }
         burst(level, at, drops);
+        if (drops >= 20) {
+            gibs(level, at, drops / 4);
+        }
         if (stain > 0) {
             stain(level, at, stain);
         }

@@ -8,6 +8,7 @@ Everything below is in development builds only; the art is placeholder (see the 
   and unfolds when disturbed), rot, and the death handover with no gap.
 - Butchery: Cleaver, Flensing Knife, carried pieces, data-driven yields that spoil with rot.
 - Cut limbs leave raw wounds, bone showing, on the stump and on the piece, and pour blood for a while.
+- Scraps of meat fly off when a limb is cut through or a piece is butchered or ground.
 - 79 rigged vanilla mobs with variants, the wither and the pufferfish included; babies of 27 kinds
   (calves, piglets, lambs, chicks, pups, kittens, cubs, baby zombies and villagers...) shaped as the
   game draws them; hook kills drop the mob's gear and inventory.
