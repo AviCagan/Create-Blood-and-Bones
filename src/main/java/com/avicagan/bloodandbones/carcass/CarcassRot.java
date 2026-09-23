@@ -71,6 +71,7 @@ public final class CarcassRot {
             }
             return;
         }
+        flies(level, carcass, position);
         // count game time rather than ticks seen, so time spent in an unloaded chunk still rots the meat;
         // a long absence is paid off a day per tick rather than all at once
         long elapsed = carcass.rotClock < 0 ? 1L : Math.max(1L, Math.min(now - carcass.rotClock, MAX_CATCH_UP));
@@ -100,6 +101,22 @@ public final class CarcassRot {
         }
         if (turnedRotten) {
             BloodAndBones.LOGGER.debug("Carcass {} has rotted", carcass.id);
+        }
+    }
+
+    /** Freshness below which flies come. */
+    public static final float FLIES_BELOW = 0.45F;
+
+    /** Flies gather over meat going off, more the further gone it is; none over meat kept cold. */
+    private static void flies(ServerLevel level, CarcassSavedData.Carcass carcass, Vector3dc at) {
+        if (carcass.freshness >= FLIES_BELOW || !Blood.bloody(carcass)) {
+            return;
+        }
+        float chance = (FLIES_BELOW - carcass.freshness) * 0.45F;
+        if (level.random.nextFloat() < chance) {
+            level.sendParticles(com.avicagan.bloodandbones.registry.BBParticles.FLY.get(),
+                    at.x() + (level.random.nextDouble() - 0.5) * 1.2, at.y() + 0.3 + level.random.nextDouble() * 0.6, at.z() + (level.random.nextDouble() - 0.5) * 1.2,
+                    1, 0.0, 0.0, 0.0, 0.0);
         }
     }
 

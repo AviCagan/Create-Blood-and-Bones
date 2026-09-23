@@ -542,6 +542,8 @@ pipes; chain clearance = hanging length + 1 block.
   under 0.5 gives 70%, 1.5 and up gives 150%.
 - There is no cold `HeatLevel` anywhere in Create or its addons; CDP's `BlockFreezer` is the exact cold
   mirror of Create's `BoilerHeater` and is what we build on.
+- Flies (`bloodandbones:fly`, a particle that darts about where it was born) gather over a carcass
+  below 45% fresh, more as it goes off; none while cold stops the rot, none over bloodless mobs.
 - Once rotten it keeps counting (`Carcass.decay`, saved, at the same rate, so ice still stops it). At
   `crumble_after_days` (server config, a day by default) it falls apart at the end of the level tick
   (`CarcassRot.levelTick`, never inside a body's own tick): every piece drops half its table's yields

@@ -13,6 +13,9 @@ public final class BBParticles {
     /** A drop of blood: falls, lands, lies there a moment. */
     public static final DeferredHolder<ParticleType<?>, SimpleParticleType> BLOOD_DROP = PARTICLES.register("blood_drop", () -> new SimpleParticleType(false));
 
+    /** A fly, drawn to rotting meat. */
+    public static final DeferredHolder<ParticleType<?>, SimpleParticleType> FLY = PARTICLES.register("fly", () -> new SimpleParticleType(false));
+
     private BBParticles() {
     }
 }

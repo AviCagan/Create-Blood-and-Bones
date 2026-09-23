@@ -230,6 +230,11 @@ public final class DevShowcase {
         // off to the side: the biggest and the smallest odd ones
         witherShown = carcass(level, EntityType.WITHER, o.offset(-17, 0, 6));
         carcass(level, EntityType.PUFFERFISH, o.offset(-20, 0, 4));
+        // and one well gone off, with flies
+        CarcassSavedData.Carcass rotting = carcass(level, EntityType.COW, o.offset(-15, 0, 4));
+        if (rotting != null) {
+            rotting.freshness = 0.12F;
+        }
 
         // row B: the machines set flush in the floor, a carcass on each
         BlockEntry<?>[] machines = {BBBlocks.MANGLER, BBBlocks.GUILLOTINE, BBBlocks.BEHEADER, BBBlocks.DEGLOVER};
