@@ -119,6 +119,10 @@ public class BBLang {
         advancement("blood_diamond", "Priceless", "Steep a diamond in soul blood");
         advancement("spit_roast", "Low and Slow", "Build a Spit Roast");
         advancement("specimen", "Curiosities", "Make a Specimen Jar to keep a piece of something on show");
+        advancement("butcher_table", "Chop Shop", "Make a Butcher's Table to cut pieces up on");
+        advancement("butcher_hook", "Hung Out to Dry", "Make a Butcher's Hook to hang your work on the wall");
+        advancement("bloody_casing", "Redecorating", "Fill an Andesite Casing with blood");
+        advancement("gut_chain", "Strung Out", "String offal into a Gut Chain");
 
         // ---- Ponder scenes (text_N in the order each scene shows its text)
         ponder("mangler", "Grinding Carcasses with the Mangler", "The Mangler tears the limbs off a carcass, then grinds every piece into meat, bone, offal and fat", "It is driven by a shaft from below. The faster it turns, the faster it works", "It works any carcass lying on it or hanging over it. Set it flush in a floor so a body lies across it", "What it makes waits inside. Take it with an empty hand, or pull it out with a funnel or hopper");

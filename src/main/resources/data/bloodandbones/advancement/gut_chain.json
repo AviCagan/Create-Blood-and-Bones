@@ -1,0 +1,35 @@
+{
+  "parent": "bloodandbones:offal",
+  "display": {
+    "icon": {
+      "id": "bloodandbones:gut_chain"
+    },
+    "title": {
+      "translate": "advancements.bloodandbones.gut_chain.title"
+    },
+    "description": {
+      "translate": "advancements.bloodandbones.gut_chain.description"
+    },
+    "frame": "task",
+    "show_toast": true,
+    "announce_to_chat": true,
+    "hidden": false
+  },
+  "criteria": {
+    "has": {
+      "trigger": "minecraft:inventory_changed",
+      "conditions": {
+        "items": [
+          {
+            "items": "bloodandbones:gut_chain"
+          }
+        ]
+      }
+    }
+  },
+  "requirements": [
+    [
+      "has"
+    ]
+  ]
+}

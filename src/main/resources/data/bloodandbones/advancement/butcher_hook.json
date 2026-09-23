@@ -1,0 +1,35 @@
+{
+  "parent": "bloodandbones:specimen",
+  "display": {
+    "icon": {
+      "id": "bloodandbones:butcher_hook"
+    },
+    "title": {
+      "translate": "advancements.bloodandbones.butcher_hook.title"
+    },
+    "description": {
+      "translate": "advancements.bloodandbones.butcher_hook.description"
+    },
+    "frame": "task",
+    "show_toast": true,
+    "announce_to_chat": true,
+    "hidden": false
+  },
+  "criteria": {
+    "has": {
+      "trigger": "minecraft:inventory_changed",
+      "conditions": {
+        "items": [
+          {
+            "items": "bloodandbones:butcher_hook"
+          }
+        ]
+      }
+    }
+  },
+  "requirements": [
+    [
+      "has"
+    ]
+  ]
+}

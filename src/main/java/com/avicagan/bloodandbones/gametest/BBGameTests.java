@@ -1418,7 +1418,8 @@ public class BBGameTests {
     /** Every advancement parsed and loaded. */
     @GameTest(template = "empty", timeoutTicks = 20)
     public static void advancementsLoad(GameTestHelper helper) {
-        for (String name : new String[]{"butchery", "cleaver", "offal", "skinned", "hanging", "blood", "machine", "blood_steel", "soul_blood", "blood_diamond", "spit_roast", "specimen"}) {
+        for (String name : new String[]{"butchery", "cleaver", "offal", "skinned", "hanging", "blood", "machine", "blood_steel", "soul_blood", "blood_diamond", "spit_roast", "specimen",
+                "butcher_table", "butcher_hook", "bloody_casing", "gut_chain"}) {
             if (helper.getLevel().getServer().getAdvancements().get(com.avicagan.bloodandbones.BloodAndBones.asResource(name)) == null) {
                 helper.fail("Advancement " + name + " did not load");
             }
