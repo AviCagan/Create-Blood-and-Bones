@@ -754,16 +754,16 @@ pipes; chain clearance = hanging length + 1 block.
   hand (`RabbitModel#renderToBuffer`), in the same form: the scales are vanilla's divided by the grown
   rabbit's 0.6, and the offsets leave out the grown rabbit's own 16 px lift, which the rig does not store
   (the assembler's 1.501 × 0.6 happens to equal 1.501 − 0.6): head 22 − 16·0.6/0.5667, body 36 − 16·0.6/0.4.
-  `babyRabbitSitsWhereTheGameDrawsIt` checks both against vanilla's numbers. Others with babies die as usual until they get a shape. Foals (horse, donkey, mule) use two
-  more fields of the shape: `parts` draws a bone with another part of the same model (the
-  `*_baby_leg` parts), and `extend` adds model pixels to the far end of its box (the baby legs are the
-  grown ones grown 5.5 px at each end; the top end hides in the body, so only the bottom is added,
-  which keeps the leg box clear of the body's). Llamas use `groups`: bones the game draws at their own
+  `babyRabbitSitsWhereTheGameDrawsIt` checks both against vanilla's numbers. Others with babies die as usual until they get a shape. Foals (horse, donkey, mule and the
+  undead horses) stand on the game's own baby-leg parts, 22 px cubes at half size with the top 5.5 px
+  hidden in the body. Drawing those would leave a stub of hide poking out past a cut leg's wound, so the
+  grown leg is drawn instead, half as wide and three quarters as long from the same pivot (a `group`,
+  below), which shows the same leg. Llamas use `groups` too: bones the game draws at their own
   scale per axis and offset (`LlamaModel#renderToBuffer` squashes the head, the body and the legs each
   differently). The pivot is scaled along the model's axes; the box, extras and drawing along the part's
   own (`BabyShape.alongPart`, exact for quarter-turned parts, which vanilla's are), so `Bone.scale` is a
-  vector now (still one number in JSON). Extras of a bone scaled unevenly would be stretched along the
-  bone's axes rather than their own; no rig has that.
+  vector now (one number in JSON when even, three when not). Extras get the bone's size before their
+  own turn.
 - Assembly lifts a body so no box starts below the feet: the ghast's tentacles hang below its feet in
   the model and used to start stuck through the ground. Its tentacle collision boxes are short (drawn
   full length) so the body does not end up on stilts.
@@ -806,8 +806,9 @@ pipes; chain clearance = hanging length + 1 block.
   and as brittle, and the Butcher's Hook is a `create:movable_empty_collider`. The Shackle Hook now turns
   with a structure or bearing (it had no `rotate`/`mirror`). A hook carrying a carcass is not yet made
   into contraption data (§3.5): the carcass falls when its hook is moved, and when the contraption is put
-  down the hook finds its old limb more than 2 blocks away and lets it go (it only rejoins a limb still
-  at its tip, as after a reload) rather than pulling the body back across the world.
+  down the hook lets it go rather than pulling the body back across the world: the hook saves its own
+  position (`HookPos`, which Create leaves alone when it rewrites x/y/z) and, read back somewhere else,
+  releases. A reload in place rejoins as before, however far the body swung.
 
 ### 13.12a Sorting pieces with Create's filters (verified)
 

@@ -219,7 +219,7 @@ public class ShackleHookBlockEntity extends BlockEntity {
         outZ = out.z;
         setChanged();
         level.sendBlockUpdated(worldPosition, getBlockState(), getBlockState(), 3);
-        attach(level, false);
+        attach(level);
     }
 
     public void release(ServerLevel level) {
@@ -244,14 +244,22 @@ public class ShackleHookBlockEntity extends BlockEntity {
             return;
         }
         hook.joint = null;
-        hook.attach(serverLevel, true);
+        if (hook.loadedAt != null && !hook.loadedAt.equals(pos)) {
+            // saved somewhere else: a Create contraption carried the hook's data but not the body, which
+            // fell where the hook was. Let it go rather than yank it across to the hook's new place.
+            hook.loadedAt = null;
+            hook.release(serverLevel);
+            return;
+        }
+        hook.loadedAt = null;
+        hook.attach(serverLevel);
     }
 
-    /** How far from the tip a hung limb may be for the hook to take it back after a reload, in blocks. */
-    public static final double REJOIN_REACH = 2.0;
+    /** Where the hook was when it was saved, as read back; null once checked. */
+    @Nullable
+    private BlockPos loadedAt;
 
-    /** @param rejoin taking back a limb it already held (after a reload), rather than hooking a new one */
-    private void attach(ServerLevel level, boolean rejoin) {
+    private void attach(ServerLevel level) {
         ServerSubLevelContainer container = SubLevelContainer.getContainer(level);
         if (container == null || subLevelId == null) {
             return;
@@ -261,14 +269,6 @@ public class ShackleHookBlockEntity extends BlockEntity {
             return;
         }
         Vec3 tip = ShackleHookBlock.tip(worldPosition, getBlockState());
-        // Rejoining after a reload finds the limb still at the tip. Far from it, the hook was moved without
-        // its carcass (a Create contraption carries the hook's data but drops the body): let it go rather
-        // than yank the body back from wherever it is now.
-        Vector3d anchorWorld = serverSubLevel.logicalPose().transformPosition(new Vector3d(anchorPlot), new Vector3d());
-        if (rejoin && anchorWorld.distance(tip.x, tip.y, tip.z) > REJOIN_REACH) {
-            release(level);
-            return;
-        }
         // A ball joint pinning the neck junction to the hook tip; the belly-out turn is a torque spring
         // applied every physics substep (see physicsTick), not a joint motor.
         GenericConstraintConfiguration config = new GenericConstraintConfiguration(
@@ -306,6 +306,8 @@ public class ShackleHookBlockEntity extends BlockEntity {
             tag.putUUID("SubLevel", subLevelId);
         }
         tag.putString("Bone", bone);
+        // Create rewrites x/y/z when a contraption puts the hook down elsewhere, but not this
+        tag.putLong("HookPos", worldPosition.asLong());
         tag.putDouble("AnchorX", anchorPlot.x);
         tag.putDouble("AnchorY", anchorPlot.y);
         tag.putDouble("AnchorZ", anchorPlot.z);
@@ -320,6 +322,7 @@ public class ShackleHookBlockEntity extends BlockEntity {
         subLevelId = tag.hasUUID("SubLevel") ? tag.getUUID("SubLevel") : null;
         bone = tag.getString("Bone");
         anchorPlot.set(tag.getDouble("AnchorX"), tag.getDouble("AnchorY"), tag.getDouble("AnchorZ"));
+        loadedAt = tag.contains("HookPos") ? BlockPos.of(tag.getLong("HookPos")) : null;
         outX = tag.getDouble("OutX");
         outZ = tag.contains("OutZ") ? tag.getDouble("OutZ") : 1.0;
     }

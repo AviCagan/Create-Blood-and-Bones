@@ -99,8 +99,11 @@ public final class CarcassModels {
             }
             poseStack.pushPose();
             poseStack.translate(extra.offset().x / 16.0F, extra.offset().y / 16.0F, extra.offset().z / 16.0F);
+            // the bone's size is along its own axes: apply it before the extra's own turn
+            org.joml.Vector3f size = new org.joml.Vector3f(bone.scale()).mul(rig.scale());
+            poseStack.scale(size.x, size.y, size.z);
             poseStack.mulPose(extra.rotation());
-            drawPart(other, poseStack, buffer, packedLight, color, new org.joml.Vector3f(bone.scale()).mul(rig.scale()));
+            drawPart(other, poseStack, buffer, packedLight, color, new org.joml.Vector3f(1.0F));
             poseStack.popPose();
         }
     }

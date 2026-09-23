@@ -17,13 +17,13 @@ import java.util.List;
  * @param headOffset (0, babyYHeadOffset, babyZHeadOffset)
  * @param bodyScale  1 / babyBodyScale
  * @param bodyOffset bodyYOffset
- * @param parts      bones the baby draws with another part of the same model (a foal's own long legs)
- * @param extend     model pixels added to the far end of a bone's box, for such a part that is longer
  * @param groups     bones the game draws at their own scale per axis and offset, instead of the head's or
- *                   the body's (a baby llama: head, body and legs each squashed differently)
+ *                   the body's (a baby llama: head, body and legs each squashed differently; a foal's
+ *                   long legs, which the game draws with longer parts of their own, as the grown legs
+ *                   drawn half as wide and three quarters as long)
  */
 public record BabyShape(List<String> head, float headScale, Vector3f headOffset, float bodyScale, float bodyOffset,
-                        java.util.Map<String, String> parts, java.util.Map<String, Vector3f> extend, List<Group> groups) {
+                        List<Group> groups) {
     /** Bones drawn at {@code scale * (p + offset)} per axis, in model pixels. */
     public record Group(List<String> bones, Vector3f scale, Vector3f offset) {
         public static final Codec<Group> CODEC = RecordCodecBuilder.create(i -> i.group(
@@ -39,8 +39,6 @@ public record BabyShape(List<String> head, float headScale, Vector3f headOffset,
             RigCodecs.VEC3.optionalFieldOf("head_offset", new Vector3f()).forGetter(BabyShape::headOffset),
             Codec.FLOAT.optionalFieldOf("body_scale", 0.5F).forGetter(BabyShape::bodyScale),
             Codec.FLOAT.optionalFieldOf("body_offset", 24.0F).forGetter(BabyShape::bodyOffset),
-            Codec.unboundedMap(Codec.STRING, Codec.STRING).optionalFieldOf("parts", java.util.Map.of()).forGetter(BabyShape::parts),
-            Codec.unboundedMap(Codec.STRING, RigCodecs.VEC3).optionalFieldOf("extend", java.util.Map.of()).forGetter(BabyShape::extend),
             Group.CODEC.listOf().optionalFieldOf("groups", List.of()).forGetter(BabyShape::groups)
     ).apply(i, BabyShape::new));
 
@@ -76,12 +74,6 @@ public record BabyShape(List<String> head, float headScale, Vector3f headOffset,
                     + d.y * d.y * modelScale.y * modelScale.y + d.z * d.z * modelScale.z * modelScale.z));
         }
         return out;
-    }
-
-    /** Model pixels the baby adds to the far end of this bone's box (none for most). */
-    public Vector3f extension(String bone) {
-        Vector3f e = extend.get(bone);
-        return e == null ? new Vector3f() : new Vector3f(e);
     }
 
     public boolean isHead(String bone) {

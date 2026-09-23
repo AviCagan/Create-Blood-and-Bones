@@ -57,7 +57,7 @@ public class BabyTests {
         for (Bone bone : grown.bones()) {
             Bone baby = small.bone(bone.name()).orElseThrow();
             Vector3f f = BabyShape.alongPart(shape.scaleOf(bone.name()), bone.rotation());
-            Vector3f expected = shape.extension(bone.name()).mul(grown.scale()).add(bone.boxSize()).mul(f);
+            Vector3f expected = bone.boxSize().mul(f);
             if (baby.boxSize().distance(expected) > 1.0E-3F) {
                 helper.fail("Baby " + type + " bone " + bone.name() + " is " + baby.boxSize() + ", expected " + expected);
                 return;
@@ -189,8 +189,9 @@ public class BabyTests {
     }
 
     /**
-     * A foal's legs are its baby legs: 22 px drawn at half size, the top 5.5 px hidden in the body, so what
-     * shows (and the box) is three quarters of a grown horse's leg, though the body is half the size.
+     * A foal stands on long legs: the game draws baby legs 22 px long at half size with the top 5.5 px
+     * hidden in the body, so what shows is three quarters of a grown horse's leg and half as wide, though
+     * the body is half the size.
      */
     @GameTest(template = "empty", timeoutTicks = 20)
     public static void foalStandsOnLongLegs(GameTestHelper helper) {
@@ -199,8 +200,8 @@ public class BabyTests {
         Rig foal = RigManager.forEntity(id, true).orElseThrow();
         Bone grownLeg = grown.bone("right_hind_leg").orElseThrow();
         Bone foalLeg = foal.bone("right_hind_leg").orElseThrow();
-        if (!foalLeg.part().equals("right_hind_baby_leg")) {
-            helper.fail("A foal's leg should be drawn with the baby leg part, got " + foalLeg.part());
+        if (Math.abs(foalLeg.boxSize().x / grownLeg.boxSize().x - 0.5F) > 0.02F) {
+            helper.fail("A foal's leg should be half as wide as a grown horse's");
         }
         float ratio = foalLeg.boxSize().y / grownLeg.boxSize().y;
         if (Math.abs(ratio - 0.75F) > 0.03F) {
@@ -221,6 +222,28 @@ public class BabyTests {
     @GameTest(template = "empty", timeoutTicks = 200)
     public static void zombieFoalCarcass(GameTestHelper helper) {
         babyTest(helper, EntityType.ZOMBIE_HORSE);
+    }
+
+    /** A baby llama's rig keeps its squashed sizes through saving and reading back; an even one stays one number. */
+    @GameTest(template = "empty", timeoutTicks = 20)
+    public static void babyRigSurvivesSaving(GameTestHelper helper) {
+        Rig baby = RigManager.forEntity(net.minecraft.resources.ResourceLocation.withDefaultNamespace("llama"), true).orElseThrow();
+        com.google.gson.JsonElement json = Rig.CODEC.encodeStart(com.mojang.serialization.JsonOps.INSTANCE, baby).getOrThrow();
+        Rig back = Rig.CODEC.parse(com.mojang.serialization.JsonOps.INSTANCE, json).getOrThrow();
+        for (Bone bone : baby.bones()) {
+            if (back.bone(bone.name()).orElseThrow().scale().distance(bone.scale()) > 1.0E-4F) {
+                helper.fail("Bone " + bone.name() + " came back at " + back.bone(bone.name()).orElseThrow().scale() + ", was " + bone.scale());
+            }
+        }
+        Rig grown = RigManager.forEntity(net.minecraft.resources.ResourceLocation.withDefaultNamespace("cow")).orElseThrow();
+        com.google.gson.JsonElement cow = Rig.CODEC.encodeStart(com.mojang.serialization.JsonOps.INSTANCE, grown).getOrThrow();
+        for (com.google.gson.JsonElement bone : cow.getAsJsonObject().getAsJsonArray("bones")) {
+            com.google.gson.JsonElement scale = bone.getAsJsonObject().get("scale");
+            if (scale != null && !scale.isJsonPrimitive()) {
+                helper.fail("An even scale should be written as one number, got " + scale);
+            }
+        }
+        helper.succeed();
     }
 
     /** A baby llama: the game squashes its head, body and legs each by its own amount along each axis. */

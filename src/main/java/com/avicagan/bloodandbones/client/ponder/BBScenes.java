@@ -152,7 +152,7 @@ public final class BBScenes {
                 .text("A Butcher's Hook goes on the side of a solid block")
                 .pointAt(util.vector().topOf(top)).placeNearTarget();
         scene.idle(80);
-        scene.overlay().showControls(util.vector().topOf(top), Pointing.DOWN, 50).rightClick().withItem(pieces.get(0));
+        scene.overlay().showControls(util.vector().topOf(hooks.get(0)), Pointing.DOWN, 50).rightClick().withItem(pieces.get(0));
         for (int i = 0; i < hooks.size(); i++) {
             ItemStack piece = pieces.get(i % pieces.size());
             scene.world().modifyBlockEntity(hooks.get(i), ButcherHookBlockEntity.class, be -> be.put(piece.copy()));

@@ -26,6 +26,11 @@ import java.util.Optional;
  */
 public record Bone(String name, String part, Optional<String> parent, Vector3f offset, Quaternionf rotation,
                    Vector3f boxMin, Vector3f boxMax, Optional<JointSpec> joint, List<String> hide, List<ExtraPart> extras, Vector3f scale) {
+    /** One number for an even scale, as rigs have it; three for a baby's squashed one, so none is lost. */
+    private static final Codec<Vector3f> SCALE_CODEC = Codec.either(Codec.FLOAT, RigCodecs.VEC3).xmap(
+            either -> either.map(s -> new Vector3f(s), v -> new Vector3f(v)),
+            v -> v.x == v.y && v.y == v.z ? com.mojang.datafixers.util.Either.left(v.x) : com.mojang.datafixers.util.Either.right(v));
+
     public static final Codec<Bone> CODEC = RecordCodecBuilder.create(i -> i.group(
             Codec.STRING.fieldOf("name").forGetter(Bone::name),
             Codec.STRING.fieldOf("part").forGetter(Bone::part),
@@ -37,7 +42,7 @@ public record Bone(String name, String part, Optional<String> parent, Vector3f o
             JointSpec.CODEC.optionalFieldOf("joint").forGetter(Bone::joint),
             Codec.STRING.listOf().optionalFieldOf("hide", List.of()).forGetter(Bone::hide),
             ExtraPart.CODEC.listOf().optionalFieldOf("extras", List.of()).forGetter(Bone::extras),
-            Codec.FLOAT.xmap(s -> new Vector3f(s), v -> v.x).optionalFieldOf("scale", new Vector3f(1.0F)).forGetter(Bone::scale)
+            SCALE_CODEC.optionalFieldOf("scale", new Vector3f(1.0F)).forGetter(Bone::scale)
     ).apply(i, Bone::new));
 
     public Bone(String name, String part, Optional<String> parent, Vector3f offset, Quaternionf rotation,
