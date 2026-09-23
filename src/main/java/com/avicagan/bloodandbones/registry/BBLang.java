@@ -78,6 +78,13 @@ public class BBLang {
         BloodAndBones.REGISTRATE.addRawLang("bloodandbones.gui.goggles.carcass_machine.output", "%1$s items waiting");
         BloodAndBones.REGISTRATE.addRawLang("bloodandbones.gui.goggles.spit_roast.roasting", "Roasting: %1$s%%");
         BloodAndBones.REGISTRATE.addRawLang("bloodandbones.gui.goggles.spit_roast.cooked", "Cooked: take it off");
+        // NeoForge's settings screen (Mods, Blood & Bones, Config)
+        config("presentation", "Presentation", "How blood and gore look. Nothing here changes how the game plays.");
+        config("bloodless_mode", "Bloodless mode", "Hides blood drops and stains, draws skinned carcasses pale, the machines and hooks clean and blood brown. A server can force it on for everyone with the bloodandbonesBloodless game rule.");
+        config("rot", "Rot", "How carcasses rot and what becomes of them.");
+        config("rot_speed", "Rot speed", "How fast carcasses rot: 1 is normal, 2 twice as fast, 0 never.");
+        config("rotten_carcasses_crumble", "Rotten carcasses fall apart", "A carcass left rotten falls apart into bones and a little rotten flesh, so old ones do not pile up.");
+        config("crumble_after_days", "Falls apart after (days)", "How long a rotten carcass lasts before it falls apart, in Minecraft days of 20 minutes, counted at the rot speed.");
         BloodAndBones.REGISTRATE.addRawLang("gamerule.bloodandbonesBloodless", "Bloodless mode for everyone");
         BloodAndBones.REGISTRATE.addRawLang("gamerule.bloodandbonesBloodless.description",
                 "Hides blood, gore and wet textures for every player, whatever their own setting. Carcasses and machines work the same.");
@@ -136,6 +143,11 @@ public class BBLang {
                 "Guillotine: limbs off. Beheader: heads off, sometimes a skull. Deglover: hides off. Mangler: everything, down to meat and bone. Take their output with a funnel or an empty hand.");
         jei("soul_blood",
                 "Soul Blood is blood with a soul in it. Mix blood, soul sand and a little liquid experience over a superheated Blaze Burner, or ferment blood with nether wart and soul soil under a Basin Lid.");
+    }
+
+    private static void config(String key, String name, String tooltip) {
+        BloodAndBones.REGISTRATE.addRawLang("bloodandbones.configuration." + key, name);
+        BloodAndBones.REGISTRATE.addRawLang("bloodandbones.configuration." + key + ".tooltip", tooltip);
     }
 
     private static void advancement(String id, String title, String description) {

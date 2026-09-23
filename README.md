@@ -23,7 +23,7 @@ provided by [Sable](https://github.com/ryanhcode/sable).
 - **Rot.** Carcasses rot over game time; cold slows it, ice stops it. Flies gather as the meat
   goes off. Rotten meat turns to rotten flesh, and a carcass left rotten for a day falls apart into bones and rotten flesh, so old ones
   don't pile up. Rot speed and the falling apart can be changed per world in
-  `serverconfig/bloodandbones-server.toml`.
+  `serverconfig/bloodandbones-server.toml`, or in game under Mods, Blood & Bones, Config.
 - **Hanging and blood.** The Shackle Hook hangs a carcass by the neck. A Bleeding Rack under a
   hanging (or lying) carcass collects its blood, faster with an Encased Fan blowing across it.
   Blood and Soul Blood are real fluids for pipes, tanks, spouts and basins. A bled carcass keeps

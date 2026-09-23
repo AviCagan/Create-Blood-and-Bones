@@ -50,6 +50,7 @@ public class BloodAndBones {
             // the rig exporter reads client-only model classes; a dedicated server must never link it
             modEventBus.addListener(BBDatagen::gatherData);
             com.avicagan.bloodandbones.client.DevShowcase.init();
+            com.avicagan.bloodandbones.client.BBClientSetup.registerConfigScreen(modContainer);
         }
         modEventBus.addListener(BBGameTests::register);
         modEventBus.addListener(BBNetwork::register);
