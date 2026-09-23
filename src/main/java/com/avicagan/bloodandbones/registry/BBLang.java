@@ -74,6 +74,14 @@ public class BBLang {
                 "PH: The Mangler, Guillotine, Beheader and Deglover work carcasses lying on them or hanging over them. Each takes a shaft from below; the faster it turns, the faster it works.");
         BloodAndBones.REGISTRATE.addRawLang("bloodandbones.jei.machines.2",
                 "PH: Guillotine: limbs off. Beheader: heads off, sometimes a skull. Deglover: hides off. Mangler: everything, down to meat. Outputs are taken out with funnels or an empty hand.");
+        item("blood_steel_cleaver",
+                "PH: A cleaver of blood steel. Each chop goes twice as deep: a limb comes off in two, a piece is butchered in two.");
+        item("blood_steel_ingot",
+                "PH: Iron quenched in blood. Fill an iron ingot with 250 mB of blood in a Spout.");
+        item("blood_diamond",
+                "PH: A diamond steeped in soul blood. Fill a diamond with 1000 mB of soul blood in a Spout. Its uses are still to come.");
+        BloodAndBones.REGISTRATE.addRawLang("bloodandbones.jei.soul_blood.1",
+                "PH: Soul Blood is blood with a soul in it. Mix blood, soul sand and a little liquid experience over a superheated Blaze Burner, or ferment blood with nether wart and soul soil under a Basin Lid.");
         item("meat_hook",
                 "PH: Kill an animal with this and it leaves a whole carcass instead of loot. Right-click a carcass to drag it, right-click again to let go.",
                 "PH: Dragging slows you down. Heavier animals slow you more.",

@@ -1,0 +1,21 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "category": "equipment",
+  "pattern": [
+    "II",
+    "II",
+    "S "
+  ],
+  "key": {
+    "I": {
+      "item": "bloodandbones:blood_steel_ingot"
+    },
+    "S": {
+      "tag": "c:rods/wooden"
+    }
+  },
+  "result": {
+    "id": "bloodandbones:blood_steel_cleaver",
+    "count": 1
+  }
+}

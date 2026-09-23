@@ -139,7 +139,7 @@ public class CarcassPartBlock extends Block implements EntityBlock, BlockSubLeve
 
     @Override
     protected ItemInteractionResult useItemOn(ItemStack stack, BlockState state, Level level, BlockPos pos, Player player, InteractionHand hand, BlockHitResult hitResult) {
-        if (stack.is(BBItems.CLEAVER.get())) {
+        if (stack.getItem() instanceof com.avicagan.bloodandbones.item.CleaverItem cleaver) {
             if (level instanceof ServerLevel serverLevel && level.getBlockEntity(pos) instanceof CarcassPartBlockEntity be && be.carcassId() != null) {
                 CarcassSavedData.Carcass carcass = CarcassSavedData.get(serverLevel).carcass(be.carcassId());
                 dev.ryanhcode.sable.sublevel.SubLevel subLevel = dev.ryanhcode.sable.Sable.HELPER.getContaining(level, pos);
@@ -148,7 +148,16 @@ public class CarcassPartBlock extends Block implements EntityBlock, BlockSubLeve
                     net.minecraft.world.phys.Vec3 hit = hitResult.getLocation();
                     hitWorld = subLevel.logicalPose().transformPosition(new org.joml.Vector3d(hit.x, hit.y, hit.z), new org.joml.Vector3d());
                 }
-                if (carcass != null && CarcassButchery.cut(serverLevel, player, carcass, be.bone(), hitWorld)) {
+                boolean cut = false;
+                for (int i = 0; i < cleaver.strokes && carcass != null; i++) {
+                    if (!CarcassButchery.cut(serverLevel, player, carcass, be.bone(), hitWorld)) {
+                        break;
+                    }
+                    cut = true;
+                    // the piece may have come off into a record of its own: follow it for the next stroke
+                    carcass = CarcassSavedData.get(serverLevel).carcass(be.carcassId());
+                }
+                if (cut) {
                     player.getCooldowns().addCooldown(stack.getItem(), 12);
                 }
             }

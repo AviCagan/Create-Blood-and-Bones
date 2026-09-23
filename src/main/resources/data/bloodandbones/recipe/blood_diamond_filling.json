@@ -1,0 +1,18 @@
+{
+  "type": "create:filling",
+  "ingredients": [
+    {
+      "tag": "c:gems/diamond"
+    },
+    {
+      "type": "neoforge:single",
+      "amount": 1000,
+      "fluid": "bloodandbones:soul_blood"
+    }
+  ],
+  "results": [
+    {
+      "id": "bloodandbones:blood_diamond"
+    }
+  ]
+}

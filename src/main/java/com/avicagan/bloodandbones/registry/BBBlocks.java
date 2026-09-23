@@ -58,6 +58,15 @@ public class BBBlocks {
             .simpleItem()
             .register();
 
+    public static final BlockEntry<net.minecraft.world.level.block.Block> BLOOD_STEEL_BLOCK = BloodAndBones.REGISTRATE
+            .block("blood_steel_block", net.minecraft.world.level.block.Block::new)
+            .initialProperties(() -> net.minecraft.world.level.block.Blocks.IRON_BLOCK)
+            .properties(p -> p.mapColor(MapColor.CRIMSON_STEM))
+            .tag(net.minecraft.tags.BlockTags.MINEABLE_WITH_PICKAXE, net.minecraft.tags.BlockTags.NEEDS_IRON_TOOL)
+            .lang("Block of Blood Steel")
+            .simpleItem()
+            .register();
+
     public static final BlockEntry<com.avicagan.bloodandbones.machine.CarcassMachineBlock> MANGLER = machine(com.avicagan.bloodandbones.machine.MachineKind.MANGLER, "Mangler");
     public static final BlockEntry<com.avicagan.bloodandbones.machine.CarcassMachineBlock> GUILLOTINE = machine(com.avicagan.bloodandbones.machine.MachineKind.GUILLOTINE, "Guillotine");
     public static final BlockEntry<com.avicagan.bloodandbones.machine.CarcassMachineBlock> BEHEADER = machine(com.avicagan.bloodandbones.machine.MachineKind.BEHEADER, "Beheader");

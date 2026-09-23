@@ -34,6 +34,32 @@ public class BBItems {
             .lang("Flensing Knife")
             .register();
 
+    public static final ItemEntry<com.avicagan.bloodandbones.item.CleaverItem> BLOOD_STEEL_CLEAVER = BloodAndBones.REGISTRATE
+            .item("blood_steel_cleaver", p -> new com.avicagan.bloodandbones.item.CleaverItem(p, net.minecraft.world.item.Tiers.DIAMOND, 2))
+            .properties(p -> p.stacksTo(1))
+            .model((ctx, prov) -> prov.handheld(ctx))
+            .lang("Blood Steel Cleaver")
+            .register();
+
+    public static final ItemEntry<net.minecraft.world.item.Item> BLOOD_STEEL_INGOT = BloodAndBones.REGISTRATE
+            .item("blood_steel_ingot", net.minecraft.world.item.Item::new)
+            .tag(net.minecraft.tags.ItemTags.create(net.minecraft.resources.ResourceLocation.fromNamespaceAndPath("c", "ingots/blood_steel")))
+            .lang("Blood Steel Ingot")
+            .register();
+
+    public static final ItemEntry<net.minecraft.world.item.Item> BLOOD_STEEL_NUGGET = BloodAndBones.REGISTRATE
+            .item("blood_steel_nugget", net.minecraft.world.item.Item::new)
+            .tag(net.minecraft.tags.ItemTags.create(net.minecraft.resources.ResourceLocation.fromNamespaceAndPath("c", "nuggets/blood_steel")))
+            .lang("Blood Steel Nugget")
+            .register();
+
+    public static final ItemEntry<net.minecraft.world.item.Item> BLOOD_DIAMOND = BloodAndBones.REGISTRATE
+            .item("blood_diamond", net.minecraft.world.item.Item::new)
+            .properties(p -> p.rarity(net.minecraft.world.item.Rarity.RARE))
+            .tag(net.minecraft.tags.ItemTags.create(net.minecraft.resources.ResourceLocation.fromNamespaceAndPath("c", "gems/blood_diamond")))
+            .lang("Blood Diamond")
+            .register();
+
     public static final ItemEntry<net.minecraft.world.item.Item> RAW_HIDE = BloodAndBones.REGISTRATE
             .item("raw_hide", net.minecraft.world.item.Item::new)
             .lang("Raw Hide")

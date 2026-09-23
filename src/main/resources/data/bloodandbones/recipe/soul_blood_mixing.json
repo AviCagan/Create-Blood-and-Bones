@@ -1,0 +1,25 @@
+{
+  "type": "create:mixing",
+  "heat_requirement": "superheated",
+  "ingredients": [
+    {
+      "item": "minecraft:soul_sand"
+    },
+    {
+      "type": "neoforge:single",
+      "amount": 500,
+      "fluid": "bloodandbones:blood"
+    },
+    {
+      "type": "neoforge:single",
+      "amount": 50,
+      "fluid": "create_enchantment_industry:experience"
+    }
+  ],
+  "results": [
+    {
+      "id": "bloodandbones:soul_blood",
+      "amount": 500
+    }
+  ]
+}

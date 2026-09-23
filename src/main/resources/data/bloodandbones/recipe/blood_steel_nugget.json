@@ -1,0 +1,13 @@
+{
+  "type": "minecraft:crafting_shapeless",
+  "category": "misc",
+  "ingredients": [
+    {
+      "item": "bloodandbones:blood_steel_ingot"
+    }
+  ],
+  "result": {
+    "id": "bloodandbones:blood_steel_nugget",
+    "count": 9
+  }
+}

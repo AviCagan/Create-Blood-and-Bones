@@ -1,0 +1,18 @@
+{
+  "type": "create:filling",
+  "ingredients": [
+    {
+      "tag": "c:ingots/iron"
+    },
+    {
+      "type": "neoforge:single",
+      "amount": 250,
+      "fluid": "bloodandbones:blood"
+    }
+  ],
+  "results": [
+    {
+      "id": "bloodandbones:blood_steel_ingot"
+    }
+  ]
+}
