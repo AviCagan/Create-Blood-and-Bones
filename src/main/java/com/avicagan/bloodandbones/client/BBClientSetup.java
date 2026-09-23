@@ -44,11 +44,24 @@ public final class BBClientSetup {
         }, com.avicagan.bloodandbones.registry.BBBlocks.BLOOD_STAIN.get());
     }
 
-    /** In bloodless mode blood stains draw nothing (they still exist, and wash away the same). */
+    /**
+     * In bloodless mode blood stains draw nothing (they still exist, and wash away the same), and the
+     * machines draw clean casings and blades.
+     */
     @SubscribeEvent
     public static void onModifyBakingResult(net.neoforged.neoforge.client.event.ModelEvent.ModifyBakingResult event) {
         for (net.minecraft.world.level.block.state.BlockState state : com.avicagan.bloodandbones.registry.BBBlocks.BLOOD_STAIN.get().getStateDefinition().getPossibleStates()) {
             event.getModels().computeIfPresent(net.minecraft.client.renderer.block.BlockModelShaper.stateToModelLocation(state), (key, model) -> new BloodlessHidden(model));
+        }
+        // the machines' bloody casings and blades come out clean, in the world and in the hand
+        for (var machine : java.util.List.of(com.avicagan.bloodandbones.registry.BBBlocks.MANGLER, com.avicagan.bloodandbones.registry.BBBlocks.GUILLOTINE,
+                com.avicagan.bloodandbones.registry.BBBlocks.BEHEADER, com.avicagan.bloodandbones.registry.BBBlocks.DEGLOVER)) {
+            for (net.minecraft.world.level.block.state.BlockState state : machine.get().getStateDefinition().getPossibleStates()) {
+                event.getModels().computeIfPresent(net.minecraft.client.renderer.block.BlockModelShaper.stateToModelLocation(state),
+                        (key, model) -> new BloodlessSwap(model, BloodlessSwap.MACHINES));
+            }
+            event.getModels().computeIfPresent(net.minecraft.client.resources.model.ModelResourceLocation.inventory(machine.getId()),
+                    (key, model) -> new BloodlessSwap(model, BloodlessSwap.MACHINES));
         }
     }
 

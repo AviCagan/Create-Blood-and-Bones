@@ -39,8 +39,8 @@ provided by [Sable](https://github.com/ryanhcode/sable).
 - **Cooking and display.** The Spit Roast turns a carcass piece over a fire until it browns (or
   burns). The Specimen Jar keeps a piece on show.
 - **Bloodless mode.** `bloodless_mode` in the client config (`config/bloodandbones-client.toml`)
-  hides blood drops and stains, shows skinned carcasses as pale meat and the hook in a carcass
-  clean. A server can force it on for everyone with `/gamerule bloodandbonesBloodless true`.
+  hides blood drops and stains, shows skinned carcasses as pale meat, the hook in a carcass and
+  the machines clean. A server can force it on for everyone with `/gamerule bloodandbonesBloodless true`.
   Nothing about how the game plays changes.
 - Tooltips (hold Shift), JEI pages (including a Butchery page per mob showing what its carcass
   gives), Ponder scenes and an advancement tab explain it all in game.

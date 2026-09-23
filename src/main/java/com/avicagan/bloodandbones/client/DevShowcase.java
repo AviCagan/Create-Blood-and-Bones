@@ -48,10 +48,14 @@ import java.util.List;
 /**
  * Developer aid, off unless {@code -Dbloodandbones.showcase=true} is given to the client run: makes a flat
  * creative world, builds a scene of carcasses, machines and the rest, photographs it from a few places into
- * run/screenshots/showcase_N.png and quits. It lets the look be checked on a machine with no screen.
+ * run/screenshots/showcase_N.png and quits. It lets the look be checked on a machine with no screen. With
+ * {@code =bloodless} it does the same with the bloodless game rule on.
  */
 public final class DevShowcase {
     public static final String PROPERTY = "bloodandbones.showcase";
+    /** {@code -Dbloodandbones.showcase=bloodless}: the same run with the bloodless game rule on, into showcase_bloodless_*. */
+    private static final boolean BLOODLESS = "bloodless".equals(System.getProperty(PROPERTY));
+    private static final String PREFIX = BLOODLESS ? "showcase_bloodless_" : "showcase_";
 
     private record View(double x, double y, double z, float yaw, float pitch) {
     }
@@ -81,7 +85,7 @@ public final class DevShowcase {
     }
 
     public static void init() {
-        if (Boolean.getBoolean(PROPERTY)) {
+        if (Boolean.getBoolean(PROPERTY) || BLOODLESS) {
             NeoForge.EVENT_BUS.addListener(DevShowcase::tick);
             BloodAndBones.LOGGER.info("[showcase] enabled");
         }
@@ -130,7 +134,7 @@ public final class DevShowcase {
                             player.teleportTo(player.serverLevel(), view.x(), view.y(), view.z(), view.yaw(), view.pitch());
                         });
                     } else if (moved > shot && age - moveAt >= SHOT_GAP - 5) {
-                        Screenshot.grab(mc.gameDirectory, "showcase_" + shot + ".png", mc.getMainRenderTarget(), message -> {
+                        Screenshot.grab(mc.gameDirectory, PREFIX + shot + ".png", mc.getMainRenderTarget(), message -> {
                         });
                         BloodAndBones.LOGGER.info("[showcase] took shot {} at server age {}", shot, age);
                         if (witherShown != null) {
@@ -168,7 +172,7 @@ public final class DevShowcase {
                         mc.options.setCameraType(net.minecraft.client.CameraType.THIRD_PERSON_BACK);
                     }
                 } else if (phase == HAND_GAP - 1) {
-                    Screenshot.grab(mc.gameDirectory, "showcase_hand_" + step + ".png", mc.getMainRenderTarget(), message -> {
+                    Screenshot.grab(mc.gameDirectory, PREFIX + "hand_" + step + ".png", mc.getMainRenderTarget(), message -> {
                     });
                     BloodAndBones.LOGGER.info("[showcase] took hand shot {}", step);
                 }
@@ -187,7 +191,7 @@ public final class DevShowcase {
                                 mezz.jei.api.recipe.RecipeIngredientRole.INPUT, mezz.jei.api.constants.VanillaTypes.ITEM_STACK,
                                 new ItemStack(net.minecraft.world.item.Items.COW_SPAWN_EGG)));
                     } else if (phase == PONDER_GAP - 1 || com.avicagan.bloodandbones.compat.jei.BBJeiPlugin.runtime == null) {
-                        Screenshot.grab(mc.gameDirectory, "showcase_jei.png", mc.getMainRenderTarget(), message -> {
+                        Screenshot.grab(mc.gameDirectory, PREFIX + "jei.png", mc.getMainRenderTarget(), message -> {
                         });
                         BloodAndBones.LOGGER.info("[showcase] done");
                         stage = 5;
@@ -196,7 +200,7 @@ public final class DevShowcase {
                 } else if (phase == 0) {
                     net.createmod.catnip.gui.ScreenOpener.open(net.createmod.ponder.foundation.ui.PonderUI.of(new ItemStack(PONDERS.get(scene).get())));
                 } else if (phase == PONDER_GAP - 1) {
-                    Screenshot.grab(mc.gameDirectory, "showcase_ponder_" + scene + ".png", mc.getMainRenderTarget(), message -> {
+                    Screenshot.grab(mc.gameDirectory, PREFIX + "ponder_" + scene + ".png", mc.getMainRenderTarget(), message -> {
                     });
                     BloodAndBones.LOGGER.info("[showcase] took ponder shot {}", scene);
                 }
@@ -211,6 +215,7 @@ public final class DevShowcase {
         level.setDayTime(6000);
         level.getGameRules().getRule(GameRules.RULE_DAYLIGHT).set(false, level.getServer());
         level.getGameRules().getRule(GameRules.RULE_DOMOBSPAWNING).set(false, level.getServer());
+        level.getGameRules().getRule(com.avicagan.bloodandbones.registry.BBGameRules.BLOODLESS).set(BLOODLESS, level.getServer());
         player.setItemInHand(InteractionHand.MAIN_HAND, new ItemStack(BBItems.MEAT_HOOK.get()));
         BlockPos o = origin;
         int ground = o.getY() - 1;

@@ -654,9 +654,11 @@ pipes; chain clearance = hanging length + 1 block.
   rule, which `BloodlessRulePayload` carries on login and on every change (reset on leaving a server).
   Either changing redraws the world so baked stains appear or go.
 - Hidden or swapped so far: blood drop particles (in the particle provider, since the server sends them),
-  blood stains (baked model wrapper), the flesh texture of a skinned carcass (a pale bloodless copy) and
-  the hook drawn in a carcass (the clean model). Not yet: machine casings, the Mangler's top, the blood
-  fluid itself, and names (the design's `bloodless.` lang prefix).
+  blood stains (baked model wrapper), the flesh texture of a skinned carcass (a pale bloodless copy), the
+  hook drawn in a carcass (the clean model), and the machines' bloody casings, blades, saw, roller and
+  Mangler top (`BloodlessSwap` re-points each quad's UVs from the bloody sprite to a clean one, for block
+  and item models; the clean textures are the bloody ones with the red taken out). Not yet: the blood
+  fluid itself and names (the design's `bloodless.` lang prefix).
 
 ### 13.8 Machines (verified)
 
