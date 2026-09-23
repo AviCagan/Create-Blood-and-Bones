@@ -100,4 +100,38 @@ public class CookingTests {
             helper.succeed();
         });
     }
+
+    /**
+     * A butcher's hook hangs on a wall and holds one piece; it cannot hang on thin air, and when its wall is
+     * broken it falls, dropping both itself and the piece.
+     */
+    @GameTest(template = "empty", timeoutTicks = 100)
+    public static void butcherHookHoldsAPieceAndFallsWithItsWall(GameTestHelper helper) {
+        BlockPos wall = new BlockPos(3, 2, 3);
+        BlockPos hookPos = wall.east();
+        helper.setBlock(wall, Blocks.STONE.defaultBlockState());
+        net.minecraft.world.level.block.state.BlockState hookState = BBBlocks.BUTCHER_HOOK.getDefaultState()
+                .setValue(net.minecraft.world.level.block.HorizontalDirectionalBlock.FACING, Direction.EAST);
+        if (!hookState.canSurvive(helper.getLevel(), helper.absolutePos(hookPos))) {
+            helper.fail("The hook should hang on a stone wall");
+        }
+        if (hookState.canSurvive(helper.getLevel(), helper.absolutePos(new BlockPos(6, 3, 6)))) {
+            helper.fail("The hook should not hang on thin air");
+        }
+        helper.setBlock(hookPos, hookState);
+        ItemStack piece = cowBody(helper);
+        SpecimenJarBlockEntity hook = (SpecimenJarBlockEntity) helper.getLevel().getBlockEntity(helper.absolutePos(hookPos));
+        if (!(hook instanceof com.avicagan.bloodandbones.cooking.ButcherHookBlockEntity) || !hook.put(piece) || hook.put(piece.copy())) {
+            helper.fail("The hook should take one piece and only one");
+        }
+        helper.runAfterDelay(5, () -> {
+            helper.destroyBlock(wall);
+            helper.runAfterDelay(2, () -> {
+                helper.assertBlockNotPresent(BBBlocks.BUTCHER_HOOK.get(), hookPos);
+                helper.assertItemEntityPresent(com.avicagan.bloodandbones.registry.BBItems.CARCASS_PIECE.get(), hookPos, 2.0);
+                helper.assertItemEntityPresent(BBBlocks.BUTCHER_HOOK.asItem(), hookPos, 2.0);
+                helper.succeed();
+            });
+        });
+    }
 }

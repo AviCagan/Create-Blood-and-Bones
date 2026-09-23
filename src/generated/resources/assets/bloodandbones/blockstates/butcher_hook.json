@@ -1,0 +1,19 @@
+{
+  "variants": {
+    "facing=east": {
+      "model": "bloodandbones:block/butcher_hook",
+      "y": 90
+    },
+    "facing=north": {
+      "model": "bloodandbones:block/butcher_hook"
+    },
+    "facing=south": {
+      "model": "bloodandbones:block/butcher_hook",
+      "y": 180
+    },
+    "facing=west": {
+      "model": "bloodandbones:block/butcher_hook",
+      "y": 270
+    }
+  }
+}

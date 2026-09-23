@@ -70,6 +70,9 @@ public class BBLang {
                 "Posts and a turning _spit_ for roasting carcass pieces over a fire.",
                 "When R-Clicked with a Carcass Piece", "_Skewers_ it. It roasts only while the spit _turns_ and there is _heat_ below: a campfire, fire, lava or a Blaze Burner. Hotter and faster cooks quicker.",
                 "When R-Clicked with an Empty Hand", "Takes it off: raw, it comes back as it was; _browned_, it comes apart into cooked meat and bones. Left twice as long, it _burns_ to charcoal.");
+        block("butcher_hook",
+                "A hook for a wall, to hang a carcass piece on for show.",
+                "When R-Clicked with a Carcass Piece", "Hangs it on the hook. It _keeps_ there. R-Click with an _empty hand_ to take it down.");
         block("specimen_jar",
                 "A jar of cloudy _preserving fluid_ for keeping a carcass piece on show.",
                 "When R-Clicked with a Carcass Piece", "Puts it in, to drift in the fluid. R-Click with an _empty hand_ to take it out.");

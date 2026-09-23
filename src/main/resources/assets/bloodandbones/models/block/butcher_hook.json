@@ -1,0 +1,294 @@
+{
+ "parent": "block/block",
+ "textures": {
+  "plate": "bloodandbones:block/shackle_hook_plate",
+  "steel": "bloodandbones:item/meat_hook_steel",
+  "point": "bloodandbones:item/meat_hook_point",
+  "particle": "bloodandbones:block/shackle_hook_plate"
+ },
+ "elements": [
+  {
+   "from": [
+    4,
+    4,
+    14
+   ],
+   "to": [
+    12,
+    12,
+    16
+   ],
+   "faces": {
+    "up": {
+     "texture": "#plate"
+    },
+    "down": {
+     "texture": "#plate"
+    },
+    "east": {
+     "texture": "#plate"
+    },
+    "west": {
+     "texture": "#plate"
+    },
+    "south": {
+     "texture": "#plate"
+    },
+    "north": {
+     "texture": "#plate"
+    }
+   }
+  },
+  {
+   "from": [
+    7.25,
+    7.25,
+    5
+   ],
+   "to": [
+    8.75,
+    8.75,
+    14
+   ],
+   "faces": {
+    "up": {
+     "texture": "#steel"
+    },
+    "down": {
+     "texture": "#steel"
+    },
+    "east": {
+     "texture": "#steel"
+    },
+    "west": {
+     "texture": "#steel"
+    },
+    "south": {
+     "texture": "#steel"
+    },
+    "north": {
+     "texture": "#steel"
+    }
+   }
+  },
+  {
+   "from": [
+    7.25,
+    7.25,
+    3.4
+   ],
+   "to": [
+    8.75,
+    8.75,
+    5.4
+   ],
+   "faces": {
+    "up": {
+     "texture": "#steel"
+    },
+    "down": {
+     "texture": "#steel"
+    },
+    "east": {
+     "texture": "#steel"
+    },
+    "west": {
+     "texture": "#steel"
+    },
+    "south": {
+     "texture": "#steel"
+    },
+    "north": {
+     "texture": "#steel"
+    }
+   },
+   "rotation": {
+    "origin": [
+     8,
+     8,
+     5
+    ],
+    "axis": "x",
+    "angle": 45
+   }
+  },
+  {
+   "from": [
+    7.25,
+    7.4,
+    2.6
+   ],
+   "to": [
+    8.75,
+    11.2,
+    4.1
+   ],
+   "faces": {
+    "up": {
+     "texture": "#steel"
+    },
+    "down": {
+     "texture": "#steel"
+    },
+    "east": {
+     "texture": "#steel"
+    },
+    "west": {
+     "texture": "#steel"
+    },
+    "south": {
+     "texture": "#steel"
+    },
+    "north": {
+     "texture": "#steel"
+    }
+   }
+  },
+  {
+   "from": [
+    7.25,
+    10.4,
+    2.4
+   ],
+   "to": [
+    8.75,
+    12.4,
+    3.9
+   ],
+   "faces": {
+    "up": {
+     "texture": "#steel"
+    },
+    "down": {
+     "texture": "#steel"
+    },
+    "east": {
+     "texture": "#steel"
+    },
+    "west": {
+     "texture": "#steel"
+    },
+    "south": {
+     "texture": "#steel"
+    },
+    "north": {
+     "texture": "#steel"
+    }
+   },
+   "rotation": {
+    "origin": [
+     8,
+     11.4,
+     3.15
+    ],
+    "axis": "x",
+    "angle": -45
+   }
+  },
+  {
+   "from": [
+    7.4,
+    12.0,
+    3.6
+   ],
+   "to": [
+    8.6,
+    13.2,
+    6.0
+   ],
+   "faces": {
+    "up": {
+     "texture": "#steel"
+    },
+    "down": {
+     "texture": "#steel"
+    },
+    "east": {
+     "texture": "#steel"
+    },
+    "west": {
+     "texture": "#steel"
+    },
+    "south": {
+     "texture": "#steel"
+    },
+    "north": {
+     "texture": "#steel"
+    }
+   },
+   "rotation": {
+    "origin": [
+     8,
+     12.6,
+     4.8
+    ],
+    "axis": "x",
+    "angle": -22.5
+   }
+  },
+  {
+   "from": [
+    7.55,
+    12.1,
+    5.8
+   ],
+   "to": [
+    8.45,
+    13.0,
+    7.6
+   ],
+   "faces": {
+    "up": {
+     "texture": "#point"
+    },
+    "down": {
+     "texture": "#point"
+    },
+    "east": {
+     "texture": "#point"
+    },
+    "west": {
+     "texture": "#point"
+    },
+    "south": {
+     "texture": "#point"
+    },
+    "north": {
+     "texture": "#point"
+    }
+   }
+  },
+  {
+   "from": [
+    7.75,
+    12.3,
+    7.4
+   ],
+   "to": [
+    8.25,
+    12.8,
+    8.6
+   ],
+   "faces": {
+    "up": {
+     "texture": "#point"
+    },
+    "down": {
+     "texture": "#point"
+    },
+    "east": {
+     "texture": "#point"
+    },
+    "west": {
+     "texture": "#point"
+    },
+    "south": {
+     "texture": "#point"
+    },
+    "north": {
+     "texture": "#point"
+    }
+   }
+  }
+ ]
+}

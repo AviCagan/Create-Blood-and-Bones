@@ -137,6 +137,20 @@ public class BBBlocks {
             .simpleItem()
             .register();
 
+    /** A hook on a wall to hang a carried piece on for show. */
+    public static final BlockEntry<com.avicagan.bloodandbones.cooking.ButcherHookBlock> BUTCHER_HOOK = BloodAndBones.REGISTRATE
+            .block("butcher_hook", com.avicagan.bloodandbones.cooking.ButcherHookBlock::new)
+            .initialProperties(() -> net.minecraft.world.level.block.Blocks.IRON_BARS)
+            .properties(p -> p.noOcclusion().noCollission())
+            .blockstate((c, p) -> p.getVariantBuilder(c.get()).forAllStates(state -> net.neoforged.neoforge.client.model.generators.ConfiguredModel.builder()
+                    .modelFile(p.models().getExistingFile(p.modLoc("block/butcher_hook")))
+                    .rotationY(((int) state.getValue(net.minecraft.world.level.block.HorizontalDirectionalBlock.FACING).toYRot() + 180) % 360)
+                    .build()))
+            .tag(net.minecraft.tags.BlockTags.MINEABLE_WITH_PICKAXE)
+            .lang("Butcher's Hook")
+            .item().model((c, p) -> p.withExistingParent(c.getName(), p.modLoc("block/butcher_hook"))).build()
+            .register();
+
     public static void register() {
     }
 }
