@@ -130,6 +130,7 @@ public class CarcassEvents {
         if (event.getLevel() instanceof ServerLevel level) {
             com.avicagan.bloodandbones.carcass.CarcassHandover.tick(level);
             com.avicagan.bloodandbones.carcass.CarcassRest.levelTick(level);
+            com.avicagan.bloodandbones.carcass.CarcassRot.levelTick(level);
         }
     }
 

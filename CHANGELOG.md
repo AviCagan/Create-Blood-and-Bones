@@ -13,4 +13,6 @@ Everything below is in development builds only; the art is placeholder (see the 
 - Mangler, Guillotine, Beheader and Deglover kinetic machines.
 - Blood Steel, Blood Diamond, Soul Blood recipes; Blood Steel Cleaver.
 - Spit Roast and Specimen Jar.
-- Item descriptions, JEI pages, Ponder scenes, advancements.
+- Item descriptions, JEI pages (a Butchery page per mob, sent to players on servers too), Ponder
+  scenes, advancements.
+- Rotten carcasses fall apart after a day; a server config sets the rot speed and the falling apart.

@@ -19,7 +19,9 @@ provided by [Sable](https://github.com/ryanhcode/sable).
   bone, offal and fat. The Flensing Knife takes the hide off (with a sheep's wool). Yields are
   data-driven per mob and spoil as the carcass rots. Light pieces can be picked up and carried.
 - **Rot.** Carcasses rot over game time; cold slows it, ice stops it. Rotten meat turns to rotten
-  flesh.
+  flesh, and a carcass left rotten for a day falls apart into bones and rotten flesh, so old ones
+  don't pile up. Rot speed and the falling apart can be changed per world in
+  `serverconfig/bloodandbones-server.toml`.
 - **Hanging and blood.** The Shackle Hook hangs a carcass by the neck. A Bleeding Rack under a
   hanging (or lying) carcass collects its blood, faster with an Encased Fan blowing across it.
   Blood and Soul Blood are real fluids for pipes, tanks, spouts and basins. A bled carcass keeps
@@ -34,8 +36,8 @@ provided by [Sable](https://github.com/ryanhcode/sable).
   with soul blood), and the Blood Steel Cleaver (twice as deep a chop).
 - **Cooking and display.** The Spit Roast turns a carcass piece over a fire until it browns (or
   burns). The Specimen Jar keeps a piece on show.
-- Tooltips (hold Shift), JEI information pages, Ponder scenes and an advancement tab explain it
-  all in game.
+- Tooltips (hold Shift), JEI pages (including a Butchery page per mob showing what its carcass
+  gives), Ponder scenes and an advancement tab explain it all in game.
 
 ## Building
 

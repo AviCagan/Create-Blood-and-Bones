@@ -1085,6 +1085,54 @@ public class BBGameTests {
         });
     }
 
+    /**
+     * A carcass that has been rotten long enough falls apart into rotten flesh and bones and its bodies go;
+     * one kept on blue ice does not, however long it has been rotten.
+     */
+    @GameTest(template = "empty", timeoutTicks = 120)
+    public static void rottenCarcassFallsApart(GameTestHelper helper) {
+        ServerLevel level = helper.getLevel();
+        for (int x = 6; x <= 9; x++) {
+            for (int z = 6; z <= 9; z++) {
+                helper.setBlock(new BlockPos(x, 1, z), net.minecraft.world.level.block.Blocks.BLUE_ICE);
+            }
+        }
+        Cow cow = helper.spawn(EntityType.COW, new BlockPos(3, 2, 3));
+        Cow iced = helper.spawn(EntityType.COW, new BlockPos(7, 2, 7));
+        CarcassSavedData.Carcass rotting = CarcassAssembler.assemble(cow, null);
+        CarcassSavedData.Carcass kept = CarcassAssembler.assemble(iced, null);
+        cow.discard();
+        iced.discard();
+        if (rotting == null || kept == null) {
+            helper.fail("Carcass assembly returned null");
+            return;
+        }
+        float due = com.avicagan.bloodandbones.config.BBServerConfig.crumbleTicks();
+        rotting.freshness = 0.0F;
+        rotting.decay = due - 5.0F;
+        kept.freshness = 0.0F;
+        kept.decay = due + 100.0F;
+        UUID torso = rotting.bones.get(rotting.rootBone);
+        helper.runAfterDelay(60, () -> {
+            if (CarcassSavedData.get(level).carcass(rotting.id) != null) {
+                helper.fail("The rotten carcass is still here (decay " + rotting.decay + " of " + due + ")");
+            }
+            SubLevel body = SubLevelContainer.getContainer(level).getSubLevel(torso);
+            if (body != null && !body.isRemoved()) {
+                helper.fail("The rotten carcass's torso body is still here");
+            }
+            AABB area = new AABB(helper.absolutePos(BlockPos.ZERO)).inflate(12);
+            // the body alone leaves at least one rotten flesh (4.2 beef, halved for crumbling, halved for rot)
+            if (level.getEntitiesOfClass(ItemEntity.class, area, item -> item.getItem().is(net.minecraft.world.item.Items.ROTTEN_FLESH)).isEmpty()) {
+                helper.fail("Nothing was left where the carcass fell apart");
+            }
+            if (CarcassSavedData.get(level).carcass(kept.id) == null) {
+                helper.fail("The carcass on blue ice fell apart");
+            }
+            helper.succeed();
+        });
+    }
+
     /** Every recipe file parsed: a broken one only logs an error, so check they all loaded. */
     @GameTest(template = "empty", timeoutTicks = 20)
     public static void recipesLoad(GameTestHelper helper) {

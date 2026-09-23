@@ -86,6 +86,8 @@ public class CarcassSavedData extends SavedData {
         public float freshness = 1.0F;
         /** game time the rot was last applied, so time spent unloaded still counts; -1 until first tick */
         public long rotClock = -1L;
+        /** rot counted since it went rotten, in ticks at the rot speed; it falls apart at the configured amount */
+        public float decay;
         /** rot speed multiplier from the surroundings, re-sampled now and then; not saved */
         public float rotRate = 1.0F;
         /** ticks since the surroundings were sampled / the clients were told the freshness; not saved */
@@ -158,6 +160,7 @@ public class CarcassSavedData extends SavedData {
             tag.put("Severed", severedList);
             tag.putFloat("Freshness", freshness);
             tag.putLong("RotClock", rotClock);
+            tag.putFloat("Decay", decay);
             tag.putFloat("Blood", blood);
             tag.putFloat("BloodMax", bloodMax);
             tag.putString("Texture", look.texture().toString());
@@ -212,6 +215,7 @@ public class CarcassSavedData extends SavedData {
             }
             carcass.freshness = tag.contains("Freshness") ? tag.getFloat("Freshness") : 1.0F;
             carcass.rotClock = tag.contains("RotClock") ? tag.getLong("RotClock") : -1L;
+            carcass.decay = tag.getFloat("Decay");
             carcass.blood = tag.contains("Blood") ? tag.getFloat("Blood") : -1.0F;
             carcass.bloodMax = tag.contains("BloodMax") ? tag.getFloat("BloodMax") : -1.0F;
             if (tag.contains("Texture")) {
@@ -278,6 +282,15 @@ public class CarcassSavedData extends SavedData {
         return carcasses.values();
     }
 
+    /** Drop a record without touching its bodies; the caller removes them. */
+    public void forget(Carcass carcass) {
+        carcasses.remove(carcass.id);
+        setDirty();
+    }
+
+    /** Carcasses whose rot is done, to fall apart at the end of the tick rather than inside a body's own tick; not saved. */
+    public final java.util.Set<UUID> crumbling = new java.util.LinkedHashSet<>();
+
     /**
      * Move a bone and everything hanging off it into a carcass record of its own, with the bone as its
      * root. The new record keeps the look, freshness and any joints among the moved bones.
@@ -303,6 +316,7 @@ public class CarcassSavedData extends SavedData {
         piece.blood = 0.0F;
         piece.bloodMax = 0.0F;
         piece.rotClock = from.rotClock;
+        piece.decay = from.decay;
         for (String name : moving) {
             UUID id = from.bones.remove(name);
             if (id != null) {

@@ -42,6 +42,7 @@ public class BloodAndBones {
         BBLang.register();
 
         modContainer.registerConfig(ModConfig.Type.CLIENT, BBClientConfig.SPEC);
+        modContainer.registerConfig(ModConfig.Type.SERVER, com.avicagan.bloodandbones.config.BBServerConfig.SPEC);
         NeoForge.EVENT_BUS.register(CarcassEvents.class);
         NeoForge.EVENT_BUS.register(com.avicagan.bloodandbones.carcass.trolley.TrolleyEvents.class);
         if (net.neoforged.fml.loading.FMLEnvironment.dist.isClient()) {

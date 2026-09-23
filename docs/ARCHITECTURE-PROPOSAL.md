@@ -542,6 +542,12 @@ pipes; chain clearance = hanging length + 1 block.
   under 0.5 gives 70%, 1.5 and up gives 150%.
 - There is no cold `HeatLevel` anywhere in Create or its addons; CDP's `BlockFreezer` is the exact cold
   mirror of Create's `BoilerHeater` and is what we build on.
+- Once rotten it keeps counting (`Carcass.decay`, saved, at the same rate, so ice still stops it). At
+  `crumble_after_days` (server config, a day by default) it falls apart at the end of the level tick
+  (`CarcassRot.levelTick`, never inside a body's own tick): every piece drops half its table's yields
+  with rot applied (bones, a little rotten flesh), the record is forgotten first so removing the bodies
+  does not split it, then the bodies go. It waits while any unfolded piece is unloaded. `rot_speed`
+  scales all rot; 0 turns it off.
 
 ### 13.4 Data-driven rigs for more mobs (verified)
 
@@ -670,3 +676,12 @@ pipes; chain clearance = hanging length + 1 block.
   smelts each butchery yield through the vanilla smelting recipes.
 - Specimen Jar: holds one carcass piece in a translucent jar; the piece is drawn with the shared
   `CarcassModels.drawPiece`.
+
+### 13.13 JEI Butchery pages (verified)
+
+- One page per butchery table (`compat/jei/ButcheryCategory`): the mob's spawn egg in, the hide from
+  skinning and the summed yields of every piece out; `{wool}` and `{mushroom}` shown as white and red.
+- The client never loads data packs, so the server sends the tables (`ButcherySyncPayload`, one packet,
+  about 52 KB for 77 mobs) alongside the rigs on `OnDatapackSyncEvent`. JEI may start before they arrive,
+  so on arrival the plugin hides the pages it had and adds fresh ones. `NetworkTests` writes the rig and
+  butchery packets to bytes and back, since a single-player world never serialises them.
