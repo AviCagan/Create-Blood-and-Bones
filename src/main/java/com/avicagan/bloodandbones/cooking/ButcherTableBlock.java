@@ -54,10 +54,14 @@ public class ButcherTableBlock extends Block implements IBE<ButcherTableBlockEnt
         }
         return onBlockEntityUseItemOn(level, pos, be -> {
             if (cleaver) {
-                if (player.getCooldowns().isOnCooldown(stack.getItem()) || !be.chop((ServerLevel) level, stack)) {
+                // a Deployer's stand-in player never ticks, so a cooldown would never run out: it goes at its own pace
+                boolean paced = !(player instanceof net.neoforged.neoforge.common.util.FakePlayer);
+                if ((paced && player.getCooldowns().isOnCooldown(stack.getItem())) || !be.chop((ServerLevel) level, stack)) {
                     return ItemInteractionResult.PASS_TO_DEFAULT_BLOCK_INTERACTION;
                 }
-                player.getCooldowns().addCooldown(stack.getItem(), 12);
+                if (paced) {
+                    player.getCooldowns().addCooldown(stack.getItem(), 12);
+                }
                 return ItemInteractionResult.SUCCESS;
             }
             if (stack.isEmpty()) {

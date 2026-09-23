@@ -68,5 +68,6 @@ public class BBBlockEntities {
     public static void registerCapabilities(RegisterCapabilitiesEvent event) {
         BleedingRackBlockEntity.registerCapabilities(event);
         com.avicagan.bloodandbones.machine.CarcassMachineBlockEntity.registerCapabilities(event);
+        com.avicagan.bloodandbones.cooking.ButcherTableBlockEntity.registerCapabilities(event);
     }
 }

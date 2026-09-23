@@ -19,8 +19,55 @@ import java.util.List;
 
 /** The piece on a butcher's table: held like a piece in a jar until a Cleaver takes it apart. */
 public class ButcherTableBlockEntity extends SpecimenJarBlockEntity {
+    /** For funnels and hoppers: one carcass piece goes on an empty table, and can be taken off again. */
+    public final net.neoforged.neoforge.items.IItemHandler inventory = new net.neoforged.neoforge.items.IItemHandler() {
+        @Override
+        public int getSlots() {
+            return 1;
+        }
+
+        @Override
+        public ItemStack getStackInSlot(int slot) {
+            return specimen();
+        }
+
+        @Override
+        public ItemStack insertItem(int slot, ItemStack stack, boolean simulate) {
+            if (!specimen().isEmpty() || !isItemValid(slot, stack)) {
+                return stack;
+            }
+            if (!simulate) {
+                put(stack.copyWithCount(1));
+            }
+            return stack.copyWithCount(stack.getCount() - 1);
+        }
+
+        @Override
+        public ItemStack extractItem(int slot, int amount, boolean simulate) {
+            if (amount <= 0 || specimen().isEmpty()) {
+                return ItemStack.EMPTY;
+            }
+            return simulate ? specimen().copy() : take();
+        }
+
+        @Override
+        public int getSlotLimit(int slot) {
+            return 1;
+        }
+
+        @Override
+        public boolean isItemValid(int slot, ItemStack stack) {
+            return CarcassPieceItem.piece(stack) != null;
+        }
+    };
+
     public ButcherTableBlockEntity(BlockEntityType<?> type, BlockPos pos, BlockState state) {
         super(type, pos, state);
+    }
+
+    public static void registerCapabilities(net.neoforged.neoforge.capabilities.RegisterCapabilitiesEvent event) {
+        event.registerBlockEntity(net.neoforged.neoforge.capabilities.Capabilities.ItemHandler.BLOCK,
+                com.avicagan.bloodandbones.registry.BBBlockEntities.BUTCHER_TABLE.get(), (be, side) -> be.inventory);
     }
 
     /**

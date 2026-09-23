@@ -275,4 +275,41 @@ public class CookingTests {
             helper.succeed();
         });
     }
+
+    /**
+     * An automated butcher's table: a piece goes in through the table's inventory (as from a funnel), and a
+     * Deployer holding a Cleaver over it chops it, again and again, not just once.
+     */
+    @GameTest(template = "empty", timeoutTicks = 400)
+    public static void deployerChopsOnTheTable(GameTestHelper helper) {
+        BlockPos tablePos = new BlockPos(3, 2, 3);
+        BlockPos deployerPos = tablePos.above(2);
+        helper.setBlock(tablePos, BBBlocks.BUTCHER_TABLE.getDefaultState());
+        helper.setBlock(deployerPos, com.simibubi.create.AllBlocks.DEPLOYER.getDefaultState()
+                .setValue(DirectionalKineticBlock.FACING, Direction.DOWN)
+                .setValue(com.simibubi.create.content.kinetics.base.DirectionalAxisKineticBlock.AXIS_ALONG_FIRST_COORDINATE, true));
+        helper.setBlock(deployerPos.east(), AllBlocks.CREATIVE_MOTOR.getDefaultState().setValue(DirectionalKineticBlock.FACING, Direction.WEST));
+        if (helper.getLevel().getBlockEntity(helper.absolutePos(deployerPos.east())) instanceof CreativeMotorBlockEntity motor) {
+            motor.generatedSpeed.setValue(128);
+        }
+        var table = (com.avicagan.bloodandbones.cooking.ButcherTableBlockEntity) helper.getLevel().getBlockEntity(helper.absolutePos(tablePos));
+        ItemStack first = cowBody(helper);
+        if (!table.inventory.insertItem(0, first.copy(), false).isEmpty() || table.inventory.insertItem(0, first.copy(), true).isEmpty()) {
+            helper.fail("The table should take one piece through its inventory, and no second");
+        }
+        helper.runAfterDelay(2, () -> {
+            var deployer = (com.simibubi.create.content.kinetics.deployer.DeployerBlockEntity) helper.getLevel().getBlockEntity(helper.absolutePos(deployerPos));
+            deployer.getPlayer().setItemInHand(net.minecraft.world.InteractionHand.MAIN_HAND, new ItemStack(com.avicagan.bloodandbones.registry.BBItems.CLEAVER.get()));
+        });
+        int[] chopped = {0};
+        helper.onEachTick(() -> {
+            if (chopped[0] < 2 && table.specimen().isEmpty()) {
+                chopped[0]++;
+                if (chopped[0] < 2) {
+                    table.inventory.insertItem(0, cowBody(helper), false);
+                }
+            }
+        });
+        helper.succeedWhen(() -> helper.assertTrue(chopped[0] >= 2, "the deployer has not chopped two pieces yet"));
+    }
 }

@@ -24,7 +24,8 @@ Everything below is in development builds only; the art is placeholder (see the 
 - Blood Steel, Blood Diamond, Soul Blood recipes; Blood Steel Cleaver.
 - Spit Roast, Specimen Jar and Butcher's Hook (a wall hook to hang a piece on; a fresh piece drips
   blood onto the floor below until it runs dry).
-- Butcher's Table: lay a carried piece on it and chop it up with a Cleaver.
+- Butcher's Table: lay a carried piece on it and chop it up with a Cleaver. Automatable: a funnel or
+  hopper puts pieces on it and a Deployer holding a Cleaver chops them.
 - Bloody Casing: andesite casing filled with blood, joining up like Create's casings.
 - Gut Chain: a string of guts hung like a chain (three offal make three); plain cord in bloodless mode.
 - Both hooks ride Create contraptions with the block they hang from.
