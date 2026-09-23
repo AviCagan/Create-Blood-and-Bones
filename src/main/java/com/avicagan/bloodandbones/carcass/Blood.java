@@ -34,6 +34,50 @@ public final class Blood {
         }
     }
 
+    /** Farthest blood falls looking for ground to stain. */
+    public static final int STAIN_REACH = 12;
+
+    /** Whether this carcass's mob has blood at all (skeletons, golems, spirits and slimes do not). */
+    public static boolean bloody(CarcassSavedData.Carcass carcass) {
+        return net.minecraft.core.registries.BuiltInRegistries.ENTITY_TYPE.getOptional(carcass.entity)
+                .map(type -> !type.is(com.avicagan.bloodandbones.registry.BBTags.BLOODLESS)).orElse(true);
+    }
+
+    /**
+     * Blood reaching the ground below a point: a stain on the first solid top surface it falls to (through
+     * air only; grass, water and the like take none), or a bigger, wet again one where one already is.
+     *
+     * @param amount 1 (a few drops) to 4 (a pool)
+     */
+    public static void stain(ServerLevel level, Vector3d at, int amount) {
+        net.minecraft.world.level.block.state.BlockState stain = com.avicagan.bloodandbones.registry.BBBlocks.BLOOD_STAIN.get().defaultBlockState();
+        net.minecraft.core.BlockPos.MutableBlockPos pos = net.minecraft.core.BlockPos.containing(at.x, at.y, at.z).mutable();
+        for (int i = 0; i <= STAIN_REACH; i++, pos.move(net.minecraft.core.Direction.DOWN)) {
+            if (!level.isLoaded(pos)) {
+                return;
+            }
+            net.minecraft.world.level.block.state.BlockState here = level.getBlockState(pos);
+            if (here.is(stain.getBlock()) || (here.isAir() && stain.canSurvive(level, pos))) {
+                com.avicagan.bloodandbones.bleeding.BloodStainBlock.splash(level, pos.immutable(), stain, amount);
+                return;
+            }
+            if (!here.isAir()) {
+                return;
+            }
+        }
+    }
+
+    /** A wound: a burst of drops and a stain under it, for a mob that bleeds. */
+    public static void wound(ServerLevel level, CarcassSavedData.Carcass carcass, Vector3d at, int drops, int stain) {
+        if (!bloody(carcass)) {
+            return;
+        }
+        burst(level, at, drops);
+        if (stain > 0) {
+            stain(level, at, stain);
+        }
+    }
+
     /** A drop letting go of a wound. */
     public static void drip(ServerLevel level, Vector3d at) {
         level.sendParticles(BBParticles.BLOOD_DROP.get(), at.x, at.y, at.z, 0, (RANDOM.nextDouble() - 0.5) * 0.02, 0.0, (RANDOM.nextDouble() - 0.5) * 0.02, 1.0);

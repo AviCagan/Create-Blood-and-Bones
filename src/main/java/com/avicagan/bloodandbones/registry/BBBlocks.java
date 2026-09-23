@@ -58,6 +58,31 @@ public class BBBlocks {
             .simpleItem()
             .register();
 
+    /** Blood on the ground (see BloodStainBlock). No item: only bleeding makes it. */
+    public static final BlockEntry<com.avicagan.bloodandbones.bleeding.BloodStainBlock> BLOOD_STAIN = BloodAndBones.REGISTRATE
+            .block("blood_stain", com.avicagan.bloodandbones.bleeding.BloodStainBlock::new)
+            .properties(p -> p.mapColor(MapColor.COLOR_RED)
+                    .replaceable()
+                    .noCollission()
+                    .noOcclusion()
+                    .instabreak()
+                    .noLootTable()
+                    .randomTicks()
+                    .pushReaction(PushReaction.DESTROY)
+                    .sound(net.minecraft.world.level.block.SoundType.SLIME_BLOCK))
+            .blockstate((c, p) -> p.getVariantBuilder(c.get()).forAllStatesExcept(state -> {
+                var model = p.models().getExistingFile(p.modLoc("block/blood_stain_" + state.getValue(com.avicagan.bloodandbones.bleeding.BloodStainBlock.SIZE)));
+                // any of four turns, picked by position, so neighbouring stains do not repeat
+                return new net.neoforged.neoforge.client.model.generators.ConfiguredModel[]{
+                        new net.neoforged.neoforge.client.model.generators.ConfiguredModel(model, 0, 0, false),
+                        new net.neoforged.neoforge.client.model.generators.ConfiguredModel(model, 0, 90, false),
+                        new net.neoforged.neoforge.client.model.generators.ConfiguredModel(model, 0, 180, false),
+                        new net.neoforged.neoforge.client.model.generators.ConfiguredModel(model, 0, 270, false)};
+            }, com.avicagan.bloodandbones.bleeding.BloodStainBlock.AGE))
+            .loot(NonNullBiConsumer.noop())
+            .lang("Blood Stain")
+            .register();
+
     public static final BlockEntry<net.minecraft.world.level.block.Block> BLOOD_STEEL_BLOCK = BloodAndBones.REGISTRATE
             .block("blood_steel_block", net.minecraft.world.level.block.Block::new)
             .initialProperties(() -> net.minecraft.world.level.block.Blocks.IRON_BLOCK)

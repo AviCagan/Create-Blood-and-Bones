@@ -169,7 +169,7 @@ public final class CarcassDrag {
         DRAGS.put(player.getUUID(), drag);
         applySlowdown(player, dragPenalty(carcass, weight));
         broadcast(level, sync(drag));
-        Blood.burst(level, serverSubLevel.logicalPose().transformPosition(anchor, new Vector3d()), 10);
+        Blood.wound(level, carcass, serverSubLevel.logicalPose().transformPosition(anchor, new Vector3d()), 10, 1);
         return true;
     }
 
@@ -238,7 +238,15 @@ public final class CarcassDrag {
             broadcast(level, sync(drag));
         }
         if (level.getGameTime() % 6 == 0) {
-            Blood.drip(level, subLevel.logicalPose().transformPosition(drag.anchorPlot, new Vector3d()));
+            CarcassSavedData.Carcass dragged = CarcassSavedData.get(level).carcass(drag.carcass);
+            if (dragged != null && Blood.bloody(dragged)) {
+                Vector3d wound = subLevel.logicalPose().transformPosition(drag.anchorPlot, new Vector3d());
+                Blood.drip(level, wound);
+                // a trail: now and then a drop reaches the ground and stays
+                if (level.getGameTime() % 24 == 0) {
+                    Blood.stain(level, wound, 1);
+                }
+            }
         }
     }
 

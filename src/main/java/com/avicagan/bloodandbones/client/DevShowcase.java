@@ -250,6 +250,14 @@ public final class DevShowcase {
         if (hung != null) {
             level.getServer().execute(() -> hang(level, player, hung, rack.above(4)));
         }
+        // a second hook with nothing under it: the pig bleeds onto the grass
+        BlockPos bare = new BlockPos(o.getX() + 11, o.getY(), z);
+        level.setBlockAndUpdate(bare.above(5), Blocks.STONE.defaultBlockState());
+        level.setBlockAndUpdate(bare.above(4), BBBlocks.SHACKLE_HOOK.getDefaultState().setValue(ShackleHookBlock.FACING, Direction.UP));
+        CarcassSavedData.Carcass dripping = carcass(level, EntityType.PIG, bare.above());
+        if (dripping != null) {
+            level.getServer().execute(() -> hang(level, player, dripping, bare.above(4)));
+        }
         for (int dx = 0; dx < 2; dx++) {
             level.setBlockAndUpdate(new BlockPos(o.getX() + 6 + dx, ground, z), BBFluids.blood().defaultFluidState().createLegacyBlock());
             level.setBlockAndUpdate(new BlockPos(o.getX() + 6 + dx, ground, z + 1), BBFluids.soulBlood().defaultFluidState().createLegacyBlock());
@@ -270,7 +278,9 @@ public final class DevShowcase {
                 // jar close
                 new View(o.getX() - 2.5, eye + 0.5, o.getZ() + 17.5, 0, 20),
                 // rack and the hanging cow
-                new View(o.getX() + 2.5, eye + 1.5, o.getZ() + 15.0, 0, -5));
+                new View(o.getX() + 2.5, eye + 1.5, o.getZ() + 15.0, 0, -5),
+                // the pig bleeding onto the ground
+                new View(o.getX() + 11.5, eye + 1.5, o.getZ() + 13.5, 0, 12));
         BloodAndBones.LOGGER.info("[showcase] built at {}", o);
     }
 

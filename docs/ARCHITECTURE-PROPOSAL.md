@@ -634,6 +634,20 @@ pipes; chain clearance = hanging length + 1 block.
   (`FanAirflow.fanSpeedAt`, which reads Create's `AirCurrent.bounds` on the server). A full rack stops
   the draining. A bled carcass rots at 70% speed.
 
+### 13.7a Blood stains (verified)
+
+- `blood_stain` (`BloodStainBlock`): a flat, non-colliding, replaceable block with `size` 1-4 and `age`
+  0-2, no item. `Blood.stain` drops blood straight down through air (at most 12 blocks) onto the first
+  sturdy top face; grass, fluids and other blocks in the way take none. Landing on a stain makes it
+  bigger and wet again.
+- Made by: a hanging carcass bleeding with no rack under it (every bleed step), the kill spray, hooking,
+  Cleaver cuts, butchering and severing, and a dragged carcass now and then (a trail). Mobs in
+  `#bloodandbones:bloodless` make no blood particles or stains at all.
+- Random ticks: rain washes it off; otherwise one in three dries it a step (a tint from `BlockColor`:
+  wet red, brown-red, near black), then shrinks it, then removes it: roughly ten to twenty minutes.
+- Bloodless mode wraps the stain's baked models so they return no quads, and a client config reload
+  redraws the world (`LevelRenderer.allChanged`), so switching it needs no restart.
+
 ### 13.8 Machines (verified)
 
 - One block entity, four blocks (`MachineKind`): Mangler, Guillotine, Beheader, Deglover. Millstone

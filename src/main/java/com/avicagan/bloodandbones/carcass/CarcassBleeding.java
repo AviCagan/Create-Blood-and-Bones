@@ -114,6 +114,10 @@ public final class CarcassBleeding {
         if (hanging) {
             Blood.drip(level, drip);
         }
+        if (rack == null) {
+            // nothing catches it: it pools on the floor below
+            Blood.stain(level, drip, 1);
+        }
         CarcassSavedData.get(level).setDirty();
     }
 

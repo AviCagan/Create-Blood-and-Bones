@@ -25,7 +25,8 @@ provided by [Sable](https://github.com/ryanhcode/sable).
 - **Hanging and blood.** The Shackle Hook hangs a carcass by the neck. A Bleeding Rack under a
   hanging (or lying) carcass collects its blood, faster with an Encased Fan blowing across it.
   Blood and Soul Blood are real fluids for pipes, tanks, spouts and basins. A bled carcass keeps
-  longer.
+  longer. Blood that nothing catches stains the ground: kills, cuts, drag trails and carcasses
+  hanging over bare floor leave splashes that dry dark and wash away in the rain.
 - **Chain conveyors.** Right-click a Create chain conveyor with the Meat Hook while dragging a
   carcass: it rides the chain on a trolley and stops at frogports addressed for it. Trolleys queue
   behind each other instead of bunching up.

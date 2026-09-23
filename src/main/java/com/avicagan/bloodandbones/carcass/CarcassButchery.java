@@ -53,7 +53,7 @@ public final class CarcassButchery {
         }
         int cuts = carcass.cuts.merge(bone, 1, Integer::sum);
         if (at != null) {
-            Blood.burst(level, at, 8);
+            Blood.wound(level, carcass, at, 8, 1);
             level.playSound(null, at.x, at.y, at.z, SoundEvents.SLIME_BLOCK_BREAK, SoundSource.BLOCKS, 0.8F, 0.7F);
         }
         if (attached && cuts >= CUTS_TO_SEVER) {
@@ -103,7 +103,7 @@ public final class CarcassButchery {
                 data.splitOff(level, carcass, other);
             }
         }
-        Blood.burst(level, where, 24);
+        Blood.wound(level, carcass, where, 24, 3);
         level.playSound(null, where.x, where.y, where.z, SoundEvents.SLIME_BLOCK_BREAK, SoundSource.BLOCKS, 1.0F, 0.5F);
         data.setDirty();
         BloodAndBones.LOGGER.debug("Butchered {} of carcass {}", bone, carcass.id);
@@ -128,7 +128,7 @@ public final class CarcassButchery {
             return false;
         }
         carcass.skinStrokes++;
-        Blood.burst(level, where, 4);
+        Blood.wound(level, carcass, where, 4, 0);
         level.playSound(null, where.x, where.y, where.z, SoundEvents.SLIME_SQUISH_SMALL, SoundSource.BLOCKS, 0.8F, 1.2F);
         if (carcass.skinStrokes < STROKES_TO_SKIN) {
             return true;
@@ -138,7 +138,7 @@ public final class CarcassButchery {
         carcass.skinned = true;
         carcass.look = CarcassLook.flesh();
         CarcassRot.sync(level, carcass, null);
-        Blood.burst(level, where, 16);
+        Blood.wound(level, carcass, where, 16, 2);
         CarcassSavedData.get(level).setDirty();
         return true;
     }
@@ -278,7 +278,7 @@ public final class CarcassButchery {
             }
         }
         if (at != null) {
-            Blood.burst(level, at, 30);
+            Blood.wound(level, carcass, at, 30, 3);
             level.playSound(null, at.x, at.y, at.z, SoundEvents.BONE_BLOCK_BREAK, SoundSource.BLOCKS, 1.0F, 0.6F);
         }
         // the piece is a carcass of its own from here: it rests, rots and is hooked on its own terms

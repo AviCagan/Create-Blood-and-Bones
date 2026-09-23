@@ -131,8 +131,10 @@ public final class CarcassHandover {
                 CarcassAssembler.configureCells(level, carcass);
                 CarcassAssembler.shove(level, carcass, pending.look());
                 Vector3d wound = CarcassAssembler.boneWorldPosition(level, carcass, carcass.hitBone);
-                if (wound != null) {
+                if (wound != null && Blood.bloody(carcass)) {
                     Blood.spray(level, wound, new Vector3d(pending.look().x, pending.look().y, pending.look().z), 24);
+                    // the spray lands a little way along the blow
+                    Blood.stain(level, new Vector3d(wound).add(pending.look().x * 0.8, 0, pending.look().z * 0.8), 2);
                 }
             }
         }
