@@ -104,6 +104,30 @@ public final class CarcassModels {
         }
     }
 
+    /**
+     * A single carried piece, centred on the pose's origin and scaled so its longest side is {@code size}
+     * blocks, the right way up. {@code tint} (ARGB, -1 for none) is laid over the rot colour: cooking browns it.
+     */
+    public static void drawPiece(com.avicagan.bloodandbones.item.CarcassPieceItem.Piece piece, Rig rig, Bone bone, float size, int tint,
+                                 PoseStack poseStack, MultiBufferSource buffers, int packedLight) {
+        org.joml.Vector3f min = bone.boxMin();
+        org.joml.Vector3f max = bone.boxMax();
+        float largest = Math.max(max.x - min.x, Math.max(max.y - min.y, max.z - min.z)) / 16.0F;
+        float fit = size / Math.max(largest, 0.3F);
+        poseStack.pushPose();
+        poseStack.scale(fit, fit, fit);
+        // entity models are drawn upside down in their own space; turn the piece the right way up
+        poseStack.mulPose(com.mojang.math.Axis.ZP.rotationDegrees(180.0F));
+        poseStack.translate(-(min.x + max.x) / 32.0F, -(min.y + max.y) / 32.0F, -(min.z + max.z) / 32.0F);
+        List<CarcassLook.Coat> coats = piece.coats().stream().map(c -> new CarcassLook.Coat(c.layer(), c.texture(), c.tint())).toList();
+        int color = rotColor(piece.freshness());
+        if (tint != -1) {
+            color = FastColor.ARGB32.multiply(color, tint);
+        }
+        drawBone(rig, bone, piece.texture(), coats, color, poseStack, buffers, packedLight);
+        poseStack.popPose();
+    }
+
     /** Fresh meat is untinted; as it rots it greys and greens. */
     public static int rotColor(float freshness) {
         float f = Math.max(0.0F, Math.min(1.0F, freshness));

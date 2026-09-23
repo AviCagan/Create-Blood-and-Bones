@@ -36,6 +36,19 @@ public class BBBlockEntities {
             .renderer(() -> com.avicagan.bloodandbones.machine.CarcassMachineRenderer::new)
             .register();
 
+    public static final BlockEntityEntry<com.avicagan.bloodandbones.cooking.SpitRoastBlockEntity> SPIT_ROAST = BloodAndBones.REGISTRATE
+            .blockEntity("spit_roast", com.avicagan.bloodandbones.cooking.SpitRoastBlockEntity::new)
+            .visual(() -> com.simibubi.create.content.kinetics.base.SingleAxisRotatingVisual::shaft, true)
+            .validBlocks(BBBlocks.SPIT_ROAST)
+            .renderer(() -> com.avicagan.bloodandbones.cooking.SpitRoastRenderer::new)
+            .register();
+
+    public static final BlockEntityEntry<com.avicagan.bloodandbones.cooking.SpecimenJarBlockEntity> SPECIMEN_JAR = BloodAndBones.REGISTRATE
+            .blockEntity("specimen_jar", com.avicagan.bloodandbones.cooking.SpecimenJarBlockEntity::new)
+            .validBlocks(BBBlocks.SPECIMEN_JAR)
+            .renderer(() -> com.avicagan.bloodandbones.cooking.SpecimenJarRenderer::new)
+            .register();
+
     public static void register() {
     }
 

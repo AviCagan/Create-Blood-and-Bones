@@ -86,6 +86,29 @@ public class BBBlocks {
                 .register();
     }
 
+    public static final BlockEntry<com.avicagan.bloodandbones.cooking.SpitRoastBlock> SPIT_ROAST = BloodAndBones.REGISTRATE
+            .block("spit_roast", com.avicagan.bloodandbones.cooking.SpitRoastBlock::new)
+            .initialProperties(() -> net.minecraft.world.level.block.Blocks.SPRUCE_FENCE)
+            .properties(p -> p.noOcclusion())
+            .tag(net.minecraft.tags.BlockTags.MINEABLE_WITH_AXE)
+            .blockstate((c, p) -> p.getVariantBuilder(c.get()).forAllStatesExcept(state -> net.neoforged.neoforge.client.model.generators.ConfiguredModel.builder()
+                    .modelFile(p.models().getExistingFile(p.modLoc("block/spit_roast")))
+                    .rotationY(state.getValue(com.simibubi.create.content.kinetics.base.HorizontalAxisKineticBlock.HORIZONTAL_AXIS) == net.minecraft.core.Direction.Axis.X ? 0 : 90)
+                    .build()))
+            .onRegister(block -> com.simibubi.create.api.stress.BlockStressValues.IMPACTS.register(block, () -> 2.0))
+            .lang("Spit Roast")
+            .simpleItem()
+            .register();
+
+    public static final BlockEntry<com.avicagan.bloodandbones.cooking.SpecimenJarBlock> SPECIMEN_JAR = BloodAndBones.REGISTRATE
+            .block("specimen_jar", com.avicagan.bloodandbones.cooking.SpecimenJarBlock::new)
+            .initialProperties(() -> net.minecraft.world.level.block.Blocks.GLASS)
+            .properties(p -> p.noOcclusion())
+            .blockstate((c, p) -> p.simpleBlock(c.get(), p.models().getExistingFile(p.modLoc("block/specimen_jar"))))
+            .lang("Specimen Jar")
+            .simpleItem()
+            .register();
+
     public static void register() {
     }
 }

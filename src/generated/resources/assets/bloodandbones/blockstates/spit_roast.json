@@ -1,0 +1,11 @@
+{
+  "variants": {
+    "axis=x": {
+      "model": "bloodandbones:block/spit_roast"
+    },
+    "axis=z": {
+      "model": "bloodandbones:block/spit_roast",
+      "y": 90
+    }
+  }
+}

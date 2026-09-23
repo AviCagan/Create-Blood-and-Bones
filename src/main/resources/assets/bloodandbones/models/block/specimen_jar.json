@@ -1,0 +1,131 @@
+{
+ "parent": "block/block",
+ "render_type": "minecraft:translucent",
+ "textures": {
+  "glass": "minecraft:block/glass",
+  "fluid": "bloodandbones:block/specimen_fluid",
+  "lid": "minecraft:block/cut_copper",
+  "particle": "minecraft:block/glass"
+ },
+ "elements": [
+  {
+   "from": [
+    3.5,
+    0.5,
+    3.5
+   ],
+   "to": [
+    12.5,
+    11,
+    12.5
+   ],
+   "faces": {
+    "north": {
+     "texture": "#fluid"
+    },
+    "south": {
+     "texture": "#fluid"
+    },
+    "east": {
+     "texture": "#fluid"
+    },
+    "west": {
+     "texture": "#fluid"
+    },
+    "up": {
+     "texture": "#fluid"
+    }
+   }
+  },
+  {
+   "from": [
+    3,
+    0,
+    3
+   ],
+   "to": [
+    13,
+    12,
+    13
+   ],
+   "faces": {
+    "north": {
+     "texture": "#glass"
+    },
+    "south": {
+     "texture": "#glass"
+    },
+    "east": {
+     "texture": "#glass"
+    },
+    "west": {
+     "texture": "#glass"
+    },
+    "up": {
+     "texture": "#glass"
+    },
+    "down": {
+     "texture": "#glass"
+    }
+   }
+  },
+  {
+   "from": [
+    4,
+    12,
+    4
+   ],
+   "to": [
+    12,
+    13,
+    12
+   ],
+   "faces": {
+    "north": {
+     "texture": "#glass"
+    },
+    "south": {
+     "texture": "#glass"
+    },
+    "east": {
+     "texture": "#glass"
+    },
+    "west": {
+     "texture": "#glass"
+    }
+   }
+  },
+  {
+   "from": [
+    3.5,
+    13,
+    3.5
+   ],
+   "to": [
+    12.5,
+    15,
+    12.5
+   ],
+   "faces": {
+    "north": {
+     "texture": "#lid"
+    },
+    "south": {
+     "texture": "#lid"
+    },
+    "east": {
+     "texture": "#lid"
+    },
+    "west": {
+     "texture": "#lid"
+    },
+    "up": {
+     "texture": "#lid"
+    },
+    "down": {
+     "texture": "#lid"
+    }
+   }
+  }
+ ]
+}

@@ -82,6 +82,16 @@ public class BBLang {
                 "PH: A diamond steeped in soul blood. Fill a diamond with 1000 mB of soul blood in a Spout. Its uses are still to come.");
         BloodAndBones.REGISTRATE.addRawLang("bloodandbones.jei.soul_blood.1",
                 "PH: Soul Blood is blood with a soul in it. Mix blood, soul sand and a little liquid experience over a superheated Blaze Burner, or ferment blood with nether wart and soul soil under a Basin Lid.");
+        BloodAndBones.REGISTRATE.addRawLang("bloodandbones.gui.goggles.spit_roast.roasting", "Roasting: %1$s%%");
+        BloodAndBones.REGISTRATE.addRawLang("bloodandbones.gui.goggles.spit_roast.cooked", "Cooked: take it off");
+        BloodAndBones.REGISTRATE.addRawLang("bloodandbones.gui.goggles.spit_roast.burnt", "Burnt to a crisp");
+        BloodAndBones.REGISTRATE.addRawLang("bloodandbones.gui.goggles.spit_roast.no_heat", "Needs a fire below");
+        block("spit_roast",
+                "PH: Roasts a carcass piece over a fire. Put it over a campfire, fire, lava or a Blaze Burner and turn the spit with a shaft.",
+                "PH: Right-click with a carcass piece to skewer it. It only cooks while the spit turns and there is heat below; hotter and faster cooks quicker.",
+                "PH: Take it off with an empty hand once it has browned: it comes apart into cooked meat and bones. Leave it too long and it burns to charcoal.");
+        block("specimen_jar",
+                "PH: A jar of cloudy preserving fluid to keep a carcass piece on show. Right-click with a piece to put it in, empty hand to take it out.");
         item("meat_hook",
                 "PH: Kill an animal with this and it leaves a whole carcass instead of loot. Right-click a carcass to drag it, right-click again to let go.",
                 "PH: Dragging slows you down. Heavier animals slow you more.",

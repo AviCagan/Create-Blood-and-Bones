@@ -1,0 +1,21 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "category": "misc",
+  "pattern": [
+    " C ",
+    "G G",
+    "GGG"
+  ],
+  "key": {
+    "C": {
+      "tag": "c:plates/copper"
+    },
+    "G": {
+      "tag": "c:glass_blocks"
+    }
+  },
+  "result": {
+    "id": "bloodandbones:specimen_jar",
+    "count": 1
+  }
+}
