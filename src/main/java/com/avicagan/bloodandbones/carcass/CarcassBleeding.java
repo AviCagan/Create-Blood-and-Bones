@@ -128,13 +128,13 @@ public final class CarcassBleeding {
             amount = taken;
         }
         carcass.blood = Math.max(0.0F, carcass.blood - amount);
-        Blood.drip(level, drip);
+        Blood.drip(level, drip, Blood.soul(carcass));
         if (hanging) {
-            Blood.drip(level, drip);
+            Blood.drip(level, drip, Blood.soul(carcass));
         }
         if (rack == null) {
             // nothing catches it: it pools on the floor below
-            Blood.stain(level, drip, 1);
+            Blood.stain(level, drip, 1, Blood.soul(carcass));
         }
         CarcassSavedData.get(level).setDirty();
     }
@@ -165,9 +165,9 @@ public final class CarcassBleeding {
             if (at == null) {
                 continue;
             }
-            Blood.drip(level, at);
+            Blood.drip(level, at, Blood.soul(carcass));
             if (left > GUSH_TICKS / 2) {
-                Blood.drip(level, at);
+                Blood.drip(level, at, Blood.soul(carcass));
             }
             // a stump drains the body; what pours onto a rack is kept, the rest stains the floor
             BleedingRackBlockEntity rack = rackBelow(level, at, HANGING_REACH, fluidOf(carcass));
@@ -180,7 +180,7 @@ public final class CarcassBleeding {
                 CarcassSavedData.get(level).setDirty();
             }
             if (rack == null && (left / INTERVAL) % 4 == 0) {
-                Blood.stain(level, at, 1);
+                Blood.stain(level, at, 1, Blood.soul(carcass));
             }
         }
     }

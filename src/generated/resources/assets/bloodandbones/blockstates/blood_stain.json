@@ -1,6 +1,6 @@
 {
   "variants": {
-    "size=1": [
+    "size=1,soul=false": [
       {
         "model": "bloodandbones:block/blood_stain_1"
       },
@@ -17,7 +17,24 @@
         "y": 270
       }
     ],
-    "size=2": [
+    "size=1,soul=true": [
+      {
+        "model": "bloodandbones:block/soul_blood_stain_1"
+      },
+      {
+        "model": "bloodandbones:block/soul_blood_stain_1",
+        "y": 90
+      },
+      {
+        "model": "bloodandbones:block/soul_blood_stain_1",
+        "y": 180
+      },
+      {
+        "model": "bloodandbones:block/soul_blood_stain_1",
+        "y": 270
+      }
+    ],
+    "size=2,soul=false": [
       {
         "model": "bloodandbones:block/blood_stain_2"
       },
@@ -34,7 +51,24 @@
         "y": 270
       }
     ],
-    "size=3": [
+    "size=2,soul=true": [
+      {
+        "model": "bloodandbones:block/soul_blood_stain_2"
+      },
+      {
+        "model": "bloodandbones:block/soul_blood_stain_2",
+        "y": 90
+      },
+      {
+        "model": "bloodandbones:block/soul_blood_stain_2",
+        "y": 180
+      },
+      {
+        "model": "bloodandbones:block/soul_blood_stain_2",
+        "y": 270
+      }
+    ],
+    "size=3,soul=false": [
       {
         "model": "bloodandbones:block/blood_stain_3"
       },
@@ -51,7 +85,24 @@
         "y": 270
       }
     ],
-    "size=4": [
+    "size=3,soul=true": [
+      {
+        "model": "bloodandbones:block/soul_blood_stain_3"
+      },
+      {
+        "model": "bloodandbones:block/soul_blood_stain_3",
+        "y": 90
+      },
+      {
+        "model": "bloodandbones:block/soul_blood_stain_3",
+        "y": 180
+      },
+      {
+        "model": "bloodandbones:block/soul_blood_stain_3",
+        "y": 270
+      }
+    ],
+    "size=4,soul=false": [
       {
         "model": "bloodandbones:block/blood_stain_4"
       },
@@ -65,6 +116,23 @@
       },
       {
         "model": "bloodandbones:block/blood_stain_4",
+        "y": 270
+      }
+    ],
+    "size=4,soul=true": [
+      {
+        "model": "bloodandbones:block/soul_blood_stain_4"
+      },
+      {
+        "model": "bloodandbones:block/soul_blood_stain_4",
+        "y": 90
+      },
+      {
+        "model": "bloodandbones:block/soul_blood_stain_4",
+        "y": 180
+      },
+      {
+        "model": "bloodandbones:block/soul_blood_stain_4",
         "y": 270
       }
     ]

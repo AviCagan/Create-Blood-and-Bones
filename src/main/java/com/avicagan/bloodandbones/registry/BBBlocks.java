@@ -71,7 +71,8 @@ public class BBBlocks {
                     .pushReaction(PushReaction.DESTROY)
                     .sound(net.minecraft.world.level.block.SoundType.SLIME_BLOCK))
             .blockstate((c, p) -> p.getVariantBuilder(c.get()).forAllStatesExcept(state -> {
-                var model = p.models().getExistingFile(p.modLoc("block/blood_stain_" + state.getValue(com.avicagan.bloodandbones.bleeding.BloodStainBlock.SIZE)));
+                var model = p.models().getExistingFile(p.modLoc((state.getValue(com.avicagan.bloodandbones.bleeding.BloodStainBlock.SOUL) ? "block/soul_blood_stain_" : "block/blood_stain_")
+                        + state.getValue(com.avicagan.bloodandbones.bleeding.BloodStainBlock.SIZE)));
                 // any of four turns, picked by position, so neighbouring stains do not repeat
                 return new net.neoforged.neoforge.client.model.generators.ConfiguredModel[]{
                         new net.neoforged.neoforge.client.model.generators.ConfiguredModel(model, 0, 0, false),

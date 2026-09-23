@@ -668,7 +668,10 @@ dragon and tropical fish, small slimes, and final art.
   hoglins, zoglins, striders, zombified piglins) drain Soul Blood instead (`CarcassBleeding.fluidOf`).
   A rack holds one fluid, so a carcass drains into the nearest rack that is empty or holds its own
   fluid, passing over one of the other (`rackBelow(..., fluid)`); with none, it spills on the floor.
-  `hoglinBleedsSoulBlood` hangs a hoglin over a grid whose middle rack already holds blood.
+  `hoglinBleedsSoulBlood` hangs a hoglin over a grid whose middle rack already holds blood. Their drops
+  are a `soul_blood_drop` particle and their stains a `soul` state of the stain block, both with teal
+  copies of the red textures (a tint cannot turn red teal); every `Blood` call that knows the mob passes
+  `Blood.soul(...)`. `hoglinStainsSoulBlood`.
 
 ### 13.7a Blood stains (verified)
 

@@ -101,7 +101,8 @@ public final class DevShowcase {
                     stage = 1;
                     LevelSettings settings = new LevelSettings("bb_showcase_" + System.currentTimeMillis(), GameType.CREATIVE, false, Difficulty.PEACEFUL,
                             true, new GameRules(), WorldDataConfiguration.DEFAULT);
-                    mc.createWorldOpenFlows().createFreshLevel(settings.levelName(), settings, WorldOptions.defaultWithRandomSeed(),
+                    // no structures: a village landing on the scene buried the camera in a house once
+                    mc.createWorldOpenFlows().createFreshLevel(settings.levelName(), settings, WorldOptions.defaultWithRandomSeed().withStructures(false),
                             access -> access.registryOrThrow(Registries.WORLD_PRESET).getHolderOrThrow(WorldPresets.FLAT).value().createWorldDimensions(),
                             new TitleScreen());
                 }
@@ -330,6 +331,14 @@ public final class DevShowcase {
         CarcassSavedData.Carcass dripping = carcass(level, EntityType.PIG, bare.above());
         if (dripping != null) {
             level.getServer().execute(() -> hang(level, player, dripping, bare.above(4)));
+        }
+        // and a hoglin beside it: a nether mob bleeds Soul Blood, dark teal
+        BlockPos soulHook = bare.east(3);
+        level.setBlockAndUpdate(soulHook.above(5), Blocks.STONE.defaultBlockState());
+        level.setBlockAndUpdate(soulHook.above(4), BBBlocks.SHACKLE_HOOK.getDefaultState().setValue(ShackleHookBlock.FACING, Direction.UP));
+        CarcassSavedData.Carcass soulDripping = carcass(level, EntityType.HOGLIN, soulHook.above());
+        if (soulDripping != null) {
+            level.getServer().execute(() -> hang(level, player, soulDripping, soulHook.above(4)));
         }
         for (int dx = 0; dx < 2; dx++) {
             level.setBlockAndUpdate(new BlockPos(o.getX() + 6 + dx, ground, z), BBFluids.blood().defaultFluidState().createLegacyBlock());

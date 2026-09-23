@@ -200,6 +200,38 @@ public class BloodStainTests {
         });
     }
 
+    /** A nether mob's wound stains the ground with Soul Blood, a cow's with blood. */
+    @GameTest(template = "empty", timeoutTicks = 40)
+    public static void hoglinStainsSoulBlood(GameTestHelper helper) {
+        ServerLevel level = helper.getLevel();
+        net.minecraft.world.entity.monster.hoglin.Hoglin hoglin = helper.spawn(EntityType.HOGLIN, new BlockPos(3, 2, 3));
+        hoglin.setImmuneToZombification(true);
+        CarcassSavedData.Carcass nether = CarcassAssembler.assemble(hoglin, null);
+        hoglin.discard();
+        Cow cow = helper.spawn(EntityType.COW, new BlockPos(7, 2, 7));
+        CarcassSavedData.Carcass plain = CarcassAssembler.assemble(cow, null);
+        cow.discard();
+        if (nether == null || plain == null) {
+            helper.fail("Carcass assembly returned null");
+            return;
+        }
+        BlockPos soulAt = new BlockPos(1, 2, 8);
+        BlockPos bloodAt = new BlockPos(8, 2, 1);
+        com.avicagan.bloodandbones.carcass.Blood.wound(level, nether, new org.joml.Vector3d(
+                helper.absolutePos(soulAt).getX() + 0.5, helper.absolutePos(soulAt).getY() + 0.5, helper.absolutePos(soulAt).getZ() + 0.5), 4, 1);
+        com.avicagan.bloodandbones.carcass.Blood.wound(level, plain, new org.joml.Vector3d(
+                helper.absolutePos(bloodAt).getX() + 0.5, helper.absolutePos(bloodAt).getY() + 0.5, helper.absolutePos(bloodAt).getZ() + 0.5), 4, 1);
+        var soulStain = helper.getBlockState(soulAt);
+        var bloodStain = helper.getBlockState(bloodAt);
+        if (!soulStain.is(com.avicagan.bloodandbones.registry.BBBlocks.BLOOD_STAIN.get()) || !soulStain.getValue(com.avicagan.bloodandbones.bleeding.BloodStainBlock.SOUL)) {
+            helper.fail("A hoglin's wound should leave a Soul Blood stain, found " + soulStain);
+        }
+        if (!bloodStain.is(com.avicagan.bloodandbones.registry.BBBlocks.BLOOD_STAIN.get()) || bloodStain.getValue(com.avicagan.bloodandbones.bleeding.BloodStainBlock.SOUL)) {
+            helper.fail("A cow's wound should leave a blood stain, found " + bloodStain);
+        }
+        helper.succeed();
+    }
+
     /** Bloodless mode's rewording: whole words only, capitals kept, this mod's keys only. */
     @GameTest(template = "empty", timeoutTicks = 20)
     public static void bloodlessWordsRewordText(GameTestHelper helper) {

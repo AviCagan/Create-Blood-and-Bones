@@ -16,20 +16,42 @@ public final class Blood {
     private Blood() {
     }
 
+    /** Whether this mob bleeds Soul Blood (a nether mob): its drops and stains are dark teal. */
+    public static boolean soul(net.minecraft.resources.ResourceLocation entity) {
+        return net.minecraft.core.registries.BuiltInRegistries.ENTITY_TYPE.getOptional(entity)
+                .map(type -> type.is(com.avicagan.bloodandbones.registry.BBTags.SOUL_BLEEDERS)).orElse(false);
+    }
+
+    public static boolean soul(CarcassSavedData.Carcass carcass) {
+        return soul(carcass.entity);
+    }
+
+    private static net.minecraft.core.particles.SimpleParticleType drop(boolean soul) {
+        return soul ? BBParticles.SOUL_BLOOD_DROP.get() : BBParticles.BLOOD_DROP.get();
+    }
+
     /** A spray along a direction, for the killing blow. */
     public static void spray(ServerLevel level, Vector3d at, Vector3d direction, int amount) {
+        spray(level, at, direction, amount, false);
+    }
+
+    public static void spray(ServerLevel level, Vector3d at, Vector3d direction, int amount, boolean soul) {
         Vector3d d = new Vector3d(direction).normalize();
         for (int i = 0; i < amount; i++) {
             double spread = 0.35;
-            level.sendParticles(BBParticles.BLOOD_DROP.get(), at.x, at.y, at.z, 0,
+            level.sendParticles(drop(soul), at.x, at.y, at.z, 0,
                     d.x * 0.5 + (RANDOM.nextDouble() - 0.5) * spread, 0.25 + RANDOM.nextDouble() * 0.3, d.z * 0.5 + (RANDOM.nextDouble() - 0.5) * spread, 1.0);
         }
     }
 
     /** A burst from a point, for a hook going in or a cut. */
     public static void burst(ServerLevel level, Vector3d at, int amount) {
+        burst(level, at, amount, false);
+    }
+
+    public static void burst(ServerLevel level, Vector3d at, int amount, boolean soul) {
         for (int i = 0; i < amount; i++) {
-            level.sendParticles(BBParticles.BLOOD_DROP.get(), at.x, at.y, at.z, 0,
+            level.sendParticles(drop(soul), at.x, at.y, at.z, 0,
                     (RANDOM.nextDouble() - 0.5) * 0.4, 0.1 + RANDOM.nextDouble() * 0.3, (RANDOM.nextDouble() - 0.5) * 0.4, 1.0);
         }
     }
@@ -67,7 +89,12 @@ public final class Blood {
      * @param amount 1 (a few drops) to 4 (a pool)
      */
     public static void stain(ServerLevel level, Vector3d at, int amount) {
-        net.minecraft.world.level.block.state.BlockState stain = com.avicagan.bloodandbones.registry.BBBlocks.BLOOD_STAIN.get().defaultBlockState();
+        stain(level, at, amount, false);
+    }
+
+    public static void stain(ServerLevel level, Vector3d at, int amount, boolean soul) {
+        net.minecraft.world.level.block.state.BlockState stain = com.avicagan.bloodandbones.registry.BBBlocks.BLOOD_STAIN.get().defaultBlockState()
+                .setValue(com.avicagan.bloodandbones.bleeding.BloodStainBlock.SOUL, soul);
         net.minecraft.core.BlockPos.MutableBlockPos pos = net.minecraft.core.BlockPos.containing(at.x, at.y, at.z).mutable();
         for (int i = 0; i <= STAIN_REACH; i++, pos.move(net.minecraft.core.Direction.DOWN)) {
             if (!level.isLoaded(pos)) {
@@ -97,17 +124,21 @@ public final class Blood {
         if (!bloody(carcass)) {
             return;
         }
-        burst(level, at, drops);
+        burst(level, at, drops, soul(carcass));
         if (drops >= 20) {
             gibs(level, at, drops / 4);
         }
         if (stain > 0) {
-            stain(level, at, stain);
+            stain(level, at, stain, soul(carcass));
         }
     }
 
     /** A drop letting go of a wound. */
     public static void drip(ServerLevel level, Vector3d at) {
-        level.sendParticles(BBParticles.BLOOD_DROP.get(), at.x, at.y, at.z, 0, (RANDOM.nextDouble() - 0.5) * 0.02, 0.0, (RANDOM.nextDouble() - 0.5) * 0.02, 1.0);
+        drip(level, at, false);
+    }
+
+    public static void drip(ServerLevel level, Vector3d at, boolean soul) {
+        level.sendParticles(drop(soul), at.x, at.y, at.z, 0, (RANDOM.nextDouble() - 0.5) * 0.02, 0.0, (RANDOM.nextDouble() - 0.5) * 0.02, 1.0);
     }
 }

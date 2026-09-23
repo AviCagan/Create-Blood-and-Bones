@@ -255,10 +255,10 @@ public final class CarcassDrag {
             CarcassSavedData.Carcass dragged = CarcassSavedData.get(level).carcass(drag.carcass);
             if (dragged != null && Blood.bloody(dragged)) {
                 Vector3d wound = subLevel.logicalPose().transformPosition(drag.anchorPlot, new Vector3d());
-                Blood.drip(level, wound);
+                Blood.drip(level, wound, Blood.soul(dragged));
                 // a trail: now and then a drop reaches the ground and stays
                 if (level.getGameTime() % 24 == 0) {
-                    Blood.stain(level, wound, 1);
+                    Blood.stain(level, wound, 1, Blood.soul(dragged));
                 }
             }
         }

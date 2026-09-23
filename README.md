@@ -30,7 +30,7 @@ provided by [Sable](https://github.com/ryanhcode/sable).
 - **Hanging and blood.** The Shackle Hook hangs a carcass by the neck. A Bleeding Rack under a
   hanging (or lying) carcass collects its blood, faster with an Encased Fan blowing across it.
   Blood and Soul Blood are real fluids for pipes, tanks, spouts and basins; nether mobs
-  (piglins, hoglins, striders) bleed Soul Blood. A bled carcass keeps longer. Blood that nothing
+  (piglins, hoglins, striders) bleed Soul Blood, dark teal drops and stains included. A bled carcass keeps longer. Blood that nothing
   catches stains the ground: kills, cuts, drag trails and carcasses hanging over bare floor leave
   splashes that dry dark and wash away in the rain.
 - **Chain conveyors.** Right-click a Create chain conveyor with the Meat Hook while dragging a

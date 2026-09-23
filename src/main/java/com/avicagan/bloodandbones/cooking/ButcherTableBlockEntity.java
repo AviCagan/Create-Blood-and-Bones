@@ -97,7 +97,7 @@ public class ButcherTableBlockEntity extends SpecimenJarBlockEntity {
         level.playSound(null, top.x, top.y, top.z, com.avicagan.bloodandbones.registry.BBSounds.CARCASS_CUT.get(), SoundSource.BLOCKS, 0.9F, 0.7F);
         boolean bleeds = BuiltInRegistries.ENTITY_TYPE.getOptional(piece.entity()).map(type -> !type.is(BBTags.BLOODLESS)).orElse(true);
         if (bleeds) {
-            Blood.burst(level, top, 10);
+            Blood.burst(level, top, 10, Blood.soul(piece.entity()));
             Blood.bloody(cleaver, level);
         }
         return true;

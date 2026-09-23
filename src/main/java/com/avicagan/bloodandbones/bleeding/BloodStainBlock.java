@@ -29,13 +29,16 @@ public class BloodStainBlock extends Block {
     public static final IntegerProperty SIZE = IntegerProperty.create("size", 1, 4);
     /** 0 wet, 1 drying, 2 dried */
     public static final IntegerProperty AGE = IntegerProperty.create("age", 0, 2);
+    /** Soul Blood, from a nether mob: dark teal instead of red. */
+    public static final net.minecraft.world.level.block.state.properties.BooleanProperty SOUL =
+            net.minecraft.world.level.block.state.properties.BooleanProperty.create("soul");
     private static final VoxelShape SHAPE = Block.box(0, 0, 0, 16, 0.25, 16);
     /** Chance a random tick moves the stain on a step (dry, shrink, gone): about three minutes a step. */
     private static final int STEP_CHANCE = 3;
 
     public BloodStainBlock(BlockBehaviour.Properties properties) {
         super(properties);
-        registerDefaultState(stateDefinition.any().setValue(SIZE, 1).setValue(AGE, 0));
+        registerDefaultState(stateDefinition.any().setValue(SIZE, 1).setValue(AGE, 0).setValue(SOUL, false));
     }
 
     @Override
@@ -45,7 +48,7 @@ public class BloodStainBlock extends Block {
 
     @Override
     protected void createBlockStateDefinition(StateDefinition.Builder<Block, BlockState> builder) {
-        builder.add(SIZE, AGE);
+        builder.add(SIZE, AGE, SOUL);
     }
 
     @Override

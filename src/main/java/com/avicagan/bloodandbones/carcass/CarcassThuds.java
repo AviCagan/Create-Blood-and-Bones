@@ -88,8 +88,8 @@ public final class CarcassThuds {
             level.playSound(null, at.x, at.y, at.z, (bones ? com.avicagan.bloodandbones.registry.BBSounds.CARCASS_CLATTER
                     : com.avicagan.bloodandbones.registry.BBSounds.CARCASS_THUD).get(), SoundSource.NEUTRAL, volume, pitch);
             if (impact >= SPLAT && Blood.bloody(carcass)) {
-                Blood.burst(level, new Vector3d(at), 6);
-                Blood.stain(level, new Vector3d(at), 1);
+                Blood.burst(level, new Vector3d(at), 6, Blood.soul(carcass));
+                Blood.stain(level, new Vector3d(at), 1, Blood.soul(carcass));
             }
             carcass.thuds++;
             carcass.quietTicks = QUIET_TICKS;

@@ -49,7 +49,7 @@ public class ButcherHookBlockEntity extends SpecimenJarBlockEntity {
         Vector3d at = dripPoint();
         if (level.isClientSide) {
             if (level.random.nextFloat() < 0.15F) {
-                level.addParticle(BBParticles.BLOOD_DROP.get(), at.x + (level.random.nextDouble() - 0.5) * 0.15, at.y,
+                level.addParticle((Blood.soul(CarcassPieceItem.piece(specimen()).entity()) ? BBParticles.SOUL_BLOOD_DROP : BBParticles.BLOOD_DROP).get(), at.x + (level.random.nextDouble() - 0.5) * 0.15, at.y,
                         at.z + (level.random.nextDouble() - 0.5) * 0.15, 0.0, -0.05, 0.0);
             }
             return;
@@ -64,7 +64,7 @@ public class ButcherHookBlockEntity extends SpecimenJarBlockEntity {
                 piece.freshness(), piece.skinned(), piece.traits(), left, piece.bloodMax(), piece.decay(), piece.baby()));
         if (time % 60 == 0) {
             // from under the hook's own block, which the drops fall out of
-            Blood.stain((ServerLevel) level, new Vector3d(at.x, at.y - 0.5, at.z), 1);
+            Blood.stain((ServerLevel) level, new Vector3d(at.x, at.y - 0.5, at.z), 1, Blood.soul(piece.entity()));
         }
         setChanged();
         if (left <= 0.0F) {
