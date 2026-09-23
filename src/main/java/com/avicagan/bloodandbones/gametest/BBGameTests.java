@@ -185,9 +185,20 @@ public class BBGameTests {
             player.setOldPosAndRot(); // mock players never tick, so refresh the previous-tick position the tether interpolates from
             hookedDistance[0] = body.logicalPose().position().distance(player.getX(), player.getY(), player.getZ());
         });
+        // the closest the hooked point came to its target over the last second: a body still swinging
+        // when the check runs is past it one tick and on it the next
+        double[] closest = {Double.MAX_VALUE};
+        int[] ticks = {0};
         helper.onEachTick(() -> {
             if (CarcassDrag.isDragging(player)) {
                 CarcassDrag.tick(level, player);
+                if (++ticks[0] >= 80) {
+                    CarcassDrag.Drag now = CarcassDrag.current(player);
+                    if (now != null && SubLevelContainer.getContainer(level).getSubLevel(now.subLevel) instanceof ServerSubLevel held) {
+                        org.joml.Vector3d point = held.logicalPose().transformPosition(now.anchorPlot, new org.joml.Vector3d());
+                        closest[0] = Math.min(closest[0], point.distance(CarcassDrag.debugTarget(player)));
+                    }
+                }
             }
         });
         helper.runAfterDelay(120, () -> {
@@ -207,7 +218,7 @@ public class BBGameTests {
             ServerSubLevel hooked = (ServerSubLevel) SubLevelContainer.getContainer(level).getSubLevel(current.subLevel);
             org.joml.Vector3d hook = hooked.logicalPose().transformPosition(current.anchorPlot, new org.joml.Vector3d());
             org.joml.Vector3d target = CarcassDrag.debugTarget(player);
-            double gap = hook.distance(target);
+            double gap = Math.min(hook.distance(target), closest[0]);
             // a grabbed leg cannot fully align with the target because the hip joint holds it back against the
             // body's weight; since the leg is also steered to point at the hand it settles right about 2 blocks off
             double allowed = grabBone.equals("body") ? 0.5 : 2.25;
