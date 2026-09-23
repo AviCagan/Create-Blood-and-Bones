@@ -1,0 +1,92 @@
+{
+  "entity": "minecraft:frog",
+  "parts": {
+    "root/body": [
+      {
+        "count": 1.38,
+        "item": "bloodandbones:raw_meat",
+        "kind": "meat"
+      },
+      {
+        "count": 0.5,
+        "item": "minecraft:bone",
+        "kind": "bone"
+      },
+      {
+        "count": 0.24,
+        "item": "bloodandbones:offal",
+        "kind": "offal"
+      },
+      {
+        "count": 0.12,
+        "item": "bloodandbones:animal_fat",
+        "kind": "fat"
+      },
+      {
+        "count": 0.3,
+        "item": "minecraft:slime_ball",
+        "kind": "offal"
+      }
+    ],
+    "root/body/head": [
+      {
+        "count": 1.38,
+        "item": "bloodandbones:raw_meat",
+        "kind": "meat"
+      },
+      {
+        "count": 0.5,
+        "item": "minecraft:bone",
+        "kind": "bone"
+      }
+    ],
+    "root/body/left_arm": [
+      {
+        "count": 0.13,
+        "item": "bloodandbones:raw_meat",
+        "kind": "meat"
+      },
+      {
+        "count": 0.5,
+        "item": "minecraft:bone",
+        "kind": "bone"
+      }
+    ],
+    "root/body/right_arm": [
+      {
+        "count": 0.13,
+        "item": "bloodandbones:raw_meat",
+        "kind": "meat"
+      },
+      {
+        "count": 0.5,
+        "item": "minecraft:bone",
+        "kind": "bone"
+      }
+    ],
+    "root/left_leg": [
+      {
+        "count": 0.26,
+        "item": "bloodandbones:raw_meat",
+        "kind": "meat"
+      },
+      {
+        "count": 0.5,
+        "item": "minecraft:bone",
+        "kind": "bone"
+      }
+    ],
+    "root/right_leg": [
+      {
+        "count": 0.26,
+        "item": "bloodandbones:raw_meat",
+        "kind": "meat"
+      },
+      {
+        "count": 0.5,
+        "item": "minecraft:bone",
+        "kind": "bone"
+      }
+    ]
+  }
+}

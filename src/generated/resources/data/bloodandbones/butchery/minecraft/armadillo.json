@@ -1,0 +1,94 @@
+{
+  "entity": "minecraft:armadillo",
+  "hide": [
+    {
+      "count": 2.48,
+      "item": "minecraft:armadillo_scute",
+      "kind": "hide"
+    }
+  ],
+  "parts": {
+    "body": [
+      {
+        "count": 3.75,
+        "item": "bloodandbones:raw_meat",
+        "kind": "meat"
+      },
+      {
+        "count": 0.56,
+        "item": "minecraft:bone",
+        "kind": "bone"
+      },
+      {
+        "count": 0.41,
+        "item": "bloodandbones:offal",
+        "kind": "offal"
+      },
+      {
+        "count": 0.21,
+        "item": "bloodandbones:animal_fat",
+        "kind": "fat"
+      }
+    ],
+    "body/head/head_cube": [
+      {
+        "count": 0.15,
+        "item": "bloodandbones:raw_meat",
+        "kind": "meat"
+      },
+      {
+        "count": 0.5,
+        "item": "minecraft:bone",
+        "kind": "bone"
+      }
+    ],
+    "left_front_leg": [
+      {
+        "count": 0.06,
+        "item": "bloodandbones:raw_meat",
+        "kind": "meat"
+      },
+      {
+        "count": 0.5,
+        "item": "minecraft:bone",
+        "kind": "bone"
+      }
+    ],
+    "left_hind_leg": [
+      {
+        "count": 0.06,
+        "item": "bloodandbones:raw_meat",
+        "kind": "meat"
+      },
+      {
+        "count": 0.5,
+        "item": "minecraft:bone",
+        "kind": "bone"
+      }
+    ],
+    "right_front_leg": [
+      {
+        "count": 0.06,
+        "item": "bloodandbones:raw_meat",
+        "kind": "meat"
+      },
+      {
+        "count": 0.5,
+        "item": "minecraft:bone",
+        "kind": "bone"
+      }
+    ],
+    "right_hind_leg": [
+      {
+        "count": 0.06,
+        "item": "bloodandbones:raw_meat",
+        "kind": "meat"
+      },
+      {
+        "count": 0.5,
+        "item": "minecraft:bone",
+        "kind": "bone"
+      }
+    ]
+  }
+}

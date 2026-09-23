@@ -798,6 +798,26 @@ public class BBGameTests {
         helper.succeed();
     }
 
+    @GameTest(template = "empty", timeoutTicks = 200)
+    public static void frogCarcassAssembles(GameTestHelper helper) {
+        animalTest(helper, EntityType.FROG, 6);
+    }
+
+    @GameTest(template = "empty", timeoutTicks = 200)
+    public static void armadilloCarcassAssembles(GameTestHelper helper) {
+        animalTest(helper, EntityType.ARMADILLO, 6);
+    }
+
+    @GameTest(template = "empty", timeoutTicks = 200)
+    public static void snifferCarcassAssembles(GameTestHelper helper) {
+        animalTest(helper, EntityType.SNIFFER, 8);
+    }
+
+    @GameTest(template = "empty", timeoutTicks = 200)
+    public static void striderCarcassAssembles(GameTestHelper helper) {
+        animalTest(helper, EntityType.STRIDER, 3);
+    }
+
     /** A white llama and a brown panda keep their colours on the carcass. */
     @GameTest(template = "empty", timeoutTicks = 100)
     public static void llamaAndPandaKeepTheirColours(GameTestHelper helper) {

@@ -1,0 +1,126 @@
+{
+  "entity": "minecraft:sniffer",
+  "hide": [
+    {
+      "count": 25.59,
+      "item": "bloodandbones:raw_hide",
+      "kind": "hide"
+    }
+  ],
+  "parts": {
+    "root/bone/body": [
+      {
+        "count": 56.64,
+        "item": "bloodandbones:raw_meat",
+        "kind": "meat"
+      },
+      {
+        "count": 21.24,
+        "item": "minecraft:bone",
+        "kind": "bone"
+      },
+      {
+        "count": 17.06,
+        "item": "bloodandbones:offal",
+        "kind": "offal"
+      },
+      {
+        "count": 8.53,
+        "item": "bloodandbones:animal_fat",
+        "kind": "fat"
+      },
+      {
+        "count": 0.5,
+        "item": "minecraft:torchflower_seeds",
+        "kind": "offal"
+      },
+      {
+        "item": "minecraft:moss_block"
+      }
+    ],
+    "root/bone/body/head": [
+      {
+        "count": 5.03,
+        "item": "bloodandbones:raw_meat",
+        "kind": "meat"
+      },
+      {
+        "count": 1.89,
+        "item": "minecraft:bone",
+        "kind": "bone"
+      }
+    ],
+    "root/bone/left_front_leg": [
+      {
+        "count": 1.09,
+        "item": "bloodandbones:raw_meat",
+        "kind": "meat"
+      },
+      {
+        "count": 0.5,
+        "item": "minecraft:bone",
+        "kind": "bone"
+      }
+    ],
+    "root/bone/left_hind_leg": [
+      {
+        "count": 1.09,
+        "item": "bloodandbones:raw_meat",
+        "kind": "meat"
+      },
+      {
+        "count": 0.5,
+        "item": "minecraft:bone",
+        "kind": "bone"
+      }
+    ],
+    "root/bone/left_mid_leg": [
+      {
+        "count": 1.09,
+        "item": "bloodandbones:raw_meat",
+        "kind": "meat"
+      },
+      {
+        "count": 0.5,
+        "item": "minecraft:bone",
+        "kind": "bone"
+      }
+    ],
+    "root/bone/right_front_leg": [
+      {
+        "count": 1.09,
+        "item": "bloodandbones:raw_meat",
+        "kind": "meat"
+      },
+      {
+        "count": 0.5,
+        "item": "minecraft:bone",
+        "kind": "bone"
+      }
+    ],
+    "root/bone/right_hind_leg": [
+      {
+        "count": 1.09,
+        "item": "bloodandbones:raw_meat",
+        "kind": "meat"
+      },
+      {
+        "count": 0.5,
+        "item": "minecraft:bone",
+        "kind": "bone"
+      }
+    ],
+    "root/bone/right_mid_leg": [
+      {
+        "count": 1.09,
+        "item": "bloodandbones:raw_meat",
+        "kind": "meat"
+      },
+      {
+        "count": 0.5,
+        "item": "minecraft:bone",
+        "kind": "bone"
+      }
+    ]
+  }
+}

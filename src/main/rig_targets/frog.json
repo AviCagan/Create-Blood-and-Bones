@@ -1,0 +1,104 @@
+{
+  "entity": "minecraft:frog",
+  "model": "minecraft:frog",
+  "texture": "{frog_texture}",
+  "rot_time": 16000,
+  "torso": "root/body",
+  "hidden": [
+    "root/body/croaking_body",
+    "root/body/tongue"
+  ],
+  "merge": [
+    "root/body/head/eyes"
+  ],
+  "joints": {
+    "root/body/head": {
+      "min_degrees": [
+        -15,
+        -30,
+        -6
+      ],
+      "max_degrees": [
+        25,
+        30,
+        6
+      ],
+      "damping": 4.0,
+      "stiffness": 2.0,
+      "contacts": false
+    },
+    "root/left_leg": {
+      "min_degrees": [
+        -75,
+        -10,
+        -15
+      ],
+      "max_degrees": [
+        75,
+        10,
+        15
+      ],
+      "damping": 3.0,
+      "stiffness": 0.1,
+      "contacts": false
+    },
+    "root/right_leg": {
+      "min_degrees": [
+        -75,
+        -10,
+        -15
+      ],
+      "max_degrees": [
+        75,
+        10,
+        15
+      ],
+      "damping": 3.0,
+      "stiffness": 0.1,
+      "contacts": false
+    },
+    "root/body/right_arm": {
+      "min_degrees": [
+        -75,
+        -10,
+        -15
+      ],
+      "max_degrees": [
+        75,
+        10,
+        15
+      ],
+      "damping": 3.0,
+      "stiffness": 0.1,
+      "contacts": false
+    },
+    "root/body/left_arm": {
+      "min_degrees": [
+        -75,
+        -10,
+        -15
+      ],
+      "max_degrees": [
+        75,
+        10,
+        15
+      ],
+      "damping": 3.0,
+      "stiffness": 0.1,
+      "contacts": false
+    }
+  },
+  "butchery": {
+    "hide": "none",
+    "meat_per_block": 30.0,
+    "part_extras": {
+      "root/body": [
+        {
+          "item": "minecraft:slime_ball",
+          "count": 0.3,
+          "kind": "offal"
+        }
+      ]
+    }
+  }
+}

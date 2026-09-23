@@ -1,0 +1,39 @@
+{
+  "entity": "minecraft:strider",
+  "parts": {
+    "body": [
+      {
+        "count": 2.63,
+        "item": "minecraft:bone",
+        "kind": "bone"
+      },
+      {
+        "count": 2.0,
+        "item": "bloodandbones:offal",
+        "kind": "offal"
+      },
+      {
+        "item": "bloodandbones:animal_fat",
+        "kind": "fat"
+      },
+      {
+        "count": 2.0,
+        "item": "minecraft:string"
+      }
+    ],
+    "left_leg": [
+      {
+        "count": 0.5,
+        "item": "minecraft:bone",
+        "kind": "bone"
+      }
+    ],
+    "right_leg": [
+      {
+        "count": 0.5,
+        "item": "minecraft:bone",
+        "kind": "bone"
+      }
+    ]
+  }
+}

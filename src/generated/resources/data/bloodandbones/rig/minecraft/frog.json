@@ -1,0 +1,241 @@
+{
+  "bones": [
+    {
+      "box_max": [
+        3.5,
+        1.0,
+        1.0
+      ],
+      "box_min": [
+        -3.5,
+        -2.0,
+        -8.0
+      ],
+      "hide": [
+        "head",
+        "right_arm",
+        "left_arm",
+        "croaking_body",
+        "tongue"
+      ],
+      "name": "root/body",
+      "offset": [
+        0.0,
+        22.0,
+        4.0
+      ],
+      "part": "root/body",
+      "rotation": [
+        0.0,
+        0.0,
+        0.0,
+        1.0
+      ]
+    },
+    {
+      "parent": "root/body",
+      "box_max": [
+        2.0,
+        3.0,
+        2.0
+      ],
+      "box_min": [
+        -1.0,
+        0.0,
+        -2.0
+      ],
+      "joint": {
+        "damping": 3.0,
+        "max_degrees": [
+          75.0,
+          10.0,
+          15.0
+        ],
+        "min_degrees": [
+          -75.0,
+          -10.0,
+          -15.0
+        ],
+        "stiffness": 0.1
+      },
+      "name": "root/left_leg",
+      "offset": [
+        3.5,
+        21.0,
+        4.0
+      ],
+      "part": "root/left_leg",
+      "rotation": [
+        0.0,
+        0.0,
+        0.0,
+        1.0
+      ]
+    },
+    {
+      "parent": "root/body",
+      "box_max": [
+        1.0,
+        3.0,
+        2.0
+      ],
+      "box_min": [
+        -2.0,
+        0.0,
+        -2.0
+      ],
+      "joint": {
+        "damping": 3.0,
+        "max_degrees": [
+          75.0,
+          10.0,
+          15.0
+        ],
+        "min_degrees": [
+          -75.0,
+          -10.0,
+          -15.0
+        ],
+        "stiffness": 0.1
+      },
+      "name": "root/right_leg",
+      "offset": [
+        -3.5,
+        21.0,
+        4.0
+      ],
+      "part": "root/right_leg",
+      "rotation": [
+        0.0,
+        0.0,
+        0.0,
+        1.0
+      ]
+    },
+    {
+      "parent": "root/body",
+      "box_max": [
+        3.5,
+        1.0,
+        2.0
+      ],
+      "box_min": [
+        -3.5,
+        -2.0,
+        -7.0
+      ],
+      "joint": {
+        "damping": 4.0,
+        "max_degrees": [
+          25.0,
+          30.0,
+          6.0
+        ],
+        "min_degrees": [
+          -15.0,
+          -30.0,
+          -6.0
+        ],
+        "stiffness": 2.0
+      },
+      "name": "root/body/head",
+      "offset": [
+        0.0,
+        20.0,
+        3.0
+      ],
+      "part": "root/body/head",
+      "rotation": [
+        0.0,
+        0.0,
+        0.0,
+        1.0
+      ]
+    },
+    {
+      "parent": "root/body",
+      "box_max": [
+        1.0,
+        3.0,
+        2.0
+      ],
+      "box_min": [
+        -1.0,
+        0.0,
+        -1.0
+      ],
+      "joint": {
+        "damping": 3.0,
+        "max_degrees": [
+          75.0,
+          10.0,
+          15.0
+        ],
+        "min_degrees": [
+          -75.0,
+          -10.0,
+          -15.0
+        ],
+        "stiffness": 0.1
+      },
+      "name": "root/body/right_arm",
+      "offset": [
+        -4.0,
+        21.0,
+        -2.5
+      ],
+      "part": "root/body/right_arm",
+      "rotation": [
+        0.0,
+        0.0,
+        0.0,
+        1.0
+      ]
+    },
+    {
+      "parent": "root/body",
+      "box_max": [
+        1.0,
+        3.0,
+        2.0
+      ],
+      "box_min": [
+        -1.0,
+        0.0,
+        -1.0
+      ],
+      "joint": {
+        "damping": 3.0,
+        "max_degrees": [
+          75.0,
+          10.0,
+          15.0
+        ],
+        "min_degrees": [
+          -75.0,
+          -10.0,
+          -15.0
+        ],
+        "stiffness": 0.1
+      },
+      "name": "root/body/left_arm",
+      "offset": [
+        4.0,
+        21.0,
+        -2.5
+      ],
+      "part": "root/body/left_arm",
+      "rotation": [
+        0.0,
+        0.0,
+        0.0,
+        1.0
+      ]
+    }
+  ],
+  "entity": "minecraft:frog",
+  "model": "minecraft:frog",
+  "rot_time": 16000,
+  "texture": "{frog_texture}",
+  "weight": 0.118652344
+}

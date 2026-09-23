@@ -1,0 +1,46 @@
+{
+  "entity": "minecraft:sniffer",
+  "model": "minecraft:sniffer",
+  "texture": "minecraft:textures/entity/sniffer/sniffer.png",
+  "rot_time": 40000,
+  "torso": "root/bone/body",
+  "merge": [
+    "root/bone/body/head/nose",
+    "root/bone/body/head/lower_beak",
+    "root/bone/body/head/right_ear",
+    "root/bone/body/head/left_ear"
+  ],
+  "joints": {
+    "root/bone/body/head": {
+      "min_degrees": [
+        -15,
+        -30,
+        -6
+      ],
+      "max_degrees": [
+        25,
+        30,
+        6
+      ],
+      "damping": 4.0,
+      "stiffness": 2.0,
+      "contacts": false
+    }
+  },
+  "butchery": {
+    "part_extras": {
+      "root/bone/body": [
+        {
+          "item": "minecraft:torchflower_seeds",
+          "count": 0.5,
+          "kind": "offal"
+        },
+        {
+          "item": "minecraft:moss_block",
+          "count": 1.0,
+          "kind": "other"
+        }
+      ]
+    }
+  }
+}

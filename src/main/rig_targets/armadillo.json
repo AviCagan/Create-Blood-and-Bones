@@ -1,0 +1,35 @@
+{
+  "entity": "minecraft:armadillo",
+  "model": "minecraft:armadillo",
+  "texture": "minecraft:textures/entity/armadillo.png",
+  "rot_time": 20000,
+  "torso": "body",
+  "hidden": [
+    "cube"
+  ],
+  "merge": [
+    "body/tail"
+  ],
+  "joints": {
+    "body/head/head_cube": {
+      "min_degrees": [
+        -15,
+        -30,
+        -6
+      ],
+      "max_degrees": [
+        25,
+        30,
+        6
+      ],
+      "damping": 4.0,
+      "stiffness": 2.0,
+      "contacts": false
+    }
+  },
+  "butchery": {
+    "hide": "minecraft:armadillo_scute",
+    "hide_per_weight": 12.0,
+    "meat_per_block": 20.0
+  }
+}

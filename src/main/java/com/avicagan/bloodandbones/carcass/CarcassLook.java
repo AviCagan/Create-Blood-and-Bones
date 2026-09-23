@@ -94,6 +94,9 @@ public record CarcassLook(ResourceLocation texture, List<Coat> passes) {
                 flags.add("no_level");
             }
         }
+        if (entity instanceof net.minecraft.world.entity.animal.frog.Frog frog) {
+            variables.put("frog_texture", frog.getVariant().value().texture().toString());
+        }
         if (entity instanceof net.minecraft.world.entity.animal.Cat cat) {
             variables.put("cat_texture", cat.getVariant().value().texture().toString());
         }
