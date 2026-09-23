@@ -31,6 +31,17 @@ public final class CarcassThuds {
     private CarcassThuds() {
     }
 
+    /** Something solid close under a point: a stop there is a landing, not a snag in mid-air. */
+    private static boolean nearGround(ServerLevel level, Vector3d at) {
+        for (double down = 0.2; down <= 1.2; down += 0.5) {
+            net.minecraft.core.BlockPos below = net.minecraft.core.BlockPos.containing(at.x, at.y - down, at.z);
+            if (!level.getBlockState(below).getCollisionShape(level, below).isEmpty()) {
+                return true;
+            }
+        }
+        return false;
+    }
+
     /** Once a tick for a moving carcass (not a resting one), from its torso. */
     public static void tick(ServerLevel level, CarcassSavedData.Carcass carcass) {
         ServerSubLevelContainer container = SubLevelContainer.getContainer(level);
@@ -39,6 +50,11 @@ public final class CarcassThuds {
         }
         if (carcass.quietTicks > 0) {
             carcass.quietTicks--;
+        }
+        if (CarcassRest.isHeld(level, carcass)) {
+            // dragged, hung or on a trolley: a jerk on the line is not a landing
+            carcass.fallSpeeds.clear();
+            return;
         }
         SubLevelPhysicsSystem physics = container.physicsSystem();
         Rig rig = RigManager.forCarcass(carcass).orElse(null);
@@ -57,13 +73,21 @@ public final class CarcassThuds {
             if (impact < FALLING) {
                 continue;
             }
+            Vector3d at = body.logicalPose().position();
+            if (!nearGround(level, at)) {
+                continue;
+            }
             Bone bone = rig == null ? null : rig.bone(entry.getKey()).orElse(null);
             double mass = bone == null ? 0.2 : bone.boxSize().x * bone.boxSize().y * bone.boxSize().z / 4096.0;
-            Vector3d at = body.logicalPose().position();
             float volume = (float) Mth.clamp(impact / 8.0 * (0.5 + Math.sqrt(mass)), 0.25, 1.2);
             float pitch = (float) Mth.clamp(1.25 - Math.sqrt(mass) * 0.6, 0.55, 1.25);
-            level.playSound(null, at.x, at.y, at.z, SoundEvents.SLIME_BLOCK_FALL, SoundSource.NEUTRAL, volume, pitch);
-            level.playSound(null, at.x, at.y, at.z, SoundEvents.HONEY_BLOCK_FALL, SoundSource.NEUTRAL, volume * 0.6F, pitch * 0.8F);
+            if (Blood.bloody(carcass)) {
+                level.playSound(null, at.x, at.y, at.z, SoundEvents.SLIME_BLOCK_FALL, SoundSource.NEUTRAL, volume, pitch);
+                level.playSound(null, at.x, at.y, at.z, SoundEvents.HONEY_BLOCK_FALL, SoundSource.NEUTRAL, volume * 0.6F, pitch * 0.8F);
+            } else {
+                // a skeleton or a golem clatters rather than squelches
+                level.playSound(null, at.x, at.y, at.z, SoundEvents.BONE_BLOCK_FALL, SoundSource.NEUTRAL, volume, pitch);
+            }
             if (impact >= SPLAT && Blood.bloody(carcass)) {
                 Blood.burst(level, new Vector3d(at), 6);
                 Blood.stain(level, new Vector3d(at), 1);

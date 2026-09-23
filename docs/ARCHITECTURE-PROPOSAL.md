@@ -683,7 +683,8 @@ pipes; chain clearance = hanging length + 1 block.
   body velocity, blocks a second) is kept from the last tick; a bone that was falling at 3 or more and
   has slowed by 3 or more has landed. Slime and honey fall sounds, louder with speed and the bone's box
   volume, deeper for bigger bones; 6 or more splats blood (a burst and a stain) for a mob that bleeds.
-  One thud per carcass per 8 ticks. `droppedCarcassThuds` drops a cow four blocks and checks a cow built
+  One thud per carcass per 8 ticks; none while it is dragged, hung or on a trolley, and only with
+  something solid within about a block under the bone. Bloodless mobs clatter (bone block) instead. `droppedCarcassThuds` drops a cow four blocks and checks a cow built
   on the ground stays quiet.
 
 ### 13.7b Bloodless mode as built
@@ -720,9 +721,11 @@ pipes; chain clearance = hanging length + 1 block.
 - Yields go to a 9-slot output exposed as an extract-only item handler; a full output stops the machine.
 - A Create `FilteringBehaviour` on the top face by the north edge (`MachineFilterSlot`: the machines sit
   flush in a floor, so the top is the face within reach, and its middle is under the body). Empty: any
-  carcass. A spawn egg or a carcass piece: that mob (Create's plain filter would match any piece). Any
-  other filter is tested against a piece of the carcass's body, so list and attribute filters work with
-  the piece attributes. The machine's renderer now runs with Flywheel too, for the slot; it still leaves
+  carcass. A spawn egg or a carcass piece: that mob (Create's plain filter would match any piece). A
+  list filter asks each entry the same way, as a whitelist or blacklist; an attribute filter is asked
+  about a piece of the carcass's body, so the piece attributes work. Only eggs, pieces and filters go in
+  the slot, and only for carcasses over the machine is it asked. A Deployer's stand-in player cannot set
+  it (Create lets fake players past the slot's hit test, which would have stolen their clicks). The machine's renderer now runs with Flywheel too, for the slot; it still leaves
   the shaft to the visual.
 
 ### 13.9 Materials (verified)
@@ -799,8 +802,8 @@ pipes; chain clearance = hanging length + 1 block.
 - Butcher's Hook (the "wall Meat Hook"): a horizontal-facing block on the side of a sturdy block, with no
   collision, holding one piece that hangs from its tip and sways. It falls with its wall, dropping the
   piece. Its block entity is the Specimen Jar's, plus dripping: a piece that still has blood (a mob that
-  bleeds) loses 1/120 of it a second, drops fall from under it on the client, and every third second a
-  stain lands on the floor below.
+  bleeds) loses 1/120 of it a second (saved each second, sent to clients only when it runs dry), drops fall
+  from under it on the client, and every third second a stain lands on the floor below.
 - Bloody Casing: a Create `CasingBlock` built with `BuilderTransformers.casing` and our own connected
   sheet (`BBSpriteShifts`), made by spout-filling an Andesite Casing with 250 mB of blood. In bloodless
   mode it shows as plain andesite casing: the swap wraps the model after Create's connected-texture
@@ -823,7 +826,8 @@ pipes; chain clearance = hanging length + 1 block.
   into contraption data (§3.5): the carcass falls when its hook is moved, and when the contraption is put
   down the hook lets it go rather than pulling the body back across the world: the hook saves its own
   position (`HookPos`, which Create leaves alone when it rewrites x/y/z) and, read back somewhere else,
-  releases. A reload in place rejoins as before, however far the body swung.
+  releases. A reload in place rejoins as before, unless the body swung more than 8 blocks off while the
+  hook was unloaded (a hook in the world only; on a ship the tip is in ship coordinates).
 
 ### 13.12a Sorting pieces with Create's filters (verified)
 

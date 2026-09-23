@@ -47,17 +47,21 @@ public class BBLang {
         block("mangler",
                 "Teeth and rollers that tear a carcass _apart_ and grind it down. Driven by a _shaft from below_.",
                 "With a Carcass Over It", "Tears the _limbs_ off, then grinds every piece into meat, bone, offal and fat.",
-                "Output", "Keeps what it makes _inside_: take it with an empty hand, or pull it out with a _funnel_, chute or hopper. When full, it stops.");
+                "Output", "Keeps what it makes _inside_: take it with an empty hand, or pull it out with a _funnel_, chute or hopper. When full, it stops.",
+                "Filter Slot", "On the top edge. A _spawn egg_ or a _carcass piece_ sets it to one kind of mob; a Create _filter_ works too. Empty, it takes anything.");
         block("guillotine",
                 "A heavy blade on two posts. Driven by a _shaft from below_.",
-                "With a Carcass Over It", "Takes the nearest _limb_ off in one stroke. It never takes the head.");
+                "With a Carcass Over It", "Takes the nearest _limb_ off in one stroke. It never takes the head.",
+                "Filter Slot", "On the top edge. A _spawn egg_ or a _carcass piece_ sets it to one kind of mob; a Create _filter_ works too. Empty, it takes anything.");
         block("beheader",
                 "A spinning saw at neck height. Driven by a _shaft from below_.",
                 "With a Carcass Over It", "Takes the _head_ off in one stroke.",
-                "Skulls", "Zombies, skeletons, creepers and piglins sometimes leave their _skull_ whole. A wither skeleton's rarely survives.");
+                "Skulls", "Zombies, skeletons, creepers and piglins sometimes leave their _skull_ whole. A wither skeleton's rarely survives.",
+                "Filter Slot", "On the top edge. A _spawn egg_ or a _carcass piece_ sets it to one kind of mob; a Create _filter_ works too. Empty, it takes anything.");
         block("deglover",
                 "Spiked rollers that strip the _hide_ off a carcass. Driven by a _shaft from below_.",
-                "With a Carcass Over It", "Skins it a stroke at a time: _hide_ and, from a sheep, _wool_ into its output.");
+                "With a Carcass Over It", "Skins it a stroke at a time: _hide_ and, from a sheep, _wool_ into its output.",
+                "Filter Slot", "On the top edge. A _spawn egg_ or a _carcass piece_ sets it to one kind of mob; a Create _filter_ works too. Empty, it takes anything.");
 
         // ---- materials
         item("blood_steel_ingot",
@@ -160,7 +164,8 @@ public class BBLang {
                 "A cow holds about a bucket. Encased Fans blowing across the body drain it up to four times faster. Pipe the blood out of the sides or bottom.");
         jei("machines",
                 "The Mangler, Guillotine, Beheader and Deglover work any carcass lying on or hanging over them. Each takes a shaft from below; the faster it turns, the faster it works. Set them flush in a floor so a body lies across them.",
-                "Guillotine: limbs off. Beheader: heads off, sometimes a skull. Deglover: hides off. Mangler: everything, down to meat and bone. Take their output with a funnel or an empty hand.");
+                "Guillotine: limbs off. Beheader: heads off, sometimes a skull. Deglover: hides off. Mangler: everything, down to meat and bone. Take their output with a funnel or an empty hand.",
+                "The filter slot on each machine's top edge picks what it works on: a spawn egg or a carcass piece for one kind of mob, or a Create list or attribute filter.");
         jei("display",
                 "Show off your work. The Butcher's Hook hangs on the side of a solid block and the Specimen Jar sits anywhere; either holds one carcass piece, which keeps there. Right-click with the piece, and with an empty hand to take it back.",
                 "The Butcher's Table holds a piece too, lying on its top: right-click it with a Cleaver and it comes apart into meat, bone, offal and fat, spoiled as far as it had rotted.");

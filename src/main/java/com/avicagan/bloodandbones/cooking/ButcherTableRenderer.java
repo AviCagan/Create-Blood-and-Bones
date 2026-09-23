@@ -19,6 +19,12 @@ public class ButcherTableRenderer extends SafeBlockEntityRenderer<ButcherTableBl
     public ButcherTableRenderer(BlockEntityRendererProvider.Context context) {
     }
 
+    /** The piece lies above the block, so the block's own box would cull it too soon. */
+    @Override
+    public net.minecraft.world.phys.AABB getRenderBoundingBox(ButcherTableBlockEntity be) {
+        return new net.minecraft.world.phys.AABB(be.getBlockPos()).expandTowards(0.0, 1.0, 0.0);
+    }
+
     @Override
     protected void renderSafe(ButcherTableBlockEntity be, float partialTicks, PoseStack ms, MultiBufferSource buffer, int light, int overlay) {
         CarcassPieceItem.Piece piece = CarcassPieceItem.piece(be.specimen());

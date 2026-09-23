@@ -252,7 +252,6 @@ public final class CarcassButchery {
     /** Where yields go instead of the ground while a machine is working, else null. */
     private static final ThreadLocal<java.util.function.Consumer<net.minecraft.world.item.ItemStack>> SINK = new ThreadLocal<>();
 
-    /** Run a butchery action with every yield it makes handed to {@code sink} instead of dropped. */
     /**
      * What butchering a carried piece gives, as items: the piece's share of its mob's table, spoiled as far
      * as it had rotted and scaled for a baby, as if it were a loose piece cut up in the world.
@@ -271,6 +270,7 @@ public final class CarcassButchery {
         return out;
     }
 
+    /** Run a butchery action with every yield it makes handed to {@code sink} instead of dropped. */
     public static <T> T capturing(java.util.function.Consumer<net.minecraft.world.item.ItemStack> sink, java.util.function.Supplier<T> action) {
         java.util.function.Consumer<net.minecraft.world.item.ItemStack> previous = SINK.get();
         SINK.set(sink);

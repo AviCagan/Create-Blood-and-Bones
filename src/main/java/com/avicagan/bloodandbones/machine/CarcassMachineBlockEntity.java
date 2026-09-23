@@ -109,25 +109,48 @@ public class CarcassMachineBlockEntity extends KineticBlockEntity implements Cle
     @Override
     public void addBehaviours(List<com.simibubi.create.foundation.blockEntity.behaviour.BlockEntityBehaviour> behaviours) {
         super.addBehaviours(behaviours);
-        filtering = new com.simibubi.create.foundation.blockEntity.behaviour.filtering.FilteringBehaviour(this, new MachineFilterSlot());
+        filtering = new com.simibubi.create.foundation.blockEntity.behaviour.filtering.FilteringBehaviour(this, new MachineFilterSlot()) {
+            // a Deployer's stand-in player is let through Create's slot hit test: it would set the filter
+            // instead of putting a piece on the machine or taking its output
+            @Override
+            public boolean mayInteract(Player player) {
+                return !(player instanceof net.neoforged.neoforge.common.util.FakePlayer);
+            }
+        }.withPredicate(stack -> stack.getItem() instanceof net.minecraft.world.item.SpawnEggItem
+                || stack.is(com.avicagan.bloodandbones.registry.BBItems.CARCASS_PIECE.get())
+                || stack.getItem() instanceof com.simibubi.create.content.logistics.filter.FilterItem);
         behaviours.add(filtering);
     }
 
     /** Whether the filter lets this machine work on this carcass. */
     public boolean accepts(CarcassSavedData.Carcass carcass) {
         ItemStack filter = filtering == null ? ItemStack.EMPTY : filtering.getFilter();
-        if (filter.isEmpty()) {
-            return true;
+        return filter.isEmpty() || matches(com.simibubi.create.content.logistics.filter.FilterItemStack.of(filter), carcass);
+    }
+
+    /**
+     * A spawn egg or a carcass piece means that mob (Create's plain match would take any piece at all); a
+     * list filter asks the same of each entry, as a whitelist or a blacklist; anything else (an attribute
+     * filter) is asked about a piece of the carcass, as Create would ask it about an item.
+     */
+    private boolean matches(com.simibubi.create.content.logistics.filter.FilterItemStack filter, CarcassSavedData.Carcass carcass) {
+        ItemStack item = filter.item();
+        if (item.getItem() instanceof net.minecraft.world.item.SpawnEggItem egg) {
+            return net.minecraft.core.registries.BuiltInRegistries.ENTITY_TYPE.getKey(egg.getType(item)).equals(carcass.entity);
         }
-        if (filter.getItem() instanceof net.minecraft.world.item.SpawnEggItem egg) {
-            return net.minecraft.core.registries.BuiltInRegistries.ENTITY_TYPE.getKey(egg.getType(filter)).equals(carcass.entity);
-        }
-        if (filter.is(com.avicagan.bloodandbones.registry.BBItems.CARCASS_PIECE.get())) {
-            // Create's plain filter would match any piece at all; this one means "a carcass like this"
-            com.avicagan.bloodandbones.item.CarcassPieceItem.Piece piece = com.avicagan.bloodandbones.item.CarcassPieceItem.piece(filter);
+        if (item.is(com.avicagan.bloodandbones.registry.BBItems.CARCASS_PIECE.get())) {
+            com.avicagan.bloodandbones.item.CarcassPieceItem.Piece piece = com.avicagan.bloodandbones.item.CarcassPieceItem.piece(item);
             return piece == null || piece.entity().equals(carcass.entity);
         }
-        return filtering.test(com.avicagan.bloodandbones.item.CarcassPieceItem.of(carcass, carcass.rootBone));
+        if (filter instanceof com.simibubi.create.content.logistics.filter.FilterItemStack.ListFilterItemStack list) {
+            for (com.simibubi.create.content.logistics.filter.FilterItemStack entry : list.containedItems) {
+                if (matches(entry, carcass)) {
+                    return !list.isBlacklist;
+                }
+            }
+            return list.isBlacklist;
+        }
+        return filter.test(level, com.avicagan.bloodandbones.item.CarcassPieceItem.of(carcass, carcass.rootBone));
     }
 
     public static void registerCapabilities(RegisterCapabilitiesEvent event) {
@@ -357,15 +380,20 @@ public class CarcassMachineBlockEntity extends KineticBlockEntity implements Cle
         }
         AABB zone = zone();
         for (CarcassSavedData.Carcass carcass : List.copyOf(CarcassSavedData.get(level).all())) {
-            if (!accepts(carcass)) {
-                continue;
-            }
+            // the filter is only asked about carcasses that are actually over the machine
+            Boolean accepted = null;
             for (Map.Entry<String, UUID> bone : carcass.bones.entrySet()) {
                 if (!(container.getSubLevel(bone.getValue()) instanceof ServerSubLevel body) || body.isRemoved()) {
                     continue;
                 }
                 Vector3dc p = body.logicalPose().position();
                 if (zone.contains(p.x(), p.y(), p.z())) {
+                    if (accepted == null) {
+                        accepted = accepts(carcass);
+                    }
+                    if (!accepted) {
+                        break;
+                    }
                     found.add(new Target(carcass, bone.getKey(), new Vector3d(p)));
                 }
             }

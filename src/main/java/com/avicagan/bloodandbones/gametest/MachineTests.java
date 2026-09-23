@@ -138,6 +138,25 @@ public class MachineTests {
                             new com.avicagan.bloodandbones.registry.BBItemAttributes.PieceOf(net.minecraft.resources.ResourceLocation.withDefaultNamespace("cow")), false)));
             machine.filtering.setFilter(attributeFilter);
             helper.assertTrue(machine.accepts(still), "an attribute filter for cow pieces should take the cow");
+            // a list filter asks each entry the same way: spawn eggs in it work, as a whitelist or a blacklist
+            ItemStack list = new ItemStack(com.simibubi.create.AllItems.FILTER.get());
+            list.set(com.simibubi.create.AllDataComponents.FILTER_ITEMS, net.minecraft.world.item.component.ItemContainerContents.fromItems(
+                    java.util.List.of(new ItemStack(net.minecraft.world.item.Items.PIG_SPAWN_EGG), new ItemStack(net.minecraft.world.item.Items.COW_SPAWN_EGG))));
+            machine.filtering.setFilter(list);
+            helper.assertTrue(machine.accepts(still), "a list filter holding a cow egg should take the cow");
+            ItemStack pigsOnly = list.copy();
+            pigsOnly.set(com.simibubi.create.AllDataComponents.FILTER_ITEMS, net.minecraft.world.item.component.ItemContainerContents.fromItems(
+                    java.util.List.of(new ItemStack(net.minecraft.world.item.Items.PIG_SPAWN_EGG))));
+            machine.filtering.setFilter(pigsOnly);
+            helper.assertTrue(!machine.accepts(still), "a list filter of pig eggs should pass the cow over");
+            pigsOnly.set(com.simibubi.create.AllDataComponents.FILTER_ITEMS_BLACKLIST, true);
+            machine.filtering.setFilter(pigsOnly);
+            helper.assertTrue(machine.accepts(still), "a blacklist of pig eggs should take the cow");
+            // a tool is not a filter, and a Deployer's stand-in player cannot change it
+            helper.assertTrue(!machine.filtering.setFilter(new ItemStack(com.avicagan.bloodandbones.registry.BBItems.CLEAVER.get())),
+                    "a cleaver should not be taken as a filter");
+            helper.assertTrue(!machine.filtering.mayInteract(net.neoforged.neoforge.common.util.FakePlayerFactory.getMinecraft(level)),
+                    "a Deployer should not set the filter");
             helper.succeed();
         });
     }

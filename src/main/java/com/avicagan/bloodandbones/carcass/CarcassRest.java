@@ -132,7 +132,7 @@ public final class CarcassRest {
     }
 
     /** True while a player drags any limb or a hook holds the carcass. */
-    private static boolean isHeld(ServerLevel level, CarcassSavedData.Carcass carcass) {
+    public static boolean isHeld(ServerLevel level, CarcassSavedData.Carcass carcass) {
         if (CarcassDrag.isDraggingCarcass(carcass.id)) {
             return true;
         }

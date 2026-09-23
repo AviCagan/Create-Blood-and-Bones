@@ -219,7 +219,7 @@ public class ShackleHookBlockEntity extends BlockEntity {
         outZ = out.z;
         setChanged();
         level.sendBlockUpdated(worldPosition, getBlockState(), getBlockState(), 3);
-        attach(level);
+        attach(level, false);
     }
 
     public void release(ServerLevel level) {
@@ -252,14 +252,18 @@ public class ShackleHookBlockEntity extends BlockEntity {
             return;
         }
         hook.loadedAt = null;
-        hook.attach(serverLevel);
+        hook.attach(serverLevel, true);
     }
+
+    /** Farthest a hung body may have swung while its hook was unloaded and still be taken back, in blocks. */
+    public static final double REJOIN_REACH = 8.0;
 
     /** Where the hook was when it was saved, as read back; null once checked. */
     @Nullable
     private BlockPos loadedAt;
 
-    private void attach(ServerLevel level) {
+    /** @param rejoin taking back a body it already held, rather than hooking a new one */
+    private void attach(ServerLevel level, boolean rejoin) {
         ServerSubLevelContainer container = SubLevelContainer.getContainer(level);
         if (container == null || subLevelId == null) {
             return;
@@ -269,6 +273,15 @@ public class ShackleHookBlockEntity extends BlockEntity {
             return;
         }
         Vec3 tip = ShackleHookBlock.tip(worldPosition, getBlockState());
+        // a body that swung far off while the hook was unloaded is let go, not pulled back through walls
+        // (only for a hook in the world: on a ship the tip is in the ship's own coordinates)
+        if (rejoin && dev.ryanhcode.sable.Sable.HELPER.getContaining(level, worldPosition) == null) {
+            Vector3d anchorWorld = serverSubLevel.logicalPose().transformPosition(new Vector3d(anchorPlot), new Vector3d());
+            if (anchorWorld.distance(tip.x, tip.y, tip.z) > REJOIN_REACH) {
+                release(level);
+                return;
+            }
+        }
         // A ball joint pinning the neck junction to the hook tip; the belly-out turn is a torque spring
         // applied every physics substep (see physicsTick), not a joint motor.
         GenericConstraintConfiguration config = new GenericConstraintConfiguration(

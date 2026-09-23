@@ -92,7 +92,8 @@ public class BBJeiPlugin implements IModPlugin {
         registration.addIngredientInfo(java.util.List.of(new net.minecraft.world.item.ItemStack(BBBlocks.MANGLER.get()), new net.minecraft.world.item.ItemStack(BBBlocks.GUILLOTINE.get()),
                         new net.minecraft.world.item.ItemStack(BBBlocks.BEHEADER.get()), new net.minecraft.world.item.ItemStack(BBBlocks.DEGLOVER.get())),
                 mezz.jei.api.constants.VanillaTypes.ITEM_STACK,
-                Component.translatable("bloodandbones.jei.machines.1"), Component.translatable("bloodandbones.jei.machines.2"));
+                Component.translatable("bloodandbones.jei.machines.1"), Component.translatable("bloodandbones.jei.machines.2"),
+                Component.translatable("bloodandbones.jei.machines.3"));
         registration.addIngredientInfo(new net.minecraft.world.item.ItemStack(com.avicagan.bloodandbones.registry.BBFluids.SOUL_BLOOD.getBucket().get()),
                 mezz.jei.api.constants.VanillaTypes.ITEM_STACK, Component.translatable("bloodandbones.jei.soul_blood.1"));
         registration.addIngredientInfo(java.util.List.of(new net.minecraft.world.item.ItemStack(BBBlocks.BUTCHER_HOOK.get()), new net.minecraft.world.item.ItemStack(BBBlocks.SPECIMEN_JAR.get()),

@@ -66,6 +66,10 @@ public class ButcherHookBlockEntity extends SpecimenJarBlockEntity {
             // from under the hook's own block, which the drops fall out of
             Blood.stain((ServerLevel) level, new Vector3d(at.x, at.y - 0.5, at.z), 1);
         }
-        notifyUpdate();
+        setChanged();
+        if (left <= 0.0F) {
+            // clients only need to know when it stops: until then they drip on what they were sent
+            sendData();
+        }
     }
 }
