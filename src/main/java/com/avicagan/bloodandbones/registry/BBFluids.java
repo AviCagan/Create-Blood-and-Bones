@@ -53,6 +53,8 @@ public class BBFluids {
     private static final ResourceLocation FLOW = ResourceLocation.withDefaultNamespace("block/water_flow");
 
     public static final int BLOOD_RGB = 0x7F0A0A;      // dark red
+    /** Blood in bloodless mode: a muddy brown, nothing red about it. */
+    public static final int BLOOD_BLOODLESS_RGB = 0x4A3B2C;
     public static final int SOUL_BLOOD_RGB = 0x167A74; // dark teal
 
     /** c:blood, the common tag other mods look blood up by. */
@@ -77,7 +79,7 @@ public class BBFluids {
     };
 
     public static final FluidEntry<BaseFlowingFluid.Flowing> BLOOD = BloodAndBones.REGISTRATE
-            .fluid("blood", STILL, FLOW, TintedFluidType.create(BLOOD_RGB, () -> 1f / 16f))
+            .fluid("blood", STILL, FLOW, TintedFluidType.create(BLOOD_RGB, BLOOD_BLOODLESS_RGB, () -> 1f / 16f))
             .lang("Blood")
             .properties(p -> p
                     .density(1060)
@@ -182,33 +184,47 @@ public class BBFluids {
     public static class TintedFluidType extends AllFluids.TintedFluidType {
         private final int argb;
         private final Vector3f fogColor;
+        /** the colour in bloodless mode (the client's toggle or the server's game rule) */
+        private final int bloodlessArgb;
+        private final Vector3f bloodlessFog;
         private final Supplier<Float> fogDistance;
 
-        private TintedFluidType(Properties properties, ResourceLocation still, ResourceLocation flow, int rgb,
+        private TintedFluidType(Properties properties, ResourceLocation still, ResourceLocation flow, int rgb, int bloodlessRgb,
                                 Supplier<Float> fogDistance) {
             super(properties, still, flow);
             this.argb = 0xFF000000 | rgb;
             this.fogColor = new Vector3f((rgb >> 16 & 0xFF) / 255f, (rgb >> 8 & 0xFF) / 255f, (rgb & 0xFF) / 255f);
+            this.bloodlessArgb = 0xFF000000 | bloodlessRgb;
+            this.bloodlessFog = new Vector3f((bloodlessRgb >> 16 & 0xFF) / 255f, (bloodlessRgb >> 8 & 0xFF) / 255f, (bloodlessRgb & 0xFF) / 255f);
             this.fogDistance = fogDistance;
         }
 
         public static FluidBuilder.FluidTypeFactory create(int rgb, Supplier<Float> fogDistance) {
-            return (p, still, flow) -> new TintedFluidType(p, still, flow, rgb, fogDistance);
+            return create(rgb, rgb, fogDistance);
+        }
+
+        public static FluidBuilder.FluidTypeFactory create(int rgb, int bloodlessRgb, Supplier<Float> fogDistance) {
+            return (p, still, flow) -> new TintedFluidType(p, still, flow, rgb, bloodlessRgb, fogDistance);
+        }
+
+        /** Only ever asked on the client, where the bloodless setting lives. */
+        private int colour() {
+            return com.avicagan.bloodandbones.config.BBClientConfig.bloodless() ? bloodlessArgb : argb;
         }
 
         @Override
         protected int getTintColor(FluidStack stack) {
-            return argb;
+            return colour();
         }
 
         @Override
         protected int getTintColor(FluidState state, BlockAndTintGetter level, BlockPos pos) {
-            return argb & 0x00FFFFFF;
+            return colour() & 0x00FFFFFF;
         }
 
         @Override
         protected Vector3f getCustomFogColor() {
-            return fogColor;
+            return com.avicagan.bloodandbones.config.BBClientConfig.bloodless() ? bloodlessFog : fogColor;
         }
 
         @Override

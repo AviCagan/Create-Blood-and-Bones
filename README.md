@@ -42,7 +42,7 @@ provided by [Sable](https://github.com/ryanhcode/sable).
   burns). The Specimen Jar keeps a piece on show.
 - **Bloodless mode.** `bloodless_mode` in the client config (`config/bloodandbones-client.toml`)
   hides blood drops and stains, shows skinned carcasses as pale meat, the hook in a carcass and
-  the machines clean. A server can force it on for everyone with `/gamerule bloodandbonesBloodless true`.
+  the machines clean, and blood itself as a muddy brown. A server can force it on for everyone with `/gamerule bloodandbonesBloodless true`.
   Nothing about how the game plays changes.
 - Tooltips (hold Shift), JEI pages (including a Butchery page per mob showing what its carcass
   gives), Ponder scenes and an advancement tab explain it all in game.

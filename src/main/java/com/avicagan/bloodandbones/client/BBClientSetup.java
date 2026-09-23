@@ -53,6 +53,12 @@ public final class BBClientSetup {
         for (net.minecraft.world.level.block.state.BlockState state : com.avicagan.bloodandbones.registry.BBBlocks.BLOOD_STAIN.get().getStateDefinition().getPossibleStates()) {
             event.getModels().computeIfPresent(net.minecraft.client.renderer.block.BlockModelShaper.stateToModelLocation(state), (key, model) -> new BloodlessHidden(model));
         }
+        for (net.minecraft.world.level.block.state.BlockState state : com.avicagan.bloodandbones.registry.BBBlocks.SHACKLE_HOOK.get().getStateDefinition().getPossibleStates()) {
+            event.getModels().computeIfPresent(net.minecraft.client.renderer.block.BlockModelShaper.stateToModelLocation(state),
+                    (key, model) -> new BloodlessSwap(model, BloodlessSwap.HOOK));
+        }
+        event.getModels().computeIfPresent(net.minecraft.client.resources.model.ModelResourceLocation.inventory(com.avicagan.bloodandbones.registry.BBBlocks.SHACKLE_HOOK.getId()),
+                (key, model) -> new BloodlessSwap(model, BloodlessSwap.HOOK));
         // the machines' bloody casings and blades come out clean, in the world and in the hand
         for (var machine : java.util.List.of(com.avicagan.bloodandbones.registry.BBBlocks.MANGLER, com.avicagan.bloodandbones.registry.BBBlocks.GUILLOTINE,
                 com.avicagan.bloodandbones.registry.BBBlocks.BEHEADER, com.avicagan.bloodandbones.registry.BBBlocks.DEGLOVER)) {

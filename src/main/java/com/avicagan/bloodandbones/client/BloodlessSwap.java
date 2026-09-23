@@ -35,6 +35,10 @@ public final class BloodlessSwap extends BakedModelWrapper<BakedModel> {
             ResourceLocation.fromNamespaceAndPath("bloodandbones", "block/bloody_saw"), ResourceLocation.fromNamespaceAndPath("bloodandbones", "block/bloody_saw_clean"),
             ResourceLocation.fromNamespaceAndPath("bloodandbones", "block/deglover_roller"), ResourceLocation.fromNamespaceAndPath("bloodandbones", "block/deglover_roller_clean"));
 
+    /** The Shackle Hook's point, red in normal play. */
+    public static final Map<ResourceLocation, ResourceLocation> HOOK = Map.of(
+            ResourceLocation.fromNamespaceAndPath("bloodandbones", "item/meat_hook_point"), ResourceLocation.fromNamespaceAndPath("bloodandbones", "item/meat_hook_point_clean"));
+
     private final Map<ResourceLocation, ResourceLocation> swaps;
     /** Resolved on first use: the block atlas is only ready once baking is over. */
     @Nullable

@@ -675,8 +675,9 @@ pipes; chain clearance = hanging length + 1 block.
   blood stains (baked model wrapper), the flesh texture of a skinned carcass (a pale bloodless copy), the
   hook drawn in a carcass (the clean model), and the machines' bloody casings, blades, saw, roller and
   Mangler top (`BloodlessSwap` re-points each quad's UVs from the bloody sprite to a clean one, for block
-  and item models; the clean textures are the bloody ones with the red taken out). Not yet: the blood
-  fluid itself and names (the design's `bloodless.` lang prefix).
+  and item models; the clean textures are the bloody ones with the red taken out), and the blood fluid,
+  drawn a muddy brown in the world, tanks, pipes and buckets (`TintedFluidType` picks its tint per
+  frame). Not yet: names (the design's `bloodless.` lang prefix).
 
 ### 13.8 Machines (verified)
 
