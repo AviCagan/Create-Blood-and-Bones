@@ -7,6 +7,7 @@ Everything below is in development builds only; the art is placeholder (see the 
 - Meat Hook kills leave physics carcasses; dragging, resting (a still carcass folds into one body
   and unfolds when disturbed), rot, and the death handover with no gap.
 - Butchery: Cleaver, Flensing Knife, carried pieces, data-driven yields that spoil with rot.
+- Cut limbs leave raw wounds, bone showing, on the stump and on the piece, and pour blood for a while.
 - 79 rigged vanilla mobs with variants, the wither and the pufferfish included; hook kills drop the mob's gear and inventory.
 - Blood and Soul Blood fluids, the Bleeding Rack, fan-boosted bleeding, slower rot once bled.
 - Blood stains on the ground from kills, cuts, drag trails and uncaught bleeding; they dry, fade

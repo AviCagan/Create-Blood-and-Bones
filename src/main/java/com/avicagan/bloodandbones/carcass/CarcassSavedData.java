@@ -99,6 +99,8 @@ public class CarcassSavedData extends SavedData {
         public float bloodMax = -1.0F;
         /** ticks since the last bleed step; not saved */
         public int bleedTicks;
+        /** fresh cuts still pouring ("parent>child" -> ticks left); not saved */
+        public final Map<String, Integer> gushing = new LinkedHashMap<>();
 
         public boolean isRotten() {
             return freshness <= 0.0F;

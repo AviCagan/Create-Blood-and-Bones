@@ -45,6 +45,8 @@ public class CarcassPartBlockEntity extends BlockEntity implements BlockEntitySu
     private final List<MergedPart> merged = new ArrayList<>();
     /** 1.0 fresh, 0.0 rotten; drives the rot tint. */
     private float freshness = 1.0F;
+    /** Joints of this carcass that have been cut, as "parent>child": both ends are drawn as raw wounds. */
+    private final List<String> cuts = new ArrayList<>();
 
     /** A merged limb: which bone, and its origin and orientation in this bone's frame (blocks). */
     public record MergedPart(String bone, Vector3f position, Quaternionf orientation) {
@@ -56,6 +58,21 @@ public class CarcassPartBlockEntity extends BlockEntity implements BlockEntitySu
 
     public float freshness() {
         return freshness;
+    }
+
+    public List<String> cuts() {
+        return cuts;
+    }
+
+    /** @return whether anything changed */
+    public boolean setCuts(List<String> value) {
+        if (cuts.equals(value)) {
+            return false;
+        }
+        cuts.clear();
+        cuts.addAll(value);
+        setChanged();
+        return true;
     }
 
     public void setFreshness(float value) {
@@ -178,6 +195,11 @@ public class CarcassPartBlockEntity extends BlockEntity implements BlockEntitySu
                 list.add(m);
             }
             tag.put("Merged", list);
+            ListTag cutList = new ListTag();
+            for (String cut : cuts) {
+                cutList.add(net.minecraft.nbt.StringTag.valueOf(cut));
+            }
+            tag.put("Cuts", cutList);
         }
     }
 
@@ -206,6 +228,10 @@ public class CarcassPartBlockEntity extends BlockEntity implements BlockEntitySu
                 getVec(m, "Pos", pos);
                 merged.add(new MergedPart(m.getString("Bone"), pos,
                         new Quaternionf(m.getFloat("QX"), m.getFloat("QY"), m.getFloat("QZ"), m.getFloat("QW"))));
+            }
+            cuts.clear();
+            for (Tag t : tag.getList("Cuts", Tag.TAG_STRING)) {
+                cuts.add(t.getAsString());
             }
         }
     }

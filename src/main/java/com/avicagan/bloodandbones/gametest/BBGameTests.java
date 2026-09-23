@@ -1228,6 +1228,66 @@ public class BBGameTests {
         helper.succeed();
     }
 
+    /**
+     * A leg cut off shows a wound on both ends, the stump on the body and the leg's own cut end, and both
+     * pour for a while: the body loses blood and the floor gets stained.
+     */
+    @GameTest(template = "empty", timeoutTicks = 200)
+    public static void cutLimbsShowWounds(GameTestHelper helper) {
+        ServerLevel level = helper.getLevel();
+        Cow cow = helper.spawn(EntityType.COW, new BlockPos(5, 2, 5));
+        CarcassSavedData.Carcass carcass = CarcassAssembler.assemble(cow, null);
+        cow.discard();
+        if (carcass == null) {
+            helper.fail("Carcass assembly returned null");
+            return;
+        }
+        if (!com.avicagan.bloodandbones.carcass.CarcassRot.cuts(carcass).isEmpty()) {
+            helper.fail("A whole carcass has no wounds, got " + com.avicagan.bloodandbones.carcass.CarcassRot.cuts(carcass));
+        }
+        helper.runAfterDelay(10, () -> {
+            UUID legId = carcass.bones.get("right_front_leg");
+            com.avicagan.bloodandbones.carcass.CarcassButchery.sever(level, carcass, "right_front_leg", null);
+            CarcassSavedData.Carcass leg = CarcassSavedData.get(level).carcassOfSubLevel(legId);
+            List<String> expected = List.of("body>right_front_leg");
+            if (!com.avicagan.bloodandbones.carcass.CarcassRot.cuts(carcass).equals(expected)) {
+                helper.fail("The body should have one stump, got " + com.avicagan.bloodandbones.carcass.CarcassRot.cuts(carcass));
+            }
+            if (leg == null || leg == carcass || !com.avicagan.bloodandbones.carcass.CarcassRot.cuts(leg).equals(expected)) {
+                helper.fail("The leg should have its own cut end, got " + (leg == null ? "no record" : com.avicagan.bloodandbones.carcass.CarcassRot.cuts(leg)));
+            }
+            // and the cells that draw them were told at once
+            for (UUID id : List.of(carcass.bones.get(carcass.rootBone), legId)) {
+                if (!(SubLevelContainer.getContainer(level).getSubLevel(id) instanceof ServerSubLevel body)
+                        || !(level.getBlockEntity(body.getPlot().getCenterBlock()) instanceof com.avicagan.bloodandbones.carcass.CarcassPartBlockEntity cell)
+                        || !cell.cuts().equals(expected)) {
+                    helper.fail("A root cell was not told about the cut");
+                    return;
+                }
+            }
+            if (!carcass.gushing.containsKey("body>right_front_leg") || !leg.gushing.containsKey("body>right_front_leg")) {
+                helper.fail("Both ends of a fresh cut should pour");
+            }
+        });
+        float[] bloodBefore = {0};
+        helper.runAfterDelay(11, () -> bloodBefore[0] = carcass.blood);
+        helper.runAfterDelay(150, () -> {
+            if (carcass.blood >= bloodBefore[0]) {
+                helper.fail("The stump should drain the body, blood " + carcass.blood + " of " + bloodBefore[0]);
+            }
+            int stains = 0;
+            for (BlockPos pos : BlockPos.betweenClosed(helper.absolutePos(new BlockPos(0, 2, 0)), helper.absolutePos(new BlockPos(10, 2, 10)))) {
+                if (level.getBlockState(pos).is(com.avicagan.bloodandbones.registry.BBBlocks.BLOOD_STAIN.get())) {
+                    stains++;
+                }
+            }
+            if (stains == 0) {
+                helper.fail("A fresh cut left no blood on the floor");
+            }
+            helper.succeed();
+        });
+    }
+
     /** Every recipe file parsed: a broken one only logs an error, so check they all loaded. */
     @GameTest(template = "empty", timeoutTicks = 20)
     public static void recipesLoad(GameTestHelper helper) {

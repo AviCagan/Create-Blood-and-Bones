@@ -15,9 +15,10 @@ provided by [Sable](https://github.com/ryanhcode/sable).
   physics, one body per limb, jointed) instead of dropping loot. Its gear still drops. Hook a limb
   to drag the body; heavier animals slow you more. 79 vanilla mobs are rigged, with their colours
   and variants (all but the ender dragon and tropical fish).
-- **Butchery.** The Cleaver takes limbs off at the joint and breaks loose pieces down into meat,
-  bone, offal and fat. The Flensing Knife takes the hide off (with a sheep's wool). Yields are
-  data-driven per mob and spoil as the carcass rots. Light pieces can be picked up and carried.
+- **Butchery.** The Cleaver takes limbs off at the joint, leaving raw wounds with the bone
+  showing on both ends, and breaks loose pieces down into meat, bone, offal and fat. The Flensing
+  Knife takes the hide off (with a sheep's wool). Yields are data-driven per mob and spoil as the
+  carcass rots. Light pieces can be picked up and carried.
 - **Rot.** Carcasses rot over game time; cold slows it, ice stops it. Rotten meat turns to rotten
   flesh, and a carcass left rotten for a day falls apart into bones and rotten flesh, so old ones
   don't pile up. Rot speed and the falling apart can be changed per world in
@@ -62,8 +63,9 @@ incremental. `./gradlew runClient` / `runServer` / `runData` are configured by M
   models' part trees to `run/build/layer-dump.txt`, for writing new rig targets in
   `src/main/rig_targets`.
 - `./gradlew runClient -Dbloodandbones.showcase=true` makes a flat world, builds a scene of
-  carcasses, machines and the rest, screenshots it (and three Ponder scenes) into
-  `run/screenshots/showcase_*.png`, and quits. It runs without a screen under `xvfb-run`.
+  carcasses, machines and the rest, screenshots it (and three Ponder scenes and the cow's JEI
+  page) into `run/screenshots/showcase_*.png`, and quits. It runs without a screen under
+  `xvfb-run`. `-Dbloodandbones.showcase=bloodless` does the same with bloodless mode forced on.
 
 ## Licence
 
@@ -92,7 +94,10 @@ before any public release. Until then, treat these as not releasable:
 - Recoloured from vanilla Minecraft textures (Mojang's assets cannot be redistributed under MIT):
   `item/blood_steel_ingot.png`, `item/blood_steel_nugget.png`, `item/blood_diamond.png`,
   `block/blood_steel_block.png`.
-- Recoloured from Create's andesite casing: `block/bloody_casing.png`.
+- Recoloured from Create's textures: `block/bloody_casing.png` (andesite casing),
+  `block/bloody_saw.png` and its bloodless twin `block/bloody_saw_clean.png` (the saw blade).
+- The other `*_clean.png` textures and `entity/flesh_bloodless.png` are this mod's own placeholders
+  with the red taken out.
 - Recoloured from this mod's own cleaver: `item/blood_steel_cleaver.png`.
 - Everything else under `assets/bloodandbones/textures` was drawn pixel by pixel by script; check
   its origin before release anyway.

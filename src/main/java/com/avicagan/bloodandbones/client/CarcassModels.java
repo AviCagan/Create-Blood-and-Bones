@@ -130,6 +130,15 @@ public final class CarcassModels {
             color = FastColor.ARGB32.multiply(color, tint);
         }
         drawBone(rig, bone, piece.texture(), coats, color, poseStack, buffers, packedLight);
+        // a piece was cut from its parent, and anything that hung off it is gone: every end is a wound
+        List<String> cuts = new ArrayList<>();
+        bone.parent().ifPresent(parent -> cuts.add(parent + ">" + bone.name()));
+        for (Bone other : rig.bones()) {
+            if (other.parent().filter(bone.name()::equals).isPresent()) {
+                cuts.add(bone.name() + ">" + other.name());
+            }
+        }
+        WoundCaps.draw(rig, bone, cuts, color, poseStack, buffers, packedLight);
         poseStack.popPose();
     }
 

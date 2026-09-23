@@ -108,6 +108,9 @@ public final class CarcassButchery {
             if (carcass.bones.isEmpty()) {
                 data.forget(carcass);
             }
+        } else {
+            // the stump it came off shows the wound at once
+            CarcassRot.sync(level, carcass, null);
         }
         Blood.wound(level, carcass, where, 24, 3);
         level.playSound(null, where.x, where.y, where.z, SoundEvents.SLIME_BLOCK_BREAK, SoundSource.BLOCKS, 1.0F, 0.5F);
@@ -288,8 +291,21 @@ public final class CarcassButchery {
             level.playSound(null, at.x, at.y, at.z, SoundEvents.BONE_BLOCK_BREAK, SoundSource.BLOCKS, 1.0F, 0.6F);
         }
         // the piece is a carcass of its own from here: it rests, rots and is hooked on its own terms
-        CarcassSavedData.get(level).splitOff(level, carcass, bone);
+        CarcassSavedData.Carcass piece = CarcassSavedData.get(level).splitOff(level, carcass, bone);
         CarcassSavedData.get(level).setDirty();
+        // both ends show the wound at once, and pour for a while
+        String parent = com.avicagan.bloodandbones.carcass.rig.RigManager.forEntity(carcass.entity)
+                .flatMap(rig -> rig.bone(bone)).flatMap(com.avicagan.bloodandbones.carcass.rig.Bone::parent).orElse(null);
+        CarcassRot.sync(level, carcass, null);
+        if (parent != null) {
+            CarcassBleeding.freshCut(carcass, parent, bone);
+        }
+        if (piece != null) {
+            CarcassRot.sync(level, piece, null);
+            if (parent != null) {
+                CarcassBleeding.freshCut(piece, parent, bone);
+            }
+        }
         BloodAndBones.LOGGER.debug("Severed {} from carcass {}", bone, carcass.id);
     }
 

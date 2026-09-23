@@ -72,6 +72,16 @@ public final class CarcassBleeding {
         }
     }
 
+    /** How long a fresh cut pours, in ticks: wherever the body lies, rack or no rack. */
+    public static final int GUSH_TICKS = 300;
+    /** Share of the body's blood a stump loses each bleed step while it pours. */
+    public static final float GUSH_SHARE = 0.01F;
+
+    /** A joint was just cut through: the end of it this record holds pours for a while. */
+    public static void freshCut(CarcassSavedData.Carcass carcass, String parent, String child) {
+        carcass.gushing.put(parent + ">" + child, GUSH_TICKS);
+    }
+
     /** Called every tick from the torso's root cell. */
     public static void tick(ServerLevel level, CarcassSavedData.Carcass carcass, ServerSubLevel torso) {
         if (++carcass.bleedTicks < INTERVAL) {
@@ -79,6 +89,7 @@ public final class CarcassBleeding {
         }
         carcass.bleedTicks = 0;
         ensureBlood(carcass);
+        gush(level, carcass);
         if (carcass.blood <= 0.0F || carcass.freshness < CLOTTED) {
             return;
         }
@@ -119,6 +130,71 @@ public final class CarcassBleeding {
             Blood.stain(level, drip, 1);
         }
         CarcassSavedData.get(level).setDirty();
+    }
+
+    /** Fresh cuts pour onto whatever is below them, the stump draining the body as it goes. */
+    private static void gush(ServerLevel level, CarcassSavedData.Carcass carcass) {
+        if (carcass.gushing.isEmpty()) {
+            return;
+        }
+        Rig rig = RigManager.forEntity(carcass.entity).orElse(null);
+        if (rig == null || !Blood.bloody(carcass) || carcass.freshness < CLOTTED) {
+            carcass.gushing.clear();
+            return;
+        }
+        var iterator = carcass.gushing.entrySet().iterator();
+        while (iterator.hasNext()) {
+            var entry = iterator.next();
+            int left = entry.getValue() - INTERVAL;
+            if (left <= 0) {
+                iterator.remove();
+                continue;
+            }
+            entry.setValue(left);
+            int split = entry.getKey().indexOf('>');
+            String parent = entry.getKey().substring(0, split);
+            String child = entry.getKey().substring(split + 1);
+            Vector3d at = woundPoint(level, carcass, rig, parent, child);
+            if (at == null) {
+                continue;
+            }
+            Blood.drip(level, at);
+            if (left > GUSH_TICKS / 2) {
+                Blood.drip(level, at);
+            }
+            if ((left / INTERVAL) % 4 == 0) {
+                Blood.stain(level, at, 1);
+            }
+            if (carcass.bones.containsKey(parent) && carcass.blood > 0.0F) {
+                carcass.blood = Math.max(0.0F, carcass.blood - carcass.bloodMax * GUSH_SHARE);
+            }
+        }
+    }
+
+    /**
+     * Where a cut is, in the world: on the stump (the child's pivot in the parent's frame) if this record
+     * holds the parent, else on the piece's own cut end (its pivot). Null while that body is not loaded.
+     */
+    @Nullable
+    private static Vector3d woundPoint(ServerLevel level, CarcassSavedData.Carcass carcass, Rig rig, String parent, String child) {
+        Bone parentBone = rig.bone(parent).orElse(null);
+        Bone childBone = rig.bone(child).orElse(null);
+        boolean stump = carcass.bones.containsKey(parent);
+        java.util.UUID id = carcass.bones.get(stump ? parent : child);
+        dev.ryanhcode.sable.api.sublevel.ServerSubLevelContainer container = dev.ryanhcode.sable.api.sublevel.SubLevelContainer.getContainer(level);
+        if (parentBone == null || childBone == null || id == null || container == null
+                || !(container.getSubLevel(id) instanceof ServerSubLevel body) || body.isRemoved()) {
+            return null;
+        }
+        BlockPos center = body.getPlot().getCenterBlock();
+        Vector3d plot = CarcassAssembler.originOffset(stump ? parentBone : childBone).add(center.getX(), center.getY(), center.getZ());
+        if (stump) {
+            // the child's pivot in the parent's frame, as the joint had it
+            Vector3d relative = new Vector3d(childBone.offset()).sub(new Vector3d(parentBone.offset()));
+            new org.joml.Quaterniond(parentBone.rotation()).invert().transform(relative);
+            plot.add(relative.div(16.0));
+        }
+        return body.logicalPose().transformPosition(plot);
     }
 
     /** The torso box corner lowest in the world, where blood gathers and falls from. */

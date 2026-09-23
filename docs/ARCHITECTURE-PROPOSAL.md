@@ -621,6 +621,20 @@ pipes; chain clearance = hanging length + 1 block.
 - `CarcassButchery.capturing(sink, action)` hands every yield of a butchery action to a sink instead of the
   ground. Machines and the Spit Roast use it; players' tools do not.
 
+### 13.6a Wounds (verified in tests; look checked in the showcase)
+
+- `CarcassRot.cuts` lists the rig joints that touch a record but no longer hold ("parent>child"): a limb
+  cut off (its stump), a piece cut from its parent (its own end), or one butchered away. Root cells carry
+  the list (`CarcassPartBlockEntity.cuts`), refreshed with the look and freshness and at once after a
+  sever or butcher.
+- `WoundCaps` draws a wound texture (raw meat, a bone ring) over the face of the lost limb's physics box
+  nearest its pivot: just outside it on the limb, just inside the space it left on the stump, placed in
+  the parent's frame from the two bones' rest offsets and rotations. Not drawn in bloodless mode.
+- A fresh cut pours for 15 seconds wherever the body lies (`CarcassBleeding.gush`): drops and a stain
+  every couple of seconds under the stump (the child's pivot in the parent's frame, from the joint's own
+  maths) and under the piece's cut end; the stump drains 1% of the body's blood per step. Carried pieces
+  (hand, Spit Roast, Specimen Jar) draw wounds on every end.
+
 ### 13.7 Blood and the Bleeding Rack (verified)
 
 - Blood and Soul Blood are Registrate fluids tinted from vanilla water textures (Create's

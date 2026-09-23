@@ -106,6 +106,31 @@ public final class CarcassRot {
     /** Share of what a fresh butchering would give that a carcass leaves when it falls apart (before rot). */
     public static final float CRUMBLE_SHARE = 0.5F;
 
+    /**
+     * The rig's joints that touch this record but no longer hold, as "parent>child": a limb cut off (its
+     * stump on the parent), a piece cut from its parent (its own cut end), or one butchered away.
+     */
+    public static java.util.List<String> cuts(CarcassSavedData.Carcass carcass) {
+        Rig rig = RigManager.forEntity(carcass.entity).orElse(null);
+        if (rig == null) {
+            return java.util.List.of();
+        }
+        java.util.Set<String> here = pieces(carcass);
+        java.util.List<String> cuts = new java.util.ArrayList<>();
+        for (com.avicagan.bloodandbones.carcass.rig.Bone bone : rig.bones()) {
+            String parent = bone.parent().orElse(null);
+            if (parent == null || (!here.contains(parent) && !here.contains(bone.name()))) {
+                continue;
+            }
+            boolean held = here.contains(parent) && here.contains(bone.name())
+                    && carcass.joints.stream().anyMatch(joint -> joint.parent().equals(parent) && joint.child().equals(bone.name()));
+            if (!held) {
+                cuts.add(parent + ">" + bone.name());
+            }
+        }
+        return cuts;
+    }
+
     /** Every piece still part of the carcass: its own bodies and, while resting, the limbs folded into the torso. */
     public static java.util.Set<String> pieces(CarcassSavedData.Carcass carcass) {
         java.util.Set<String> pieces = new java.util.LinkedHashSet<>(carcass.bones.keySet());
@@ -177,8 +202,9 @@ public final class CarcassRot {
         return true;
     }
 
-    /** Tell clients the current freshness through every loaded limb's root cell. */
+    /** Tell clients the current freshness, look and cut joints through every loaded limb's root cell. */
     public static void sync(ServerLevel level, CarcassSavedData.Carcass carcass, ServerSubLevel torso) {
+        java.util.List<String> cuts = cuts(carcass);
         dev.ryanhcode.sable.api.sublevel.ServerSubLevelContainer container = dev.ryanhcode.sable.api.sublevel.SubLevelContainer.getContainer(level);
         for (java.util.UUID id : carcass.bones.values()) {
             dev.ryanhcode.sable.sublevel.SubLevel subLevel = container == null ? null : container.getSubLevel(id);
@@ -197,6 +223,9 @@ public final class CarcassRot {
             // the look too: a skinned carcass whose limb was unloaded while it was skinned
             if (!be.look().equals(carcass.look)) {
                 be.setLook(carcass.look);
+                changed = true;
+            }
+            if (be.setCuts(cuts)) {
                 changed = true;
             }
             if (changed) {
