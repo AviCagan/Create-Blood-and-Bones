@@ -1,4 +1,9 @@
 {
+  "baby": {
+    "body_offset": 72.0,
+    "body_scale": 0.25,
+    "head": []
+  },
   "bones": [
     {
       "box_max": [

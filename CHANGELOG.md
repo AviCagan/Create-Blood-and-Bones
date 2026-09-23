@@ -12,7 +12,7 @@ Everything below is in development builds only; the art is placeholder (see the 
 - 79 rigged vanilla mobs with variants, the wither and the pufferfish included.
 - Babies of all 36 kinds that have them (calves, piglets, lambs, chicks, pups, kittens, cubs,
   bunnies, foals on their long legs, crias, baby zombies and villagers...), shaped as the game
-  draws them.
+  draws them. The smallest slimes and magma cubes leave little carcasses too.
 - Carcasses land with a wet thud, louder and deeper for heavier, faster falls, on the ground or a
   ship's deck; a hard landing splats blood.
 - Flies gather over rotting carcasses, and maggots squirm over ones nearly gone. Rotten carcasses
@@ -71,7 +71,8 @@ Everything below is in development builds only; the art is placeholder (see the 
 
 ### Known gaps
 
-- Slimes and magma cubes smaller than size 4 still die normally.
+- Middle-sized slimes and magma cubes (size 2) still split and die normally, and pieces of the
+  smallest ones say "from a baby".
 - Not rigged: the ender dragon and tropical fish.
 - Trolleys cannot ride chain conveyors that sit on a Sable sub-level (a moving ship).
 - A carcass hanging from a hook that a Create contraption moves falls off rather than going along.

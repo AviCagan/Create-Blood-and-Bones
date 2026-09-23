@@ -31,5 +31,10 @@
         }
       ]
     }
+  },
+  "baby": {
+    "head": [],
+    "body_scale": 0.25,
+    "body_offset": 72.0
   }
 }

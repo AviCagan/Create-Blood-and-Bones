@@ -442,7 +442,7 @@ cooking, display and decoration is built and tested (§13). What remains needs d
 before code: the body-horror progression (Block 11: Surgery Table, prosthetics, minions,
 cybernetics, and the Fluid Backtank and its port, whose tiers are decided above), a carcass riding a
 hook on a Create contraption (§3.5), trolleys on chain conveyors that sit on a ship, the ender
-dragon and tropical fish, small slimes, and final art.
+dragon and tropical fish, middle-sized (size 2) slimes, and final art.
 
 ## 13. Slice 1 implementation notes (what is actually built, verified by the headless game tests)
 
@@ -761,7 +761,11 @@ dragon and tropical fish, small slimes, and final art.
   profession and level). A coat can use another model's layer by full name (`minecraft:llama#decor`).
 - Hook kills drop the mob's belongings (saddles, armour, chests and contents, held items) by calling the
   protected vanilla `dropCustomDeathLoot` and `dropEquipment` before the mob is removed.
-- Only full-size slimes and magma cubes become carcasses (the rig has one scale). The pufferfish is rigged
+- Big slimes and magma cubes (size 4) and the smallest (size 1) become carcasses; size 2 splits and dies
+  as usual. The rig is drawn at size 4, and the renderer scales the whole model by the size about the
+  feet, so size 1 is the rig's baby shape: everything at 0.25, moved down 72 model pixels
+  (`0.25 * (24 + 72)` puts the feet back on the feet). The assembler marks a size 1 slime as a baby, so
+  its pieces say "from a baby". `smallestSlimesLeaveCarcasses`. The pufferfish is rigged
   on its fully puffed model (its spikes stuck to the body), whatever its state when it died; the wither at
   its drawn double size, with its tail hung from the ribcage, bloodless, its heads sometimes giving a
   wither skeleton skull. Not rigged: the ender dragon (a multi-part entity with its own long death) and

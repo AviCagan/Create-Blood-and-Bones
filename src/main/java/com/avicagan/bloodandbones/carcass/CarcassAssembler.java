@@ -104,9 +104,14 @@ public final class CarcassAssembler {
         }
         // a baby is built from its kind's baby rig, if the kind has one; otherwise it dies as usual
         boolean baby = entity.isBaby();
-        // a slime's model is scaled by its size and the rig by the biggest; the small ones split and die as usual
-        if (entity instanceof net.minecraft.world.entity.monster.Slime slime && slime.getSize() < 4) {
-            return null;
+        // a slime's model is scaled by its size and the rig drawn at 4: the smallest (1) is the rig's baby
+        // shape, a quarter of it; the sizes between split and die as usual
+        if (entity instanceof net.minecraft.world.entity.monster.Slime slime) {
+            if (slime.getSize() == 1) {
+                baby = true;
+            } else if (slime.getSize() < 4) {
+                return null;
+            }
         }
         Optional<Rig> maybeRig = RigManager.forEntity(net.minecraft.core.registries.BuiltInRegistries.ENTITY_TYPE.getKey(entity.getType()), baby);
         if (maybeRig.isEmpty()) {

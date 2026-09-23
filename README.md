@@ -16,6 +16,7 @@ provided by [Sable](https://github.com/ryanhcode/sable).
   to drag the body; heavier animals slow you more. 79 vanilla mobs are rigged, with their colours
   and variants (all but the ender dragon and tropical fish). Babies of every kind that has them
   (36) leave carcasses shaped like the baby: a calf's big head on a small body, a foal's long legs.
+  Big slimes and magma cubes leave carcasses, and so do the smallest ones.
 - **Butchery.** The Cleaver takes limbs off at the joint, leaving raw wounds with the bone
   showing on both ends, and breaks loose pieces down into meat, bone, offal and fat, with scraps of
   meat flying. Blades come away bloody and stay that way for a few minutes. The Flensing
@@ -71,7 +72,7 @@ incremental. `./gradlew runClient` / `runServer` / `runData` are configured by M
 
 ### Development aids
 
-- `./gradlew runGameTestServer` runs the game tests headless (173: every rigged mob and baby,
+- `./gradlew runGameTestServer` runs the game tests headless (174: every rigged mob and baby,
   butchery, rot, bleeding, machines and their filters, cooking and display, chains, recipes,
   advancements and sounds).
 - `./gradlew runData -Dbloodandbones.dump_layers=minecraft:goat#main,...` writes those vanilla

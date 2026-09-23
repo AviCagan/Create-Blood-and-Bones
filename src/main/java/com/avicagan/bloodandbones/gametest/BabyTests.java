@@ -172,6 +172,49 @@ public class BabyTests {
         helper.succeed();
     }
 
+    /**
+     * The smallest slime and magma cube leave a carcass a quarter the size of a big one's, starting where the
+     * game draws them (the cube's middle a quarter of a block up); a middle-sized one still splits as usual.
+     */
+    @GameTest(template = "empty", timeoutTicks = 20)
+    public static void smallestSlimesLeaveCarcasses(GameTestHelper helper) {
+        for (EntityType<? extends net.minecraft.world.entity.monster.Slime> type : java.util.List.of(EntityType.SLIME, EntityType.MAGMA_CUBE)) {
+            net.minecraft.world.entity.monster.Slime slime = helper.spawn(type, new BlockPos(3, 2, 3));
+            slime.setSize(1, true);
+            Vec3 pos = slime.position();
+            CarcassSavedData.Carcass carcass = CarcassAssembler.assemble(slime, null);
+            slime.discard();
+            if (carcass == null || !carcass.baby) {
+                helper.fail("The smallest " + type + " should leave a small carcass");
+                return;
+            }
+            Rig grown = RigManager.forEntity(carcass.entity).orElseThrow();
+            Rig small = RigManager.forCarcass(carcass).orElseThrow();
+            if (small.weight() > grown.weight() / 8.0F) {
+                helper.fail("A size 1 " + type + " should weigh far less than a size 4 one: " + small.weight() + " vs " + grown.weight());
+                return;
+            }
+            UUID torso = carcass.bones.get(small.root().name());
+            if (!(SubLevelContainer.getContainer(helper.getLevel()).getSubLevel(torso) instanceof ServerSubLevel body)) {
+                helper.fail("The small " + type + " carcass has no body");
+                return;
+            }
+            double up = body.logicalPose().position().y - pos.y;
+            if (Math.abs(up - 0.25) > 0.1) {
+                helper.fail("The small " + type + " starts " + up + " blocks above its feet, expected about 0.25");
+                return;
+            }
+            net.minecraft.world.entity.monster.Slime middle = helper.spawn(type, new BlockPos(7, 2, 7));
+            middle.setSize(2, true);
+            if (CarcassAssembler.assemble(middle, null) != null) {
+                helper.fail("A size 2 " + type + " should split and die as usual");
+                return;
+            }
+            middle.discard();
+        }
+        helper.succeed();
+    }
+
     /** Foals: the head and body shrink as usual, but the game draws them on their own long legs. */
     @GameTest(template = "empty", timeoutTicks = 200)
     public static void foalCarcass(GameTestHelper helper) {

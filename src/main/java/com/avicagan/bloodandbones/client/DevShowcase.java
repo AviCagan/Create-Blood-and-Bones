@@ -269,6 +269,16 @@ public final class DevShowcase {
         // off to the side: the biggest and the smallest odd ones
         witherShown = carcass(level, EntityType.WITHER, o.offset(-17, 0, 6));
         carcass(level, EntityType.PUFFERFISH, o.offset(-20, 0, 4));
+        // the smallest slime and magma cube, a quarter the size of a big one
+        for (EntityType<? extends net.minecraft.world.entity.monster.Slime> type : java.util.List.of(EntityType.SLIME, EntityType.MAGMA_CUBE)) {
+            if (type.create(level) instanceof net.minecraft.world.entity.monster.Slime slime) {
+                slime.setSize(1, true);
+                slime.moveTo(o.getX() - (type == EntityType.SLIME ? 17.5 : 15.5), o.getY(), o.getZ() + 3.0, 0, 0);
+                level.addFreshEntity(slime);
+                CarcassAssembler.assemble(slime, null);
+                slime.discard();
+            }
+        }
         // and one well gone off, with flies
         CarcassSavedData.Carcass rotting = carcass(level, EntityType.COW, o.offset(-15, 0, 4));
         if (rotting != null) {
