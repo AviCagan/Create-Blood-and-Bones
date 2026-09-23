@@ -77,6 +77,10 @@ public class CarcassMachineBlockEntity extends KineticBlockEntity implements Cle
         @Override
         protected void onContentsChanged(int slot) {
             setChanged();
+            // a funnel emptying it: goggles should see the new count now, not at the next stroke
+            if (level != null && !level.isClientSide) {
+                sendData();
+            }
         }
     };
     /** Output only: nothing goes in from outside. */
@@ -161,7 +165,9 @@ public class CarcassMachineBlockEntity extends KineticBlockEntity implements Cle
             CarcassSavedData.Carcass carcass = target.carcass();
             // a carcass lying folded over the machine is unfolded so its limbs can be reached, in the same
             // stroke: left for the next one, it may already have settled and folded up again
-            if (carcass.resting && kind != MachineKind.DEGLOVER && CarcassRest.split(level, carcass) == null) {
+            // (only when this machine has something to cut on it: a head for the Beheader, any other limb for the
+            // Guillotine; else it would unfold the body every stroke for nothing)
+            if (carcass.resting && kind != MachineKind.DEGLOVER && (!hasWork(carcass, kind) || CarcassRest.split(level, carcass) == null)) {
                 continue;
             }
             boolean did = switch (kind) {
@@ -177,6 +183,21 @@ public class CarcassMachineBlockEntity extends KineticBlockEntity implements Cle
         return false;
     }
 
+
+    /** Whether a blade of this kind has anything to cut on this carcass; the Mangler grinds anything. */
+    private static boolean hasWork(CarcassSavedData.Carcass carcass, MachineKind kind) {
+        if (kind != MachineKind.GUILLOTINE && kind != MachineKind.BEHEADER) {
+            return true;
+        }
+        boolean heads = kind == MachineKind.BEHEADER;
+        for (CarcassJoints.Spec joint : carcass.joints) {
+            String bone = joint.child();
+            if (CarcassButchery.isAttached(carcass, bone) && isHead(bone) == heads && !(heads && hasHeadAbove(carcass, bone))) {
+                return true;
+            }
+        }
+        return false;
+    }
 
     /** Tear a limb off first, else grind a loose piece. The body is only ground once nothing hangs off it. */
     private boolean mangle(ServerLevel level, Target target) {

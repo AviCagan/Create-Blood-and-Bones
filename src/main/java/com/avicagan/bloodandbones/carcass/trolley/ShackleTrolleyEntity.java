@@ -185,8 +185,10 @@ public class ShackleTrolleyEntity extends Entity {
     public static final double GAP = 1.6;
 
     /**
-     * Another trolley is close ahead, so wait behind it (Create lets packages overlap; hanging bodies would
-     * swing into each other). Two on the same spot: the newer one waits.
+     * Another trolley going the same way is close ahead, so wait behind it (Create lets packages overlap;
+     * hanging bodies would swing into each other). One coming the other way is on the far strand of the
+     * loop, under 1.5 blocks across: let it pass, or the two would hold each other up for good. Two on the
+     * same spot: the newer one waits.
      */
     private boolean blockedAhead(ServerLevel level) {
         Set<ShackleTrolleyEntity> trolleys = LOADED.get(level);
@@ -205,6 +207,10 @@ public class ShackleTrolleyEntity extends Entity {
             if (distance >= GAP) {
                 continue;
             }
+            ChainConveyorBlockEntity otherBe = ChainCursor.conveyorAt(level, other.cursor.conveyor);
+            if (otherBe == null || other.cursor.heading(otherBe).dot(heading) < 0.3) {
+                continue;
+            }
             double ahead = offset.dot(heading);
             if (ahead > 0.1 || (Math.abs(ahead) <= 0.1 && distance < 0.5 && other.getId() < getId())) {
                 return true;
@@ -216,6 +222,11 @@ public class ShackleTrolleyEntity extends Entity {
     @Override
     public void tick() {
         super.tick();
+        // the carcass was ground up, fell apart or was taken down: an empty trolley has no reason to ride on
+        if (level() instanceof ServerLevel level && tickCount % 20 == 0 && carcassGone(level)) {
+            dropCarcass(level);
+            return;
+        }
         if (level() instanceof ServerLevel level && (joint == null || !joint.isValid())) {
             joint = null;
             attach(level); // the joint is memory-only: (re)build it after spawn, load, or the carcass reloading
@@ -337,6 +348,15 @@ public class ShackleTrolleyEntity extends Entity {
             joint.remove();
         }
         joint = null;
+    }
+
+    /** The body this trolley carries is gone for good (not merely in an unloaded chunk). */
+    private boolean carcassGone(ServerLevel level) {
+        if (carcassId == null || subLevelId == null) {
+            return true;
+        }
+        CarcassSavedData.Carcass carcass = CarcassSavedData.get(level).carcass(carcassId);
+        return carcass == null || !carcass.bones.containsValue(subLevelId);
     }
 
     /** Let the carcass fall and remove the trolley (drop a trolley item here if it is craftable). */

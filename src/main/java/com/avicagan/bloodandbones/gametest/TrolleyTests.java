@@ -272,4 +272,96 @@ public class TrolleyTests {
             helper.succeed();
         });
     }
+
+    /**
+     * Two trolleys coming at each other on the two strands of a loop pass instead of holding each other up;
+     * one whose carcass is ground up leaves the chain.
+     */
+    @GameTest(template = "empty", timeoutTicks = 500)
+    public static void trolleysPassEachOtherAndEmptyOnesLeave(GameTestHelper helper) {
+        ServerLevel level = helper.getLevel();
+        BlockPos aRel = new BlockPos(1, 6, 5);
+        BlockPos bRel = new BlockPos(9, 6, 5);
+        helper.setBlock(aRel, AllBlocks.CHAIN_CONVEYOR.getDefaultState());
+        helper.setBlock(bRel, AllBlocks.CHAIN_CONVEYOR.getDefaultState());
+        helper.setBlock(aRel.above(), AllBlocks.CREATIVE_MOTOR.getDefaultState().setValue(CreativeMotorBlock.FACING, Direction.DOWN));
+        BlockPos a = helper.absolutePos(aRel);
+        BlockPos b = helper.absolutePos(bRel);
+        UUID[] ids = new UUID[2];
+        for (int i = 0; i < 2; i++) {
+            Cow cow = helper.spawn(EntityType.COW, new BlockPos(3 + 3 * i, 2, 5));
+            CarcassSavedData.Carcass carcass = CarcassAssembler.assemble(cow, null);
+            cow.discard();
+            if (carcass == null) {
+                helper.fail("Carcass assembly returned null");
+                return;
+            }
+            ids[i] = carcass.id;
+        }
+        ShackleTrolleyEntity[] trolleys = new ShackleTrolleyEntity[2];
+        double[][] range = {{Double.MAX_VALUE, -Double.MAX_VALUE}, {Double.MAX_VALUE, -Double.MAX_VALUE}};
+        helper.runAfterDelay(5, () -> {
+            ChainConveyorBlockEntity aBe = (ChainConveyorBlockEntity) level.getBlockEntity(a);
+            ChainConveyorBlockEntity bBe = (ChainConveyorBlockEntity) level.getBlockEntity(b);
+            if (!bBe.addConnectionTo(a) || !aBe.addConnectionTo(b)) {
+                helper.fail("Could not connect the chain conveyors");
+            }
+            ((CreativeMotorBlockEntity) level.getBlockEntity(a.above())).generatedSpeed.setValue(32);
+        });
+        helper.runAfterDelay(30, () -> {
+            ServerSubLevelContainer container = SubLevelContainer.getContainer(level);
+            BlockPos[] from = {a, b};
+            for (int i = 0; i < 2; i++) {
+                ChainConveyorBlockEntity be = (ChainConveyorBlockEntity) level.getBlockEntity(from[i]);
+                be.prepareStats();
+                CarcassSavedData.Carcass carcass = CarcassSavedData.get(level).carcass(ids[i]);
+                if (carcass == null || !(container.getSubLevel(carcass.bones.get(carcass.rootBone)) instanceof ServerSubLevel torso)) {
+                    helper.fail("No carcass " + i);
+                    return;
+                }
+                // one on each strand, heading towards each other
+                ChainCursor cursor = new ChainCursor(from[i], from[1 - i].subtract(from[i]), 2.0f, be.reversed);
+                trolleys[i] = ShackleTrolleyEntity.create(BBEntities.SHACKLE_TROLLEY.get(), level, cursor, carcass, torso);
+                level.addFreshEntity(trolleys[i]);
+            }
+        });
+        for (int t = 40; t < 300; t++) {
+            helper.runAfterDelay(t, () -> {
+                for (int i = 0; i < 2; i++) {
+                    if (trolleys[i] != null && !trolleys[i].isRemoved()) {
+                        range[i][0] = Math.min(range[i][0], trolleys[i].getX());
+                        range[i][1] = Math.max(range[i][1], trolleys[i].getX());
+                    }
+                }
+            });
+        }
+        helper.runAfterDelay(300, () -> {
+            for (int i = 0; i < 2; i++) {
+                if (range[i][1] - range[i][0] < 4.0) {
+                    helper.fail("Trolley " + i + " was held up: it only covered " + range[i][0] + ".." + range[i][1]);
+                }
+            }
+            // grind the first one's body away: its trolley must leave the chain
+            CarcassSavedData.Carcass carcass = CarcassSavedData.get(level).carcass(ids[0]);
+            if (carcass == null) {
+                helper.fail("Carcass 0 is gone before it was ground");
+                return;
+            }
+            com.avicagan.bloodandbones.carcass.CarcassButchery.capturing(stack -> {
+            }, () -> {
+                com.avicagan.bloodandbones.carcass.CarcassButchery.butcher(level, carcass, carcass.rootBone, null);
+                return null;
+            });
+        });
+        helper.runAfterDelay(340, () -> {
+            if (!trolleys[0].isRemoved()) {
+                helper.fail("A trolley whose carcass was ground up is still riding the chain");
+            }
+            if (trolleys[1].isRemoved()) {
+                helper.fail("The other trolley should still be carrying its carcass");
+            }
+            trolleys[1].dropCarcass(level);
+            helper.succeed();
+        });
+    }
 }

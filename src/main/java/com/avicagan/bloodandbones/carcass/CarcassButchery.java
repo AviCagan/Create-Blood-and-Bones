@@ -99,8 +99,14 @@ public final class CarcassButchery {
         container.removeSubLevel(body, dev.ryanhcode.sable.sublevel.storage.SubLevelRemovalReason.REMOVED);
         if (wasRoot) {
             // nothing is left to hold the rest of this record together: each remaining piece stands alone
+            // (a piece jointed to one split off before it has already gone with that one)
             for (String other : java.util.List.copyOf(carcass.bones.keySet())) {
-                data.splitOff(level, carcass, other);
+                if (carcass.bones.containsKey(other)) {
+                    data.splitOff(level, carcass, other);
+                }
+            }
+            if (carcass.bones.isEmpty()) {
+                data.forget(carcass);
             }
         }
         Blood.wound(level, carcass, where, 24, 3);

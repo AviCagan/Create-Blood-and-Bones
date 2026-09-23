@@ -40,6 +40,7 @@ public final class CarcassHandover {
     private static final Method DROP_EQUIPMENT = ObfuscationReflectionHelper.findMethod(LivingEntity.class, "dropEquipment");
     private static final Method DROP_CUSTOM_LOOT = ObfuscationReflectionHelper.findMethod(LivingEntity.class,
             "dropCustomDeathLoot", ServerLevel.class, DamageSource.class, boolean.class);
+    private static final Method SHOULD_DROP_LOOT = ObfuscationReflectionHelper.findMethod(LivingEntity.class, "shouldDropLoot");
 
     private static final Map<ServerLevel, List<Pending>> PENDING = new WeakHashMap<>();
 
@@ -123,6 +124,7 @@ public final class CarcassHandover {
                 continue;
             }
             iterator.remove();
+            com.avicagan.bloodandbones.event.CarcassEvents.handedOver(entity.getUUID());
             dropBelongings(level, entity, pending.source());
             entity.discard();
             CarcassSavedData.Carcass carcass = data.carcass(pending.carcassId());
@@ -143,14 +145,24 @@ public final class CarcassHandover {
     /**
      * The body keeps the meat, but not what the mob was carrying: saddles, horse armour, chests and their
      * contents, and anything it held or wore. The normal death that would have dropped these is cancelled,
-     * so the same vanilla drop calls are made here (they are protected, hence the reflection).
+     * so the same vanilla drop calls are made here, under the same rules as LivingEntity#dropAllDeathLoot
+     * (worn and held gear only with doMobLoot, never from a baby) and through the same LivingDropsEvent, so
+     * other mods can see or change them. They are protected, hence the reflection.
      */
     private static void dropBelongings(ServerLevel level, LivingEntity entity, DamageSource source) {
+        boolean byPlayer = source.getEntity() instanceof net.minecraft.world.entity.player.Player;
+        entity.captureDrops(new java.util.ArrayList<>());
         try {
-            DROP_CUSTOM_LOOT.invoke(entity, level, source, source.getEntity() instanceof net.minecraft.world.entity.player.Player);
+            if ((boolean) SHOULD_DROP_LOOT.invoke(entity) && level.getGameRules().getBoolean(net.minecraft.world.level.GameRules.RULE_DOMOBLOOT)) {
+                DROP_CUSTOM_LOOT.invoke(entity, level, source, byPlayer);
+            }
             DROP_EQUIPMENT.invoke(entity);
         } catch (ReflectiveOperationException | RuntimeException e) {
             BloodAndBones.LOGGER.warn("Could not drop the belongings of {}", entity, e);
+        }
+        java.util.Collection<net.minecraft.world.entity.item.ItemEntity> drops = entity.captureDrops(null);
+        if (drops != null && !drops.isEmpty() && !net.neoforged.neoforge.common.CommonHooks.onLivingDrops(entity, source, drops, byPlayer)) {
+            drops.forEach(level::addFreshEntity);
         }
     }
 

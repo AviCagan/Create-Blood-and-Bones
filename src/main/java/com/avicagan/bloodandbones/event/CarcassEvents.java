@@ -169,6 +169,14 @@ public class CarcassEvents {
         }
     }
 
+    /**
+     * The handover is done and the mob is going: forget it here. Its death was cancelled, so no drop event of
+     * its own ever came to clear it, and the belongings the handover drops next must not be cancelled.
+     */
+    public static void handedOver(UUID entity) {
+        CARCASS_DEATHS.remove(entity);
+    }
+
     @SubscribeEvent
     public static void onDrops(LivingDropsEvent event) {
         if (CARCASS_DEATHS.remove(event.getEntity().getUUID())) {
