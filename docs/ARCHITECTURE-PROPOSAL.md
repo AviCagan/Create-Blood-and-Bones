@@ -714,6 +714,12 @@ pipes; chain clearance = hanging length + 1 block.
   across a machine set flush in a floor, or hanging over it, is reached. A resting carcass is unfolded
   first. A body over the machine offers its nearest limb of the right kind.
 - Yields go to a 9-slot output exposed as an extract-only item handler; a full output stops the machine.
+- A Create `FilteringBehaviour` on the top face by the north edge (`MachineFilterSlot`: the machines sit
+  flush in a floor, so the top is the face within reach, and its middle is under the body). Empty: any
+  carcass. A spawn egg or a carcass piece: that mob (Create's plain filter would match any piece). Any
+  other filter is tested against a piece of the carcass's body, so list and attribute filters work with
+  the piece attributes. The machine's renderer now runs with Flywheel too, for the slot; it still leaves
+  the shaft to the visual.
 
 ### 13.9 Materials (verified)
 

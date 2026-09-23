@@ -107,6 +107,41 @@ public class MachineTests {
         });
     }
 
+    /**
+     * A machine's filter picks what it works on: with a pig's spawn egg in it, a Guillotine leaves a cow
+     * lying on it alone; with a cow's egg or a cow piece it takes the cow; with a Create attribute filter
+     * set to "is a piece of Cow", too.
+     */
+    @GameTest(template = "empty", timeoutTicks = 300)
+    public static void machineFilterPicksTheMob(GameTestHelper helper) {
+        UUID id = setUp(helper, BBBlocks.GUILLOTINE, EntityType.COW);
+        ServerLevel level = helper.getLevel();
+        var machine = (com.avicagan.bloodandbones.machine.CarcassMachineBlockEntity) level.getBlockEntity(helper.absolutePos(MACHINE));
+        CarcassSavedData.Carcass cow = CarcassSavedData.get(level).carcass(id);
+        if (!machine.accepts(cow)) {
+            helper.fail("With no filter the machine should take any carcass");
+        }
+        machine.filtering.setFilter(new ItemStack(net.minecraft.world.item.Items.PIG_SPAWN_EGG));
+        if (machine.accepts(cow)) {
+            helper.fail("A pig egg in the filter should pass over a cow");
+        }
+        helper.runAfterDelay(200, () -> {
+            CarcassSavedData.Carcass still = CarcassSavedData.get(level).carcass(id);
+            helper.assertTrue(still != null && still.joints.size() == 5, "a guillotine set for pigs cut the cow");
+            machine.filtering.setFilter(new ItemStack(net.minecraft.world.item.Items.COW_SPAWN_EGG));
+            helper.assertTrue(machine.accepts(still), "a cow egg in the filter should take the cow");
+            machine.filtering.setFilter(com.avicagan.bloodandbones.item.CarcassPieceItem.of(still, "head"));
+            helper.assertTrue(machine.accepts(still), "a cow piece in the filter should take the cow");
+            ItemStack attributeFilter = new ItemStack(com.simibubi.create.AllItems.ATTRIBUTE_FILTER.get());
+            attributeFilter.set(com.simibubi.create.AllDataComponents.ATTRIBUTE_FILTER_MATCHED_ATTRIBUTES, java.util.List.of(
+                    new com.simibubi.create.content.logistics.item.filter.attribute.ItemAttribute.ItemAttributeEntry(
+                            new com.avicagan.bloodandbones.registry.BBItemAttributes.PieceOf(net.minecraft.resources.ResourceLocation.withDefaultNamespace("cow")), false)));
+            machine.filtering.setFilter(attributeFilter);
+            helper.assertTrue(machine.accepts(still), "an attribute filter for cow pieces should take the cow");
+            helper.succeed();
+        });
+    }
+
     /** The Beheader takes the head off and leaves the legs on. */
     @GameTest(template = "empty", timeoutTicks = 900)
     public static void beheaderTakesTheHead(GameTestHelper helper) {

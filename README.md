@@ -40,7 +40,8 @@ provided by [Sable](https://github.com/ryanhcode/sable).
   experience, or a Diesel Generators fermenting basin), the Blood Diamond (spout-fill a diamond
   with soul blood), and the Blood Steel Cleaver (twice as deep a chop).
 - **Sorting.** Create's Attribute Filter knows carcass pieces: which mob, which part (head, body,
-  limb, tail), fresh or rotting, skinned, or from a baby, so funnels and frogports can sort meat.
+  limb, tail), fresh or rotting, skinned, or from a baby, so funnels and frogports can sort meat. The
+  machines have a filter slot too: a spawn egg, a piece or a filter picks the carcasses they work on.
 - **Cooking and display.** The Spit Roast turns a carcass piece over a fire until it browns (or
   burns). The Specimen Jar keeps a piece on show, and so does the Butcher's Hook, on a wall, where a
   fresh piece drips blood on the floor. The

@@ -96,9 +96,38 @@ public class CarcassMachineBlockEntity extends KineticBlockEntity implements Cle
         }
     };
     public int timer;
+    /**
+     * Which carcasses it works on: all when empty; a spawn egg or a carcass piece for one kind of mob; a
+     * Create filter for anything its settings allow (the piece attributes: a mob, fresh, rotting, baby...).
+     */
+    public com.simibubi.create.foundation.blockEntity.behaviour.filtering.FilteringBehaviour filtering;
 
     public CarcassMachineBlockEntity(BlockEntityType<?> type, BlockPos pos, BlockState state) {
         super(type, pos, state);
+    }
+
+    @Override
+    public void addBehaviours(List<com.simibubi.create.foundation.blockEntity.behaviour.BlockEntityBehaviour> behaviours) {
+        super.addBehaviours(behaviours);
+        filtering = new com.simibubi.create.foundation.blockEntity.behaviour.filtering.FilteringBehaviour(this, new MachineFilterSlot());
+        behaviours.add(filtering);
+    }
+
+    /** Whether the filter lets this machine work on this carcass. */
+    public boolean accepts(CarcassSavedData.Carcass carcass) {
+        ItemStack filter = filtering == null ? ItemStack.EMPTY : filtering.getFilter();
+        if (filter.isEmpty()) {
+            return true;
+        }
+        if (filter.getItem() instanceof net.minecraft.world.item.SpawnEggItem egg) {
+            return net.minecraft.core.registries.BuiltInRegistries.ENTITY_TYPE.getKey(egg.getType(filter)).equals(carcass.entity);
+        }
+        if (filter.is(com.avicagan.bloodandbones.registry.BBItems.CARCASS_PIECE.get())) {
+            // Create's plain filter would match any piece at all; this one means "a carcass like this"
+            com.avicagan.bloodandbones.item.CarcassPieceItem.Piece piece = com.avicagan.bloodandbones.item.CarcassPieceItem.piece(filter);
+            return piece == null || piece.entity().equals(carcass.entity);
+        }
+        return filtering.test(com.avicagan.bloodandbones.item.CarcassPieceItem.of(carcass, carcass.rootBone));
     }
 
     public static void registerCapabilities(RegisterCapabilitiesEvent event) {
@@ -328,6 +357,9 @@ public class CarcassMachineBlockEntity extends KineticBlockEntity implements Cle
         }
         AABB zone = zone();
         for (CarcassSavedData.Carcass carcass : List.copyOf(CarcassSavedData.get(level).all())) {
+            if (!accepts(carcass)) {
+                continue;
+            }
             for (Map.Entry<String, UUID> bone : carcass.bones.entrySet()) {
                 if (!(container.getSubLevel(bone.getValue()) instanceof ServerSubLevel body) || body.isRemoved()) {
                     continue;

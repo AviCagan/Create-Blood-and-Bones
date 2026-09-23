@@ -19,7 +19,8 @@ Everything below is in development builds only; the art is placeholder (see the 
 - Blood stains on the ground (they squelch underfoot) from kills, cuts, drag trails and uncaught bleeding; they dry, fade
   and wash off in rain, and bloodless mode hides them. Bloodless mobs no longer spray blood.
 - Shackle Hook and Shackle Trolley on Create chain conveyors; trolleys queue a body's length apart.
-- Mangler, Guillotine, Beheader and Deglover kinetic machines.
+- Mangler, Guillotine, Beheader and Deglover kinetic machines, each with a filter slot on its top
+  edge: a spawn egg, a carcass piece or a Create filter picks which carcasses it works on.
 - Blood Steel, Blood Diamond, Soul Blood recipes; Blood Steel Cleaver.
 - Spit Roast, Specimen Jar and Butcher's Hook (a wall hook to hang a piece on; a fresh piece drips
   blood onto the floor below until it runs dry).

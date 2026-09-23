@@ -279,6 +279,17 @@ public final class DevShowcase {
                 motor.generatedSpeed.setValue(64);
             }
             carcass(level, onThem[i], at.above(), false);
+            if (i == 0 && level.getBlockEntity(at) instanceof com.avicagan.bloodandbones.machine.CarcassMachineBlockEntity machine) {
+                // the filter slot, set for what lies on it
+                machine.filtering.setFilter(new ItemStack(net.minecraft.world.item.Items.COW_SPAWN_EGG));
+            }
+        }
+
+        // a spare Beheader with nothing on it, its filter slot set for zombies, in plain view
+        BlockPos spare = new BlockPos(o.getX() + 10, ground, o.getZ() + 12);
+        level.setBlockAndUpdate(spare, BBBlocks.BEHEADER.getDefaultState());
+        if (level.getBlockEntity(spare) instanceof com.avicagan.bloodandbones.machine.CarcassMachineBlockEntity machine) {
+            machine.filtering.setFilter(new ItemStack(net.minecraft.world.item.Items.ZOMBIE_SPAWN_EGG));
         }
 
         // row C: spit roast, specimen jar, bleeding rack under a hanging carcass, blood pools
@@ -372,6 +383,8 @@ public final class DevShowcase {
                 new View(o.getX() + 11.5, eye + 1.5, o.getZ() + 13.5, 0, 12),
                 // the wither and the pufferfish
                 new View(o.getX() - 18.0, eye + 1.0, o.getZ() + 0.5, 0, 25),
+                // a spare Beheader's filter slot, set for zombies
+                new View(o.getX() + 10.5, eye + 1.6, o.getZ() + 10.3, 0, 55),
                 // the foal beside a grown horse, and a baby llama
                 new View(o.getX() + 8.5, eye + 1.2, o.getZ() - 2.0, 0, 18),
                 // bloody casing and butcher's hooks

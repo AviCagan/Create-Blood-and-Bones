@@ -14,6 +14,14 @@ public class CarcassMachineRenderer extends KineticBlockEntityRenderer<CarcassMa
         super(context);
     }
 
+    /** The filter slot on the top; the shaft itself only without Flywheel (the visual draws it with). */
+    @Override
+    protected void renderSafe(CarcassMachineBlockEntity be, float partialTicks, com.mojang.blaze3d.vertex.PoseStack ms,
+                              net.minecraft.client.renderer.MultiBufferSource buffer, int light, int overlay) {
+        com.simibubi.create.foundation.blockEntity.behaviour.filtering.FilteringRenderer.renderOnBlockEntity(be, partialTicks, ms, buffer, light, overlay);
+        super.renderSafe(be, partialTicks, ms, buffer, light, overlay);
+    }
+
     @Override
     protected SuperByteBuffer getRotatedModel(CarcassMachineBlockEntity be, BlockState state) {
         return CachedBuffers.partialFacing(AllPartialModels.SHAFT_HALF, state, Direction.DOWN);

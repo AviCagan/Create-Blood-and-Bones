@@ -31,7 +31,7 @@ public class BBBlockEntities {
 
     public static final BlockEntityEntry<com.avicagan.bloodandbones.machine.CarcassMachineBlockEntity> CARCASS_MACHINE = BloodAndBones.REGISTRATE
             .blockEntity("carcass_machine", com.avicagan.bloodandbones.machine.CarcassMachineBlockEntity::new)
-            .visual(() -> com.avicagan.bloodandbones.machine.CarcassMachineVisual::new, false)
+            .visual(() -> com.avicagan.bloodandbones.machine.CarcassMachineVisual::new, true)
             .validBlocks(BBBlocks.MANGLER, BBBlocks.GUILLOTINE, BBBlocks.BEHEADER, BBBlocks.DEGLOVER)
             .renderer(() -> com.avicagan.bloodandbones.machine.CarcassMachineRenderer::new)
             .register();
