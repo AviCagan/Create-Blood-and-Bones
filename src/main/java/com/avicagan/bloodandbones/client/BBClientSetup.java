@@ -17,6 +17,7 @@ public final class BBClientSetup {
 
     @SubscribeEvent
     public static void onClientSetup(FMLClientSetupEvent event) {
+        net.createmod.ponder.foundation.PonderIndex.addPlugin(new com.avicagan.bloodandbones.client.ponder.BBPonderPlugin());
         event.enqueueWork(() -> ItemProperties.register(BBItems.MEAT_HOOK.get(), BloodAndBones.asResource("dragging"),
                 // the hook is in the carcass, not in the hand, while its holder drags something
                 (stack, level, entity, seed) -> entity != null && ClientDragState.all().containsKey(entity.getUUID()) ? 1.0F : 0.0F));

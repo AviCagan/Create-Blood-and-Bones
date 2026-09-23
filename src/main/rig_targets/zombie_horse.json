@@ -70,13 +70,13 @@
     "left_hind_leg": {
       "min_degrees": [
         -75,
-        -10,
-        -15
+        -20,
+        -40
       ],
       "max_degrees": [
         75,
-        10,
-        15
+        20,
+        40
       ],
       "damping": 3.0,
       "stiffness": 0.1,
@@ -85,13 +85,13 @@
     "right_hind_leg": {
       "min_degrees": [
         -75,
-        -10,
-        -15
+        -20,
+        -40
       ],
       "max_degrees": [
         75,
-        10,
-        15
+        20,
+        40
       ],
       "damping": 3.0,
       "stiffness": 0.1,
@@ -100,13 +100,13 @@
     "left_front_leg": {
       "min_degrees": [
         -75,
-        -10,
-        -15
+        -20,
+        -40
       ],
       "max_degrees": [
         75,
-        10,
-        15
+        20,
+        40
       ],
       "damping": 3.0,
       "stiffness": 0.1,
@@ -115,13 +115,13 @@
     "right_front_leg": {
       "min_degrees": [
         -75,
-        -10,
-        -15
+        -20,
+        -40
       ],
       "max_degrees": [
         75,
-        10,
-        15
+        20,
+        40
       ],
       "damping": 3.0,
       "stiffness": 0.1,

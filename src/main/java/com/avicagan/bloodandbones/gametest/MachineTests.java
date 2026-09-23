@@ -33,7 +33,7 @@ public class MachineTests {
     private static final BlockPos MOTOR = new BlockPos(5, 2, 5);
     private static final BlockPos MACHINE = MOTOR.above();
 
-    /** A creative motor turning the machine at 256 RPM, and a fresh carcass of the mob lying over it. */
+    /** A creative motor turning the machine at 32 RPM, and a fresh carcass of the mob lying over it. */
     private static UUID setUp(GameTestHelper helper, BlockEntry<?> machine, EntityType<? extends Mob> type) {
         // the machine sits flush in a floor, as it would in a real build
         for (int x = -2; x <= 2; x++) {
@@ -44,7 +44,8 @@ public class MachineTests {
         helper.setBlock(MOTOR, AllBlocks.CREATIVE_MOTOR.getDefaultState().setValue(DirectionalKineticBlock.FACING, Direction.UP));
         helper.setBlock(MACHINE, machine.getDefaultState());
         if (helper.getLevel().getBlockEntity(helper.absolutePos(MOTOR)) instanceof CreativeMotorBlockEntity motor) {
-            motor.generatedSpeed.setValue(256);
+            // a slow shaft: the carcass has time to settle and fold between strokes
+            motor.generatedSpeed.setValue(32);
         }
         Mob mob = helper.spawn(type, MACHINE.above());
         CarcassSavedData.Carcass carcass = CarcassAssembler.assemble(mob, null);
@@ -93,7 +94,7 @@ public class MachineTests {
     }
 
     /** The Guillotine takes limbs off a cow lying on it, but never the head. */
-    @GameTest(template = "empty", timeoutTicks = 300)
+    @GameTest(template = "empty", timeoutTicks = 900)
     public static void guillotineTakesLegsNotHead(GameTestHelper helper) {
         UUID id = setUp(helper, BBBlocks.GUILLOTINE, EntityType.COW);
         ServerLevel level = helper.getLevel();
@@ -107,7 +108,7 @@ public class MachineTests {
     }
 
     /** The Beheader takes the head off and leaves the legs on. */
-    @GameTest(template = "empty", timeoutTicks = 300)
+    @GameTest(template = "empty", timeoutTicks = 900)
     public static void beheaderTakesTheHead(GameTestHelper helper) {
         UUID id = setUp(helper, BBBlocks.BEHEADER, EntityType.COW);
         ServerLevel level = helper.getLevel();
@@ -120,7 +121,7 @@ public class MachineTests {
     }
 
     /** The Deglover skins a sheep over it: hide and wool in its output. */
-    @GameTest(template = "empty", timeoutTicks = 300)
+    @GameTest(template = "empty", timeoutTicks = 900)
     public static void degloverSkinsASheep(GameTestHelper helper) {
         UUID id = setUp(helper, BBBlocks.DEGLOVER, EntityType.SHEEP);
         ServerLevel level = helper.getLevel();
@@ -133,7 +134,7 @@ public class MachineTests {
     }
 
     /** The Mangler tears a cow apart and grinds the body into meat. */
-    @GameTest(template = "empty", timeoutTicks = 600)
+    @GameTest(template = "empty", timeoutTicks = 1600)
     public static void manglerGrindsACow(GameTestHelper helper) {
         setUp(helper, BBBlocks.MANGLER, EntityType.COW);
         helper.succeedWhen(() -> helper.assertTrue(held(helper, Items.BEEF) > 0,

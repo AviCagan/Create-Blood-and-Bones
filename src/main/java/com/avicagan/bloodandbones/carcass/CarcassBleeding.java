@@ -139,7 +139,10 @@ public final class CarcassBleeding {
         return lowest;
     }
 
-    /** The first thing solid straight below, if it is a Bleeding Rack within reach. */
+    /**
+     * The Bleeding Rack the blood lands in: going down from the drip point, the first rack in that column or
+     * the eight around it (a tray catches a little wide), no lower than the first solid thing straight below.
+     */
     @Nullable
     public static BleedingRackBlockEntity rackBelow(ServerLevel level, Vector3d from, int reach) {
         BlockPos start = BlockPos.containing(from.x, from.y, from.z);
@@ -150,6 +153,14 @@ public final class CarcassBleeding {
             }
             if (level.getBlockEntity(pos) instanceof BleedingRackBlockEntity rack) {
                 return rack;
+            }
+            for (net.minecraft.core.Direction side : net.minecraft.core.Direction.Plane.HORIZONTAL) {
+                for (int corner = 0; corner < 2; corner++) {
+                    BlockPos around = corner == 0 ? pos.relative(side) : pos.relative(side).relative(side.getClockWise());
+                    if (level.isLoaded(around) && level.getBlockEntity(around) instanceof BleedingRackBlockEntity rack) {
+                        return rack;
+                    }
+                }
             }
             if (!level.getBlockState(pos).getCollisionShape(level, pos).isEmpty()) {
                 return null;

@@ -96,6 +96,14 @@ public class BBLang {
         advancement("spit_roast", "Low and Slow", "Build a Spit Roast");
         advancement("specimen", "Curiosities", "Make a Specimen Jar to keep a piece of something on show");
 
+        // ---- Ponder scenes (text_N in the order each scene shows its text)
+        ponder("mangler", "Grinding Carcasses with the Mangler", "The Mangler tears the limbs off a carcass, then grinds every piece into meat, bone, offal and fat", "It is driven by a shaft from below. The faster it turns, the faster it works", "It works any carcass lying on it or hanging over it. Set it flush in a floor so a body lies across it", "What it makes waits inside. Take it with an empty hand, or pull it out with a funnel or hopper");
+        ponder("guillotine", "Taking Limbs Off with the Guillotine", "The Guillotine takes the nearest limb off a carcass in one stroke. It never takes the head", "It is driven by a shaft from below. The faster it turns, the faster it works", "It works any carcass lying on it or hanging over it. Set it flush in a floor so a body lies across it", "What it makes waits inside. Take it with an empty hand, or pull it out with a funnel or hopper");
+        ponder("beheader", "Taking Heads with the Beheader", "The Beheader takes heads off. Zombies, skeletons, creepers and piglins sometimes leave their skull whole", "It is driven by a shaft from below. The faster it turns, the faster it works", "It works any carcass lying on it or hanging over it. Set it flush in a floor so a body lies across it", "What it makes waits inside. Take it with an empty hand, or pull it out with a funnel or hopper");
+        ponder("deglover", "Skinning with the Deglover", "The Deglover strips the hide off a carcass, and a sheep's wool with it", "It is driven by a shaft from below. The faster it turns, the faster it works", "It works any carcass lying on it or hanging over it. Set it flush in a floor so a body lies across it", "What it makes waits inside. Take it with an empty hand, or pull it out with a funnel or hopper");
+        ponder("bleeding_rack", "Draining Blood with the Bleeding Rack", "The Bleeding Rack is a drip tray with a tank for catching blood", "Hang a carcass on a Shackle Hook up to 8 blocks above it, and its blood drips into the tray", "An Encased Fan blowing across the body drains it up to four times faster", "Pipes can pull the blood from the rack's sides and bottom. When the rack is full, the carcass stops draining");
+        ponder("spit_roast", "Roasting on the Spit Roast", "Set the Spit Roast over heat: a campfire, fire, lava or a Blaze Burner", "A shaft turns the spit. It only roasts while it turns", "Right-click with a carcass piece to skewer it. It browns as it cooks", "Take it off with an empty hand once cooked: it comes apart into cooked meat and bones. Leave it too long and it burns");
+
         // ---- JEI information pages
         jei("meat_hook",
                 "The Meat Hook is where a carcass comes from. Kill an animal or monster with it and the whole body stays behind as a ragdoll you can hook, drag, hang, cut up and process, instead of its loot.",
@@ -125,6 +133,13 @@ public class BBLang {
     private static void advancement(String id, String title, String description) {
         BloodAndBones.REGISTRATE.addRawLang("advancements.bloodandbones." + id + ".title", title);
         BloodAndBones.REGISTRATE.addRawLang("advancements.bloodandbones." + id + ".description", description);
+    }
+
+    private static void ponder(String scene, String header, String... texts) {
+        BloodAndBones.REGISTRATE.addRawLang("bloodandbones.ponder." + scene + ".header", header);
+        for (int i = 0; i < texts.length; i++) {
+            BloodAndBones.REGISTRATE.addRawLang("bloodandbones.ponder." + scene + ".text_" + (i + 1), texts[i]);
+        }
     }
 
     private static void jei(String id, String... pages) {

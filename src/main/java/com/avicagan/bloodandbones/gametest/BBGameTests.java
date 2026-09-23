@@ -1110,6 +1110,48 @@ public class BBGameTests {
         helper.succeed();
     }
 
+    /** Shoved from the side, a tall four-legged carcass falls over instead of standing dead on stiff legs. */
+    @GameTest(template = "empty", timeoutTicks = 200)
+    public static void sidewaysPushTopplesALlama(GameTestHelper helper) {
+        toppleTest(helper, EntityType.LLAMA);
+    }
+
+    @GameTest(template = "empty", timeoutTicks = 200)
+    public static void sidewaysPushTopplesAHorse(GameTestHelper helper) {
+        toppleTest(helper, EntityType.HORSE);
+    }
+
+    private static void toppleTest(GameTestHelper helper, EntityType<? extends net.minecraft.world.entity.Mob> type) {
+        ServerLevel level = helper.getLevel();
+        net.minecraft.world.entity.Mob mob = helper.spawn(type, new BlockPos(5, 2, 5));
+        mob.setYRot(0);
+        mob.yBodyRot = 0;
+        mob.setYHeadRot(0);
+        CarcassSavedData.Carcass carcass = CarcassAssembler.assemble(mob, null);
+        mob.discard();
+        if (carcass == null) {
+            helper.fail("Carcass assembly returned false");
+            return;
+        }
+        UUID id = carcass.id;
+        double[] start = new double[1];
+        helper.runAfterDelay(2, () -> {
+            ServerSubLevel torso = liveBones(helper, level, carcass).get(carcass.rootBone);
+            start[0] = torso.logicalPose().position().y();
+            // facing south, so east is square to its side
+            CarcassAssembler.shove(level, carcass, new Vec3(1, 0, 0));
+        });
+        helper.runAfterDelay(150, () -> {
+            CarcassSavedData.Carcass now = CarcassSavedData.get(level).carcass(id);
+            ServerSubLevel torso = liveBones(helper, level, now).get(now.rootBone);
+            double drop = start[0] - torso.logicalPose().position().y();
+            if (drop < 0.25) {
+                helper.fail(type + " is still standing after a push from the side: torso dropped only " + drop);
+            }
+            helper.succeed();
+        });
+    }
+
     /** A red mooshroom wears the red coat and yields red mushrooms when skinned. */
     @GameTest(template = "empty", timeoutTicks = 200)
     public static void mooshroomKeepsItsColour(GameTestHelper helper) {

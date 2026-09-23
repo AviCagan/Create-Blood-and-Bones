@@ -47,6 +47,7 @@ public class BloodAndBones {
         if (net.neoforged.fml.loading.FMLEnvironment.dist.isClient()) {
             // the rig exporter reads client-only model classes; a dedicated server must never link it
             modEventBus.addListener(BBDatagen::gatherData);
+            com.avicagan.bloodandbones.client.DevShowcase.init();
         }
         modEventBus.addListener(BBGameTests::register);
         modEventBus.addListener(BBNetwork::register);

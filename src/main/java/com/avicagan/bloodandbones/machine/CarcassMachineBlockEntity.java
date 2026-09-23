@@ -159,10 +159,10 @@ public class CarcassMachineBlockEntity extends KineticBlockEntity implements Cle
         MachineKind kind = kind();
         for (Target target : targets) {
             CarcassSavedData.Carcass carcass = target.carcass();
-            if (carcass.resting) {
-                // a carcass lying folded over the machine is unfolded first so its limbs can be reached
-                CarcassRest.split(level, carcass);
-                return true;
+            // a carcass lying folded over the machine is unfolded so its limbs can be reached, in the same
+            // stroke: left for the next one, it may already have settled and folded up again
+            if (carcass.resting && kind != MachineKind.DEGLOVER && CarcassRest.split(level, carcass) == null) {
+                continue;
             }
             boolean did = switch (kind) {
                 case MANGLER -> mangle(level, target);
@@ -176,6 +176,7 @@ public class CarcassMachineBlockEntity extends KineticBlockEntity implements Cle
         }
         return false;
     }
+
 
     /** Tear a limb off first, else grind a loose piece. The body is only ground once nothing hangs off it. */
     private boolean mangle(ServerLevel level, Target target) {

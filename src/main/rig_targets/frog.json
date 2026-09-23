@@ -30,13 +30,13 @@
     "root/left_leg": {
       "min_degrees": [
         -75,
-        -10,
-        -15
+        -20,
+        -40
       ],
       "max_degrees": [
         75,
-        10,
-        15
+        20,
+        40
       ],
       "damping": 3.0,
       "stiffness": 0.1,
@@ -45,13 +45,13 @@
     "root/right_leg": {
       "min_degrees": [
         -75,
-        -10,
-        -15
+        -20,
+        -40
       ],
       "max_degrees": [
         75,
-        10,
-        15
+        20,
+        40
       ],
       "damping": 3.0,
       "stiffness": 0.1,
@@ -60,13 +60,13 @@
     "root/body/right_arm": {
       "min_degrees": [
         -75,
-        -10,
-        -15
+        -20,
+        -40
       ],
       "max_degrees": [
         75,
-        10,
-        15
+        20,
+        40
       ],
       "damping": 3.0,
       "stiffness": 0.1,
@@ -75,13 +75,13 @@
     "root/body/left_arm": {
       "min_degrees": [
         -75,
-        -10,
-        -15
+        -20,
+        -40
       ],
       "max_degrees": [
         75,
-        10,
-        15
+        20,
+        40
       ],
       "damping": 3.0,
       "stiffness": 0.1,
