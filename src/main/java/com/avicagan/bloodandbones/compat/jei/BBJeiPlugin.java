@@ -39,14 +39,38 @@ public class BBJeiPlugin implements IModPlugin {
         registration.addRecipeCatalyst(new net.minecraft.world.item.ItemStack(BBBlocks.DEGLOVER.get()), ButcheryCategory.TYPE);
     }
 
+    /** the Butchery pages JEI is showing, so they can be swapped when the server sends new tables */
+    private static java.util.List<ButcheryCategory.Entry> shown = java.util.List.of();
+
     @Override
     public void onRuntimeAvailable(mezz.jei.api.runtime.IJeiRuntime jeiRuntime) {
         runtime = jeiRuntime;
     }
 
     @Override
+    public void onRuntimeUnavailable() {
+        runtime = null;
+    }
+
+    /** The tables can arrive after JEI has started: swap the old pages for new ones. */
+    private static void refreshButchery() {
+        if (runtime == null) {
+            return;
+        }
+        if (!shown.isEmpty()) {
+            runtime.getRecipeManager().hideRecipes(ButcheryCategory.TYPE, shown);
+        }
+        shown = ButcheryCategory.entries();
+        if (!shown.isEmpty()) {
+            runtime.getRecipeManager().addRecipes(ButcheryCategory.TYPE, shown);
+        }
+    }
+
+    @Override
     public void registerRecipes(IRecipeRegistration registration) {
-        registration.addRecipes(ButcheryCategory.TYPE, ButcheryCategory.entries());
+        shown = ButcheryCategory.entries();
+        registration.addRecipes(ButcheryCategory.TYPE, shown);
+        com.avicagan.bloodandbones.carcass.butchery.ButcheryManager.onClientTables = BBJeiPlugin::refreshButchery;
         registration.addIngredientInfo(BBItems.MEAT_HOOK.get(),
                 Component.translatable("bloodandbones.jei.meat_hook.1"),
                 Component.translatable("bloodandbones.jei.meat_hook.2"));

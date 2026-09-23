@@ -43,10 +43,10 @@ public class ButcheryCategory extends AbstractRecipeCategory<ButcheryCategory.En
         super(TYPE, Component.translatable("bloodandbones.jei.category.butchery"), helper.createDrawableItemLike(BBItems.CLEAVER.get()), WIDTH, HEIGHT);
     }
 
-    /** One entry per butchery table the (integrated) server has loaded. */
+    /** One entry per butchery table the server has sent us. */
     public static List<Entry> entries() {
         List<Entry> out = new ArrayList<>();
-        ButcheryManager.all().forEach((id, table) -> {
+        ButcheryManager.clientAll().forEach((id, table) -> {
             EntityType<?> type = BuiltInRegistries.ENTITY_TYPE.getOptional(table.entity()).orElse(null);
             if (type == null) {
                 return;

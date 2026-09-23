@@ -52,7 +52,7 @@ public class CarcassEvents {
         event.addListener(com.avicagan.bloodandbones.carcass.butchery.ButcheryManager.INSTANCE);
     }
 
-    /** Hand every joining or reloading player the rigs, the way vanilla hands out recipes and tags. */
+    /** Hand every joining or reloading player the rigs and butchery tables, the way vanilla hands out recipes and tags. */
     @SubscribeEvent
     public static void onDatapackSync(net.neoforged.neoforge.event.OnDatapackSyncEvent event) {
         // one packet per rig keeps each well under the frame limit however many mobs get rigs;
@@ -66,6 +66,9 @@ public class CarcassEvents {
                     for (com.avicagan.bloodandbones.network.RigSyncPayload payload : payloads) {
                         net.neoforged.neoforge.network.PacketDistributor.sendToPlayer(player, payload);
                     }
+                    // the butchery tables are small enough to go in one
+                    net.neoforged.neoforge.network.PacketDistributor.sendToPlayer(player,
+                            new com.avicagan.bloodandbones.network.ButcherySyncPayload(com.avicagan.bloodandbones.carcass.butchery.ButcheryManager.all()));
                 });
     }
 

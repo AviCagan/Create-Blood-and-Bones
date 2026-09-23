@@ -97,7 +97,8 @@ public class BBBlocks {
                     .build()))
             .onRegister(block -> com.simibubi.create.api.stress.BlockStressValues.IMPACTS.register(block, () -> 2.0))
             .lang("Spit Roast")
-            .simpleItem()
+            // the block model is only the posts (the turning rod is drawn by the renderer), so the item gets its own with the rod
+            .item().model((c, p) -> p.withExistingParent(c.getName(), p.modLoc("block/spit_roast_item"))).build()
             .register();
 
     public static final BlockEntry<com.avicagan.bloodandbones.cooking.SpecimenJarBlock> SPECIMEN_JAR = BloodAndBones.REGISTRATE

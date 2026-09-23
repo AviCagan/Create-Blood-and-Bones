@@ -14,12 +14,20 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.Optional;
 
-/** Loads the butchery tables. Server side only: yields are rolled on the server. */
+/**
+ * Loads the butchery tables. Yields are rolled on the server; the client keeps the copy the server sends it,
+ * which only the recipe viewer reads.
+ */
 public class ButcheryManager extends SimpleJsonResourceReloadListener {
     private static final Gson GSON = new GsonBuilder().create();
     public static final ButcheryManager INSTANCE = new ButcheryManager();
 
     private volatile Map<ResourceLocation, ButcheryTable> tables = Map.of();
+    /** what the server last sent us */
+    private static volatile Map<ResourceLocation, ButcheryTable> clientTables = Map.of();
+    /** told when new tables arrive from the server; the recipe viewer sets it to refresh its pages */
+    public static Runnable onClientTables = () -> {
+    };
 
     private ButcheryManager() {
         super(GSON, "butchery");
@@ -42,5 +50,16 @@ public class ButcheryManager extends SimpleJsonResourceReloadListener {
 
     public static Optional<ButcheryTable> forEntity(ResourceLocation entity) {
         return Optional.ofNullable(INSTANCE.tables.get(entity));
+    }
+
+    /** Client side: every table the server told us about, by mob. */
+    public static Map<ResourceLocation, ButcheryTable> clientAll() {
+        return clientTables;
+    }
+
+    public static void receiveClientTables(Map<ResourceLocation, ButcheryTable> received) {
+        clientTables = Map.copyOf(received);
+        BloodAndBones.LOGGER.debug("Client now knows {} butchery tables", clientTables.size());
+        onClientTables.run();
     }
 }
