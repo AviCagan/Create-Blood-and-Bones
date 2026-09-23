@@ -727,10 +727,13 @@ pipes; chain clearance = hanging length + 1 block.
   scale (`Bone.scale`), weight from the new boxes. `RigManager.forCarcass` / `forEntity(id, baby)` /
   `clientRig(id, baby)` hand it out (cached, cleared on reload). The record, the root cells and carried
   pieces remember `baby`; butchery gives as much less as the baby weighs less.
-- 27 kinds so far (cow, mooshroom, pig, sheep, chicken, wolf, goat, polar bear, panda, ocelot, cat, fox,
-  hoglin, zoglin, zombie, husk, drowned, zombie villager, piglin, villager, turtle, and, shrunk whole
-  around the feet, axolotl, bee, sniffer, armadillo, camel, strider). Others with babies die as
-  usual until they get a shape; horses and llamas draw their babies with their own rules.
+- 28 kinds so far (cow, mooshroom, pig, sheep, chicken, wolf, goat, polar bear, panda, ocelot, cat, fox,
+  hoglin, zoglin, zombie, husk, drowned, zombie villager, piglin, villager, turtle, rabbit, and, shrunk
+  whole around the feet, axolotl, bee, sniffer, armadillo, camel, strider). The rabbit draws its baby by
+  hand (`RabbitModel#renderToBuffer`), in the same form, so its shape is the vanilla numbers divided by
+  the grown rabbit's 0.6. Others with babies die as usual until they get a shape. Two kinds do not fit
+  the shape: the llama squashes its baby's head, body and legs by different amounts along each axis, and
+  horses, donkeys and mules swap in separate, longer baby legs and lower the body.
 - Assembly lifts a body so no box starts below the feet: the ghast's tentacles hang below its feet in
   the model and used to start stuck through the ground. Its tentacle collision boxes are short (drawn
   full length) so the body does not end up on stilts.
@@ -753,6 +756,18 @@ pipes; chain clearance = hanging length + 1 block.
   smelts each butchery yield through the vanilla smelting recipes.
 - Specimen Jar: holds one carcass piece in a translucent jar; the piece is drawn with the shared
   `CarcassModels.drawPiece`.
+- Butcher's Hook (the "wall Meat Hook"): a horizontal-facing block on the side of a sturdy block, with no
+  collision, holding one piece that hangs from its tip and sways. It falls with its wall, dropping the
+  piece. Its block entity is the Specimen Jar's.
+- Bloody Casing: a Create `CasingBlock` built with `BuilderTransformers.casing` and our own connected
+  sheet (`BBSpriteShifts`), made by spout-filling an Andesite Casing with 250 mB of blood. In bloodless
+  mode it shows as plain andesite casing: the swap wraps the model after Create's connected-texture
+  wrapper (lowest event priority) and finds the sprite a quad shows by where its UVs fall, since
+  Create moves the UVs onto the connected sheet but leaves the quad's sprite field alone.
+- On Create contraptions (`BBMovementChecks`): both hooks count as attached to the block they hang from
+  and as brittle, and the Butcher's Hook is a `create:movable_empty_collider`. The Shackle Hook now turns
+  with a structure or bearing (it had no `rotate`/`mirror`). A hook carrying a carcass is not yet made
+  into contraption data (§3.5): the carcass falls when its hook is moved.
 
 ### 13.13 JEI Butchery pages (verified)
 

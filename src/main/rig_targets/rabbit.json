@@ -84,5 +84,18 @@
       ]
     },
     "meat_per_block": 40.0
+  },
+  "baby": {
+    "head": [
+      "head"
+    ],
+    "head_scale": 0.94444,
+    "head_offset": [
+      0,
+      22,
+      2
+    ],
+    "body_scale": 0.66667,
+    "body_offset": 36
   }
 }

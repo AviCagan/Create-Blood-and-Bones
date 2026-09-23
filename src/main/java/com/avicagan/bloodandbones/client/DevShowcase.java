@@ -294,6 +294,25 @@ public final class DevShowcase {
             level.setBlockAndUpdate(new BlockPos(o.getX() + 6 + dx, ground, z + 1), BBFluids.soulBlood().defaultFluidState().createLegacyBlock());
         }
 
+        // row D: a wall of Bloody Casing (joined up) beside plain andesite casing, a Butcher's Hook with a
+        // piece on each
+        int wallZ = o.getZ() + 27;
+        for (int dx = -4; dx <= 1; dx++) {
+            for (int dy = 0; dy < 2; dy++) {
+                level.setBlockAndUpdate(new BlockPos(o.getX() + dx, o.getY() + dy, wallZ),
+                        dx <= -2 ? BBBlocks.BLOODY_CASING.getDefaultState() : AllBlocks.ANDESITE_CASING.getDefaultState());
+            }
+        }
+        BlockPos[] hooks = {new BlockPos(o.getX() - 3, o.getY() + 1, wallZ - 1), new BlockPos(o.getX() + 1, o.getY() + 1, wallZ - 1)};
+        CarcassSavedData.Carcass[] hookMeat = {jarPig, roastCow};
+        String[] hookBones = {"right_front_leg", "head"};
+        for (int i = 0; i < hooks.length; i++) {
+            level.setBlockAndUpdate(hooks[i], BBBlocks.BUTCHER_HOOK.getDefaultState().setValue(net.minecraft.world.level.block.HorizontalDirectionalBlock.FACING, Direction.NORTH));
+            if (hookMeat[i] != null && level.getBlockEntity(hooks[i]) instanceof com.avicagan.bloodandbones.cooking.ButcherHookBlockEntity hook) {
+                hook.put(CarcassPieceItem.of(hookMeat[i], hookBones[i]));
+            }
+        }
+
         double eye = o.getY();
         views = List.of(
                 // carcasses, from behind the row
@@ -313,7 +332,9 @@ public final class DevShowcase {
                 // the pig bleeding onto the ground
                 new View(o.getX() + 11.5, eye + 1.5, o.getZ() + 13.5, 0, 12),
                 // the wither and the pufferfish
-                new View(o.getX() - 18.0, eye + 1.0, o.getZ() + 0.5, 0, 25));
+                new View(o.getX() - 18.0, eye + 1.0, o.getZ() + 0.5, 0, 25),
+                // bloody casing and butcher's hooks
+                new View(o.getX() - 1.0, eye + 1.0, wallZ - 4.0, 0, 8));
         BloodAndBones.LOGGER.info("[showcase] built at {}", o);
     }
 

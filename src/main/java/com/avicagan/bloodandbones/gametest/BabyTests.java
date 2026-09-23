@@ -141,6 +141,12 @@ public class BabyTests {
         babyTest(helper, EntityType.SNIFFER);
     }
 
+    /** The rabbit draws its baby by hand, not through AgeableListModel; its shape is relative to the grown rabbit's 0.6. */
+    @GameTest(template = "empty", timeoutTicks = 200)
+    public static void babyRabbitCarcass(GameTestHelper helper) {
+        babyTest(helper, EntityType.RABBIT);
+    }
+
     /** A kind with no baby shape (a horse foal) still dies as it always did. */
     @GameTest(template = "empty", timeoutTicks = 20)
     public static void foalDiesAsUsual(GameTestHelper helper) {

@@ -27,9 +27,10 @@ import java.util.Map;
  * chunk meshes, so a change of mode redraws the world (BBClientConfig#redraw); items follow at once.
  */
 public final class BloodlessSwap extends BakedModelWrapper<BakedModel> {
-    /** Bloody texture -> clean texture, for every machine. */
+    /** Bloody texture -> clean texture, for every machine and the Bloody Casing (its joined-up edges too). */
     public static final Map<ResourceLocation, ResourceLocation> MACHINES = Map.of(
             ResourceLocation.fromNamespaceAndPath("bloodandbones", "block/bloody_casing"), ResourceLocation.fromNamespaceAndPath("create", "block/andesite_casing"),
+            ResourceLocation.fromNamespaceAndPath("bloodandbones", "block/bloody_casing_connected"), ResourceLocation.fromNamespaceAndPath("create", "block/andesite_casing_connected"),
             ResourceLocation.fromNamespaceAndPath("bloodandbones", "block/mangler_top"), ResourceLocation.fromNamespaceAndPath("bloodandbones", "block/mangler_top_clean"),
             ResourceLocation.fromNamespaceAndPath("bloodandbones", "block/butcher_blade"), ResourceLocation.fromNamespaceAndPath("bloodandbones", "block/butcher_blade_clean"),
             ResourceLocation.fromNamespaceAndPath("bloodandbones", "block/bloody_saw"), ResourceLocation.fromNamespaceAndPath("bloodandbones", "block/bloody_saw_clean"),
@@ -86,15 +87,37 @@ public final class BloodlessSwap extends BakedModelWrapper<BakedModel> {
         }
         List<BakedQuad> out = new ArrayList<>(quads.size());
         for (BakedQuad quad : quads) {
-            TextureAtlasSprite to = map.get(quad.getSprite());
-            out.add(to == null ? quad : retexture(quad, to));
+            TextureAtlasSprite from = drawnFrom(quad, map);
+            out.add(from == null ? quad : retexture(quad, from, map.get(from)));
         }
         return out;
     }
 
+    /**
+     * Which of the swapped sprites the quad actually shows, found by where its UVs are rather than by its
+     * sprite field: Create's connected textures move the UVs onto the joined-up sheet but leave the field
+     * naming the block's plain sprite.
+     */
+    @Nullable
+    private static TextureAtlasSprite drawnFrom(BakedQuad quad, Map<TextureAtlasSprite, TextureAtlasSprite> map) {
+        int[] vertices = quad.getVertices();
+        int stride = vertices.length / 4;
+        float u = 0;
+        float v = 0;
+        for (int i = 0; i < 4; i++) {
+            u += Float.intBitsToFloat(vertices[i * stride + 4]) / 4.0F;
+            v += Float.intBitsToFloat(vertices[i * stride + 5]) / 4.0F;
+        }
+        for (TextureAtlasSprite sprite : map.keySet()) {
+            if (u >= sprite.getU0() && u <= sprite.getU1() && v >= sprite.getV0() && v <= sprite.getV1()) {
+                return sprite;
+            }
+        }
+        return null;
+    }
+
     /** The same quad over another sprite: each corner's UV kept at the same place within its sprite. */
-    private static BakedQuad retexture(BakedQuad quad, TextureAtlasSprite to) {
-        TextureAtlasSprite from = quad.getSprite();
+    private static BakedQuad retexture(BakedQuad quad, TextureAtlasSprite from, TextureAtlasSprite to) {
         int[] vertices = quad.getVertices().clone();
         int stride = vertices.length / 4;
         for (int i = 0; i < 4; i++) {

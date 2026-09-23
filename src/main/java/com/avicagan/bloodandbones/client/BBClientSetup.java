@@ -68,7 +68,7 @@ public final class BBClientSetup {
      * In bloodless mode blood stains draw nothing (they still exist, and wash away the same), and the
      * machines draw clean casings and blades.
      */
-    @SubscribeEvent
+    @SubscribeEvent(priority = net.neoforged.bus.api.EventPriority.LOWEST)
     public static void onModifyBakingResult(net.neoforged.neoforge.client.event.ModelEvent.ModifyBakingResult event) {
         for (net.minecraft.world.level.block.state.BlockState state : com.avicagan.bloodandbones.registry.BBBlocks.BLOOD_STAIN.get().getStateDefinition().getPossibleStates()) {
             event.getModels().computeIfPresent(net.minecraft.client.renderer.block.BlockModelShaper.stateToModelLocation(state), (key, model) -> new BloodlessHidden(model));
@@ -82,9 +82,12 @@ public final class BBClientSetup {
             event.getModels().computeIfPresent(net.minecraft.client.resources.model.ModelResourceLocation.inventory(hook.getId()),
                     (key, model) -> new BloodlessSwap(model, BloodlessSwap.HOOK));
         }
-        // the machines' bloody casings and blades come out clean, in the world and in the hand
+        // the machines' bloody casings and blades come out clean, in the world and in the hand; so does the
+        // Bloody Casing, wrapped outside Create's connected textures (hence the lowest priority) so its
+        // joined-up edges are swapped too
         for (var machine : java.util.List.of(com.avicagan.bloodandbones.registry.BBBlocks.MANGLER, com.avicagan.bloodandbones.registry.BBBlocks.GUILLOTINE,
-                com.avicagan.bloodandbones.registry.BBBlocks.BEHEADER, com.avicagan.bloodandbones.registry.BBBlocks.DEGLOVER)) {
+                com.avicagan.bloodandbones.registry.BBBlocks.BEHEADER, com.avicagan.bloodandbones.registry.BBBlocks.DEGLOVER,
+                com.avicagan.bloodandbones.registry.BBBlocks.BLOODY_CASING)) {
             for (net.minecraft.world.level.block.state.BlockState state : machine.get().getStateDefinition().getPossibleStates()) {
                 event.getModels().computeIfPresent(net.minecraft.client.renderer.block.BlockModelShaper.stateToModelLocation(state),
                         (key, model) -> new BloodlessSwap(model, BloodlessSwap.MACHINES));

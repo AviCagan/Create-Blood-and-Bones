@@ -14,7 +14,7 @@ provided by [Sable](https://github.com/ryanhcode/sable).
 - **The Meat Hook.** Kill a mob with it and the body stays behind as a ragdoll carcass (Sable
   physics, one body per limb, jointed) instead of dropping loot. Its gear still drops. Hook a limb
   to drag the body; heavier animals slow you more. 79 vanilla mobs are rigged, with their colours
-  and variants (all but the ender dragon and tropical fish). Babies of 27 kinds leave carcasses
+  and variants (all but the ender dragon and tropical fish). Babies of 28 kinds leave carcasses
   shaped like the baby: a calf's big head on a small body.
 - **Butchery.** The Cleaver takes limbs off at the joint, leaving raw wounds with the bone
   showing on both ends, and breaks loose pieces down into meat, bone, offal and fat, with scraps of
@@ -40,7 +40,8 @@ provided by [Sable](https://github.com/ryanhcode/sable).
   experience, or a Diesel Generators fermenting basin), the Blood Diamond (spout-fill a diamond
   with soul blood), and the Blood Steel Cleaver (twice as deep a chop).
 - **Cooking and display.** The Spit Roast turns a carcass piece over a fire until it browns (or
-  burns). The Specimen Jar keeps a piece on show.
+  burns). The Specimen Jar keeps a piece on show, and so does the Butcher's Hook, on a wall. The
+  Bloody Casing (spout 250 mB of blood onto an Andesite Casing) joins up like Create's casings.
 - **Bloodless mode.** `bloodless_mode` in the client config (`config/bloodandbones-client.toml`)
   hides blood drops and stains, shows skinned carcasses as pale meat, the hook in a carcass and
   the machines clean, and blood itself as a muddy brown. A server can force it on for everyone with `/gamerule bloodandbonesBloodless true`.

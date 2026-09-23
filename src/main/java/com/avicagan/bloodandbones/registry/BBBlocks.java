@@ -151,6 +151,14 @@ public class BBBlocks {
             .item().model((c, p) -> p.withExistingParent(c.getName(), p.modLoc("block/butcher_hook"))).build()
             .register();
 
+    /** Andesite casing smeared with blood; joins up with its neighbours like Create's casings. */
+    public static final BlockEntry<com.simibubi.create.content.decoration.encasing.CasingBlock> BLOODY_CASING = BloodAndBones.REGISTRATE
+            .block("bloody_casing", com.simibubi.create.content.decoration.encasing.CasingBlock::new)
+            .properties(p -> p.mapColor(MapColor.CRIMSON_NYLIUM))
+            .transform(com.simibubi.create.foundation.data.BuilderTransformers.casing(() -> BBSpriteShifts.BLOODY_CASING))
+            .lang("Bloody Casing")
+            .register();
+
     public static void register() {
     }
 }

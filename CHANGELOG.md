@@ -10,8 +10,8 @@ Everything below is in development builds only; the art is placeholder (see the 
 - Cut limbs leave raw wounds, bone showing, on the stump and on the piece, and pour blood for a while.
 - Scraps of meat fly off when a limb is cut through or a piece is butchered or ground.
 - Cleavers and the Flensing Knife come away bloody from a cut or a hit and stay so for five minutes.
-- 79 rigged vanilla mobs with variants, the wither and the pufferfish included; babies of 27 kinds
-  (calves, piglets, lambs, chicks, pups, kittens, cubs, baby zombies and villagers...) shaped as the
+- 79 rigged vanilla mobs with variants, the wither and the pufferfish included; babies of 28 kinds
+  (calves, piglets, lambs, chicks, pups, kittens, cubs, bunnies, baby zombies and villagers...) shaped as the
   game draws them; hook kills drop the mob's gear and inventory.
 - Blood and Soul Blood fluids, the Bleeding Rack, fan-boosted bleeding, slower rot once bled.
 - Blood stains on the ground (they squelch underfoot) from kills, cuts, drag trails and uncaught bleeding; they dry, fade
@@ -19,7 +19,9 @@ Everything below is in development builds only; the art is placeholder (see the 
 - Shackle Hook and Shackle Trolley on Create chain conveyors; trolleys queue a body's length apart.
 - Mangler, Guillotine, Beheader and Deglover kinetic machines.
 - Blood Steel, Blood Diamond, Soul Blood recipes; Blood Steel Cleaver.
-- Spit Roast and Specimen Jar.
+- Spit Roast, Specimen Jar and Butcher's Hook (a wall hook to hang a piece on).
+- Bloody Casing: andesite casing filled with blood, joining up like Create's casings.
+- Both hooks ride Create contraptions with the block they hang from.
 - Item descriptions, JEI pages (a Butchery page per mob, sent to players on servers too), Ponder
   scenes, advancements.
 - A `bloodandbonesBloodless` game rule forces bloodless mode for everyone; bloodless mode also shows
@@ -30,10 +32,11 @@ Everything below is in development builds only; the art is placeholder (see the 
 
 ### Known gaps
 
-- Babies of kinds without a baby shape yet (horses, donkeys, mules, llamas and rabbits, which draw
-  their young by their own rules) and slimes smaller than size 4 still die normally.
+- Babies of kinds without a baby shape yet (horses, donkeys, mules and llamas, which draw their young
+  by their own rules) and slimes smaller than size 4 still die normally.
 - Not rigged: the ender dragon and tropical fish.
 - Trolleys cannot ride chain conveyors that sit on a Sable sub-level (a moving ship).
+- A carcass hanging from a hook that a Create contraption moves falls off rather than going along.
 - Bloodless mode does not yet rename items (Blood Steel, the Bleeding Rack and so on keep their names).
 - The drag test (`meatHookDragsByBody`) missed its 0.5-block mark by 0.02 once in about thirty runs.
 - All art is placeholder (see the README).
