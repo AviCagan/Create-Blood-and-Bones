@@ -10,8 +10,8 @@ import net.minecraft.network.chat.Component;
 import net.minecraft.resources.ResourceLocation;
 
 /**
- * JEI integration. Machines and their recipe categories arrive with the machines; until then every
- * item gets an information page. All text is placeholder until the real descriptions are written.
+ * JEI integration: a Butchery page per mob (what its carcass gives), and information pages for the tools,
+ * machines and fluids.
  */
 @JeiPlugin
 public class BBJeiPlugin implements IModPlugin {
@@ -22,8 +22,31 @@ public class BBJeiPlugin implements IModPlugin {
         return ID;
     }
 
+    /** For the developer showcase, which opens the butchery page to photograph it. */
+    public static mezz.jei.api.runtime.IJeiRuntime runtime;
+
+    @Override
+    public void registerCategories(mezz.jei.api.registration.IRecipeCategoryRegistration registration) {
+        registration.addRecipeCategories(new ButcheryCategory(registration.getJeiHelpers().getGuiHelper()));
+    }
+
+    @Override
+    public void registerRecipeCatalysts(mezz.jei.api.registration.IRecipeCatalystRegistration registration) {
+        registration.addRecipeCatalyst(new net.minecraft.world.item.ItemStack(BBItems.CLEAVER.get()), ButcheryCategory.TYPE);
+        registration.addRecipeCatalyst(new net.minecraft.world.item.ItemStack(BBItems.BLOOD_STEEL_CLEAVER.get()), ButcheryCategory.TYPE);
+        registration.addRecipeCatalyst(new net.minecraft.world.item.ItemStack(BBItems.FLENSING_KNIFE.get()), ButcheryCategory.TYPE);
+        registration.addRecipeCatalyst(new net.minecraft.world.item.ItemStack(BBBlocks.MANGLER.get()), ButcheryCategory.TYPE);
+        registration.addRecipeCatalyst(new net.minecraft.world.item.ItemStack(BBBlocks.DEGLOVER.get()), ButcheryCategory.TYPE);
+    }
+
+    @Override
+    public void onRuntimeAvailable(mezz.jei.api.runtime.IJeiRuntime jeiRuntime) {
+        runtime = jeiRuntime;
+    }
+
     @Override
     public void registerRecipes(IRecipeRegistration registration) {
+        registration.addRecipes(ButcheryCategory.TYPE, ButcheryCategory.entries());
         registration.addIngredientInfo(BBItems.MEAT_HOOK.get(),
                 Component.translatable("bloodandbones.jei.meat_hook.1"),
                 Component.translatable("bloodandbones.jei.meat_hook.2"));

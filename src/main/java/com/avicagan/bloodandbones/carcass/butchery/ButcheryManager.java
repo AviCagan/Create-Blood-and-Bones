@@ -35,6 +35,11 @@ public class ButcheryManager extends SimpleJsonResourceReloadListener {
         BloodAndBones.LOGGER.info("Loaded {} butchery tables", tables.size());
     }
 
+    /** Every loaded table, by table id. */
+    public static Map<ResourceLocation, ButcheryTable> all() {
+        return INSTANCE.tables;
+    }
+
     public static Optional<ButcheryTable> forEntity(ResourceLocation entity) {
         return Optional.ofNullable(INSTANCE.tables.get(entity));
     }
