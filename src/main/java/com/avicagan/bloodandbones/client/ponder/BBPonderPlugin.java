@@ -39,6 +39,9 @@ public class BBPonderPlugin implements PonderPlugin {
         scenes.forComponents(BBBlocks.BUTCHER_HOOK, BBBlocks.BLOODY_CASING).addStoryBoard("butcher_hook",
                 (b, u) -> BBScenes.butcherHook(b, u, java.util.List.of(piece("pig", "right_front_leg"), piece("cow", "head"),
                         piece("sheep", "left_hind_leg"), piece("chicken", "right_wing"))), AllCreatePonderTags.DECORATION);
+        scenes.forComponents(BBBlocks.BUTCHER_TABLE).addStoryBoard("butcher_table",
+                (b, u) -> BBScenes.butcherTable(b, u, piece("cow", "right_hind_leg"), new ItemStack(BBItems.CLEAVER.get()),
+                        java.util.List.of(new ItemStack(Items.BEEF, 2), new ItemStack(Items.BONE))), AllCreatePonderTags.DECORATION);
         scenes.forComponents(BBBlocks.SPIT_ROAST).addStoryBoard("spit_roast",
                 (b, u) -> BBScenes.spitRoast(b, u, new ItemStack(BBItems.CARCASS_PIECE.get())), AllCreatePonderTags.KINETIC_APPLIANCES);
     }
@@ -71,6 +74,7 @@ public class BBPonderPlugin implements PonderPlugin {
                 .add(BBBlocks.BLEEDING_RACK);
         tags.addToTag(AllCreatePonderTags.DECORATION)
                 .add(BBBlocks.BUTCHER_HOOK)
+                .add(BBBlocks.BUTCHER_TABLE)
                 .add(BBBlocks.BLOODY_CASING);
     }
 }

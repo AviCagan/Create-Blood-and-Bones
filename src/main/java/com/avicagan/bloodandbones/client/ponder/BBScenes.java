@@ -14,6 +14,7 @@ import net.minecraft.world.phys.Vec3;
 import java.util.List;
 
 import com.avicagan.bloodandbones.cooking.ButcherHookBlockEntity;
+import com.avicagan.bloodandbones.cooking.ButcherTableBlockEntity;
 
 /**
  * Ponder scenes. Schematics are in assets/bloodandbones/ponder/, 5 wide on a snow plate. Ponder worlds do
@@ -167,5 +168,55 @@ public final class BBScenes {
                 .pointAt(util.vector().topOf(top)).placeNearTarget();
         scene.idle(100);
         scene.markAsFinished();
+    }
+
+    /** A piece laid on the Butcher's Table and chopped with a Cleaver; then a Deployer doing the same. */
+    public static void butcherTable(SceneBuilder builder, SceneBuildingUtil util, ItemStack piece, ItemStack cleaver, List<ItemStack> yields) {
+        CreateSceneBuilder scene = new CreateSceneBuilder(builder);
+        scene.title("butcher_table", "Chopping Pieces on the Butcher's Table");
+        scene.configureBasePlate(0, 0, 5);
+        scene.showBasePlate();
+        BlockPos table = util.grid().at(2, 1, 2);
+        BlockPos deployer = util.grid().at(2, 3, 2);
+        scene.idle(5);
+        scene.world().showSection(util.select().position(table), Direction.DOWN);
+        scene.idle(15);
+        scene.overlay().showControls(util.vector().topOf(table), Pointing.DOWN, 40).rightClick().withItem(piece);
+        scene.world().modifyBlockEntity(table, ButcherTableBlockEntity.class, be -> be.put(piece.copy()));
+        scene.overlay().showText(70).attachKeyFrame()
+                .text("Right-click the Butcher's Table with a carcass piece to lay it on the top")
+                .pointAt(util.vector().topOf(table)).placeNearTarget();
+        scene.idle(80);
+        scene.overlay().showControls(util.vector().topOf(table), Pointing.DOWN, 40).rightClick().withItem(cleaver);
+        scene.idle(10);
+        chop(scene, util, table, yields);
+        scene.overlay().showText(80).attachKeyFrame().colored(PonderPalette.RED)
+                .text("Chop it with a Cleaver: it comes apart into meat, bone, offal and fat, spoiled as far as it had rotted")
+                .pointAt(util.vector().topOf(table)).placeNearTarget();
+        scene.idle(90);
+        scene.world().showSection(util.select().position(deployer), Direction.DOWN);
+        scene.world().modifyBlockEntityNBT(util.select().position(deployer), com.simibubi.create.content.kinetics.deployer.DeployerBlockEntity.class,
+                nbt -> nbt.put("HeldItem", cleaver.saveOptional(scene.world().getHolderLookupProvider())));
+        scene.idle(15);
+        scene.world().modifyBlockEntity(table, ButcherTableBlockEntity.class, be -> be.put(piece.copy()));
+        scene.overlay().showText(80).attachKeyFrame()
+                .text("A Deployer holding a Cleaver chops too. A funnel or hopper can lay the pieces on the table")
+                .pointAt(util.vector().centerOf(deployer)).placeNearTarget();
+        scene.idle(30);
+        scene.world().moveDeployer(deployer, 1, 20);
+        scene.idle(20);
+        chop(scene, util, table, yields);
+        scene.world().moveDeployer(deployer, -1, 20);
+        scene.idle(60);
+        scene.markAsFinished();
+    }
+
+    /** The piece on the table comes apart: it goes, and its yields pop up off the top. */
+    private static void chop(CreateSceneBuilder scene, SceneBuildingUtil util, BlockPos table, List<ItemStack> yields) {
+        scene.world().modifyBlockEntity(table, ButcherTableBlockEntity.class, ButcherTableBlockEntity::take);
+        for (int i = 0; i < yields.size(); i++) {
+            double side = (i - (yields.size() - 1) / 2.0) * 0.08;
+            scene.world().createItemEntity(util.vector().topOf(table), util.vector().of(side, 0.2, side * 0.5), yields.get(i));
+        }
     }
 }

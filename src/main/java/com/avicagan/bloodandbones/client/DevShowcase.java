@@ -79,7 +79,7 @@ public final class DevShowcase {
     /** Client ticks per Ponder scene: long enough for its first line of text. */
     private static final int PONDER_GAP = 110;
     private static final List<java.util.function.Supplier<? extends net.minecraft.world.level.ItemLike>> PONDERS = List.of(
-            BBBlocks.MANGLER::get, BBBlocks.BLEEDING_RACK::get, BBBlocks.SPIT_ROAST::get, BBBlocks.BUTCHER_HOOK::get);
+            BBBlocks.MANGLER::get, BBBlocks.BLEEDING_RACK::get, BBBlocks.SPIT_ROAST::get, BBBlocks.BUTCHER_HOOK::get, BBBlocks.BUTCHER_TABLE::get);
 
     private DevShowcase() {
     }
@@ -222,6 +222,10 @@ public final class DevShowcase {
                         && mc.screen instanceof net.createmod.ponder.foundation.ui.PonderUI ponder) {
                     // past the point where every hook has its piece
                     ponder.seekToTime(300);
+                } else if (phase == 20 && PONDERS.get(scene).get() == BBBlocks.BUTCHER_TABLE.get()
+                        && mc.screen instanceof net.createmod.ponder.foundation.ui.PonderUI ponder) {
+                    // the Deployer over the table, a piece on it
+                    ponder.seekToTime(250);
                 } else if (phase == PONDER_GAP - 1) {
                     Screenshot.grab(mc.gameDirectory, PREFIX + "ponder_" + scene + ".png", mc.getMainRenderTarget(), message -> {
                     });
