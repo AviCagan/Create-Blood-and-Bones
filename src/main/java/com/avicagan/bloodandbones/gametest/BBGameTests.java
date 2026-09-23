@@ -1099,6 +1099,17 @@ public class BBGameTests {
         helper.succeed();
     }
 
+    /** Every advancement parsed and loaded. */
+    @GameTest(template = "empty", timeoutTicks = 20)
+    public static void advancementsLoad(GameTestHelper helper) {
+        for (String name : new String[]{"butchery", "cleaver", "offal", "skinned", "hanging", "blood", "machine", "blood_steel", "soul_blood", "blood_diamond", "spit_roast", "specimen"}) {
+            if (helper.getLevel().getServer().getAdvancements().get(com.avicagan.bloodandbones.BloodAndBones.asResource(name)) == null) {
+                helper.fail("Advancement " + name + " did not load");
+            }
+        }
+        helper.succeed();
+    }
+
     /** A red mooshroom wears the red coat and yields red mushrooms when skinned. */
     @GameTest(template = "empty", timeoutTicks = 200)
     public static void mooshroomKeepsItsColour(GameTestHelper helper) {

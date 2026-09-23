@@ -1,0 +1,35 @@
+{
+  "parent": "bloodandbones:soul_blood",
+  "display": {
+    "icon": {
+      "id": "bloodandbones:blood_diamond"
+    },
+    "title": {
+      "translate": "advancements.bloodandbones.blood_diamond.title"
+    },
+    "description": {
+      "translate": "advancements.bloodandbones.blood_diamond.description"
+    },
+    "frame": "challenge",
+    "show_toast": true,
+    "announce_to_chat": true,
+    "hidden": false
+  },
+  "criteria": {
+    "has": {
+      "trigger": "minecraft:inventory_changed",
+      "conditions": {
+        "items": [
+          {
+            "items": "bloodandbones:blood_diamond"
+          }
+        ]
+      }
+    }
+  },
+  "requirements": [
+    [
+      "has"
+    ]
+  ]
+}

@@ -1,0 +1,35 @@
+{
+  "display": {
+    "icon": {
+      "id": "bloodandbones:meat_hook"
+    },
+    "title": {
+      "translate": "advancements.bloodandbones.butchery.title"
+    },
+    "description": {
+      "translate": "advancements.bloodandbones.butchery.description"
+    },
+    "frame": "task",
+    "show_toast": true,
+    "announce_to_chat": true,
+    "hidden": false,
+    "background": "minecraft:textures/block/red_nether_bricks.png"
+  },
+  "criteria": {
+    "has": {
+      "trigger": "minecraft:inventory_changed",
+      "conditions": {
+        "items": [
+          {
+            "items": "bloodandbones:meat_hook"
+          }
+        ]
+      }
+    }
+  },
+  "requirements": [
+    [
+      "has"
+    ]
+  ]
+}

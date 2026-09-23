@@ -1,0 +1,35 @@
+{
+  "parent": "bloodandbones:butchery",
+  "display": {
+    "icon": {
+      "id": "bloodandbones:cleaver"
+    },
+    "title": {
+      "translate": "advancements.bloodandbones.cleaver.title"
+    },
+    "description": {
+      "translate": "advancements.bloodandbones.cleaver.description"
+    },
+    "frame": "task",
+    "show_toast": true,
+    "announce_to_chat": true,
+    "hidden": false
+  },
+  "criteria": {
+    "has": {
+      "trigger": "minecraft:inventory_changed",
+      "conditions": {
+        "items": [
+          {
+            "items": "bloodandbones:cleaver"
+          }
+        ]
+      }
+    }
+  },
+  "requirements": [
+    [
+      "has"
+    ]
+  ]
+}

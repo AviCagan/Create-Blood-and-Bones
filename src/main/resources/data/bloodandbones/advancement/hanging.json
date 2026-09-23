@@ -1,0 +1,35 @@
+{
+  "parent": "bloodandbones:butchery",
+  "display": {
+    "icon": {
+      "id": "bloodandbones:shackle_hook"
+    },
+    "title": {
+      "translate": "advancements.bloodandbones.hanging.title"
+    },
+    "description": {
+      "translate": "advancements.bloodandbones.hanging.description"
+    },
+    "frame": "task",
+    "show_toast": true,
+    "announce_to_chat": true,
+    "hidden": false
+  },
+  "criteria": {
+    "has": {
+      "trigger": "minecraft:inventory_changed",
+      "conditions": {
+        "items": [
+          {
+            "items": "bloodandbones:shackle_hook"
+          }
+        ]
+      }
+    }
+  },
+  "requirements": [
+    [
+      "has"
+    ]
+  ]
+}

@@ -1,0 +1,35 @@
+{
+  "parent": "bloodandbones:hanging",
+  "display": {
+    "icon": {
+      "id": "bloodandbones:blood_bucket"
+    },
+    "title": {
+      "translate": "advancements.bloodandbones.blood.title"
+    },
+    "description": {
+      "translate": "advancements.bloodandbones.blood.description"
+    },
+    "frame": "task",
+    "show_toast": true,
+    "announce_to_chat": true,
+    "hidden": false
+  },
+  "criteria": {
+    "has": {
+      "trigger": "minecraft:inventory_changed",
+      "conditions": {
+        "items": [
+          {
+            "items": "bloodandbones:blood_bucket"
+          }
+        ]
+      }
+    }
+  },
+  "requirements": [
+    [
+      "has"
+    ]
+  ]
+}

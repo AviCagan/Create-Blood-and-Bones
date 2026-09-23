@@ -1,0 +1,40 @@
+{
+  "parent": "bloodandbones:offal",
+  "display": {
+    "icon": {
+      "id": "bloodandbones:mangler"
+    },
+    "title": {
+      "translate": "advancements.bloodandbones.machine.title"
+    },
+    "description": {
+      "translate": "advancements.bloodandbones.machine.description"
+    },
+    "frame": "goal",
+    "show_toast": true,
+    "announce_to_chat": true,
+    "hidden": false
+  },
+  "criteria": {
+    "has": {
+      "trigger": "minecraft:inventory_changed",
+      "conditions": {
+        "items": [
+          {
+            "items": [
+              "bloodandbones:mangler",
+              "bloodandbones:guillotine",
+              "bloodandbones:beheader",
+              "bloodandbones:deglover"
+            ]
+          }
+        ]
+      }
+    }
+  },
+  "requirements": [
+    [
+      "has"
+    ]
+  ]
+}

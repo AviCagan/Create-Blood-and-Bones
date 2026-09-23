@@ -3,116 +3,154 @@ package com.avicagan.bloodandbones.registry;
 import com.avicagan.bloodandbones.BloodAndBones;
 
 /**
- * Tooltip text shown by Create's item description system (hold Shift on an item).
- * All wording is placeholder until the real descriptions are written.
+ * Text that is not a plain name: Create's item descriptions (hold Shift on an item), JEI information pages
+ * and goggle lines. In descriptions, _underscored_ words are highlighted the way Create highlights them.
  */
 public class BBLang {
     public static void register() {
-        // JEI information pages
-        BloodAndBones.REGISTRATE.addRawLang("bloodandbones.jei.meat_hook.1",
-                "PH: The Meat Hook is how carcasses enter the pipeline. Kill an animal with it and the whole body stays behind as a physics carcass instead of dropping loot.");
-        BloodAndBones.REGISTRATE.addRawLang("bloodandbones.jei.meat_hook.2",
-                "PH: Right-click a limb to hook it and drag the carcass behind you. Heavier animals slow you down more. Right-click again to let go.");
-
-        block("shackle_hook",
-                "PH: Hangs a carcass. Drag one up to it and click the hook with the Meat Hook to hang it by the limb you are holding.",
-                "PH: A hanging carcass keeps swinging and can be worked on from all sides.",
-                "PH: Click the hook again, or with an empty hand, to let it down.");
-        BloodAndBones.REGISTRATE.addRawLang("bloodandbones.jei.shackle_hook.1",
-                "PH: Mount the Shackle Hook under a ceiling or on a wall. Drag a carcass close and click the hook with the Meat Hook to hang it.");
-        BloodAndBones.REGISTRATE.addRawLang("bloodandbones.jei.shackle_hook.2",
-                "PH: Hanging carcasses stay ragdolls, so they swing. To send one down a line, drag it under a Create chain conveyor and right-click the chain with the Meat Hook: it rides the chain on a trolley, round wheels and along strands, and stops at frogports addressed for it.");
-        BloodAndBones.REGISTRATE.addRawLang("bloodandbones.jei.cleaver.1",
-                "PH: The Cleaver takes a carcass apart. Right-click a limb three times to cut through the joint; the limb comes free as its own piece.");
-        BloodAndBones.REGISTRATE.addRawLang("bloodandbones.jei.cleaver.2",
-                "PH: Severed limbs can still be hooked and dragged on their own. The body cannot be cut through, only its limbs.");
-        BloodAndBones.REGISTRATE.addRawLang("bloodandbones.jei.flensing_knife.1",
-                "PH: The Flensing Knife takes the hide off a carcass. Right-click any part of it four times; the hide drops and the carcass shows bare meat.");
-        BloodAndBones.REGISTRATE.addRawLang("bloodandbones.jei.flensing_knife.2",
-                "PH: Skin before you butcher: a piece cut down with its hide still on loses the hide. An unsheared sheep gives its wool too. Rot spoils hides.");
-        item("flensing_knife",
-                "PH: Right-click a carcass to skin it. A few strokes take the whole hide off.",
-                "PH: Skin before butchering, or the hide is lost.",
-                "PH: A rotting carcass gives a poorer hide, a rotten one none.");
-        BloodAndBones.REGISTRATE.addRawLang("bloodandbones.jei.butchery.1",
-                "PH: Cut a limb off with the Cleaver, then keep cutting the loose piece: it breaks down into meat, bone, and from the body offal and fat.");
-        BloodAndBones.REGISTRATE.addRawLang("bloodandbones.jei.butchery.2",
-                "PH: Bigger pieces give more. Fresh meat is whole; half-rotten meat gives half; badly rotten meat turns to rotten flesh.");
+        // ---- tools
+        item("meat_hook",
+                "The butcher's first tool. Anything _killed_ with it is left behind as a whole _physics carcass_ instead of dropping loot.",
+                "When R-Clicked on a Carcass", "_Hooks_ the limb you clicked and _drags_ the body behind you. Heavier animals slow you more. R-Click again to let go.",
+                "When R-Clicked on a Shackle Hook", "Hangs the carcass you are dragging _by the neck_.",
+                "When R-Clicked on a Chain Conveyor", "Hangs the carcass you are dragging on a _trolley_ that rides the chain.");
         item("cleaver",
-                "PH: Right-click a limb of a carcass to cut into it. Three cuts sever the joint and the limb comes off; three more on a loose piece butcher it.",
-                "PH: The body itself cannot be cut through.",
-                "PH: A severed limb is its own piece: hook it, drag it, hang it.");
-        BloodAndBones.REGISTRATE.addRawLang("item.bloodandbones.carcass_piece.named", "%s %s");
-        item("carcass_piece",
-                "PH: A piece of carcass light enough to carry. Right-click the ground to put it back down as a body.",
-                "PH: Shift-right-click a head, a leg or a whole small animal with an empty hand to pick it up.",
-                "PH: A piece still attached to a body has to be cut off first.");
-        block("bleeding_rack",
-                "PH: A drip tray that catches blood. Hang a carcass on a Shackle Hook above it, or lay one on it, and the blood drains in.",
-                "PH: A hanging carcass drains faster than a lying one. An Encased Fan blowing across the body speeds it up.",
-                "PH: Pipes can pull blood from its sides and bottom, never fill it. When it is full the carcass stops draining.",
-                "PH: A carcass drained of its blood keeps longer before it rots.");
-        BloodAndBones.REGISTRATE.addRawLang("bloodandbones.jei.bleeding_rack.1",
-                "PH: Put the Bleeding Rack under a Shackle Hook (up to 8 blocks below) and hang a carcass: its blood drips into the tray. A carcass lying still on the rack drains too, more slowly.");
-        BloodAndBones.REGISTRATE.addRawLang("bloodandbones.jei.bleeding_rack.2",
-                "PH: A cow gives about a bucket. Fans across the body drain it up to four times faster. Pipe the blood out from the sides or bottom; a bled carcass rots slower.");
-        BloodAndBones.REGISTRATE.addRawLang("bloodandbones.gui.goggles.carcass_machine.output", "%1$s items waiting");
-        block("mangler",
-                "PH: Tears carcasses apart and grinds the pieces into meat, bone, offal and fat. Drive it with a shaft from below.",
-                "PH: Works whatever carcass lies on it or hangs over it, up to two blocks up. Limbs come off first, then every piece is ground.",
-                "PH: What it makes waits inside: take it with an empty hand, or pull it out with a funnel, chute or hopper. When full it stops.");
-        block("guillotine",
-                "PH: A heavy blade that takes a limb off in one stroke. Drive it with a shaft from below.",
-                "PH: Cuts the limb nearest the blade off any carcass over it. It never takes the head: that is the Beheader's job.");
-        block("beheader",
-                "PH: A spinning saw that takes heads off in one stroke. Drive it with a shaft from below.",
-                "PH: Zombies, skeletons, creepers and piglins sometimes leave their skull whole. A wither skeleton's rarely does.");
-        block("deglover",
-                "PH: Spiked rollers that strip the hide off a carcass. Drive it with a shaft from below.",
-                "PH: A few turns and the whole hide comes away, wool and all. Faster shafts strip faster.");
-        BloodAndBones.REGISTRATE.addRawLang("bloodandbones.jei.machines.1",
-                "PH: The Mangler, Guillotine, Beheader and Deglover work carcasses lying on them or hanging over them. Each takes a shaft from below; the faster it turns, the faster it works.");
-        BloodAndBones.REGISTRATE.addRawLang("bloodandbones.jei.machines.2",
-                "PH: Guillotine: limbs off. Beheader: heads off, sometimes a skull. Deglover: hides off. Mangler: everything, down to meat. Outputs are taken out with funnels or an empty hand.");
+                "A heavy blade for taking a carcass _apart_. Slow in a fight, but it goes through bone.",
+                "When R-Clicked on a Limb", "_Cuts_ into the joint. Three cuts and the limb comes off as a piece of its own.",
+                "When R-Clicked on a Loose Piece", "_Butchers_ it: three cuts and it falls apart into meat, bone and, from the body, offal and fat.");
         item("blood_steel_cleaver",
-                "PH: A cleaver of blood steel. Each chop goes twice as deep: a limb comes off in two, a piece is butchered in two.");
+                "A cleaver of _blood steel_. Every chop goes _twice as deep_.",
+                "When R-Clicked on a Carcass", "Takes a limb off, or butchers a piece, in _two_ chops instead of three.");
+        item("flensing_knife",
+                "A curved knife for taking the _hide_ off in one piece.",
+                "When R-Clicked on a Carcass", "_Skins_ it: four strokes take the whole hide off, and a sheep's wool with it. The carcass shows _bare meat_ afterwards.",
+                "Before Butchering", "Skin _first_: a piece butchered with its hide on loses the hide. A rotting hide is poorer; a rotten one is gone.");
+        item("carcass_piece",
+                "A piece of carcass light enough to _carry_: a head, a leg, or a whole small animal.",
+                "When Shift-R-Clicked with an Empty Hand", "Picks a _loose_ piece up off the ground. Pieces still attached have to be cut off first.",
+                "When R-Clicked on the Ground", "Puts it back down as a _body_ again.",
+                "On a Spit Roast or in a Specimen Jar", "It can be _roasted_, or kept on _show_.");
+
+        // ---- hanging, bleeding
+        block("shackle_hook",
+                "A hook on a chain for _hanging_ carcasses. Mount it under a ceiling or on a wall.",
+                "When R-Clicked with a Meat Hook", "Hangs the carcass you are dragging by the _neck_, belly facing out, swinging. Click again to let it down.",
+                "Hanging", "A hung carcass never _settles_, can be worked from every side, and _bleeds_ into a Bleeding Rack below.");
+        block("bleeding_rack",
+                "A copper _drip tray_ with a tank for catching _blood_.",
+                "Under a Hanging Carcass", "Catches the blood of a carcass hung up to _8 blocks_ above it.",
+                "Under a Lying Carcass", "A carcass lying still _on_ the rack drains too, at half the speed.",
+                "With Fans", "An _Encased Fan_ blowing across the body drains it up to _four times_ faster.",
+                "With Pipes", "Pipes pull blood from its _sides and bottom_. When it is full, the carcass stops draining. A _bled_ carcass rots slower.");
+
+        // ---- machines
+        block("mangler",
+                "Teeth and rollers that tear a carcass _apart_ and grind it down. Driven by a _shaft from below_.",
+                "With a Carcass Over It", "Tears the _limbs_ off, then grinds every piece into meat, bone, offal and fat.",
+                "Output", "Keeps what it makes _inside_: take it with an empty hand, or pull it out with a _funnel_, chute or hopper. When full, it stops.");
+        block("guillotine",
+                "A heavy blade on two posts. Driven by a _shaft from below_.",
+                "With a Carcass Over It", "Takes the nearest _limb_ off in one stroke. It never takes the head.");
+        block("beheader",
+                "A spinning saw at neck height. Driven by a _shaft from below_.",
+                "With a Carcass Over It", "Takes the _head_ off in one stroke.",
+                "Skulls", "Zombies, skeletons, creepers and piglins sometimes leave their _skull_ whole. A wither skeleton's rarely survives.");
+        block("deglover",
+                "Spiked rollers that strip the _hide_ off a carcass. Driven by a _shaft from below_.",
+                "With a Carcass Over It", "Skins it a stroke at a time: _hide_ and, from a sheep, _wool_ into its output.");
+
+        // ---- materials
         item("blood_steel_ingot",
-                "PH: Iron quenched in blood. Fill an iron ingot with 250 mB of blood in a Spout.");
+                "Iron _quenched in blood_. Fill an iron ingot with _250 mB_ of blood in a Spout.");
         item("blood_diamond",
-                "PH: A diamond steeped in soul blood. Fill a diamond with 1000 mB of soul blood in a Spout. Its uses are still to come.");
-        BloodAndBones.REGISTRATE.addRawLang("bloodandbones.jei.soul_blood.1",
-                "PH: Soul Blood is blood with a soul in it. Mix blood, soul sand and a little liquid experience over a superheated Blaze Burner, or ferment blood with nether wart and soul soil under a Basin Lid.");
+                "A diamond steeped in _soul blood_. Fill a diamond with _1000 mB_ of soul blood in a Spout.");
+
+        // ---- cooking and display
+        block("spit_roast",
+                "Posts and a turning _spit_ for roasting carcass pieces over a fire.",
+                "When R-Clicked with a Carcass Piece", "_Skewers_ it. It roasts only while the spit _turns_ and there is _heat_ below: a campfire, fire, lava or a Blaze Burner. Hotter and faster cooks quicker.",
+                "When R-Clicked with an Empty Hand", "Takes it off: raw, it comes back as it was; _browned_, it comes apart into cooked meat and bones. Left twice as long, it _burns_ to charcoal.");
+        block("specimen_jar",
+                "A jar of cloudy _preserving fluid_ for keeping a carcass piece on show.",
+                "When R-Clicked with a Carcass Piece", "Puts it in, to drift in the fluid. R-Click with an _empty hand_ to take it out.");
+
+        // ---- goggles
+        BloodAndBones.REGISTRATE.addRawLang("bloodandbones.gui.goggles.carcass_machine.output", "%1$s items waiting");
         BloodAndBones.REGISTRATE.addRawLang("bloodandbones.gui.goggles.spit_roast.roasting", "Roasting: %1$s%%");
         BloodAndBones.REGISTRATE.addRawLang("bloodandbones.gui.goggles.spit_roast.cooked", "Cooked: take it off");
         BloodAndBones.REGISTRATE.addRawLang("bloodandbones.gui.goggles.spit_roast.burnt", "Burnt to a crisp");
         BloodAndBones.REGISTRATE.addRawLang("bloodandbones.gui.goggles.spit_roast.no_heat", "Needs a fire below");
-        block("spit_roast",
-                "PH: Roasts a carcass piece over a fire. Put it over a campfire, fire, lava or a Blaze Burner and turn the spit with a shaft.",
-                "PH: Right-click with a carcass piece to skewer it. It only cooks while the spit turns and there is heat below; hotter and faster cooks quicker.",
-                "PH: Take it off with an empty hand once it has browned: it comes apart into cooked meat and bones. Leave it too long and it burns to charcoal.");
-        block("specimen_jar",
-                "PH: A jar of cloudy preserving fluid to keep a carcass piece on show. Right-click with a piece to put it in, empty hand to take it out.");
-        item("meat_hook",
-                "PH: Kill an animal with this and it leaves a whole carcass instead of loot. Right-click a carcass to drag it, right-click again to let go.",
-                "PH: Dragging slows you down. Heavier animals slow you more.",
-                "PH: Where you hook matters: the limb you grab is the one that gets pulled.");
+        BloodAndBones.REGISTRATE.addRawLang("item.bloodandbones.carcass_piece.named", "%s %s");
+
+        // ---- advancements
+        advancement("butchery", "Create: Blood & Bones", "Make a Meat Hook. Whatever it kills stays whole");
+        advancement("cleaver", "Clean Cuts", "Make a Cleaver to take a carcass apart at the joints");
+        advancement("offal", "Guts and Glory", "Get your hands on some offal");
+        advancement("skinned", "Skin in the Game", "Take a hide off with the Flensing Knife");
+        advancement("hanging", "Hang in There", "Make a Shackle Hook to hang carcasses by the neck");
+        advancement("blood", "Bloodletting", "Get a bucket of blood");
+        advancement("machine", "Industrial Slaughter", "Build a butchery machine");
+        advancement("blood_steel", "Tempered in Blood", "Quench iron in blood with a Spout");
+        advancement("soul_blood", "Soul Food", "Give blood a soul");
+        advancement("blood_diamond", "Priceless", "Steep a diamond in soul blood");
+        advancement("spit_roast", "Low and Slow", "Build a Spit Roast");
+        advancement("specimen", "Curiosities", "Make a Specimen Jar to keep a piece of something on show");
+
+        // ---- JEI information pages
+        jei("meat_hook",
+                "The Meat Hook is where a carcass comes from. Kill an animal or monster with it and the whole body stays behind as a ragdoll you can hook, drag, hang, cut up and process, instead of its loot.",
+                "Right-click a limb to hook it and drag the body behind you. Heavier animals slow you down more. Right-click again to let go. What the mob was carrying (saddles, chests, armour, held items) still drops.");
+        jei("shackle_hook",
+                "Mount the Shackle Hook under a ceiling or on a wall. Drag a carcass close and click the hook with the Meat Hook to hang it by the neck.",
+                "To send a carcass down a line, drag it under a Create chain conveyor and right-click the chain with the Meat Hook: it rides the chain on a trolley, round wheels and along strands, and stops at frogports addressed for it.");
+        jei("cleaver",
+                "The Cleaver takes a carcass apart. Right-click a limb three times to cut through the joint; it comes free as a piece of its own that can be hooked, carried, hung or butchered.",
+                "Three more cuts on a loose piece butcher it into meat and bone. The body is butchered last, once nothing hangs off it; it gives the offal and fat.");
+        jei("flensing_knife",
+                "The Flensing Knife takes the hide off. Four strokes on any part of a carcass and the whole hide drops, with a sheep's wool, a mooshroom's mushrooms or a rabbit's pelt as it applies.",
+                "Skin before you butcher: a piece cut down with its hide still on loses it. Rot spoils hides.");
+        jei("butchery",
+                "Bigger pieces give more: meat and bone come from every part by its size, offal and fat from the body.",
+                "Fresh meat is whole. Half-rotten meat gives half. Badly rotten meat turns to rotten flesh, and a rotten carcass has no hide worth taking. Cold slows rot, ice stops it, and a bled carcass keeps longer.");
+        jei("bleeding_rack",
+                "Put a Bleeding Rack under a Shackle Hook (up to 8 blocks below) and hang a carcass: its blood drips into the tray. A carcass lying still on the rack drains too, more slowly.",
+                "A cow holds about a bucket. Encased Fans blowing across the body drain it up to four times faster. Pipe the blood out of the sides or bottom.");
+        jei("machines",
+                "The Mangler, Guillotine, Beheader and Deglover work any carcass lying on or hanging over them. Each takes a shaft from below; the faster it turns, the faster it works. Set them flush in a floor so a body lies across them.",
+                "Guillotine: limbs off. Beheader: heads off, sometimes a skull. Deglover: hides off. Mangler: everything, down to meat and bone. Take their output with a funnel or an empty hand.");
+        jei("soul_blood",
+                "Soul Blood is blood with a soul in it. Mix blood, soul sand and a little liquid experience over a superheated Blaze Burner, or ferment blood with nether wart and soul soil under a Basin Lid.");
     }
 
-    private static void block(String id, String summary, String... notes) {
-        describe("block." + BloodAndBones.MOD_ID + "." + id + ".tooltip", id, summary, notes);
+    private static void advancement(String id, String title, String description) {
+        BloodAndBones.REGISTRATE.addRawLang("advancements.bloodandbones." + id + ".title", title);
+        BloodAndBones.REGISTRATE.addRawLang("advancements.bloodandbones." + id + ".description", description);
     }
 
-    /** Create's description keys: a summary line plus any number of behaviour/condition pairs. */
-    private static void item(String id, String summary, String... notes) {
-        describe("item." + BloodAndBones.MOD_ID + "." + id + ".tooltip", id, summary, notes);
+    private static void jei(String id, String... pages) {
+        for (int i = 0; i < pages.length; i++) {
+            BloodAndBones.REGISTRATE.addRawLang("bloodandbones.jei." + id + "." + (i + 1), pages[i]);
+        }
     }
 
-    private static void describe(String base, String id, String summary, String... notes) {
+    private static void block(String id, String summary, String... pairs) {
+        describe("block." + BloodAndBones.MOD_ID + "." + id + ".tooltip", id, summary, pairs);
+    }
+
+    private static void item(String id, String summary, String... pairs) {
+        describe("item." + BloodAndBones.MOD_ID + "." + id + ".tooltip", id, summary, pairs);
+    }
+
+    /** Create's description keys: a summary line, then condition and behaviour pairs. */
+    private static void describe(String base, String id, String summary, String... pairs) {
+        if (pairs.length % 2 != 0) {
+            throw new IllegalArgumentException("Description of " + id + " needs condition and behaviour pairs");
+        }
         BloodAndBones.REGISTRATE.addRawLang(base, id.replace('_', ' ').toUpperCase());
         BloodAndBones.REGISTRATE.addRawLang(base + ".summary", summary);
-        for (int i = 0; i < notes.length; i++) {
-            BloodAndBones.REGISTRATE.addRawLang(base + ".condition" + (i + 1), "PH: Note " + (i + 1));
-            BloodAndBones.REGISTRATE.addRawLang(base + ".behaviour" + (i + 1), notes[i]);
+        for (int i = 0; i < pairs.length / 2; i++) {
+            BloodAndBones.REGISTRATE.addRawLang(base + ".condition" + (i + 1), pairs[2 * i]);
+            BloodAndBones.REGISTRATE.addRawLang(base + ".behaviour" + (i + 1), pairs[2 * i + 1]);
         }
     }
 }

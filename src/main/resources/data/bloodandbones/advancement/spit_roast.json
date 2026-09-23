@@ -1,0 +1,35 @@
+{
+  "parent": "bloodandbones:butchery",
+  "display": {
+    "icon": {
+      "id": "bloodandbones:spit_roast"
+    },
+    "title": {
+      "translate": "advancements.bloodandbones.spit_roast.title"
+    },
+    "description": {
+      "translate": "advancements.bloodandbones.spit_roast.description"
+    },
+    "frame": "task",
+    "show_toast": true,
+    "announce_to_chat": true,
+    "hidden": false
+  },
+  "criteria": {
+    "has": {
+      "trigger": "minecraft:inventory_changed",
+      "conditions": {
+        "items": [
+          {
+            "items": "bloodandbones:spit_roast"
+          }
+        ]
+      }
+    }
+  },
+  "requirements": [
+    [
+      "has"
+    ]
+  ]
+}

@@ -1,0 +1,35 @@
+{
+  "parent": "bloodandbones:blood",
+  "display": {
+    "icon": {
+      "id": "bloodandbones:soul_blood_bucket"
+    },
+    "title": {
+      "translate": "advancements.bloodandbones.soul_blood.title"
+    },
+    "description": {
+      "translate": "advancements.bloodandbones.soul_blood.description"
+    },
+    "frame": "goal",
+    "show_toast": true,
+    "announce_to_chat": true,
+    "hidden": false
+  },
+  "criteria": {
+    "has": {
+      "trigger": "minecraft:inventory_changed",
+      "conditions": {
+        "items": [
+          {
+            "items": "bloodandbones:soul_blood_bucket"
+          }
+        ]
+      }
+    }
+  },
+  "requirements": [
+    [
+      "has"
+    ]
+  ]
+}

@@ -1,0 +1,35 @@
+{
+  "parent": "bloodandbones:blood",
+  "display": {
+    "icon": {
+      "id": "bloodandbones:blood_steel_ingot"
+    },
+    "title": {
+      "translate": "advancements.bloodandbones.blood_steel.title"
+    },
+    "description": {
+      "translate": "advancements.bloodandbones.blood_steel.description"
+    },
+    "frame": "task",
+    "show_toast": true,
+    "announce_to_chat": true,
+    "hidden": false
+  },
+  "criteria": {
+    "has": {
+      "trigger": "minecraft:inventory_changed",
+      "conditions": {
+        "items": [
+          {
+            "items": "bloodandbones:blood_steel_ingot"
+          }
+        ]
+      }
+    }
+  },
+  "requirements": [
+    [
+      "has"
+    ]
+  ]
+}

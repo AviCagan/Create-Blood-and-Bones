@@ -1,0 +1,35 @@
+{
+  "parent": "bloodandbones:spit_roast",
+  "display": {
+    "icon": {
+      "id": "bloodandbones:specimen_jar"
+    },
+    "title": {
+      "translate": "advancements.bloodandbones.specimen.title"
+    },
+    "description": {
+      "translate": "advancements.bloodandbones.specimen.description"
+    },
+    "frame": "task",
+    "show_toast": true,
+    "announce_to_chat": true,
+    "hidden": false
+  },
+  "criteria": {
+    "has": {
+      "trigger": "minecraft:inventory_changed",
+      "conditions": {
+        "items": [
+          {
+            "items": "bloodandbones:specimen_jar"
+          }
+        ]
+      }
+    }
+  },
+  "requirements": [
+    [
+      "has"
+    ]
+  ]
+}

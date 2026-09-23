@@ -1,0 +1,35 @@
+{
+  "parent": "bloodandbones:butchery",
+  "display": {
+    "icon": {
+      "id": "bloodandbones:raw_hide"
+    },
+    "title": {
+      "translate": "advancements.bloodandbones.skinned.title"
+    },
+    "description": {
+      "translate": "advancements.bloodandbones.skinned.description"
+    },
+    "frame": "task",
+    "show_toast": true,
+    "announce_to_chat": true,
+    "hidden": false
+  },
+  "criteria": {
+    "has": {
+      "trigger": "minecraft:inventory_changed",
+      "conditions": {
+        "items": [
+          {
+            "items": "bloodandbones:raw_hide"
+          }
+        ]
+      }
+    }
+  },
+  "requirements": [
+    [
+      "has"
+    ]
+  ]
+}
