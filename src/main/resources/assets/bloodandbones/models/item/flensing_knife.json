@@ -1,14 +1,14 @@
 {
   "parent": "minecraft:item/handheld",
   "textures": {
-    "layer0": "bloodandbones:item/cleaver"
+    "layer0": "bloodandbones:item/flensing_knife"
   },
   "overrides": [
     {
       "predicate": {
         "bloodandbones:bloody": 1
       },
-      "model": "bloodandbones:item/cleaver_bloody"
+      "model": "bloodandbones:item/flensing_knife_bloody"
     }
   ]
 }

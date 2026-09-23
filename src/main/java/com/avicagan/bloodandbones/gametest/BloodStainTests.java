@@ -170,4 +170,35 @@ public class BloodStainTests {
             helper.succeed();
         });
     }
+
+    /** A cleaver that cuts a cow comes away bloody; one that cuts a skeleton does not. */
+    @GameTest(template = "empty", timeoutTicks = 60)
+    public static void bladesGetBloody(GameTestHelper helper) {
+        ServerLevel level = helper.getLevel();
+        Cow cow = helper.spawn(EntityType.COW, new BlockPos(3, 2, 3));
+        CarcassSavedData.Carcass meat = CarcassAssembler.assemble(cow, null);
+        cow.discard();
+        Skeleton skeleton = helper.spawn(EntityType.SKELETON, new BlockPos(7, 2, 7));
+        CarcassSavedData.Carcass bones = CarcassAssembler.assemble(skeleton, null);
+        skeleton.discard();
+        if (meat == null || bones == null) {
+            helper.fail("Carcass assembly returned null");
+            return;
+        }
+        Player butcher = helper.makeMockPlayer(GameType.SURVIVAL);
+        Player other = helper.makeMockPlayer(GameType.SURVIVAL);
+        butcher.setItemInHand(InteractionHand.MAIN_HAND, new ItemStack(BBItems.CLEAVER.get()));
+        other.setItemInHand(InteractionHand.MAIN_HAND, new ItemStack(BBItems.CLEAVER.get()));
+        helper.runAfterDelay(5, () -> {
+            com.avicagan.bloodandbones.carcass.CarcassButchery.cut(level, butcher, meat, "right_front_leg", null);
+            com.avicagan.bloodandbones.carcass.CarcassButchery.cut(level, other, bones, "right_arm", null);
+            if (butcher.getMainHandItem().get(com.avicagan.bloodandbones.registry.BBDataComponents.BLOODIED_AT.get()) == null) {
+                helper.fail("A cleaver that cut a cow should be bloody");
+            }
+            if (other.getMainHandItem().get(com.avicagan.bloodandbones.registry.BBDataComponents.BLOODIED_AT.get()) != null) {
+                helper.fail("A cleaver that cut a skeleton should stay clean");
+            }
+            helper.succeed();
+        });
+    }
 }

@@ -24,9 +24,23 @@ public final class BBClientSetup {
     @SubscribeEvent
     public static void onClientSetup(FMLClientSetupEvent event) {
         net.createmod.ponder.foundation.PonderIndex.addPlugin(new com.avicagan.bloodandbones.client.ponder.BBPonderPlugin());
-        event.enqueueWork(() -> ItemProperties.register(BBItems.MEAT_HOOK.get(), BloodAndBones.asResource("dragging"),
-                // the hook is in the carcass, not in the hand, while its holder drags something
-                (stack, level, entity, seed) -> entity != null && ClientDragState.all().containsKey(entity.getUUID()) ? 1.0F : 0.0F));
+        event.enqueueWork(() -> {
+            ItemProperties.register(BBItems.MEAT_HOOK.get(), BloodAndBones.asResource("dragging"),
+                    // the hook is in the carcass, not in the hand, while its holder drags something
+                    (stack, level, entity, seed) -> entity != null && ClientDragState.all().containsKey(entity.getUUID()) ? 1.0F : 0.0F);
+            // blades show bloody for a while after drawing blood; never in bloodless mode
+            for (net.minecraft.world.item.Item blade : java.util.List.of(BBItems.CLEAVER.get(), BBItems.BLOOD_STEEL_CLEAVER.get(), BBItems.FLENSING_KNIFE.get())) {
+                ItemProperties.register(blade, BloodAndBones.asResource("bloody"), (stack, level, entity, seed) -> {
+                    Long at = stack.get(com.avicagan.bloodandbones.registry.BBDataComponents.BLOODIED_AT.get());
+                    net.minecraft.world.level.Level world = level != null ? level : entity != null ? entity.level() : net.minecraft.client.Minecraft.getInstance().level;
+                    if (at == null || world == null || com.avicagan.bloodandbones.config.BBClientConfig.bloodless()) {
+                        return 0.0F;
+                    }
+                    long age = world.getGameTime() - at;
+                    return age >= 0 && age < com.avicagan.bloodandbones.carcass.Blood.BLOODY_TICKS ? 1.0F : 0.0F;
+                });
+            }
+        });
     }
 
     @SubscribeEvent

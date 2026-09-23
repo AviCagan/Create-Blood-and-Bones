@@ -17,4 +17,13 @@ public class CleaverItem extends SwordItem {
         super(tier, properties.attributes(SwordItem.createAttributes(tier, 5, -3.0F)));
         this.strokes = strokes;
     }
+
+    /** Striking a living thing that bleeds leaves the blade bloody for a while. */
+    @Override
+    public boolean hurtEnemy(net.minecraft.world.item.ItemStack stack, net.minecraft.world.entity.LivingEntity target, net.minecraft.world.entity.LivingEntity attacker) {
+        if (!target.getType().is(com.avicagan.bloodandbones.registry.BBTags.BLOODLESS)) {
+            com.avicagan.bloodandbones.carcass.Blood.bloody(stack, target.level());
+        }
+        return super.hurtEnemy(stack, target, attacker);
+    }
 }

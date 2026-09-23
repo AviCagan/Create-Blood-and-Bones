@@ -34,6 +34,17 @@ public final class Blood {
         }
     }
 
+    /** How long a blade shows bloody after it last drew blood: five minutes. */
+    public static final long BLOODY_TICKS = 6000L;
+
+    /** A blade drew blood: it shows bloody for a while. Not for a mob without blood. */
+    public static void bloody(net.minecraft.world.item.ItemStack blade, net.minecraft.world.level.Level level) {
+        if (!blade.isEmpty() && (blade.getItem() instanceof com.avicagan.bloodandbones.item.CleaverItem
+                || blade.getItem() instanceof com.avicagan.bloodandbones.item.FlensingKnifeItem)) {
+            blade.set(com.avicagan.bloodandbones.registry.BBDataComponents.BLOODIED_AT.get(), level.getGameTime());
+        }
+    }
+
     /** Farthest blood falls looking for ground to stain. */
     public static final int STAIN_REACH = 12;
 

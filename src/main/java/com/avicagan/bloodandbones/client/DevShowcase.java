@@ -321,7 +321,12 @@ public final class DevShowcase {
         player.teleportTo(level, o.getX() + 0.5, o.getY(), o.getZ() + 3.2, 0, 35);
         if (step < HANDS) {
             ItemStack stack = switch (step) {
-                case 0 -> new ItemStack(BBItems.CLEAVER.get());
+                case 0 -> {
+                    // just used: bloody
+                    ItemStack cleaver = new ItemStack(BBItems.CLEAVER.get());
+                    com.avicagan.bloodandbones.carcass.Blood.bloody(cleaver, level);
+                    yield cleaver;
+                }
                 case 1 -> new ItemStack(BBItems.FLENSING_KNIFE.get());
                 case 2 -> new ItemStack(BBItems.BLOOD_STEEL_CLEAVER.get());
                 case 3 -> carriedPiece(level);

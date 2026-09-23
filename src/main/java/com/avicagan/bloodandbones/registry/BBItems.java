@@ -30,14 +30,14 @@ public class BBItems {
     public static final ItemEntry<com.avicagan.bloodandbones.item.FlensingKnifeItem> FLENSING_KNIFE = BloodAndBones.REGISTRATE
             .item("flensing_knife", com.avicagan.bloodandbones.item.FlensingKnifeItem::new)
             .properties(p -> p.stacksTo(1))
-            .model((ctx, prov) -> prov.handheld(ctx))
+            .model(NonNullBiConsumer.noop()) // hand-made: handheld, and bloody after use
             .lang("Flensing Knife")
             .register();
 
     public static final ItemEntry<com.avicagan.bloodandbones.item.CleaverItem> BLOOD_STEEL_CLEAVER = BloodAndBones.REGISTRATE
             .item("blood_steel_cleaver", p -> new com.avicagan.bloodandbones.item.CleaverItem(p, net.minecraft.world.item.Tiers.DIAMOND, 2))
             .properties(p -> p.stacksTo(1))
-            .model((ctx, prov) -> prov.handheld(ctx))
+            .model(NonNullBiConsumer.noop()) // hand-made: handheld, and bloody after use
             .lang("Blood Steel Cleaver")
             .register();
 

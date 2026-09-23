@@ -636,6 +636,9 @@ pipes; chain clearance = hanging length + 1 block.
   pivot if the two coincide): just outside it on the limb, just inside the space it left on the stump,
   placed in the parent's frame from the two bones' rest offsets and rotations. Not drawn in bloodless
   mode, nor for bloodless mobs (dry cut ends). A fresh cut over a Bleeding Rack pours into it.
+- Blades that cut a bleeding carcass or hit a bleeding mob get `bloodandbones:bloodied_at` (game time);
+  the `bloodandbones:bloody` item property shows a bloody model for 6000 ticks after, never in bloodless
+  mode.
 - Severing and butchering throw meat scraps (`bloodandbones:gib`, three sprites, tumbling, a wet bounce;
   hidden in bloodless mode by its client provider).
 - A fresh cut pours for 15 seconds wherever the body lies (`CarcassBleeding.gush`): drops and a stain

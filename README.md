@@ -18,7 +18,7 @@ provided by [Sable](https://github.com/ryanhcode/sable).
   shaped like the baby: a calf's big head on a small body.
 - **Butchery.** The Cleaver takes limbs off at the joint, leaving raw wounds with the bone
   showing on both ends, and breaks loose pieces down into meat, bone, offal and fat, with scraps of
-  meat flying. The Flensing
+  meat flying. Blades come away bloody and stay that way for a few minutes. The Flensing
   Knife takes the hide off (with a sheep's wool). Yields are data-driven per mob and spoil as the
   carcass rots. Light pieces can be picked up and carried.
 - **Rot.** Carcasses rot over game time; cold slows it, ice stops it. Flies gather as the meat

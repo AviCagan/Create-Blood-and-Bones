@@ -52,6 +52,9 @@ public final class CarcassButchery {
             at = new Vector3d(limb.logicalPose().position());
         }
         int cuts = carcass.cuts.merge(bone, 1, Integer::sum);
+        if (player != null && Blood.bloody(carcass)) {
+            Blood.bloody(player.getMainHandItem(), level);
+        }
         if (at != null) {
             Blood.wound(level, carcass, at, 8, 1);
             level.playSound(null, at.x, at.y, at.z, SoundEvents.SLIME_BLOCK_BREAK, SoundSource.BLOCKS, 0.8F, 0.7F);
@@ -137,6 +140,9 @@ public final class CarcassButchery {
             return false;
         }
         carcass.skinStrokes++;
+        if (player != null && Blood.bloody(carcass)) {
+            Blood.bloody(player.getMainHandItem(), level);
+        }
         Blood.wound(level, carcass, where, 4, 0);
         level.playSound(null, where.x, where.y, where.z, SoundEvents.SLIME_SQUISH_SMALL, SoundSource.BLOCKS, 0.8F, 1.2F);
         if (carcass.skinStrokes < STROKES_TO_SKIN) {
