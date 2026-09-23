@@ -112,9 +112,12 @@ public class CarcassPartRenderer implements BlockEntityRenderer<CarcassPartBlock
         // FIXED display centres the model on (8,8,8); slide it so the bend sits inside the flesh
         poseStack.translate(0.0, HOOK_DEPTH_PX / 16.0, 0.0);
         net.minecraft.client.Minecraft minecraft = net.minecraft.client.Minecraft.getInstance();
-        // the hook in the meat is the bloodied one; the clean model is what sits in the hand
-        net.minecraft.client.resources.model.BakedModel model = minecraft.getModelManager().getModel(BBClientModels.MEAT_HOOK_BLOODY);
-        minecraft.getItemRenderer().render(new net.minecraft.world.item.ItemStack(com.avicagan.bloodandbones.registry.BBItems.MEAT_HOOK.get()),
+        // the hook in the meat is the bloodied one (the clean one in bloodless mode); the clean model sits in the hand
+        net.minecraft.world.item.ItemStack hook = new net.minecraft.world.item.ItemStack(com.avicagan.bloodandbones.registry.BBItems.MEAT_HOOK.get());
+        net.minecraft.client.resources.model.BakedModel model = com.avicagan.bloodandbones.config.BBClientConfig.bloodless()
+                ? minecraft.getItemRenderer().getItemModelShaper().getItemModel(hook)
+                : minecraft.getModelManager().getModel(BBClientModels.MEAT_HOOK_BLOODY);
+        minecraft.getItemRenderer().render(hook,
                 net.minecraft.world.item.ItemDisplayContext.FIXED, false, poseStack, buffers, packedLight, OverlayTexture.NO_OVERLAY, model);
         poseStack.popPose();
     }

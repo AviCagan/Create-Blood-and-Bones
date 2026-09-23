@@ -1,0 +1,130 @@
+{
+  "entity": "minecraft:wither",
+  "model": "minecraft:wither",
+  "texture": "minecraft:textures/entity/wither/wither.png",
+  "rot_time": 96000,
+  "torso": "shoulders",
+  "parents": {
+    "ribcage": "shoulders",
+    "center_head": "shoulders",
+    "right_head": "shoulders",
+    "left_head": "shoulders",
+    "tail": "ribcage"
+  },
+  "joints": {
+    "ribcage": {
+      "min_degrees": [
+        -40,
+        -15,
+        -15
+      ],
+      "max_degrees": [
+        40,
+        15,
+        15
+      ],
+      "damping": 4.0,
+      "stiffness": 0.8,
+      "contacts": false
+    },
+    "tail": {
+      "min_degrees": [
+        -50,
+        -20,
+        -20
+      ],
+      "max_degrees": [
+        50,
+        20,
+        20
+      ],
+      "damping": 3.0,
+      "stiffness": 0.3,
+      "contacts": false
+    },
+    "center_head": {
+      "min_degrees": [
+        -30,
+        -45,
+        -15
+      ],
+      "max_degrees": [
+        40,
+        45,
+        15
+      ],
+      "damping": 4.0,
+      "stiffness": 1.5,
+      "contacts": false
+    },
+    "right_head": {
+      "min_degrees": [
+        -30,
+        -40,
+        -20
+      ],
+      "max_degrees": [
+        40,
+        40,
+        20
+      ],
+      "damping": 4.0,
+      "stiffness": 1.0,
+      "contacts": false
+    },
+    "left_head": {
+      "min_degrees": [
+        -30,
+        -40,
+        -20
+      ],
+      "max_degrees": [
+        40,
+        40,
+        20
+      ],
+      "damping": 4.0,
+      "stiffness": 1.0,
+      "contacts": false
+    }
+  },
+  "butchery": {
+    "meat": "none",
+    "hide": "none",
+    "bone_per_block": 12.0,
+    "bone_min": 1.0,
+    "offal_per_weight": 0.0,
+    "fat_per_weight": 0.0,
+    "part_extras": {
+      "center_head": [
+        {
+          "item": "minecraft:wither_skeleton_skull",
+          "count": 0.5,
+          "kind": "bone"
+        }
+      ],
+      "right_head": [
+        {
+          "item": "minecraft:wither_skeleton_skull",
+          "count": 0.25,
+          "kind": "bone"
+        }
+      ],
+      "left_head": [
+        {
+          "item": "minecraft:wither_skeleton_skull",
+          "count": 0.25,
+          "kind": "bone"
+        }
+      ],
+      "ribcage": [
+        {
+          "item": "minecraft:coal",
+          "count": 2.0,
+          "kind": "other"
+        }
+      ]
+    }
+  },
+  "scale": 2.0
+}

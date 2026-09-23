@@ -141,6 +141,14 @@ public class CarcassEvents {
         }
     }
 
+    /** A joining player learns whether the server forces bloodless mode. */
+    @SubscribeEvent
+    public static void onLogin(PlayerEvent.PlayerLoggedInEvent event) {
+        if (event.getEntity() instanceof net.minecraft.server.level.ServerPlayer player) {
+            com.avicagan.bloodandbones.registry.BBGameRules.tell(player);
+        }
+    }
+
     @SubscribeEvent
     public static void onLogout(PlayerEvent.PlayerLoggedOutEvent event) {
         if (event.getEntity().level() instanceof ServerLevel level) {

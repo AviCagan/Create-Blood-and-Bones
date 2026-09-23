@@ -138,6 +138,8 @@
   "entity.bloodandbones.shackle_trolley": "Shackle Trolley",
   "fluid.bloodandbones.blood": "Blood",
   "fluid.bloodandbones.soul_blood": "Soul Blood",
+  "gamerule.bloodandbonesBloodless": "Bloodless mode for everyone",
+  "gamerule.bloodandbonesBloodless.description": "Hides blood, gore and wet textures for every player, whatever their own setting. Carcasses and machines work the same.",
   "item.bloodandbones.animal_fat": "Animal Fat",
   "item.bloodandbones.blood_bucket": "Blood Bucket",
   "item.bloodandbones.blood_diamond": "Blood Diamond",

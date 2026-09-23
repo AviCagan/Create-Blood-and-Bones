@@ -63,6 +63,8 @@ public final class DevShowcase {
     private static List<View> views;
     private static long builtAt = -1;
     private static int moved;
+    /** Logged at each shot: the wither is the biggest, oddest body in the scene. */
+    private static CarcassSavedData.Carcass witherShown;
     private static long moveAt;
     /** Server ticks to let the scene play before the first picture, and between pictures. */
     private static final int SETTLE = 400;
@@ -131,6 +133,14 @@ public final class DevShowcase {
                         Screenshot.grab(mc.gameDirectory, "showcase_" + shot + ".png", mc.getMainRenderTarget(), message -> {
                         });
                         BloodAndBones.LOGGER.info("[showcase] took shot {} at server age {}", shot, age);
+                        if (witherShown != null) {
+                            MinecraftServer srv = mc.getSingleplayerServer();
+                            srv.execute(() -> witherShown.bones.forEach((bone, id) -> {
+                                if (dev.ryanhcode.sable.api.sublevel.SubLevelContainer.getContainer(srv.overworld()).getSubLevel(id) instanceof dev.ryanhcode.sable.sublevel.ServerSubLevel body) {
+                                    BloodAndBones.LOGGER.info("[showcase] wither {} at {} (built at {})", bone, body.logicalPose().position(), origin.offset(-17, 0, 6));
+                                }
+                            }));
+                        }
                         shot++;
                     }
                 } else if (age - moveAt > SHOT_GAP + 20) {
@@ -212,6 +222,10 @@ public final class DevShowcase {
             carcass(level, mobs[i], o.offset((int) Math.round(-9 + i * 2.6), 0, 5));
         }
 
+        // off to the side: the biggest and the smallest odd ones
+        witherShown = carcass(level, EntityType.WITHER, o.offset(-17, 0, 6));
+        carcass(level, EntityType.PUFFERFISH, o.offset(-20, 0, 4));
+
         // row B: the machines set flush in the floor, a carcass on each
         BlockEntry<?>[] machines = {BBBlocks.MANGLER, BBBlocks.GUILLOTINE, BBBlocks.BEHEADER, BBBlocks.DEGLOVER};
         EntityType<?>[] onThem = {EntityType.COW, EntityType.PIG, EntityType.ZOMBIE, EntityType.SHEEP};
@@ -280,7 +294,9 @@ public final class DevShowcase {
                 // rack and the hanging cow
                 new View(o.getX() + 2.5, eye + 1.5, o.getZ() + 15.0, 0, -5),
                 // the pig bleeding onto the ground
-                new View(o.getX() + 11.5, eye + 1.5, o.getZ() + 13.5, 0, 12));
+                new View(o.getX() + 11.5, eye + 1.5, o.getZ() + 13.5, 0, 12),
+                // the wither and the pufferfish
+                new View(o.getX() - 18.0, eye + 1.0, o.getZ() + 0.5, 0, 25));
         BloodAndBones.LOGGER.info("[showcase] built at {}", o);
     }
 

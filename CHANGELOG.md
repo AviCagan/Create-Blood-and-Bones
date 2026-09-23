@@ -7,7 +7,7 @@ Everything below is in development builds only; the art is placeholder (see the 
 - Meat Hook kills leave physics carcasses; dragging, resting (a still carcass folds into one body
   and unfolds when disturbed), rot, and the death handover with no gap.
 - Butchery: Cleaver, Flensing Knife, carried pieces, data-driven yields that spoil with rot.
-- 77 rigged vanilla mobs with variants; hook kills drop the mob's gear and inventory.
+- 79 rigged vanilla mobs with variants, the wither and the pufferfish included; hook kills drop the mob's gear and inventory.
 - Blood and Soul Blood fluids, the Bleeding Rack, fan-boosted bleeding, slower rot once bled.
 - Blood stains on the ground from kills, cuts, drag trails and uncaught bleeding; they dry, fade
   and wash off in rain, and bloodless mode hides them. Bloodless mobs no longer spray blood.
@@ -17,4 +17,6 @@ Everything below is in development builds only; the art is placeholder (see the 
 - Spit Roast and Specimen Jar.
 - Item descriptions, JEI pages (a Butchery page per mob, sent to players on servers too), Ponder
   scenes, advancements.
+- A `bloodandbonesBloodless` game rule forces bloodless mode for everyone; bloodless mode also shows
+  skinned carcasses pale and the hook in a carcass clean.
 - Rotten carcasses fall apart after a day; a server config sets the rot speed and the falling apart.

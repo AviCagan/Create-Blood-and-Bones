@@ -1,0 +1,66 @@
+{
+  "entity": "minecraft:wither",
+  "parts": {
+    "center_head": [
+      {
+        "count": 12.0,
+        "item": "minecraft:bone",
+        "kind": "bone"
+      },
+      {
+        "count": 0.5,
+        "item": "minecraft:wither_skeleton_skull",
+        "kind": "bone"
+      }
+    ],
+    "left_head": [
+      {
+        "count": 5.06,
+        "item": "minecraft:bone",
+        "kind": "bone"
+      },
+      {
+        "count": 0.25,
+        "item": "minecraft:wither_skeleton_skull",
+        "kind": "bone"
+      }
+    ],
+    "ribcage": [
+      {
+        "count": 2.11,
+        "item": "minecraft:bone",
+        "kind": "bone"
+      },
+      {
+        "count": 2.0,
+        "item": "minecraft:coal"
+      }
+    ],
+    "right_head": [
+      {
+        "count": 5.06,
+        "item": "minecraft:bone",
+        "kind": "bone"
+      },
+      {
+        "count": 0.25,
+        "item": "minecraft:wither_skeleton_skull",
+        "kind": "bone"
+      }
+    ],
+    "shoulders": [
+      {
+        "count": 4.22,
+        "item": "minecraft:bone",
+        "kind": "bone"
+      }
+    ],
+    "tail": [
+      {
+        "count": 1.27,
+        "item": "minecraft:bone",
+        "kind": "bone"
+      }
+    ]
+  }
+}

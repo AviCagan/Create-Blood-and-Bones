@@ -1,0 +1,235 @@
+{
+  "bones": [
+    {
+      "box_max": [
+        20.0,
+        13.8,
+        5.0
+      ],
+      "box_min": [
+        -20.0,
+        7.8,
+        -1.0
+      ],
+      "name": "shoulders",
+      "offset": [
+        0.0,
+        0.0,
+        0.0
+      ],
+      "part": "shoulders",
+      "rotation": [
+        0.0,
+        0.0,
+        0.0,
+        1.0
+      ]
+    },
+    {
+      "parent": "shoulders",
+      "box_max": [
+        6.0,
+        20.0,
+        6.0
+      ],
+      "box_min": [
+        0.0,
+        0.0,
+        0.0
+      ],
+      "joint": {
+        "damping": 4.0,
+        "max_degrees": [
+          40.0,
+          15.0,
+          15.0
+        ],
+        "min_degrees": [
+          -40.0,
+          -15.0,
+          -15.0
+        ],
+        "stiffness": 0.8
+      },
+      "name": "ribcage",
+      "offset": [
+        -4.0,
+        13.8,
+        -1.0
+      ],
+      "part": "ribcage",
+      "rotation": [
+        0.10192445,
+        0.0,
+        0.0,
+        0.9947921
+      ]
+    },
+    {
+      "parent": "ribcage",
+      "box_max": [
+        6.0,
+        12.0,
+        6.0
+      ],
+      "box_min": [
+        0.0,
+        0.0,
+        0.0
+      ],
+      "joint": {
+        "damping": 3.0,
+        "max_degrees": [
+          50.0,
+          20.0,
+          20.0
+        ],
+        "min_degrees": [
+          -50.0,
+          -20.0,
+          -20.0
+        ],
+        "stiffness": 0.3
+      },
+      "name": "tail",
+      "offset": [
+        -4.0,
+        33.384815,
+        3.0540185
+      ],
+      "part": "tail",
+      "rotation": [
+        0.40434358,
+        0.0,
+        0.0,
+        0.91460717
+      ]
+    },
+    {
+      "parent": "shoulders",
+      "box_max": [
+        4.0,
+        4.0,
+        4.0
+      ],
+      "box_min": [
+        -8.0,
+        -8.0,
+        -8.0
+      ],
+      "joint": {
+        "damping": 4.0,
+        "max_degrees": [
+          40.0,
+          40.0,
+          20.0
+        ],
+        "min_degrees": [
+          -30.0,
+          -40.0,
+          -20.0
+        ],
+        "stiffness": 1.0
+      },
+      "name": "left_head",
+      "offset": [
+        20.0,
+        8.0,
+        0.0
+      ],
+      "part": "left_head",
+      "rotation": [
+        0.0,
+        0.0,
+        0.0,
+        1.0
+      ]
+    },
+    {
+      "parent": "shoulders",
+      "box_max": [
+        4.0,
+        4.0,
+        4.0
+      ],
+      "box_min": [
+        -8.0,
+        -8.0,
+        -8.0
+      ],
+      "joint": {
+        "damping": 4.0,
+        "max_degrees": [
+          40.0,
+          40.0,
+          20.0
+        ],
+        "min_degrees": [
+          -30.0,
+          -40.0,
+          -20.0
+        ],
+        "stiffness": 1.0
+      },
+      "name": "right_head",
+      "offset": [
+        -16.0,
+        8.0,
+        0.0
+      ],
+      "part": "right_head",
+      "rotation": [
+        0.0,
+        0.0,
+        0.0,
+        1.0
+      ]
+    },
+    {
+      "parent": "shoulders",
+      "box_max": [
+        8.0,
+        8.0,
+        8.0
+      ],
+      "box_min": [
+        -8.0,
+        -8.0,
+        -8.0
+      ],
+      "joint": {
+        "damping": 4.0,
+        "max_degrees": [
+          40.0,
+          45.0,
+          15.0
+        ],
+        "min_degrees": [
+          -30.0,
+          -45.0,
+          -15.0
+        ],
+        "stiffness": 1.5
+      },
+      "name": "center_head",
+      "offset": [
+        0.0,
+        0.0,
+        0.0
+      ],
+      "part": "center_head",
+      "rotation": [
+        0.0,
+        0.0,
+        0.0,
+        1.0
+      ]
+    }
+  ],
+  "entity": "minecraft:wither",
+  "model": "minecraft:wither",
+  "rot_time": 96000,
+  "scale": 2.0,
+  "texture": "minecraft:textures/entity/wither/wither.png",
+  "weight": 2.4765625
+}

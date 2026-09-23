@@ -18,6 +18,8 @@ public class BBNetwork {
                 }));
         registrar.playToClient(RigSyncPayload.TYPE, RigSyncPayload.STREAM_CODEC,
                 (payload, context) -> context.enqueueWork(() -> com.avicagan.bloodandbones.carcass.rig.RigManager.receiveClientRigs(payload.rigs())));
+        registrar.playToClient(BloodlessRulePayload.TYPE, BloodlessRulePayload.STREAM_CODEC,
+                (payload, context) -> context.enqueueWork(() -> com.avicagan.bloodandbones.config.BBClientConfig.setServerForced(payload.forced())));
         registrar.playToClient(ButcherySyncPayload.TYPE, ButcherySyncPayload.STREAM_CODEC,
                 (payload, context) -> context.enqueueWork(() -> com.avicagan.bloodandbones.carcass.butchery.ButcheryManager.receiveClientTables(payload.tables())));
     }

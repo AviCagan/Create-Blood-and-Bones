@@ -13,8 +13,8 @@ provided by [Sable](https://github.com/ryanhcode/sable).
 
 - **The Meat Hook.** Kill a mob with it and the body stays behind as a ragdoll carcass (Sable
   physics, one body per limb, jointed) instead of dropping loot. Its gear still drops. Hook a limb
-  to drag the body; heavier animals slow you more. 77 vanilla mobs are rigged, with their colours
-  and variants (not the wither, the ender dragon, pufferfish or tropical fish).
+  to drag the body; heavier animals slow you more. 79 vanilla mobs are rigged, with their colours
+  and variants (all but the ender dragon and tropical fish).
 - **Butchery.** The Cleaver takes limbs off at the joint and breaks loose pieces down into meat,
   bone, offal and fat. The Flensing Knife takes the hide off (with a sheep's wool). Yields are
   data-driven per mob and spoil as the carcass rots. Light pieces can be picked up and carried.
@@ -38,6 +38,10 @@ provided by [Sable](https://github.com/ryanhcode/sable).
   with soul blood), and the Blood Steel Cleaver (twice as deep a chop).
 - **Cooking and display.** The Spit Roast turns a carcass piece over a fire until it browns (or
   burns). The Specimen Jar keeps a piece on show.
+- **Bloodless mode.** `bloodless_mode` in the client config (`config/bloodandbones-client.toml`)
+  hides blood drops and stains, shows skinned carcasses as pale meat and the hook in a carcass
+  clean. A server can force it on for everyone with `/gamerule bloodandbonesBloodless true`.
+  Nothing about how the game plays changes.
 - Tooltips (hold Shift), JEI pages (including a Butchery page per mob showing what its carcass
   gives), Ponder scenes and an advancement tab explain it all in game.
 

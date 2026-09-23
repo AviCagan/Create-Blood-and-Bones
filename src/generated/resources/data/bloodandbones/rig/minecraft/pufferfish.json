@@ -1,0 +1,204 @@
+{
+  "bones": [
+    {
+      "box_max": [
+        4.0,
+        0.0,
+        4.0
+      ],
+      "box_min": [
+        -4.0,
+        -8.0,
+        -4.0
+      ],
+      "extras": [
+        {
+          "offset": [
+            4.0,
+            -7.0,
+            -2.0
+          ],
+          "part": "left_blue_fin",
+          "rotation": [
+            0.0,
+            0.0,
+            0.0,
+            1.0
+          ]
+        },
+        {
+          "offset": [
+            -4.0,
+            -7.0,
+            -2.0
+          ],
+          "part": "right_blue_fin",
+          "rotation": [
+            0.0,
+            0.0,
+            0.0,
+            1.0
+          ]
+        },
+        {
+          "offset": [
+            0.0,
+            -8.0,
+            -4.0
+          ],
+          "part": "top_front_fin",
+          "rotation": [
+            0.38268346,
+            0.0,
+            0.0,
+            0.9238795
+          ]
+        },
+        {
+          "offset": [
+            0.0,
+            -8.0,
+            0.0
+          ],
+          "part": "top_middle_fin",
+          "rotation": [
+            0.0,
+            0.0,
+            0.0,
+            1.0
+          ]
+        },
+        {
+          "offset": [
+            0.0,
+            -8.0,
+            4.0
+          ],
+          "part": "top_back_fin",
+          "rotation": [
+            -0.38268346,
+            0.0,
+            0.0,
+            0.9238795
+          ]
+        },
+        {
+          "offset": [
+            0.0,
+            0.0,
+            -4.0
+          ],
+          "part": "bottom_front_fin",
+          "rotation": [
+            -0.38268346,
+            0.0,
+            0.0,
+            0.9238795
+          ]
+        },
+        {
+          "offset": [
+            0.0,
+            0.0,
+            0.0
+          ],
+          "part": "bottom_middle_fin",
+          "rotation": [
+            0.0,
+            0.0,
+            0.0,
+            1.0
+          ]
+        },
+        {
+          "offset": [
+            0.0,
+            0.0,
+            4.0
+          ],
+          "part": "bottom_back_fin",
+          "rotation": [
+            0.38268346,
+            0.0,
+            0.0,
+            0.9238795
+          ]
+        },
+        {
+          "offset": [
+            4.0,
+            0.0,
+            -4.0
+          ],
+          "part": "left_front_fin",
+          "rotation": [
+            0.0,
+            0.38268346,
+            0.0,
+            0.9238795
+          ]
+        },
+        {
+          "offset": [
+            -4.0,
+            0.0,
+            -4.0
+          ],
+          "part": "right_front_fin",
+          "rotation": [
+            0.0,
+            -0.38268346,
+            0.0,
+            0.9238795
+          ]
+        },
+        {
+          "offset": [
+            4.0,
+            0.0,
+            4.0
+          ],
+          "part": "left_back_fin",
+          "rotation": [
+            0.0,
+            -0.38268346,
+            0.0,
+            0.9238795
+          ]
+        },
+        {
+          "offset": [
+            -4.0,
+            0.0,
+            4.0
+          ],
+          "part": "right_back_fin",
+          "rotation": [
+            0.0,
+            0.38268346,
+            0.0,
+            0.9238795
+          ]
+        }
+      ],
+      "name": "body",
+      "offset": [
+        0.0,
+        22.0,
+        0.0
+      ],
+      "part": "body",
+      "rotation": [
+        0.0,
+        0.0,
+        0.0,
+        1.0
+      ]
+    }
+  ],
+  "entity": "minecraft:pufferfish",
+  "model": "minecraft:pufferfish_big",
+  "rot_time": 8000,
+  "texture": "minecraft:textures/entity/fish/pufferfish.png",
+  "weight": 0.125
+}

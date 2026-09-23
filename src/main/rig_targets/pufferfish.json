@@ -1,0 +1,42 @@
+{
+  "entity": "minecraft:pufferfish",
+  "model": "minecraft:pufferfish_big",
+  "texture": "minecraft:textures/entity/fish/pufferfish.png",
+  "rot_time": 8000,
+  "torso": "body",
+  "attach": {
+    "left_blue_fin": "body",
+    "right_blue_fin": "body",
+    "top_front_fin": "body",
+    "top_middle_fin": "body",
+    "top_back_fin": "body",
+    "bottom_front_fin": "body",
+    "bottom_middle_fin": "body",
+    "bottom_back_fin": "body",
+    "left_front_fin": "body",
+    "right_front_fin": "body",
+    "left_back_fin": "body",
+    "right_back_fin": "body"
+  },
+  "butchery": {
+    "meat": "none",
+    "hide": "none",
+    "bone": "none",
+    "offal_per_weight": 0.0,
+    "fat_per_weight": 0.0,
+    "part_extras": {
+      "body": [
+        {
+          "item": "minecraft:pufferfish",
+          "count": 1.0,
+          "kind": "meat"
+        },
+        {
+          "item": "minecraft:bone_meal",
+          "count": 0.1,
+          "kind": "bone"
+        }
+      ]
+    }
+  }
+}

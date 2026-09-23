@@ -30,6 +30,8 @@ import java.util.concurrent.ConcurrentHashMap;
  */
 public final class CarcassModels {
     private static final Map<ModelLayerLocation, Optional<ModelPart>> ROOTS = new ConcurrentHashMap<>();
+    /** What a skinned carcass shows in bloodless mode: pale, with no blood. */
+    private static final ResourceLocation FLESH_BLOODLESS = ResourceLocation.fromNamespaceAndPath("bloodandbones", "textures/entity/flesh_bloodless.png");
 
     private CarcassModels() {
     }
@@ -37,6 +39,9 @@ public final class CarcassModels {
     /** The skin, then each coat, for a bone's own part and everything attached to it. */
     public static void drawBone(Rig rig, Bone bone, ResourceLocation texture, List<CarcassLook.Coat> passes, int rot,
                                 PoseStack poseStack, MultiBufferSource buffers, int packedLight) {
+        if (texture.equals(CarcassLook.FLESH) && com.avicagan.bloodandbones.config.BBClientConfig.bloodless()) {
+            texture = FLESH_BLOODLESS;
+        }
         drawPass(rig, bone, rig.layer(), texture, rot, poseStack, buffers, packedLight);
         for (CarcassLook.Coat coat : passes) {
             int color = coat.tint() == -1 ? rot : FastColor.ARGB32.multiply(coat.tint() | 0xFF000000, rot);

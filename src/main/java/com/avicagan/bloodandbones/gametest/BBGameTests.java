@@ -884,6 +884,63 @@ public class BBGameTests {
     }
 
     @GameTest(template = "empty", timeoutTicks = 200)
+    public static void pufferfishCarcassAssembles(GameTestHelper helper) {
+        animalTest(helper, EntityType.PUFFERFISH, 1);
+    }
+
+    @GameTest(template = "empty", timeoutTicks = 200)
+    public static void witherCarcassAssembles(GameTestHelper helper) {
+        animalTest(helper, EntityType.WITHER, 6);
+    }
+
+    /** Knocked over as a kill would, the wither's overlapping heads and shoulders must not fling it away. */
+    @GameTest(template = "empty", timeoutTicks = 260)
+    public static void shovedWitherStaysPut(GameTestHelper helper) {
+        ServerLevel level = helper.getLevel();
+        net.minecraft.world.entity.boss.wither.WitherBoss wither = helper.spawn(EntityType.WITHER, new BlockPos(5, 2, 5));
+        Vec3 start = wither.position();
+        CarcassSavedData.Carcass carcass = CarcassAssembler.assemble(wither, null);
+        wither.discard();
+        if (carcass == null) {
+            helper.fail("Carcass assembly returned null");
+            return;
+        }
+        CarcassAssembler.shove(level, carcass, new Vec3(1, 0, 0));
+        double[] farthest = {0};
+        Vector3d[] landed = {null};
+        helper.runAfterDelay(120, () -> {
+            if (SubLevelContainer.getContainer(level).getSubLevel(carcass.bones.get(carcass.rootBone)) instanceof ServerSubLevel body) {
+                landed[0] = new Vector3d(body.logicalPose().position());
+            }
+        });
+        for (int t = 1; t <= 200; t++) {
+            helper.runAfterDelay(t, () -> {
+                for (UUID id : carcass.bones.values()) {
+                    if (SubLevelContainer.getContainer(level).getSubLevel(id) instanceof ServerSubLevel body) {
+                        Vector3d p = body.logicalPose().position();
+                        farthest[0] = Math.max(farthest[0], p.distance(start.x, start.y, start.z));
+                    }
+                }
+            });
+        }
+        helper.runAfterDelay(210, () -> {
+            BloodAndBones.LOGGER.info("[wither] farthest bone {} blocks from where it died", farthest[0]);
+            if (farthest[0] > 6.0) {
+                helper.fail("The wither carcass flew " + farthest[0] + " blocks");
+            }
+            // once down it must lie still, not crawl about on its own
+            if (landed[0] != null && SubLevelContainer.getContainer(level).getSubLevel(carcass.bones.get(carcass.rootBone)) instanceof ServerSubLevel body) {
+                double crawl = body.logicalPose().position().distance(landed[0]);
+                BloodAndBones.LOGGER.info("[wither] moved {} blocks after landing", crawl);
+                if (crawl > 0.75) {
+                    helper.fail("The wither carcass crawled " + crawl + " blocks after it landed");
+                }
+            }
+            helper.succeed();
+        });
+    }
+
+    @GameTest(template = "empty", timeoutTicks = 200)
     public static void ghastCarcassAssembles(GameTestHelper helper) {
         animalTest(helper, EntityType.GHAST, 10);
     }
@@ -1151,6 +1208,24 @@ public class BBGameTests {
             }
             helper.succeed();
         });
+    }
+
+    /** The server-wide bloodless rule exists, is off by default, and can be switched with players about. */
+    @GameTest(template = "empty", timeoutTicks = 20)
+    public static void bloodlessGameRule(GameTestHelper helper) {
+        var rules = helper.getLevel().getGameRules();
+        var rule = rules.getRule(com.avicagan.bloodandbones.registry.BBGameRules.BLOODLESS);
+        if (rule.get()) {
+            helper.fail("Bloodless should be off by default");
+        }
+        helper.makeMockPlayer(GameType.SURVIVAL);
+        rule.set(true, helper.getLevel().getServer());
+        boolean on = rules.getBoolean(com.avicagan.bloodandbones.registry.BBGameRules.BLOODLESS);
+        rule.set(false, helper.getLevel().getServer());
+        if (!on) {
+            helper.fail("The rule did not switch on");
+        }
+        helper.succeed();
     }
 
     /** Every recipe file parsed: a broken one only logs an error, so check they all loaded. */

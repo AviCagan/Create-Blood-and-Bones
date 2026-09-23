@@ -1,0 +1,16 @@
+{
+  "entity": "minecraft:pufferfish",
+  "parts": {
+    "body": [
+      {
+        "item": "minecraft:pufferfish",
+        "kind": "meat"
+      },
+      {
+        "count": 0.1,
+        "item": "minecraft:bone_meal",
+        "kind": "bone"
+      }
+    ]
+  }
+}

@@ -648,6 +648,16 @@ pipes; chain clearance = hanging length + 1 block.
 - Bloodless mode wraps the stain's baked models so they return no quads, and a client config reload
   redraws the world (`LevelRenderer.allChanged`), so switching it needs no restart.
 
+### 13.7b Bloodless mode as built
+
+- Client: `BBClientConfig.bloodless()` is the client toggle OR the server's `bloodandbonesBloodless` game
+  rule, which `BloodlessRulePayload` carries on login and on every change (reset on leaving a server).
+  Either changing redraws the world so baked stains appear or go.
+- Hidden or swapped so far: blood drop particles (in the particle provider, since the server sends them),
+  blood stains (baked model wrapper), the flesh texture of a skinned carcass (a pale bloodless copy) and
+  the hook drawn in a carcass (the clean model). Not yet: machine casings, the Mangler's top, the blood
+  fluid itself, and names (the design's `bloodless.` lang prefix).
+
 ### 13.8 Machines (verified)
 
 - One block entity, four blocks (`MachineKind`): Mangler, Guillotine, Beheader, Deglover. Millstone
@@ -664,16 +674,19 @@ pipes; chain clearance = hanging length + 1 block.
   Diamond); soul blood by superheated mixing with CEI liquid experience, or by CDG basin fermenting.
   The `recipesLoad` game test checks every recipe file parsed, since a broken one only logs an error.
 
-### 13.10 Every vanilla mob (verified; bosses and shape-changing fish excepted)
+### 13.10 Every vanilla mob (verified; the ender dragon and tropical fish excepted)
 
-- 77 rig targets. `LayerDumpProvider` (`-Dbloodandbones.dump_layers=ns:model#layer,...` on the data run)
+- 79 rig targets. `LayerDumpProvider` (`-Dbloodandbones.dump_layers=ns:model#layer,...` on the data run)
   prints part trees to `run/build/layer-dump.txt` for writing new ones.
 - Variants come through `CarcassLook` placeholders (`{variant}`, `{cat_texture}`, villager type,
   profession and level). A coat can use another model's layer by full name (`minecraft:llama#decor`).
 - Hook kills drop the mob's belongings (saddles, armour, chests and contents, held items) by calling the
   protected vanilla `dropCustomDeathLoot` and `dropEquipment` before the mob is removed.
-- Only full-size slimes and magma cubes become carcasses (the rig has one scale). Not rigged: the wither,
-  the ender dragon, pufferfish and tropical fish.
+- Only full-size slimes and magma cubes become carcasses (the rig has one scale). The pufferfish is rigged
+  on its fully puffed model (its spikes stuck to the body), whatever its state when it died; the wither at
+  its drawn double size, with its tail hung from the ribcage, bloodless, its heads sometimes giving a
+  wither skeleton skull. Not rigged: the ender dragon (a multi-part entity with its own long death) and
+  tropical fish (two body shapes under one mob, and a rig has one model).
 
 ### 13.11 Chain conveyors (verified)
 

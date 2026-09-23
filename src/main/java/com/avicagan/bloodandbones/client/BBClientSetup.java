@@ -56,12 +56,7 @@ public final class BBClientSetup {
     @SubscribeEvent
     public static void onConfigReload(net.neoforged.fml.event.config.ModConfigEvent.Reloading event) {
         if (event.getConfig().getSpec() == com.avicagan.bloodandbones.config.BBClientConfig.SPEC) {
-            net.minecraft.client.Minecraft mc = net.minecraft.client.Minecraft.getInstance();
-            mc.execute(() -> {
-                if (mc.level != null) {
-                    mc.levelRenderer.allChanged();
-                }
-            });
+            com.avicagan.bloodandbones.config.BBClientConfig.redraw();
         }
     }
 
