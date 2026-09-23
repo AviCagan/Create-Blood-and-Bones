@@ -219,7 +219,7 @@ public class ShackleHookBlockEntity extends BlockEntity {
         outZ = out.z;
         setChanged();
         level.sendBlockUpdated(worldPosition, getBlockState(), getBlockState(), 3);
-        attach(level);
+        attach(level, false);
     }
 
     public void release(ServerLevel level) {
@@ -244,10 +244,14 @@ public class ShackleHookBlockEntity extends BlockEntity {
             return;
         }
         hook.joint = null;
-        hook.attach(serverLevel);
+        hook.attach(serverLevel, true);
     }
 
-    private void attach(ServerLevel level) {
+    /** How far from the tip a hung limb may be for the hook to take it back after a reload, in blocks. */
+    public static final double REJOIN_REACH = 2.0;
+
+    /** @param rejoin taking back a limb it already held (after a reload), rather than hooking a new one */
+    private void attach(ServerLevel level, boolean rejoin) {
         ServerSubLevelContainer container = SubLevelContainer.getContainer(level);
         if (container == null || subLevelId == null) {
             return;
@@ -257,6 +261,14 @@ public class ShackleHookBlockEntity extends BlockEntity {
             return;
         }
         Vec3 tip = ShackleHookBlock.tip(worldPosition, getBlockState());
+        // Rejoining after a reload finds the limb still at the tip. Far from it, the hook was moved without
+        // its carcass (a Create contraption carries the hook's data but drops the body): let it go rather
+        // than yank the body back from wherever it is now.
+        Vector3d anchorWorld = serverSubLevel.logicalPose().transformPosition(new Vector3d(anchorPlot), new Vector3d());
+        if (rejoin && anchorWorld.distance(tip.x, tip.y, tip.z) > REJOIN_REACH) {
+            release(level);
+            return;
+        }
         // A ball joint pinning the neck junction to the hook tip; the belly-out turn is a torque spring
         // applied every physics substep (see physicsTick), not a joint motor.
         GenericConstraintConfiguration config = new GenericConstraintConfiguration(

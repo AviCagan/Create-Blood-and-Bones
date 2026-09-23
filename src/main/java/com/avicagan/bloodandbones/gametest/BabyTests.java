@@ -147,6 +147,31 @@ public class BabyTests {
         babyTest(helper, EntityType.RABBIT);
     }
 
+    /**
+     * The baby rabbit's body and head start where the game draws them. RabbitModel draws a baby's body at
+     * 0.4 * (p + (0, 36, 0)) and its head at 0.5667 * (p + (0, 22, 2)) model pixels under the renderer's
+     * 1.501 block lift; the assembler puts a bone's pivot at feet + 1.501 * scale - offset.y / 16.
+     */
+    @GameTest(template = "empty", timeoutTicks = 20)
+    public static void babyRabbitSitsWhereTheGameDrawsIt(GameTestHelper helper) {
+        net.minecraft.resources.ResourceLocation id = net.minecraft.resources.ResourceLocation.withDefaultNamespace("rabbit");
+        Rig grown = RigManager.forEntity(id).orElseThrow();
+        Rig baby = RigManager.forEntity(id, true).orElseThrow();
+        String[] bones = {"body", "head"};
+        float[] scales = {0.4F, 0.56666666F};
+        float[] shifts = {36.0F, 22.0F};
+        for (int i = 0; i < bones.length; i++) {
+            // the grown rig keeps the model's pixels times the grown rabbit's 0.6
+            double p = grown.bone(bones[i]).orElseThrow().offset().y / 0.6;
+            double drawn = 1.501 - scales[i] * (p + shifts[i]) / 16.0;
+            double built = 1.501 * baby.scale() - baby.bone(bones[i]).orElseThrow().offset().y / 16.0;
+            if (Math.abs(drawn - built) > 0.02) {
+                helper.fail("The baby rabbit's " + bones[i] + " starts " + built + " above its feet; the game draws it at " + drawn);
+            }
+        }
+        helper.succeed();
+    }
+
     /** A kind with no baby shape (a horse foal) still dies as it always did. */
     @GameTest(template = "empty", timeoutTicks = 20)
     public static void foalDiesAsUsual(GameTestHelper helper) {

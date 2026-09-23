@@ -92,10 +92,10 @@
     "head_scale": 0.94444,
     "head_offset": [
       0,
-      22,
+      5.0588,
       2
     ],
     "body_scale": 0.66667,
-    "body_offset": 36
+    "body_offset": 12.0
   }
 }

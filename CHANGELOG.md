@@ -40,5 +40,6 @@ Everything below is in development builds only; the art is placeholder (see the 
 - Not rigged: the ender dragon and tropical fish.
 - Trolleys cannot ride chain conveyors that sit on a Sable sub-level (a moving ship).
 - A carcass hanging from a hook that a Create contraption moves falls off rather than going along.
-- The drag test (`meatHookDragsByBody`) missed its 0.5-block mark by 0.02 once in about thirty runs.
+- The drag tests occasionally miss their mark: `meatHookDragsByBody` by 0.02 blocks once in about thirty
+  runs, and `meatHookDragsByLeg` once (both passed on the reruns).
 - All art is placeholder (see the README).

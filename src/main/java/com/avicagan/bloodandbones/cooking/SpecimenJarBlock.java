@@ -38,7 +38,9 @@ public class SpecimenJarBlock extends Block implements IBE<SpecimenJarBlockEntit
             return ItemInteractionResult.PASS_TO_DEFAULT_BLOCK_INTERACTION;
         }
         if (level.isClientSide) {
-            return ItemInteractionResult.SUCCESS;
+            // an empty hand on an empty one does nothing, so the other hand gets its turn (a piece held there)
+            return stack.isEmpty() && level.getBlockEntity(pos) instanceof SpecimenJarBlockEntity be && be.specimen().isEmpty()
+                    ? ItemInteractionResult.PASS_TO_DEFAULT_BLOCK_INTERACTION : ItemInteractionResult.SUCCESS;
         }
         return onBlockEntityUseItemOn(level, pos, be -> {
             if (stack.isEmpty()) {

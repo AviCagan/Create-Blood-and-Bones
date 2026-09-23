@@ -374,6 +374,65 @@ public class BBGameTests {
         });
     }
 
+    /**
+     * A Create contraption carries a Shackle Hook's data but not its carcass. Put back down somewhere else,
+     * the hook must let the carcass go, not pull it across to its new place.
+     */
+    @GameTest(template = "empty", timeoutTicks = 300)
+    public static void movedShackleHookLetsGo(GameTestHelper helper) {
+        ServerLevel level = helper.getLevel();
+        Cow cow = helper.spawn(EntityType.COW, new BlockPos(5, 2, 5));
+        if (CarcassAssembler.assemble(cow, null) == null) {
+            helper.fail("Carcass assembly returned false");
+        }
+        cow.discard();
+        BlockPos hookPos = new BlockPos(5, 5, 5);
+        BlockPos farPos = new BlockPos(5, 5, 1);
+        net.minecraft.world.level.block.state.BlockState hookState = com.avicagan.bloodandbones.registry.BBBlocks.SHACKLE_HOOK.get().defaultBlockState()
+                .setValue(com.avicagan.bloodandbones.carcass.ShackleHookBlock.FACING, net.minecraft.core.Direction.UP);
+        helper.setBlock(hookPos.above(), net.minecraft.world.level.block.Blocks.STONE);
+        helper.setBlock(hookPos, hookState);
+        helper.setBlock(farPos.above(), net.minecraft.world.level.block.Blocks.STONE);
+        Player player = helper.makeMockPlayer(GameType.SURVIVAL);
+        player.setItemInHand(InteractionHand.MAIN_HAND, new ItemStack(BBItems.MEAT_HOOK.get()));
+        player.setPos(Vec3.atBottomCenterOf(helper.absolutePos(new BlockPos(5, 2, 5))));
+        player.setOldPosAndRot();
+        net.minecraft.nbt.CompoundTag[] carried = new net.minecraft.nbt.CompoundTag[1];
+        helper.runAfterDelay(10, () -> {
+            CarcassSavedData.Carcass carcass = onlyCarcass(helper, level);
+            ServerSubLevel leg = liveBones(helper, level, carcass).get("right_hind_leg");
+            CarcassDrag.start(level, player, leg.getPlot().getCenterBlock(), null);
+            com.avicagan.bloodandbones.carcass.ShackleHookBlockEntity hook = (com.avicagan.bloodandbones.carcass.ShackleHookBlockEntity) level.getBlockEntity(helper.absolutePos(hookPos));
+            hook.toggle(level, player);
+            if (!hook.isOccupied()) {
+                helper.fail("Hook did not take the dragged limb");
+            }
+        });
+        helper.runAfterDelay(80, () -> {
+            // what Contraption#removeBlocksFromWorld does: the block entity goes first, then the block
+            com.avicagan.bloodandbones.carcass.ShackleHookBlockEntity hook = (com.avicagan.bloodandbones.carcass.ShackleHookBlockEntity) level.getBlockEntity(helper.absolutePos(hookPos));
+            carried[0] = hook.saveWithFullMetadata(level.registryAccess());
+            level.removeBlockEntity(helper.absolutePos(hookPos));
+            level.setBlock(helper.absolutePos(hookPos), net.minecraft.world.level.block.Blocks.AIR.defaultBlockState(), 2 | 16);
+            // ...and later, where the contraption stops, the block and its data come back
+            helper.setBlock(farPos, hookState);
+            level.getBlockEntity(helper.absolutePos(farPos)).loadWithComponents(carried[0], level.registryAccess());
+        });
+        helper.runAfterDelay(140, () -> {
+            com.avicagan.bloodandbones.carcass.ShackleHookBlockEntity moved = (com.avicagan.bloodandbones.carcass.ShackleHookBlockEntity) level.getBlockEntity(helper.absolutePos(farPos));
+            if (moved.isOccupied()) {
+                helper.fail("A hook put down away from its carcass should have let it go");
+            }
+            CarcassSavedData.Carcass carcass = onlyCarcass(helper, level);
+            ServerSubLevel body = liveBones(helper, level, carcass).get(carcass.rootBone);
+            Vec3 tip = com.avicagan.bloodandbones.carcass.ShackleHookBlock.tip(helper.absolutePos(farPos), hookState);
+            if (body.logicalPose().position().distance(tip.x, tip.y, tip.z) < 1.5) {
+                helper.fail("The carcass was pulled over to the moved hook");
+            }
+            helper.succeed();
+        });
+    }
+
     /** A still carcass folds into one body; grabbing it unfolds it at the same poses with its joints back. */
     @GameTest(template = "empty", timeoutTicks = 600)
     public static void restingFormFoldsAndUnfolds(GameTestHelper helper) {

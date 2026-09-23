@@ -180,6 +180,7 @@ public class BloodStainTests {
                 {"Bloody Casing", "Stained Casing"},
                 {"Soul Blood", "Soul Essence"},
                 {"_Bloodless_ mode keeps its name", "_Bloodless_ mode keeps its name"},
+                {"Create: Blood & Bones", "Create: Blood & Bones"},
                 {"A _bloody_ blade: blood-soaked meat bleeds, and bled out", "A _stained_ blade: essence-soaked meat drains, and drained out"},
         };
         for (String[] c : cases) {
@@ -190,6 +191,8 @@ public class BloodStainTests {
         }
         if (!com.avicagan.bloodandbones.config.BloodlessWords.reworded("block.bloodandbones.bleeding_rack")
                 || com.avicagan.bloodandbones.config.BloodlessWords.reworded("itemGroup.bloodandbones.title")
+                || com.avicagan.bloodandbones.config.BloodlessWords.reworded("bloodandbones.configuration.bloodless_mode.tooltip")
+                || com.avicagan.bloodandbones.config.BloodlessWords.reworded("gamerule.bloodandbonesBloodless.description")
                 || com.avicagan.bloodandbones.config.BloodlessWords.reworded("block.minecraft.stone")) {
             helper.fail("Only this mod's text, and not its name, should be reworded");
         }

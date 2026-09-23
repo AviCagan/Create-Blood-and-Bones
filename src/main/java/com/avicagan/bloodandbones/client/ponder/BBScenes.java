@@ -11,6 +11,10 @@ import net.minecraft.core.Direction;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.phys.Vec3;
 
+import java.util.List;
+
+import com.avicagan.bloodandbones.cooking.ButcherHookBlockEntity;
+
 /**
  * Ponder scenes. Schematics are in assets/bloodandbones/ponder/, 5 wide on a snow plate. Ponder worlds do
  * not run kinetics, so every turning block is given its speed here. The text of each scene is in the lang
@@ -120,6 +124,47 @@ public final class BBScenes {
         scene.overlay().showText(90).attachKeyFrame()
                 .text("Take it off with an empty hand once cooked: it comes apart into cooked meat and bones. Leave it too long and it burns")
                 .pointAt(util.vector().topOf(spit)).placeNearTarget();
+        scene.idle(100);
+        scene.markAsFinished();
+    }
+
+    /** A pillar of Bloody Casing with a Butcher's Hook on each side, each hung with a piece. */
+    public static void butcherHook(SceneBuilder builder, SceneBuildingUtil util, List<ItemStack> pieces) {
+        CreateSceneBuilder scene = new CreateSceneBuilder(builder);
+        scene.title("butcher_hook", "Hanging Meat on the Butcher's Hook");
+        scene.configureBasePlate(0, 0, 5);
+        scene.showBasePlate();
+        BlockPos top = util.grid().at(2, 2, 2);
+        List<BlockPos> hooks = List.of(util.grid().at(2, 2, 1), util.grid().at(3, 2, 2), util.grid().at(2, 2, 3), util.grid().at(1, 2, 2));
+        scene.idle(5);
+        scene.world().showSection(util.select().fromTo(2, 1, 2, 2, 2, 2), Direction.DOWN);
+        scene.idle(15);
+        scene.overlay().showText(80).attachKeyFrame()
+                .text("Bloody Casing: fill an Andesite Casing with 250 mB of blood from a Spout. It joins up like any casing")
+                .pointAt(util.vector().topOf(top)).placeNearTarget();
+        scene.idle(90);
+        for (BlockPos hook : hooks) {
+            scene.world().showSection(util.select().position(hook), Direction.DOWN);
+            scene.idle(5);
+        }
+        scene.idle(10);
+        scene.overlay().showText(70).attachKeyFrame()
+                .text("A Butcher's Hook goes on the side of a solid block")
+                .pointAt(util.vector().topOf(top)).placeNearTarget();
+        scene.idle(80);
+        scene.overlay().showControls(util.vector().topOf(top), Pointing.DOWN, 50).rightClick().withItem(pieces.get(0));
+        for (int i = 0; i < hooks.size(); i++) {
+            ItemStack piece = pieces.get(i % pieces.size());
+            scene.world().modifyBlockEntity(hooks.get(i), ButcherHookBlockEntity.class, be -> be.put(piece.copy()));
+            scene.idle(5);
+        }
+        scene.overlay().showText(80).attachKeyFrame().colored(PonderPalette.GREEN)
+                .text("Right-click with a carcass piece to hang it up. It keeps there, like a piece in a Specimen Jar")
+                .pointAt(util.vector().topOf(top)).placeNearTarget();
+        scene.idle(90);
+        scene.overlay().showText(90).attachKeyFrame()
+                .text("Take it down with an empty hand. If the block behind it is broken, the hook falls and drops the piece")
+                .pointAt(util.vector().topOf(top)).placeNearTarget();
         scene.idle(100);
         scene.markAsFinished();
     }

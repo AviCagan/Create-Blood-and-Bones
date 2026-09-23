@@ -689,7 +689,8 @@ pipes; chain clearance = hanging length + 1 block.
   own reference by reflection, since Create's descriptions read through I18n) and, in bloodless mode,
   rewords this mod's keys: a translation's own `bloodless.<key>` if it has one, else
   `BloodlessWords.soften` (English only: blood to essence, bleeding to draining, bloody to stained,
-  whole words, capitals kept; "bloodless" and the mod's name are left alone). A client tick puts the
+  whole words, capitals kept; "bloodless", the mod's name, and the settings and game rule that describe
+  bloodless mode itself are left alone). A client tick puts the
   wrapper back after a resource reload replaces the language; a mode change injects a fresh wrapper so
   all text is looked up again, and our `BBDescriptionModifier` rebuilds Create's cached descriptions.
   Checked in the real client (the bloodless showcase logs "Essence Steel Ingot | Draining Rack |
@@ -739,8 +740,10 @@ pipes; chain clearance = hanging length + 1 block.
 - 28 kinds so far (cow, mooshroom, pig, sheep, chicken, wolf, goat, polar bear, panda, ocelot, cat, fox,
   hoglin, zoglin, zombie, husk, drowned, zombie villager, piglin, villager, turtle, rabbit, and, shrunk
   whole around the feet, axolotl, bee, sniffer, armadillo, camel, strider). The rabbit draws its baby by
-  hand (`RabbitModel#renderToBuffer`), in the same form, so its shape is the vanilla numbers divided by
-  the grown rabbit's 0.6. Others with babies die as usual until they get a shape. Two kinds do not fit
+  hand (`RabbitModel#renderToBuffer`), in the same form: the scales are vanilla's divided by the grown
+  rabbit's 0.6, and the offsets leave out the grown rabbit's own 16 px lift, which the rig does not store
+  (the assembler's 1.501 × 0.6 happens to equal 1.501 − 0.6): head 22 − 16·0.6/0.5667, body 36 − 16·0.6/0.4.
+  `babyRabbitSitsWhereTheGameDrawsIt` checks both against vanilla's numbers. Others with babies die as usual until they get a shape. Two kinds do not fit
   the shape: the llama squashes its baby's head, body and legs by different amounts along each axis, and
   horses, donkeys and mules swap in separate, longer baby legs and lower the body.
 - Assembly lifts a body so no box starts below the feet: the ghast's tentacles hang below its feet in
@@ -776,7 +779,9 @@ pipes; chain clearance = hanging length + 1 block.
 - On Create contraptions (`BBMovementChecks`): both hooks count as attached to the block they hang from
   and as brittle, and the Butcher's Hook is a `create:movable_empty_collider`. The Shackle Hook now turns
   with a structure or bearing (it had no `rotate`/`mirror`). A hook carrying a carcass is not yet made
-  into contraption data (§3.5): the carcass falls when its hook is moved.
+  into contraption data (§3.5): the carcass falls when its hook is moved, and when the contraption is put
+  down the hook finds its old limb more than 2 blocks away and lets it go (it only rejoins a limb still
+  at its tip, as after a reload) rather than pulling the body back across the world.
 
 ### 13.12a Sorting pieces with Create's filters (verified)
 

@@ -34,7 +34,8 @@ public final class BloodlessWords {
     }
 
     public static String soften(String text) {
-        String out = text;
+        // the mod's own name stays as it is
+        String out = text.replace(MOD_NAME, NAME_MARK);
         for (Swap swap : SWAPS) {
             Matcher matcher = swap.pattern().matcher(out);
             StringBuilder sb = new StringBuilder();
@@ -46,11 +47,18 @@ public final class BloodlessWords {
             matcher.appendTail(sb);
             out = sb.toString();
         }
-        return out;
+        return out.replace(NAME_MARK, MOD_NAME);
     }
 
-    /** Whether bloodless mode rewords this translation key: this mod's own text, but not its name. */
+    private static final String MOD_NAME = "Blood & Bones";
+    private static final String NAME_MARK = "\u0000name\u0000";
+
+    /**
+     * Whether bloodless mode rewords this translation key: this mod's own text, but not its name, nor the
+     * settings and game rule that describe bloodless mode itself.
+     */
     public static boolean reworded(String key) {
-        return key.contains("bloodandbones") && !key.startsWith("itemGroup.") && !key.startsWith("bloodless.");
+        return key.contains("bloodandbones") && !key.startsWith("itemGroup.") && !key.startsWith("bloodless.")
+                && !key.startsWith("bloodandbones.configuration.") && !key.startsWith("gamerule.");
     }
 }

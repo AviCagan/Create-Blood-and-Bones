@@ -36,8 +36,26 @@ public class BBPonderPlugin implements PonderPlugin {
                 "Skinning with the Deglover", "The Deglover strips the hide off a carcass, and a sheep's wool with it",
                 new ItemStack(BBItems.RAW_HIDE.get())), AllCreatePonderTags.KINETIC_APPLIANCES);
         scenes.forComponents(BBBlocks.BLEEDING_RACK).addStoryBoard("bleeding_rack", BBScenes::bleedingRack, AllCreatePonderTags.FLUIDS);
+        scenes.forComponents(BBBlocks.BUTCHER_HOOK, BBBlocks.BLOODY_CASING).addStoryBoard("butcher_hook",
+                (b, u) -> BBScenes.butcherHook(b, u, java.util.List.of(piece("pig", "right_front_leg"), piece("cow", "head"),
+                        piece("sheep", "left_hind_leg"), piece("chicken", "right_wing"))), AllCreatePonderTags.DECORATION);
         scenes.forComponents(BBBlocks.SPIT_ROAST).addStoryBoard("spit_roast",
                 (b, u) -> BBScenes.spitRoast(b, u, new ItemStack(BBItems.CARCASS_PIECE.get())), AllCreatePonderTags.KINETIC_APPLIANCES);
+    }
+
+    /** A fresh piece of a vanilla mob, as the hook in the scene holds it. */
+    private static ItemStack piece(String mob, String bone) {
+        ItemStack stack = new ItemStack(BBItems.CARCASS_PIECE.get());
+        String texture = switch (mob) {
+            case "cow" -> "textures/entity/cow/cow.png";
+            case "pig" -> "textures/entity/pig/pig.png";
+            case "sheep" -> "textures/entity/sheep/sheep.png";
+            default -> "textures/entity/chicken.png";
+        };
+        stack.set(com.avicagan.bloodandbones.registry.BBDataComponents.PIECE.get(), new com.avicagan.bloodandbones.item.CarcassPieceItem.Piece(
+                ResourceLocation.withDefaultNamespace(mob), bone, ResourceLocation.withDefaultNamespace(texture), java.util.List.of(), 1.0F,
+                false, java.util.Map.of(), 0.0F, 0.0F, 0.0F, false));
+        return stack;
     }
 
     @Override
@@ -51,5 +69,8 @@ public class BBPonderPlugin implements PonderPlugin {
                 .add(BBBlocks.SPIT_ROAST);
         tags.addToTag(AllCreatePonderTags.FLUIDS)
                 .add(BBBlocks.BLEEDING_RACK);
+        tags.addToTag(AllCreatePonderTags.DECORATION)
+                .add(BBBlocks.BUTCHER_HOOK)
+                .add(BBBlocks.BLOODY_CASING);
     }
 }
