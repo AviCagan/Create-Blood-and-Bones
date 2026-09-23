@@ -111,7 +111,11 @@ public class CarcassPieceItem extends Item {
             tooltip.add(Component.translatable("item.bloodandbones.carcass_piece.skinned").withStyle(net.minecraft.ChatFormatting.GRAY));
         }
         if (piece.baby()) {
-            tooltip.add(Component.translatable("item.bloodandbones.carcass_piece.baby").withStyle(net.minecraft.ChatFormatting.GRAY));
+            // a slime's "baby" is its smallest size
+            boolean slime = net.minecraft.core.registries.BuiltInRegistries.ENTITY_TYPE.getOptional(piece.entity())
+                    .map(type -> type == net.minecraft.world.entity.EntityType.SLIME || type == net.minecraft.world.entity.EntityType.MAGMA_CUBE)
+                    .orElse(false);
+            tooltip.add(Component.translatable("item.bloodandbones.carcass_piece." + (slime ? "small" : "baby")).withStyle(net.minecraft.ChatFormatting.GRAY));
         }
     }
 

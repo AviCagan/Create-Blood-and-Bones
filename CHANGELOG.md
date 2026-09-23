@@ -71,8 +71,8 @@ Everything below is in development builds only; the art is placeholder (see the 
 
 ### Known gaps
 
-- Middle-sized slimes and magma cubes (size 2) still split and die normally, and pieces of the
-  smallest ones say "from a baby".
+- Middle-sized slimes and magma cubes (size 2) still split and die normally. Pieces of the smallest
+  ones say "From a small one", but the Attribute Filter counts them as "from a baby".
 - Not rigged: the ender dragon and tropical fish.
 - Trolleys cannot ride chain conveyors that sit on a Sable sub-level (a moving ship).
 - A carcass hanging from a hook that a Create contraption moves falls off rather than going along.

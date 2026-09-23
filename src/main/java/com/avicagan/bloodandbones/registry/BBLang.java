@@ -114,6 +114,7 @@ public class BBLang {
         BloodAndBones.REGISTRATE.addRawLang("item.bloodandbones.carcass_piece.rotting", "Rotting (%s%%)");
         BloodAndBones.REGISTRATE.addRawLang("item.bloodandbones.carcass_piece.skinned", "Skinned");
         BloodAndBones.REGISTRATE.addRawLang("item.bloodandbones.carcass_piece.baby", "From a baby");
+        BloodAndBones.REGISTRATE.addRawLang("item.bloodandbones.carcass_piece.small", "From a small one");
 
         // ---- advancements
         advancement("butchery", "Create: Blood & Bones", "Make a Meat Hook. Whatever it kills stays whole");

@@ -215,6 +215,28 @@ public class BabyTests {
         helper.succeed();
     }
 
+    /** A piece of the smallest slime says it is from a small one; a calf's, from a baby. */
+    @GameTest(template = "empty", timeoutTicks = 20)
+    public static void smallSlimePiecesSaySmall(GameTestHelper helper) {
+        String[][] cases = {{"slime", "cube", "item.bloodandbones.carcass_piece.small"}, {"cow", "body", "item.bloodandbones.carcass_piece.baby"}};
+        for (String[] c : cases) {
+            net.minecraft.world.item.ItemStack stack = new net.minecraft.world.item.ItemStack(com.avicagan.bloodandbones.registry.BBItems.CARCASS_PIECE.get());
+            stack.set(com.avicagan.bloodandbones.registry.BBDataComponents.PIECE.get(), new com.avicagan.bloodandbones.item.CarcassPieceItem.Piece(
+                    net.minecraft.resources.ResourceLocation.withDefaultNamespace(c[0]), c[1],
+                    net.minecraft.resources.ResourceLocation.withDefaultNamespace("textures/entity/" + c[0] + ".png"), java.util.List.of(),
+                    1.0F, false, Map.of(), 0.0F, 0.0F, 0.0F, true));
+            java.util.List<net.minecraft.network.chat.Component> tooltip = new java.util.ArrayList<>();
+            stack.getItem().appendHoverText(stack, net.minecraft.world.item.Item.TooltipContext.EMPTY, tooltip, net.minecraft.world.item.TooltipFlag.NORMAL);
+            boolean found = tooltip.stream().anyMatch(line -> line.getContents() instanceof net.minecraft.network.chat.contents.TranslatableContents t
+                    && t.getKey().equals(c[2]));
+            if (!found) {
+                helper.fail("A baby " + c[0] + " piece's tooltip should have " + c[2] + ", got " + tooltip);
+                return;
+            }
+        }
+        helper.succeed();
+    }
+
     /** Foals: the head and body shrink as usual, but the game draws them on their own long legs. */
     @GameTest(template = "empty", timeoutTicks = 200)
     public static void foalCarcass(GameTestHelper helper) {

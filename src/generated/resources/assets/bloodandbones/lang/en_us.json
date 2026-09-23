@@ -243,6 +243,7 @@
   "item.bloodandbones.carcass_piece.named": "%s %s",
   "item.bloodandbones.carcass_piece.rotting": "Rotting (%s%%)",
   "item.bloodandbones.carcass_piece.skinned": "Skinned",
+  "item.bloodandbones.carcass_piece.small": "From a small one",
   "item.bloodandbones.carcass_piece.tooltip": "CARCASS PIECE",
   "item.bloodandbones.carcass_piece.tooltip.behaviour1": "Picks a _loose_ piece up off the ground. Pieces still attached have to be cut off first.",
   "item.bloodandbones.carcass_piece.tooltip.behaviour2": "Puts it back down as a _body_ again.",
