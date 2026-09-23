@@ -21,9 +21,18 @@ public class CleaverItem extends SwordItem {
     /** Striking a living thing that bleeds leaves the blade bloody for a while. */
     @Override
     public boolean hurtEnemy(net.minecraft.world.item.ItemStack stack, net.minecraft.world.entity.LivingEntity target, net.minecraft.world.entity.LivingEntity attacker) {
-        if (!target.getType().is(com.avicagan.bloodandbones.registry.BBTags.BLOODLESS)) {
+        if (com.avicagan.bloodandbones.carcass.Blood.bleeds(target)) {
             com.avicagan.bloodandbones.carcass.Blood.bloody(stack, target.level());
         }
         return super.hurtEnemy(stack, target, attacker);
+    }
+
+    /**
+     * Drawing blood only changes the blade's components; the held blade should not dip out of view and
+     * back each time it does. Another item, or another slot, still swaps as usual.
+     */
+    @Override
+    public boolean shouldCauseReequipAnimation(net.minecraft.world.item.ItemStack oldStack, net.minecraft.world.item.ItemStack newStack, boolean slotChanged) {
+        return slotChanged || !net.minecraft.world.item.ItemStack.isSameItem(oldStack, newStack);
     }
 }

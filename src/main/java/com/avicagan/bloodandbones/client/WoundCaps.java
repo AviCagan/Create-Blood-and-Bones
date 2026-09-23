@@ -24,6 +24,8 @@ public final class WoundCaps {
     private static final ResourceLocation WOUND = ResourceLocation.fromNamespaceAndPath("bloodandbones", "textures/entity/wound.png");
     /** How far off the face a wound sits, in model pixels, so it does not flicker against the box. */
     private static final float LIFT = 0.06F;
+    /** How far off centre (as a share of its length) a long limb's pivot must be to count as at one end. */
+    private static final float PIVOT_END = 0.2F;
 
     private WoundCaps() {
     }
@@ -60,10 +62,10 @@ public final class WoundCaps {
     }
 
     /**
-     * One wound over the face of {@code limb}'s box where it was cut: for a long limb, the end its pivot is
-     * at; for a blocky part, the face pointing most toward the parent's pivot (if the two pivots coincide,
-     * the face nearest its own pivot). Drawn in the limb's frame: outside the box for the limb's own cut end,
-     * inside it for the stump.
+     * One wound over the face of {@code limb}'s box where it was cut: for a long limb pivoted at one end,
+     * that end; otherwise (a blocky part, or a limb pivoted mid-way) the face pointing most toward the
+     * parent's pivot (if the two pivots coincide, the face nearest its own pivot). Drawn in the limb's
+     * frame: outside the box for the limb's own cut end, inside it for the stump.
      */
     private static void cap(Bone limb, @org.jetbrains.annotations.Nullable Bone parent, boolean stump, int color, PoseStack poseStack, MultiBufferSource buffers, int packedLight) {
         Vector3f min = limb.boxMin();
@@ -76,7 +78,10 @@ public final class WoundCaps {
         float others = Math.max(size.get((longest + 1) % 3), size.get((longest + 2) % 3));
         Vector3f toParent = parent == null ? new Vector3f()
                 : new Quaternionf(limb.rotation()).invert().transform(new Vector3f(parent.offset()).sub(limb.offset()));
-        if (size.get(longest) >= 1.5F * others) {
+        // ...but only when the pivot is clearly nearer one end; a wing or a head hung from its middle is
+        // cut on the side facing what it hung from, below
+        boolean pivotAtAnEnd = Math.abs(Math.abs(max.get(longest)) - Math.abs(min.get(longest))) > PIVOT_END * size.get(longest);
+        if (size.get(longest) >= 1.5F * others && pivotAtAnEnd) {
             axis = longest;
             high = Math.abs(max.get(axis)) < Math.abs(min.get(axis));
         } else if (toParent.lengthSquared() > 1.0E-4F) {

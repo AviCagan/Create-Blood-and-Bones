@@ -45,6 +45,12 @@ public final class Blood {
         }
     }
 
+    /** Whether striking this creature draws blood: not an armour stand, nor a mob without blood. */
+    public static boolean bleeds(net.minecraft.world.entity.LivingEntity target) {
+        return !(target instanceof net.minecraft.world.entity.decoration.ArmorStand)
+                && !target.getType().is(com.avicagan.bloodandbones.registry.BBTags.BLOODLESS);
+    }
+
     /** Farthest blood falls looking for ground to stain. */
     public static final int STAIN_REACH = 12;
 

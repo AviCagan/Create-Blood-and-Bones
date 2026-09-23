@@ -171,7 +171,10 @@ public class BloodStainTests {
         });
     }
 
-    /** A cleaver that cuts a cow comes away bloody; one that cuts a skeleton does not. */
+    /**
+     * A cleaver that cuts a cow comes away bloody, even from the off hand; one that cuts a skeleton does not,
+     * and neither does one that strikes an armour stand.
+     */
     @GameTest(template = "empty", timeoutTicks = 60)
     public static void bladesGetBloody(GameTestHelper helper) {
         ServerLevel level = helper.getLevel();
@@ -187,13 +190,26 @@ public class BloodStainTests {
         }
         Player butcher = helper.makeMockPlayer(GameType.SURVIVAL);
         Player other = helper.makeMockPlayer(GameType.SURVIVAL);
+        Player lefty = helper.makeMockPlayer(GameType.SURVIVAL);
         butcher.setItemInHand(InteractionHand.MAIN_HAND, new ItemStack(BBItems.CLEAVER.get()));
         other.setItemInHand(InteractionHand.MAIN_HAND, new ItemStack(BBItems.CLEAVER.get()));
+        lefty.setItemInHand(InteractionHand.MAIN_HAND, new ItemStack(net.minecraft.world.item.Items.BREAD));
+        lefty.setItemInHand(InteractionHand.OFF_HAND, new ItemStack(BBItems.CLEAVER.get()));
+        ItemStack standBlade = new ItemStack(BBItems.CLEAVER.get());
+        net.minecraft.world.entity.decoration.ArmorStand stand = helper.spawn(EntityType.ARMOR_STAND, new BlockPos(1, 2, 7));
         helper.runAfterDelay(5, () -> {
             com.avicagan.bloodandbones.carcass.CarcassButchery.cut(level, butcher, meat, "right_front_leg", null);
             com.avicagan.bloodandbones.carcass.CarcassButchery.cut(level, other, bones, "right_arm", null);
+            com.avicagan.bloodandbones.carcass.CarcassButchery.cut(level, lefty, meat, "left_front_leg", null);
+            standBlade.getItem().hurtEnemy(standBlade, stand, other);
             if (butcher.getMainHandItem().get(com.avicagan.bloodandbones.registry.BBDataComponents.BLOODIED_AT.get()) == null) {
                 helper.fail("A cleaver that cut a cow should be bloody");
+            }
+            if (lefty.getOffhandItem().get(com.avicagan.bloodandbones.registry.BBDataComponents.BLOODIED_AT.get()) == null) {
+                helper.fail("A cleaver in the off hand that cut a cow should be bloody");
+            }
+            if (standBlade.get(com.avicagan.bloodandbones.registry.BBDataComponents.BLOODIED_AT.get()) != null) {
+                helper.fail("A cleaver that struck an armour stand should stay clean");
             }
             if (other.getMainHandItem().get(com.avicagan.bloodandbones.registry.BBDataComponents.BLOODIED_AT.get()) != null) {
                 helper.fail("A cleaver that cut a skeleton should stay clean");

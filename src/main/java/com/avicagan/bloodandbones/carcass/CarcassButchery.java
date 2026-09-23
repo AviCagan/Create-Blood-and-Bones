@@ -53,7 +53,7 @@ public final class CarcassButchery {
         }
         int cuts = carcass.cuts.merge(bone, 1, Integer::sum);
         if (player != null && Blood.bloody(carcass)) {
-            Blood.bloody(player.getMainHandItem(), level);
+            Blood.bloody(blade(player, com.avicagan.bloodandbones.item.CleaverItem.class), level);
         }
         if (at != null) {
             Blood.wound(level, carcass, at, 8, 1);
@@ -121,6 +121,11 @@ public final class CarcassButchery {
         BloodAndBones.LOGGER.debug("Butchered {} of carcass {}", bone, carcass.id);
     }
 
+    /** The blade of this kind the player is working with: the main hand's, or else the off hand's. */
+    private static net.minecraft.world.item.ItemStack blade(Player player, Class<?> kind) {
+        return kind.isInstance(player.getMainHandItem().getItem()) ? player.getMainHandItem() : player.getOffhandItem();
+    }
+
     /**
      * One Flensing Knife stroke. Enough of them take the hide off: the hide (and anything the table adds,
      * like a sheep's wool) drops, and the carcass shows bare meat from then on.
@@ -141,7 +146,7 @@ public final class CarcassButchery {
         }
         carcass.skinStrokes++;
         if (player != null && Blood.bloody(carcass)) {
-            Blood.bloody(player.getMainHandItem(), level);
+            Blood.bloody(blade(player, com.avicagan.bloodandbones.item.FlensingKnifeItem.class), level);
         }
         Blood.wound(level, carcass, where, 4, 0);
         level.playSound(null, where.x, where.y, where.z, SoundEvents.SLIME_SQUISH_SMALL, SoundSource.BLOCKS, 0.8F, 1.2F);
