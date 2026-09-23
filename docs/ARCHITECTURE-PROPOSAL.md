@@ -437,7 +437,12 @@ baby; licence MIT; backtank tiers copper 2 / gold 3 / iron 4 / diamond 6 / blood
 diamond 16 / soul netherite 32; port block works with an adjacent wearer and with a placed backtank on
 pipes; chain clearance = hanging length + 1 block.
 
-**Still open**: nothing blocking. Slice 1 (cow) is in progress.
+**Still open** (as of the latest build): everything up to and including machines, materials,
+cooking, display and decoration is built and tested (§13). What remains needs design decisions
+before code: the body-horror progression (Block 11: Surgery Table, prosthetics, minions,
+cybernetics, and the Fluid Backtank and its port, whose tiers are decided above), a carcass riding a
+hook on a Create contraption (§3.5), trolleys on chain conveyors that sit on a ship, the ender
+dragon and tropical fish, small slimes, and final art.
 
 ## 13. Slice 1 implementation notes (what is actually built, verified by the headless game tests)
 
