@@ -1,0 +1,58 @@
+{
+  "entity": "minecraft:goat",
+  "model": "minecraft:goat",
+  "texture": "minecraft:textures/entity/goat/goat.png",
+  "rot_time": 24000,
+  "torso": "body",
+  "merge": [
+    "head/nose",
+    "head/right_horn",
+    "head/left_horn"
+  ],
+  "boxes": {
+    "head": {
+      "min": [
+        -3,
+        -16,
+        -16
+      ],
+      "max": [
+        2,
+        0,
+        -4
+      ]
+    },
+    "body": {
+      "min": [
+        -5,
+        -18,
+        -8
+      ],
+      "max": [
+        6,
+        -4,
+        9
+      ]
+    }
+  },
+  "joints": {
+    "head": {
+      "min_degrees": [
+        -15,
+        -30,
+        -6
+      ],
+      "max_degrees": [
+        25,
+        30,
+        6
+      ],
+      "damping": 4.0,
+      "stiffness": 2.0,
+      "contacts": false
+    }
+  },
+  "butchery": {
+    "meat": "minecraft:mutton"
+  }
+}

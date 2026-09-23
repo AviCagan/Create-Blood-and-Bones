@@ -1,0 +1,67 @@
+{
+  "entity": "minecraft:polar_bear",
+  "model": "minecraft:polar_bear",
+  "texture": "minecraft:textures/entity/bear/polarbear.png",
+  "rot_time": 36000,
+  "torso": "body",
+  "scale": 1.2,
+  "boxes": {
+    "head": {
+      "min": [
+        -3.5,
+        -4,
+        -6
+      ],
+      "max": [
+        3.5,
+        4,
+        4
+      ]
+    },
+    "body": {
+      "min": [
+        -5,
+        -25,
+        -7
+      ],
+      "max": [
+        9,
+        1,
+        4
+      ]
+    }
+  },
+  "joints": {
+    "head": {
+      "min_degrees": [
+        -15,
+        -30,
+        -6
+      ],
+      "max_degrees": [
+        25,
+        30,
+        6
+      ],
+      "damping": 4.0,
+      "stiffness": 2.0,
+      "contacts": false
+    }
+  },
+  "butchery": {
+    "part_extras": {
+      "body": [
+        {
+          "item": "minecraft:cod",
+          "count": 1.5,
+          "kind": "offal"
+        },
+        {
+          "item": "minecraft:salmon",
+          "count": 0.75,
+          "kind": "offal"
+        }
+      ]
+    }
+  }
+}

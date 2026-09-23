@@ -75,6 +75,12 @@ public record CarcassLook(ResourceLocation texture, List<Coat> passes) {
         if (entity instanceof net.minecraft.world.entity.animal.MushroomCow mooshroom) {
             variables.put("variant", mooshroom.getVariant().getSerializedName());
         }
+        if (entity instanceof net.minecraft.world.entity.animal.horse.Llama llama) {
+            variables.put("variant", llama.getVariant().getSerializedName());
+        }
+        if (entity instanceof net.minecraft.world.entity.animal.Panda panda) {
+            variables.put("variant", panda.getVariant().getSerializedName());
+        }
         if (entity instanceof Wolf wolf) {
             var variant = wolf.getVariant().value();
             variables.put("wolf_texture", (wolf.isTame() ? variant.tameTexture() : variant.wildTexture()).toString());

@@ -1,0 +1,58 @@
+{
+  "entity": "minecraft:panda",
+  "model": "minecraft:panda",
+  "texture": "minecraft:textures/entity/panda/{variant}.png",
+  "variant_names": {
+    "normal": "panda",
+    "lazy": "lazy_panda",
+    "worried": "worried_panda",
+    "playful": "playful_panda",
+    "brown": "brown_panda",
+    "weak": "weak_panda",
+    "aggressive": "aggressive_panda"
+  },
+  "rot_time": 36000,
+  "torso": "body",
+  "boxes": {
+    "head": {
+      "min": [
+        -6.5,
+        -5,
+        -6
+      ],
+      "max": [
+        6.5,
+        5,
+        5
+      ]
+    }
+  },
+  "joints": {
+    "head": {
+      "min_degrees": [
+        -15,
+        -30,
+        -6
+      ],
+      "max_degrees": [
+        25,
+        30,
+        6
+      ],
+      "damping": 4.0,
+      "stiffness": 2.0,
+      "contacts": false
+    }
+  },
+  "butchery": {
+    "part_extras": {
+      "body": [
+        {
+          "item": "minecraft:bamboo",
+          "count": 3.0,
+          "kind": "offal"
+        }
+      ]
+    }
+  }
+}

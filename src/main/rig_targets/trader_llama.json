@@ -1,0 +1,48 @@
+{
+  "entity": "minecraft:trader_llama",
+  "model": "minecraft:trader_llama",
+  "texture": "minecraft:textures/entity/llama/{variant}.png",
+  "rot_time": 30000,
+  "torso": "body",
+  "hidden": [
+    "right_chest",
+    "left_chest"
+  ],
+  "boxes": {
+    "head": {
+      "min": [
+        -4,
+        -16,
+        -10
+      ],
+      "max": [
+        4,
+        2,
+        0
+      ]
+    }
+  },
+  "joints": {
+    "head": {
+      "min_degrees": [
+        -15,
+        -30,
+        -6
+      ],
+      "max_degrees": [
+        25,
+        30,
+        6
+      ],
+      "damping": 4.0,
+      "stiffness": 2.0,
+      "contacts": false
+    }
+  },
+  "passes": [
+    {
+      "layer": "minecraft:llama#decor",
+      "texture": "minecraft:textures/entity/llama/decor/trader_llama.png"
+    }
+  ]
+}

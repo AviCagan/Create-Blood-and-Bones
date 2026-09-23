@@ -95,7 +95,7 @@ public class CarcassEvents {
             // the mob stays a few ticks, frozen, so the client never sees an empty gap before the carcass
             CARCASS_DEATHS.add(entity.getUUID());
             event.setCanceled(true);
-            com.avicagan.bloodandbones.carcass.CarcassHandover.begin((ServerLevel) entity.level(), entity, carcass, killer.getLookAngle());
+            com.avicagan.bloodandbones.carcass.CarcassHandover.begin((ServerLevel) entity.level(), entity, carcass, killer.getLookAngle(), source);
         }
     }
 

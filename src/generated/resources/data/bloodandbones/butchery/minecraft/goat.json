@@ -1,0 +1,94 @@
+{
+  "entity": "minecraft:goat",
+  "hide": [
+    {
+      "count": 2.83,
+      "item": "bloodandbones:raw_hide",
+      "kind": "hide"
+    }
+  ],
+  "parts": {
+    "body": [
+      {
+        "count": 5.11,
+        "item": "minecraft:mutton",
+        "kind": "meat"
+      },
+      {
+        "count": 1.92,
+        "item": "minecraft:bone",
+        "kind": "bone"
+      },
+      {
+        "count": 1.89,
+        "item": "bloodandbones:offal",
+        "kind": "offal"
+      },
+      {
+        "count": 0.94,
+        "item": "bloodandbones:animal_fat",
+        "kind": "fat"
+      }
+    ],
+    "head": [
+      {
+        "count": 1.88,
+        "item": "minecraft:mutton",
+        "kind": "meat"
+      },
+      {
+        "count": 0.7,
+        "item": "minecraft:bone",
+        "kind": "bone"
+      }
+    ],
+    "left_front_leg": [
+      {
+        "count": 0.18,
+        "item": "minecraft:mutton",
+        "kind": "meat"
+      },
+      {
+        "count": 0.5,
+        "item": "minecraft:bone",
+        "kind": "bone"
+      }
+    ],
+    "left_hind_leg": [
+      {
+        "count": 0.11,
+        "item": "minecraft:mutton",
+        "kind": "meat"
+      },
+      {
+        "count": 0.5,
+        "item": "minecraft:bone",
+        "kind": "bone"
+      }
+    ],
+    "right_front_leg": [
+      {
+        "count": 0.18,
+        "item": "minecraft:mutton",
+        "kind": "meat"
+      },
+      {
+        "count": 0.5,
+        "item": "minecraft:bone",
+        "kind": "bone"
+      }
+    ],
+    "right_hind_leg": [
+      {
+        "count": 0.11,
+        "item": "minecraft:mutton",
+        "kind": "meat"
+      },
+      {
+        "count": 0.5,
+        "item": "minecraft:bone",
+        "kind": "bone"
+      }
+    ]
+  }
+}

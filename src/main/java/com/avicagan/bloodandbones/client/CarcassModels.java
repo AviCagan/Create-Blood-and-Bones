@@ -45,7 +45,7 @@ public final class CarcassModels {
     }
 
     private static void drawPass(Rig rig, Bone bone, String layer, ResourceLocation texture, int color, PoseStack poseStack, MultiBufferSource buffers, int packedLight) {
-        ModelLayerLocation location = new ModelLayerLocation(rig.model(), layer);
+        ModelLayerLocation location = layerOf(rig, layer);
         ModelPart part = resolve(location, bone.part());
         if (part == null) {
             return;
@@ -77,6 +77,18 @@ public final class CarcassModels {
             drawPart(other, poseStack, buffer, packedLight, color, rig.scale());
             poseStack.popPose();
         }
+    }
+
+    /** A coat's layer is one of the rig model's own ("fur"), or another model's in full ("minecraft:llama#decor"). */
+    private static ModelLayerLocation layerOf(Rig rig, String layer) {
+        int hash = layer.indexOf('#');
+        if (hash > 0) {
+            ResourceLocation model = ResourceLocation.tryParse(layer.substring(0, hash));
+            if (model != null) {
+                return new ModelLayerLocation(model, layer.substring(hash + 1));
+            }
+        }
+        return new ModelLayerLocation(rig.model(), layer);
     }
 
     private static void drawPart(ModelPart part, PoseStack poseStack, VertexConsumer buffer, int packedLight, int color, float scale) {

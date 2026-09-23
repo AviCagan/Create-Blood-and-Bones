@@ -613,6 +613,92 @@ public class BBGameTests {
         animalTest(helper, EntityType.SKELETON_HORSE, 7);
     }
 
+    @GameTest(template = "empty", timeoutTicks = 200)
+    public static void donkeyCarcassAssembles(GameTestHelper helper) {
+        animalTest(helper, EntityType.DONKEY, 7);
+    }
+
+    @GameTest(template = "empty", timeoutTicks = 200)
+    public static void muleCarcassAssembles(GameTestHelper helper) {
+        animalTest(helper, EntityType.MULE, 7);
+    }
+
+    @GameTest(template = "empty", timeoutTicks = 200)
+    public static void llamaCarcassAssembles(GameTestHelper helper) {
+        animalTest(helper, EntityType.LLAMA, 6);
+    }
+
+    @GameTest(template = "empty", timeoutTicks = 200)
+    public static void traderLlamaCarcassAssembles(GameTestHelper helper) {
+        animalTest(helper, EntityType.TRADER_LLAMA, 6);
+    }
+
+    @GameTest(template = "empty", timeoutTicks = 200)
+    public static void goatCarcassAssembles(GameTestHelper helper) {
+        animalTest(helper, EntityType.GOAT, 6);
+    }
+
+    @GameTest(template = "empty", timeoutTicks = 200)
+    public static void polarBearCarcassAssembles(GameTestHelper helper) {
+        animalTest(helper, EntityType.POLAR_BEAR, 6);
+    }
+
+    @GameTest(template = "empty", timeoutTicks = 200)
+    public static void pandaCarcassAssembles(GameTestHelper helper) {
+        animalTest(helper, EntityType.PANDA, 6);
+    }
+
+    /** A white llama and a brown panda keep their colours on the carcass. */
+    @GameTest(template = "empty", timeoutTicks = 100)
+    public static void llamaAndPandaKeepTheirColours(GameTestHelper helper) {
+        net.minecraft.world.entity.animal.horse.Llama llama = helper.spawn(EntityType.LLAMA, new BlockPos(3, 2, 3));
+        llama.setVariant(net.minecraft.world.entity.animal.horse.Llama.Variant.WHITE);
+        net.minecraft.world.entity.animal.Panda panda = helper.spawn(EntityType.PANDA, new BlockPos(7, 2, 7));
+        panda.setMainGene(net.minecraft.world.entity.animal.Panda.Gene.BROWN);
+        panda.setHiddenGene(net.minecraft.world.entity.animal.Panda.Gene.BROWN);
+        CarcassSavedData.Carcass llamaCarcass = CarcassAssembler.assemble(llama, null);
+        CarcassSavedData.Carcass pandaCarcass = CarcassAssembler.assemble(panda, null);
+        if (llamaCarcass == null || pandaCarcass == null) {
+            helper.fail("Carcass assembly returned false");
+        }
+        if (!llamaCarcass.look.texture().getPath().equals("textures/entity/llama/white.png")) {
+            helper.fail("The white llama should wear white.png, not " + llamaCarcass.look.texture());
+        }
+        if (!pandaCarcass.look.texture().getPath().equals("textures/entity/panda/brown_panda.png")) {
+            helper.fail("The brown panda should wear brown_panda.png, not " + pandaCarcass.look.texture());
+        }
+        llama.discard();
+        panda.discard();
+        helper.succeed();
+    }
+
+    /** A Meat Hook kill keeps the meat in the carcass but drops what the donkey carried: saddle, chest, and its contents. */
+    @GameTest(template = "empty", timeoutTicks = 100)
+    public static void meatHookKillDropsBelongings(GameTestHelper helper) {
+        ServerLevel level = helper.getLevel();
+        net.minecraft.world.entity.animal.horse.Donkey donkey = helper.spawn(EntityType.DONKEY, new BlockPos(5, 2, 5));
+        donkey.setTamed(true);
+        donkey.getSlot(499).set(new ItemStack(net.minecraft.world.item.Items.CHEST));
+        donkey.getSlot(400).set(new ItemStack(net.minecraft.world.item.Items.SADDLE));
+        donkey.getSlot(500).set(new ItemStack(net.minecraft.world.item.Items.DIAMOND, 3));
+        Player player = helper.makeMockPlayer(GameType.SURVIVAL);
+        player.setItemInHand(InteractionHand.MAIN_HAND, new ItemStack(BBItems.MEAT_HOOK.get()));
+        donkey.hurt(level.damageSources().playerAttack(player), 1000.0F);
+        helper.runAfterDelay(com.avicagan.bloodandbones.carcass.CarcassHandover.TICKS + 2, () -> {
+            if (!donkey.isRemoved()) {
+                helper.fail("The donkey should be gone once the carcass has taken over");
+            }
+            if (itemsInArena(helper, net.minecraft.world.item.Items.CHEST) != 1
+                    || itemsInArena(helper, net.minecraft.world.item.Items.SADDLE) != 1
+                    || itemsInArena(helper, net.minecraft.world.item.Items.DIAMOND) != 3) {
+                helper.fail("Expected the chest, the saddle and 3 diamonds on the ground; chest " + itemsInArena(helper, net.minecraft.world.item.Items.CHEST)
+                        + ", saddle " + itemsInArena(helper, net.minecraft.world.item.Items.SADDLE)
+                        + ", diamonds " + itemsInArena(helper, net.minecraft.world.item.Items.DIAMOND));
+            }
+            helper.succeed();
+        });
+    }
+
     /** A red mooshroom wears the red coat and yields red mushrooms when skinned. */
     @GameTest(template = "empty", timeoutTicks = 200)
     public static void mooshroomKeepsItsColour(GameTestHelper helper) {

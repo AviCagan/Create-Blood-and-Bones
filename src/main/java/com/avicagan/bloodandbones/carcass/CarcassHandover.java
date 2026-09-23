@@ -1,16 +1,20 @@
 package com.avicagan.bloodandbones.carcass;
 
+import com.avicagan.bloodandbones.BloodAndBones;
 import dev.ryanhcode.sable.api.physics.PhysicsPipeline;
 import dev.ryanhcode.sable.api.sublevel.ServerSubLevelContainer;
 import dev.ryanhcode.sable.api.sublevel.SubLevelContainer;
 import dev.ryanhcode.sable.companion.math.Pose3d;
 import dev.ryanhcode.sable.sublevel.ServerSubLevel;
 import net.minecraft.server.level.ServerLevel;
+import net.minecraft.world.damagesource.DamageSource;
 import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.entity.Mob;
 import net.minecraft.world.phys.Vec3;
+import net.neoforged.fml.util.ObfuscationReflectionHelper;
 import org.joml.Vector3d;
 
+import java.lang.reflect.Method;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.Iterator;
@@ -29,8 +33,13 @@ public final class CarcassHandover {
     /** Ticks the dead mob stays visible while the client catches up. */
     public static final int TICKS = 3;
 
-    private record Pending(LivingEntity entity, UUID carcassId, Vec3 look, int[] ticksLeft, Map<UUID, Pose3d> poses) {
+    private record Pending(LivingEntity entity, UUID carcassId, Vec3 look, int[] ticksLeft, Map<UUID, Pose3d> poses,
+                           DamageSource source) {
     }
+
+    private static final Method DROP_EQUIPMENT = ObfuscationReflectionHelper.findMethod(LivingEntity.class, "dropEquipment");
+    private static final Method DROP_CUSTOM_LOOT = ObfuscationReflectionHelper.findMethod(LivingEntity.class,
+            "dropCustomDeathLoot", ServerLevel.class, DamageSource.class, boolean.class);
 
     private static final Map<ServerLevel, List<Pending>> PENDING = new WeakHashMap<>();
 
@@ -38,7 +47,8 @@ public final class CarcassHandover {
     }
 
     /** Freeze the mob in place and schedule its removal. */
-    public static void begin(ServerLevel level, LivingEntity entity, CarcassSavedData.Carcass carcass, Vec3 killerLook) {
+    public static void begin(ServerLevel level, LivingEntity entity, CarcassSavedData.Carcass carcass, Vec3 killerLook,
+                             DamageSource source) {
         entity.setHealth(Math.max(1.0F, entity.getHealth()));
         entity.setInvulnerable(true);
         entity.setSilent(true);
@@ -61,7 +71,7 @@ public final class CarcassHandover {
                 }
             }
         }
-        PENDING.computeIfAbsent(level, l -> new ArrayList<>()).add(new Pending(entity, carcass.id, killerLook, new int[]{TICKS}, poses));
+        PENDING.computeIfAbsent(level, l -> new ArrayList<>()).add(new Pending(entity, carcass.id, killerLook, new int[]{TICKS}, poses, source));
     }
 
     /** Hold every body exactly where it was built, so the carcass appears in the mob's own pose. */
@@ -113,6 +123,7 @@ public final class CarcassHandover {
                 continue;
             }
             iterator.remove();
+            dropBelongings(level, entity, pending.source());
             entity.discard();
             CarcassSavedData.Carcass carcass = data.carcass(pending.carcassId());
             if (carcass != null) {
@@ -124,6 +135,20 @@ public final class CarcassHandover {
                     Blood.spray(level, wound, new Vector3d(pending.look().x, pending.look().y, pending.look().z), 24);
                 }
             }
+        }
+    }
+
+    /**
+     * The body keeps the meat, but not what the mob was carrying: saddles, horse armour, chests and their
+     * contents, and anything it held or wore. The normal death that would have dropped these is cancelled,
+     * so the same vanilla drop calls are made here (they are protected, hence the reflection).
+     */
+    private static void dropBelongings(ServerLevel level, LivingEntity entity, DamageSource source) {
+        try {
+            DROP_CUSTOM_LOOT.invoke(entity, level, source, source.getEntity() instanceof net.minecraft.world.entity.player.Player);
+            DROP_EQUIPMENT.invoke(entity);
+        } catch (ReflectiveOperationException | RuntimeException e) {
+            BloodAndBones.LOGGER.warn("Could not drop the belongings of {}", entity, e);
         }
     }
 
