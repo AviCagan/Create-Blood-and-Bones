@@ -14,8 +14,8 @@ provided by [Sable](https://github.com/ryanhcode/sable).
 - **The Meat Hook.** Kill a mob with it and the body stays behind as a ragdoll carcass (Sable
   physics, one body per limb, jointed) instead of dropping loot. Its gear still drops. Hook a limb
   to drag the body; heavier animals slow you more. 79 vanilla mobs are rigged, with their colours
-  and variants (all but the ender dragon and tropical fish). Babies of every kind that has them (36) leave carcasses
-  shaped like the baby: a calf's big head on a small body.
+  and variants (all but the ender dragon and tropical fish). Babies of every kind that has them
+  (36) leave carcasses shaped like the baby: a calf's big head on a small body, a foal's long legs.
 - **Butchery.** The Cleaver takes limbs off at the joint, leaving raw wounds with the bone
   showing on both ends, and breaks loose pieces down into meat, bone, offal and fat, with scraps of
   meat flying. Blades come away bloody and stay that way for a few minutes. The Flensing

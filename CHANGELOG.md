@@ -10,10 +10,10 @@ Everything below is in development builds only; the art is placeholder (see the 
 - Cut limbs leave raw wounds, bone showing, on the stump and on the piece, and pour blood for a while.
 - Scraps of meat fly off when a limb is cut through or a piece is butchered or ground.
 - Cleavers and the Flensing Knife come away bloody from a cut or a hit and stay so for five minutes.
-- 79 rigged vanilla mobs with variants, the wither and the pufferfish included; babies of all 36 kinds that have them
-  (calves, piglets, lambs, chicks, pups, kittens, cubs, bunnies, foals on their long legs, crias,
-  baby zombies and villagers...) shaped as the
-  game draws them; hook kills drop the mob's gear and inventory.
+- 79 rigged vanilla mobs with variants, the wither and the pufferfish included; babies of all 36
+  kinds that have them (calves, piglets, lambs, chicks, pups, kittens, cubs, bunnies, foals on their
+  long legs, crias, baby zombies and villagers...) shaped as the game draws them; hook kills drop the
+  mob's gear and inventory.
 - Blood and Soul Blood fluids, the Bleeding Rack, fan-boosted bleeding, slower rot once bled.
 - Blood stains on the ground (they squelch underfoot) from kills, cuts, drag trails and uncaught bleeding; they dry, fade
   and wash off in rain, and bloodless mode hides them. Bloodless mobs no longer spray blood.
