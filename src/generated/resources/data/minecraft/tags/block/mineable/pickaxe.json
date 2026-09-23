@@ -1,6 +1,10 @@
 {
   "values": [
     "bloodandbones:shackle_hook",
-    "bloodandbones:bleeding_rack"
+    "bloodandbones:bleeding_rack",
+    "bloodandbones:mangler",
+    "bloodandbones:guillotine",
+    "bloodandbones:beheader",
+    "bloodandbones:deglover"
   ]
 }

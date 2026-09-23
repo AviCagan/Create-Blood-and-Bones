@@ -944,7 +944,7 @@ public class BBGameTests {
     @GameTest(template = "empty", timeoutTicks = 20)
     public static void recipesLoad(GameTestHelper helper) {
         for (String name : new String[]{"meat_hook", "cleaver", "flensing_knife", "shackle_hook", "bleeding_rack", "raw_hide_splashing",
-                "cooked_meat_from_raw_meat_smelting"}) {
+                "cooked_meat_from_raw_meat_smelting", "mangler", "guillotine", "beheader", "deglover"}) {
             if (helper.getLevel().getRecipeManager().byKey(com.avicagan.bloodandbones.BloodAndBones.asResource(name)).isEmpty()) {
                 helper.fail("Recipe " + name + " did not load");
             }

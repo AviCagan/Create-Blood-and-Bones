@@ -29,11 +29,19 @@ public class BBBlockEntities {
             .renderer(() -> BleedingRackRenderer::new)
             .register();
 
+    public static final BlockEntityEntry<com.avicagan.bloodandbones.machine.CarcassMachineBlockEntity> CARCASS_MACHINE = BloodAndBones.REGISTRATE
+            .blockEntity("carcass_machine", com.avicagan.bloodandbones.machine.CarcassMachineBlockEntity::new)
+            .visual(() -> com.avicagan.bloodandbones.machine.CarcassMachineVisual::new, false)
+            .validBlocks(BBBlocks.MANGLER, BBBlocks.GUILLOTINE, BBBlocks.BEHEADER, BBBlocks.DEGLOVER)
+            .renderer(() -> com.avicagan.bloodandbones.machine.CarcassMachineRenderer::new)
+            .register();
+
     public static void register() {
     }
 
     /** Mod bus listener; RegisterCapabilitiesEvent fires after registries freeze, so .get() is safe here. */
     public static void registerCapabilities(RegisterCapabilitiesEvent event) {
         BleedingRackBlockEntity.registerCapabilities(event);
+        com.avicagan.bloodandbones.machine.CarcassMachineBlockEntity.registerCapabilities(event);
     }
 }

@@ -56,6 +56,24 @@ public class BBLang {
                 "PH: Put the Bleeding Rack under a Shackle Hook (up to 8 blocks below) and hang a carcass: its blood drips into the tray. A carcass lying still on the rack drains too, more slowly.");
         BloodAndBones.REGISTRATE.addRawLang("bloodandbones.jei.bleeding_rack.2",
                 "PH: A cow gives about a bucket. Fans across the body drain it up to four times faster. Pipe the blood out from the sides or bottom; a bled carcass rots slower.");
+        BloodAndBones.REGISTRATE.addRawLang("bloodandbones.gui.goggles.carcass_machine.output", "%1$s items waiting");
+        block("mangler",
+                "PH: Tears carcasses apart and grinds the pieces into meat, bone, offal and fat. Drive it with a shaft from below.",
+                "PH: Works whatever carcass lies on it or hangs over it, up to two blocks up. Limbs come off first, then every piece is ground.",
+                "PH: What it makes waits inside: take it with an empty hand, or pull it out with a funnel, chute or hopper. When full it stops.");
+        block("guillotine",
+                "PH: A heavy blade that takes a limb off in one stroke. Drive it with a shaft from below.",
+                "PH: Cuts the limb nearest the blade off any carcass over it. It never takes the head: that is the Beheader's job.");
+        block("beheader",
+                "PH: A spinning saw that takes heads off in one stroke. Drive it with a shaft from below.",
+                "PH: Zombies, skeletons, creepers and piglins sometimes leave their skull whole. A wither skeleton's rarely does.");
+        block("deglover",
+                "PH: Spiked rollers that strip the hide off a carcass. Drive it with a shaft from below.",
+                "PH: A few turns and the whole hide comes away, wool and all. Faster shafts strip faster.");
+        BloodAndBones.REGISTRATE.addRawLang("bloodandbones.jei.machines.1",
+                "PH: The Mangler, Guillotine, Beheader and Deglover work carcasses lying on them or hanging over them. Each takes a shaft from below; the faster it turns, the faster it works.");
+        BloodAndBones.REGISTRATE.addRawLang("bloodandbones.jei.machines.2",
+                "PH: Guillotine: limbs off. Beheader: heads off, sometimes a skull. Deglover: hides off. Mangler: everything, down to meat. Outputs are taken out with funnels or an empty hand.");
         item("meat_hook",
                 "PH: Kill an animal with this and it leaves a whole carcass instead of loot. Right-click a carcass to drag it, right-click again to let go.",
                 "PH: Dragging slows you down. Heavier animals slow you more.",

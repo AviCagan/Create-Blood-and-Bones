@@ -1,0 +1,282 @@
+{
+ "parent": "block/block",
+ "render_type": "minecraft:cutout",
+ "textures": {
+  "casing": "create:block/andesite_casing",
+  "side": "bloodandbones:block/bloody_casing",
+  "particle": "create:block/andesite_casing",
+  "saw": "bloodandbones:block/bloody_saw"
+ },
+ "elements": [
+  {
+   "from": [
+    0,
+    0,
+    0
+   ],
+   "to": [
+    4,
+    4,
+    4
+   ],
+   "faces": {
+    "north": {
+     "texture": "#casing"
+    },
+    "south": {
+     "texture": "#casing"
+    },
+    "east": {
+     "texture": "#casing"
+    },
+    "west": {
+     "texture": "#casing"
+    },
+    "down": {
+     "texture": "#casing"
+    }
+   },
+   "name": "leg"
+  },
+  {
+   "from": [
+    12,
+    0,
+    0
+   ],
+   "to": [
+    16,
+    4,
+    4
+   ],
+   "faces": {
+    "north": {
+     "texture": "#casing"
+    },
+    "south": {
+     "texture": "#casing"
+    },
+    "east": {
+     "texture": "#casing"
+    },
+    "west": {
+     "texture": "#casing"
+    },
+    "down": {
+     "texture": "#casing"
+    }
+   },
+   "name": "leg"
+  },
+  {
+   "from": [
+    0,
+    0,
+    12
+   ],
+   "to": [
+    4,
+    4,
+    16
+   ],
+   "faces": {
+    "north": {
+     "texture": "#casing"
+    },
+    "south": {
+     "texture": "#casing"
+    },
+    "east": {
+     "texture": "#casing"
+    },
+    "west": {
+     "texture": "#casing"
+    },
+    "down": {
+     "texture": "#casing"
+    }
+   },
+   "name": "leg"
+  },
+  {
+   "from": [
+    12,
+    0,
+    12
+   ],
+   "to": [
+    16,
+    4,
+    16
+   ],
+   "faces": {
+    "north": {
+     "texture": "#casing"
+    },
+    "south": {
+     "texture": "#casing"
+    },
+    "east": {
+     "texture": "#casing"
+    },
+    "west": {
+     "texture": "#casing"
+    },
+    "down": {
+     "texture": "#casing"
+    }
+   },
+   "name": "leg"
+  },
+  {
+   "from": [
+    0,
+    4,
+    0
+   ],
+   "to": [
+    16,
+    16,
+    16
+   ],
+   "faces": {
+    "north": {
+     "texture": "#side",
+     "uv": [
+      0,
+      0,
+      16,
+      12
+     ]
+    },
+    "south": {
+     "texture": "#side",
+     "uv": [
+      0,
+      0,
+      16,
+      12
+     ]
+    },
+    "east": {
+     "texture": "#side",
+     "uv": [
+      0,
+      0,
+      16,
+      12
+     ]
+    },
+    "west": {
+     "texture": "#side",
+     "uv": [
+      0,
+      0,
+      16,
+      12
+     ]
+    },
+    "up": {
+     "texture": "#side"
+    },
+    "down": {
+     "texture": "#casing"
+    }
+   },
+   "name": "body"
+  },
+  {
+   "from": [
+    7.5,
+    10,
+    0
+   ],
+   "to": [
+    8.5,
+    26,
+    16
+   ],
+   "faces": {
+    "east": {
+     "texture": "#saw",
+     "uv": [
+      0,
+      0,
+      16,
+      16
+     ]
+    },
+    "west": {
+     "texture": "#saw",
+     "uv": [
+      0,
+      0,
+      16,
+      16
+     ]
+    }
+   },
+   "name": "saw"
+  },
+  {
+   "from": [
+    6,
+    16,
+    1
+   ],
+   "to": [
+    7,
+    17,
+    15
+   ],
+   "faces": {
+    "north": {
+     "texture": "#casing"
+    },
+    "south": {
+     "texture": "#casing"
+    },
+    "east": {
+     "texture": "#casing"
+    },
+    "west": {
+     "texture": "#casing"
+    },
+    "up": {
+     "texture": "#casing"
+    }
+   },
+   "name": "slot"
+  },
+  {
+   "from": [
+    9,
+    16,
+    1
+   ],
+   "to": [
+    10,
+    17,
+    15
+   ],
+   "faces": {
+    "north": {
+     "texture": "#casing"
+    },
+    "south": {
+     "texture": "#casing"
+    },
+    "east": {
+     "texture": "#casing"
+    },
+    "west": {
+     "texture": "#casing"
+    },
+    "up": {
+     "texture": "#casing"
+    }
+   },
+   "name": "slot"
+  }
+ ]
+}

@@ -58,6 +58,25 @@ public class BBBlocks {
             .simpleItem()
             .register();
 
+    public static final BlockEntry<com.avicagan.bloodandbones.machine.CarcassMachineBlock> MANGLER = machine(com.avicagan.bloodandbones.machine.MachineKind.MANGLER, "Mangler");
+    public static final BlockEntry<com.avicagan.bloodandbones.machine.CarcassMachineBlock> GUILLOTINE = machine(com.avicagan.bloodandbones.machine.MachineKind.GUILLOTINE, "Guillotine");
+    public static final BlockEntry<com.avicagan.bloodandbones.machine.CarcassMachineBlock> BEHEADER = machine(com.avicagan.bloodandbones.machine.MachineKind.BEHEADER, "Beheader");
+    public static final BlockEntry<com.avicagan.bloodandbones.machine.CarcassMachineBlock> DEGLOVER = machine(com.avicagan.bloodandbones.machine.MachineKind.DEGLOVER, "Deglover");
+
+    /** A carcass machine: shaft from below, hand-made model, stress impact per RPM from its kind. */
+    private static BlockEntry<com.avicagan.bloodandbones.machine.CarcassMachineBlock> machine(com.avicagan.bloodandbones.machine.MachineKind kind, String name) {
+        return BloodAndBones.REGISTRATE
+                .block(kind.id, p -> new com.avicagan.bloodandbones.machine.CarcassMachineBlock(p, kind))
+                .initialProperties(com.simibubi.create.foundation.data.SharedProperties::stone)
+                .properties(p -> p.mapColor(MapColor.METAL).noOcclusion().sound(net.minecraft.world.level.block.SoundType.NETHERITE_BLOCK))
+                .transform(com.simibubi.create.foundation.data.TagGen.pickaxeOnly())
+                .blockstate((c, p) -> p.simpleBlock(c.get(), p.models().getExistingFile(p.modLoc("block/" + kind.id))))
+                .onRegister(block -> com.simibubi.create.api.stress.BlockStressValues.IMPACTS.register(block, () -> kind.stress))
+                .lang(name)
+                .simpleItem()
+                .register();
+    }
+
     public static void register() {
     }
 }

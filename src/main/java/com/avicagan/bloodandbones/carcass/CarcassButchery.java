@@ -209,12 +209,31 @@ public final class CarcassButchery {
             while (n > 0) {
                 int stackSize = Math.min(n, item.get().getDefaultMaxStackSize());
                 n -= stackSize;
+                java.util.function.Consumer<net.minecraft.world.item.ItemStack> sink = SINK.get();
+                if (sink != null) {
+                    sink.accept(new net.minecraft.world.item.ItemStack(item.get(), stackSize));
+                    continue;
+                }
                 net.minecraft.world.entity.item.ItemEntity entity = new net.minecraft.world.entity.item.ItemEntity(level, at.x, at.y + 0.25, at.z,
                         new net.minecraft.world.item.ItemStack(item.get(), stackSize));
                 entity.setDeltaMovement((level.random.nextDouble() - 0.5) * 0.15, 0.2, (level.random.nextDouble() - 0.5) * 0.15);
                 entity.setDefaultPickUpDelay();
                 level.addFreshEntity(entity);
             }
+        }
+    }
+
+    /** Where yields go instead of the ground while a machine is working, else null. */
+    private static final ThreadLocal<java.util.function.Consumer<net.minecraft.world.item.ItemStack>> SINK = new ThreadLocal<>();
+
+    /** Run a butchery action with every yield it makes handed to {@code sink} instead of dropped. */
+    public static <T> T capturing(java.util.function.Consumer<net.minecraft.world.item.ItemStack> sink, java.util.function.Supplier<T> action) {
+        java.util.function.Consumer<net.minecraft.world.item.ItemStack> previous = SINK.get();
+        SINK.set(sink);
+        try {
+            return action.get();
+        } finally {
+            SINK.set(previous);
         }
     }
 

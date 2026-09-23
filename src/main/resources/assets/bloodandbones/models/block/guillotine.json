@@ -1,0 +1,345 @@
+{
+ "parent": "block/block",
+ "render_type": "minecraft:cutout",
+ "textures": {
+  "casing": "create:block/andesite_casing",
+  "side": "bloodandbones:block/bloody_casing",
+  "particle": "create:block/andesite_casing",
+  "blade": "bloodandbones:block/butcher_blade"
+ },
+ "elements": [
+  {
+   "from": [
+    0,
+    0,
+    0
+   ],
+   "to": [
+    4,
+    4,
+    4
+   ],
+   "faces": {
+    "north": {
+     "texture": "#casing"
+    },
+    "south": {
+     "texture": "#casing"
+    },
+    "east": {
+     "texture": "#casing"
+    },
+    "west": {
+     "texture": "#casing"
+    },
+    "down": {
+     "texture": "#casing"
+    }
+   },
+   "name": "leg"
+  },
+  {
+   "from": [
+    12,
+    0,
+    0
+   ],
+   "to": [
+    16,
+    4,
+    4
+   ],
+   "faces": {
+    "north": {
+     "texture": "#casing"
+    },
+    "south": {
+     "texture": "#casing"
+    },
+    "east": {
+     "texture": "#casing"
+    },
+    "west": {
+     "texture": "#casing"
+    },
+    "down": {
+     "texture": "#casing"
+    }
+   },
+   "name": "leg"
+  },
+  {
+   "from": [
+    0,
+    0,
+    12
+   ],
+   "to": [
+    4,
+    4,
+    16
+   ],
+   "faces": {
+    "north": {
+     "texture": "#casing"
+    },
+    "south": {
+     "texture": "#casing"
+    },
+    "east": {
+     "texture": "#casing"
+    },
+    "west": {
+     "texture": "#casing"
+    },
+    "down": {
+     "texture": "#casing"
+    }
+   },
+   "name": "leg"
+  },
+  {
+   "from": [
+    12,
+    0,
+    12
+   ],
+   "to": [
+    16,
+    4,
+    16
+   ],
+   "faces": {
+    "north": {
+     "texture": "#casing"
+    },
+    "south": {
+     "texture": "#casing"
+    },
+    "east": {
+     "texture": "#casing"
+    },
+    "west": {
+     "texture": "#casing"
+    },
+    "down": {
+     "texture": "#casing"
+    }
+   },
+   "name": "leg"
+  },
+  {
+   "from": [
+    0,
+    4,
+    0
+   ],
+   "to": [
+    16,
+    16,
+    16
+   ],
+   "faces": {
+    "north": {
+     "texture": "#side",
+     "uv": [
+      0,
+      0,
+      16,
+      12
+     ]
+    },
+    "south": {
+     "texture": "#side",
+     "uv": [
+      0,
+      0,
+      16,
+      12
+     ]
+    },
+    "east": {
+     "texture": "#side",
+     "uv": [
+      0,
+      0,
+      16,
+      12
+     ]
+    },
+    "west": {
+     "texture": "#side",
+     "uv": [
+      0,
+      0,
+      16,
+      12
+     ]
+    },
+    "up": {
+     "texture": "#side"
+    },
+    "down": {
+     "texture": "#casing"
+    }
+   },
+   "name": "body"
+  },
+  {
+   "from": [
+    0,
+    16,
+    7
+   ],
+   "to": [
+    2,
+    32,
+    9
+   ],
+   "faces": {
+    "north": {
+     "texture": "#casing"
+    },
+    "south": {
+     "texture": "#casing"
+    },
+    "east": {
+     "texture": "#casing"
+    },
+    "west": {
+     "texture": "#casing"
+    }
+   },
+   "name": "post"
+  },
+  {
+   "from": [
+    14,
+    16,
+    7
+   ],
+   "to": [
+    16,
+    32,
+    9
+   ],
+   "faces": {
+    "north": {
+     "texture": "#casing"
+    },
+    "south": {
+     "texture": "#casing"
+    },
+    "east": {
+     "texture": "#casing"
+    },
+    "west": {
+     "texture": "#casing"
+    }
+   },
+   "name": "post"
+  },
+  {
+   "from": [
+    0,
+    30,
+    6.5
+   ],
+   "to": [
+    16,
+    32,
+    9.5
+   ],
+   "faces": {
+    "north": {
+     "texture": "#casing"
+    },
+    "south": {
+     "texture": "#casing"
+    },
+    "east": {
+     "texture": "#casing"
+    },
+    "west": {
+     "texture": "#casing"
+    },
+    "up": {
+     "texture": "#casing"
+    },
+    "down": {
+     "texture": "#casing"
+    }
+   },
+   "name": "crossbar"
+  },
+  {
+   "from": [
+    2,
+    24,
+    7.5
+   ],
+   "to": [
+    14,
+    30,
+    8.5
+   ],
+   "faces": {
+    "north": {
+     "texture": "#blade",
+     "uv": [
+      2,
+      10,
+      14,
+      16
+     ]
+    },
+    "south": {
+     "texture": "#blade",
+     "uv": [
+      2,
+      10,
+      14,
+      16
+     ]
+    },
+    "down": {
+     "texture": "#blade",
+     "uv": [
+      2,
+      15,
+      14,
+      16
+     ]
+    }
+   },
+   "name": "blade"
+  },
+  {
+   "from": [
+    7.5,
+    28,
+    7.8
+   ],
+   "to": [
+    8.5,
+    30,
+    8.2
+   ],
+   "faces": {
+    "north": {
+     "texture": "#casing"
+    },
+    "south": {
+     "texture": "#casing"
+    },
+    "east": {
+     "texture": "#casing"
+    },
+    "west": {
+     "texture": "#casing"
+    }
+   },
+   "name": "rope"
+  }
+ ]
+}
