@@ -194,8 +194,14 @@ public class BabyTests {
                 helper.fail("A size 1 " + type + " should weigh far less than a size 4 one: " + small.weight() + " vs " + grown.weight());
                 return;
             }
-            if (com.avicagan.bloodandbones.carcass.CarcassButchery.babyYieldScale(carcass) != 0.25F) {
-                helper.fail("The smallest " + type + " should give a quarter of a big one's yield");
+            // butchered: one slime ball from the slime, as the game drops; no magma cream from the magma cube
+            var piece = com.avicagan.bloodandbones.item.CarcassPieceItem.piece(
+                    com.avicagan.bloodandbones.item.CarcassPieceItem.of(carcass, small.root().name()));
+            java.util.List<net.minecraft.world.item.ItemStack> yields = com.avicagan.bloodandbones.carcass.CarcassButchery.pieceYields(helper.getLevel(), piece);
+            int balls = yields.stream().filter(s -> s.is(net.minecraft.world.item.Items.SLIME_BALL)).mapToInt(net.minecraft.world.item.ItemStack::getCount).sum();
+            int cream = yields.stream().filter(s -> s.is(net.minecraft.world.item.Items.MAGMA_CREAM)).mapToInt(net.minecraft.world.item.ItemStack::getCount).sum();
+            if (type == EntityType.SLIME ? balls != 1 : cream != 0) {
+                helper.fail("The smallest " + type + " gave " + yields + " when butchered");
                 return;
             }
             UUID torso = carcass.bones.get(small.root().name());

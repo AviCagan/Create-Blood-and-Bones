@@ -228,6 +228,8 @@ public class BloodStainTests {
             helper.fail("The deck's blocks should have moved into the sub-level");
             return;
         }
+        // as the assembler does for a body: give it its colliders now, or it can drop through its posts
+        CarcassAssembler.bindColliders(level, ship);
         Cow cow = helper.spawn(EntityType.COW, new BlockPos(4, 6, 4));
         CarcassSavedData.Carcass falling = CarcassAssembler.assemble(cow, null);
         cow.discard();

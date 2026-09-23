@@ -185,15 +185,18 @@ public final class CarcassButchery {
     /**
      * The tables are for grown animals: a baby gives as much less as it weighs less. The smallest slime is a
      * quarter the size of a big one but weighs a 64th, which would leave it next to nothing; it gives a
-     * quarter (one slime ball, about what the game drops for one).
+     * quarter (one slime ball, about what the game drops for one). The smallest magma cube gives nothing,
+     * as in the game, where only bigger ones drop magma cream.
      */
     public static float babyYieldScale(CarcassSavedData.Carcass carcass) {
         if (!carcass.baby) {
             return 1.0F;
         }
-        if (carcass.entity.equals(net.minecraft.core.registries.BuiltInRegistries.ENTITY_TYPE.getKey(net.minecraft.world.entity.EntityType.SLIME))
-                || carcass.entity.equals(net.minecraft.core.registries.BuiltInRegistries.ENTITY_TYPE.getKey(net.minecraft.world.entity.EntityType.MAGMA_CUBE))) {
+        if (carcass.entity.equals(net.minecraft.core.registries.BuiltInRegistries.ENTITY_TYPE.getKey(net.minecraft.world.entity.EntityType.SLIME))) {
             return 0.25F;
+        }
+        if (carcass.entity.equals(net.minecraft.core.registries.BuiltInRegistries.ENTITY_TYPE.getKey(net.minecraft.world.entity.EntityType.MAGMA_CUBE))) {
+            return 0.0F;
         }
         float grown = com.avicagan.bloodandbones.carcass.rig.RigManager.forEntity(carcass.entity).map(com.avicagan.bloodandbones.carcass.rig.Rig::weight).orElse(1.0F);
         float small = com.avicagan.bloodandbones.carcass.rig.RigManager.forCarcass(carcass).map(com.avicagan.bloodandbones.carcass.rig.Rig::weight).orElse(grown);

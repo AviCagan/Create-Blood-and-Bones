@@ -768,7 +768,10 @@ dragon and tropical fish, middle-sized (size 2) slimes, and final art.
   pieces' tooltip says "From a small one" instead, though the Attribute Filter's "from a baby" still
   matches them. A baby's yields are cut by its weight against the grown rig's, which for a slime (a 64th)
   would leave nothing; the smallest slime gives a quarter instead (`CarcassButchery.babyYieldScale`: one
-  slime ball of four, about the game's own drop). `smallestSlimesLeaveCarcasses`,
+  slime ball of four, about the game's own drop) and the smallest magma cube none (the game only drops
+  magma cream from bigger ones). The test butchers a piece of each and counts. The special cases are by
+  entity type, so a modded slime with a rig and a baby shape would get the weight rule and "From a
+  baby". `smallestSlimesLeaveCarcasses`,
   `smallSlimePiecesSaySmall`. The pufferfish is rigged
   on its fully puffed model (its spikes stuck to the body), whatever its state when it died; the wither at
   its drawn double size, with its tail hung from the ribcage, bloodless, its heads sometimes giving a
