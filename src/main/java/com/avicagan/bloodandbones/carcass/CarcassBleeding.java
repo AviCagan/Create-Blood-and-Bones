@@ -82,7 +82,8 @@ public final class CarcassBleeding {
         if (carcass.blood <= 0.0F || carcass.freshness < CLOTTED) {
             return;
         }
-        boolean hanging = ShackleHookBlockEntity.isHanging(level, carcass.id);
+        boolean hanging = ShackleHookBlockEntity.isHanging(level, carcass.id)
+                || com.avicagan.bloodandbones.carcass.trolley.ShackleTrolleyEntity.isHanging(level, carcass.id);
         if (!hanging && !carcass.resting) {
             // a body still moving about has not settled onto anything
             return;

@@ -21,7 +21,7 @@ public class BBLang {
         BloodAndBones.REGISTRATE.addRawLang("bloodandbones.jei.shackle_hook.1",
                 "PH: Mount the Shackle Hook under a ceiling or on a wall. Drag a carcass close and click the hook with the Meat Hook to hang it.");
         BloodAndBones.REGISTRATE.addRawLang("bloodandbones.jei.shackle_hook.2",
-                "PH: Hanging carcasses stay ragdolls, so they swing, and will be routable along chain conveyors.");
+                "PH: Hanging carcasses stay ragdolls, so they swing. To send one down a line, drag it under a Create chain conveyor and right-click the chain with the Meat Hook: it rides the chain on a trolley, round wheels and along strands, and stops at frogports addressed for it.");
         BloodAndBones.REGISTRATE.addRawLang("bloodandbones.jei.cleaver.1",
                 "PH: The Cleaver takes a carcass apart. Right-click a limb three times to cut through the joint; the limb comes free as its own piece.");
         BloodAndBones.REGISTRATE.addRawLang("bloodandbones.jei.cleaver.2",

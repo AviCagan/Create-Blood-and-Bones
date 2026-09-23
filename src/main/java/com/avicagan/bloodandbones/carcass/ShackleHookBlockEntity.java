@@ -132,7 +132,7 @@ public class ShackleHookBlockEntity extends BlockEntity {
      * The torso-side anchor of the head joint: where the neck meets the body. Falls back to the torso's
      * own center for rigs without a head.
      */
-    private static Vector3d neckJunction(CarcassSavedData.Carcass carcass, ServerSubLevel torso) {
+    public static Vector3d neckJunction(CarcassSavedData.Carcass carcass, ServerSubLevel torso) {
         for (CarcassJoints.Spec joint : carcass.joints) {
             if (joint.parent().equals(carcass.rootBone) && joint.child().toLowerCase().contains("head")) {
                 return joint.anchorParent(torso);
@@ -151,7 +151,7 @@ public class ShackleHookBlockEntity extends BlockEntity {
      * World orientation for a hanging torso: the model's head end (part-local -y) points up and its belly
      * (part-local -z) faces {@code out}. Columns of the rotation are the world images of the local axes.
      */
-    private static Quaterniond hangingOrientation(double outX, double outZ) {
+    public static Quaterniond hangingOrientation(double outX, double outZ) {
         Vector3d belly = new Vector3d(outX, 0.0, outZ).normalize();
         Vector3d imageY = new Vector3d(0.0, -1.0, 0.0);      // local +y (rear) points down
         Vector3d imageZ = new Vector3d(belly).negate();      // local +z (back) faces away from out

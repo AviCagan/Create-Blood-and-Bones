@@ -111,6 +111,15 @@ public class CarcassEvents {
     public static void onPrePhysicsTick(ForgeSablePrePhysicsTickEvent event) {
         CarcassDrag.physicsTick(event.getPhysicsSystem().getLevel(), event.getPhysicsSystem().getPartialPhysicsTick(), event.getTimeStep());
         ShackleHookBlockEntity.physicsTick(event.getPhysicsSystem().getLevel(), event.getTimeStep());
+        com.avicagan.bloodandbones.carcass.trolley.ShackleTrolleyEntity.physicsTick(event.getPhysicsSystem().getLevel(), event.getPhysicsSystem().getPartialPhysicsTick(), event.getTimeStep());
+    }
+
+    /** Trolleys move before Sable steps physics, so the carcass keeps up with the chain instead of trailing a tick. */
+    @SubscribeEvent
+    public static void onLevelTickPre(net.neoforged.neoforge.event.tick.LevelTickEvent.Pre event) {
+        if (event.getLevel() instanceof ServerLevel level) {
+            com.avicagan.bloodandbones.carcass.trolley.ShackleTrolleyEntity.advanceAll(level);
+        }
     }
 
     @SubscribeEvent

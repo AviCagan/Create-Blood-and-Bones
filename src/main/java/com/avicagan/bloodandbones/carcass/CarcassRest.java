@@ -126,7 +126,8 @@ public final class CarcassRest {
         if (CarcassDrag.isDraggingCarcass(carcass.id)) {
             return true;
         }
-        return ShackleHookBlockEntity.isHanging(level, carcass.id);
+        return ShackleHookBlockEntity.isHanging(level, carcass.id)
+                || com.avicagan.bloodandbones.carcass.trolley.ShackleTrolleyEntity.isHanging(level, carcass.id);
     }
 
     /**
