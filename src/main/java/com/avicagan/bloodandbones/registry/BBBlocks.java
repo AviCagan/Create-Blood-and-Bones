@@ -80,6 +80,8 @@ public class BBBlocks {
                         new net.neoforged.neoforge.client.model.generators.ConfiguredModel(model, 0, 270, false)};
             }, com.avicagan.bloodandbones.bleeding.BloodStainBlock.AGE))
             .loot(NonNullBiConsumer.noop())
+            // walking through it squelches, over whatever the ground sounds like
+            .tag(net.minecraft.tags.BlockTags.COMBINATION_STEP_SOUND_BLOCKS)
             .lang("Blood Stain")
             .register();
 
