@@ -766,7 +766,10 @@ dragon and tropical fish, middle-sized (size 2) slimes, and final art.
   feet, so size 1 is the rig's baby shape: everything at 0.25, moved down 72 model pixels
   (`0.25 * (24 + 72)` puts the feet back on the feet). The assembler marks a size 1 slime as a baby; its
   pieces' tooltip says "From a small one" instead, though the Attribute Filter's "from a baby" still
-  matches them. `smallestSlimesLeaveCarcasses`, `smallSlimePiecesSaySmall`. The pufferfish is rigged
+  matches them. A baby's yields are cut by its weight against the grown rig's, which for a slime (a 64th)
+  would leave nothing; the smallest slime gives a quarter instead (`CarcassButchery.babyYieldScale`: one
+  slime ball of four, about the game's own drop). `smallestSlimesLeaveCarcasses`,
+  `smallSlimePiecesSaySmall`. The pufferfish is rigged
   on its fully puffed model (its spikes stuck to the body), whatever its state when it died; the wither at
   its drawn double size, with its tail hung from the ribcage, bloodless, its heads sometimes giving a
   wither skeleton skull. Not rigged: the ender dragon (a multi-part entity with its own long death) and

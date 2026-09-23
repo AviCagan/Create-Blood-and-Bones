@@ -183,6 +183,24 @@ public final class CarcassButchery {
     }
 
     /**
+     * The tables are for grown animals: a baby gives as much less as it weighs less. The smallest slime is a
+     * quarter the size of a big one but weighs a 64th, which would leave it next to nothing; it gives a
+     * quarter (one slime ball, about what the game drops for one).
+     */
+    public static float babyYieldScale(CarcassSavedData.Carcass carcass) {
+        if (!carcass.baby) {
+            return 1.0F;
+        }
+        if (carcass.entity.equals(net.minecraft.core.registries.BuiltInRegistries.ENTITY_TYPE.getKey(net.minecraft.world.entity.EntityType.SLIME))
+                || carcass.entity.equals(net.minecraft.core.registries.BuiltInRegistries.ENTITY_TYPE.getKey(net.minecraft.world.entity.EntityType.MAGMA_CUBE))) {
+            return 0.25F;
+        }
+        float grown = com.avicagan.bloodandbones.carcass.rig.RigManager.forEntity(carcass.entity).map(com.avicagan.bloodandbones.carcass.rig.Rig::weight).orElse(1.0F);
+        float small = com.avicagan.bloodandbones.carcass.rig.RigManager.forCarcass(carcass).map(com.avicagan.bloodandbones.carcass.rig.Rig::weight).orElse(grown);
+        return Math.min(1.0F, small / Math.max(grown, 1.0E-4F));
+    }
+
+    /**
      * Spawn a list of yields at a point, scaled, with rot applied: past 60% fresh everything is whole; past
      * 30% meat, offal and fat are halved; below that meat turns to rotten flesh (halved), offal and fat are
      * gone and hides halved; a rotten carcass gives no hide at all. Bones never spoil.
@@ -190,12 +208,7 @@ public final class CarcassButchery {
     public static void dropYields(ServerLevel level, CarcassSavedData.Carcass carcass, java.util.List<com.avicagan.bloodandbones.carcass.butchery.Yield> yields,
                                   float scale, Vector3d at) {
         float fresh = carcass.freshness;
-        // the tables are for grown animals; a baby gives as much less as it weighs less
-        if (carcass.baby) {
-            float grown = com.avicagan.bloodandbones.carcass.rig.RigManager.forEntity(carcass.entity).map(com.avicagan.bloodandbones.carcass.rig.Rig::weight).orElse(1.0F);
-            float small = com.avicagan.bloodandbones.carcass.rig.RigManager.forCarcass(carcass).map(com.avicagan.bloodandbones.carcass.rig.Rig::weight).orElse(grown);
-            scale *= Math.min(1.0F, small / Math.max(grown, 1.0E-4F));
-        }
+        scale *= babyYieldScale(carcass);
         for (var yield : yields) {
             String id = fillTraits(yield.item(), carcass.traits);
             if (id == null) {

@@ -194,6 +194,10 @@ public class BabyTests {
                 helper.fail("A size 1 " + type + " should weigh far less than a size 4 one: " + small.weight() + " vs " + grown.weight());
                 return;
             }
+            if (com.avicagan.bloodandbones.carcass.CarcassButchery.babyYieldScale(carcass) != 0.25F) {
+                helper.fail("The smallest " + type + " should give a quarter of a big one's yield");
+                return;
+            }
             UUID torso = carcass.bones.get(small.root().name());
             if (!(SubLevelContainer.getContainer(helper.getLevel()).getSubLevel(torso) instanceof ServerSubLevel body)) {
                 helper.fail("The small " + type + " carcass has no body");
