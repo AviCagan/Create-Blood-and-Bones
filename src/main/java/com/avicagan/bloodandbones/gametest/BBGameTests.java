@@ -908,6 +908,41 @@ public class BBGameTests {
         animalTest(helper, EntityType.ELDER_GUARDIAN, 4);
     }
 
+    @GameTest(template = "empty", timeoutTicks = 200)
+    public static void silverfishCarcassAssembles(GameTestHelper helper) {
+        animalTest(helper, EntityType.SILVERFISH, 7);
+    }
+
+    @GameTest(template = "empty", timeoutTicks = 200)
+    public static void endermiteCarcassAssembles(GameTestHelper helper) {
+        animalTest(helper, EntityType.ENDERMITE, 4);
+    }
+
+    @GameTest(template = "empty", timeoutTicks = 200)
+    public static void snowGolemCarcassAssembles(GameTestHelper helper) {
+        animalTest(helper, EntityType.SNOW_GOLEM, 5);
+    }
+
+    @GameTest(template = "empty", timeoutTicks = 200)
+    public static void wardenCarcassAssembles(GameTestHelper helper) {
+        animalTest(helper, EntityType.WARDEN, 6);
+    }
+
+    @GameTest(template = "empty", timeoutTicks = 200)
+    public static void tadpoleCarcassAssembles(GameTestHelper helper) {
+        animalTest(helper, EntityType.TADPOLE, 1);
+    }
+
+    @GameTest(template = "empty", timeoutTicks = 200)
+    public static void breezeCarcassAssembles(GameTestHelper helper) {
+        animalTest(helper, EntityType.BREEZE, 1);
+    }
+
+    @GameTest(template = "empty", timeoutTicks = 200)
+    public static void shulkerCarcassAssembles(GameTestHelper helper) {
+        animalTest(helper, EntityType.SHULKER, 3);
+    }
+
     /** A white llama and a brown panda keep their colours on the carcass. */
     @GameTest(template = "empty", timeoutTicks = 100)
     public static void llamaAndPandaKeepTheirColours(GameTestHelper helper) {

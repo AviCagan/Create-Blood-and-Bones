@@ -1,0 +1,26 @@
+{
+  "entity": "minecraft:tadpole",
+  "model": "minecraft:tadpole",
+  "texture": "minecraft:textures/entity/tadpole/tadpole.png",
+  "rot_time": 4000,
+  "torso": "body",
+  "attach": {
+    "tail": "body"
+  },
+  "butchery": {
+    "meat": "none",
+    "hide": "none",
+    "bone": "none",
+    "offal_per_weight": 0.0,
+    "fat_per_weight": 0.0,
+    "part_extras": {
+      "body": [
+        {
+          "item": "minecraft:slime_ball",
+          "count": 0.1,
+          "kind": "offal"
+        }
+      ]
+    }
+  }
+}

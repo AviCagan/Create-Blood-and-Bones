@@ -1,0 +1,28 @@
+{
+  "entity": "minecraft:snow_golem",
+  "parts": {
+    "head": [],
+    "left_arm": [
+      {
+        "item": "minecraft:stick"
+      }
+    ],
+    "lower_body": [
+      {
+        "count": 4.0,
+        "item": "minecraft:snowball"
+      }
+    ],
+    "right_arm": [
+      {
+        "item": "minecraft:stick"
+      }
+    ],
+    "upper_body": [
+      {
+        "count": 2.0,
+        "item": "minecraft:snowball"
+      }
+    ]
+  }
+}

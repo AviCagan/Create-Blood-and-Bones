@@ -1,0 +1,114 @@
+{
+  "bones": [
+    {
+      "box_max": [
+        8.0,
+        0.0,
+        8.0
+      ],
+      "box_min": [
+        -8.0,
+        -8.0,
+        -8.0
+      ],
+      "name": "base",
+      "offset": [
+        0.0,
+        24.0,
+        0.0
+      ],
+      "part": "base",
+      "rotation": [
+        0.0,
+        0.0,
+        0.0,
+        1.0
+      ]
+    },
+    {
+      "parent": "base",
+      "box_max": [
+        3.0,
+        6.0,
+        3.0
+      ],
+      "box_min": [
+        -3.0,
+        0.0,
+        -3.0
+      ],
+      "joint": {
+        "damping": 4.0,
+        "max_degrees": [
+          25.0,
+          30.0,
+          6.0
+        ],
+        "min_degrees": [
+          -15.0,
+          -30.0,
+          -6.0
+        ],
+        "stiffness": 2.0
+      },
+      "name": "head",
+      "offset": [
+        0.0,
+        12.0,
+        0.0
+      ],
+      "part": "head",
+      "rotation": [
+        0.0,
+        0.0,
+        0.0,
+        1.0
+      ]
+    },
+    {
+      "parent": "base",
+      "box_max": [
+        8.0,
+        -4.0,
+        8.0
+      ],
+      "box_min": [
+        -8.0,
+        -16.0,
+        -8.0
+      ],
+      "joint": {
+        "damping": 3.0,
+        "max_degrees": [
+          10.0,
+          45.0,
+          10.0
+        ],
+        "min_degrees": [
+          -10.0,
+          -45.0,
+          -10.0
+        ],
+        "stiffness": 0.5
+      },
+      "name": "lid",
+      "offset": [
+        0.0,
+        24.0,
+        0.0
+      ],
+      "part": "lid",
+      "rotation": [
+        0.0,
+        0.0,
+        0.0,
+        1.0
+      ]
+    }
+  ],
+  "entity": "minecraft:shulker",
+  "model": "minecraft:shulker",
+  "rot_time": 1000000,
+  "texture": "minecraft:textures/entity/shulker/{shulker}.png",
+  "weight": 1.3027344
+}

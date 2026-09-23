@@ -1,0 +1,119 @@
+{
+  "entity": "minecraft:silverfish",
+  "model": "minecraft:silverfish",
+  "texture": "minecraft:textures/entity/silverfish.png",
+  "rot_time": 6000,
+  "torso": "segment2",
+  "attach": {
+    "layer0": "segment2",
+    "layer1": "segment4",
+    "layer2": "segment1"
+  },
+  "parents": {
+    "segment0": "segment1",
+    "segment1": "segment2",
+    "segment3": "segment2",
+    "segment4": "segment3",
+    "segment5": "segment4",
+    "segment6": "segment5"
+  },
+  "joints": {
+    "segment0": {
+      "min_degrees": [
+        -30,
+        -35,
+        -20
+      ],
+      "max_degrees": [
+        30,
+        35,
+        20
+      ],
+      "damping": 2.0,
+      "stiffness": 0.5,
+      "contacts": false
+    },
+    "segment1": {
+      "min_degrees": [
+        -30,
+        -35,
+        -20
+      ],
+      "max_degrees": [
+        30,
+        35,
+        20
+      ],
+      "damping": 2.0,
+      "stiffness": 0.5,
+      "contacts": false
+    },
+    "segment3": {
+      "min_degrees": [
+        -30,
+        -35,
+        -20
+      ],
+      "max_degrees": [
+        30,
+        35,
+        20
+      ],
+      "damping": 2.0,
+      "stiffness": 0.5,
+      "contacts": false
+    },
+    "segment4": {
+      "min_degrees": [
+        -30,
+        -35,
+        -20
+      ],
+      "max_degrees": [
+        30,
+        35,
+        20
+      ],
+      "damping": 2.0,
+      "stiffness": 0.5,
+      "contacts": false
+    },
+    "segment5": {
+      "min_degrees": [
+        -30,
+        -35,
+        -20
+      ],
+      "max_degrees": [
+        30,
+        35,
+        20
+      ],
+      "damping": 2.0,
+      "stiffness": 0.5,
+      "contacts": false
+    },
+    "segment6": {
+      "min_degrees": [
+        -30,
+        -35,
+        -20
+      ],
+      "max_degrees": [
+        30,
+        35,
+        20
+      ],
+      "damping": 2.0,
+      "stiffness": 0.5,
+      "contacts": false
+    }
+  },
+  "butchery": {
+    "meat": "none",
+    "hide": "none",
+    "bone": "none",
+    "offal_per_weight": 0.0,
+    "fat_per_weight": 0.0
+  }
+}

@@ -1,0 +1,12 @@
+{
+  "entity": "minecraft:shulker",
+  "parts": {
+    "base": [],
+    "head": [],
+    "lid": [
+      {
+        "item": "minecraft:shulker_shell"
+      }
+    ]
+  }
+}

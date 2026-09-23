@@ -1,0 +1,11 @@
+{
+  "entity": "minecraft:breeze",
+  "parts": {
+    "body/head": [
+      {
+        "count": 1.5,
+        "item": "minecraft:breeze_rod"
+      }
+    ]
+  }
+}

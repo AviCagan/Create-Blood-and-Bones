@@ -1,0 +1,322 @@
+{
+  "bones": [
+    {
+      "box_max": [
+        3.0,
+        4.0,
+        1.5
+      ],
+      "box_min": [
+        -3.0,
+        0.0,
+        -1.5
+      ],
+      "extras": [
+        {
+          "offset": [
+            0.0,
+            -4.0,
+            0.0
+          ],
+          "part": "layer0",
+          "rotation": [
+            0.0,
+            0.0,
+            0.0,
+            1.0
+          ]
+        }
+      ],
+      "name": "segment2",
+      "offset": [
+        0.0,
+        20.0,
+        1.0
+      ],
+      "part": "segment2",
+      "rotation": [
+        0.0,
+        0.0,
+        0.0,
+        1.0
+      ]
+    },
+    {
+      "parent": "segment2",
+      "box_max": [
+        2.0,
+        3.0,
+        1.0
+      ],
+      "box_min": [
+        -2.0,
+        0.0,
+        -1.0
+      ],
+      "extras": [
+        {
+          "offset": [
+            0.0,
+            -2.0,
+            0.0
+          ],
+          "part": "layer2",
+          "rotation": [
+            0.0,
+            0.0,
+            0.0,
+            1.0
+          ]
+        }
+      ],
+      "joint": {
+        "damping": 2.0,
+        "max_degrees": [
+          30.0,
+          35.0,
+          20.0
+        ],
+        "min_degrees": [
+          -30.0,
+          -35.0,
+          -20.0
+        ],
+        "stiffness": 0.5
+      },
+      "name": "segment1",
+      "offset": [
+        0.0,
+        21.0,
+        -1.5
+      ],
+      "part": "segment1",
+      "rotation": [
+        0.0,
+        0.0,
+        0.0,
+        1.0
+      ]
+    },
+    {
+      "parent": "segment1",
+      "box_max": [
+        1.5,
+        2.0,
+        1.0
+      ],
+      "box_min": [
+        -1.5,
+        0.0,
+        -1.0
+      ],
+      "joint": {
+        "damping": 2.0,
+        "max_degrees": [
+          30.0,
+          35.0,
+          20.0
+        ],
+        "min_degrees": [
+          -30.0,
+          -35.0,
+          -20.0
+        ],
+        "stiffness": 0.5
+      },
+      "name": "segment0",
+      "offset": [
+        0.0,
+        22.0,
+        -3.5
+      ],
+      "part": "segment0",
+      "rotation": [
+        0.0,
+        0.0,
+        0.0,
+        1.0
+      ]
+    },
+    {
+      "parent": "segment5",
+      "box_max": [
+        0.5,
+        1.0,
+        1.0
+      ],
+      "box_min": [
+        -0.5,
+        0.0,
+        -1.0
+      ],
+      "joint": {
+        "damping": 2.0,
+        "max_degrees": [
+          30.0,
+          35.0,
+          20.0
+        ],
+        "min_degrees": [
+          -30.0,
+          -35.0,
+          -20.0
+        ],
+        "stiffness": 0.5
+      },
+      "name": "segment6",
+      "offset": [
+        0.0,
+        23.0,
+        11.5
+      ],
+      "part": "segment6",
+      "rotation": [
+        0.0,
+        0.0,
+        0.0,
+        1.0
+      ]
+    },
+    {
+      "parent": "segment4",
+      "box_max": [
+        1.0,
+        1.0,
+        1.0
+      ],
+      "box_min": [
+        -1.0,
+        0.0,
+        -1.0
+      ],
+      "joint": {
+        "damping": 2.0,
+        "max_degrees": [
+          30.0,
+          35.0,
+          20.0
+        ],
+        "min_degrees": [
+          -30.0,
+          -35.0,
+          -20.0
+        ],
+        "stiffness": 0.5
+      },
+      "name": "segment5",
+      "offset": [
+        0.0,
+        23.0,
+        9.5
+      ],
+      "part": "segment5",
+      "rotation": [
+        0.0,
+        0.0,
+        0.0,
+        1.0
+      ]
+    },
+    {
+      "parent": "segment3",
+      "box_max": [
+        1.0,
+        2.0,
+        1.5
+      ],
+      "box_min": [
+        -1.0,
+        0.0,
+        -1.5
+      ],
+      "extras": [
+        {
+          "offset": [
+            0.0,
+            -2.0,
+            0.0
+          ],
+          "part": "layer1",
+          "rotation": [
+            0.0,
+            0.0,
+            0.0,
+            1.0
+          ]
+        }
+      ],
+      "joint": {
+        "damping": 2.0,
+        "max_degrees": [
+          30.0,
+          35.0,
+          20.0
+        ],
+        "min_degrees": [
+          -30.0,
+          -35.0,
+          -20.0
+        ],
+        "stiffness": 0.5
+      },
+      "name": "segment4",
+      "offset": [
+        0.0,
+        22.0,
+        7.0
+      ],
+      "part": "segment4",
+      "rotation": [
+        0.0,
+        0.0,
+        0.0,
+        1.0
+      ]
+    },
+    {
+      "parent": "segment2",
+      "box_max": [
+        1.5,
+        3.0,
+        1.5
+      ],
+      "box_min": [
+        -1.5,
+        0.0,
+        -1.5
+      ],
+      "joint": {
+        "damping": 2.0,
+        "max_degrees": [
+          30.0,
+          35.0,
+          20.0
+        ],
+        "min_degrees": [
+          -30.0,
+          -35.0,
+          -20.0
+        ],
+        "stiffness": 0.5
+      },
+      "name": "segment3",
+      "offset": [
+        0.0,
+        21.0,
+        4.0
+      ],
+      "part": "segment3",
+      "rotation": [
+        0.0,
+        0.0,
+        0.0,
+        1.0
+      ]
+    }
+  ],
+  "entity": "minecraft:silverfish",
+  "model": "minecraft:silverfish",
+  "rot_time": 6000,
+  "texture": "minecraft:textures/entity/silverfish.png",
+  "weight": 0.037353516
+}

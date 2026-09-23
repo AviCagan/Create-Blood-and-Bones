@@ -1,0 +1,239 @@
+{
+  "bones": [
+    {
+      "box_max": [
+        9.0,
+        8.0,
+        7.0
+      ],
+      "box_min": [
+        -9.0,
+        -13.0,
+        -4.0
+      ],
+      "hide": [
+        "head",
+        "right_arm",
+        "left_arm"
+      ],
+      "name": "bone/body",
+      "offset": [
+        0.0,
+        3.0,
+        0.0
+      ],
+      "part": "bone/body",
+      "rotation": [
+        0.0,
+        0.0,
+        0.0,
+        1.0
+      ]
+    },
+    {
+      "parent": "bone/body",
+      "box_max": [
+        3.1,
+        13.0,
+        3.0
+      ],
+      "box_min": [
+        -2.9,
+        0.0,
+        -3.0
+      ],
+      "joint": {
+        "damping": 3.0,
+        "max_degrees": [
+          75.0,
+          10.0,
+          15.0
+        ],
+        "min_degrees": [
+          -75.0,
+          -10.0,
+          -15.0
+        ],
+        "stiffness": 0.1
+      },
+      "name": "bone/left_leg",
+      "offset": [
+        5.9,
+        11.0,
+        0.0
+      ],
+      "part": "bone/left_leg",
+      "rotation": [
+        0.0,
+        0.0,
+        0.0,
+        1.0
+      ]
+    },
+    {
+      "parent": "bone/body",
+      "box_max": [
+        2.9,
+        13.0,
+        3.0
+      ],
+      "box_min": [
+        -3.1,
+        0.0,
+        -3.0
+      ],
+      "joint": {
+        "damping": 3.0,
+        "max_degrees": [
+          75.0,
+          10.0,
+          15.0
+        ],
+        "min_degrees": [
+          -75.0,
+          -10.0,
+          -15.0
+        ],
+        "stiffness": 0.1
+      },
+      "name": "bone/right_leg",
+      "offset": [
+        -5.9,
+        11.0,
+        0.0
+      ],
+      "part": "bone/right_leg",
+      "rotation": [
+        0.0,
+        0.0,
+        0.0,
+        1.0
+      ]
+    },
+    {
+      "parent": "bone/body",
+      "box_max": [
+        8.0,
+        0.0,
+        5.0
+      ],
+      "box_min": [
+        -8.0,
+        -16.0,
+        -5.0
+      ],
+      "joint": {
+        "damping": 4.0,
+        "max_degrees": [
+          25.0,
+          30.0,
+          6.0
+        ],
+        "min_degrees": [
+          -15.0,
+          -30.0,
+          -6.0
+        ],
+        "stiffness": 2.0
+      },
+      "name": "bone/body/head",
+      "offset": [
+        0.0,
+        -10.0,
+        0.0
+      ],
+      "part": "bone/body/head",
+      "rotation": [
+        0.0,
+        0.0,
+        0.0,
+        1.0
+      ]
+    },
+    {
+      "parent": "bone/body",
+      "box_max": [
+        4.0,
+        28.0,
+        4.0
+      ],
+      "box_min": [
+        -4.0,
+        0.0,
+        -4.0
+      ],
+      "joint": {
+        "damping": 3.0,
+        "max_degrees": [
+          75.0,
+          10.0,
+          15.0
+        ],
+        "min_degrees": [
+          -75.0,
+          -10.0,
+          -15.0
+        ],
+        "stiffness": 0.1
+      },
+      "name": "bone/body/right_arm",
+      "offset": [
+        -13.0,
+        -10.0,
+        1.0
+      ],
+      "part": "bone/body/right_arm",
+      "rotation": [
+        0.0,
+        0.0,
+        0.0,
+        1.0
+      ]
+    },
+    {
+      "parent": "bone/body",
+      "box_max": [
+        4.0,
+        28.0,
+        4.0
+      ],
+      "box_min": [
+        -4.0,
+        0.0,
+        -4.0
+      ],
+      "joint": {
+        "damping": 3.0,
+        "max_degrees": [
+          75.0,
+          10.0,
+          15.0
+        ],
+        "min_degrees": [
+          -75.0,
+          -10.0,
+          -15.0
+        ],
+        "stiffness": 0.1
+      },
+      "name": "bone/body/left_arm",
+      "offset": [
+        13.0,
+        -10.0,
+        1.0
+      ],
+      "part": "bone/body/left_arm",
+      "rotation": [
+        0.0,
+        0.0,
+        0.0,
+        1.0
+      ]
+    }
+  ],
+  "entity": "minecraft:warden",
+  "model": "minecraft:warden",
+  "rot_time": 36000,
+  "texture": "minecraft:textures/entity/warden/warden.png",
+  "weight": 2.7436523
+}

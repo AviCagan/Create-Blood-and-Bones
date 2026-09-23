@@ -1,0 +1,12 @@
+{
+  "entity": "minecraft:tadpole",
+  "parts": {
+    "body": [
+      {
+        "count": 0.1,
+        "item": "minecraft:slime_ball",
+        "kind": "offal"
+      }
+    ]
+  }
+}

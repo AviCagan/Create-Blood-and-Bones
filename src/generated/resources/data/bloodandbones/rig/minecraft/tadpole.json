@@ -1,0 +1,50 @@
+{
+  "bones": [
+    {
+      "box_max": [
+        1.5,
+        1.0,
+        3.0
+      ],
+      "box_min": [
+        -1.5,
+        -1.0,
+        0.0
+      ],
+      "extras": [
+        {
+          "offset": [
+            0.0,
+            0.0,
+            3.0
+          ],
+          "part": "tail",
+          "rotation": [
+            0.0,
+            0.0,
+            0.0,
+            1.0
+          ]
+        }
+      ],
+      "name": "body",
+      "offset": [
+        0.0,
+        22.0,
+        -3.0
+      ],
+      "part": "body",
+      "rotation": [
+        0.0,
+        0.0,
+        0.0,
+        1.0
+      ]
+    }
+  ],
+  "entity": "minecraft:tadpole",
+  "model": "minecraft:tadpole",
+  "rot_time": 4000,
+  "texture": "minecraft:textures/entity/tadpole/tadpole.png",
+  "weight": 0.0043945312
+}

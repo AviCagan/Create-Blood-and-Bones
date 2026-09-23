@@ -1,0 +1,15 @@
+{
+  "entity": "minecraft:endermite",
+  "parts": {
+    "segment0": [],
+    "segment1": [
+      {
+        "count": 0.1,
+        "item": "minecraft:ender_pearl",
+        "kind": "offal"
+      }
+    ],
+    "segment2": [],
+    "segment3": []
+  }
+}

@@ -1,0 +1,102 @@
+{
+  "entity": "minecraft:warden",
+  "hide": [
+    {
+      "count": 8.23,
+      "item": "bloodandbones:raw_hide",
+      "kind": "hide"
+    }
+  ],
+  "parts": {
+    "bone/body": [
+      {
+        "count": 8.12,
+        "item": "bloodandbones:raw_meat",
+        "kind": "meat"
+      },
+      {
+        "count": 3.05,
+        "item": "minecraft:bone",
+        "kind": "bone"
+      },
+      {
+        "count": 5.49,
+        "item": "bloodandbones:offal",
+        "kind": "offal"
+      },
+      {
+        "count": 2.74,
+        "item": "bloodandbones:animal_fat",
+        "kind": "fat"
+      },
+      {
+        "item": "minecraft:sculk_catalyst",
+        "kind": "offal"
+      },
+      {
+        "count": 0.25,
+        "item": "minecraft:echo_shard"
+      }
+    ],
+    "bone/body/head": [
+      {
+        "count": 5.0,
+        "item": "bloodandbones:raw_meat",
+        "kind": "meat"
+      },
+      {
+        "count": 1.88,
+        "item": "minecraft:bone",
+        "kind": "bone"
+      }
+    ],
+    "bone/body/left_arm": [
+      {
+        "count": 3.5,
+        "item": "bloodandbones:raw_meat",
+        "kind": "meat"
+      },
+      {
+        "count": 1.31,
+        "item": "minecraft:bone",
+        "kind": "bone"
+      }
+    ],
+    "bone/body/right_arm": [
+      {
+        "count": 3.5,
+        "item": "bloodandbones:raw_meat",
+        "kind": "meat"
+      },
+      {
+        "count": 1.31,
+        "item": "minecraft:bone",
+        "kind": "bone"
+      }
+    ],
+    "bone/left_leg": [
+      {
+        "count": 0.91,
+        "item": "bloodandbones:raw_meat",
+        "kind": "meat"
+      },
+      {
+        "count": 0.5,
+        "item": "minecraft:bone",
+        "kind": "bone"
+      }
+    ],
+    "bone/right_leg": [
+      {
+        "count": 0.91,
+        "item": "bloodandbones:raw_meat",
+        "kind": "meat"
+      },
+      {
+        "count": 0.5,
+        "item": "minecraft:bone",
+        "kind": "bone"
+      }
+    ]
+  }
+}

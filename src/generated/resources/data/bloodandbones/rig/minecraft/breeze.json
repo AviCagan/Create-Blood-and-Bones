@@ -1,0 +1,81 @@
+{
+  "bones": [
+    {
+      "box_max": [
+        4.0,
+        0.0,
+        4.0
+      ],
+      "box_min": [
+        -4.0,
+        -8.0,
+        -4.0
+      ],
+      "extras": [
+        {
+          "offset": [
+            2.5981,
+            1.0,
+            1.5
+          ],
+          "part": "body/rods/rod_1",
+          "rotation": [
+            0.09754378,
+            -0.8493849,
+            0.1689503,
+            0.490394
+          ]
+        },
+        {
+          "offset": [
+            -2.5981,
+            1.0,
+            1.5
+          ],
+          "part": "body/rods/rod_2",
+          "rotation": [
+            -0.09754378,
+            -0.8493849,
+            0.1689503,
+            -0.490394
+          ]
+        },
+        {
+          "offset": [
+            0.0,
+            1.0,
+            -3.0
+          ],
+          "part": "body/rods/rod_3",
+          "rotation": [
+            0.19509077,
+            0.0,
+            0.0,
+            0.9807852
+          ]
+        }
+      ],
+      "hide": [
+        "eyes"
+      ],
+      "name": "body/head",
+      "offset": [
+        0.0,
+        4.0,
+        0.0
+      ],
+      "part": "body/head",
+      "rotation": [
+        0.0,
+        0.0,
+        0.0,
+        1.0
+      ]
+    }
+  ],
+  "entity": "minecraft:breeze",
+  "model": "minecraft:breeze",
+  "rot_time": 1000000,
+  "texture": "minecraft:textures/entity/breeze/breeze.png",
+  "weight": 0.125
+}
