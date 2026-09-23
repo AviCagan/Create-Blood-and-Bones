@@ -169,19 +169,10 @@ public class SpitRoastBlockEntity extends KineticBlockEntity {
     /** What the piece gives cooked: its butchery yields, each smelted where it can be; burnt, charcoal and bones. */
     public List<ItemStack> cookedYields(ServerLevel level) {
         CarcassPieceItem.Piece data = CarcassPieceItem.piece(piece);
-        List<ItemStack> raw = new ArrayList<>();
         if (data == null) {
-            return raw;
+            return new ArrayList<>();
         }
-        CarcassSavedData.Carcass stand = new CarcassSavedData.Carcass(UUID.randomUUID(), data.entity(), data.bone());
-        stand.freshness = data.freshness();
-        stand.baby = data.baby();
-        stand.traits.putAll(data.traits());
-        ButcheryManager.forEntity(data.entity()).ifPresent(table ->
-                CarcassButchery.capturing(raw::add, () -> {
-                    CarcassButchery.dropYields(level, stand, table.part(data.bone()), 1.0F, new Vector3d());
-                    return true;
-                }));
+        List<ItemStack> raw = CarcassButchery.pieceYields(level, data);
         List<ItemStack> out = new ArrayList<>();
         boolean burnt = isBurnt();
         for (ItemStack stack : raw) {

@@ -785,6 +785,10 @@ pipes; chain clearance = hanging length + 1 block.
   mode it shows as plain andesite casing: the swap wraps the model after Create's connected-texture
   wrapper (lowest event priority) and finds the sprite a quad shows by where its UVs fall, since
   Create moves the UVs onto the connected sheet but leaves the quad's sprite field alone.
+- Butcher's Table (the design's "Steel Table"): holds one piece like the jar, drawn lying on the top;
+  a Cleaver chops it into `CarcassButchery.pieceYields` (the same yields a loose piece gives, now shared
+  with the Spit Roast), dropped on the top, with the spray, the sound and a bloodied cleaver. Clean steel
+  in bloodless mode.
 - Gut Chain: a vanilla `ChainBlock` with our own two-plane model (4 px wide strips) and a lumpy, wet
   texture; hand-breakable, slime sounds; three offal in a column make three. Bloodless mode swaps it to
   a plain cord texture and rewords "gut" as "cord". (The design's other Gut Chain idea, a texture swap

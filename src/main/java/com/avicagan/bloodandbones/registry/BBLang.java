@@ -73,6 +73,11 @@ public class BBLang {
         block("bloody_casing",
                 "Andesite casing _smeared with blood_, for a slaughterhouse that looks the part. Joins up with its neighbours like any casing.",
                 "When Made", "_Fill_ an Andesite Casing with 250 mB of blood using a _Spout_.");
+        block("butcher_table",
+                "A steel table for cutting up carcass pieces by hand.",
+                "When R-Clicked with a Carcass Piece", "Lays it on the table.",
+                "When R-Clicked with a Cleaver", "_Chops_ the piece apart into meat, bone, offal and fat, spoiled as far as it had rotted.",
+                "When R-Clicked with an Empty Hand", "Takes the piece back.");
         block("gut_chain",
                 "A string of _guts_, hung like a chain. Squelches underfoot and in the hand.",
                 "When Made", "Three pieces of _offal_ in a column make three.");

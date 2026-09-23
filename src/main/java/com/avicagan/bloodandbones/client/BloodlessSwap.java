@@ -40,6 +40,11 @@ public final class BloodlessSwap extends BakedModelWrapper<BakedModel> {
     public static final Map<ResourceLocation, ResourceLocation> HOOK = Map.of(
             ResourceLocation.fromNamespaceAndPath("bloodandbones", "item/meat_hook_point"), ResourceLocation.fromNamespaceAndPath("bloodandbones", "item/meat_hook_point_clean"));
 
+    /** The Butcher's Table comes out clean steel. */
+    public static final Map<ResourceLocation, ResourceLocation> TABLE = Map.of(
+            ResourceLocation.fromNamespaceAndPath("bloodandbones", "block/butcher_table_top"), ResourceLocation.fromNamespaceAndPath("bloodandbones", "block/butcher_table_top_clean"),
+            ResourceLocation.fromNamespaceAndPath("bloodandbones", "block/butcher_table_side"), ResourceLocation.fromNamespaceAndPath("bloodandbones", "block/butcher_table_side_clean"));
+
     /** The Gut Chain comes out as plain cord. */
     public static final Map<ResourceLocation, ResourceLocation> GUTS = Map.of(
             ResourceLocation.fromNamespaceAndPath("bloodandbones", "block/gut_chain"), ResourceLocation.fromNamespaceAndPath("bloodandbones", "block/gut_chain_clean"),

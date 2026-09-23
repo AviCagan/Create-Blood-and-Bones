@@ -217,4 +217,30 @@ public class CookingTests {
         }
         helper.succeed();
     }
+
+    /** A cow body laid on a Butcher's Table and chopped with a Cleaver comes apart into beef and bones. */
+    @GameTest(template = "empty", timeoutTicks = 60)
+    public static void butcherTableChopsAPiece(GameTestHelper helper) {
+        BlockPos tablePos = new BlockPos(3, 2, 3);
+        helper.setBlock(tablePos, BBBlocks.BUTCHER_TABLE.getDefaultState());
+        var table = (com.avicagan.bloodandbones.cooking.ButcherTableBlockEntity) helper.getLevel().getBlockEntity(helper.absolutePos(tablePos));
+        ItemStack cleaver = new ItemStack(com.avicagan.bloodandbones.registry.BBItems.CLEAVER.get());
+        if (table.chop(helper.getLevel(), cleaver)) {
+            helper.fail("There is nothing on an empty table to chop");
+        }
+        if (!table.put(cowBody(helper))) {
+            helper.fail("The table should take a piece");
+        }
+        if (!table.chop(helper.getLevel(), cleaver) || !table.specimen().isEmpty()) {
+            helper.fail("Chopping should take the piece apart and leave the table empty");
+        }
+        if (cleaver.get(com.avicagan.bloodandbones.registry.BBDataComponents.BLOODIED_AT.get()) == null) {
+            helper.fail("A cleaver that chopped up a cow should be bloody");
+        }
+        helper.runAfterDelay(5, () -> {
+            helper.assertItemEntityPresent(Items.BEEF, tablePos.above(), 2.0);
+            helper.assertItemEntityPresent(Items.BONE, tablePos.above(), 2.0);
+            helper.succeed();
+        });
+    }
 }

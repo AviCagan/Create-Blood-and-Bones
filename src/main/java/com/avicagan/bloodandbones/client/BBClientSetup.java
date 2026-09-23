@@ -82,6 +82,12 @@ public final class BBClientSetup {
             event.getModels().computeIfPresent(net.minecraft.client.resources.model.ModelResourceLocation.inventory(hook.getId()),
                     (key, model) -> new BloodlessSwap(model, BloodlessSwap.HOOK));
         }
+        for (net.minecraft.world.level.block.state.BlockState state : com.avicagan.bloodandbones.registry.BBBlocks.BUTCHER_TABLE.get().getStateDefinition().getPossibleStates()) {
+            event.getModels().computeIfPresent(net.minecraft.client.renderer.block.BlockModelShaper.stateToModelLocation(state),
+                    (key, model) -> new BloodlessSwap(model, BloodlessSwap.TABLE));
+        }
+        event.getModels().computeIfPresent(net.minecraft.client.resources.model.ModelResourceLocation.inventory(com.avicagan.bloodandbones.registry.BBBlocks.BUTCHER_TABLE.getId()),
+                (key, model) -> new BloodlessSwap(model, BloodlessSwap.TABLE));
         for (net.minecraft.world.level.block.state.BlockState state : com.avicagan.bloodandbones.registry.BBBlocks.GUT_CHAIN.get().getStateDefinition().getPossibleStates()) {
             event.getModels().computeIfPresent(net.minecraft.client.renderer.block.BlockModelShaper.stateToModelLocation(state),
                     (key, model) -> new BloodlessSwap(model, BloodlessSwap.GUTS));

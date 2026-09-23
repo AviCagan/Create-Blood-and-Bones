@@ -336,6 +336,12 @@ public final class DevShowcase {
             level.setBlockAndUpdate(new BlockPos(o.getX() + dx, o.getY() + 2, wallZ), BBBlocks.GUT_CHAIN.getDefaultState()
                     .setValue(net.minecraft.world.level.block.RotatedPillarBlock.AXIS, Direction.Axis.X));
         }
+        // a butcher's table in front, a cow's leg laid on it
+        BlockPos tablePos = new BlockPos(o.getX(), o.getY(), wallZ - 2);
+        level.setBlockAndUpdate(tablePos, BBBlocks.BUTCHER_TABLE.getDefaultState());
+        if (roastCow != null && level.getBlockEntity(tablePos) instanceof com.avicagan.bloodandbones.cooking.ButcherTableBlockEntity table) {
+            table.put(CarcassPieceItem.of(roastCow, "left_hind_leg"));
+        }
         BlockPos[] hooks = {new BlockPos(o.getX() - 3, o.getY() + 1, wallZ - 1), new BlockPos(o.getX() + 1, o.getY() + 1, wallZ - 1)};
         CarcassSavedData.Carcass[] hookMeat = {jarPig, roastCow};
         String[] hookBones = {"right_front_leg", "head"};

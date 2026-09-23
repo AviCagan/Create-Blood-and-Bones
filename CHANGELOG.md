@@ -21,6 +21,7 @@ Everything below is in development builds only; the art is placeholder (see the 
 - Mangler, Guillotine, Beheader and Deglover kinetic machines.
 - Blood Steel, Blood Diamond, Soul Blood recipes; Blood Steel Cleaver.
 - Spit Roast, Specimen Jar and Butcher's Hook (a wall hook to hang a piece on).
+- Butcher's Table: lay a carried piece on it and chop it up with a Cleaver.
 - Bloody Casing: andesite casing filled with blood, joining up like Create's casings.
 - Gut Chain: a string of guts hung like a chain (three offal make three); plain cord in bloodless mode.
 - Both hooks ride Create contraptions with the block they hang from.

@@ -159,6 +159,17 @@ public class BBBlocks {
             .lang("Bloody Casing")
             .register();
 
+    /** A steel table to lay a piece on and chop it up with a Cleaver. */
+    public static final BlockEntry<com.avicagan.bloodandbones.cooking.ButcherTableBlock> BUTCHER_TABLE = BloodAndBones.REGISTRATE
+            .block("butcher_table", com.avicagan.bloodandbones.cooking.ButcherTableBlock::new)
+            .initialProperties(() -> net.minecraft.world.level.block.Blocks.IRON_BLOCK)
+            .properties(p -> p.noOcclusion().strength(3.0F, 6.0F))
+            .blockstate((c, p) -> p.simpleBlock(c.get(), p.models().getExistingFile(p.modLoc("block/butcher_table"))))
+            .tag(net.minecraft.tags.BlockTags.MINEABLE_WITH_PICKAXE)
+            .lang("Butcher's Table")
+            .simpleItem()
+            .register();
+
     /** A string of guts hung like a chain. Squelches. */
     public static final BlockEntry<net.minecraft.world.level.block.ChainBlock> GUT_CHAIN = BloodAndBones.REGISTRATE
             .block("gut_chain", net.minecraft.world.level.block.ChainBlock::new)

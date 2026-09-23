@@ -253,6 +253,24 @@ public final class CarcassButchery {
     private static final ThreadLocal<java.util.function.Consumer<net.minecraft.world.item.ItemStack>> SINK = new ThreadLocal<>();
 
     /** Run a butchery action with every yield it makes handed to {@code sink} instead of dropped. */
+    /**
+     * What butchering a carried piece gives, as items: the piece's share of its mob's table, spoiled as far
+     * as it had rotted and scaled for a baby, as if it were a loose piece cut up in the world.
+     */
+    public static java.util.List<net.minecraft.world.item.ItemStack> pieceYields(ServerLevel level, com.avicagan.bloodandbones.item.CarcassPieceItem.Piece piece) {
+        java.util.List<net.minecraft.world.item.ItemStack> out = new java.util.ArrayList<>();
+        CarcassSavedData.Carcass stand = new CarcassSavedData.Carcass(UUID.randomUUID(), piece.entity(), piece.bone());
+        stand.freshness = piece.freshness();
+        stand.baby = piece.baby();
+        stand.traits.putAll(piece.traits());
+        com.avicagan.bloodandbones.carcass.butchery.ButcheryManager.forEntity(piece.entity()).ifPresent(table ->
+                capturing(out::add, () -> {
+                    dropYields(level, stand, table.part(piece.bone()), 1.0F, new Vector3d());
+                    return true;
+                }));
+        return out;
+    }
+
     public static <T> T capturing(java.util.function.Consumer<net.minecraft.world.item.ItemStack> sink, java.util.function.Supplier<T> action) {
         java.util.function.Consumer<net.minecraft.world.item.ItemStack> previous = SINK.get();
         SINK.set(sink);
