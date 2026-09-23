@@ -788,7 +788,9 @@ pipes; chain clearance = hanging length + 1 block.
   `CarcassModels.drawPiece`.
 - Butcher's Hook (the "wall Meat Hook"): a horizontal-facing block on the side of a sturdy block, with no
   collision, holding one piece that hangs from its tip and sways. It falls with its wall, dropping the
-  piece. Its block entity is the Specimen Jar's.
+  piece. Its block entity is the Specimen Jar's, plus dripping: a piece that still has blood (a mob that
+  bleeds) loses 1/120 of it a second, drops fall from under it on the client, and every third second a
+  stain lands on the floor below.
 - Bloody Casing: a Create `CasingBlock` built with `BuilderTransformers.casing` and our own connected
   sheet (`BBSpriteShifts`), made by spout-filling an Andesite Casing with 250 mB of blood. In bloodless
   mode it shows as plain andesite casing: the swap wraps the model after Create's connected-texture

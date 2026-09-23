@@ -95,6 +95,13 @@ public class BBJeiPlugin implements IModPlugin {
                 Component.translatable("bloodandbones.jei.machines.1"), Component.translatable("bloodandbones.jei.machines.2"));
         registration.addIngredientInfo(new net.minecraft.world.item.ItemStack(com.avicagan.bloodandbones.registry.BBFluids.SOUL_BLOOD.getBucket().get()),
                 mezz.jei.api.constants.VanillaTypes.ITEM_STACK, Component.translatable("bloodandbones.jei.soul_blood.1"));
+        registration.addIngredientInfo(java.util.List.of(new net.minecraft.world.item.ItemStack(BBBlocks.BUTCHER_HOOK.get()), new net.minecraft.world.item.ItemStack(BBBlocks.SPECIMEN_JAR.get()),
+                        new net.minecraft.world.item.ItemStack(BBBlocks.BUTCHER_TABLE.get())),
+                mezz.jei.api.constants.VanillaTypes.ITEM_STACK,
+                Component.translatable("bloodandbones.jei.display.1"), Component.translatable("bloodandbones.jei.display.2"));
+        registration.addIngredientInfo(java.util.List.of(new net.minecraft.world.item.ItemStack(BBBlocks.BLOODY_CASING.get()), new net.minecraft.world.item.ItemStack(BBBlocks.GUT_CHAIN.get())),
+                mezz.jei.api.constants.VanillaTypes.ITEM_STACK,
+                Component.translatable("bloodandbones.jei.decoration.1"), Component.translatable("bloodandbones.jei.decoration.2"));
         registration.addIngredientInfo(BBBlocks.SHACKLE_HOOK.get(),
                 Component.translatable("bloodandbones.jei.shackle_hook.1"),
                 Component.translatable("bloodandbones.jei.shackle_hook.2"));

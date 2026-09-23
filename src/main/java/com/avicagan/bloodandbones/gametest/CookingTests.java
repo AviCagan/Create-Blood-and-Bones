@@ -243,4 +243,36 @@ public class CookingTests {
             helper.succeed();
         });
     }
+
+    /** A fresh piece on a Butcher's Hook drips: its blood runs down, and stains the floor below. */
+    @GameTest(template = "empty", timeoutTicks = 120)
+    public static void hookedPieceDrips(GameTestHelper helper) {
+        BlockPos wall = new BlockPos(3, 3, 3);
+        BlockPos hookPos = wall.east();
+        helper.setBlock(wall, Blocks.STONE.defaultBlockState());
+        helper.setBlock(hookPos, BBBlocks.BUTCHER_HOOK.getDefaultState()
+                .setValue(net.minecraft.world.level.block.HorizontalDirectionalBlock.FACING, Direction.EAST));
+        var hook = (com.avicagan.bloodandbones.cooking.ButcherHookBlockEntity) helper.getLevel().getBlockEntity(helper.absolutePos(hookPos));
+        ItemStack piece = cowBody(helper);
+        float before = CarcassPieceItem.piece(piece).blood();
+        if (before <= 0 || !hook.put(piece)) {
+            helper.fail("A fresh cow piece should have blood and hang on the hook");
+        }
+        helper.runAfterDelay(90, () -> {
+            float after = CarcassPieceItem.piece(hook.specimen()).blood();
+            if (after >= before) {
+                helper.fail("The hung piece should be losing its blood, still " + after + " of " + before);
+            }
+            boolean stained = false;
+            for (int dx = -1; dx <= 1; dx++) {
+                for (int dz = -1; dz <= 1; dz++) {
+                    stained |= helper.getBlockState(new BlockPos(hookPos.getX() + dx, 2, hookPos.getZ() + dz)).is(BBBlocks.BLOOD_STAIN.get());
+                }
+            }
+            if (!stained) {
+                helper.fail("The floor under a dripping piece should be stained");
+            }
+            helper.succeed();
+        });
+    }
 }

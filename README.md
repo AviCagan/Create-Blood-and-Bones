@@ -42,7 +42,8 @@ provided by [Sable](https://github.com/ryanhcode/sable).
 - **Sorting.** Create's Attribute Filter knows carcass pieces: which mob, which part (head, body,
   limb, tail), fresh or rotting, skinned, or from a baby, so funnels and frogports can sort meat.
 - **Cooking and display.** The Spit Roast turns a carcass piece over a fire until it browns (or
-  burns). The Specimen Jar keeps a piece on show, and so does the Butcher's Hook, on a wall. The
+  burns). The Specimen Jar keeps a piece on show, and so does the Butcher's Hook, on a wall, where a
+  fresh piece drips blood on the floor. The
   Bloody Casing (spout 250 mB of blood onto an Andesite Casing) joins up like Create's casings, and
   the Gut Chain (three offal in a column) hangs like a chain.
 - **Bloodless mode.** `bloodless_mode` in the client config (`config/bloodandbones-client.toml`)

@@ -21,7 +21,8 @@ Everything below is in development builds only; the art is placeholder (see the 
 - Shackle Hook and Shackle Trolley on Create chain conveyors; trolleys queue a body's length apart.
 - Mangler, Guillotine, Beheader and Deglover kinetic machines.
 - Blood Steel, Blood Diamond, Soul Blood recipes; Blood Steel Cleaver.
-- Spit Roast, Specimen Jar and Butcher's Hook (a wall hook to hang a piece on).
+- Spit Roast, Specimen Jar and Butcher's Hook (a wall hook to hang a piece on; a fresh piece drips
+  blood onto the floor below until it runs dry).
 - Butcher's Table: lay a carried piece on it and chop it up with a Cleaver.
 - Bloody Casing: andesite casing filled with blood, joining up like Create's casings.
 - Gut Chain: a string of guts hung like a chain (three offal make three); plain cord in bloodless mode.
