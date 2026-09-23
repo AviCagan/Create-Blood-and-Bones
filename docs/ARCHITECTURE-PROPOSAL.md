@@ -684,7 +684,16 @@ pipes; chain clearance = hanging length + 1 block.
   Mangler top (`BloodlessSwap` re-points each quad's UVs from the bloody sprite to a clean one, for block
   and item models; the clean textures are the bloody ones with the red taken out), and the blood fluid,
   drawn a muddy brown in the world, tanks, pipes and buckets (`TintedFluidType` picks its tint per
-  frame). Not yet: names (the design's `bloodless.` lang prefix).
+  frame).
+- Names and descriptions: `BloodlessLanguage` wraps the game's language (`Language.inject`, and I18n's
+  own reference by reflection, since Create's descriptions read through I18n) and, in bloodless mode,
+  rewords this mod's keys: a translation's own `bloodless.<key>` if it has one, else
+  `BloodlessWords.soften` (English only: blood to essence, bleeding to draining, bloody to stained,
+  whole words, capitals kept; "bloodless" and the mod's name are left alone). A client tick puts the
+  wrapper back after a resource reload replaces the language; a mode change injects a fresh wrapper so
+  all text is looked up again, and our `BBDescriptionModifier` rebuilds Create's cached descriptions.
+  Checked in the real client (the bloodless showcase logs "Essence Steel Ingot | Draining Rack |
+  Stained Casing | Essence").
 
 ### 13.8 Machines (verified)
 

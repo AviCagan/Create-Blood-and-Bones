@@ -25,7 +25,8 @@ Everything below is in development builds only; the art is placeholder (see the 
 - Item descriptions, JEI pages (a Butchery page per mob, sent to players on servers too), Ponder
   scenes, advancements.
 - A `bloodandbonesBloodless` game rule forces bloodless mode for everyone; bloodless mode also shows
-  skinned carcasses pale and the hook in a carcass clean.
+  skinned carcasses pale and the hook in a carcass clean, and rewords names and descriptions (Blood
+  Steel reads as Essence Steel, the Bleeding Rack as the Draining Rack).
 - Flies gather over rotting carcasses, and maggots squirm over ones nearly gone.
 - An in-game settings screen (Mods, Blood & Bones, Config) for bloodless mode and the rot settings.
 - Rotten carcasses fall apart after a day; a server config sets the rot speed and the falling apart.
@@ -37,6 +38,5 @@ Everything below is in development builds only; the art is placeholder (see the 
 - Not rigged: the ender dragon and tropical fish.
 - Trolleys cannot ride chain conveyors that sit on a Sable sub-level (a moving ship).
 - A carcass hanging from a hook that a Create contraption moves falls off rather than going along.
-- Bloodless mode does not yet rename items (Blood Steel, the Bleeding Rack and so on keep their names).
 - The drag test (`meatHookDragsByBody`) missed its 0.5-block mark by 0.02 once in about thirty runs.
 - All art is placeholder (see the README).

@@ -44,7 +44,8 @@ provided by [Sable](https://github.com/ryanhcode/sable).
   Bloody Casing (spout 250 mB of blood onto an Andesite Casing) joins up like Create's casings.
 - **Bloodless mode.** `bloodless_mode` in the client config (`config/bloodandbones-client.toml`)
   hides blood drops and stains, shows skinned carcasses as pale meat, the hook in a carcass and
-  the machines clean, and blood itself as a muddy brown. A server can force it on for everyone with `/gamerule bloodandbonesBloodless true`.
+  the machines clean, and blood itself as a muddy brown. Names and descriptions are reworded too
+  (blood reads as "essence", bleeding as "draining", bloody as "stained"). A server can force it on for everyone with `/gamerule bloodandbonesBloodless true`.
   Nothing about how the game plays changes.
 - Tooltips (hold Shift), JEI pages (including a Butchery page per mob showing what its carcass
   gives), Ponder scenes and an advancement tab explain it all in game.

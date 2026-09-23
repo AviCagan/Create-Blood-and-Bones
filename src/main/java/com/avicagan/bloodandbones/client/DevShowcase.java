@@ -195,6 +195,13 @@ public final class DevShowcase {
                     } else if (phase == PONDER_GAP - 1 || com.avicagan.bloodandbones.compat.jei.BBJeiPlugin.runtime == null) {
                         Screenshot.grab(mc.gameDirectory, PREFIX + "jei.png", mc.getMainRenderTarget(), message -> {
                         });
+                        // names as the player reads them: reworded in bloodless mode
+                        BloodAndBones.LOGGER.info("[showcase] names: {} | {} | {} | {} | {}",
+                                BBItems.BLOOD_STEEL_INGOT.asStack().getHoverName().getString(),
+                                BBBlocks.BLEEDING_RACK.asStack().getHoverName().getString(),
+                                BBBlocks.BLOODY_CASING.asStack().getHoverName().getString(),
+                                com.avicagan.bloodandbones.registry.BBFluids.blood().getFluidType().getDescription().getString(),
+                                net.minecraft.client.resources.language.I18n.get("block.bloodandbones.bleeding_rack.tooltip.summary"));
                         BloodAndBones.LOGGER.info("[showcase] done");
                         stage = 5;
                         mc.stop();

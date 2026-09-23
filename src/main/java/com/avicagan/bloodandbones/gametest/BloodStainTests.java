@@ -171,6 +171,31 @@ public class BloodStainTests {
         });
     }
 
+    /** Bloodless mode's rewording: whole words only, capitals kept, this mod's keys only. */
+    @GameTest(template = "empty", timeoutTicks = 20)
+    public static void bloodlessWordsRewordText(GameTestHelper helper) {
+        String[][] cases = {
+                {"Bucket of Blood", "Bucket of Essence"},
+                {"Bleeding Rack", "Draining Rack"},
+                {"Bloody Casing", "Stained Casing"},
+                {"Soul Blood", "Soul Essence"},
+                {"_Bloodless_ mode keeps its name", "_Bloodless_ mode keeps its name"},
+                {"A _bloody_ blade: blood-soaked meat bleeds, and bled out", "A _stained_ blade: essence-soaked meat drains, and drained out"},
+        };
+        for (String[] c : cases) {
+            String out = com.avicagan.bloodandbones.config.BloodlessWords.soften(c[0]);
+            if (!out.equals(c[1])) {
+                helper.fail("\"" + c[0] + "\" should read \"" + c[1] + "\" in bloodless mode, got \"" + out + "\"");
+            }
+        }
+        if (!com.avicagan.bloodandbones.config.BloodlessWords.reworded("block.bloodandbones.bleeding_rack")
+                || com.avicagan.bloodandbones.config.BloodlessWords.reworded("itemGroup.bloodandbones.title")
+                || com.avicagan.bloodandbones.config.BloodlessWords.reworded("block.minecraft.stone")) {
+            helper.fail("Only this mod's text, and not its name, should be reworded");
+        }
+        helper.succeed();
+    }
+
     /**
      * A cleaver that cuts a cow comes away bloody, even from the off hand; one that cuts a skeleton does not,
      * and neither does one that strikes an armour stand.

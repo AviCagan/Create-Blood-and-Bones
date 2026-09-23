@@ -13,6 +13,12 @@ public final class BBClientEvents {
     private BBClientEvents() {
     }
 
+    /** Keep the bloodless rewording in front of the game's language after any reload replaced it. */
+    @SubscribeEvent
+    public static void onClientTick(net.neoforged.neoforge.client.event.ClientTickEvent.Post event) {
+        BloodlessLanguage.install();
+    }
+
     /** A server's forced bloodless mode does not follow the player to the next world. */
     @SubscribeEvent
     public static void onLoggingOut(ClientPlayerNetworkEvent.LoggingOut event) {

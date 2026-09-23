@@ -45,10 +45,11 @@ public class BBClientConfig {
         }
     }
 
-    /** Blood stains are baked into chunk meshes, so a change needs the chunks rebuilt. */
+    /** Blood stains are baked into chunk meshes, so a change needs the chunks rebuilt; names are reworded too. */
     public static void redraw() {
         net.minecraft.client.Minecraft mc = net.minecraft.client.Minecraft.getInstance();
         mc.execute(() -> {
+            com.avicagan.bloodandbones.client.BloodlessLanguage.refresh();
             if (mc.level != null) {
                 mc.levelRenderer.allChanged();
             }

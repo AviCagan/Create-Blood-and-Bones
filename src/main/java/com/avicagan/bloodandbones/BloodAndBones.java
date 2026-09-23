@@ -30,7 +30,7 @@ public class BloodAndBones {
 
     public BloodAndBones(IEventBus modEventBus, ModContainer modContainer) {
         REGISTRATE.registerEventListeners(modEventBus);
-        REGISTRATE.setTooltipModifierFactory(item -> new ItemDescription.Modifier(item, FontHelper.Palette.STANDARD_CREATE)
+        REGISTRATE.setTooltipModifierFactory(item -> new com.avicagan.bloodandbones.item.BBDescriptionModifier(item, FontHelper.Palette.STANDARD_CREATE)
                 .andThen(com.simibubi.create.foundation.item.TooltipModifier.mapNull(com.simibubi.create.foundation.item.KineticStats.create(item))));
 
         BBCreativeTabs.register();
