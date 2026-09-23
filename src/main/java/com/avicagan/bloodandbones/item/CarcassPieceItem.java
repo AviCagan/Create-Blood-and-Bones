@@ -41,7 +41,7 @@ public class CarcassPieceItem extends Item {
      * bloodless).
      */
     public record Piece(ResourceLocation entity, String bone, ResourceLocation texture, List<Coat> coats, float freshness,
-                        boolean skinned, java.util.Map<String, String> traits, float blood, float bloodMax, float decay) {
+                        boolean skinned, java.util.Map<String, String> traits, float blood, float bloodMax, float decay, boolean baby) {
         public static final Codec<Piece> CODEC = RecordCodecBuilder.create(i -> i.group(
                 ResourceLocation.CODEC.fieldOf("entity").forGetter(Piece::entity),
                 Codec.STRING.fieldOf("bone").forGetter(Piece::bone),
@@ -52,7 +52,8 @@ public class CarcassPieceItem extends Item {
                 Codec.unboundedMap(Codec.STRING, Codec.STRING).optionalFieldOf("traits", java.util.Map.of()).forGetter(Piece::traits),
                 Codec.FLOAT.optionalFieldOf("blood", 0.0F).forGetter(Piece::blood),
                 Codec.FLOAT.optionalFieldOf("blood_max", 0.0F).forGetter(Piece::bloodMax),
-                Codec.FLOAT.optionalFieldOf("decay", 0.0F).forGetter(Piece::decay)
+                Codec.FLOAT.optionalFieldOf("decay", 0.0F).forGetter(Piece::decay),
+                Codec.BOOL.optionalFieldOf("baby", false).forGetter(Piece::baby)
         ).apply(i, Piece::new));
 
         public CarcassLook look() {
@@ -69,7 +70,7 @@ public class CarcassPieceItem extends Item {
         List<Coat> coats = carcass.look.passes().stream().map(c -> new Coat(c.layer(), c.texture(), c.tint())).toList();
         com.avicagan.bloodandbones.carcass.CarcassBleeding.ensureBlood(carcass);
         stack.set(BBDataComponents.PIECE.get(), new Piece(carcass.entity, bone, carcass.look.texture(), coats, carcass.freshness,
-                carcass.skinned, java.util.Map.copyOf(carcass.traits), Math.max(0.0F, carcass.blood), Math.max(0.0F, carcass.bloodMax), carcass.decay));
+                carcass.skinned, java.util.Map.copyOf(carcass.traits), Math.max(0.0F, carcass.blood), Math.max(0.0F, carcass.bloodMax), carcass.decay, carcass.baby));
         return stack;
     }
 
@@ -100,7 +101,7 @@ public class CarcassPieceItem extends Item {
             // the server puts it down; the client must not go on to use the other hand
             return InteractionResult.SUCCESS;
         }
-        Rig rig = RigManager.forEntity(piece.entity()).orElse(null);
+        Rig rig = RigManager.forEntity(piece.entity(), piece.baby()).orElse(null);
         Bone bone = rig == null ? null : rig.bone(piece.bone()).orElse(null);
         if (bone == null) {
             return InteractionResult.FAIL;
@@ -122,6 +123,7 @@ public class CarcassPieceItem extends Item {
         carcass.blood = piece.blood();
         carcass.bloodMax = piece.bloodMax();
         carcass.decay = piece.decay();
+        carcass.baby = piece.baby();
         if (!context.getPlayer().getAbilities().instabuild) {
             context.getItemInHand().shrink(1);
         }

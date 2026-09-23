@@ -156,7 +156,7 @@ public final class RigDerivation {
             weight += (size.x / 16.0F) * (size.y / 16.0F) * (size.z / 16.0F) * FLESH_DENSITY;
         }
         return new Rig(target.entity(), target.model(), target.layer(), target.texture(), target.variantNames(), target.passes(),
-                target.scale(), weight, target.rotTime(), ordered);
+                target.scale(), weight, target.rotTime(), ordered, Optional.empty());
     }
 
     private static Bone bone(RigTarget target, Seen s, Optional<String> parent, List<String> bonePaths, Map<String, Seen> byPath) {
@@ -204,7 +204,7 @@ public final class RigDerivation {
         });
         Optional<JointSpec> joint = parent.isEmpty() ? Optional.empty()
                 : Optional.of(target.joints().getOrDefault(s.path(), jointFor(s.path())));
-        return new Bone(s.path(), s.path(), parent, new Vector3f(s.offset()).mul(target.scale()), s.rotation(), min, max, joint, hide, extras);
+        return new Bone(s.path(), s.path(), parent, new Vector3f(s.offset()).mul(target.scale()), s.rotation(), min, max, joint, hide, extras, 1.0F);
     }
 
     private static Vector3f boxSize(RigTarget target, Seen s) {

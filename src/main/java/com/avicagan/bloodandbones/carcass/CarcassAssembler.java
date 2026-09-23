@@ -102,14 +102,13 @@ public final class CarcassAssembler {
         if (!(entity.level() instanceof ServerLevel level)) {
             return null;
         }
-        if (entity.isBaby()) {
-            return null;
-        }
+        // a baby is built from its kind's baby rig, if the kind has one; otherwise it dies as usual
+        boolean baby = entity.isBaby();
         // a slime's model is scaled by its size and the rig by the biggest; the small ones split and die as usual
         if (entity instanceof net.minecraft.world.entity.monster.Slime slime && slime.getSize() < 4) {
             return null;
         }
-        Optional<Rig> maybeRig = RigManager.forEntity(entity.getType());
+        Optional<Rig> maybeRig = RigManager.forEntity(net.minecraft.core.registries.BuiltInRegistries.ENTITY_TYPE.getKey(entity.getType()), baby);
         if (maybeRig.isEmpty()) {
             return null;
         }
@@ -133,6 +132,21 @@ public final class CarcassAssembler {
         Vector3d base = new Vector3d(feet.x, feet.y + 1.501 * rig.scale(), feet.z);
         Quaterniond g = new Quaterniond().rotationY(Math.toRadians(180.0 - entity.yBodyRot)).rotateZ(Math.PI);
 
+        // some models hang below the mob's feet (a ghast's tentacles): lift the body so nothing starts in the ground
+        double lowest = Double.MAX_VALUE;
+        for (Bone bone : rig.bones()) {
+            Quaterniond orientation = new Quaterniond(g).mul(new Quaterniond(bone.rotation()));
+            Vector3d origin = g.transform(new Vector3d(bone.offset()).div(16.0)).add(base);
+            for (int i = 0; i < 8; i++) {
+                Vector3d corner = new Vector3d((i & 1) == 0 ? bone.boxMin().x : bone.boxMax().x, (i & 2) == 0 ? bone.boxMin().y : bone.boxMax().y,
+                        (i & 4) == 0 ? bone.boxMin().z : bone.boxMax().z).div(16.0);
+                lowest = Math.min(lowest, orientation.transform(corner).add(origin).y);
+            }
+        }
+        if (lowest < feet.y) {
+            base.y += feet.y - lowest + 0.01;
+        }
+
         CarcassLook appearance = CarcassLook.of(entity, rig);
         Map<String, ServerSubLevel> subLevels = new LinkedHashMap<>();
         Map<String, Vector3d> origins = new LinkedHashMap<>();
@@ -154,6 +168,7 @@ public final class CarcassAssembler {
         }
 
         CarcassSavedData.Carcass carcass = new CarcassSavedData.Carcass(carcassId, rig.entity(), rig.root().name());
+        carcass.baby = baby;
         carcass.look = appearance;
         carcass.traits.putAll(CarcassLook.traits(entity));
         subLevels.forEach((name, subLevel) -> carcass.bones.put(name, subLevel.getUniqueId()));
@@ -194,7 +209,7 @@ public final class CarcassAssembler {
      */
     public static void shove(ServerLevel level, CarcassSavedData.Carcass carcass, Vec3 look) {
         ServerSubLevelContainer container = SubLevelContainer.getContainer(level);
-        Rig rig = RigManager.forEntity(carcass.entity).orElse(null);
+        Rig rig = RigManager.forCarcass(carcass).orElse(null);
         if (container == null || rig == null) {
             return;
         }
@@ -425,7 +440,7 @@ public final class CarcassAssembler {
     /** Configure every limb of a carcass whose cells were left blank at assembly. */
     public static void configureCells(ServerLevel level, CarcassSavedData.Carcass carcass) {
         ServerSubLevelContainer container = SubLevelContainer.getContainer(level);
-        Rig rig = RigManager.forEntity(carcass.entity).orElse(null);
+        Rig rig = RigManager.forCarcass(carcass).orElse(null);
         if (container == null || rig == null) {
             return;
         }

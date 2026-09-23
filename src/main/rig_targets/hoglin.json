@@ -30,5 +30,18 @@
   },
   "butchery": {
     "meat": "minecraft:porkchop"
+  },
+  "baby": {
+    "head": [
+      "head"
+    ],
+    "head_scale": 0.7895,
+    "head_offset": [
+      0,
+      8,
+      6
+    ],
+    "body_scale": 0.5,
+    "body_offset": 24
   }
 }

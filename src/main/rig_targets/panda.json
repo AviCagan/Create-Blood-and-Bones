@@ -54,5 +54,18 @@
         }
       ]
     }
+  },
+  "baby": {
+    "head": [
+      "head"
+    ],
+    "head_scale": 0.5556,
+    "head_offset": [
+      0,
+      23,
+      4.8
+    ],
+    "body_scale": 0.3333,
+    "body_offset": 49
   }
 }

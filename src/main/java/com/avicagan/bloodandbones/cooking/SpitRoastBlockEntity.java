@@ -61,7 +61,7 @@ public class SpitRoastBlockEntity extends KineticBlockEntity {
     /** Ticks the piece on the spit needs at a campfire. */
     public int cookTime() {
         CarcassPieceItem.Piece data = CarcassPieceItem.piece(piece);
-        Bone bone = data == null ? null : RigManager.forEntity(data.entity()).flatMap(rig -> rig.bone(data.bone())).orElse(null);
+        Bone bone = data == null ? null : RigManager.forEntity(data.entity(), data.baby()).flatMap(rig -> rig.bone(data.bone())).orElse(null);
         if (bone == null) {
             return MIN_COOK;
         }

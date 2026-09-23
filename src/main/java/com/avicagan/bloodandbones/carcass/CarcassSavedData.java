@@ -67,6 +67,8 @@ public class CarcassSavedData extends SavedData {
         public int stillTicks;
         /** skinned with the Flensing Knife: the hide is off and the meat shows */
         public boolean skinned;
+        /** a baby's body: built and drawn from the baby rig (RigManager#forCarcass) */
+        public boolean baby;
         /** Flensing Knife strokes so far; not saved */
         public int skinStrokes;
         /** facts about the living mob that yields can name, like a sheep's wool colour ({wool}) */
@@ -155,6 +157,7 @@ public class CarcassSavedData extends SavedData {
             tag.put("Joints", jointList);
             tag.putBoolean("Resting", resting);
             tag.putBoolean("Skinned", skinned);
+            tag.putBoolean("Baby", baby);
             CompoundTag traitTag = new CompoundTag();
             traits.forEach(traitTag::putString);
             tag.put("Traits", traitTag);
@@ -210,6 +213,7 @@ public class CarcassSavedData extends SavedData {
             }
             carcass.resting = tag.getBoolean("Resting");
             carcass.skinned = tag.getBoolean("Skinned");
+            carcass.baby = tag.getBoolean("Baby");
             CompoundTag traitTag = tag.getCompound("Traits");
             for (String key : traitTag.getAllKeys()) {
                 carcass.traits.put(key, traitTag.getString(key));
@@ -318,6 +322,7 @@ public class CarcassSavedData extends SavedData {
         Carcass piece = new Carcass(UUID.randomUUID(), from.entity, bone);
         piece.look = from.look;
         piece.skinned = from.skinned;
+        piece.baby = from.baby;
         piece.traits.putAll(from.traits);
         piece.freshness = from.freshness;
         // the blood drains from the body, not from a leg
@@ -448,7 +453,7 @@ public class CarcassSavedData extends SavedData {
 
     /** Joints saved by an older build cannot be read; make them again from the rig for the bones still here. */
     private void rebuildJointSpecs(Carcass carcass) {
-        com.avicagan.bloodandbones.carcass.rig.Rig rig = com.avicagan.bloodandbones.carcass.rig.RigManager.forEntity(carcass.entity).orElse(null);
+        com.avicagan.bloodandbones.carcass.rig.Rig rig = com.avicagan.bloodandbones.carcass.rig.RigManager.forCarcass(carcass).orElse(null);
         if (rig == null) {
             return;
         }

@@ -39,6 +39,7 @@ public class RigManager extends SimpleJsonResourceReloadListener {
                 .resultOrPartial(error -> BloodAndBones.LOGGER.error("Bad rig {}: {}", id, error))
                 .ifPresent(rig -> loaded.put(rig.entity(), rig)));
         rigs = Map.copyOf(loaded);
+        BABIES.clear();
         BloodAndBones.LOGGER.info("Loaded {} carcass rigs", rigs.size());
     }
 
@@ -54,6 +55,36 @@ public class RigManager extends SimpleJsonResourceReloadListener {
         return INSTANCE.rigs;
     }
 
+    /** Baby rigs worked out from the adult ones on first use; cleared whenever the rigs change. */
+    private static final Map<ResourceLocation, Optional<Rig>> BABIES = new java.util.concurrent.ConcurrentHashMap<>();
+    private static final Map<ResourceLocation, Optional<Rig>> CLIENT_BABIES = new java.util.concurrent.ConcurrentHashMap<>();
+
+    /** The rig for a mob, or for its baby; empty for a baby whose kind has no baby shape. */
+    public static Optional<Rig> forEntity(ResourceLocation entityId, boolean baby) {
+        if (!baby) {
+            return forEntity(entityId);
+        }
+        return BABIES.computeIfAbsent(entityId, id -> forEntity(id).filter(rig -> rig.baby().isPresent()).map(Rig::asBaby));
+    }
+
+    /** Whether this rig is one worked out for a baby (its mob's own rig is another object). */
+    public static boolean isBaby(Rig rig) {
+        return rig.baby().isEmpty() && forEntity(rig.entity()).map(adult -> adult != rig).orElse(false);
+    }
+
+    /** The rig a carcass was built from: its mob's, or its mob's baby's. */
+    public static Optional<Rig> forCarcass(com.avicagan.bloodandbones.carcass.CarcassSavedData.Carcass carcass) {
+        return forEntity(carcass.entity, carcass.baby);
+    }
+
+    /** Client side: the rig for a mob or its baby. */
+    public static Optional<Rig> clientRig(ResourceLocation entityId, boolean baby) {
+        if (!baby) {
+            return clientRig(entityId);
+        }
+        return CLIENT_BABIES.computeIfAbsent(entityId, id -> clientRig(id).filter(rig -> rig.baby().isPresent()).map(Rig::asBaby));
+    }
+
     /** Client side: the rig the server told us about for this mob. */
     public static Optional<Rig> clientRig(ResourceLocation entityId) {
         return Optional.ofNullable(clientRigs.get(entityId));
@@ -61,6 +92,7 @@ public class RigManager extends SimpleJsonResourceReloadListener {
 
     /** An empty map clears what we had; otherwise the rigs are added to it. */
     public static void receiveClientRigs(Map<ResourceLocation, Rig> received) {
+        CLIENT_BABIES.clear();
         if (received.isEmpty()) {
             clientRigs = Map.of();
             return;

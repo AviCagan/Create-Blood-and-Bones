@@ -154,7 +154,7 @@ public final class CarcassButchery {
 
     /** How much of the whole animal this record still is, by bone volume (a lone leg is a small hide). */
     public static float shareOfAnimal(CarcassSavedData.Carcass carcass) {
-        var rig = com.avicagan.bloodandbones.carcass.rig.RigManager.forEntity(carcass.entity).orElse(null);
+        var rig = com.avicagan.bloodandbones.carcass.rig.RigManager.forCarcass(carcass).orElse(null);
         if (rig == null) {
             return 1.0F;
         }
@@ -179,6 +179,12 @@ public final class CarcassButchery {
     public static void dropYields(ServerLevel level, CarcassSavedData.Carcass carcass, java.util.List<com.avicagan.bloodandbones.carcass.butchery.Yield> yields,
                                   float scale, Vector3d at) {
         float fresh = carcass.freshness;
+        // the tables are for grown animals; a baby gives as much less as it weighs less
+        if (carcass.baby) {
+            float grown = com.avicagan.bloodandbones.carcass.rig.RigManager.forEntity(carcass.entity).map(com.avicagan.bloodandbones.carcass.rig.Rig::weight).orElse(1.0F);
+            float small = com.avicagan.bloodandbones.carcass.rig.RigManager.forCarcass(carcass).map(com.avicagan.bloodandbones.carcass.rig.Rig::weight).orElse(grown);
+            scale *= Math.min(1.0F, small / Math.max(grown, 1.0E-4F));
+        }
         for (var yield : yields) {
             String id = fillTraits(yield.item(), carcass.traits);
             if (id == null) {
@@ -294,7 +300,7 @@ public final class CarcassButchery {
         CarcassSavedData.Carcass piece = CarcassSavedData.get(level).splitOff(level, carcass, bone);
         CarcassSavedData.get(level).setDirty();
         // both ends show the wound at once, and pour for a while
-        String parent = com.avicagan.bloodandbones.carcass.rig.RigManager.forEntity(carcass.entity)
+        String parent = com.avicagan.bloodandbones.carcass.rig.RigManager.forCarcass(carcass)
                 .flatMap(rig -> rig.bone(bone)).flatMap(com.avicagan.bloodandbones.carcass.rig.Bone::parent).orElse(null);
         CarcassRot.sync(level, carcass, null);
         if (parent != null) {

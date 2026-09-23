@@ -50,7 +50,7 @@ public final class CarcassBleeding {
 
     /** Blood the whole animal held at death; skeletons and severed pieces have none. */
     public static float capacity(CarcassSavedData.Carcass carcass) {
-        Rig rig = RigManager.forEntity(carcass.entity).orElse(null);
+        Rig rig = RigManager.forCarcass(carcass).orElse(null);
         if (rig == null || !carcass.rootBone.equals(rig.root().name())) {
             return 0.0F;
         }
@@ -137,7 +137,7 @@ public final class CarcassBleeding {
         if (carcass.gushing.isEmpty()) {
             return;
         }
-        Rig rig = RigManager.forEntity(carcass.entity).orElse(null);
+        Rig rig = RigManager.forCarcass(carcass).orElse(null);
         if (rig == null || !Blood.bloody(carcass) || carcass.freshness < CLOTTED) {
             carcass.gushing.clear();
             return;
@@ -199,7 +199,7 @@ public final class CarcassBleeding {
 
     /** The torso box corner lowest in the world, where blood gathers and falls from. */
     public static Vector3d lowestPoint(CarcassSavedData.Carcass carcass, ServerSubLevel torso) {
-        Rig rig = RigManager.forEntity(carcass.entity).orElse(null);
+        Rig rig = RigManager.forCarcass(carcass).orElse(null);
         Pose3d pose = torso.logicalPose();
         if (rig == null) {
             return new Vector3d(pose.position());

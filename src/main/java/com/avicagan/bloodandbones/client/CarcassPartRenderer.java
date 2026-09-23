@@ -47,7 +47,7 @@ public class CarcassPartRenderer implements BlockEntityRenderer<CarcassPartBlock
         if (!be.isRoot()) {
             return;
         }
-        Rig rig = RigManager.clientRig(be.entity()).orElse(null);
+        Rig rig = RigManager.clientRig(be.entity(), be.baby()).orElse(null);
         if (rig == null) {
             return;
         }

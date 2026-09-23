@@ -65,7 +65,7 @@ public final class CarcassModels {
             }
         }
         try {
-            drawPart(part, poseStack, buffer, packedLight, color, rig.scale());
+            drawPart(part, poseStack, buffer, packedLight, color, rig.scale() * bone.scale());
         } finally {
             for (ModelPart child : hidden) {
                 child.visible = true;
@@ -79,7 +79,7 @@ public final class CarcassModels {
             poseStack.pushPose();
             poseStack.translate(extra.offset().x / 16.0F, extra.offset().y / 16.0F, extra.offset().z / 16.0F);
             poseStack.mulPose(extra.rotation());
-            drawPart(other, poseStack, buffer, packedLight, color, rig.scale());
+            drawPart(other, poseStack, buffer, packedLight, color, rig.scale() * bone.scale());
             poseStack.popPose();
         }
     }

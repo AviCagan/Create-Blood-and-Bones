@@ -45,6 +45,8 @@ public class CarcassPartBlockEntity extends BlockEntity implements BlockEntitySu
     private final List<MergedPart> merged = new ArrayList<>();
     /** 1.0 fresh, 0.0 rotten; drives the rot tint. */
     private float freshness = 1.0F;
+    /** a baby's limb: drawn from the baby rig */
+    private boolean baby;
     /** Joints of this carcass that have been cut, as "parent>child": both ends are drawn as raw wounds. */
     private final List<String> cuts = new ArrayList<>();
 
@@ -58,6 +60,10 @@ public class CarcassPartBlockEntity extends BlockEntity implements BlockEntitySu
 
     public float freshness() {
         return freshness;
+    }
+
+    public boolean baby() {
+        return baby;
     }
 
     public List<String> cuts() {
@@ -94,6 +100,7 @@ public class CarcassPartBlockEntity extends BlockEntity implements BlockEntitySu
         this.bone = bone.name();
         this.root = true;
         this.entity = rig.entity();
+        this.baby = com.avicagan.bloodandbones.carcass.rig.RigManager.isBaby(rig);
         this.texture = look.texture();
         this.passes.clear();
         this.passes.addAll(look.passes());
@@ -170,6 +177,7 @@ public class CarcassPartBlockEntity extends BlockEntity implements BlockEntitySu
         tag.putBoolean("Root", root);
         if (root) {
             tag.putString("Entity", entity.toString());
+            tag.putBoolean("Baby", baby);
             tag.putString("Texture", texture.toString());
             ListTag passList = new ListTag();
             for (CarcassLook.Coat pass : passes) {
@@ -212,6 +220,7 @@ public class CarcassPartBlockEntity extends BlockEntity implements BlockEntitySu
         if (root) {
             // cells saved before rigs were data-driven carried a model id instead; those were all cows
             entity = tag.contains("Entity") ? ResourceLocation.parse(tag.getString("Entity")) : ResourceLocation.withDefaultNamespace("cow");
+            baby = tag.getBoolean("Baby");
             texture = ResourceLocation.parse(tag.getString("Texture"));
             passes.clear();
             for (Tag t : tag.getList("Passes", Tag.TAG_COMPOUND)) {

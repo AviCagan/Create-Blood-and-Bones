@@ -30,7 +30,7 @@ public class SpitRoastRenderer extends KineticBlockEntityRenderer<SpitRoastBlock
     @Override
     protected void renderSafe(SpitRoastBlockEntity be, float partialTicks, PoseStack ms, MultiBufferSource buffer, int light, int overlay) {
         CarcassPieceItem.Piece piece = CarcassPieceItem.piece(be.piece());
-        Rig rig = piece == null ? null : RigManager.clientRig(piece.entity()).orElse(null);
+        Rig rig = piece == null ? null : RigManager.clientRig(piece.entity(), piece.baby()).orElse(null);
         Bone bone = rig == null ? null : rig.bone(piece.bone()).orElse(null);
         if (bone != null) {
             Direction.Axis axis = be.getBlockState().getValue(HorizontalAxisKineticBlock.HORIZONTAL_AXIS);

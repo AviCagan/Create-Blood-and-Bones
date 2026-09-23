@@ -942,7 +942,9 @@ public class BBGameTests {
 
     @GameTest(template = "empty", timeoutTicks = 200)
     public static void ghastCarcassAssembles(GameTestHelper helper) {
-        animalTest(helper, EntityType.GHAST, 10);
+        // dropped straight down with no knock at all, nine tentacles hold the body up like stilts; a kill
+        // always knocks it, and knocked over it lies down
+        animalTest(helper, EntityType.GHAST, 10, true);
     }
 
     @GameTest(template = "empty", timeoutTicks = 200)
@@ -1384,6 +1386,10 @@ public class BBGameTests {
 
     /** Every rigged mob: the right number of bodies and joints, all of them near the spawn, none in the floor. */
     private static void animalTest(GameTestHelper helper, EntityType<? extends net.minecraft.world.entity.Mob> type, int bones) {
+        animalTest(helper, type, bones, false);
+    }
+
+    private static void animalTest(GameTestHelper helper, EntityType<? extends net.minecraft.world.entity.Mob> type, int bones, boolean knock) {
         ServerLevel level = helper.getLevel();
         net.minecraft.world.entity.Mob mob = helper.spawn(type, new BlockPos(5, 2, 5));
         mob.setBaby(false);
@@ -1395,8 +1401,11 @@ public class BBGameTests {
         double ceiling = Math.max(2.6, mob.getBbHeight() + 0.2);
         // a big mob's tail reaches further than a cow's
         double reach = Math.max(4.0, 2.5 * mob.getBbWidth());
-        if (CarcassAssembler.assemble(mob, null) == null) {
+        CarcassSavedData.Carcass assembled = CarcassAssembler.assemble(mob, null);
+        if (assembled == null) {
             helper.fail("Carcass assembly returned false for " + type);
+        } else if (knock) {
+            CarcassAssembler.shove(level, assembled, new Vec3(1, 0, 0));
         }
         mob.discard();
         helper.runAfterDelay(SETTLE_TICKS, () -> {
@@ -1411,8 +1420,11 @@ public class BBGameTests {
                 if (distance > reach) {
                     helper.fail("Bone " + bone.getKey() + " of " + type + " ended up " + distance + " blocks away at " + p);
                 }
-                if (p.y < pos.y - 0.2) {
-                    helper.fail("Bone " + bone.getKey() + " of " + type + " sank into the floor to " + p);
+                // sinking is judged by the box's lowest corner: a body's reference point can sit below the floor
+                // while the body itself lies on it (a thin ghast tentacle on its side)
+                double lowest = lowestCorner(carcass, bone.getKey(), bone.getValue());
+                if (lowest < pos.y - 0.2) {
+                    helper.fail("Bone " + bone.getKey() + " of " + type + " sank into the floor: lowest corner at " + lowest + ", body at " + p);
                 }
                 if (p.y > pos.y + ceiling) {
                     helper.fail("Bone " + bone.getKey() + " of " + type + " is floating at " + p);
@@ -1821,6 +1833,23 @@ public class BBGameTests {
             CarcassDrag.stop(level, dragger);
             helper.succeed();
         });
+    }
+
+    /** World height of the lowest corner of a bone's physics box. */
+    private static double lowestCorner(CarcassSavedData.Carcass carcass, String boneName, ServerSubLevel body) {
+        com.avicagan.bloodandbones.carcass.rig.Bone bone = com.avicagan.bloodandbones.carcass.rig.RigManager.forCarcass(carcass)
+                .flatMap(rig -> rig.bone(boneName)).orElse(null);
+        if (bone == null) {
+            return body.logicalPose().position().y;
+        }
+        Vector3d origin = CarcassAssembler.boneOriginInPlot(body, bone);
+        double lowest = Double.MAX_VALUE;
+        for (int i = 0; i < 8; i++) {
+            Vector3d corner = new Vector3d((i & 1) == 0 ? bone.boxMin().x : bone.boxMax().x, (i & 2) == 0 ? bone.boxMin().y : bone.boxMax().y,
+                    (i & 4) == 0 ? bone.boxMin().z : bone.boxMax().z).div(16.0).add(origin);
+            lowest = Math.min(lowest, body.logicalPose().transformPosition(corner).y);
+        }
+        return lowest;
     }
 
     /** Items of a kind lying in this test's arena. */

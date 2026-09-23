@@ -5,5 +5,18 @@
   "rot_time": 24000,
   "butchery": {
     "meat": "minecraft:beef"
+  },
+  "baby": {
+    "head": [
+      "head"
+    ],
+    "head_scale": 1.0,
+    "head_offset": [
+      0,
+      10,
+      4
+    ],
+    "body_scale": 0.5,
+    "body_offset": 24
   }
 }

@@ -21,9 +21,10 @@ import java.util.Optional;
  * @param joint    swing limits of the joint to the parent
  * @param hide     descendant part paths (relative to this part) not to draw with it: other bones, hidden parts
  * @param extras   other parts drawn along with this bone
+ * @param scale    drawn at this size on top of the rig's own scale: a baby's body is drawn at half size
  */
 public record Bone(String name, String part, Optional<String> parent, Vector3f offset, Quaternionf rotation,
-                   Vector3f boxMin, Vector3f boxMax, Optional<JointSpec> joint, List<String> hide, List<ExtraPart> extras) {
+                   Vector3f boxMin, Vector3f boxMax, Optional<JointSpec> joint, List<String> hide, List<ExtraPart> extras, float scale) {
     public static final Codec<Bone> CODEC = RecordCodecBuilder.create(i -> i.group(
             Codec.STRING.fieldOf("name").forGetter(Bone::name),
             Codec.STRING.fieldOf("part").forGetter(Bone::part),
@@ -34,12 +35,13 @@ public record Bone(String name, String part, Optional<String> parent, Vector3f o
             RigCodecs.VEC3.fieldOf("box_max").forGetter(Bone::boxMax),
             JointSpec.CODEC.optionalFieldOf("joint").forGetter(Bone::joint),
             Codec.STRING.listOf().optionalFieldOf("hide", List.of()).forGetter(Bone::hide),
-            ExtraPart.CODEC.listOf().optionalFieldOf("extras", List.of()).forGetter(Bone::extras)
+            ExtraPart.CODEC.listOf().optionalFieldOf("extras", List.of()).forGetter(Bone::extras),
+            Codec.FLOAT.optionalFieldOf("scale", 1.0F).forGetter(Bone::scale)
     ).apply(i, Bone::new));
 
     public Bone(String name, String part, Optional<String> parent, Vector3f offset, Quaternionf rotation,
                 Vector3f boxMin, Vector3f boxMax, Optional<JointSpec> joint) {
-        this(name, part, parent, offset, rotation, boxMin, boxMax, joint, List.of(), List.of());
+        this(name, part, parent, offset, rotation, boxMin, boxMax, joint, List.of(), List.of(), 1.0F);
     }
 
     public Vector3f boxSize() {

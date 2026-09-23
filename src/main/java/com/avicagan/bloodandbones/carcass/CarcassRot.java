@@ -90,7 +90,7 @@ public final class CarcassRot {
             }
             return;
         }
-        int rotTime = RigManager.forEntity(carcass.entity).map(Rig::rotTime).orElse(Rig.DEFAULT_ROT_TIME);
+        int rotTime = RigManager.forCarcass(carcass).map(Rig::rotTime).orElse(Rig.DEFAULT_ROT_TIME);
         float before = carcass.freshness;
         carcass.freshness = Math.max(0.0F, before - rate * elapsed / rotTime);
         boolean turnedRotten = carcass.freshness <= 0.0F;
@@ -128,7 +128,7 @@ public final class CarcassRot {
      * stump on the parent), a piece cut from its parent (its own cut end), or one butchered away.
      */
     public static java.util.List<String> cuts(CarcassSavedData.Carcass carcass) {
-        Rig rig = RigManager.forEntity(carcass.entity).orElse(null);
+        Rig rig = RigManager.forCarcass(carcass).orElse(null);
         if (rig == null) {
             return java.util.List.of();
         }

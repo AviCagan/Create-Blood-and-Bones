@@ -706,6 +706,24 @@ pipes; chain clearance = hanging length + 1 block.
   wither skeleton skull. Not rigged: the ender dragon (a multi-part entity with its own long death) and
   tropical fish (two body shapes under one mob, and a rig has one model).
 
+### 13.10a Babies (verified)
+
+- A rig target may carry a `baby` section copied from the vanilla model's constructor
+  (`AgeableListModel`): the head bones, the head's scale and offset, the body's scale and offset. A
+  model point `p` is drawn at `scale * (p + offset)` in model pixels; the villager, which its renderer
+  simply halves, has both halves at 0.5 around the feet. Datagen reads it beside the target (the
+  target codec is full) and writes it into the rig.
+- `Rig.asBaby()` works out the baby rig at run time: offsets, boxes and extras scaled, a per-bone draw
+  scale (`Bone.scale`), weight from the new boxes. `RigManager.forCarcass` / `forEntity(id, baby)` /
+  `clientRig(id, baby)` hand it out (cached, cleared on reload). The record, the root cells and carried
+  pieces remember `baby`; butchery gives as much less as the baby weighs less.
+- 20 kinds so far (cow, mooshroom, pig, sheep, chicken, wolf, goat, polar bear, panda, ocelot, cat, fox,
+  hoglin, zoglin, zombie, husk, drowned, zombie villager, piglin, villager). Others with babies die as
+  usual until they get a shape; horses and llamas draw their babies with their own rules.
+- Assembly lifts a body so no box starts below the feet: the ghast's tentacles hang below its feet in
+  the model and used to start stuck through the ground. Its tentacle collision boxes are short (drawn
+  full length) so the body does not end up on stilts.
+
 ### 13.11 Chain conveyors (verified)
 
 - `ChainCursor` follows a Create chain with Create's own rules through public API (`connectionStats`

@@ -25,5 +25,18 @@
     "hide": "none",
     "offal_per_weight": 0.5,
     "fat_per_weight": 0.0
+  },
+  "baby": {
+    "head": [
+      "head"
+    ],
+    "head_scale": 0.75,
+    "head_offset": [
+      0,
+      16,
+      0
+    ],
+    "body_scale": 0.5,
+    "body_offset": 24
   }
 }

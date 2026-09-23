@@ -51,5 +51,18 @@
         "kind": "hide"
       }
     ]
+  },
+  "baby": {
+    "head": [
+      "head"
+    ],
+    "head_scale": 1.0,
+    "head_offset": [
+      0,
+      8,
+      4
+    ],
+    "body_scale": 0.5,
+    "body_offset": 24
   }
 }

@@ -196,7 +196,7 @@ public final class CarcassDrag {
             }
         }
         if (total <= 0.0) {
-            return RigManager.forEntity(carcass.entity).map(Rig::weight).orElse(1.0F);
+            return RigManager.forCarcass(carcass).map(Rig::weight).orElse(1.0F);
         }
         return (float) total;
     }

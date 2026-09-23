@@ -42,5 +42,18 @@
   "butchery": {
     "hide_per_weight": 4.0
   },
-  "scale": 0.8
+  "scale": 0.8,
+  "baby": {
+    "head": [
+      "head"
+    ],
+    "head_scale": 0.75,
+    "head_offset": [
+      0,
+      10,
+      4
+    ],
+    "body_scale": 0.5,
+    "body_offset": 24
+  }
 }

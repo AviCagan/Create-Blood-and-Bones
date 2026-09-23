@@ -13,6 +13,7 @@ import net.minecraft.client.model.geom.builders.LayerDefinition;
 import net.minecraft.data.CachedOutput;
 import net.minecraft.data.DataProvider;
 import net.minecraft.data.PackOutput;
+import net.minecraft.resources.ResourceLocation;
 
 import java.io.IOException;
 import java.io.Reader;
@@ -21,6 +22,7 @@ import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 import java.util.concurrent.CompletableFuture;
 import java.util.stream.Stream;
 
@@ -62,11 +64,36 @@ public class RigExportProvider implements DataProvider {
         return targets;
     }
 
+    /** Each target's "baby" section, read beside the target itself (the target's codec is full). */
+    public static Map<ResourceLocation, Optional<com.avicagan.bloodandbones.carcass.rig.BabyShape>> loadBabyShapes() {
+        Map<ResourceLocation, Optional<com.avicagan.bloodandbones.carcass.rig.BabyShape>> out = new java.util.HashMap<>();
+        Path root = Path.of(System.getProperty(TARGETS_PROPERTY));
+        try (Stream<Path> files = Files.list(root)) {
+            for (Path file : files.sorted().toList()) {
+                if (!file.toString().endsWith(".json")) {
+                    continue;
+                }
+                try (Reader reader = Files.newBufferedReader(file)) {
+                    com.google.gson.JsonObject json = JsonParser.parseReader(reader).getAsJsonObject();
+                    ResourceLocation entity = ResourceLocation.parse(json.get("entity").getAsString());
+                    out.put(entity, json.has("baby")
+                            ? Optional.of(com.avicagan.bloodandbones.carcass.rig.BabyShape.CODEC.parse(JsonOps.INSTANCE, json.get("baby"))
+                            .getOrThrow(message -> new IllegalStateException("Bad baby shape in " + file + ": " + message)))
+                            : Optional.empty());
+                }
+            }
+        } catch (IOException e) {
+            throw new IllegalStateException("Cannot read rig targets from " + root, e);
+        }
+        return out;
+    }
+
     @Override
     public CompletableFuture<?> run(CachedOutput cache) {
         Map<ModelLayerLocation, LayerDefinition> roots = LayerDefinitions.createRoots();
         List<CompletableFuture<?>> futures = new ArrayList<>();
         Path base = output.getOutputFolder(PackOutput.Target.DATA_PACK).resolve(BloodAndBones.MOD_ID).resolve("rig");
+        Map<ResourceLocation, Optional<com.avicagan.bloodandbones.carcass.rig.BabyShape>> babies = loadBabyShapes();
         for (RigTarget target : loadTargets()) {
             ModelLayerLocation layer = new ModelLayerLocation(target.model(), target.layer());
             LayerDefinition definition = roots.get(layer);
@@ -74,7 +101,7 @@ public class RigExportProvider implements DataProvider {
                 throw new IllegalStateException("No layer definition for " + layer);
             }
             ModelPart root = definition.bakeRoot();
-            Rig rig = RigDerivation.derive(target, root);
+            Rig rig = RigDerivation.derive(target, root).withBaby(babies.getOrDefault(target.entity(), Optional.empty()));
             JsonElement json = Rig.CODEC.encodeStart(JsonOps.INSTANCE, rig).getOrThrow();
             Path path = base.resolve(target.entity().getNamespace()).resolve(target.entity().getPath() + ".json");
             futures.add(DataProvider.saveStable(cache, json, path));

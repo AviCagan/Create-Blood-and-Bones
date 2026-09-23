@@ -99,5 +99,18 @@
       ]
     }
   },
-  "scale": 1.0625
+  "scale": 1.0625,
+  "baby": {
+    "head": [
+      "head"
+    ],
+    "head_scale": 0.75,
+    "head_offset": [
+      0,
+      16,
+      0
+    ],
+    "body_scale": 0.5,
+    "body_offset": 24
+  }
 }

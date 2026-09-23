@@ -23,7 +23,7 @@ public class SpecimenJarRenderer extends SafeBlockEntityRenderer<SpecimenJarBloc
     @Override
     protected void renderSafe(SpecimenJarBlockEntity be, float partialTicks, PoseStack ms, MultiBufferSource buffer, int light, int overlay) {
         CarcassPieceItem.Piece piece = CarcassPieceItem.piece(be.specimen());
-        Rig rig = piece == null ? null : RigManager.clientRig(piece.entity()).orElse(null);
+        Rig rig = piece == null ? null : RigManager.clientRig(piece.entity(), piece.baby()).orElse(null);
         Bone bone = rig == null ? null : rig.bone(piece.bone()).orElse(null);
         if (bone == null || be.getLevel() == null) {
             return;

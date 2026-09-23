@@ -147,7 +147,7 @@ public final class CarcassRest {
         if (carcass.resting) {
             return true;
         }
-        Optional<Rig> maybeRig = RigManager.forEntity(carcass.entity);
+        Optional<Rig> maybeRig = RigManager.forCarcass(carcass);
         ServerSubLevelContainer container = SubLevelContainer.getContainer(level);
         if (maybeRig.isEmpty() || container == null) {
             return false;
@@ -360,7 +360,7 @@ public final class CarcassRest {
      * (A carcass propped up on folded legs rests on its leg cells, so those count.)
      */
     static boolean isSupported(ServerLevel level, CarcassSavedData.Carcass carcass, ServerSubLevel torso) {
-        Optional<Rig> maybeRig = RigManager.forEntity(carcass.entity);
+        Optional<Rig> maybeRig = RigManager.forCarcass(carcass);
         if (maybeRig.isEmpty()) {
             return true;
         }
@@ -483,7 +483,7 @@ public final class CarcassRest {
     @Nullable
     public static Map<String, ServerSubLevel> split(ServerLevel level, CarcassSavedData.Carcass carcass) {
         ServerSubLevelContainer container = SubLevelContainer.getContainer(level);
-        Optional<Rig> maybeRig = RigManager.forEntity(carcass.entity);
+        Optional<Rig> maybeRig = RigManager.forCarcass(carcass);
         if (container == null || maybeRig.isEmpty()) {
             return null;
         }

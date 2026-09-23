@@ -23,7 +23,7 @@ public class CarcassPieceItemRenderer extends BlockEntityWithoutLevelRenderer {
     @Override
     public void renderByItem(ItemStack stack, ItemDisplayContext context, PoseStack poseStack, MultiBufferSource buffers, int light, int overlay) {
         CarcassPieceItem.Piece piece = CarcassPieceItem.piece(stack);
-        Rig rig = piece == null ? null : RigManager.clientRig(piece.entity()).orElse(null);
+        Rig rig = piece == null ? null : RigManager.clientRig(piece.entity(), piece.baby()).orElse(null);
         Bone bone = rig == null ? null : rig.bone(piece.bone()).orElse(null);
         if (bone == null) {
             // a piece with nothing in it (the creative tab): the plain icon

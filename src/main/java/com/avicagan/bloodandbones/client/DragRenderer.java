@@ -93,7 +93,7 @@ public class DragRenderer {
                     if (!(entry.getValue() instanceof com.avicagan.bloodandbones.carcass.CarcassPartBlockEntity be) || !be.isRoot() || be.merged().isEmpty() || be.carcassId() == null) {
                         continue;
                     }
-                    com.avicagan.bloodandbones.carcass.rig.Rig rig = com.avicagan.bloodandbones.carcass.rig.RigManager.clientRig(be.entity()).orElse(null);
+                    com.avicagan.bloodandbones.carcass.rig.Rig rig = com.avicagan.bloodandbones.carcass.rig.RigManager.clientRig(be.entity(), be.baby()).orElse(null);
                     com.avicagan.bloodandbones.carcass.rig.Bone torsoBone = rig == null ? null : rig.bone(be.bone()).orElse(null);
                     if (torsoBone == null) {
                         continue;
