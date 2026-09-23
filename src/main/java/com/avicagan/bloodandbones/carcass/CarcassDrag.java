@@ -48,7 +48,8 @@ public final class CarcassDrag {
 
     public static final class Drag {
         public final UUID player;
-        public final UUID carcass;
+        /** changes when the hooked limb is cut off into a record of its own */
+        public UUID carcass;
         public final String bone;
         public final UUID subLevel;
         public final Vector3d anchorPlot;
@@ -97,11 +98,24 @@ public final class CarcassDrag {
         return start(level, player, plotPos, hitLocation);
     }
 
-    /** To every player in the level whose client has the mod; the channel is optional, so others get nothing. */
+    /**
+     * To every player on the server whose client has the mod (the channel is optional, so others get
+     * nothing). Every dimension, not just this one: a drag can end after its player went through a portal,
+     * and anyone left behind must still hear that it ended.
+     */
     private static void broadcast(ServerLevel level, net.minecraft.network.protocol.common.custom.CustomPacketPayload payload) {
-        for (net.minecraft.server.level.ServerPlayer player : level.players()) {
+        for (net.minecraft.server.level.ServerPlayer player : level.getServer().getPlayerList().getPlayers()) {
             if (player.connection.hasChannel(payload.type())) {
                 PacketDistributor.sendToPlayer(player, payload);
+            }
+        }
+    }
+
+    /** Limbs moved from one record to another (cut off): drags of those limbs follow them. */
+    public static void moved(UUID from, UUID to, java.util.Set<String> bones) {
+        for (Drag drag : DRAGS.values()) {
+            if (drag.carcass.equals(from) && bones.contains(drag.bone)) {
+                drag.carcass = to;
             }
         }
     }

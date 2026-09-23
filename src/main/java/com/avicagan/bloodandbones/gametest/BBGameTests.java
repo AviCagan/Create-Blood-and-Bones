@@ -1736,6 +1736,93 @@ public class BBGameTests {
         });
     }
 
+    /**
+     * A piece picked up and put down keeps its blood and its rot (it must not come back full of blood), and a
+     * dragged limb cut off stays dragged, now as a carcass of its own.
+     */
+    @GameTest(template = "empty", timeoutTicks = 100)
+    public static void piecesKeepTheirBloodAndDragsFollowCuts(GameTestHelper helper) {
+        ServerLevel level = helper.getLevel();
+        net.minecraft.world.entity.animal.Pufferfish fish = helper.spawn(EntityType.PUFFERFISH, new BlockPos(2, 2, 2));
+        CarcassSavedData.Carcass drained = CarcassAssembler.assemble(fish, null);
+        fish.discard();
+        Cow cow = helper.spawn(EntityType.COW, new BlockPos(6, 2, 5));
+        CarcassSavedData.Carcass body = CarcassAssembler.assemble(cow, null);
+        cow.discard();
+        if (drained == null || body == null) {
+            helper.fail("Carcass assembly returned null");
+            return;
+        }
+        drained.blood = 40.0F;
+        drained.bloodMax = 125.0F;
+        drained.decay = 1234.0F;
+        ItemStack item = com.avicagan.bloodandbones.item.CarcassPieceItem.of(drained, drained.rootBone);
+        Player placer = helper.makeMockPlayer(GameType.SURVIVAL);
+        placer.setItemInHand(InteractionHand.MAIN_HAND, item);
+        BlockPos floor = helper.absolutePos(new BlockPos(2, 1, 8));
+        item.useOn(new net.minecraft.world.item.context.UseOnContext(placer, InteractionHand.MAIN_HAND,
+                new net.minecraft.world.phys.BlockHitResult(Vec3.atCenterOf(floor).add(0, 0.5, 0), net.minecraft.core.Direction.UP, floor, false)));
+        CarcassSavedData.Carcass placed = null;
+        for (CarcassSavedData.Carcass other : CarcassSavedData.get(level).all()) {
+            if (other != drained && other.entity.equals(drained.entity) && Math.abs(other.decay - 1234.0F) < 0.5F) {
+                placed = other;
+            }
+        }
+        if (placed == null) {
+            helper.fail("Putting the piece down did not make a carcass that kept its rot");
+            return;
+        }
+        if (Math.abs(placed.blood - 40.0F) > 0.01F || Math.abs(placed.bloodMax - 125.0F) > 0.01F) {
+            helper.fail("A piece put back down should keep its blood: " + placed.blood + " of " + placed.bloodMax);
+        }
+
+        Player dragger = helper.makeMockPlayer(GameType.SURVIVAL);
+        dragger.setItemInHand(InteractionHand.MAIN_HAND, new ItemStack(BBItems.MEAT_HOOK.get()));
+        dragger.setPos(Vec3.atBottomCenterOf(helper.absolutePos(new BlockPos(6, 2, 5))));
+        dragger.setOldPosAndRot();
+        helper.runAfterDelay(10, () -> {
+            UUID legId = body.bones.get("right_hind_leg");
+            if (!(SubLevelContainer.getContainer(level).getSubLevel(legId) instanceof ServerSubLevel leg)
+                    || !CarcassDrag.start(level, dragger, leg.getPlot().getCenterBlock(), null)) {
+                helper.fail("Could not start dragging the leg");
+                return;
+            }
+            // a piece put down by clicking on another carcass lands by that carcass, not out in its plot
+            UUID torsoId = body.bones.get(body.rootBone);
+            if (SubLevelContainer.getContainer(level).getSubLevel(torsoId) instanceof ServerSubLevel torso) {
+                ItemStack another = com.avicagan.bloodandbones.item.CarcassPieceItem.of(drained, drained.rootBone);
+                placer.setItemInHand(InteractionHand.MAIN_HAND, another);
+                BlockPos cell = torso.getPlot().getCenterBlock();
+                java.util.Set<UUID> before = new java.util.HashSet<>();
+                CarcassSavedData.get(level).all().forEach(c -> before.add(c.id));
+                another.useOn(new net.minecraft.world.item.context.UseOnContext(placer, InteractionHand.MAIN_HAND,
+                        new net.minecraft.world.phys.BlockHitResult(Vec3.atCenterOf(cell).add(0, 0.5, 0), net.minecraft.core.Direction.UP, cell, false)));
+                Vector3d torsoAt = torso.logicalPose().position();
+                boolean near = false;
+                for (CarcassSavedData.Carcass other : CarcassSavedData.get(level).all()) {
+                    if (!before.contains(other.id) && other.entity.equals(drained.entity)
+                            && SubLevelContainer.getContainer(level).getSubLevel(other.bones.get(other.rootBone)) instanceof ServerSubLevel fishBody) {
+                        double distance = fishBody.logicalPose().position().distance(torsoAt);
+                        near = distance < 6.0;
+                        if (!near) {
+                            helper.fail("A piece put down on a carcass landed " + distance + " blocks away");
+                        }
+                    }
+                }
+                if (!near) {
+                    helper.fail("A piece put down on a carcass did not appear");
+                }
+            }
+            com.avicagan.bloodandbones.carcass.CarcassButchery.sever(level, body, "right_hind_leg", null);
+            CarcassSavedData.Carcass cut = CarcassSavedData.get(level).carcassOfSubLevel(legId);
+            if (cut == null || cut == body || !CarcassDrag.isDraggingCarcass(cut.id) || CarcassDrag.isDraggingCarcass(body.id)) {
+                helper.fail("The drag should follow the leg into its own record");
+            }
+            CarcassDrag.stop(level, dragger);
+            helper.succeed();
+        });
+    }
+
     /** Items of a kind lying in this test's arena. */
     private static int itemsInArena(GameTestHelper helper, net.minecraft.world.item.Item item) {
         AABB area = AABB.encapsulatingFullBlocks(helper.absolutePos(new BlockPos(0, 0, 0)), helper.absolutePos(new BlockPos(10, 6, 10)));

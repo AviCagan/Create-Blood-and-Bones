@@ -84,6 +84,16 @@ public final class CarcassRest {
                 return;
             }
         }
+        if (carcass.unfoldedUnsupported != null) {
+            UUID torsoId = carcass.bones.get(carcass.rootBone);
+            if (torsoId != null && container.getSubLevel(torsoId) instanceof ServerSubLevel torso
+                    && torso.logicalPose().position().distance(carcass.unfoldedUnsupported) < UNSUPPORTED_MOVE) {
+                // lying just as it lay when the ground check failed: folding would only unfold it again
+                carcass.stillTicks = 0;
+                return;
+            }
+            carcass.unfoldedUnsupported = null;
+        }
         carcass.stillTicks++;
         if (carcass.stillTicks >= STILL_TICKS) {
             // this runs inside Sable's loop over every sub-level; removing bodies here would mutate that
@@ -320,6 +330,9 @@ public final class CarcassRest {
         return stray;
     }
 
+    /** How far an unfolded-for-support body must move before it may fold again, in blocks. */
+    private static final double UNSUPPORTED_MOVE = 0.5;
+
     /** Ticks between looks at whether the resting body still has something under it. */
     private static final int SUPPORT_INTERVAL = 20;
 
@@ -334,6 +347,7 @@ public final class CarcassRest {
         if (!isSupported(level, carcass, torso)) {
             // like the fold, the unfold must not run inside Sable's walk over its bodies
             BloodAndBones.LOGGER.debug("Carcass {} lost its support, unfolding", carcass.id);
+            carcass.unfoldedUnsupported = new Vector3d(torso.logicalPose().position());
             PENDING_SPLIT.computeIfAbsent(level, l -> new java.util.LinkedHashSet<>()).add(carcass.id);
         }
     }

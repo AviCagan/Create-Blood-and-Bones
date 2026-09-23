@@ -99,6 +99,12 @@ public class CarcassSavedData extends SavedData {
         public float bloodMax = -1.0F;
         /** ticks since the last bleed step; not saved */
         public int bleedTicks;
+        /**
+         * Where the torso lay when a resting check found nothing under it and unfolded it; until it has
+         * moved from there it does not fold again (else it would fold and unfold for ever). Not saved.
+         */
+        @Nullable
+        public org.joml.Vector3d unfoldedUnsupported;
         /** fresh cuts still pouring ("parent>child" -> ticks left); not saved */
         public final Map<String, Integer> gushing = new LinkedHashMap<>();
 
@@ -354,6 +360,8 @@ public class CarcassSavedData extends SavedData {
             }
         }
         carcasses.put(piece.id, piece);
+        // a player dragging one of the moved limbs now drags the new record
+        CarcassDrag.moved(from.id, piece.id, moving);
         setDirty();
         return piece;
     }
