@@ -43,6 +43,16 @@ public final class BBClientSetup {
         });
     }
 
+    /** Implants drawn on players, both arm shapes. */
+    @SubscribeEvent
+    public static void onAddLayers(net.neoforged.neoforge.client.event.EntityRenderersEvent.AddLayers event) {
+        for (net.minecraft.client.resources.PlayerSkin.Model skin : event.getSkins()) {
+            if (event.getSkin(skin) instanceof net.minecraft.client.renderer.entity.player.PlayerRenderer renderer) {
+                renderer.addLayer(new BodyRendering.ImplantLayer(renderer));
+            }
+        }
+    }
+
     @SubscribeEvent
     public static void onClientExtensions(net.neoforged.neoforge.client.extensions.common.RegisterClientExtensionsEvent event) {
         CarcassPieceItemRenderer renderer = new CarcassPieceItemRenderer();
@@ -92,6 +102,12 @@ public final class BBClientSetup {
         }
         event.getModels().computeIfPresent(net.minecraft.client.resources.model.ModelResourceLocation.inventory(com.avicagan.bloodandbones.registry.BBBlocks.BUTCHER_TABLE.getId()),
                 (key, model) -> new BloodlessSwap(model, BloodlessSwap.TABLE));
+        for (net.minecraft.world.level.block.state.BlockState state : com.avicagan.bloodandbones.registry.BBBlocks.SURGERY_TABLE.get().getStateDefinition().getPossibleStates()) {
+            event.getModels().computeIfPresent(net.minecraft.client.renderer.block.BlockModelShaper.stateToModelLocation(state),
+                    (key, model) -> new BloodlessSwap(model, BloodlessSwap.SURGERY));
+        }
+        event.getModels().computeIfPresent(net.minecraft.client.resources.model.ModelResourceLocation.inventory(com.avicagan.bloodandbones.registry.BBBlocks.SURGERY_TABLE.getId()),
+                (key, model) -> new BloodlessSwap(model, BloodlessSwap.SURGERY));
         for (net.minecraft.world.level.block.state.BlockState state : com.avicagan.bloodandbones.registry.BBBlocks.GUT_CHAIN.get().getStateDefinition().getPossibleStates()) {
             event.getModels().computeIfPresent(net.minecraft.client.renderer.block.BlockModelShaper.stateToModelLocation(state),
                     (key, model) -> new BloodlessSwap(model, BloodlessSwap.GUTS));

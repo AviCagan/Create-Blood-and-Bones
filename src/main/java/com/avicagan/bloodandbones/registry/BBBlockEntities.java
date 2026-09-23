@@ -61,6 +61,12 @@ public class BBBlockEntities {
             .renderer(() -> com.avicagan.bloodandbones.cooking.ButcherTableRenderer::new)
             .register();
 
+    public static final BlockEntityEntry<com.avicagan.bloodandbones.body.SurgeryTableBlockEntity> SURGERY_TABLE = BloodAndBones.REGISTRATE
+            .blockEntity("surgery_table", com.avicagan.bloodandbones.body.SurgeryTableBlockEntity::new)
+            .validBlocks(BBBlocks.SURGERY_TABLE)
+            .renderer(() -> com.avicagan.bloodandbones.client.SurgeryTableRenderer::new)
+            .register();
+
     public static void register() {
     }
 

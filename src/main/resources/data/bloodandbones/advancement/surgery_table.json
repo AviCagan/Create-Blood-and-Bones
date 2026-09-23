@@ -1,0 +1,35 @@
+{
+  "parent": "bloodandbones:cleaver",
+  "display": {
+    "icon": {
+      "id": "bloodandbones:surgery_table"
+    },
+    "title": {
+      "translate": "advancements.bloodandbones.surgery_table.title"
+    },
+    "description": {
+      "translate": "advancements.bloodandbones.surgery_table.description"
+    },
+    "frame": "task",
+    "show_toast": true,
+    "announce_to_chat": true,
+    "hidden": false
+  },
+  "criteria": {
+    "has": {
+      "trigger": "minecraft:inventory_changed",
+      "conditions": {
+        "items": [
+          {
+            "items": "bloodandbones:surgery_table"
+          }
+        ]
+      }
+    }
+  },
+  "requirements": [
+    [
+      "has"
+    ]
+  ]
+}

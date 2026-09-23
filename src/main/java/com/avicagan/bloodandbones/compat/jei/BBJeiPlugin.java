@@ -104,6 +104,11 @@ public class BBJeiPlugin implements IModPlugin {
         registration.addIngredientInfo(java.util.List.of(new net.minecraft.world.item.ItemStack(BBBlocks.BLOODY_CASING.get()), new net.minecraft.world.item.ItemStack(BBBlocks.GUT_CHAIN.get())),
                 mezz.jei.api.constants.VanillaTypes.ITEM_STACK,
                 Component.translatable("bloodandbones.jei.decoration.1"), Component.translatable("bloodandbones.jei.decoration.2"));
+        registration.addIngredientInfo(java.util.List.of(new net.minecraft.world.item.ItemStack(BBBlocks.SURGERY_TABLE.get()), new net.minecraft.world.item.ItemStack(BBItems.PEG_LEG.get()),
+                        new net.minecraft.world.item.ItemStack(BBItems.HOOK_HAND.get()), new net.minecraft.world.item.ItemStack(BBItems.SEVERED_ARM.get()),
+                        new net.minecraft.world.item.ItemStack(BBItems.SEVERED_LEG.get())),
+                mezz.jei.api.constants.VanillaTypes.ITEM_STACK,
+                Component.translatable("bloodandbones.jei.surgery.1"), Component.translatable("bloodandbones.jei.surgery.2"));
         registration.addIngredientInfo(BBBlocks.SHACKLE_HOOK.get(),
                 Component.translatable("bloodandbones.jei.shackle_hook.1"),
                 Component.translatable("bloodandbones.jei.shackle_hook.2"));

@@ -57,6 +57,18 @@ Everything below is in development builds only; the art is placeholder (see the 
 - Bloody Casing: andesite casing filled with blood, joining up like Create's casings.
 - Gut Chain: a string of guts hung like a chain (three offal make three).
 
+### The body
+
+- Surgery Table: lie on it (empty hand) and a screen shows each limb. A Cleaver laid on the table
+  takes one off, and you keep it ("Steve's Arm"); a Peg Leg, a Hook Hand or a severed limb laid on it
+  goes where one is missing; a prosthetic unclips. Limbs are only ever lost by choice, and nothing
+  can go wrong.
+- A missing arm uses, places and swings nothing, and blocks break slowly without the main arm. A
+  missing leg slows you (60% walking on one) and weakens the jump. A Peg Leg walks at 90%; a Hook Hand
+  works the hand and breaks blocks at 70%.
+- Drawn on the player for everyone: missing limbs gone, prosthetics in their place, in third and
+  first person. The body is saved and kept through death.
+
 ### Presentation
 
 - Bloodless mode (a client setting, or the `bloodandbonesBloodless` game rule for everyone): no
@@ -81,4 +93,6 @@ Everything below is in development builds only; the art is placeholder (see the 
   at the one tick they looked). They now judge the middle value over the last second; the whole
   suite has passed every run made with that check (at least eleven), which is encouraging but not
   proof.
+- A patient on the Surgery Table is drawn sitting, not lying. An item held in a missing hand still
+  shows in third person.
 - All art is placeholder (see the README).

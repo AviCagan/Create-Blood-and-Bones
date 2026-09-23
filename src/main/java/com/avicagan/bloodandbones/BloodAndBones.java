@@ -47,6 +47,7 @@ public class BloodAndBones {
         modContainer.registerConfig(ModConfig.Type.SERVER, com.avicagan.bloodandbones.config.BBServerConfig.SPEC);
         NeoForge.EVENT_BUS.register(CarcassEvents.class);
         NeoForge.EVENT_BUS.register(com.avicagan.bloodandbones.carcass.trolley.TrolleyEvents.class);
+        NeoForge.EVENT_BUS.register(com.avicagan.bloodandbones.body.BodyEffects.class);
         if (net.neoforged.fml.loading.FMLEnvironment.dist.isClient()) {
             // the rig exporter reads client-only model classes; a dedicated server must never link it
             modEventBus.addListener(BBDatagen::gatherData);
@@ -60,6 +61,7 @@ public class BloodAndBones {
         com.avicagan.bloodandbones.registry.BBParticles.PARTICLES.register(modEventBus);
         com.avicagan.bloodandbones.registry.BBItemAttributes.register(modEventBus);
         com.avicagan.bloodandbones.registry.BBSounds.register(modEventBus);
+        com.avicagan.bloodandbones.body.BBAttachments.register(modEventBus);
 
         LOGGER.info("Create: Blood & Bones loaded");
     }

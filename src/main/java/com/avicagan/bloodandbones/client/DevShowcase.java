@@ -162,7 +162,7 @@ public final class DevShowcase {
                 if (step >= HANDS + 2) {
                     mc.options.setCameraType(net.minecraft.client.CameraType.FIRST_PERSON);
                     server.execute(() -> CarcassDrag.stop(server.overworld(), server.getPlayerList().getPlayers().get(0)));
-                    stage = 4;
+                    stage = 6;
                     ticks = 0;
                     return;
                 }
@@ -233,6 +233,62 @@ public final class DevShowcase {
                     Screenshot.grab(mc.gameDirectory, PREFIX + "ponder_" + scene + ".png", mc.getMainRenderTarget(), message -> {
                     });
                     BloodAndBones.LOGGER.info("[showcase] took ponder shot {}", scene);
+                }
+            }
+            case 6 -> {
+                // the body: a peg leg, a hook hand and an arm gone, from the front and first-person; then the surgery screen
+                MinecraftServer server = mc.getSingleplayerServer();
+                int t = ticks++;
+                if (t == 0) {
+                    mc.options.setCameraType(net.minecraft.client.CameraType.THIRD_PERSON_FRONT);
+                    mc.options.hideGui = true;
+                    server.execute(() -> {
+                        ServerPlayer player = server.getPlayerList().getPlayers().get(0);
+                        var body = com.avicagan.bloodandbones.body.BodyEffects.body(player);
+                        body.fit(com.avicagan.bloodandbones.body.BodyPart.LEFT_LEG, new ItemStack(BBItems.PEG_LEG.get()));
+                        body.fit(com.avicagan.bloodandbones.body.BodyPart.RIGHT_ARM, new ItemStack(BBItems.HOOK_HAND.get()));
+                        body.lose(com.avicagan.bloodandbones.body.BodyPart.LEFT_ARM);
+                        com.avicagan.bloodandbones.body.BodyEffects.changed(player);
+                        player.setItemInHand(InteractionHand.MAIN_HAND, ItemStack.EMPTY);
+                        player.teleportTo(player.serverLevel(), player.getX(), player.getY(), player.getZ(), 180.0F, -25.0F);
+                    });
+                } else if (t == 40) {
+                    Screenshot.grab(mc.gameDirectory, PREFIX + "body_0.png", mc.getMainRenderTarget(), message -> {
+                    });
+                    mc.options.setCameraType(net.minecraft.client.CameraType.FIRST_PERSON);
+                    mc.options.hideGui = false;
+                    server.execute(() -> {
+                        ServerPlayer player = server.getPlayerList().getPlayers().get(0);
+                        player.setItemInHand(InteractionHand.MAIN_HAND, ItemStack.EMPTY);
+                        player.teleportTo(player.serverLevel(), player.getX(), player.getY(), player.getZ(), 180.0F, 20.0F);
+                    });
+                } else if (t == 70) {
+                    Screenshot.grab(mc.gameDirectory, PREFIX + "body_1.png", mc.getMainRenderTarget(), message -> {
+                    });
+                    server.execute(() -> {
+                        ServerPlayer player = server.getPlayerList().getPlayers().get(0);
+                        BlockPos at = player.blockPosition().east(2);
+                        player.serverLevel().setBlockAndUpdate(at, BBBlocks.SURGERY_TABLE.getDefaultState());
+                        if (player.serverLevel().getBlockEntity(at) instanceof com.avicagan.bloodandbones.body.SurgeryTableBlockEntity table) {
+                            table.put(new ItemStack(BBItems.CLEAVER.get()));
+                        }
+                        if (com.avicagan.bloodandbones.body.SurgeryTableBlock.lieDown(player.serverLevel(), at, player)) {
+                            net.neoforged.neoforge.network.PacketDistributor.sendToPlayer(player, new com.avicagan.bloodandbones.body.Surgery.OpenPayload(at));
+                        }
+                    });
+                } else if (t == 110) {
+                    Screenshot.grab(mc.gameDirectory, PREFIX + "body_2.png", mc.getMainRenderTarget(), message -> {
+                    });
+                    BloodAndBones.LOGGER.info("[showcase] took body shots; screen {}", mc.screen == null ? "none" : mc.screen.getClass().getSimpleName());
+                    mc.setScreen(null);
+                    server.execute(() -> {
+                        ServerPlayer player = server.getPlayerList().getPlayers().get(0);
+                        player.stopRiding();
+                        player.setData(com.avicagan.bloodandbones.body.BBAttachments.BODY, new com.avicagan.bloodandbones.body.Body());
+                        com.avicagan.bloodandbones.body.BodyEffects.changed(player);
+                    });
+                    stage = 4;
+                    ticks = 0;
                 }
             }
             default -> {

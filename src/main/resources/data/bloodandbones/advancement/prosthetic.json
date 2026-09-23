@@ -1,0 +1,38 @@
+{
+  "parent": "bloodandbones:surgery_table",
+  "display": {
+    "icon": {
+      "id": "bloodandbones:peg_leg"
+    },
+    "title": {
+      "translate": "advancements.bloodandbones.prosthetic.title"
+    },
+    "description": {
+      "translate": "advancements.bloodandbones.prosthetic.description"
+    },
+    "frame": "task",
+    "show_toast": true,
+    "announce_to_chat": true,
+    "hidden": false
+  },
+  "criteria": {
+    "has": {
+      "trigger": "minecraft:inventory_changed",
+      "conditions": {
+        "items": [
+          {
+            "items": [
+              "bloodandbones:peg_leg",
+              "bloodandbones:hook_hand"
+            ]
+          }
+        ]
+      }
+    }
+  },
+  "requirements": [
+    [
+      "has"
+    ]
+  ]
+}

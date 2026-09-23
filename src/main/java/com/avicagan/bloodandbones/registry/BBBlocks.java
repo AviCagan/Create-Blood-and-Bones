@@ -183,6 +183,17 @@ public class BBBlocks {
             .item().model((c, p) -> p.generated(c, p.modLoc("item/gut_chain"))).build()
             .register();
 
+    /** Lie on it and have your limbs off, or new ones on. */
+    public static final BlockEntry<com.avicagan.bloodandbones.body.SurgeryTableBlock> SURGERY_TABLE = BloodAndBones.REGISTRATE
+            .block("surgery_table", com.avicagan.bloodandbones.body.SurgeryTableBlock::new)
+            .initialProperties(() -> net.minecraft.world.level.block.Blocks.IRON_BLOCK)
+            .properties(p -> p.noOcclusion().strength(3.0F, 6.0F))
+            .blockstate((c, p) -> p.simpleBlock(c.get(), p.models().getExistingFile(p.modLoc("block/surgery_table"))))
+            .tag(net.minecraft.tags.BlockTags.MINEABLE_WITH_PICKAXE)
+            .lang("Surgery Table")
+            .simpleItem()
+            .register();
+
     public static void register() {
     }
 }

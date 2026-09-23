@@ -20,6 +20,16 @@ public class BBNetwork {
                 (payload, context) -> context.enqueueWork(() -> com.avicagan.bloodandbones.carcass.rig.RigManager.receiveClientRigs(payload.rigs())));
         registrar.playToClient(BloodlessRulePayload.TYPE, BloodlessRulePayload.STREAM_CODEC,
                 (payload, context) -> context.enqueueWork(() -> com.avicagan.bloodandbones.config.BBClientConfig.setServerForced(payload.forced())));
+        registrar.playToClient(com.avicagan.bloodandbones.body.BodySync.Payload.TYPE, com.avicagan.bloodandbones.body.BodySync.Payload.STREAM_CODEC,
+                (payload, context) -> context.enqueueWork(() -> com.avicagan.bloodandbones.client.ClientBody.receive(payload)));
+        registrar.playToClient(com.avicagan.bloodandbones.body.Surgery.OpenPayload.TYPE, com.avicagan.bloodandbones.body.Surgery.OpenPayload.STREAM_CODEC,
+                (payload, context) -> context.enqueueWork(() -> com.avicagan.bloodandbones.client.ClientBody.openSurgery(payload.pos())));
+        registrar.playToServer(com.avicagan.bloodandbones.body.Surgery.ActionPayload.TYPE, com.avicagan.bloodandbones.body.Surgery.ActionPayload.STREAM_CODEC,
+                (payload, context) -> context.enqueueWork(() -> {
+                    if (context.player() instanceof net.minecraft.server.level.ServerPlayer player) {
+                        com.avicagan.bloodandbones.body.Surgery.handle(player, payload);
+                    }
+                }));
         registrar.playToClient(ButcherySyncPayload.TYPE, ButcherySyncPayload.STREAM_CODEC,
                 (payload, context) -> context.enqueueWork(() -> com.avicagan.bloodandbones.carcass.butchery.ButcheryManager.receiveClientTables(payload.tables())));
     }

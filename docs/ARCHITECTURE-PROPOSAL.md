@@ -933,3 +933,31 @@ later. The head and torso cannot be taken.
 - 11d: the powered table; surgery on other players, mobs and carcasses; organs out of carcasses.
 - 11e: minions from parts, with jobs from what they are given.
 
+### 14.1 Slice 11a as built (verified)
+
+- `body/Body`: the parts that are gone and the implants in their place, with a codec (saved under the
+  player's NeoForge attachments, only when something is missing) and a stream codec. `BBAttachments.BODY`
+  is `copyOnDeath`. `BodySync.Payload` goes to the player and everyone tracking them on every change, on
+  login, respawn, dimension change and when someone starts tracking them.
+- `BodyEffects`, on both sides from the synced body: `RightClickItem`, `RightClickBlock` and the two entity
+  interactions are cancelled for a hand with no working arm when it holds something; attacks need a
+  working main arm; `BreakSpeed` times the main arm's figure (missing 0.2, Hook Hand 0.7). Legs are two
+  transient attribute modifiers (`bloodandbones:legs`, multiply total) on movement speed and jump
+  strength: the two legs' figures averaged, a missing leg 0.2 for walking and 0.4 for jumping, a Peg Leg
+  0.9. Refreshed on change and every ten ticks, since transient modifiers are not saved. No sprinting on
+  no legs.
+- Drawing: `RenderPlayerEvent.Pre` fires after vanilla's `setModelProperties`, so hiding a part and its
+  outer layer there sticks for the frame (`Post` shows them again). `BodyRendering.ImplantLayer`, added to
+  both player renderers, draws each implant's part in the same pose with the implant's own texture, laid
+  out like a skin. First person: `RenderArmEvent` hides a missing arm or draws the implant as vanilla's
+  `renderHand` does; `RenderHandEvent` hides what a missing hand holds.
+- `SurgeryTableBlock`: one item (a Cleaver, an `ImplantItem` or a `SeveredLimbItem`); an empty hand lies
+  you on a `SurgerySeatEntity` (invisible, no physics, gone when empty or when the table is) and the
+  server sends `Surgery.OpenPayload`; the screen's buttons send `Surgery.ActionPayload`, done only for a
+  player lying on that table (`Surgery.lyingOn`). `Surgery.action` decides the button on both sides:
+  an implant unclips; flesh comes off with a blade (bloodied, it stays on the table); a missing part takes
+  a fitting implant, or a severed limb (anyone's, either side) as flesh again.
+- `BodyTests`: the body saved and loaded (on its own and on a player), a whole round of surgery on one
+  arm, the walk and jump figures, the hands, the seat, and the screen's check. The showcase photographs a
+  player with a Peg Leg, a Hook Hand and an arm gone, first-person, and the surgery screen.
+

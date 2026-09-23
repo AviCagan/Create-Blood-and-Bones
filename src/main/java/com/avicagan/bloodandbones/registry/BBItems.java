@@ -92,6 +92,30 @@ public class BBItems {
             .lang("Animal Fat")
             .register();
 
+    /** A basic prosthetic leg: walks at 90%, needs nothing to run. */
+    public static final ItemEntry<com.avicagan.bloodandbones.body.ImplantItem> PEG_LEG = BloodAndBones.REGISTRATE
+            .item("peg_leg", p -> new com.avicagan.bloodandbones.body.ImplantItem(p, com.avicagan.bloodandbones.body.BodyPart.Kind.LEG,
+                    0.9F, 1.0F, BloodAndBones.asResource("textures/entity/implant/peg_leg.png")))
+            .lang("Peg Leg")
+            .register();
+
+    /** A basic prosthetic arm: holds and uses things, breaks blocks at 70%. */
+    public static final ItemEntry<com.avicagan.bloodandbones.body.ImplantItem> HOOK_HAND = BloodAndBones.REGISTRATE
+            .item("hook_hand", p -> new com.avicagan.bloodandbones.body.ImplantItem(p, com.avicagan.bloodandbones.body.BodyPart.Kind.ARM,
+                    1.0F, 0.7F, BloodAndBones.asResource("textures/entity/implant/hook_hand.png")))
+            .lang("Hook Hand")
+            .register();
+
+    public static final ItemEntry<com.avicagan.bloodandbones.body.SeveredLimbItem> SEVERED_ARM = BloodAndBones.REGISTRATE
+            .item("severed_arm", p -> new com.avicagan.bloodandbones.body.SeveredLimbItem(p, com.avicagan.bloodandbones.body.BodyPart.Kind.ARM))
+            .lang("Severed Arm")
+            .register();
+
+    public static final ItemEntry<com.avicagan.bloodandbones.body.SeveredLimbItem> SEVERED_LEG = BloodAndBones.REGISTRATE
+            .item("severed_leg", p -> new com.avicagan.bloodandbones.body.SeveredLimbItem(p, com.avicagan.bloodandbones.body.BodyPart.Kind.LEG))
+            .lang("Severed Leg")
+            .register();
+
     public static void register() {
     }
 }

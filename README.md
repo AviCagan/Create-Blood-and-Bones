@@ -52,6 +52,11 @@ provided by [Sable](https://github.com/ryanhcode/sable).
   a fresh piece drips blood on the floor. The Bloody Casing (spout 250 mB of blood onto an Andesite
   Casing) joins up like Create's casings, and the Gut Chain (three offal in a column) hangs like a
   chain.
+- **The body.** Lie on the Surgery Table and choose what to do to each limb: a Cleaver on the table
+  takes one of your own limbs off (you keep it, with your name on it), and a Peg Leg, a Hook Hand or
+  a severed limb goes back where one is missing. Nothing takes a limb any other way, and surgery
+  cannot go wrong. A missing arm can't use or swing anything and a missing leg slows you down; the
+  prosthetics nearly make up for it. Other players see what you are missing and what is fitted.
 - **Bloodless mode.** `bloodless_mode` in the client config (`config/bloodandbones-client.toml`)
   hides blood drops and stains, shows skinned carcasses as pale meat, the hook in a carcass and
   the machines clean, and blood itself as a muddy brown. Names and descriptions are reworded too
@@ -72,8 +77,8 @@ incremental. `./gradlew runClient` / `runServer` / `runData` are configured by M
 
 ### Development aids
 
-- `./gradlew runGameTestServer` runs the game tests headless (175: every rigged mob and baby,
-  butchery, rot, bleeding, machines and their filters, cooking and display, chains, recipes,
+- `./gradlew runGameTestServer` runs the game tests headless (181: every rigged mob and baby,
+  butchery, rot, bleeding, machines and their filters, cooking and display, surgery, chains, recipes,
   advancements and sounds).
 - `./gradlew runData -Dbloodandbones.dump_layers=minecraft:goat#main,...` writes those vanilla
   models' part trees to `run/build/layer-dump.txt`, for writing new rig targets in

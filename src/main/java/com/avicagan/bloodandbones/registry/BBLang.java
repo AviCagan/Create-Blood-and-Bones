@@ -92,6 +92,44 @@ public class BBLang {
                 "A jar of cloudy _preserving fluid_ for keeping a carcass piece on show.",
                 "When R-Clicked with a Carcass Piece", "Puts it in, to drift in the fluid. R-Click with an _empty hand_ to take it out.");
 
+        // ---- the body
+        block("surgery_table",
+                "A padded table with straps, for _surgery_. Lie on it to have a limb _off_, or a new one _on_. Nothing can go wrong.",
+                "When R-Clicked with a Blade, Implant or Limb", "Lays it on the table: a _Cleaver_ takes a limb off, a _prosthetic_ or a _severed limb_ goes where one is missing.",
+                "When R-Clicked with an Empty Hand", "You _lie down_ on it and choose which part to operate on. _Sneak_ to get up.",
+                "When Sneak-R-Clicked with an Empty Hand", "Takes back what lies on the table.");
+        item("peg_leg",
+                "A wooden leg for a leg that is _gone_. Needs nothing to run.",
+                "When Fitted", "You walk almost as well as on flesh (_90%_).");
+        item("hook_hand",
+                "An iron hook on a leather cuff, for an arm that is _gone_. Needs nothing to run.",
+                "When Fitted", "The hand can _hold_ and _use_ things again. Blocks break a little slower (_70%_).");
+        item("severed_arm",
+                "Somebody's _arm_, taken off on a Surgery Table.",
+                "On a Surgery Table", "Goes back on where an arm is _missing_, anyone's, either side. It is flesh again.");
+        item("severed_leg",
+                "Somebody's _leg_, taken off on a Surgery Table.",
+                "On a Surgery Table", "Goes back on where a leg is _missing_, anyone's, either side. It is flesh again.");
+        BloodAndBones.REGISTRATE.addRawLang("item.bloodandbones.severed_arm.of", "%s's Arm");
+        BloodAndBones.REGISTRATE.addRawLang("item.bloodandbones.severed_leg.of", "%s's Leg");
+        BloodAndBones.REGISTRATE.addRawLang("bloodandbones.body.left_arm", "Left arm");
+        BloodAndBones.REGISTRATE.addRawLang("bloodandbones.body.right_arm", "Right arm");
+        BloodAndBones.REGISTRATE.addRawLang("bloodandbones.body.left_leg", "Left leg");
+        BloodAndBones.REGISTRATE.addRawLang("bloodandbones.body.right_leg", "Right leg");
+        BloodAndBones.REGISTRATE.addRawLang("bloodandbones.surgery.title", "Surgery");
+        BloodAndBones.REGISTRATE.addRawLang("bloodandbones.surgery.empty", "Nothing on the table: lay a Cleaver, a prosthetic or a limb on it");
+        BloodAndBones.REGISTRATE.addRawLang("bloodandbones.surgery.on_table", "On the table: %s");
+        BloodAndBones.REGISTRATE.addRawLang("bloodandbones.surgery.state.natural", "Your own");
+        BloodAndBones.REGISTRATE.addRawLang("bloodandbones.surgery.state.missing", "Missing");
+        BloodAndBones.REGISTRATE.addRawLang("bloodandbones.surgery.action.none", "-");
+        BloodAndBones.REGISTRATE.addRawLang("bloodandbones.surgery.action.take_off", "Take it off");
+        BloodAndBones.REGISTRATE.addRawLang("bloodandbones.surgery.action.fit", "Fit what is on the table");
+        BloodAndBones.REGISTRATE.addRawLang("bloodandbones.surgery.action.reattach", "Put the limb back on");
+        BloodAndBones.REGISTRATE.addRawLang("bloodandbones.surgery.action.unclip", "Unclip it");
+        BloodAndBones.REGISTRATE.addRawLang("bloodandbones.surgery.done", "Done");
+        BloodAndBones.REGISTRATE.addRawLang("bloodandbones.surgery.nothing", "Nothing on the table can do that");
+        BloodAndBones.REGISTRATE.addRawLang("bloodandbones.surgery.occupied", "Someone is already on the table");
+
         // ---- goggles
         BloodAndBones.REGISTRATE.addRawLang("bloodandbones.gui.goggles.carcass_machine.output", "%1$s items waiting");
         BloodAndBones.REGISTRATE.addRawLang("bloodandbones.gui.goggles.spit_roast.roasting", "Roasting: %1$s%%");
@@ -133,6 +171,9 @@ public class BBLang {
         advancement("butcher_hook", "Hung Out to Dry", "Make a Butcher's Hook to hang your work on the wall");
         advancement("bloody_casing", "Redecorating", "Fill an Andesite Casing with blood");
         advancement("gut_chain", "Strung Out", "String offal into a Gut Chain");
+        advancement("surgery_table", "Under the Knife", "Make a Surgery Table");
+        advancement("severed", "Disarming", "Take off one of your own limbs on a Surgery Table");
+        advancement("prosthetic", "Spare Parts", "Make a Peg Leg or a Hook Hand");
 
         // ---- Ponder scenes (text_N in the order each scene shows its text)
         ponder("mangler", "Grinding Carcasses with the Mangler", "The Mangler tears the limbs off a carcass, then grinds every piece into meat, bone, offal and fat", "It is driven by a shaft from below. The faster it turns, the faster it works", "It works any carcass lying on it or hanging over it. Set it flush in a floor so a body lies across it", "What it makes waits inside. Take it with an empty hand, or pull it out with a funnel or hopper");
@@ -178,6 +219,9 @@ public class BBLang {
         jei("decoration",
                 "Bloody Casing: fill an Andesite Casing with 250 mB of blood from a Spout. It joins up with its neighbours like Create's own casings.",
                 "Gut Chain: three pieces of offal in a column make three. It hangs and lies like a chain.");
+        jei("surgery",
+                "Lay a Cleaver on the Surgery Table and lie on it (right-click with an empty hand) to take one of your own limbs off. You get it back as a severed limb. Nothing takes a limb any other way, and nothing can go wrong.",
+                "A missing arm uses and swings nothing and a missing leg slows you down. Lay a Peg Leg, a Hook Hand or a severed limb on the table and lie down again to fit it; an empty table unclips a prosthetic.");
         jei("soul_blood",
                 "Soul Blood is blood with a soul in it. Mix blood, soul sand and a little liquid experience over a superheated Blaze Burner, or ferment blood with nether wart and soul soil under a Basin Lid.");
     }

@@ -1,0 +1,38 @@
+{
+  "parent": "bloodandbones:surgery_table",
+  "display": {
+    "icon": {
+      "id": "bloodandbones:severed_arm"
+    },
+    "title": {
+      "translate": "advancements.bloodandbones.severed.title"
+    },
+    "description": {
+      "translate": "advancements.bloodandbones.severed.description"
+    },
+    "frame": "task",
+    "show_toast": true,
+    "announce_to_chat": true,
+    "hidden": false
+  },
+  "criteria": {
+    "has": {
+      "trigger": "minecraft:inventory_changed",
+      "conditions": {
+        "items": [
+          {
+            "items": [
+              "bloodandbones:severed_arm",
+              "bloodandbones:severed_leg"
+            ]
+          }
+        ]
+      }
+    }
+  },
+  "requirements": [
+    [
+      "has"
+    ]
+  ]
+}
