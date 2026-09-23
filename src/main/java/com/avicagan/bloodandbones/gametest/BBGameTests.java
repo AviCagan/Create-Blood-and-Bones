@@ -578,6 +578,68 @@ public class BBGameTests {
         animalTest(helper, EntityType.SKELETON, 6);
     }
 
+    @GameTest(template = "empty", timeoutTicks = 200)
+    public static void mooshroomCarcassAssembles(GameTestHelper helper) {
+        animalTest(helper, EntityType.MOOSHROOM, 6);
+    }
+
+    @GameTest(template = "empty", timeoutTicks = 200)
+    public static void huskCarcassAssembles(GameTestHelper helper) {
+        animalTest(helper, EntityType.HUSK, 6);
+    }
+
+    @GameTest(template = "empty", timeoutTicks = 200)
+    public static void strayCarcassAssembles(GameTestHelper helper) {
+        animalTest(helper, EntityType.STRAY, 6);
+    }
+
+    @GameTest(template = "empty", timeoutTicks = 200)
+    public static void boggedCarcassAssembles(GameTestHelper helper) {
+        animalTest(helper, EntityType.BOGGED, 6);
+    }
+
+    @GameTest(template = "empty", timeoutTicks = 200)
+    public static void witherSkeletonCarcassAssembles(GameTestHelper helper) {
+        animalTest(helper, EntityType.WITHER_SKELETON, 6);
+    }
+
+    @GameTest(template = "empty", timeoutTicks = 200)
+    public static void zombieHorseCarcassAssembles(GameTestHelper helper) {
+        animalTest(helper, EntityType.ZOMBIE_HORSE, 7);
+    }
+
+    @GameTest(template = "empty", timeoutTicks = 200)
+    public static void skeletonHorseCarcassAssembles(GameTestHelper helper) {
+        animalTest(helper, EntityType.SKELETON_HORSE, 7);
+    }
+
+    /** A red mooshroom wears the red coat and yields red mushrooms when skinned. */
+    @GameTest(template = "empty", timeoutTicks = 200)
+    public static void mooshroomKeepsItsColour(GameTestHelper helper) {
+        ServerLevel level = helper.getLevel();
+        net.minecraft.world.entity.animal.MushroomCow cow = helper.spawn(EntityType.MOOSHROOM, new BlockPos(5, 2, 5));
+        cow.setVariant(net.minecraft.world.entity.animal.MushroomCow.MushroomType.BROWN);
+        if (CarcassAssembler.assemble(cow, null) == null) {
+            helper.fail("Carcass assembly returned false");
+        }
+        cow.discard();
+        helper.runAfterDelay(SETTLE_TICKS, () -> {
+            CarcassSavedData.Carcass carcass = nearestCarcass(helper, level, new BlockPos(5, 2, 5), EntityType.MOOSHROOM);
+            if (!carcass.look.texture().getPath().equals("textures/entity/cow/brown_mooshroom.png")) {
+                helper.fail("A brown mooshroom should wear brown_mooshroom.png, got " + carcass.look.texture());
+            }
+            for (int i = 0; i < com.avicagan.bloodandbones.carcass.CarcassButchery.STROKES_TO_SKIN; i++) {
+                com.avicagan.bloodandbones.carcass.CarcassButchery.skin(level, null, carcass, null);
+            }
+        });
+        helper.runAfterDelay(SETTLE_TICKS + 5, () -> {
+            if (itemsInArena(helper, net.minecraft.world.item.Items.BROWN_MUSHROOM) != 2) {
+                helper.fail("Skinning a brown mooshroom should give two brown mushrooms");
+            }
+            helper.succeed();
+        });
+    }
+
     /** Every rigged mob: the right number of bodies and joints, all of them near the spawn, none in the floor. */
     private static void animalTest(GameTestHelper helper, EntityType<? extends net.minecraft.world.entity.Mob> type, int bones) {
         ServerLevel level = helper.getLevel();

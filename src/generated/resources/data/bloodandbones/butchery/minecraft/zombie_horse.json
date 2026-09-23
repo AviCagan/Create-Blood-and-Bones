@@ -1,0 +1,89 @@
+{
+  "entity": "minecraft:zombie_horse",
+  "parts": {
+    "body": [
+      {
+        "count": 4.3,
+        "item": "minecraft:rotten_flesh",
+        "kind": "meat"
+      },
+      {
+        "count": 1.61,
+        "item": "minecraft:bone",
+        "kind": "bone"
+      }
+    ],
+    "body/tail": [
+      {
+        "count": 0.33,
+        "item": "minecraft:rotten_flesh",
+        "kind": "meat"
+      },
+      {
+        "count": 0.5,
+        "item": "minecraft:bone",
+        "kind": "bone"
+      }
+    ],
+    "head_parts": [
+      {
+        "count": 3.12,
+        "item": "minecraft:rotten_flesh",
+        "kind": "meat"
+      },
+      {
+        "count": 1.17,
+        "item": "minecraft:bone",
+        "kind": "bone"
+      }
+    ],
+    "left_front_leg": [
+      {
+        "count": 0.34,
+        "item": "minecraft:rotten_flesh",
+        "kind": "meat"
+      },
+      {
+        "count": 0.5,
+        "item": "minecraft:bone",
+        "kind": "bone"
+      }
+    ],
+    "left_hind_leg": [
+      {
+        "count": 0.34,
+        "item": "minecraft:rotten_flesh",
+        "kind": "meat"
+      },
+      {
+        "count": 0.5,
+        "item": "minecraft:bone",
+        "kind": "bone"
+      }
+    ],
+    "right_front_leg": [
+      {
+        "count": 0.34,
+        "item": "minecraft:rotten_flesh",
+        "kind": "meat"
+      },
+      {
+        "count": 0.5,
+        "item": "minecraft:bone",
+        "kind": "bone"
+      }
+    ],
+    "right_hind_leg": [
+      {
+        "count": 0.34,
+        "item": "minecraft:rotten_flesh",
+        "kind": "meat"
+      },
+      {
+        "count": 0.5,
+        "item": "minecraft:bone",
+        "kind": "bone"
+      }
+    ]
+  }
+}

@@ -1,0 +1,49 @@
+{
+  "entity": "minecraft:skeleton_horse",
+  "parts": {
+    "body": [
+      {
+        "count": 6.45,
+        "item": "minecraft:bone",
+        "kind": "bone"
+      }
+    ],
+    "body/tail": [
+      {
+        "item": "minecraft:bone",
+        "kind": "bone"
+      }
+    ],
+    "head_parts": [
+      {
+        "count": 4.68,
+        "item": "minecraft:bone",
+        "kind": "bone"
+      }
+    ],
+    "left_front_leg": [
+      {
+        "item": "minecraft:bone",
+        "kind": "bone"
+      }
+    ],
+    "left_hind_leg": [
+      {
+        "item": "minecraft:bone",
+        "kind": "bone"
+      }
+    ],
+    "right_front_leg": [
+      {
+        "item": "minecraft:bone",
+        "kind": "bone"
+      }
+    ],
+    "right_hind_leg": [
+      {
+        "item": "minecraft:bone",
+        "kind": "bone"
+      }
+    ]
+  }
+}

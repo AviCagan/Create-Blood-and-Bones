@@ -1,0 +1,43 @@
+{
+  "entity": "minecraft:stray",
+  "parts": {
+    "body": [
+      {
+        "count": 1.13,
+        "item": "minecraft:bone",
+        "kind": "bone"
+      }
+    ],
+    "head": [
+      {
+        "count": 1.5,
+        "item": "minecraft:bone",
+        "kind": "bone"
+      }
+    ],
+    "left_arm": [
+      {
+        "item": "minecraft:bone",
+        "kind": "bone"
+      }
+    ],
+    "left_leg": [
+      {
+        "item": "minecraft:bone",
+        "kind": "bone"
+      }
+    ],
+    "right_arm": [
+      {
+        "item": "minecraft:bone",
+        "kind": "bone"
+      }
+    ],
+    "right_leg": [
+      {
+        "item": "minecraft:bone",
+        "kind": "bone"
+      }
+    ]
+  }
+}

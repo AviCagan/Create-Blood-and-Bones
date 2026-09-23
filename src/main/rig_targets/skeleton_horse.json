@@ -1,0 +1,140 @@
+{
+  "entity": "minecraft:skeleton_horse",
+  "model": "minecraft:skeleton_horse",
+  "texture": "minecraft:textures/entity/horse/horse_skeleton.png",
+  "rot_time": 48000,
+  "torso": "body",
+  "hidden": [
+    "body/saddle",
+    "head_parts/left_saddle_mouth",
+    "head_parts/right_saddle_mouth",
+    "head_parts/left_saddle_line",
+    "head_parts/right_saddle_line",
+    "head_parts/head_saddle",
+    "head_parts/mouth_saddle_wrap",
+    "left_hind_baby_leg",
+    "right_hind_baby_leg",
+    "left_front_baby_leg",
+    "right_front_baby_leg"
+  ],
+  "merge": [
+    "head_parts/head",
+    "head_parts/mane",
+    "head_parts/upper_mouth"
+  ],
+  "boxes": {
+    "head_parts": {
+      "min": [
+        -3,
+        -13,
+        -7
+      ],
+      "max": [
+        3,
+        6,
+        7
+      ]
+    }
+  },
+  "joints": {
+    "head_parts": {
+      "min_degrees": [
+        -25,
+        -35,
+        -15
+      ],
+      "max_degrees": [
+        75,
+        35,
+        15
+      ],
+      "damping": 4.0,
+      "stiffness": 1.0,
+      "contacts": false
+    },
+    "body/tail": {
+      "min_degrees": [
+        -30,
+        -45,
+        -20
+      ],
+      "max_degrees": [
+        60,
+        45,
+        20
+      ],
+      "damping": 2.0,
+      "stiffness": 1.0,
+      "contacts": false
+    },
+    "left_hind_leg": {
+      "min_degrees": [
+        -75,
+        -10,
+        -15
+      ],
+      "max_degrees": [
+        75,
+        10,
+        15
+      ],
+      "damping": 3.0,
+      "stiffness": 0.1,
+      "contacts": false
+    },
+    "right_hind_leg": {
+      "min_degrees": [
+        -75,
+        -10,
+        -15
+      ],
+      "max_degrees": [
+        75,
+        10,
+        15
+      ],
+      "damping": 3.0,
+      "stiffness": 0.1,
+      "contacts": false
+    },
+    "left_front_leg": {
+      "min_degrees": [
+        -75,
+        -10,
+        -15
+      ],
+      "max_degrees": [
+        75,
+        10,
+        15
+      ],
+      "damping": 3.0,
+      "stiffness": 0.1,
+      "contacts": false
+    },
+    "right_front_leg": {
+      "min_degrees": [
+        -75,
+        -10,
+        -15
+      ],
+      "max_degrees": [
+        75,
+        10,
+        15
+      ],
+      "damping": 3.0,
+      "stiffness": 0.1,
+      "contacts": false
+    }
+  },
+  "scale": 1.0,
+  "butchery": {
+    "meat": "none",
+    "hide": "none",
+    "bone_per_block": 12.0,
+    "bone_min": 1.0,
+    "offal_per_weight": 0.0,
+    "fat_per_weight": 0.0
+  }
+}

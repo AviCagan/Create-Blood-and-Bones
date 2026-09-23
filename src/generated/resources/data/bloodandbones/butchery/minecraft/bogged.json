@@ -1,0 +1,51 @@
+{
+  "entity": "minecraft:bogged",
+  "parts": {
+    "body": [
+      {
+        "count": 1.13,
+        "item": "minecraft:bone",
+        "kind": "bone"
+      }
+    ],
+    "head": [
+      {
+        "count": 1.5,
+        "item": "minecraft:bone",
+        "kind": "bone"
+      },
+      {
+        "count": 0.5,
+        "item": "minecraft:red_mushroom"
+      },
+      {
+        "count": 0.5,
+        "item": "minecraft:brown_mushroom"
+      }
+    ],
+    "left_arm": [
+      {
+        "item": "minecraft:bone",
+        "kind": "bone"
+      }
+    ],
+    "left_leg": [
+      {
+        "item": "minecraft:bone",
+        "kind": "bone"
+      }
+    ],
+    "right_arm": [
+      {
+        "item": "minecraft:bone",
+        "kind": "bone"
+      }
+    ],
+    "right_leg": [
+      {
+        "item": "minecraft:bone",
+        "kind": "bone"
+      }
+    ]
+  }
+}

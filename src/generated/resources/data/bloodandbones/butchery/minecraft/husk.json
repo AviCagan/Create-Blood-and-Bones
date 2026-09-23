@@ -1,0 +1,81 @@
+{
+  "entity": "minecraft:husk",
+  "parts": {
+    "body": [
+      {
+        "count": 0.9,
+        "item": "minecraft:rotten_flesh",
+        "kind": "meat"
+      },
+      {
+        "count": 0.5,
+        "item": "minecraft:bone",
+        "kind": "bone"
+      },
+      {
+        "count": 0.5,
+        "item": "minecraft:sand"
+      }
+    ],
+    "head": [
+      {
+        "count": 1.2,
+        "item": "minecraft:rotten_flesh",
+        "kind": "meat"
+      },
+      {
+        "count": 0.5,
+        "item": "minecraft:bone",
+        "kind": "bone"
+      }
+    ],
+    "left_arm": [
+      {
+        "count": 0.45,
+        "item": "minecraft:rotten_flesh",
+        "kind": "meat"
+      },
+      {
+        "count": 0.5,
+        "item": "minecraft:bone",
+        "kind": "bone"
+      }
+    ],
+    "left_leg": [
+      {
+        "count": 0.45,
+        "item": "minecraft:rotten_flesh",
+        "kind": "meat"
+      },
+      {
+        "count": 0.5,
+        "item": "minecraft:bone",
+        "kind": "bone"
+      }
+    ],
+    "right_arm": [
+      {
+        "count": 0.45,
+        "item": "minecraft:rotten_flesh",
+        "kind": "meat"
+      },
+      {
+        "count": 0.5,
+        "item": "minecraft:bone",
+        "kind": "bone"
+      }
+    ],
+    "right_leg": [
+      {
+        "count": 0.45,
+        "item": "minecraft:rotten_flesh",
+        "kind": "meat"
+      },
+      {
+        "count": 0.5,
+        "item": "minecraft:bone",
+        "kind": "bone"
+      }
+    ]
+  }
+}

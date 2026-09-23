@@ -1,0 +1,104 @@
+{
+  "entity": "minecraft:wither_skeleton",
+  "model": "minecraft:wither_skeleton",
+  "texture": "minecraft:textures/entity/skeleton/wither_skeleton.png",
+  "rot_time": 48000,
+  "torso": "body",
+  "attach": {
+    "hat": "head"
+  },
+  "joints": {
+    "head": {
+      "min_degrees": [
+        -30,
+        -60,
+        -20
+      ],
+      "max_degrees": [
+        40,
+        60,
+        20
+      ],
+      "damping": 4.0,
+      "stiffness": 1.5,
+      "contacts": true
+    },
+    "right_arm": {
+      "min_degrees": [
+        -90,
+        -20,
+        -10
+      ],
+      "max_degrees": [
+        90,
+        20,
+        80
+      ],
+      "damping": 3.0,
+      "stiffness": 0.1,
+      "contacts": false
+    },
+    "left_arm": {
+      "min_degrees": [
+        -90,
+        -20,
+        -80
+      ],
+      "max_degrees": [
+        90,
+        20,
+        10
+      ],
+      "damping": 3.0,
+      "stiffness": 0.1,
+      "contacts": false
+    },
+    "right_leg": {
+      "min_degrees": [
+        -70,
+        -10,
+        -10
+      ],
+      "max_degrees": [
+        70,
+        10,
+        30
+      ],
+      "damping": 3.0,
+      "stiffness": 0.1,
+      "contacts": false
+    },
+    "left_leg": {
+      "min_degrees": [
+        -70,
+        -10,
+        -30
+      ],
+      "max_degrees": [
+        70,
+        10,
+        10
+      ],
+      "damping": 3.0,
+      "stiffness": 0.1,
+      "contacts": false
+    }
+  },
+  "butchery": {
+    "meat": "none",
+    "hide": "none",
+    "bone_per_block": 12.0,
+    "bone_min": 1.0,
+    "offal_per_weight": 0.0,
+    "fat_per_weight": 0.0,
+    "part_extras": {
+      "body": [
+        {
+          "item": "minecraft:coal",
+          "count": 0.6
+        }
+      ]
+    }
+  },
+  "scale": 1.2
+}

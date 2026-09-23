@@ -49,6 +49,9 @@ public record CarcassLook(ResourceLocation texture, List<Coat> passes) {
         if (entity instanceof Sheep sheep && !sheep.isSheared()) {
             traits.put("wool", sheep.getColor().getName());
         }
+        if (entity instanceof net.minecraft.world.entity.animal.MushroomCow mooshroom) {
+            traits.put("mushroom", mooshroom.getVariant().getSerializedName());
+        }
         return traits;
     }
 
@@ -68,6 +71,9 @@ public record CarcassLook(ResourceLocation texture, List<Coat> passes) {
             if (horse.getMarkings() == Markings.NONE) {
                 flags.add("no_markings");
             }
+        }
+        if (entity instanceof net.minecraft.world.entity.animal.MushroomCow mooshroom) {
+            variables.put("variant", mooshroom.getVariant().getSerializedName());
         }
         if (entity instanceof Wolf wolf) {
             var variant = wolf.getVariant().value();

@@ -1,0 +1,47 @@
+{
+  "entity": "minecraft:wither_skeleton",
+  "parts": {
+    "body": [
+      {
+        "count": 1.94,
+        "item": "minecraft:bone",
+        "kind": "bone"
+      },
+      {
+        "count": 0.6,
+        "item": "minecraft:coal"
+      }
+    ],
+    "head": [
+      {
+        "count": 2.59,
+        "item": "minecraft:bone",
+        "kind": "bone"
+      }
+    ],
+    "left_arm": [
+      {
+        "item": "minecraft:bone",
+        "kind": "bone"
+      }
+    ],
+    "left_leg": [
+      {
+        "item": "minecraft:bone",
+        "kind": "bone"
+      }
+    ],
+    "right_arm": [
+      {
+        "item": "minecraft:bone",
+        "kind": "bone"
+      }
+    ],
+    "right_leg": [
+      {
+        "item": "minecraft:bone",
+        "kind": "bone"
+      }
+    ]
+  }
+}
