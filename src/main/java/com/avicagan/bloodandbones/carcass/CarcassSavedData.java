@@ -65,6 +65,11 @@ public class CarcassSavedData extends SavedData {
         public final List<net.minecraft.core.BlockPos> restCells = new ArrayList<>();
         /** consecutive ticks the whole carcass has been still, not saved */
         public int stillTicks;
+        /** each bone's vertical speed last tick, to hear it land (CarcassThuds); not saved */
+        public final Map<String, Double> fallSpeeds = new java.util.HashMap<>();
+        /** ticks until this carcass may thud again, and how many times it has; not saved */
+        public int quietTicks;
+        public int thuds;
         /** skinned with the Flensing Knife: the hide is off and the meat shows */
         public boolean skinned;
         /** a baby's body: built and drawn from the baby rig (RigManager#forCarcass) */
@@ -407,6 +412,7 @@ public class CarcassSavedData extends SavedData {
             return;
         }
         if (torso) {
+            CarcassThuds.tick(rootSubLevel.getLevel(), carcass);
             CarcassRest.tick(rootSubLevel.getLevel(), carcass);
         }
         if (carcass.resting) {

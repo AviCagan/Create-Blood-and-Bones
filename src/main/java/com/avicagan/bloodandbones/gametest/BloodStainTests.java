@@ -171,6 +171,35 @@ public class BloodStainTests {
         });
     }
 
+    /**
+     * Meat hitting the ground: a cow carcass dropped from high up thuds when it lands (and a hard landing
+     * splats); one built lying on the ground stays quiet.
+     */
+    @GameTest(template = "empty", timeoutTicks = 200)
+    public static void droppedCarcassThuds(GameTestHelper helper) {
+        ServerLevel level = helper.getLevel();
+        // the test space is seven blocks high: from its top, a fall of about four
+        Cow high = helper.spawn(EntityType.COW, new BlockPos(3, 6, 3));
+        CarcassSavedData.Carcass falling = CarcassAssembler.assemble(high, null);
+        high.discard();
+        Cow low = helper.spawn(EntityType.COW, new BlockPos(7, 2, 7));
+        CarcassSavedData.Carcass lying = CarcassAssembler.assemble(low, null);
+        low.discard();
+        if (falling == null || lying == null) {
+            helper.fail("Carcass assembly returned null");
+            return;
+        }
+        helper.runAfterDelay(120, () -> {
+            if (falling.thuds == 0) {
+                helper.fail("A carcass dropped four blocks should thud when it lands");
+            }
+            if (lying.thuds > 0) {
+                helper.fail("A carcass built on the ground should not thud, it did " + lying.thuds + " times");
+            }
+            helper.succeed();
+        });
+    }
+
     /** Bloodless mode's rewording: whole words only, capitals kept, this mod's keys only. */
     @GameTest(template = "empty", timeoutTicks = 20)
     public static void bloodlessWordsRewordText(GameTestHelper helper) {

@@ -9,6 +9,7 @@ Everything below is in development builds only; the art is placeholder (see the 
 - Butchery: Cleaver, Flensing Knife, carried pieces, data-driven yields that spoil with rot.
 - Cut limbs leave raw wounds, bone showing, on the stump and on the piece, and pour blood for a while.
 - Scraps of meat fly off when a limb is cut through or a piece is butchered or ground.
+- Carcasses land with a wet thud, louder and deeper for heavier, faster falls; a hard landing splats blood.
 - Cleavers and the Flensing Knife come away bloody from a cut or a hit and stay so for five minutes.
 - 79 rigged vanilla mobs with variants, the wither and the pufferfish included; babies of all 36
   kinds that have them (calves, piglets, lambs, chicks, pups, kittens, cubs, bunnies, foals on their

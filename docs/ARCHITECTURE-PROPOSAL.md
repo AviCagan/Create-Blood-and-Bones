@@ -673,6 +673,15 @@ pipes; chain clearance = hanging length + 1 block.
 - Bloodless mode wraps the stain's baked models so they return no quads, and a client config reload
   redraws the world (`LevelRenderer.allChanged`), so switching it needs no restart.
 
+### 13.7c Thuds (verified)
+
+- `CarcassThuds`, once a tick from a moving carcass's torso: each bone's vertical speed (Sable's rigid
+  body velocity, blocks a second) is kept from the last tick; a bone that was falling at 3 or more and
+  has slowed by 3 or more has landed. Slime and honey fall sounds, louder with speed and the bone's box
+  volume, deeper for bigger bones; 6 or more splats blood (a burst and a stain) for a mob that bleeds.
+  One thud per carcass per 8 ticks. `droppedCarcassThuds` drops a cow four blocks and checks a cow built
+  on the ground stays quiet.
+
 ### 13.7b Bloodless mode as built
 
 - Client: `BBClientConfig.bloodless()` is the client toggle OR the server's `bloodandbonesBloodless` game
