@@ -37,6 +37,7 @@ public class BBJeiPlugin implements IModPlugin {
         registration.addRecipeCatalyst(new net.minecraft.world.item.ItemStack(BBItems.FLENSING_KNIFE.get()), ButcheryCategory.TYPE);
         registration.addRecipeCatalyst(new net.minecraft.world.item.ItemStack(BBBlocks.MANGLER.get()), ButcheryCategory.TYPE);
         registration.addRecipeCatalyst(new net.minecraft.world.item.ItemStack(BBBlocks.DEGLOVER.get()), ButcheryCategory.TYPE);
+        registration.addRecipeCatalyst(new net.minecraft.world.item.ItemStack(BBBlocks.BUTCHER_TABLE.get()), ButcheryCategory.TYPE);
     }
 
     /** the Butchery pages JEI is showing, so they can be swapped when the server sends new tables */
