@@ -67,6 +67,10 @@ public final class DevShowcase {
     /** Server ticks to let the scene play before the first picture, and between pictures. */
     private static final int SETTLE = 400;
     private static final int SHOT_GAP = 40;
+    /** Client ticks per Ponder scene: long enough for its first line of text. */
+    private static final int PONDER_GAP = 110;
+    private static final List<java.util.function.Supplier<? extends net.minecraft.world.level.ItemLike>> PONDERS = List.of(
+            BBBlocks.MANGLER::get, BBBlocks.BLEEDING_RACK::get, BBBlocks.SPIT_ROAST::get);
 
     private DevShowcase() {
     }
@@ -127,9 +131,25 @@ public final class DevShowcase {
                         shot++;
                     }
                 } else if (age - moveAt > SHOT_GAP + 20) {
-                    BloodAndBones.LOGGER.info("[showcase] done");
                     stage = 3;
+                    ticks = 0;
+                }
+            }
+            case 3 -> {
+                // open each Ponder scene and photograph it once its first text is up
+                int scene = ticks / PONDER_GAP;
+                int phase = ticks % PONDER_GAP;
+                ticks++;
+                if (scene >= PONDERS.size()) {
+                    BloodAndBones.LOGGER.info("[showcase] done");
+                    stage = 4;
                     mc.stop();
+                } else if (phase == 0) {
+                    net.createmod.catnip.gui.ScreenOpener.open(net.createmod.ponder.foundation.ui.PonderUI.of(new ItemStack(PONDERS.get(scene).get())));
+                } else if (phase == PONDER_GAP - 1) {
+                    Screenshot.grab(mc.gameDirectory, "showcase_ponder_" + scene + ".png", mc.getMainRenderTarget(), message -> {
+                    });
+                    BloodAndBones.LOGGER.info("[showcase] took ponder shot {}", scene);
                 }
             }
             default -> {
