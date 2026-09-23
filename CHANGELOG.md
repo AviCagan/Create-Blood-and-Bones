@@ -23,7 +23,7 @@ Everything below is in development builds only; the art is placeholder (see the 
   scenes, advancements.
 - A `bloodandbonesBloodless` game rule forces bloodless mode for everyone; bloodless mode also shows
   skinned carcasses pale and the hook in a carcass clean.
-- Flies gather over rotting carcasses.
+- Flies gather over rotting carcasses, and maggots squirm over ones nearly gone.
 - An in-game settings screen (Mods, Blood & Bones, Config) for bloodless mode and the rot settings.
 - Rotten carcasses fall apart after a day; a server config sets the rot speed and the falling apart.
 

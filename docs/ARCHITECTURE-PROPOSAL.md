@@ -544,6 +544,8 @@ pipes; chain clearance = hanging length + 1 block.
   mirror of Create's `BoilerHeater` and is what we build on.
 - Flies (`bloodandbones:fly`, a particle that darts about where it was born) gather over a carcass
   below 45% fresh, more as it goes off; none while cold stops the rot, none over bloodless mobs.
+  Below 15% maggots crawl over it: an overlay pass on the same model, two frames swapped every 0.3 s
+  (`CarcassModels.drawMaggots`), hidden in bloodless mode.
 - Once rotten it keeps counting (`Carcass.decay`, saved, at the same rate, so ice still stops it). At
   `crumble_after_days` (server config, a day by default) it falls apart at the end of the level tick
   (`CarcassRot.levelTick`, never inside a body's own tick): every piece drops half its table's yields

@@ -63,6 +63,7 @@ public class CarcassPartRenderer implements BlockEntityRenderer<CarcassPartBlock
         poseStack.translate(-min.x / 16.0F, -min.y / 16.0F, -min.z / 16.0F);
         CarcassModels.drawBone(rig, bone, be.texture(), be.passes(), rot, poseStack, buffers, packedLight);
         WoundCaps.draw(rig, bone, be.cuts(), rot, poseStack, buffers, packedLight);
+        CarcassModels.drawMaggots(rig, bone, be.freshness(), poseStack, buffers, packedLight);
         // resting form: the other limbs, posed relative to this bone's frame
         for (CarcassPartBlockEntity.MergedPart mergedPart : be.merged()) {
             Bone other = rig.bone(mergedPart.bone()).orElse(null);
@@ -74,6 +75,7 @@ public class CarcassPartRenderer implements BlockEntityRenderer<CarcassPartBlock
             poseStack.mulPose(mergedPart.orientation());
             CarcassModels.drawBone(rig, other, be.texture(), be.passes(), rot, poseStack, buffers, packedLight);
             WoundCaps.draw(rig, other, be.cuts(), rot, poseStack, buffers, packedLight);
+            CarcassModels.drawMaggots(rig, other, be.freshness(), poseStack, buffers, packedLight);
             poseStack.popPose();
         }
         poseStack.popPose();

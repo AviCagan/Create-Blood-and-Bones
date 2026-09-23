@@ -22,7 +22,7 @@ provided by [Sable](https://github.com/ryanhcode/sable).
   Knife takes the hide off (with a sheep's wool). Yields are data-driven per mob and spoil as the
   carcass rots. Light pieces can be picked up and carried.
 - **Rot.** Carcasses rot over game time; cold slows it, ice stops it. Flies gather as the meat
-  goes off. Rotten meat turns to rotten flesh, and a carcass left rotten for a day falls apart into bones and rotten flesh, so old ones
+  goes off, and maggots crawl over it near the end. Rotten meat turns to rotten flesh, and a carcass left rotten for a day falls apart into bones and rotten flesh, so old ones
   don't pile up. Rot speed and the falling apart can be changed per world in
   `serverconfig/bloodandbones-server.toml`, or in game under Mods, Blood & Bones, Config.
 - **Hanging and blood.** The Shackle Hook hangs a carcass by the neck. A Bleeding Rack under a

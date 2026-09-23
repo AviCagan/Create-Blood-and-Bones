@@ -49,6 +49,27 @@ public final class CarcassModels {
         }
     }
 
+    /** Two frames of maggots, swapped a few times a second so they squirm. */
+    private static final ResourceLocation[] MAGGOTS = {
+            ResourceLocation.fromNamespaceAndPath("bloodandbones", "textures/entity/maggots_0.png"),
+            ResourceLocation.fromNamespaceAndPath("bloodandbones", "textures/entity/maggots_1.png")};
+    /** Freshness below which maggots crawl over the meat. */
+    public static final float MAGGOTS_BELOW = 0.15F;
+
+    /** Maggots over a bone of a carcass nearly or wholly rotten (not a bloodless mob's, not in bloodless mode). */
+    public static void drawMaggots(Rig rig, Bone bone, float freshness, PoseStack poseStack, MultiBufferSource buffers, int packedLight) {
+        if (freshness >= MAGGOTS_BELOW || com.avicagan.bloodandbones.config.BBClientConfig.bloodless()) {
+            return;
+        }
+        boolean bloodless = net.minecraft.core.registries.BuiltInRegistries.ENTITY_TYPE.getOptional(rig.entity())
+                .map(type -> type.is(com.avicagan.bloodandbones.registry.BBTags.BLOODLESS)).orElse(false);
+        if (bloodless) {
+            return;
+        }
+        ResourceLocation frame = MAGGOTS[(int) ((net.minecraft.Util.getMillis() / 300L) % 2L)];
+        drawPass(rig, bone, rig.layer(), frame, 0xFFFFFFFF, poseStack, buffers, packedLight);
+    }
+
     private static void drawPass(Rig rig, Bone bone, String layer, ResourceLocation texture, int color, PoseStack poseStack, MultiBufferSource buffers, int packedLight) {
         ModelLayerLocation location = layerOf(rig, layer);
         ModelPart part = resolve(location, bone.part());
@@ -130,6 +151,7 @@ public final class CarcassModels {
             color = FastColor.ARGB32.multiply(color, tint);
         }
         drawBone(rig, bone, piece.texture(), coats, color, poseStack, buffers, packedLight);
+        drawMaggots(rig, bone, piece.freshness(), poseStack, buffers, packedLight);
         // a piece was cut from its parent, and anything that hung off it is gone: every end is a wound
         // (unless the mob has no blood: a skeleton's cut ends are dry)
         List<String> cuts = new ArrayList<>();
