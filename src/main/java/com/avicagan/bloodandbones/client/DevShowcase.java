@@ -187,6 +187,8 @@ public final class DevShowcase {
                         mc.setScreen(null);
                         // the cow's page: what a cow's carcass gives
                         var jei = com.avicagan.bloodandbones.compat.jei.BBJeiPlugin.runtime;
+                        // and every item of this mod in the list beside it, to see their icons
+                        jei.getIngredientFilter().setFilterText("@bloodandbones");
                         jei.getRecipesGui().show(jei.getJeiHelpers().getFocusFactory().createFocus(
                                 mezz.jei.api.recipe.RecipeIngredientRole.INPUT, mezz.jei.api.constants.VanillaTypes.ITEM_STACK,
                                 new ItemStack(net.minecraft.world.item.Items.COW_SPAWN_EGG)));
