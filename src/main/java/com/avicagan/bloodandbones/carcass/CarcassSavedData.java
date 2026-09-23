@@ -65,6 +65,12 @@ public class CarcassSavedData extends SavedData {
         public final List<net.minecraft.core.BlockPos> restCells = new ArrayList<>();
         /** consecutive ticks the whole carcass has been still, not saved */
         public int stillTicks;
+        /** skinned with the Flensing Knife: the hide is off and the meat shows */
+        public boolean skinned;
+        /** Flensing Knife strokes so far; not saved */
+        public int skinStrokes;
+        /** facts about the living mob that yields can name, like a sheep's wool colour ({wool}) */
+        public final Map<String, String> traits = new LinkedHashMap<>();
         /** cleaver cuts per limb, and limbs whose joint to the body has been cut through */
         public final Map<String, Integer> cuts = new LinkedHashMap<>();
         public final java.util.Set<String> severed = new java.util.LinkedHashSet<>();
@@ -127,6 +133,10 @@ public class CarcassSavedData extends SavedData {
             }
             tag.put("Joints", jointList);
             tag.putBoolean("Resting", resting);
+            tag.putBoolean("Skinned", skinned);
+            CompoundTag traitTag = new CompoundTag();
+            traits.forEach(traitTag::putString);
+            tag.put("Traits", traitTag);
             CompoundTag cutTag = new CompoundTag();
             cuts.forEach(cutTag::putInt);
             tag.put("Cuts", cutTag);
@@ -175,6 +185,11 @@ public class CarcassSavedData extends SavedData {
                 }
             }
             carcass.resting = tag.getBoolean("Resting");
+            carcass.skinned = tag.getBoolean("Skinned");
+            CompoundTag traitTag = tag.getCompound("Traits");
+            for (String key : traitTag.getAllKeys()) {
+                carcass.traits.put(key, traitTag.getString(key));
+            }
             CompoundTag cutTag = tag.getCompound("Cuts");
             for (String key : cutTag.getAllKeys()) {
                 carcass.cuts.put(key, cutTag.getInt(key));
@@ -266,6 +281,8 @@ public class CarcassSavedData extends SavedData {
         }
         Carcass piece = new Carcass(UUID.randomUUID(), from.entity, bone);
         piece.look = from.look;
+        piece.skinned = from.skinned;
+        piece.traits.putAll(from.traits);
         piece.freshness = from.freshness;
         piece.rotClock = from.rotClock;
         for (String name : moving) {

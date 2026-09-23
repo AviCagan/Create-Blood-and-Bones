@@ -127,6 +127,14 @@ public class CarcassPartBlockEntity extends BlockEntity implements BlockEntitySu
         return new CarcassLook(texture, List.copyOf(passes));
     }
 
+    /** Change what the limb wears (skinning); root cells only. */
+    public void setLook(CarcassLook look) {
+        this.texture = look.texture();
+        this.passes.clear();
+        this.passes.addAll(look.passes());
+        setChanged();
+    }
+
     public Vector3f boxMin() {
         return boxMin;
     }

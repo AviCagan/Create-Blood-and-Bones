@@ -1,0 +1,94 @@
+{
+  "entity": "minecraft:sheep",
+  "hide": [
+    {
+      "count": 1.28,
+      "item": "bloodandbones:raw_hide",
+      "kind": "hide"
+    }
+  ],
+  "parts": {
+    "body": [
+      {
+        "count": 1.5,
+        "item": "bloodandbones:raw_meat",
+        "kind": "meat"
+      },
+      {
+        "count": 0.56,
+        "item": "minecraft:bone",
+        "kind": "bone"
+      },
+      {
+        "count": 0.86,
+        "item": "bloodandbones:offal",
+        "kind": "offal"
+      },
+      {
+        "count": 0.43,
+        "item": "bloodandbones:animal_fat",
+        "kind": "fat"
+      }
+    ],
+    "head": [
+      {
+        "count": 0.42,
+        "item": "bloodandbones:raw_meat",
+        "kind": "meat"
+      },
+      {
+        "count": 0.5,
+        "item": "minecraft:bone",
+        "kind": "bone"
+      }
+    ],
+    "left_front_leg": [
+      {
+        "count": 0.38,
+        "item": "bloodandbones:raw_meat",
+        "kind": "meat"
+      },
+      {
+        "count": 0.5,
+        "item": "minecraft:bone",
+        "kind": "bone"
+      }
+    ],
+    "left_hind_leg": [
+      {
+        "count": 0.38,
+        "item": "bloodandbones:raw_meat",
+        "kind": "meat"
+      },
+      {
+        "count": 0.5,
+        "item": "minecraft:bone",
+        "kind": "bone"
+      }
+    ],
+    "right_front_leg": [
+      {
+        "count": 0.38,
+        "item": "bloodandbones:raw_meat",
+        "kind": "meat"
+      },
+      {
+        "count": 0.5,
+        "item": "minecraft:bone",
+        "kind": "bone"
+      }
+    ],
+    "right_hind_leg": [
+      {
+        "count": 0.38,
+        "item": "bloodandbones:raw_meat",
+        "kind": "meat"
+      },
+      {
+        "count": 0.5,
+        "item": "minecraft:bone",
+        "kind": "bone"
+      }
+    ]
+  }
+}

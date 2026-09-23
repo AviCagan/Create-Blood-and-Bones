@@ -28,10 +28,12 @@ import java.util.Optional;
  * @param parents      bone -> parent bone overrides
  * @param boxes        bone -> physics box overrides, part-local pixels
  * @param joints       bone -> joint overrides
+ * @param butchery     what taking the carcass apart gives; defaults to generic meat, hide and bone
  */
 public record RigTarget(ResourceLocation entity, ResourceLocation model, String layer, String texture, Map<String, String> variantNames,
                         List<RenderPass> passes, float scale, int rotTime, Optional<String> torso, List<String> hidden, List<String> merge,
-                        Map<String, String> attach, Map<String, String> parents, Map<String, Box> boxes, Map<String, JointSpec> joints) {
+                        Map<String, String> attach, Map<String, String> parents, Map<String, Box> boxes, Map<String, JointSpec> joints,
+                        ButcheryTarget butchery) {
     public record Box(Vector3f min, Vector3f max) {
         public static final Codec<Box> CODEC = RecordCodecBuilder.create(i -> i.group(
                 RigCodecs.VEC3.fieldOf("min").forGetter(Box::min),
@@ -54,6 +56,7 @@ public record RigTarget(ResourceLocation entity, ResourceLocation model, String 
             Codec.unboundedMap(Codec.STRING, Codec.STRING).optionalFieldOf("attach", Map.of()).forGetter(RigTarget::attach),
             Codec.unboundedMap(Codec.STRING, Codec.STRING).optionalFieldOf("parents", Map.of()).forGetter(RigTarget::parents),
             Codec.unboundedMap(Codec.STRING, Box.CODEC).optionalFieldOf("boxes", Map.of()).forGetter(RigTarget::boxes),
-            Codec.unboundedMap(Codec.STRING, JointSpec.CODEC).optionalFieldOf("joints", Map.of()).forGetter(RigTarget::joints)
+            Codec.unboundedMap(Codec.STRING, JointSpec.CODEC).optionalFieldOf("joints", Map.of()).forGetter(RigTarget::joints),
+            ButcheryTarget.CODEC.optionalFieldOf("butchery", ButcheryTarget.DEFAULT).forGetter(RigTarget::butchery)
     ).apply(i, RigTarget::new));
 }

@@ -43,6 +43,11 @@ public final class CarcassRot {
     /** Called every tick from the torso's root cell, resting or not. */
     public static void tick(ServerLevel level, CarcassSavedData.Carcass carcass, ServerSubLevel torso) {
         if (carcass.isRotten()) {
+            // nothing left to rot, but limbs that load later still need telling what they look like
+            if (++carcass.rotSyncTicks >= SYNC_INTERVAL) {
+                carcass.rotSyncTicks = 0;
+                sync(level, carcass, torso);
+            }
             return;
         }
         Vector3dc position = torso.logicalPose().position();
@@ -84,8 +89,20 @@ public final class CarcassRot {
                 continue;
             }
             BlockPos root = limb.getPlot().getCenterBlock();
-            if (level.getBlockEntity(root) instanceof CarcassPartBlockEntity be && Math.abs(be.freshness() - carcass.freshness) > 1.0E-4F) {
+            if (!(level.getBlockEntity(root) instanceof CarcassPartBlockEntity be) || !be.isRoot()) {
+                continue;
+            }
+            boolean changed = false;
+            if (Math.abs(be.freshness() - carcass.freshness) > 1.0E-4F) {
                 be.setFreshness(carcass.freshness);
+                changed = true;
+            }
+            // the look too: a skinned carcass whose limb was unloaded while it was skinned
+            if (!be.look().equals(carcass.look)) {
+                be.setLook(carcass.look);
+                changed = true;
+            }
+            if (changed) {
                 be.setChanged();
                 level.sendBlockUpdated(root, level.getBlockState(root), level.getBlockState(root), Block.UPDATE_CLIENTS);
             }

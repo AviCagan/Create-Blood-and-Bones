@@ -78,12 +78,18 @@ public class RigExportProvider implements DataProvider {
             JsonElement json = Rig.CODEC.encodeStart(JsonOps.INSTANCE, rig).getOrThrow();
             Path path = base.resolve(target.entity().getNamespace()).resolve(target.entity().getPath() + ".json");
             futures.add(DataProvider.saveStable(cache, json, path));
+            // and what taking it apart gives, spread over the same bones
+            com.avicagan.bloodandbones.carcass.butchery.ButcheryTable table = ButcheryDerivation.derive(rig, target.butchery());
+            JsonElement tableJson = com.avicagan.bloodandbones.carcass.butchery.ButcheryTable.CODEC.encodeStart(JsonOps.INSTANCE, table).getOrThrow();
+            Path tablePath = output.getOutputFolder(PackOutput.Target.DATA_PACK).resolve(BloodAndBones.MOD_ID).resolve("butchery")
+                    .resolve(target.entity().getNamespace()).resolve(target.entity().getPath() + ".json");
+            futures.add(DataProvider.saveStable(cache, tableJson, tablePath));
         }
         return CompletableFuture.allOf(futures.toArray(CompletableFuture[]::new));
     }
 
     @Override
     public String getName() {
-        return "Blood & Bones carcass rigs";
+        return "Blood & Bones carcass rigs and butchery tables";
     }
 }

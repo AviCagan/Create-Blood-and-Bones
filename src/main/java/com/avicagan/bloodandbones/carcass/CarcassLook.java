@@ -36,6 +36,22 @@ public record CarcassLook(ResourceLocation texture, List<Coat> passes) {
             Markings.WHITE_DOTS, "whitedots",
             Markings.BLACK_DOTS, "blackdots");
 
+    /** What a skinned carcass wears: bare meat. Model UVs are relative, so one texture fits every model. */
+    public static final ResourceLocation FLESH = ResourceLocation.fromNamespaceAndPath("bloodandbones", "textures/entity/flesh.png");
+
+    public static CarcassLook flesh() {
+        return new CarcassLook(FLESH, List.of());
+    }
+
+    /** Facts about the living mob that butchery yields can name: {wool} for an unsheared sheep's colour. */
+    public static Map<String, String> traits(LivingEntity entity) {
+        Map<String, String> traits = new HashMap<>();
+        if (entity instanceof Sheep sheep && !sheep.isSheared()) {
+            traits.put("wool", sheep.getColor().getName());
+        }
+        return traits;
+    }
+
     public static CarcassLook of(LivingEntity entity, Rig rig) {
         Map<String, String> variables = new HashMap<>();
         Map<String, Integer> tints = new HashMap<>();

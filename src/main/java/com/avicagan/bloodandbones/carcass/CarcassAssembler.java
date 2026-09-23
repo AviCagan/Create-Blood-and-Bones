@@ -151,6 +151,7 @@ public final class CarcassAssembler {
 
         CarcassSavedData.Carcass carcass = new CarcassSavedData.Carcass(carcassId, rig.entity(), rig.root().name());
         carcass.look = appearance;
+        carcass.traits.putAll(CarcassLook.traits(entity));
         subLevels.forEach((name, subLevel) -> carcass.bones.put(name, subLevel.getUniqueId()));
 
         for (Bone bone : rig.bones()) {
