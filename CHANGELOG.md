@@ -31,7 +31,8 @@ Everything below is in development builds only; the art is placeholder (see the 
 
 ### Blood
 
-- Blood and Soul Blood fluids, the Bleeding Rack, fan-boosted bleeding, slower rot once bled.
+- Blood and Soul Blood fluids, the Bleeding Rack, fan-boosted bleeding, slower rot once bled. A rack
+  only takes one kind: blood waits in the body rather than mixing.
   Nether mobs (piglins, hoglins, zoglins, striders) drain Soul Blood straight into the rack, and
   their spray, drips and stains are its dark teal.
 - Blood stains on the ground (they squelch underfoot) from kills, cuts, drag trails and uncaught

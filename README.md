@@ -71,7 +71,7 @@ incremental. `./gradlew runClient` / `runServer` / `runData` are configured by M
 
 ### Development aids
 
-- `./gradlew runGameTestServer` runs the game tests headless (170: every rigged mob and baby,
+- `./gradlew runGameTestServer` runs the game tests headless (172: every rigged mob and baby,
   butchery, rot, bleeding, machines and their filters, cooking and display, chains, recipes,
   advancements and sounds).
 - `./gradlew runData -Dbloodandbones.dump_layers=minecraft:goat#main,...` writes those vanilla

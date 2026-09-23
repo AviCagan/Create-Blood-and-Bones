@@ -57,10 +57,14 @@ public final class BBClientSetup {
     /** Blood stains darken as they dry: wet red, drying brown-red, dried near black. */
     @SubscribeEvent
     public static void onBlockColors(net.neoforged.neoforge.client.event.RegisterColorHandlersEvent.Block event) {
-        event.register((state, level, pos, tint) -> switch (state.getValue(com.avicagan.bloodandbones.bleeding.BloodStainBlock.AGE)) {
-            case 0 -> 0xFFFFFF;
-            case 1 -> 0xA0806C;
-            default -> 0x6A5448;
+        event.register((state, level, pos, tint) -> {
+            // Soul Blood dries darker too, but greyer rather than brown
+            boolean soul = state.getValue(com.avicagan.bloodandbones.bleeding.BloodStainBlock.SOUL);
+            return switch (state.getValue(com.avicagan.bloodandbones.bleeding.BloodStainBlock.AGE)) {
+                case 0 -> 0xFFFFFF;
+                case 1 -> soul ? 0x8C9A98 : 0xA0806C;
+                default -> soul ? 0x5A6462 : 0x6A5448;
+            };
         }, com.avicagan.bloodandbones.registry.BBBlocks.BLOOD_STAIN.get());
     }
 

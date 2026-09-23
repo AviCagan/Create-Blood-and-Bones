@@ -244,7 +244,9 @@ public final class CarcassBleeding {
 
     /**
      * The nearest rack under a point that can take this fluid: empty, or holding the same (a rack holds
-     * one fluid, so a tray of blood is passed over for a hoglin's Soul Blood, and the next one tried).
+     * one fluid, so a tray of blood is passed over for a hoglin's Soul Blood, and one beside it tried).
+     * When the only racks at that level hold the other fluid, the one under it is returned anyway: it
+     * takes nothing, like a full tray, so the blood waits in the body instead of draining into nothing.
      */
     public static BleedingRackBlockEntity rackBelow(ServerLevel level, Vector3d from, int reach,
                                                     @org.jetbrains.annotations.Nullable net.minecraft.world.level.material.Fluid fluid) {
@@ -256,16 +258,26 @@ public final class CarcassBleeding {
             if (!level.isLoaded(pos)) {
                 return null;
             }
-            if (level.getBlockEntity(pos) instanceof BleedingRackBlockEntity rack && takes.test(rack)) {
-                return rack;
+            BleedingRackBlockEntity refused = null;
+            if (level.getBlockEntity(pos) instanceof BleedingRackBlockEntity rack) {
+                if (takes.test(rack)) {
+                    return rack;
+                }
+                refused = rack;
             }
             for (net.minecraft.core.Direction side : net.minecraft.core.Direction.Plane.HORIZONTAL) {
                 for (int corner = 0; corner < 2; corner++) {
                     BlockPos around = corner == 0 ? pos.relative(side) : pos.relative(side).relative(side.getClockWise());
-                    if (level.isLoaded(around) && level.getBlockEntity(around) instanceof BleedingRackBlockEntity rack && takes.test(rack)) {
-                        return rack;
+                    if (level.isLoaded(around) && level.getBlockEntity(around) instanceof BleedingRackBlockEntity rack) {
+                        if (takes.test(rack)) {
+                            return rack;
+                        }
+                        refused = refused == null ? rack : refused;
                     }
                 }
+            }
+            if (refused != null) {
+                return refused;
             }
             if (!level.getBlockState(pos).getCollisionShape(level, pos).isEmpty()) {
                 return null;

@@ -146,4 +146,30 @@ public class BleedingRackTests {
             helper.succeed();
         });
     }
+
+    /**
+     * A rack holds one fluid: Soul Blood over a lone rack of blood is refused there (it takes nothing, so
+     * the blood waits in the body), and goes to an empty rack beside it once there is one.
+     */
+    @GameTest(template = "empty", timeoutTicks = 20)
+    public static void soulBloodPassesOverARackOfBlood(GameTestHelper helper) {
+        ServerLevel level = helper.getLevel();
+        BlockPos under = new BlockPos(5, 2, 5);
+        helper.setBlock(under, BBBlocks.BLEEDING_RACK.getDefaultState());
+        BleedingRackBlockEntity bloodRack = (BleedingRackBlockEntity) level.getBlockEntity(helper.absolutePos(under));
+        bloodRack.collect(new FluidStack(com.avicagan.bloodandbones.registry.BBFluids.blood(), 200), FluidAction.EXECUTE);
+        BlockPos above = helper.absolutePos(under.above(3));
+        org.joml.Vector3d from = new org.joml.Vector3d(above.getX() + 0.5, above.getY() + 0.5, above.getZ() + 0.5);
+        net.minecraft.world.level.material.Fluid soul = com.avicagan.bloodandbones.registry.BBFluids.soulBlood();
+        BleedingRackBlockEntity found = com.avicagan.bloodandbones.carcass.CarcassBleeding.rackBelow(level, from, 8, soul);
+        if (found != bloodRack || found.collect(new FluidStack(soul, 50), FluidAction.EXECUTE) != 0) {
+            helper.fail("A lone rack of blood should be found but take no Soul Blood");
+        }
+        helper.setBlock(under.east(), BBBlocks.BLEEDING_RACK.getDefaultState());
+        BleedingRackBlockEntity empty = (BleedingRackBlockEntity) level.getBlockEntity(helper.absolutePos(under.east()));
+        if (com.avicagan.bloodandbones.carcass.CarcassBleeding.rackBelow(level, from, 8, soul) != empty) {
+            helper.fail("An empty rack beside the rack of blood should take the Soul Blood");
+        }
+        helper.succeed();
+    }
 }

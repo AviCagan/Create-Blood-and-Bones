@@ -124,6 +124,21 @@ public class CarcassMachineBlockEntity extends KineticBlockEntity implements Cle
                 return super.canShortInteract(toApply) && (toApply.isEmpty() || filterAllowed(toApply));
             }
 
+            /** Turned away, with Create's own "invalid item" message and sound. */
+            @Override
+            public void onShortInteract(Player player, net.minecraft.world.InteractionHand hand, net.minecraft.core.Direction side,
+                                        net.minecraft.world.phys.BlockHitResult hitResult) {
+                ItemStack toApply = player.getItemInHand(hand);
+                if (!toApply.isEmpty() && !filterAllowed(toApply)) {
+                    if (!player.level().isClientSide) {
+                        player.displayClientMessage(com.simibubi.create.foundation.utility.CreateLang.translateDirect("logistics.filter.invalid_item"), true);
+                        com.simibubi.create.AllSoundEvents.DENY.playOnServer(player.level(), player.blockPosition(), 1, 1);
+                    }
+                    return;
+                }
+                super.onShortInteract(player, hand, side, hitResult);
+            }
+
             @Override
             public boolean readFromClipboard(net.minecraft.core.HolderLookup.Provider registries, CompoundTag tag, Player player,
                                              net.minecraft.core.Direction side, boolean simulate) {

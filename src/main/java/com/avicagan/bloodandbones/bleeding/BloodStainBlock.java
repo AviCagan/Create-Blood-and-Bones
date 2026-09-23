@@ -115,7 +115,8 @@ public class BloodStainBlock extends Block {
         BlockState here = level.getBlockState(pos);
         if (here.is(stain.getBlock())) {
             int size = Math.min(4, Math.max(here.getValue(SIZE), here.getValue(SIZE) + amount / 2 + (level.random.nextBoolean() ? 1 : 0)));
-            BlockState grown = here.setValue(SIZE, size).setValue(AGE, 0);
+            // fresh blood over it: it takes that blood's colour
+            BlockState grown = here.setValue(SIZE, size).setValue(AGE, 0).setValue(SOUL, stain.getValue(SOUL));
             if (grown != here) {
                 level.setBlock(pos, grown, Block.UPDATE_CLIENTS);
             }
