@@ -1,0 +1,101 @@
+{
+  "entity": "minecraft:rabbit",
+  "hide": [
+    {
+      "item": "minecraft:rabbit_hide",
+      "kind": "hide"
+    }
+  ],
+  "parts": {
+    "body": [
+      {
+        "count": 0.63,
+        "item": "minecraft:rabbit",
+        "kind": "meat"
+      },
+      {
+        "count": 0.5,
+        "item": "minecraft:bone",
+        "kind": "bone"
+      },
+      {
+        "count": 0.06,
+        "item": "bloodandbones:offal",
+        "kind": "offal"
+      },
+      {
+        "count": 0.03,
+        "item": "bloodandbones:animal_fat",
+        "kind": "fat"
+      }
+    ],
+    "head": [
+      {
+        "count": 0.21,
+        "item": "minecraft:rabbit",
+        "kind": "meat"
+      },
+      {
+        "count": 0.5,
+        "item": "minecraft:bone",
+        "kind": "bone"
+      }
+    ],
+    "left_front_leg": [
+      {
+        "count": 0.06,
+        "item": "minecraft:rabbit",
+        "kind": "meat"
+      },
+      {
+        "count": 0.5,
+        "item": "minecraft:bone",
+        "kind": "bone"
+      }
+    ],
+    "left_haunch": [
+      {
+        "count": 0.08,
+        "item": "minecraft:rabbit",
+        "kind": "meat"
+      },
+      {
+        "count": 0.5,
+        "item": "minecraft:bone",
+        "kind": "bone"
+      },
+      {
+        "count": 0.1,
+        "item": "minecraft:rabbit_foot"
+      }
+    ],
+    "right_front_leg": [
+      {
+        "count": 0.06,
+        "item": "minecraft:rabbit",
+        "kind": "meat"
+      },
+      {
+        "count": 0.5,
+        "item": "minecraft:bone",
+        "kind": "bone"
+      }
+    ],
+    "right_haunch": [
+      {
+        "count": 0.08,
+        "item": "minecraft:rabbit",
+        "kind": "meat"
+      },
+      {
+        "count": 0.5,
+        "item": "minecraft:bone",
+        "kind": "bone"
+      },
+      {
+        "count": 0.1,
+        "item": "minecraft:rabbit_foot"
+      }
+    ]
+  }
+}

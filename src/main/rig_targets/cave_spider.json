@@ -1,0 +1,193 @@
+{
+  "entity": "minecraft:cave_spider",
+  "model": "minecraft:cave_spider",
+  "texture": "minecraft:textures/entity/spider/cave_spider.png",
+  "rot_time": 20000,
+  "torso": "body1",
+  "parents": {
+    "right_front_leg": "body0",
+    "left_front_leg": "body0",
+    "right_middle_front_leg": "body0",
+    "left_middle_front_leg": "body0",
+    "right_middle_hind_leg": "body0",
+    "left_middle_hind_leg": "body0",
+    "right_hind_leg": "body0",
+    "left_hind_leg": "body0",
+    "head": "body0"
+  },
+  "joints": {
+    "right_front_leg": {
+      "min_degrees": [
+        -20,
+        -40,
+        -60
+      ],
+      "max_degrees": [
+        20,
+        40,
+        60
+      ],
+      "damping": 2.5,
+      "stiffness": 0.1,
+      "contacts": false
+    },
+    "left_front_leg": {
+      "min_degrees": [
+        -20,
+        -40,
+        -60
+      ],
+      "max_degrees": [
+        20,
+        40,
+        60
+      ],
+      "damping": 2.5,
+      "stiffness": 0.1,
+      "contacts": false
+    },
+    "right_middle_front_leg": {
+      "min_degrees": [
+        -20,
+        -40,
+        -60
+      ],
+      "max_degrees": [
+        20,
+        40,
+        60
+      ],
+      "damping": 2.5,
+      "stiffness": 0.1,
+      "contacts": false
+    },
+    "left_middle_front_leg": {
+      "min_degrees": [
+        -20,
+        -40,
+        -60
+      ],
+      "max_degrees": [
+        20,
+        40,
+        60
+      ],
+      "damping": 2.5,
+      "stiffness": 0.1,
+      "contacts": false
+    },
+    "right_middle_hind_leg": {
+      "min_degrees": [
+        -20,
+        -40,
+        -60
+      ],
+      "max_degrees": [
+        20,
+        40,
+        60
+      ],
+      "damping": 2.5,
+      "stiffness": 0.1,
+      "contacts": false
+    },
+    "left_middle_hind_leg": {
+      "min_degrees": [
+        -20,
+        -40,
+        -60
+      ],
+      "max_degrees": [
+        20,
+        40,
+        60
+      ],
+      "damping": 2.5,
+      "stiffness": 0.1,
+      "contacts": false
+    },
+    "right_hind_leg": {
+      "min_degrees": [
+        -20,
+        -40,
+        -60
+      ],
+      "max_degrees": [
+        20,
+        40,
+        60
+      ],
+      "damping": 2.5,
+      "stiffness": 0.1,
+      "contacts": false
+    },
+    "left_hind_leg": {
+      "min_degrees": [
+        -20,
+        -40,
+        -60
+      ],
+      "max_degrees": [
+        20,
+        40,
+        60
+      ],
+      "damping": 2.5,
+      "stiffness": 0.1,
+      "contacts": false
+    },
+    "head": {
+      "min_degrees": [
+        -15,
+        -30,
+        -6
+      ],
+      "max_degrees": [
+        25,
+        30,
+        6
+      ],
+      "damping": 4.0,
+      "stiffness": 2.0,
+      "contacts": false
+    },
+    "body0": {
+      "min_degrees": [
+        -20,
+        -15,
+        -10
+      ],
+      "max_degrees": [
+        20,
+        15,
+        10
+      ],
+      "damping": 4.0,
+      "stiffness": 2.0,
+      "contacts": false
+    }
+  },
+  "butchery": {
+    "meat": "none",
+    "hide": "none",
+    "bone": "none",
+    "fat_per_weight": 0.0,
+    "part_extras": {
+      "head": [
+        {
+          "item": "minecraft:spider_eye",
+          "count": 1.0,
+          "kind": "offal"
+        }
+      ],
+      "body1": [
+        {
+          "item": "minecraft:string",
+          "count": 2.0,
+          "kind": "other"
+        }
+      ]
+    }
+  },
+  "scale": 0.7
+}

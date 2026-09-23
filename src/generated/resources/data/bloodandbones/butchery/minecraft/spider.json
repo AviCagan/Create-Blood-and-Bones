@@ -1,0 +1,31 @@
+{
+  "entity": "minecraft:spider",
+  "parts": {
+    "body0": [],
+    "body1": [
+      {
+        "count": 1.07,
+        "item": "bloodandbones:offal",
+        "kind": "offal"
+      },
+      {
+        "count": 2.0,
+        "item": "minecraft:string"
+      }
+    ],
+    "head": [
+      {
+        "item": "minecraft:spider_eye",
+        "kind": "offal"
+      }
+    ],
+    "left_front_leg": [],
+    "left_hind_leg": [],
+    "left_middle_front_leg": [],
+    "left_middle_hind_leg": [],
+    "right_front_leg": [],
+    "right_hind_leg": [],
+    "right_middle_front_leg": [],
+    "right_middle_hind_leg": []
+  }
+}

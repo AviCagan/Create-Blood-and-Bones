@@ -1,0 +1,88 @@
+{
+  "entity": "minecraft:rabbit",
+  "model": "minecraft:rabbit",
+  "texture": "minecraft:textures/entity/rabbit/{variant}.png",
+  "variant_names": {
+    "evil": "caerbannog"
+  },
+  "rot_time": 16000,
+  "torso": "body",
+  "scale": 0.6,
+  "attach": {
+    "nose": "head",
+    "right_ear": "head",
+    "left_ear": "head",
+    "right_hind_foot": "right_haunch",
+    "left_hind_foot": "left_haunch",
+    "tail": "body"
+  },
+  "joints": {
+    "head": {
+      "min_degrees": [
+        -15,
+        -30,
+        -6
+      ],
+      "max_degrees": [
+        25,
+        30,
+        6
+      ],
+      "damping": 4.0,
+      "stiffness": 2.0,
+      "contacts": false
+    },
+    "right_haunch": {
+      "min_degrees": [
+        -75,
+        -10,
+        -15
+      ],
+      "max_degrees": [
+        75,
+        10,
+        15
+      ],
+      "damping": 3.0,
+      "stiffness": 0.1,
+      "contacts": false
+    },
+    "left_haunch": {
+      "min_degrees": [
+        -75,
+        -10,
+        -15
+      ],
+      "max_degrees": [
+        75,
+        10,
+        15
+      ],
+      "damping": 3.0,
+      "stiffness": 0.1,
+      "contacts": false
+    }
+  },
+  "butchery": {
+    "meat": "minecraft:rabbit",
+    "hide": "minecraft:rabbit_hide",
+    "hide_per_weight": 20.0,
+    "part_extras": {
+      "right_haunch": [
+        {
+          "item": "minecraft:rabbit_foot",
+          "count": 0.1,
+          "kind": "other"
+        }
+      ],
+      "left_haunch": [
+        {
+          "item": "minecraft:rabbit_foot",
+          "count": 0.1,
+          "kind": "other"
+        }
+      ]
+    },
+    "meat_per_block": 40.0
+  }
+}

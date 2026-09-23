@@ -1,0 +1,30 @@
+{
+  "entity": "minecraft:creeper",
+  "model": "minecraft:creeper",
+  "texture": "minecraft:textures/entity/creeper/creeper.png",
+  "rot_time": 12000,
+  "torso": "body",
+  "butchery": {
+    "meat": "none",
+    "hide": "none",
+    "bone": "none",
+    "offal_per_weight": 0.0,
+    "fat_per_weight": 0.0,
+    "part_extras": {
+      "body": [
+        {
+          "item": "minecraft:gunpowder",
+          "count": 2.0,
+          "kind": "other"
+        }
+      ],
+      "head": [
+        {
+          "item": "minecraft:gunpowder",
+          "count": 0.5,
+          "kind": "other"
+        }
+      ]
+    }
+  }
+}

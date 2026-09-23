@@ -1,0 +1,330 @@
+{
+  "bones": [
+    {
+      "box_max": [
+        1.8000001,
+        1.8000001,
+        0.0
+      ],
+      "box_min": [
+        -1.8000001,
+        -1.2,
+        -6.0
+      ],
+      "extras": [
+        {
+          "offset": [
+            0.0,
+            0.7690276,
+            -0.35860345
+          ],
+          "part": "tail",
+          "rotation": [
+            -4.4703484E-8,
+            0.0,
+            0.0,
+            1.0000001
+          ]
+        }
+      ],
+      "name": "body",
+      "offset": [
+        0.0,
+        11.400001,
+        4.8
+      ],
+      "part": "body",
+      "rotation": [
+        -0.17364818,
+        0.0,
+        0.0,
+        0.9848077
+      ]
+    },
+    {
+      "parent": "body",
+      "box_max": [
+        1.5,
+        0.0,
+        0.0
+      ],
+      "box_min": [
+        -1.5,
+        -2.4,
+        -3.0
+      ],
+      "extras": [
+        {
+          "offset": [
+            0.0,
+            0.0,
+            0.0
+          ],
+          "part": "nose",
+          "rotation": [
+            0.0,
+            0.0,
+            0.0,
+            1.0
+          ]
+        },
+        {
+          "offset": [
+            0.0,
+            0.0,
+            0.0
+          ],
+          "part": "right_ear",
+          "rotation": [
+            0.0,
+            -0.1305262,
+            0.0,
+            0.9914449
+          ]
+        },
+        {
+          "offset": [
+            0.0,
+            0.0,
+            0.0
+          ],
+          "part": "left_ear",
+          "rotation": [
+            0.0,
+            0.1305262,
+            0.0,
+            0.9914449
+          ]
+        }
+      ],
+      "joint": {
+        "damping": 4.0,
+        "max_degrees": [
+          25.0,
+          30.0,
+          6.0
+        ],
+        "min_degrees": [
+          -15.0,
+          -30.0,
+          -6.0
+        ],
+        "stiffness": 2.0
+      },
+      "name": "head",
+      "offset": [
+        0.0,
+        9.6,
+        -0.6
+      ],
+      "part": "head",
+      "rotation": [
+        0.0,
+        0.0,
+        0.0,
+        1.0
+      ]
+    },
+    {
+      "parent": "body",
+      "box_max": [
+        0.6,
+        4.2000003,
+        0.6
+      ],
+      "box_min": [
+        -0.6,
+        0.0,
+        -0.6
+      ],
+      "joint": {
+        "damping": 3.0,
+        "max_degrees": [
+          75.0,
+          10.0,
+          15.0
+        ],
+        "min_degrees": [
+          -75.0,
+          -10.0,
+          -15.0
+        ],
+        "stiffness": 0.1
+      },
+      "name": "right_front_leg",
+      "offset": [
+        -1.8000001,
+        10.200001,
+        -0.6
+      ],
+      "part": "right_front_leg",
+      "rotation": [
+        -0.08715574,
+        0.0,
+        0.0,
+        0.9961947
+      ]
+    },
+    {
+      "parent": "body",
+      "box_max": [
+        0.6,
+        2.4,
+        3.0
+      ],
+      "box_min": [
+        -0.6,
+        0.0,
+        0.0
+      ],
+      "extras": [
+        {
+          "offset": [
+            0.0,
+            0.0,
+            0.0
+          ],
+          "part": "left_hind_foot",
+          "rotation": [
+            0.1736482,
+            0.0,
+            0.0,
+            0.98480785
+          ]
+        }
+      ],
+      "joint": {
+        "damping": 3.0,
+        "max_degrees": [
+          75.0,
+          10.0,
+          15.0
+        ],
+        "min_degrees": [
+          -75.0,
+          -10.0,
+          -15.0
+        ],
+        "stiffness": 0.1
+      },
+      "name": "left_haunch",
+      "offset": [
+        1.8000001,
+        10.5,
+        2.22
+      ],
+      "part": "left_haunch",
+      "rotation": [
+        -0.17364818,
+        0.0,
+        0.0,
+        0.9848077
+      ]
+    },
+    {
+      "parent": "body",
+      "box_max": [
+        0.6,
+        2.4,
+        3.0
+      ],
+      "box_min": [
+        -0.6,
+        0.0,
+        0.0
+      ],
+      "extras": [
+        {
+          "offset": [
+            0.0,
+            0.0,
+            0.0
+          ],
+          "part": "right_hind_foot",
+          "rotation": [
+            0.1736482,
+            0.0,
+            0.0,
+            0.98480785
+          ]
+        }
+      ],
+      "joint": {
+        "damping": 3.0,
+        "max_degrees": [
+          75.0,
+          10.0,
+          15.0
+        ],
+        "min_degrees": [
+          -75.0,
+          -10.0,
+          -15.0
+        ],
+        "stiffness": 0.1
+      },
+      "name": "right_haunch",
+      "offset": [
+        -1.8000001,
+        10.5,
+        2.22
+      ],
+      "part": "right_haunch",
+      "rotation": [
+        -0.17364818,
+        0.0,
+        0.0,
+        0.9848077
+      ]
+    },
+    {
+      "parent": "body",
+      "box_max": [
+        0.6,
+        4.2000003,
+        0.6
+      ],
+      "box_min": [
+        -0.6,
+        0.0,
+        -0.6
+      ],
+      "joint": {
+        "damping": 3.0,
+        "max_degrees": [
+          75.0,
+          10.0,
+          15.0
+        ],
+        "min_degrees": [
+          -75.0,
+          -10.0,
+          -15.0
+        ],
+        "stiffness": 0.1
+      },
+      "name": "left_front_leg",
+      "offset": [
+        1.8000001,
+        10.200001,
+        -0.6
+      ],
+      "part": "left_front_leg",
+      "rotation": [
+        -0.08715574,
+        0.0,
+        0.0,
+        0.9961947
+      ]
+    }
+  ],
+  "entity": "minecraft:rabbit",
+  "model": "minecraft:rabbit",
+  "rot_time": 16000,
+  "scale": 0.6,
+  "texture": "minecraft:textures/entity/rabbit/{variant}.png",
+  "variant_names": {
+    "evil": "caerbannog"
+  },
+  "weight": 0.028265627
+}

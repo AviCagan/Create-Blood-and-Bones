@@ -78,6 +78,16 @@ public record CarcassLook(ResourceLocation texture, List<Coat> passes) {
         if (entity instanceof net.minecraft.world.entity.animal.horse.Llama llama) {
             variables.put("variant", llama.getVariant().getSerializedName());
         }
+        if (entity instanceof net.minecraft.world.entity.animal.Cat cat) {
+            variables.put("cat_texture", cat.getVariant().value().texture().toString());
+        }
+        if (entity instanceof net.minecraft.world.entity.animal.Fox fox) {
+            variables.put("variant", fox.getVariant().getSerializedName());
+        }
+        if (entity instanceof net.minecraft.world.entity.animal.Rabbit rabbit) {
+            boolean toast = rabbit.hasCustomName() && "Toast".equals(net.minecraft.ChatFormatting.stripFormatting(rabbit.getName().getString()));
+            variables.put("variant", toast ? "toast" : rabbit.getVariant().getSerializedName());
+        }
         if (entity instanceof net.minecraft.world.entity.animal.Panda panda) {
             variables.put("variant", panda.getVariant().getSerializedName());
         }

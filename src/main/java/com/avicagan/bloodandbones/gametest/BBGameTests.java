@@ -648,6 +648,51 @@ public class BBGameTests {
         animalTest(helper, EntityType.PANDA, 6);
     }
 
+    @GameTest(template = "empty", timeoutTicks = 200)
+    public static void catCarcassAssembles(GameTestHelper helper) {
+        animalTest(helper, EntityType.CAT, 7);
+    }
+
+    @GameTest(template = "empty", timeoutTicks = 200)
+    public static void ocelotCarcassAssembles(GameTestHelper helper) {
+        animalTest(helper, EntityType.OCELOT, 7);
+    }
+
+    @GameTest(template = "empty", timeoutTicks = 200)
+    public static void hoglinCarcassAssembles(GameTestHelper helper) {
+        animalTest(helper, EntityType.HOGLIN, 6);
+    }
+
+    @GameTest(template = "empty", timeoutTicks = 200)
+    public static void zoglinCarcassAssembles(GameTestHelper helper) {
+        animalTest(helper, EntityType.ZOGLIN, 6);
+    }
+
+    @GameTest(template = "empty", timeoutTicks = 200)
+    public static void spiderCarcassAssembles(GameTestHelper helper) {
+        animalTest(helper, EntityType.SPIDER, 11);
+    }
+
+    @GameTest(template = "empty", timeoutTicks = 200)
+    public static void caveSpiderCarcassAssembles(GameTestHelper helper) {
+        animalTest(helper, EntityType.CAVE_SPIDER, 11);
+    }
+
+    @GameTest(template = "empty", timeoutTicks = 200)
+    public static void creeperCarcassAssembles(GameTestHelper helper) {
+        animalTest(helper, EntityType.CREEPER, 6);
+    }
+
+    @GameTest(template = "empty", timeoutTicks = 200)
+    public static void foxCarcassAssembles(GameTestHelper helper) {
+        animalTest(helper, EntityType.FOX, 7);
+    }
+
+    @GameTest(template = "empty", timeoutTicks = 200)
+    public static void rabbitCarcassAssembles(GameTestHelper helper) {
+        animalTest(helper, EntityType.RABBIT, 6);
+    }
+
     /** A white llama and a brown panda keep their colours on the carcass. */
     @GameTest(template = "empty", timeoutTicks = 100)
     public static void llamaAndPandaKeepTheirColours(GameTestHelper helper) {

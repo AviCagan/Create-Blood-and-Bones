@@ -1,0 +1,36 @@
+{
+  "entity": "minecraft:fox",
+  "model": "minecraft:fox",
+  "texture": "minecraft:textures/entity/fox/{variant}.png",
+  "variant_names": {
+    "red": "fox",
+    "snow": "snow_fox"
+  },
+  "rot_time": 20000,
+  "torso": "body",
+  "merge": [
+    "head/nose",
+    "head/right_ear",
+    "head/left_ear"
+  ],
+  "joints": {
+    "head": {
+      "min_degrees": [
+        -15,
+        -30,
+        -6
+      ],
+      "max_degrees": [
+        25,
+        30,
+        6
+      ],
+      "damping": 4.0,
+      "stiffness": 2.0,
+      "contacts": false
+    }
+  },
+  "butchery": {
+    "hide_per_weight": 5.0
+  }
+}

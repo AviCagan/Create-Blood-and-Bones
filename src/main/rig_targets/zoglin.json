@@ -1,0 +1,37 @@
+{
+  "entity": "minecraft:zoglin",
+  "model": "minecraft:zoglin",
+  "texture": "minecraft:textures/entity/hoglin/zoglin.png",
+  "rot_time": 8000,
+  "torso": "body",
+  "merge": [
+    "head/right_horn",
+    "head/left_horn",
+    "head/right_ear",
+    "head/left_ear",
+    "body/mane"
+  ],
+  "joints": {
+    "head": {
+      "min_degrees": [
+        -15,
+        -30,
+        -6
+      ],
+      "max_degrees": [
+        25,
+        30,
+        6
+      ],
+      "damping": 4.0,
+      "stiffness": 2.0,
+      "contacts": false
+    }
+  },
+  "butchery": {
+    "meat": "minecraft:rotten_flesh",
+    "hide": "none",
+    "offal_per_weight": 0.5,
+    "fat_per_weight": 0.0
+  }
+}

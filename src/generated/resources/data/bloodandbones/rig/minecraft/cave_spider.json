@@ -1,0 +1,435 @@
+{
+  "bones": [
+    {
+      "box_max": [
+        3.5,
+        2.8,
+        4.2
+      ],
+      "box_min": [
+        -3.5,
+        -2.8,
+        -4.2
+      ],
+      "name": "body1",
+      "offset": [
+        0.0,
+        10.5,
+        6.2999997
+      ],
+      "part": "body1",
+      "rotation": [
+        0.0,
+        0.0,
+        0.0,
+        1.0
+      ]
+    },
+    {
+      "parent": "body0",
+      "box_max": [
+        2.8,
+        2.8,
+        0.0
+      ],
+      "box_min": [
+        -2.8,
+        -2.8,
+        -5.6
+      ],
+      "joint": {
+        "damping": 4.0,
+        "max_degrees": [
+          25.0,
+          30.0,
+          6.0
+        ],
+        "min_degrees": [
+          -15.0,
+          -30.0,
+          -6.0
+        ],
+        "stiffness": 2.0
+      },
+      "name": "head",
+      "offset": [
+        0.0,
+        10.5,
+        -2.1
+      ],
+      "part": "head",
+      "rotation": [
+        0.0,
+        0.0,
+        0.0,
+        1.0
+      ]
+    },
+    {
+      "parent": "body0",
+      "box_max": [
+        0.7,
+        0.7,
+        0.7
+      ],
+      "box_min": [
+        -10.5,
+        -0.7,
+        -0.7
+      ],
+      "joint": {
+        "damping": 2.5,
+        "max_degrees": [
+          20.0,
+          40.0,
+          60.0
+        ],
+        "min_degrees": [
+          -20.0,
+          -40.0,
+          -60.0
+        ],
+        "stiffness": 0.1
+      },
+      "name": "right_front_leg",
+      "offset": [
+        -2.8,
+        10.5,
+        -0.7
+      ],
+      "part": "right_front_leg",
+      "rotation": [
+        0.0,
+        0.0,
+        0.0,
+        1.0
+      ]
+    },
+    {
+      "parent": "body0",
+      "box_max": [
+        0.7,
+        0.7,
+        0.7
+      ],
+      "box_min": [
+        -10.5,
+        -0.7,
+        -0.7
+      ],
+      "joint": {
+        "damping": 2.5,
+        "max_degrees": [
+          20.0,
+          40.0,
+          60.0
+        ],
+        "min_degrees": [
+          -20.0,
+          -40.0,
+          -60.0
+        ],
+        "stiffness": 0.1
+      },
+      "name": "right_hind_leg",
+      "offset": [
+        -2.8,
+        10.5,
+        1.4
+      ],
+      "part": "right_hind_leg",
+      "rotation": [
+        0.0,
+        0.0,
+        0.0,
+        1.0
+      ]
+    },
+    {
+      "parent": "body0",
+      "box_max": [
+        10.5,
+        0.7,
+        0.7
+      ],
+      "box_min": [
+        -0.7,
+        -0.7,
+        -0.7
+      ],
+      "joint": {
+        "damping": 2.5,
+        "max_degrees": [
+          20.0,
+          40.0,
+          60.0
+        ],
+        "min_degrees": [
+          -20.0,
+          -40.0,
+          -60.0
+        ],
+        "stiffness": 0.1
+      },
+      "name": "left_middle_front_leg",
+      "offset": [
+        2.8,
+        10.5,
+        0.0
+      ],
+      "part": "left_middle_front_leg",
+      "rotation": [
+        0.0,
+        0.0,
+        0.0,
+        1.0
+      ]
+    },
+    {
+      "parent": "body1",
+      "box_max": [
+        2.1,
+        2.1,
+        2.1
+      ],
+      "box_min": [
+        -2.1,
+        -2.1,
+        -2.1
+      ],
+      "joint": {
+        "damping": 4.0,
+        "max_degrees": [
+          20.0,
+          15.0,
+          10.0
+        ],
+        "min_degrees": [
+          -20.0,
+          -15.0,
+          -10.0
+        ],
+        "stiffness": 2.0
+      },
+      "name": "body0",
+      "offset": [
+        0.0,
+        10.5,
+        0.0
+      ],
+      "part": "body0",
+      "rotation": [
+        0.0,
+        0.0,
+        0.0,
+        1.0
+      ]
+    },
+    {
+      "parent": "body0",
+      "box_max": [
+        10.5,
+        0.7,
+        0.7
+      ],
+      "box_min": [
+        -0.7,
+        -0.7,
+        -0.7
+      ],
+      "joint": {
+        "damping": 2.5,
+        "max_degrees": [
+          20.0,
+          40.0,
+          60.0
+        ],
+        "min_degrees": [
+          -20.0,
+          -40.0,
+          -60.0
+        ],
+        "stiffness": 0.1
+      },
+      "name": "left_hind_leg",
+      "offset": [
+        2.8,
+        10.5,
+        1.4
+      ],
+      "part": "left_hind_leg",
+      "rotation": [
+        0.0,
+        0.0,
+        0.0,
+        1.0
+      ]
+    },
+    {
+      "parent": "body0",
+      "box_max": [
+        0.7,
+        0.7,
+        0.7
+      ],
+      "box_min": [
+        -10.5,
+        -0.7,
+        -0.7
+      ],
+      "joint": {
+        "damping": 2.5,
+        "max_degrees": [
+          20.0,
+          40.0,
+          60.0
+        ],
+        "min_degrees": [
+          -20.0,
+          -40.0,
+          -60.0
+        ],
+        "stiffness": 0.1
+      },
+      "name": "right_middle_hind_leg",
+      "offset": [
+        -2.8,
+        10.5,
+        0.7
+      ],
+      "part": "right_middle_hind_leg",
+      "rotation": [
+        0.0,
+        0.0,
+        0.0,
+        1.0
+      ]
+    },
+    {
+      "parent": "body0",
+      "box_max": [
+        0.7,
+        0.7,
+        0.7
+      ],
+      "box_min": [
+        -10.5,
+        -0.7,
+        -0.7
+      ],
+      "joint": {
+        "damping": 2.5,
+        "max_degrees": [
+          20.0,
+          40.0,
+          60.0
+        ],
+        "min_degrees": [
+          -20.0,
+          -40.0,
+          -60.0
+        ],
+        "stiffness": 0.1
+      },
+      "name": "right_middle_front_leg",
+      "offset": [
+        -2.8,
+        10.5,
+        0.0
+      ],
+      "part": "right_middle_front_leg",
+      "rotation": [
+        0.0,
+        0.0,
+        0.0,
+        1.0
+      ]
+    },
+    {
+      "parent": "body0",
+      "box_max": [
+        10.5,
+        0.7,
+        0.7
+      ],
+      "box_min": [
+        -0.7,
+        -0.7,
+        -0.7
+      ],
+      "joint": {
+        "damping": 2.5,
+        "max_degrees": [
+          20.0,
+          40.0,
+          60.0
+        ],
+        "min_degrees": [
+          -20.0,
+          -40.0,
+          -60.0
+        ],
+        "stiffness": 0.1
+      },
+      "name": "left_middle_hind_leg",
+      "offset": [
+        2.8,
+        10.5,
+        0.7
+      ],
+      "part": "left_middle_hind_leg",
+      "rotation": [
+        0.0,
+        0.0,
+        0.0,
+        1.0
+      ]
+    },
+    {
+      "parent": "body0",
+      "box_max": [
+        10.5,
+        0.7,
+        0.7
+      ],
+      "box_min": [
+        -0.7,
+        -0.7,
+        -0.7
+      ],
+      "joint": {
+        "damping": 2.5,
+        "max_degrees": [
+          20.0,
+          40.0,
+          60.0
+        ],
+        "min_degrees": [
+          -20.0,
+          -40.0,
+          -60.0
+        ],
+        "stiffness": 0.1
+      },
+      "name": "left_front_leg",
+      "offset": [
+        2.8,
+        10.5,
+        -0.7
+      ],
+      "part": "left_front_leg",
+      "rotation": [
+        0.0,
+        0.0,
+        0.0,
+        1.0
+      ]
+    }
+  ],
+  "entity": "minecraft:cave_spider",
+  "model": "minecraft:cave_spider",
+  "rot_time": 20000,
+  "scale": 0.7,
+  "texture": "minecraft:textures/entity/spider/cave_spider.png",
+  "weight": 0.18422857
+}

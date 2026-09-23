@@ -1,0 +1,21 @@
+{
+  "entity": "minecraft:creeper",
+  "parts": {
+    "body": [
+      {
+        "count": 2.0,
+        "item": "minecraft:gunpowder"
+      }
+    ],
+    "head": [
+      {
+        "count": 0.5,
+        "item": "minecraft:gunpowder"
+      }
+    ],
+    "left_front_leg": [],
+    "left_hind_leg": [],
+    "right_front_leg": [],
+    "right_hind_leg": []
+  }
+}

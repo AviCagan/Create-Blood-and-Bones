@@ -1,0 +1,46 @@
+{
+  "entity": "minecraft:cat",
+  "model": "minecraft:cat",
+  "texture": "{cat_texture}",
+  "rot_time": 20000,
+  "torso": "body",
+  "attach": {
+    "tail2": "tail1"
+  },
+  "joints": {
+    "head": {
+      "min_degrees": [
+        -15,
+        -30,
+        -6
+      ],
+      "max_degrees": [
+        25,
+        30,
+        6
+      ],
+      "damping": 4.0,
+      "stiffness": 2.0,
+      "contacts": false
+    },
+    "tail1": {
+      "min_degrees": [
+        -45,
+        -45,
+        -45
+      ],
+      "max_degrees": [
+        45,
+        45,
+        45
+      ],
+      "damping": 2.0,
+      "stiffness": 1.0,
+      "contacts": false
+    }
+  },
+  "butchery": {
+    "hide_per_weight": 4.0
+  },
+  "scale": 0.8
+}

@@ -1,0 +1,94 @@
+{
+  "entity": "minecraft:hoglin",
+  "hide": [
+    {
+      "count": 6.58,
+      "item": "bloodandbones:raw_hide",
+      "kind": "hide"
+    }
+  ],
+  "parts": {
+    "body": [
+      {
+        "count": 11.38,
+        "item": "minecraft:porkchop",
+        "kind": "meat"
+      },
+      {
+        "count": 4.27,
+        "item": "minecraft:bone",
+        "kind": "bone"
+      },
+      {
+        "count": 4.38,
+        "item": "bloodandbones:offal",
+        "kind": "offal"
+      },
+      {
+        "count": 2.19,
+        "item": "bloodandbones:animal_fat",
+        "kind": "fat"
+      }
+    ],
+    "head": [
+      {
+        "count": 3.12,
+        "item": "minecraft:porkchop",
+        "kind": "meat"
+      },
+      {
+        "count": 1.17,
+        "item": "minecraft:bone",
+        "kind": "bone"
+      }
+    ],
+    "left_front_leg": [
+      {
+        "count": 0.98,
+        "item": "minecraft:porkchop",
+        "kind": "meat"
+      },
+      {
+        "count": 0.5,
+        "item": "minecraft:bone",
+        "kind": "bone"
+      }
+    ],
+    "left_hind_leg": [
+      {
+        "count": 0.54,
+        "item": "minecraft:porkchop",
+        "kind": "meat"
+      },
+      {
+        "count": 0.5,
+        "item": "minecraft:bone",
+        "kind": "bone"
+      }
+    ],
+    "right_front_leg": [
+      {
+        "count": 0.98,
+        "item": "minecraft:porkchop",
+        "kind": "meat"
+      },
+      {
+        "count": 0.5,
+        "item": "minecraft:bone",
+        "kind": "bone"
+      }
+    ],
+    "right_hind_leg": [
+      {
+        "count": 0.54,
+        "item": "minecraft:porkchop",
+        "kind": "meat"
+      },
+      {
+        "count": 0.5,
+        "item": "minecraft:bone",
+        "kind": "bone"
+      }
+    ]
+  }
+}
