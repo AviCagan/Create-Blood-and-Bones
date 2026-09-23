@@ -151,7 +151,7 @@ public class ShackleTrolleyEntity extends Entity {
         if (cursor == null) {
             return;
         }
-        switch (cursor.advance(level, parked)) {
+        switch (cursor.advance(level, parked || blockedAhead(level))) {
             case DERAILED -> {
                 dropCarcass(level); // conveyor broken or chain removed
                 return;
@@ -179,6 +179,38 @@ public class ShackleTrolleyEntity extends Entity {
         Vec3 next = point.subtract(0, HANG, 0);
         prevAnchor = anchor == null ? next : anchor;
         anchor = next;
+    }
+
+    /** Closest another trolley may be ahead before this one waits: carcasses hang about this far apart. */
+    public static final double GAP = 1.6;
+
+    /**
+     * Another trolley is close ahead, so wait behind it (Create lets packages overlap; hanging bodies would
+     * swing into each other). Two on the same spot: the newer one waits.
+     */
+    private boolean blockedAhead(ServerLevel level) {
+        Set<ShackleTrolleyEntity> trolleys = LOADED.get(level);
+        ChainConveyorBlockEntity be = ChainCursor.conveyorAt(level, cursor.conveyor);
+        if (trolleys == null || trolleys.size() < 2 || be == null) {
+            return false;
+        }
+        Vec3 here = position();
+        Vec3 heading = cursor.heading(be);
+        for (ShackleTrolleyEntity other : trolleys) {
+            if (other == this || other.isRemoved() || other.cursor == null) {
+                continue;
+            }
+            Vec3 offset = other.position().subtract(here);
+            double distance = offset.length();
+            if (distance >= GAP) {
+                continue;
+            }
+            double ahead = offset.dot(heading);
+            if (ahead > 0.1 || (Math.abs(ahead) <= 0.1 && distance < 0.5 && other.getId() < getId())) {
+                return true;
+            }
+        }
+        return false;
     }
 
     @Override

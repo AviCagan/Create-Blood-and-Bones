@@ -187,4 +187,89 @@ public class TrolleyTests {
             helper.succeed();
         });
     }
+
+    /** Two trolleys put on the chain almost together: the newer waits, then follows a carcass-length behind. */
+    @GameTest(template = "empty", timeoutTicks = 600)
+    public static void trolleysQueueOnAChain(GameTestHelper helper) {
+        ServerLevel level = helper.getLevel();
+        BlockPos aRel = new BlockPos(1, 6, 5);
+        BlockPos bRel = new BlockPos(9, 6, 5);
+        helper.setBlock(aRel, AllBlocks.CHAIN_CONVEYOR.getDefaultState());
+        helper.setBlock(bRel, AllBlocks.CHAIN_CONVEYOR.getDefaultState());
+        helper.setBlock(aRel.above(), AllBlocks.CREATIVE_MOTOR.getDefaultState().setValue(CreativeMotorBlock.FACING, Direction.DOWN));
+        BlockPos a = helper.absolutePos(aRel);
+        BlockPos b = helper.absolutePos(bRel);
+        UUID[] ids = new UUID[2];
+        for (int i = 0; i < 2; i++) {
+            Cow cow = helper.spawn(EntityType.COW, new BlockPos(3 + 3 * i, 2, 5));
+            CarcassSavedData.Carcass carcass = CarcassAssembler.assemble(cow, null);
+            cow.discard();
+            if (carcass == null) {
+                helper.fail("Carcass assembly returned null");
+                return;
+            }
+            ids[i] = carcass.id;
+        }
+        ShackleTrolleyEntity[] trolleys = new ShackleTrolleyEntity[2];
+        double[] closest = {Double.MAX_VALUE};
+        double[][] range = {{Double.MAX_VALUE, -Double.MAX_VALUE}, {Double.MAX_VALUE, -Double.MAX_VALUE}};
+
+        helper.runAfterDelay(5, () -> {
+            ChainConveyorBlockEntity aBe = (ChainConveyorBlockEntity) level.getBlockEntity(a);
+            ChainConveyorBlockEntity bBe = (ChainConveyorBlockEntity) level.getBlockEntity(b);
+            if (!bBe.addConnectionTo(a) || !aBe.addConnectionTo(b)) {
+                helper.fail("Could not connect the chain conveyors");
+            }
+            ((CreativeMotorBlockEntity) level.getBlockEntity(a.above())).generatedSpeed.setValue(64);
+        });
+        helper.runAfterDelay(30, () -> {
+            ChainConveyorBlockEntity aBe = (ChainConveyorBlockEntity) level.getBlockEntity(a);
+            aBe.prepareStats();
+            ServerSubLevelContainer container = SubLevelContainer.getContainer(level);
+            for (int i = 0; i < 2; i++) {
+                CarcassSavedData.Carcass carcass = CarcassSavedData.get(level).carcass(ids[i]);
+                if (carcass == null || !(container.getSubLevel(carcass.bones.get(carcass.rootBone)) instanceof ServerSubLevel torso)) {
+                    helper.fail("No carcass " + i);
+                    return;
+                }
+                // the second goes on a hair behind the first
+                ChainCursor cursor = new ChainCursor(a, b.subtract(a), 1.3f - 0.3f * i, aBe.reversed);
+                trolleys[i] = ShackleTrolleyEntity.create(BBEntities.SHACKLE_TROLLEY.get(), level, cursor, carcass, torso);
+                level.addFreshEntity(trolleys[i]);
+            }
+        });
+        for (int t = 31; t < 500; t++) {
+            int tick = t;
+            helper.runAfterDelay(t, () -> {
+                if (trolleys[0] == null || trolleys[0].isRemoved() || trolleys[1].isRemoved()) {
+                    helper.fail("A trolley is gone at tick " + tick);
+                    return;
+                }
+                for (int i = 0; i < 2; i++) {
+                    range[i][0] = Math.min(range[i][0], trolleys[i].getX());
+                    range[i][1] = Math.max(range[i][1], trolleys[i].getX());
+                }
+                double gap = trolleys[0].position().distanceTo(trolleys[1].position());
+                if (tick > 60) {
+                    closest[0] = Math.min(closest[0], gap);
+                }
+                if (tick % 40 == 0) {
+                    BloodAndBones.LOGGER.info("[queue] t={} gap={} first={} second={}", tick, gap, trolleys[0].position(), trolleys[1].position());
+                }
+            });
+        }
+        helper.runAfterDelay(510, () -> {
+            BloodAndBones.LOGGER.info("[queue] closest={} ranges={}..{} / {}..{}", closest[0], range[0][0], range[0][1], range[1][0], range[1][1]);
+            if (closest[0] < 1.2) {
+                helper.fail("The trolleys came within " + closest[0] + " blocks of each other");
+            }
+            for (int i = 0; i < 2; i++) {
+                if (range[i][1] - range[i][0] < 4.0) {
+                    helper.fail("Trolley " + i + " barely moved: " + range[i][0] + ".." + range[i][1]);
+                }
+                trolleys[i].dropCarcass(level);
+            }
+            helper.succeed();
+        });
+    }
 }

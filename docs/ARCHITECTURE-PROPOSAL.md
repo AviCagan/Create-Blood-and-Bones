@@ -667,7 +667,10 @@ pipes; chain clearance = hanging length + 1 block.
   after `prepareStats()`, `getSpeed()`, `reversed`, `loopThresholdCrossed`, routing table and ports).
   `ShackleTrolleyEntity` moves in `LevelTickEvent.Pre` (before Sable steps) and slides the world end of a
   ball joint each substep with `setFrame1`. A carcass on a trolley counts as hanging.
-- Open: trolleys do not queue on a shared strand; conveyors on Sable sub-levels are not supported.
+- Trolleys queue: one waits while another is within `GAP` (1.6 blocks) and ahead along its heading, so
+  a line of carcasses keeps a body's length apart and backs up behind one stopped at a frogport (Create
+  itself lets packages overlap). Two on the same spot: the newer waits.
+- Open: conveyors on Sable sub-levels are not supported.
 
 ### 13.12 Cooking and display (verified)
 

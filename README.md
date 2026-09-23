@@ -27,7 +27,8 @@ provided by [Sable](https://github.com/ryanhcode/sable).
   Blood and Soul Blood are real fluids for pipes, tanks, spouts and basins. A bled carcass keeps
   longer.
 - **Chain conveyors.** Right-click a Create chain conveyor with the Meat Hook while dragging a
-  carcass: it rides the chain on a trolley and stops at frogports addressed for it.
+  carcass: it rides the chain on a trolley and stops at frogports addressed for it. Trolleys queue
+  behind each other instead of bunching up.
 - **Machines** (shaft from below, stress 4 to 8 per RPM): the Mangler tears a carcass apart and
   grinds it down; the Guillotine takes limbs off; the Beheader takes heads (sometimes the skull);
   the Deglover strips hides. Each works whatever carcass lies on or hangs over it.
