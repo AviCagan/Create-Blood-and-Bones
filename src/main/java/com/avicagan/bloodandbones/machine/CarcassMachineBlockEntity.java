@@ -116,10 +116,34 @@ public class CarcassMachineBlockEntity extends KineticBlockEntity implements Cle
             public boolean mayInteract(Player player) {
                 return !(player instanceof net.neoforged.neoforge.common.util.FakePlayer);
             }
-        }.withPredicate(stack -> stack.getItem() instanceof net.minecraft.world.item.SpawnEggItem
-                || stack.is(com.avicagan.bloodandbones.registry.BBItems.CARCASS_PIECE.get())
-                || stack.getItem() instanceof com.simibubi.create.content.logistics.filter.FilterItem);
+
+            // Create hands the old filter back before it asks whether the new item may go in: an item that
+            // may not has to be turned away before that, or each refused click would copy the old filter
+            @Override
+            public boolean canShortInteract(ItemStack toApply) {
+                return super.canShortInteract(toApply) && (toApply.isEmpty() || filterAllowed(toApply));
+            }
+
+            @Override
+            public boolean readFromClipboard(net.minecraft.core.HolderLookup.Provider registries, CompoundTag tag, Player player,
+                                             net.minecraft.core.Direction side, boolean simulate) {
+                if (tag.contains("Filter")) {
+                    ItemStack copied = ItemStack.parseOptional(registries, tag.getCompound("Filter"));
+                    if (!copied.isEmpty() && !filterAllowed(copied)) {
+                        return false;
+                    }
+                }
+                return super.readFromClipboard(registries, tag, player, side, simulate);
+            }
+        }.withPredicate(CarcassMachineBlockEntity::filterAllowed);
         behaviours.add(filtering);
+    }
+
+    /** What may go in the filter slot: a spawn egg, a carcass piece, or a Create filter. */
+    public static boolean filterAllowed(ItemStack stack) {
+        return stack.getItem() instanceof net.minecraft.world.item.SpawnEggItem
+                || stack.is(com.avicagan.bloodandbones.registry.BBItems.CARCASS_PIECE.get())
+                || stack.getItem() instanceof com.simibubi.create.content.logistics.filter.FilterItem;
     }
 
     /** Whether the filter lets this machine work on this carcass. */

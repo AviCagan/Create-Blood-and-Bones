@@ -74,7 +74,7 @@ public class ButcherTableBlockEntity extends SpecimenJarBlockEntity {
      * One chop: the piece comes apart into what butchering it gives, dropped on the table top, with the
      * wet sound and spray of a cut. The cleaver comes away bloody from a mob that bleeds.
      *
-     * @return false when there is nothing on the table
+     * @return false when there is nothing on the table, or nothing it could be cut into
      */
     public boolean chop(ServerLevel level, ItemStack cleaver) {
         CarcassPieceItem.Piece piece = CarcassPieceItem.piece(specimen());
@@ -82,6 +82,10 @@ public class ButcherTableBlockEntity extends SpecimenJarBlockEntity {
             return false;
         }
         List<ItemStack> yields = CarcassButchery.pieceYields(level, piece);
+        if (yields.isEmpty()) {
+            // no butchery table for this mob or this part: the piece stays whole rather than vanish
+            return false;
+        }
         take();
         BlockPos pos = getBlockPos();
         Vector3d top = new Vector3d(pos.getX() + 0.5, pos.getY() + 1.05, pos.getZ() + 0.5);

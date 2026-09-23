@@ -81,12 +81,12 @@ public final class CarcassThuds {
             double mass = bone == null ? 0.2 : bone.boxSize().x * bone.boxSize().y * bone.boxSize().z / 4096.0;
             float volume = (float) Mth.clamp(impact / 8.0 * (0.5 + Math.sqrt(mass)), 0.25, 1.2);
             float pitch = (float) Mth.clamp(1.25 - Math.sqrt(mass) * 0.6, 0.55, 1.25);
-            if (Blood.bloody(carcass)) {
-                level.playSound(null, at.x, at.y, at.z, com.avicagan.bloodandbones.registry.BBSounds.CARCASS_THUD.get(), SoundSource.NEUTRAL, volume, pitch);
-            } else {
-                // a skeleton or a golem clatters rather than squelches
-                level.playSound(null, at.x, at.y, at.z, com.avicagan.bloodandbones.registry.BBSounds.CARCASS_CLATTER.get(), SoundSource.NEUTRAL, volume, pitch);
-            }
+            // a skeleton clatters; everything else, slimes and golems included, lands with a thud
+            boolean bones = net.minecraft.core.registries.BuiltInRegistries.ENTITY_TYPE.getOptional(carcass.entity)
+                    .map(type -> type.is(net.minecraft.tags.EntityTypeTags.SKELETONS) || type == net.minecraft.world.entity.EntityType.WITHER)
+                    .orElse(false);
+            level.playSound(null, at.x, at.y, at.z, (bones ? com.avicagan.bloodandbones.registry.BBSounds.CARCASS_CLATTER
+                    : com.avicagan.bloodandbones.registry.BBSounds.CARCASS_THUD).get(), SoundSource.NEUTRAL, volume, pitch);
             if (impact >= SPLAT && Blood.bloody(carcass)) {
                 Blood.burst(level, new Vector3d(at), 6);
                 Blood.stain(level, new Vector3d(at), 1);

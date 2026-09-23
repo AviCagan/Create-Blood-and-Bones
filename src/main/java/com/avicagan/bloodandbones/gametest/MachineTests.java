@@ -155,6 +155,11 @@ public class MachineTests {
             // a tool is not a filter, and a Deployer's stand-in player cannot change it
             helper.assertTrue(!machine.filtering.setFilter(new ItemStack(com.avicagan.bloodandbones.registry.BBItems.CLEAVER.get())),
                     "a cleaver should not be taken as a filter");
+            // turned away before Create hands the old filter back, so no refused click copies it
+            helper.assertTrue(!machine.filtering.canShortInteract(new ItemStack(net.minecraft.world.item.Items.COBBLESTONE)),
+                    "cobblestone should be turned away at the slot");
+            helper.assertTrue(machine.filtering.canShortInteract(ItemStack.EMPTY) && machine.filtering.canShortInteract(list),
+                    "an empty hand or a filter should be let through to the slot");
             helper.assertTrue(!machine.filtering.mayInteract(net.neoforged.neoforge.common.util.FakePlayerFactory.getMinecraft(level)),
                     "a Deployer should not set the filter");
             helper.succeed();

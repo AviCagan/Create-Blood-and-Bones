@@ -185,9 +185,9 @@ public class BBGameTests {
             player.setOldPosAndRot(); // mock players never tick, so refresh the previous-tick position the tether interpolates from
             hookedDistance[0] = body.logicalPose().position().distance(player.getX(), player.getY(), player.getZ());
         });
-        // the closest the hooked point came to its target over the last second: a body still swinging
-        // when the check runs is past it one tick and on it the next
-        double[] closest = {Double.MAX_VALUE};
+        // the hooked point's distance to its target over the last second, judged by its middle value: one
+        // tick caught mid-swing does not fail a drag that holds on, and one that keeps swinging still fails
+        List<Double> gaps = new java.util.ArrayList<>();
         int[] ticks = {0};
         helper.onEachTick(() -> {
             if (CarcassDrag.isDragging(player)) {
@@ -196,7 +196,7 @@ public class BBGameTests {
                     CarcassDrag.Drag now = CarcassDrag.current(player);
                     if (now != null && SubLevelContainer.getContainer(level).getSubLevel(now.subLevel) instanceof ServerSubLevel held) {
                         org.joml.Vector3d point = held.logicalPose().transformPosition(now.anchorPlot, new org.joml.Vector3d());
-                        closest[0] = Math.min(closest[0], point.distance(CarcassDrag.debugTarget(player)));
+                        gaps.add(point.distance(CarcassDrag.debugTarget(player)));
                     }
                 }
             }
@@ -218,7 +218,9 @@ public class BBGameTests {
             ServerSubLevel hooked = (ServerSubLevel) SubLevelContainer.getContainer(level).getSubLevel(current.subLevel);
             org.joml.Vector3d hook = hooked.logicalPose().transformPosition(current.anchorPlot, new org.joml.Vector3d());
             org.joml.Vector3d target = CarcassDrag.debugTarget(player);
-            double gap = Math.min(hook.distance(target), closest[0]);
+            gaps.add(hook.distance(target));
+            List<Double> sorted = gaps.stream().sorted().toList();
+            double gap = sorted.get(sorted.size() / 2);
             // a grabbed leg cannot fully align with the target because the hip joint holds it back against the
             // body's weight; since the leg is also steered to point at the hand it settles right about 2 blocks off
             double allowed = grabBone.equals("body") ? 0.5 : 2.25;
@@ -1154,12 +1156,21 @@ public class BBGameTests {
                     helper.setBlock(new BlockPos(x, 1, z), com.avicagan.bloodandbones.registry.BBBlocks.BLEEDING_RACK.getDefaultState());
                 }
             }
+            // the rack right under it already holds some blood: the Soul Blood goes to the others
+            ((com.avicagan.bloodandbones.bleeding.BleedingRackBlockEntity) level.getBlockEntity(helper.absolutePos(new BlockPos(5, 1, 5))))
+                    .collect(new net.neoforged.neoforge.fluids.FluidStack(com.avicagan.bloodandbones.registry.BBFluids.blood(), 200),
+                            net.neoforged.neoforge.fluids.capability.IFluidHandler.FluidAction.EXECUTE);
         });
         helper.runAfterDelay(300, () -> {
+            var bloodRack = (com.avicagan.bloodandbones.bleeding.BleedingRackBlockEntity) level.getBlockEntity(helper.absolutePos(new BlockPos(5, 1, 5)));
+            if (!bloodRack.getFluid().is(com.avicagan.bloodandbones.registry.BBFluids.blood()) || bloodRack.getFluid().getAmount() != 200) {
+                helper.fail("The rack of blood should be left as it was, has " + bloodRack.getFluid().getAmount() + " of " + bloodRack.getFluid().getFluid());
+            }
             int soul = 0;
             for (int x = 3; x <= 7; x++) {
                 for (int z = 3; z <= 7; z++) {
-                    if (level.getBlockEntity(helper.absolutePos(new BlockPos(x, 1, z))) instanceof com.avicagan.bloodandbones.bleeding.BleedingRackBlockEntity rack) {
+                    if (level.getBlockEntity(helper.absolutePos(new BlockPos(x, 1, z))) instanceof com.avicagan.bloodandbones.bleeding.BleedingRackBlockEntity rack
+                            && rack != bloodRack) {
                         net.neoforged.neoforge.fluids.FluidStack fluid = rack.getFluid();
                         if (!fluid.isEmpty() && !fluid.is(com.avicagan.bloodandbones.registry.BBFluids.soulBlood())) {
                             helper.fail("A hoglin should drain Soul Blood, a rack holds " + fluid.getFluid());

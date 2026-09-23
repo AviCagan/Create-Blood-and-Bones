@@ -666,7 +666,9 @@ dragon and tropical fish, small slimes, and final art.
 
 - The trickle path to Soul Blood: carcasses of mobs in `#bloodandbones:soul_bleeders` (piglins,
   hoglins, zoglins, striders, zombified piglins) drain Soul Blood instead (`CarcassBleeding.fluidOf`).
-  A rack holds one fluid, so blood and Soul Blood need racks of their own. `hoglinBleedsSoulBlood`.
+  A rack holds one fluid, so a carcass drains into the nearest rack that is empty or holds its own
+  fluid, passing over one of the other (`rackBelow(..., fluid)`); with none, it spills on the floor.
+  `hoglinBleedsSoulBlood` hangs a hoglin over a grid whose middle rack already holds blood.
 
 ### 13.7a Blood stains (verified)
 
@@ -689,7 +691,8 @@ dragon and tropical fish, small slimes, and final art.
   has slowed by 3 or more has landed. Slime and honey fall sounds, louder with speed and the bone's box
   volume, deeper for bigger bones; 6 or more splats blood (a burst and a stain) for a mob that bleeds.
   One thud per carcass per 8 ticks; none while it is dragged, hung or on a trolley, and only with
-  something solid within about a block under the bone. Bloodless mobs clatter (bone block) instead. `droppedCarcassThuds` drops a cow four blocks and checks a cow built
+  something solid within about a block under the bone. Skeletons and the wither clatter (bone block) instead. Only world blocks count as ground, so a
+  landing on a ship's deck or another carcass is silent. `droppedCarcassThuds` drops a cow four blocks and checks a cow built
   on the ground stays quiet.
 
 ### 13.7b Bloodless mode as built
@@ -729,7 +732,9 @@ dragon and tropical fish, small slimes, and final art.
   carcass. A spawn egg or a carcass piece: that mob (Create's plain filter would match any piece). A
   list filter asks each entry the same way, as a whitelist or blacklist; an attribute filter is asked
   about a piece of the carcass's body, so the piece attributes work. Only eggs, pieces and filters go in
-  the slot, and only for carcasses over the machine is it asked. A Deployer's stand-in player cannot set
+  the slot, turned away in `canShortInteract` and on a clipboard paste: Create hands the old filter back
+  before it checks the new item, so refusing any later would let each refused click copy the old
+  filter. It is only asked about carcasses over the machine. A Deployer's stand-in player cannot set
   it (Create lets fake players past the slot's hit test, which would have stolen their clicks). The machine's renderer now runs with Flywheel too, for the slot; it still leaves
   the shaft to the visual.
 
@@ -817,7 +822,8 @@ dragon and tropical fish, small slimes, and final art.
 - Butcher's Table (the design's "Steel Table"): holds one piece like the jar, drawn lying on the top;
   a Cleaver chops it into `CarcassButchery.pieceYields` (the same yields a loose piece gives, now shared
   with the Spit Roast), dropped on the top, with the spray, the sound and a bloodied cleaver. Clean steel
-  in bloodless mode. An item handler takes one piece at a time (funnels, hoppers) and gives it back. A
+  in bloodless mode. A piece with nothing to cut it into (no butchery table for its mob or part) stays
+  whole. An item handler takes one piece at a time (funnels, hoppers) and gives it back. A
   Deployer's stand-in player never ticks, so its item cooldowns would never run out: the table does not
   put a fake player's cleaver on cooldown (the Deployer's own pace limits it). `deployerChopsOnTheTable`
   feeds two pieces in and checks both are chopped.

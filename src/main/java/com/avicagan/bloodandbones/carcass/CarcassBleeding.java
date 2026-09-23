@@ -107,7 +107,7 @@ public final class CarcassBleeding {
             return;
         }
         Vector3d drip = lowestPoint(carcass, torso);
-        BleedingRackBlockEntity rack = rackBelow(level, drip, hanging ? HANGING_REACH : LYING_REACH);
+        BleedingRackBlockEntity rack = rackBelow(level, drip, hanging ? HANGING_REACH : LYING_REACH, fluidOf(carcass));
         if (rack == null && !hanging) {
             return;
         }
@@ -170,7 +170,7 @@ public final class CarcassBleeding {
                 Blood.drip(level, at);
             }
             // a stump drains the body; what pours onto a rack is kept, the rest stains the floor
-            BleedingRackBlockEntity rack = rackBelow(level, at, HANGING_REACH);
+            BleedingRackBlockEntity rack = rackBelow(level, at, HANGING_REACH, fluidOf(carcass));
             if (carcass.bones.containsKey(parent) && carcass.blood > 0.0F) {
                 int amount = (int) Math.ceil(Math.min(carcass.blood, carcass.bloodMax * GUSH_SHARE));
                 if (rack != null) {
@@ -239,19 +239,30 @@ public final class CarcassBleeding {
      */
     @Nullable
     public static BleedingRackBlockEntity rackBelow(ServerLevel level, Vector3d from, int reach) {
+        return rackBelow(level, from, reach, null);
+    }
+
+    /**
+     * The nearest rack under a point that can take this fluid: empty, or holding the same (a rack holds
+     * one fluid, so a tray of blood is passed over for a hoglin's Soul Blood, and the next one tried).
+     */
+    public static BleedingRackBlockEntity rackBelow(ServerLevel level, Vector3d from, int reach,
+                                                    @org.jetbrains.annotations.Nullable net.minecraft.world.level.material.Fluid fluid) {
+        java.util.function.Predicate<BleedingRackBlockEntity> takes = rack -> fluid == null
+                || rack.getFluid().isEmpty() || rack.getFluid().getFluid().isSame(fluid);
         BlockPos start = BlockPos.containing(from.x, from.y, from.z);
         for (int i = 0; i <= reach; i++) {
             BlockPos pos = start.below(i);
             if (!level.isLoaded(pos)) {
                 return null;
             }
-            if (level.getBlockEntity(pos) instanceof BleedingRackBlockEntity rack) {
+            if (level.getBlockEntity(pos) instanceof BleedingRackBlockEntity rack && takes.test(rack)) {
                 return rack;
             }
             for (net.minecraft.core.Direction side : net.minecraft.core.Direction.Plane.HORIZONTAL) {
                 for (int corner = 0; corner < 2; corner++) {
                     BlockPos around = corner == 0 ? pos.relative(side) : pos.relative(side).relative(side.getClockWise());
-                    if (level.isLoaded(around) && level.getBlockEntity(around) instanceof BleedingRackBlockEntity rack) {
+                    if (level.isLoaded(around) && level.getBlockEntity(around) instanceof BleedingRackBlockEntity rack && takes.test(rack)) {
                         return rack;
                     }
                 }

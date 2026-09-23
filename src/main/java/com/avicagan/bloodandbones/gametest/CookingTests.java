@@ -228,6 +228,16 @@ public class CookingTests {
         if (table.chop(helper.getLevel(), cleaver)) {
             helper.fail("There is nothing on an empty table to chop");
         }
+        // a piece of something with no butchery table stays whole rather than vanish
+        ItemStack odd = new ItemStack(com.avicagan.bloodandbones.registry.BBItems.CARCASS_PIECE.get());
+        odd.set(com.avicagan.bloodandbones.registry.BBDataComponents.PIECE.get(), new CarcassPieceItem.Piece(
+                com.avicagan.bloodandbones.BloodAndBones.asResource("nothing"), "body", net.minecraft.resources.ResourceLocation.withDefaultNamespace("textures/misc/white.png"),
+                List.of(), 1.0F, false, java.util.Map.of(), 0.0F, 0.0F, 0.0F, false));
+        table.put(odd);
+        if (table.chop(helper.getLevel(), cleaver) || table.specimen().isEmpty()) {
+            helper.fail("A piece with nothing to cut it into should stay on the table");
+        }
+        table.take();
         if (!table.put(cowBody(helper))) {
             helper.fail("The table should take a piece");
         }
