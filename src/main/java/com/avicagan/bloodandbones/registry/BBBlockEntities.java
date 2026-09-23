@@ -72,6 +72,11 @@ public class BBBlockEntities {
             .validBlocks(BBBlocks.FLUID_BACKTANK)
             .register();
 
+    public static final BlockEntityEntry<com.avicagan.bloodandbones.body.BacktankPortBlockEntity> BACKTANK_PORT = BloodAndBones.REGISTRATE
+            .blockEntity("backtank_port", com.avicagan.bloodandbones.body.BacktankPortBlockEntity::new)
+            .validBlocks(BBBlocks.BACKTANK_PORT)
+            .register();
+
     public static void register() {
     }
 
@@ -82,6 +87,9 @@ public class BBBlockEntities {
         com.avicagan.bloodandbones.cooking.ButcherTableBlockEntity.registerCapabilities(event);
         // a backtank set down is open to pipes on every side; worn or held, spouts and item drains fill and empty it
         event.registerBlockEntity(net.neoforged.neoforge.capabilities.Capabilities.FluidHandler.BLOCK, FLUID_BACKTANK.get(), (be, side) -> be.tank());
+        // the port's nozzle side only
+        event.registerBlockEntity(net.neoforged.neoforge.capabilities.Capabilities.FluidHandler.BLOCK, BACKTANK_PORT.get(),
+                (be, side) -> side == null || side == be.getBlockState().getValue(net.minecraft.world.level.block.DirectionalBlock.FACING) ? be.handler() : null);
         for (var entry : BBItems.BACKTANKS.values()) {
             event.registerItem(net.neoforged.neoforge.capabilities.Capabilities.FluidHandler.ITEM,
                     (stack, context) -> new net.neoforged.neoforge.fluids.capability.templates.FluidHandlerItemStack(BBDataComponents.FLUID, stack,

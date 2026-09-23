@@ -1,0 +1,16 @@
+{
+  "values": {
+    "#minecraft:lava": {
+      "effect": "fire"
+    },
+    "#minecraft:water": {
+      "effect": "splash"
+    },
+    "#c:experience": {
+      "effect": "experience"
+    },
+    "#c:milk": {
+      "effect": "cleanse"
+    }
+  }
+}

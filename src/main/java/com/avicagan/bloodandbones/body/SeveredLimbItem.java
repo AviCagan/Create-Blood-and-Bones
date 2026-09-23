@@ -6,8 +6,8 @@ import net.minecraft.world.item.Item;
 import net.minecraft.world.item.ItemStack;
 
 /**
- * A limb taken off at the Surgery Table, named for whoever it came from. Fitted back where a limb of its kind
- * is missing (anyone's, either side), it is flesh again.
+ * A part of a body taken out at the Surgery Table (a limb, an eye, an organ), named for whoever it came
+ * from. Fitted back where a part of its kind is missing (anyone's, either side), it is flesh again.
  */
 public class SeveredLimbItem extends Item {
     private final BodyPart.Kind kind;

@@ -1,0 +1,23 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "category": "equipment",
+  "pattern": [
+    "MOM",
+    "MBM",
+    " M "
+  ],
+  "key": {
+    "M": {
+      "item": "bloodandbones:raw_meat"
+    },
+    "O": {
+      "item": "bloodandbones:offal"
+    },
+    "B": {
+      "item": "minecraft:bone"
+    }
+  },
+  "result": {
+    "id": "bloodandbones:flesh_arm"
+  }
+}

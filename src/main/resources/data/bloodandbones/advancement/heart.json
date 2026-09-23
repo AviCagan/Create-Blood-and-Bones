@@ -1,0 +1,35 @@
+{
+  "parent": "bloodandbones:severed",
+  "display": {
+    "icon": {
+      "id": "bloodandbones:heart"
+    },
+    "title": {
+      "translate": "advancements.bloodandbones.heart.title"
+    },
+    "description": {
+      "translate": "advancements.bloodandbones.heart.description"
+    },
+    "frame": "challenge",
+    "show_toast": true,
+    "announce_to_chat": true,
+    "hidden": false
+  },
+  "criteria": {
+    "has": {
+      "trigger": "minecraft:inventory_changed",
+      "conditions": {
+        "items": [
+          {
+            "items": "bloodandbones:heart"
+          }
+        ]
+      }
+    }
+  },
+  "requirements": [
+    [
+      "has"
+    ]
+  ]
+}

@@ -30,6 +30,8 @@ public class BBNetwork {
                         com.avicagan.bloodandbones.body.Surgery.handle(player, payload);
                     }
                 }));
+        registrar.playToServer(com.avicagan.bloodandbones.body.Vent.Payload.TYPE, com.avicagan.bloodandbones.body.Vent.Payload.STREAM_CODEC,
+                (payload, context) -> context.enqueueWork(() -> com.avicagan.bloodandbones.body.Vent.spray(context.player())));
         registrar.playToClient(ButcherySyncPayload.TYPE, ButcherySyncPayload.STREAM_CODEC,
                 (payload, context) -> context.enqueueWork(() -> com.avicagan.bloodandbones.carcass.butchery.ButcheryManager.receiveClientTables(payload.tables())));
     }

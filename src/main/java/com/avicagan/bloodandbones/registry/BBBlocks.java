@@ -210,6 +210,17 @@ public class BBBlocks {
             .build()
             .register();
 
+    /** Where a player with a Port Arm plugs their backtank into the pipes. */
+    public static final BlockEntry<com.avicagan.bloodandbones.body.BacktankPortBlock> BACKTANK_PORT = BloodAndBones.REGISTRATE
+            .block("backtank_port", com.avicagan.bloodandbones.body.BacktankPortBlock::new)
+            .initialProperties(() -> net.minecraft.world.level.block.Blocks.COPPER_BLOCK)
+            .properties(p -> p.noOcclusion().strength(2.0F, 6.0F))
+            .blockstate((c, p) -> p.directionalBlock(c.get(), p.models().getExistingFile(p.modLoc("block/backtank_port"))))
+            .tag(net.minecraft.tags.BlockTags.MINEABLE_WITH_PICKAXE)
+            .lang("Backtank Port")
+            .simpleItem()
+            .register();
+
     public static void register() {
     }
 }

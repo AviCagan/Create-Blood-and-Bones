@@ -1431,7 +1431,9 @@ public class BBGameTests {
                 "soul_blood_fermenting", "blood_steel_block", "blood_steel_ingot_from_block", "blood_steel_ingot_from_nuggets", "blood_steel_nugget",
                 "blood_steel_cleaver", "spit_roast", "specimen_jar", "butcher_table", "butcher_hook", "gut_chain", "bloody_casing_filling",
                 "surgery_table", "peg_leg", "hook_hand", "copper_fluid_backtank", "gold_fluid_backtank", "iron_fluid_backtank", "diamond_fluid_backtank",
-                "blood_steel_fluid_backtank", "blood_diamond_fluid_backtank", "soul_netherite_fluid_backtank", "soul_netherite_ingot"}) {
+                "blood_steel_fluid_backtank", "blood_diamond_fluid_backtank", "soul_netherite_fluid_backtank", "soul_netherite_ingot",
+                "flesh_arm", "sinew_leg", "hydraulic_arm", "piston_leg", "vent_arm", "port_arm", "optic_eye", "pump_heart", "bellows_lungs", "furnace_stomach",
+                "backtank_port"}) {
             if (helper.getLevel().getRecipeManager().byKey(com.avicagan.bloodandbones.BloodAndBones.asResource(name)).isEmpty()) {
                 helper.fail("Recipe " + name + " did not load");
             }
@@ -1455,7 +1457,7 @@ public class BBGameTests {
     @GameTest(template = "empty", timeoutTicks = 20)
     public static void advancementsLoad(GameTestHelper helper) {
         for (String name : new String[]{"butchery", "cleaver", "offal", "skinned", "hanging", "blood", "machine", "blood_steel", "soul_blood", "blood_diamond", "spit_roast", "specimen",
-                "butcher_table", "butcher_hook", "bloody_casing", "gut_chain", "surgery_table", "severed", "prosthetic", "backtank", "soul_netherite"}) {
+                "butcher_table", "butcher_hook", "bloody_casing", "gut_chain", "surgery_table", "severed", "prosthetic", "backtank", "soul_netherite", "organic", "cybernetic", "heart"}) {
             if (helper.getLevel().getServer().getAdvancements().get(com.avicagan.bloodandbones.BloodAndBones.asResource(name)) == null) {
                 helper.fail("Advancement " + name + " did not load");
             }

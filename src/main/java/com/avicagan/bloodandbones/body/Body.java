@@ -94,6 +94,16 @@ public final class Body {
         return out == null ? ItemStack.EMPTY : out;
     }
 
+    /** Whether a working implant somewhere in this body has that ability. */
+    public boolean has(ImplantSpec.Ability ability, @org.jetbrains.annotations.Nullable net.minecraft.world.entity.LivingEntity wearer) {
+        for (Map.Entry<BodyPart, ItemStack> e : implants.entrySet()) {
+            if (e.getValue().getItem() instanceof ImplantItem implant && implant.spec().ability() == ability && implant.working(wearer)) {
+                return true;
+            }
+        }
+        return false;
+    }
+
     public boolean whole() {
         return lost.isEmpty();
     }

@@ -110,8 +110,60 @@ public class BBLang {
         item("severed_leg",
                 "Somebody's _leg_, taken off on a Surgery Table.",
                 "On a Surgery Table", "Goes back on where a leg is _missing_, anyone's, either side. It is flesh again.");
-        BloodAndBones.REGISTRATE.addRawLang("item.bloodandbones.severed_arm.of", "%s's Arm");
-        BloodAndBones.REGISTRATE.addRawLang("item.bloodandbones.severed_leg.of", "%s's Leg");
+        item("flesh_arm",
+                "An _organic_ arm of meat and sinew, stitched on. Runs on _blood_ from a worn Fluid Backtank.",
+                "While It Has Blood", "Blocks break _30%_ faster and it hits _harder_. When the tank runs dry it hangs _dead_, as good as no arm.");
+        item("sinew_leg",
+                "An _organic_ leg, all muscle. Runs on _blood_ from a worn Fluid Backtank.",
+                "While It Has Blood", "Walks a little faster and jumps _higher_. When the tank runs dry it is _dead weight_.");
+        item("hydraulic_arm",
+                "A _cybernetic_ arm of brass and blood steel. Runs on _soul blood_ from a worn Fluid Backtank.",
+                "While It Has Soul Blood", "Blocks break _80%_ faster, it hits _much_ harder, and it reaches a block further. Dry, it stops.");
+        item("piston_leg",
+                "A _cybernetic_ leg on a piston. Runs on _soul blood_ from a worn Fluid Backtank.",
+                "While It Has Soul Blood", "Walks faster, jumps _far_ higher and lands soft. Dry, it stops.");
+        item("vent_arm",
+                "A _cybernetic_ arm that ends in a nozzle. Runs on _whatever is in the tank_, and sprays it.",
+                "When Use Is Held with an Empty Hand", "Sprays the tank ahead of you: _lava_ or fuel burns, _water_ puts fires out, _liquid experience_ gives experience, _milk_ clears effects, anything else spills.");
+        item("port_arm",
+                "A _cybernetic_ arm with a pipe coupling for a hand. Needs nothing to run.",
+                "Next to a Backtank Port", "Plugs your worn tank into the _pipes_: pump into the port to fill it, out of it to empty it.");
+        item("optic_eye",
+                "A _cybernetic_ eye with a red lens. Runs on _soul blood_.",
+                "While It Has Soul Blood", "You see in the _dark_. Dry, it sees nothing.");
+        item("pump_heart",
+                "A _cybernetic_ heart, a brass pump. Runs on _soul blood_.",
+                "While It Has Soul Blood", "It keeps _healing_ you. Dry, it barely beats: you are _weak and slow_ until it has soul blood again.");
+        item("bellows_lungs",
+                "_Cybernetic_ lungs, a pair of bellows. Run on _soul blood_.",
+                "While They Have Soul Blood", "You breathe _underwater_. Dry, you are too winded to sprint.");
+        item("furnace_stomach",
+                "An _organic_ stomach with a fire in it. Runs on _blood_.",
+                "While It Has Blood", "Nothing you eat makes you _sick_: no hunger, no poison. Dry, you cannot eat.");
+        item("eye",
+                "Somebody's _eye_.",
+                "On a Surgery Table", "Goes back in where an eye is _missing_. With no working eye you are _blind_.");
+        item("heart",
+                "Somebody's _heart_. It is still warm.",
+                "On a Surgery Table", "Goes back in where a heart is _missing_. Without a working heart you are _weak and slow_, but alive.");
+        item("lungs",
+                "Somebody's _lungs_.",
+                "On a Surgery Table", "Go back in where lungs are _missing_. Without working lungs you cannot sprint.");
+        item("stomach",
+                "Somebody's _stomach_.",
+                "On a Surgery Table", "Goes back in where a stomach is _missing_. Without a working stomach you cannot eat.");
+        block("backtank_port",
+                "A _port_ for a worn Fluid Backtank, like a pump with a direction. Pipes connect to its _nozzle_.",
+                "With a Port Arm", "Stand next to it with a working _Port Arm_ and a backtank on: to the pipes, the port _is_ your tank. Pump into it to fill, out of it to empty.");
+        BloodAndBones.REGISTRATE.addRawLang("bloodandbones.implant.runs_on", "Runs on %s: %s mB a second");
+        BloodAndBones.REGISTRATE.addRawLang("bloodandbones.implant.runs_on_any", "Runs on whatever is in the tank, a shot at a time");
+        BloodAndBones.REGISTRATE.addRawLang("bloodandbones.body.left_eye", "Left eye");
+        BloodAndBones.REGISTRATE.addRawLang("bloodandbones.body.right_eye", "Right eye");
+        BloodAndBones.REGISTRATE.addRawLang("bloodandbones.body.heart", "Heart");
+        BloodAndBones.REGISTRATE.addRawLang("bloodandbones.body.lungs", "Lungs");
+        BloodAndBones.REGISTRATE.addRawLang("bloodandbones.body.stomach", "Stomach");
+        BloodAndBones.REGISTRATE.addRawLang("bloodandbones.surgery.action.replace", "Swap in what is on the table");
+        BloodAndBones.REGISTRATE.addRawLang("bloodandbones.surgery.state.dead", "%s (dry)");
         BloodAndBones.REGISTRATE.addRawLang("bloodandbones.body.left_arm", "Left arm");
         BloodAndBones.REGISTRATE.addRawLang("bloodandbones.body.right_arm", "Right arm");
         BloodAndBones.REGISTRATE.addRawLang("bloodandbones.body.left_leg", "Left leg");
@@ -210,6 +262,9 @@ public class BBLang {
         advancement("severed", "Disarming", "Take off one of your own limbs on a Surgery Table");
         advancement("prosthetic", "Spare Parts", "Make a Peg Leg or a Hook Hand");
         advancement("backtank", "Tank Top", "Make a Fluid Backtank");
+        advancement("organic", "Grown, Not Made", "Make an organic prosthetic");
+        advancement("cybernetic", "More Machine Than Man", "Make a cybernetic");
+        advancement("heart", "Heartless", "Hold your own heart");
         advancement("soul_netherite", "Thirty-Two Buckets", "Make a Soul Netherite Fluid Backtank");
 
         // ---- Ponder scenes (text_N in the order each scene shows its text)
@@ -257,8 +312,11 @@ public class BBLang {
                 "Bloody Casing: fill an Andesite Casing with 250 mB of blood from a Spout. It joins up with its neighbours like Create's own casings.",
                 "Gut Chain: three pieces of offal in a column make three. It hangs and lies like a chain.");
         jei("surgery",
-                "Lay a Cleaver on the Surgery Table and lie on it (right-click with an empty hand) to take one of your own limbs off. You get it back as a severed limb. Nothing takes a limb any other way, and nothing can go wrong.",
-                "A missing arm uses and swings nothing and a missing leg slows you down. Lay a Peg Leg, a Hook Hand or a severed limb on the table and lie down again to fit it; an empty table unclips a prosthetic.");
+                "Lay a Cleaver on the Surgery Table and lie on it (right-click with an empty hand) to take out one of your own limbs, eyes or organs. You get it back, with your name on it. Nothing takes a part any other way, and nothing can go wrong.",
+                "A missing arm uses and swings nothing, a missing leg slows you down, no eyes blind you, no heart leaves you weak, no lungs winded, no stomach unable to eat. Lay an implant or a part on the table and lie down again to fit it (or swap it in for a part of flesh); an implant unclips with nothing on the table.");
+        jei("implants",
+                "Basic prosthetics (Peg Leg, Hook Hand) need nothing. Organic ones (Flesh Arm, Sinew Leg, Furnace Stomach) run on blood and cybernetics (Hydraulic Arm, Piston Leg, Optic Eye, Pump Heart, Bellows Lungs) on soul blood, from a worn Fluid Backtank, a mB or two a second. The Vent Arm runs on whatever the tank holds; the Port Arm needs nothing.",
+                "When the tank runs out of their fluid they stop working, as if the part were missing, until it is filled again. The Vent Arm sprays the tank (hold use, empty-handed); the Port Arm plugs the tank into pipes at a Backtank Port.");
         jei("backtank",
                 "The Fluid Backtank holds any fluid, worn in the chest slot with the armour of its tier: copper 2 buckets, gold 3, iron 4, diamond 6, blood steel 8, blood diamond 16, soul netherite 32.",
                 "Right-click a block to set it down; pipes fill or empty it from any side, and it keeps its fluid when broken. A Spout fills it and an Item Drain empties it in the hand. The soul netherite tank is a smithing upgrade of the blood diamond one.");

@@ -18,12 +18,13 @@ import org.joml.Vector3d;
 
 /**
  * Operations at the Surgery Table on whoever lies on it. What can be done to a part depends on the part
- * and on what lies on the table: a blade takes a limb of flesh off, an implant or a severed limb goes where
- * one is missing, and an implant comes out with nothing needed. Nothing can go wrong.
+ * and on what lies on the table: a blade takes a part of flesh out (a limb, an eye, an organ); an implant
+ * that fits takes a part of flesh's place in one go, or goes where one is missing; a part of flesh goes back
+ * where one is missing; and an implant comes out with nothing needed. Nothing can go wrong.
  */
 public final class Surgery {
     public enum Action {
-        NONE, TAKE_OFF, FIT, REATTACH, UNCLIP;
+        NONE, TAKE_OFF, REPLACE, FIT, REATTACH, UNCLIP;
 
         public String translationKey() {
             return "bloodandbones.surgery.action." + name().toLowerCase(java.util.Locale.ROOT);
@@ -46,7 +47,8 @@ public final class Surgery {
     public static Action action(Body body, ItemStack tool, BodyPart part) {
         return switch (body.state(part)) {
             case IMPLANT -> Action.UNCLIP;
-            case NATURAL -> isBlade(tool) ? Action.TAKE_OFF : Action.NONE;
+            case NATURAL -> isBlade(tool) ? Action.TAKE_OFF
+                    : tool.getItem() instanceof ImplantItem implant && implant.fits(part) ? Action.REPLACE : Action.NONE;
             case MISSING -> tool.getItem() instanceof ImplantItem implant && implant.fits(part) ? Action.FIT
                     : tool.getItem() instanceof SeveredLimbItem limb && limb.fits(part) ? Action.REATTACH : Action.NONE;
         };
@@ -72,12 +74,12 @@ public final class Surgery {
                 com.avicagan.bloodandbones.carcass.Blood.bloody(blade, level);
                 table.setChanged();
                 table.sendData();
-                SeveredLimbItem severed = part.kind() == BodyPart.Kind.ARM ? com.avicagan.bloodandbones.registry.BBItems.SEVERED_ARM.get()
-                        : com.avicagan.bloodandbones.registry.BBItems.SEVERED_LEG.get();
-                give(patient, severed.of(patient), pos);
-                com.avicagan.bloodandbones.carcass.Blood.burst(level, at, 12);
-                com.avicagan.bloodandbones.carcass.Blood.stain(level, at, 3);
-                level.playSound(null, pos, com.avicagan.bloodandbones.registry.BBSounds.CARCASS_CUT.get(), SoundSource.PLAYERS, 1.0F, 0.9F);
+                cutOut(level, patient, part, pos, at);
+            }
+            case REPLACE -> {
+                cutOut(level, patient, part, pos, at);
+                body.fit(part, table.take());
+                level.playSound(null, pos, SoundEvents.ARMOR_EQUIP_IRON.value(), SoundSource.PLAYERS, 1.0F, 0.8F);
             }
             case FIT -> {
                 body.fit(part, table.take());
@@ -97,6 +99,14 @@ public final class Surgery {
         patient.setData(BBAttachments.BODY, body);
         BodyEffects.changed(patient);
         return action;
+    }
+
+    /** The part of flesh comes out, bloodily, into the patient's hands. */
+    private static void cutOut(ServerLevel level, Player patient, BodyPart part, BlockPos pos, Vector3d at) {
+        give(patient, com.avicagan.bloodandbones.registry.BBItems.partItem(part.kind()).of(patient), pos);
+        com.avicagan.bloodandbones.carcass.Blood.burst(level, at, 12);
+        com.avicagan.bloodandbones.carcass.Blood.stain(level, at, 3);
+        level.playSound(null, pos, com.avicagan.bloodandbones.registry.BBSounds.CARCASS_CUT.get(), SoundSource.PLAYERS, 1.0F, 0.9F);
     }
 
     private static void give(Player player, ItemStack stack, BlockPos pos) {

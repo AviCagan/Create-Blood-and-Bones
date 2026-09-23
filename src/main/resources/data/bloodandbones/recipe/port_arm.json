@@ -1,0 +1,23 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "category": "equipment",
+  "pattern": [
+    "PTP",
+    "PMP",
+    " P "
+  ],
+  "key": {
+    "P": {
+      "tag": "c:plates/brass"
+    },
+    "T": {
+      "item": "create:fluid_pipe"
+    },
+    "M": {
+      "item": "create:precision_mechanism"
+    }
+  },
+  "result": {
+    "id": "bloodandbones:port_arm"
+  }
+}

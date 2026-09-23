@@ -255,13 +255,21 @@ public final class DevShowcase {
                     server.execute(() -> {
                         ServerPlayer player = server.getPlayerList().getPlayers().get(0);
                         var body = com.avicagan.bloodandbones.body.BodyEffects.body(player);
-                        body.fit(com.avicagan.bloodandbones.body.BodyPart.LEFT_LEG, new ItemStack(BBItems.PEG_LEG.get()));
-                        body.fit(com.avicagan.bloodandbones.body.BodyPart.RIGHT_ARM, new ItemStack(BBItems.HOOK_HAND.get()));
-                        body.lose(com.avicagan.bloodandbones.body.BodyPart.LEFT_ARM);
+                        // a cybernetic body on soul blood: hydraulic and vent arms, a piston leg, a sinew leg left dry (it runs on
+                        // blood), a red lens for one eye and an empty socket for the other
+                        body.fit(com.avicagan.bloodandbones.body.BodyPart.LEFT_LEG, new ItemStack(BBItems.PISTON_LEG.get()));
+                        body.fit(com.avicagan.bloodandbones.body.BodyPart.RIGHT_LEG, new ItemStack(BBItems.SINEW_LEG.get()));
+                        body.fit(com.avicagan.bloodandbones.body.BodyPart.RIGHT_ARM, new ItemStack(BBItems.HYDRAULIC_ARM.get()));
+                        body.fit(com.avicagan.bloodandbones.body.BodyPart.LEFT_ARM, new ItemStack(BBItems.VENT_ARM.get()));
+                        body.fit(com.avicagan.bloodandbones.body.BodyPart.RIGHT_EYE, new ItemStack(BBItems.OPTIC_EYE.get()));
+                        body.lose(com.avicagan.bloodandbones.body.BodyPart.LEFT_EYE);
                         com.avicagan.bloodandbones.body.BodyEffects.changed(player);
                         player.setItemInHand(InteractionHand.MAIN_HAND, ItemStack.EMPTY);
-                        player.setItemSlot(net.minecraft.world.entity.EquipmentSlot.CHEST,
-                                new ItemStack(BBItems.backtank(com.avicagan.bloodandbones.backtank.BacktankTier.BLOOD_DIAMOND)));
+                        ItemStack tank = new ItemStack(BBItems.backtank(com.avicagan.bloodandbones.backtank.BacktankTier.SOUL_NETHERITE));
+                        com.avicagan.bloodandbones.backtank.FluidBacktankItem.setFluid(tank, new net.neoforged.neoforge.fluids.FluidStack(
+                                com.avicagan.bloodandbones.registry.BBFluids.soulBlood(), 32000));
+                        player.setItemSlot(net.minecraft.world.entity.EquipmentSlot.CHEST, tank);
+                        player.serverLevel().setBlockAndUpdate(player.blockPosition().offset(4, 0, 5), BBBlocks.BACKTANK_PORT.getDefaultState());
                         player.teleportTo(player.serverLevel(), player.getX(), player.getY(), player.getZ(), 180.0F, -25.0F);
                         // every tier of backtank set down in a row behind
                         for (var tier : com.avicagan.bloodandbones.backtank.BacktankTier.values()) {

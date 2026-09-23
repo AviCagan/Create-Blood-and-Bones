@@ -44,6 +44,7 @@ public final class BodyRendering {
             case RIGHT_ARM -> model.rightArm;
             case LEFT_LEG -> model.leftLeg;
             case RIGHT_LEG -> model.rightLeg;
+            default -> null;
         };
     }
 
@@ -53,6 +54,7 @@ public final class BodyRendering {
             case RIGHT_ARM -> model.rightSleeve;
             case LEFT_LEG -> model.leftPants;
             case RIGHT_LEG -> model.rightPants;
+            default -> null;
         };
     }
 
@@ -64,7 +66,7 @@ public final class BodyRendering {
         }
         PlayerModel<AbstractClientPlayer> model = event.getRenderer().getModel();
         for (BodyPart part : BodyPart.values()) {
-            if (body.state(part) != Body.State.NATURAL) {
+            if (body.state(part) != Body.State.NATURAL && part(model, part) != null) {
                 hide(part(model, part));
                 hide(outer(model, part));
             }
@@ -98,7 +100,7 @@ public final class BodyRendering {
             case MISSING -> event.setCanceled(true);
             case IMPLANT -> {
                 event.setCanceled(true);
-                if (body.implant(part).getItem() instanceof ImplantItem implant
+                if (body.implant(part).getItem() instanceof ImplantItem implant && implant.texture() != null
                         && Minecraft.getInstance().getEntityRenderDispatcher().getRenderer(player) instanceof PlayerRenderer renderer) {
                     PlayerModel<AbstractClientPlayer> model = renderer.getModel();
                     model.attackTime = 0.0F;
@@ -127,6 +129,37 @@ public final class BodyRendering {
         }
     }
 
+    private static final net.minecraft.resources.ResourceLocation[] SOCKETS = {
+            BloodAndBones.asResource("textures/entity/implant/eye_socket_left.png"), BloodAndBones.asResource("textures/entity/implant/eye_socket_right.png")};
+    private static final net.minecraft.resources.ResourceLocation[] OPTICS = {
+            BloodAndBones.asResource("textures/entity/implant/optic_eye_left.png"), BloodAndBones.asResource("textures/entity/implant/optic_eye_right.png")};
+
+    /** An empty socket where an eye is gone, a red lens where an Optic Eye is, glowing while it works. */
+    static void eyes(PoseStack poseStack, MultiBufferSource buffers, int packedLight, AbstractClientPlayer player, Body body) {
+        if (!(Minecraft.getInstance().getEntityRenderDispatcher().getRenderer(player) instanceof PlayerRenderer renderer)) {
+            return;
+        }
+        ModelPart head = renderer.getModel().head;
+        BodyPart[] eyes = {BodyPart.LEFT_EYE, BodyPart.RIGHT_EYE};
+        for (int i = 0; i < 2; i++) {
+            Body.State state = body.state(eyes[i]);
+            if (state == Body.State.NATURAL) {
+                continue;
+            }
+            boolean glowing = state == Body.State.IMPLANT && body.works(eyes[i], player);
+            RenderType type = state == Body.State.MISSING ? RenderType.entityCutoutNoCull(SOCKETS[i])
+                    : glowing ? RenderType.eyes(OPTICS[i]) : RenderType.entityCutoutNoCull(OPTICS[i]);
+            // a hair out from the face, so it is not lost in it; the head turns about the neck, the origin
+            poseStack.pushPose();
+            poseStack.scale(1.02F, 1.02F, 1.02F);
+            boolean visible = head.visible;
+            head.visible = true;
+            head.render(poseStack, buffers.getBuffer(type), glowing ? net.minecraft.client.renderer.LightTexture.FULL_BRIGHT : packedLight, OverlayTexture.NO_OVERLAY);
+            head.visible = visible;
+            poseStack.popPose();
+        }
+    }
+
     /** Implants drawn where the parts they replace were, posed like them. */
     public static class ImplantLayer extends RenderLayer<AbstractClientPlayer, PlayerModel<AbstractClientPlayer>> {
         public ImplantLayer(RenderLayerParent<AbstractClientPlayer, PlayerModel<AbstractClientPlayer>> parent) {
@@ -140,8 +173,10 @@ public final class BodyRendering {
             if (body.whole() || player.isInvisible()) {
                 return;
             }
+            eyes(poseStack, buffers, packedLight, player, body);
             for (BodyPart part : BodyPart.values()) {
-                if (body.state(part) == Body.State.IMPLANT && body.implant(part).getItem() instanceof ImplantItem implant) {
+                if (body.state(part) == Body.State.IMPLANT && body.implant(part).getItem() instanceof ImplantItem implant
+                        && implant.texture() != null && part(getParentModel(), part) != null) {
                     ModelPart model = part(getParentModel(), part);
                     boolean visible = model.visible;
                     model.visible = true;

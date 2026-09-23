@@ -984,3 +984,32 @@ later. The head and torso cannot be taken.
   player's `useOn`, drained and filled by a pipe (water refused), broken and dropped with the right
   amount, and the fluid saved on the item.
 
+### 14.3 Slice 11c as built (verified)
+
+- `BodyPart` gains the eyes, heart, lungs and stomach. Every part can be taken out with a blade, put back
+  as flesh (the part's item, anyone's), or swapped in one step for an implant that fits (`REPLACE`); the
+  organ comes out in your hands. *Default*: a missing or dead organ debilitates but never kills (no working
+  eye: blindness; heart: weakness II and slowness II; lungs: no sprinting; stomach: food cannot be
+  started). Effects are applied once a second on the server (`BodyEffects.second`).
+- `ImplantSpec`: kind, walk, jump, work, attack, reach, safe fall, fuel, drain (mB a second), ability,
+  texture. Fuel `null` never stops; `blood`/`soul_blood` work while the worn tank holds that fluid;
+  `any` (the Vent Arm) works while the tank holds anything and only uses it as it sprays. The second's
+  drain comes from the worn tank's item component. Limb bonuses are transient attribute modifiers
+  (movement, jump, safe fall, attack on the main arm, block and entity reach).
+- The Vent Arm and Port Arm were first written to run on soul blood, which the tests showed cannot work:
+  a tank holds one fluid, so the Vent Arm could never spray lava and the Port Arm could never pipe blood.
+  The Vent Arm runs on whatever it sprays; the Port Arm needs nothing (so an empty tank can be filled).
+- `Vent`: the client sends `Vent.Payload` every third tick while use is held empty-handed with a ready
+  Vent Arm; the server keeps its own pace (three ticks) and takes 50 mB a shot. The effect is a NeoForge
+  data map on fluids (`bloodandbones:vent_effects`, tag keys allowed); unlisted fluids spill. Liquid
+  experience is counted a point per mB, *assumed* to be Enchantment Industry's rate.
+- `BacktankPortBlockEntity` exposes, on its nozzle side only, a proxy fluid handler: the worn tank's item
+  handler of the first player within a block who has a Port Arm, else an empty handler. Create's pumps and
+  pipes do the moving, so the direction is the pump's.
+- Drawing: eyes are drawn on the head a hair out from the face (the head turns about the model origin),
+  an empty socket for a missing eye, a red lens for an Optic Eye (through `RenderType.eyes`, glowing,
+  while it works). The surgery screen fits nine rows and marks a dead implant "(dry)".
+- `ImplantTests`: a Piston Leg on soul blood, not blood, draining to dead; a Hydraulic Arm's bonuses; a
+  heart swapped for a Pump Heart, weak when dry and healing when fed, eyes out one at a time to blindness;
+  the Vent Arm's fire, water and spill; the port reaching a worn tank only with a Port Arm.
+

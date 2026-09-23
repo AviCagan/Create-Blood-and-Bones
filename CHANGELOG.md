@@ -68,6 +68,18 @@ Everything below is in development builds only; the art is placeholder (see the 
   works the hand and breaks blocks at 70%.
 - Drawn on the player for everyone: missing limbs gone, prosthetics in their place, in third and
   first person. The body is saved and kept through death.
+- Eyes and organs too: a heart, lungs and stomach can be taken out and put back, or swapped straight
+  for an implant. No working eye blinds you; no heart leaves you weak and slow (it does not kill); no
+  lungs, no sprinting; no stomach, no eating. An empty socket shows where an eye was.
+- Organic prosthetics on blood (Flesh Arm, Sinew Leg, Furnace Stomach) and cybernetics on soul blood
+  (Hydraulic Arm, Piston Leg, Optic Eye with a glowing lens, Pump Heart, Bellows Lungs) draw a mB or two
+  a second from the worn Fluid Backtank, and stop working, as if the part were missing, when it runs
+  dry.
+- Vent Arm: hold use empty-handed to spray the tank ahead of you. What it does comes from a data map
+  (`data_maps/fluid/vent_effects.json`): lava burns, water puts fires out, liquid experience gives
+  experience, milk clears effects, anything else spills.
+- Port Arm and Backtank Port: next to a port with a Port Arm, your tank is the port to the pipes, so a
+  pump fills or empties it.
 
 ### The Fluid Backtank
 

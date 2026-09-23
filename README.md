@@ -52,11 +52,15 @@ provided by [Sable](https://github.com/ryanhcode/sable).
   a fresh piece drips blood on the floor. The Bloody Casing (spout 250 mB of blood onto an Andesite
   Casing) joins up like Create's casings, and the Gut Chain (three offal in a column) hangs like a
   chain.
-- **The body.** Lie on the Surgery Table and choose what to do to each limb: a Cleaver on the table
-  takes one of your own limbs off (you keep it, with your name on it), and a Peg Leg, a Hook Hand or
-  a severed limb goes back where one is missing. Nothing takes a limb any other way, and surgery
-  cannot go wrong. A missing arm can't use or swing anything and a missing leg slows you down; the
-  prosthetics nearly make up for it. Other players see what you are missing and what is fitted.
+- **The body.** Lie on the Surgery Table and choose what to do to each part of you: arms, legs,
+  eyes, heart, lungs and stomach. A Cleaver on the table takes one out (you keep it, with your name on
+  it); an implant or a part goes where one is missing, or swaps straight in. Nothing takes a part any
+  other way, and surgery cannot go wrong. Missing parts cost you (no arm, no hand; no eyes, blind; no
+  heart, weak and slow). Basic prosthetics (Peg Leg, Hook Hand) run on nothing; organic ones (Flesh
+  Arm, Sinew Leg, Furnace Stomach) on blood and cybernetics (Hydraulic Arm, Piston Leg, Optic Eye, Pump
+  Heart, Bellows Lungs) on soul blood from the backtank, and stop working when it runs dry. The Vent Arm
+  sprays whatever the tank holds (lava burns, water douses, experience gives experience); the Port Arm
+  plugs the tank into pipes at a Backtank Port. Everyone sees what you are missing and what is fitted.
 - **The Fluid Backtank.** A tank for any fluid, worn in the chest slot with the armour of its tier:
   copper 2 buckets, gold 3, iron 4, diamond 6, blood steel 8, blood diamond 16, and soul netherite 32
   (a smithing upgrade with a Soul Netherite Ingot: a netherite ingot filled with soul blood and pressed
@@ -82,8 +86,8 @@ incremental. `./gradlew runClient` / `runServer` / `runData` are configured by M
 
 ### Development aids
 
-- `./gradlew runGameTestServer` runs the game tests headless (184: every rigged mob and baby,
-  butchery, rot, bleeding, machines and their filters, cooking and display, surgery, backtanks, chains, recipes,
+- `./gradlew runGameTestServer` runs the game tests headless (189: every rigged mob and baby,
+  butchery, rot, bleeding, machines and their filters, cooking and display, surgery, implants, backtanks, chains, recipes,
   advancements and sounds).
 - `./gradlew runData -Dbloodandbones.dump_layers=minecraft:goat#main,...` writes those vanilla
   models' part trees to `run/build/layer-dump.txt`, for writing new rig targets in

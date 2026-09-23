@@ -1,55 +1,95 @@
 package com.avicagan.bloodandbones.body;
 
+import com.avicagan.bloodandbones.backtank.FluidBacktankItem;
+import net.minecraft.ChatFormatting;
+import net.minecraft.network.chat.Component;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.item.Item;
+import net.minecraft.world.item.ItemStack;
+import net.minecraft.world.item.TooltipFlag;
+import net.minecraft.world.level.material.Fluid;
+import net.neoforged.neoforge.fluids.FluidStack;
 import org.jetbrains.annotations.Nullable;
 
+import java.util.List;
+
 /**
- * Something fitted where a limb was, at the Surgery Table. A basic prosthetic (a peg leg, a hook hand) needs
- * nothing to run and always works, a little worse than flesh.
- *
- * @param kind    the sort of part it replaces, either side
- * @param walk    how well a leg walks, flesh being 1
- * @param work    how fast an arm breaks blocks, flesh being 1
- * @param texture drawn in the part's place on the player, laid out like a player skin
+ * Something fitted in a part's place at the Surgery Table: a basic prosthetic (a peg leg, a hook hand)
+ * that always works, an organic prosthetic that runs on blood, or a cybernetic that runs on soul blood, both
+ * from the Fluid Backtank. See {@link ImplantSpec}.
  */
 public class ImplantItem extends Item {
-    private final BodyPart.Kind kind;
-    private final float walk;
-    private final float work;
-    private final ResourceLocation texture;
+    private final ImplantSpec spec;
 
-    public ImplantItem(Properties properties, BodyPart.Kind kind, float walk, float work, ResourceLocation texture) {
+    public ImplantItem(Properties properties, ImplantSpec spec) {
         super(properties.stacksTo(1));
-        this.kind = kind;
-        this.walk = walk;
-        this.work = work;
-        this.texture = texture;
+        this.spec = spec;
+    }
+
+    public ImplantSpec spec() {
+        return spec;
     }
 
     public BodyPart.Kind kind() {
-        return kind;
+        return spec.kind();
     }
 
     public boolean fits(BodyPart part) {
-        return part.kind() == kind;
+        return part.kind() == spec.kind();
     }
 
     public float walk() {
-        return walk;
+        return spec.walk();
     }
 
     public float work() {
-        return work;
+        return spec.work();
     }
 
+    @Nullable
     public ResourceLocation texture() {
-        return texture;
+        return spec.texture();
     }
 
-    /** Whether it is doing its job on this wearer. A basic prosthetic always is. */
+    public boolean powered() {
+        return spec.fuel() != null;
+    }
+
+    @Nullable
+    public Fluid fuel() {
+        return switch (spec.fuel() == null ? "" : spec.fuel()) {
+            case "blood" -> com.avicagan.bloodandbones.registry.BBFluids.blood();
+            case "soul_blood" -> com.avicagan.bloodandbones.registry.BBFluids.soulBlood();
+            default -> null;
+        };
+    }
+
+    /** Runs on whatever is in the tank, using it only as it goes (the Vent Arm sprays it). */
+    public boolean anyFuel() {
+        return "any".equals(spec.fuel());
+    }
+
+    /** Whether it is doing its job on this wearer: a basic one always; a powered one while the worn tank has its fuel. */
     public boolean working(@Nullable LivingEntity wearer) {
-        return true;
+        if (spec.fuel() == null) {
+            return true;
+        }
+        FluidStack tank = FluidBacktankItem.fluid(FluidBacktankItem.wornBy(wearer));
+        if (anyFuel()) {
+            return !tank.isEmpty();
+        }
+        return tank.is(fuel()) && tank.getAmount() > 0;
+    }
+
+    @Override
+    public void appendHoverText(ItemStack stack, TooltipContext context, List<Component> tooltip, TooltipFlag flag) {
+        Fluid fuel = fuel();
+        if (anyFuel()) {
+            tooltip.add(Component.translatable("bloodandbones.implant.runs_on_any").withStyle(ChatFormatting.GRAY));
+        } else if (fuel != null) {
+            tooltip.add(Component.translatable("bloodandbones.implant.runs_on", new FluidStack(fuel, 1).getHoverName(), spec.drain())
+                    .withStyle(ChatFormatting.GRAY));
+        }
     }
 }

@@ -1,0 +1,43 @@
+{
+  "parent": "bloodandbones:prosthetic",
+  "display": {
+    "icon": {
+      "id": "bloodandbones:hydraulic_arm"
+    },
+    "title": {
+      "translate": "advancements.bloodandbones.cybernetic.title"
+    },
+    "description": {
+      "translate": "advancements.bloodandbones.cybernetic.description"
+    },
+    "frame": "task",
+    "show_toast": true,
+    "announce_to_chat": true,
+    "hidden": false
+  },
+  "criteria": {
+    "has": {
+      "trigger": "minecraft:inventory_changed",
+      "conditions": {
+        "items": [
+          {
+            "items": [
+              "bloodandbones:hydraulic_arm",
+              "bloodandbones:piston_leg",
+              "bloodandbones:vent_arm",
+              "bloodandbones:port_arm",
+              "bloodandbones:optic_eye",
+              "bloodandbones:pump_heart",
+              "bloodandbones:bellows_lungs"
+            ]
+          }
+        ]
+      }
+    }
+  },
+  "requirements": [
+    [
+      "has"
+    ]
+  ]
+}

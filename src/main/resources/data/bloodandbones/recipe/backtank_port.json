@@ -1,0 +1,22 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "category": "building",
+  "pattern": [
+    "CUC",
+    "CTC"
+  ],
+  "key": {
+    "C": {
+      "tag": "c:plates/copper"
+    },
+    "U": {
+      "item": "create:mechanical_pump"
+    },
+    "T": {
+      "item": "create:fluid_pipe"
+    }
+  },
+  "result": {
+    "id": "bloodandbones:backtank_port"
+  }
+}

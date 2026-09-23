@@ -1,0 +1,23 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "category": "equipment",
+  "pattern": [
+    "MHM",
+    "MBM",
+    "M M"
+  ],
+  "key": {
+    "M": {
+      "item": "bloodandbones:raw_meat"
+    },
+    "H": {
+      "item": "bloodandbones:raw_hide"
+    },
+    "B": {
+      "item": "minecraft:bone"
+    }
+  },
+  "result": {
+    "id": "bloodandbones:sinew_leg"
+  }
+}

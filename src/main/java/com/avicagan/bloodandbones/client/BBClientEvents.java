@@ -14,6 +14,18 @@ public final class BBClientEvents {
     }
 
     /** Keep the bloodless rewording in front of the game's language after any reload replaced it. */
+    /** Holding use empty-handed with a Vent Arm sprays; the server keeps the pace. */
+    @SubscribeEvent
+    public static void onVent(net.neoforged.neoforge.client.event.ClientTickEvent.Post event) {
+        net.minecraft.client.Minecraft mc = net.minecraft.client.Minecraft.getInstance();
+        if (mc.player != null && mc.screen == null && mc.options.keyUse.isDown() && mc.player.tickCount % 3 == 0
+                && com.avicagan.bloodandbones.body.Vent.ready(mc.player)
+                && !com.avicagan.bloodandbones.backtank.FluidBacktankItem.fluid(com.avicagan.bloodandbones.backtank.FluidBacktankItem.wornBy(mc.player)).isEmpty()) {
+            net.neoforged.neoforge.network.PacketDistributor.sendToServer(new com.avicagan.bloodandbones.body.Vent.Payload());
+            mc.player.swing(net.minecraft.world.InteractionHand.MAIN_HAND);
+        }
+    }
+
     @SubscribeEvent
     public static void onClientTick(net.neoforged.neoforge.client.event.ClientTickEvent.Post event) {
         BloodlessLanguage.install();

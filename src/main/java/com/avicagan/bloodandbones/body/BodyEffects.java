@@ -39,9 +39,19 @@ public final class BodyEffects {
 
     private static float leg(Body body, BodyPart part, LivingEntity wearer, boolean jump) {
         if (body.works(part, wearer)) {
-            return body.state(part) == Body.State.IMPLANT ? ((ImplantItem) body.implant(part).getItem()).walk() : 1.0F;
+            if (body.state(part) != Body.State.IMPLANT) {
+                return 1.0F;
+            }
+            ImplantSpec spec = ((ImplantItem) body.implant(part).getItem()).spec();
+            return jump ? spec.jump() : spec.walk();
         }
         return jump ? MISSING_JUMP : MISSING_WALK;
+    }
+
+    /** The working implant's spec in a part, if there is one. */
+    @org.jetbrains.annotations.Nullable
+    private static ImplantSpec working(Body body, BodyPart part, LivingEntity wearer) {
+        return body.state(part) == Body.State.IMPLANT && body.works(part, wearer) ? ((ImplantItem) body.implant(part).getItem()).spec() : null;
     }
 
     /** How fast this body walks, flesh being 1: the two legs' figures, averaged. */
@@ -73,22 +83,112 @@ public final class BodyEffects {
         return body.state(arm) == Body.State.IMPLANT ? ((ImplantItem) body.implant(arm).getItem()).work() : 1.0F;
     }
 
-    /** Bring the player's walking and jumping in line with their legs. */
+    private static final ResourceLocation ARMS = BloodAndBones.asResource("arms");
+
+    /** Bring the player's walking, jumping, hitting and reach in line with their limbs. */
     public static void refresh(Player player) {
         Body body = body(player);
-        apply(player.getAttribute(Attributes.MOVEMENT_SPEED), walk(body, player));
-        apply(player.getAttribute(Attributes.JUMP_STRENGTH), jump(body, player));
+        apply(player.getAttribute(Attributes.MOVEMENT_SPEED), LEGS, walk(body, player) - 1.0F, AttributeModifier.Operation.ADD_MULTIPLIED_TOTAL);
+        apply(player.getAttribute(Attributes.JUMP_STRENGTH), LEGS, jump(body, player) - 1.0F, AttributeModifier.Operation.ADD_MULTIPLIED_TOTAL);
+        float safeFall = 0.0F;
+        for (BodyPart leg : new BodyPart[]{BodyPart.LEFT_LEG, BodyPart.RIGHT_LEG}) {
+            ImplantSpec spec = working(body, leg, player);
+            safeFall += spec == null ? 0.0F : spec.safeFall() / 2.0F;
+        }
+        apply(player.getAttribute(Attributes.SAFE_FALL_DISTANCE), LEGS, safeFall, AttributeModifier.Operation.ADD_VALUE);
+        ImplantSpec main = working(body, armFor(player, InteractionHand.MAIN_HAND), player);
+        apply(player.getAttribute(Attributes.ATTACK_DAMAGE), ARMS, main == null ? 0.0F : main.attack(), AttributeModifier.Operation.ADD_VALUE);
+        float reach = 0.0F;
+        for (BodyPart arm : new BodyPart[]{BodyPart.LEFT_ARM, BodyPart.RIGHT_ARM}) {
+            ImplantSpec spec = working(body, arm, player);
+            reach = Math.max(reach, spec == null ? 0.0F : spec.reach());
+        }
+        apply(player.getAttribute(Attributes.BLOCK_INTERACTION_RANGE), ARMS, reach, AttributeModifier.Operation.ADD_VALUE);
+        apply(player.getAttribute(Attributes.ENTITY_INTERACTION_RANGE), ARMS, reach, AttributeModifier.Operation.ADD_VALUE);
     }
 
-    private static void apply(AttributeInstance attribute, float factor) {
+    private static void apply(AttributeInstance attribute, ResourceLocation id, float amount, AttributeModifier.Operation operation) {
         if (attribute == null) {
             return;
         }
-        if (Math.abs(factor - 1.0F) < 1.0E-4F) {
-            attribute.removeModifier(LEGS);
+        if (Math.abs(amount) < 1.0E-4F) {
+            attribute.removeModifier(id);
         } else {
-            attribute.addOrUpdateTransientModifier(new AttributeModifier(LEGS, factor - 1.0F, AttributeModifier.Operation.ADD_MULTIPLIED_TOTAL));
+            attribute.addOrUpdateTransientModifier(new AttributeModifier(id, amount, operation));
         }
+    }
+
+    /** Whether the body can see: at least one working eye. */
+    public static boolean sees(Body body, LivingEntity wearer) {
+        return body.works(BodyPart.LEFT_EYE, wearer) || body.works(BodyPart.RIGHT_EYE, wearer);
+    }
+
+    /**
+     * Once a second, on the server: powered implants take their fuel from the worn tank, and the organs do
+     * what they do. A heart that is gone or dead leaves you weak and slow (it does not kill); lungs, winded
+     * (no sprinting); no working eye, blind; no working stomach, you cannot eat.
+     */
+    public static void second(Player player) {
+        Body body = body(player);
+        if (body.whole()) {
+            return;
+        }
+        drain(player);
+        if (!sees(body, player)) {
+            effect(player, net.minecraft.world.effect.MobEffects.BLINDNESS, 0, 60);
+        }
+        if (!body.works(BodyPart.HEART, player)) {
+            effect(player, net.minecraft.world.effect.MobEffects.WEAKNESS, 1, 60);
+            effect(player, net.minecraft.world.effect.MobEffects.MOVEMENT_SLOWDOWN, 1, 60);
+        }
+        if (body.has(ImplantSpec.Ability.NIGHT_VISION, player)) {
+            effect(player, net.minecraft.world.effect.MobEffects.NIGHT_VISION, 0, 260);
+        }
+        if (body.has(ImplantSpec.Ability.REGENERATION, player)) {
+            effect(player, net.minecraft.world.effect.MobEffects.REGENERATION, 0, 60);
+        }
+        if (body.has(ImplantSpec.Ability.WATER_BREATHING, player)) {
+            effect(player, net.minecraft.world.effect.MobEffects.WATER_BREATHING, 0, 60);
+        }
+        if (body.has(ImplantSpec.Ability.IRON_GUT, player)) {
+            player.removeEffect(net.minecraft.world.effect.MobEffects.HUNGER);
+            player.removeEffect(net.minecraft.world.effect.MobEffects.POISON);
+        }
+    }
+
+    private static void effect(Player player, net.minecraft.core.Holder<net.minecraft.world.effect.MobEffect> effect, int amplifier, int ticks) {
+        player.addEffect(new net.minecraft.world.effect.MobEffectInstance(effect, ticks, amplifier, true, false, true));
+    }
+
+    /** Each working powered implant takes its fuel for a second from the worn tank. */
+    public static void drain(Player player) {
+        Body body = body(player);
+        net.minecraft.world.item.ItemStack tank = com.avicagan.bloodandbones.backtank.FluidBacktankItem.wornBy(player);
+        if (tank.isEmpty()) {
+            return;
+        }
+        int total = 0;
+        for (BodyPart part : BodyPart.values()) {
+            ImplantSpec spec = working(body, part, player);
+            if (spec != null && spec.fuel() != null) {
+                total += spec.drain();
+            }
+        }
+        if (total > 0) {
+            take(player, total);
+        }
+    }
+
+    /** Take up to this much from the worn tank; how much there was. */
+    public static int take(Player player, int amount) {
+        net.minecraft.world.item.ItemStack tank = com.avicagan.bloodandbones.backtank.FluidBacktankItem.wornBy(player);
+        net.neoforged.neoforge.fluids.FluidStack fluid = com.avicagan.bloodandbones.backtank.FluidBacktankItem.fluid(tank);
+        int taken = Math.min(amount, fluid.getAmount());
+        if (taken > 0) {
+            fluid.shrink(taken);
+            com.avicagan.bloodandbones.backtank.FluidBacktankItem.setFluid(tank, fluid);
+        }
+        return taken;
     }
 
     /** After any change: the effects now, and everyone who can see the player told. */
@@ -107,8 +207,21 @@ public final class BodyEffects {
         if (player.tickCount % 10 == 0) {
             refresh(player);
         }
-        if (player.isSprinting() && walk(body(player), player) <= MISSING_WALK + 1.0E-4F) {
+        if (!player.level().isClientSide && player.tickCount % 20 == 0) {
+            second(player);
+        }
+        Body body = body(player);
+        if (player.isSprinting() && (walk(body, player) <= MISSING_WALK + 1.0E-4F || !body.works(BodyPart.LUNGS, player))) {
             player.setSprinting(false);
+        }
+    }
+
+    /** No working stomach: nothing can be eaten. */
+    @SubscribeEvent
+    public static void onEat(net.neoforged.neoforge.event.entity.living.LivingEntityUseItemEvent.Start event) {
+        if (event.getEntity() instanceof Player player && event.getItem().has(net.minecraft.core.component.DataComponents.FOOD)
+                && !body(player).works(BodyPart.STOMACH, player)) {
+            event.setCanceled(true);
         }
     }
 

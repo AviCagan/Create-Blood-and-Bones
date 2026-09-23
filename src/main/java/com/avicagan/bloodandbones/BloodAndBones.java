@@ -63,6 +63,7 @@ public class BloodAndBones {
         com.avicagan.bloodandbones.registry.BBSounds.register(modEventBus);
         com.avicagan.bloodandbones.body.BBAttachments.register(modEventBus);
         com.avicagan.bloodandbones.backtank.BBArmorMaterials.register(modEventBus);
+        modEventBus.addListener((net.neoforged.neoforge.registries.datamaps.RegisterDataMapTypesEvent event) -> event.register(com.avicagan.bloodandbones.body.Vent.EFFECTS));
 
         LOGGER.info("Create: Blood & Bones loaded");
     }

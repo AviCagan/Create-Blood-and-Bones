@@ -1,0 +1,39 @@
+{
+  "parent": "bloodandbones:prosthetic",
+  "display": {
+    "icon": {
+      "id": "bloodandbones:flesh_arm"
+    },
+    "title": {
+      "translate": "advancements.bloodandbones.organic.title"
+    },
+    "description": {
+      "translate": "advancements.bloodandbones.organic.description"
+    },
+    "frame": "task",
+    "show_toast": true,
+    "announce_to_chat": true,
+    "hidden": false
+  },
+  "criteria": {
+    "has": {
+      "trigger": "minecraft:inventory_changed",
+      "conditions": {
+        "items": [
+          {
+            "items": [
+              "bloodandbones:flesh_arm",
+              "bloodandbones:sinew_leg",
+              "bloodandbones:furnace_stomach"
+            ]
+          }
+        ]
+      }
+    }
+  },
+  "requirements": [
+    [
+      "has"
+    ]
+  ]
+}

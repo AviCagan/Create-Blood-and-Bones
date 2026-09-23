@@ -27,6 +27,13 @@ public class SurgeryScreen extends Screen {
     private final BlockPos table;
     private final Map<BodyPart, Button> buttons = new EnumMap<>(BodyPart.class);
 
+    /** Height of a part's row: nine parts fit a small window. */
+    private static final int ROW = 20;
+
+    private int top() {
+        return Math.max(32, (height - BodyPart.values().length * ROW - 30) / 2 + 10);
+    }
+
     public SurgeryScreen(BlockPos table) {
         super(Component.translatable("bloodandbones.surgery.title"));
         this.table = table;
@@ -34,16 +41,16 @@ public class SurgeryScreen extends Screen {
 
     @Override
     protected void init() {
-        int top = height / 2 - 50;
+        int top = top();
         int i = 0;
         for (BodyPart part : BodyPart.values()) {
             Button button = Button.builder(Component.empty(), b -> PacketDistributor.sendToServer(new Surgery.ActionPayload(table, part)))
-                    .bounds(width / 2 + 10, top + i * 24, 130, 20).build();
+                    .bounds(width / 2 + 10, top + i * ROW, 130, ROW - 2).build();
             buttons.put(part, addRenderableWidget(button));
             i++;
         }
         addRenderableWidget(Button.builder(Component.translatable("bloodandbones.surgery.done"), b -> onClose())
-                .bounds(width / 2 - 50, top + BodyPart.values().length * 24 + 12, 100, 20).build());
+                .bounds(width / 2 - 50, top + BodyPart.values().length * ROW + 6, 100, 20).build());
         refresh();
     }
 
@@ -83,21 +90,22 @@ public class SurgeryScreen extends Screen {
         if (player == null) {
             return;
         }
-        int top = height / 2 - 50;
-        graphics.drawCenteredString(font, title, width / 2, top - 34, 0xFFFFFF);
+        int top = top();
+        graphics.drawCenteredString(font, title, width / 2, top - 28, 0xFFFFFF);
         ItemStack tool = tool();
         Component lying = tool.isEmpty() ? Component.translatable("bloodandbones.surgery.empty")
                 : Component.translatable("bloodandbones.surgery.on_table", tool.getHoverName());
-        graphics.drawCenteredString(font, lying, width / 2, top - 20, 0xC8C8C8);
+        graphics.drawCenteredString(font, lying, width / 2, top - 15, 0xC8C8C8);
         Body body = BodyEffects.body(player);
         int i = 0;
         for (BodyPart part : BodyPart.values()) {
             Component state = switch (body.state(part)) {
                 case NATURAL -> Component.translatable("bloodandbones.surgery.state.natural");
                 case MISSING -> Component.translatable("bloodandbones.surgery.state.missing");
-                case IMPLANT -> body.implant(part).getHoverName();
+                case IMPLANT -> body.works(part, player) ? body.implant(part).getHoverName()
+                        : Component.translatable("bloodandbones.surgery.state.dead", body.implant(part).getHoverName());
             };
-            int y = top + i * 24 + 6;
+            int y = top + i * ROW + 5;
             graphics.drawString(font, Component.translatable(part.translationKey()), width / 2 - 140, y, 0xFFFFFF);
             graphics.drawString(font, state, width / 2 - 60, y, body.state(part) == Body.State.MISSING ? 0xD04040 : 0xA0A0A0);
             i++;

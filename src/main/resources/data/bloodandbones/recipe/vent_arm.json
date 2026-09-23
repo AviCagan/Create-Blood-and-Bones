@@ -1,0 +1,23 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "category": "equipment",
+  "pattern": [
+    "PNP",
+    "PMP",
+    " P "
+  ],
+  "key": {
+    "P": {
+      "tag": "c:plates/brass"
+    },
+    "N": {
+      "item": "create:nozzle"
+    },
+    "M": {
+      "item": "create:precision_mechanism"
+    }
+  },
+  "result": {
+    "id": "bloodandbones:vent_arm"
+  }
+}

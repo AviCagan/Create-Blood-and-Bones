@@ -11,6 +11,7 @@
     "bloodandbones:bloody_casing",
     "bloodandbones:butcher_table",
     "bloodandbones:surgery_table",
-    "bloodandbones:fluid_backtank"
+    "bloodandbones:fluid_backtank",
+    "bloodandbones:backtank_port"
   ]
 }
