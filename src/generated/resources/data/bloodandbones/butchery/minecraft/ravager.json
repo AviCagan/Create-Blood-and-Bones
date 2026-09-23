@@ -1,0 +1,109 @@
+{
+  "entity": "minecraft:ravager",
+  "hide": [
+    {
+      "count": 17.95,
+      "item": "bloodandbones:raw_hide",
+      "kind": "hide"
+    }
+  ],
+  "parts": {
+    "body": [
+      {
+        "count": 15.86,
+        "item": "bloodandbones:raw_meat",
+        "kind": "meat"
+      },
+      {
+        "count": 5.95,
+        "item": "minecraft:bone",
+        "kind": "bone"
+      },
+      {
+        "count": 11.97,
+        "item": "bloodandbones:offal",
+        "kind": "offal"
+      },
+      {
+        "count": 5.98,
+        "item": "bloodandbones:animal_fat",
+        "kind": "fat"
+      },
+      {
+        "item": "minecraft:saddle"
+      }
+    ],
+    "left_front_leg": [
+      {
+        "count": 4.63,
+        "item": "bloodandbones:raw_meat",
+        "kind": "meat"
+      },
+      {
+        "count": 1.73,
+        "item": "minecraft:bone",
+        "kind": "bone"
+      }
+    ],
+    "left_hind_leg": [
+      {
+        "count": 4.63,
+        "item": "bloodandbones:raw_meat",
+        "kind": "meat"
+      },
+      {
+        "count": 1.73,
+        "item": "minecraft:bone",
+        "kind": "bone"
+      }
+    ],
+    "neck": [
+      {
+        "count": 3.52,
+        "item": "bloodandbones:raw_meat",
+        "kind": "meat"
+      },
+      {
+        "count": 1.32,
+        "item": "minecraft:bone",
+        "kind": "bone"
+      }
+    ],
+    "neck/head": [
+      {
+        "count": 10.0,
+        "item": "bloodandbones:raw_meat",
+        "kind": "meat"
+      },
+      {
+        "count": 3.75,
+        "item": "minecraft:bone",
+        "kind": "bone"
+      }
+    ],
+    "right_front_leg": [
+      {
+        "count": 4.63,
+        "item": "bloodandbones:raw_meat",
+        "kind": "meat"
+      },
+      {
+        "count": 1.73,
+        "item": "minecraft:bone",
+        "kind": "bone"
+      }
+    ],
+    "right_hind_leg": [
+      {
+        "count": 4.63,
+        "item": "bloodandbones:raw_meat",
+        "kind": "meat"
+      },
+      {
+        "count": 1.73,
+        "item": "minecraft:bone",
+        "kind": "bone"
+      }
+    ]
+  }
+}

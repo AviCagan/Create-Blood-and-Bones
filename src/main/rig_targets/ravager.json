@@ -1,0 +1,69 @@
+{
+  "entity": "minecraft:ravager",
+  "model": "minecraft:ravager",
+  "texture": "minecraft:textures/entity/illager/ravager.png",
+  "rot_time": 36000,
+  "torso": "body",
+  "merge": [
+    "neck/head/right_horn",
+    "neck/head/left_horn",
+    "neck/head/mouth"
+  ],
+  "boxes": {
+    "body": {
+      "min": [
+        -7,
+        -10,
+        -7
+      ],
+      "max": [
+        7,
+        19,
+        13
+      ]
+    }
+  },
+  "joints": {
+    "neck": {
+      "min_degrees": [
+        -20,
+        -25,
+        -6
+      ],
+      "max_degrees": [
+        30,
+        25,
+        6
+      ],
+      "damping": 4.0,
+      "stiffness": 2.0,
+      "contacts": false
+    },
+    "neck/head": {
+      "min_degrees": [
+        -15,
+        -30,
+        -6
+      ],
+      "max_degrees": [
+        25,
+        30,
+        6
+      ],
+      "damping": 4.0,
+      "stiffness": 2.0,
+      "contacts": false
+    }
+  },
+  "butchery": {
+    "part_extras": {
+      "body": [
+        {
+          "item": "minecraft:saddle",
+          "count": 1.0,
+          "kind": "other"
+        }
+      ]
+    }
+  }
+}

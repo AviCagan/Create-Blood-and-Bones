@@ -1,0 +1,16 @@
+{
+  "entity": "minecraft:enderman",
+  "parts": {
+    "body": [
+      {
+        "item": "minecraft:ender_pearl",
+        "kind": "offal"
+      }
+    ],
+    "head": [],
+    "left_arm": [],
+    "left_leg": [],
+    "right_arm": [],
+    "right_leg": []
+  }
+}

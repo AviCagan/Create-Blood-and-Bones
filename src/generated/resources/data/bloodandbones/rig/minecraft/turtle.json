@@ -1,0 +1,234 @@
+{
+  "bones": [
+    {
+      "box_max": [
+        9.5,
+        23.0,
+        -4.0
+      ],
+      "box_min": [
+        -9.5,
+        3.0,
+        -13.0
+      ],
+      "name": "body",
+      "offset": [
+        0.0,
+        11.0,
+        -10.0
+      ],
+      "part": "body",
+      "rotation": [
+        0.70710677,
+        0.0,
+        0.0,
+        0.70710677
+      ]
+    },
+    {
+      "parent": "body",
+      "box_max": [
+        3.0,
+        4.0,
+        3.0
+      ],
+      "box_min": [
+        -3.0,
+        -1.0,
+        -3.0
+      ],
+      "joint": {
+        "damping": 4.0,
+        "max_degrees": [
+          25.0,
+          30.0,
+          6.0
+        ],
+        "min_degrees": [
+          -15.0,
+          -30.0,
+          -6.0
+        ],
+        "stiffness": 2.0
+      },
+      "name": "head",
+      "offset": [
+        0.0,
+        19.0,
+        -10.0
+      ],
+      "part": "head",
+      "rotation": [
+        0.0,
+        0.0,
+        0.0,
+        1.0
+      ]
+    },
+    {
+      "parent": "body",
+      "box_max": [
+        0.0,
+        1.0,
+        3.0
+      ],
+      "box_min": [
+        -13.0,
+        0.0,
+        -2.0
+      ],
+      "joint": {
+        "damping": 3.0,
+        "max_degrees": [
+          30.0,
+          40.0,
+          45.0
+        ],
+        "min_degrees": [
+          -30.0,
+          -40.0,
+          -45.0
+        ],
+        "stiffness": 0.1
+      },
+      "name": "right_front_leg",
+      "offset": [
+        -5.0,
+        21.0,
+        -4.0
+      ],
+      "part": "right_front_leg",
+      "rotation": [
+        0.0,
+        0.0,
+        0.0,
+        1.0
+      ]
+    },
+    {
+      "parent": "body",
+      "box_max": [
+        2.0,
+        1.0,
+        10.0
+      ],
+      "box_min": [
+        -2.0,
+        0.0,
+        0.0
+      ],
+      "joint": {
+        "damping": 3.0,
+        "max_degrees": [
+          30.0,
+          40.0,
+          45.0
+        ],
+        "min_degrees": [
+          -30.0,
+          -40.0,
+          -45.0
+        ],
+        "stiffness": 0.1
+      },
+      "name": "right_hind_leg",
+      "offset": [
+        -3.5,
+        22.0,
+        11.0
+      ],
+      "part": "right_hind_leg",
+      "rotation": [
+        0.0,
+        0.0,
+        0.0,
+        1.0
+      ]
+    },
+    {
+      "parent": "body",
+      "box_max": [
+        2.0,
+        1.0,
+        10.0
+      ],
+      "box_min": [
+        -2.0,
+        0.0,
+        0.0
+      ],
+      "joint": {
+        "damping": 3.0,
+        "max_degrees": [
+          30.0,
+          40.0,
+          45.0
+        ],
+        "min_degrees": [
+          -30.0,
+          -40.0,
+          -45.0
+        ],
+        "stiffness": 0.1
+      },
+      "name": "left_hind_leg",
+      "offset": [
+        3.5,
+        22.0,
+        11.0
+      ],
+      "part": "left_hind_leg",
+      "rotation": [
+        0.0,
+        0.0,
+        0.0,
+        1.0
+      ]
+    },
+    {
+      "parent": "body",
+      "box_max": [
+        13.0,
+        1.0,
+        3.0
+      ],
+      "box_min": [
+        0.0,
+        0.0,
+        -2.0
+      ],
+      "joint": {
+        "damping": 3.0,
+        "max_degrees": [
+          30.0,
+          40.0,
+          45.0
+        ],
+        "min_degrees": [
+          -30.0,
+          -40.0,
+          -45.0
+        ],
+        "stiffness": 0.1
+      },
+      "name": "left_front_leg",
+      "offset": [
+        5.0,
+        21.0,
+        -4.0
+      ],
+      "part": "left_front_leg",
+      "rotation": [
+        0.0,
+        0.0,
+        0.0,
+        1.0
+      ]
+    }
+  ],
+  "entity": "minecraft:turtle",
+  "model": "minecraft:turtle",
+  "rot_time": 30000,
+  "texture": "minecraft:textures/entity/turtle/big_sea_turtle.png",
+  "weight": 0.9301758
+}

@@ -1,0 +1,59 @@
+{
+  "entity": "minecraft:camel",
+  "model": "minecraft:camel",
+  "texture": "minecraft:textures/entity/camel/camel.png",
+  "rot_time": 36000,
+  "torso": "body",
+  "hidden": [
+    "body/saddle",
+    "body/head/bridle",
+    "body/head/reins"
+  ],
+  "merge": [
+    "body/hump",
+    "body/head/right_ear",
+    "body/head/left_ear"
+  ],
+  "boxes": {
+    "body/head": {
+      "min": [
+        -3.5,
+        -21,
+        -21
+      ],
+      "max": [
+        3.5,
+        1,
+        4
+      ]
+    }
+  },
+  "joints": {
+    "body/head": {
+      "min_degrees": [
+        -15,
+        -30,
+        -6
+      ],
+      "max_degrees": [
+        25,
+        30,
+        6
+      ],
+      "damping": 4.0,
+      "stiffness": 2.0,
+      "contacts": false
+    }
+  },
+  "butchery": {
+    "part_extras": {
+      "body": [
+        {
+          "item": "bloodandbones:animal_fat",
+          "count": 2.0,
+          "kind": "fat"
+        }
+      ]
+    }
+  }
+}

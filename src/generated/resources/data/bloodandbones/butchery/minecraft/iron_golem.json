@@ -1,0 +1,31 @@
+{
+  "entity": "minecraft:iron_golem",
+  "parts": {
+    "body": [
+      {
+        "count": 3.0,
+        "item": "minecraft:iron_ingot"
+      }
+    ],
+    "head": [
+      {
+        "count": 0.5,
+        "item": "minecraft:poppy"
+      }
+    ],
+    "left_arm": [
+      {
+        "count": 4.0,
+        "item": "minecraft:iron_nugget"
+      }
+    ],
+    "left_leg": [],
+    "right_arm": [
+      {
+        "count": 4.0,
+        "item": "minecraft:iron_nugget"
+      }
+    ],
+    "right_leg": []
+  }
+}

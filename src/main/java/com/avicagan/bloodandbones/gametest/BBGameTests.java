@@ -693,6 +693,31 @@ public class BBGameTests {
         animalTest(helper, EntityType.RABBIT, 6);
     }
 
+    @GameTest(template = "empty", timeoutTicks = 200)
+    public static void turtleCarcassAssembles(GameTestHelper helper) {
+        animalTest(helper, EntityType.TURTLE, 6);
+    }
+
+    @GameTest(template = "empty", timeoutTicks = 200)
+    public static void camelCarcassAssembles(GameTestHelper helper) {
+        animalTest(helper, EntityType.CAMEL, 6);
+    }
+
+    @GameTest(template = "empty", timeoutTicks = 200)
+    public static void ironGolemCarcassAssembles(GameTestHelper helper) {
+        animalTest(helper, EntityType.IRON_GOLEM, 6);
+    }
+
+    @GameTest(template = "empty", timeoutTicks = 200)
+    public static void ravagerCarcassAssembles(GameTestHelper helper) {
+        animalTest(helper, EntityType.RAVAGER, 7);
+    }
+
+    @GameTest(template = "empty", timeoutTicks = 200)
+    public static void endermanCarcassAssembles(GameTestHelper helper) {
+        animalTest(helper, EntityType.ENDERMAN, 6);
+    }
+
     /** A white llama and a brown panda keep their colours on the carcass. */
     @GameTest(template = "empty", timeoutTicks = 100)
     public static void llamaAndPandaKeepTheirColours(GameTestHelper helper) {
@@ -880,6 +905,8 @@ public class BBGameTests {
         net.minecraft.world.entity.Mob mob = helper.spawn(type, new BlockPos(5, 2, 5));
         mob.setBaby(false);
         Vec3 pos = mob.position();
+        // a tall mob (an enderman) may not have finished falling over yet; nothing may be above its own height
+        double ceiling = Math.max(2.6, mob.getBbHeight() + 0.2);
         if (CarcassAssembler.assemble(mob, null) == null) {
             helper.fail("Carcass assembly returned false for " + type);
         }
@@ -899,7 +926,7 @@ public class BBGameTests {
                 if (p.y < pos.y - 0.2) {
                     helper.fail("Bone " + bone.getKey() + " of " + type + " sank into the floor to " + p);
                 }
-                if (p.y > pos.y + 2.6) {
+                if (p.y > pos.y + ceiling) {
                     helper.fail("Bone " + bone.getKey() + " of " + type + " is floating at " + p);
                 }
             }

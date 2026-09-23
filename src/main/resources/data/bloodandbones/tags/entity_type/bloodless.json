@@ -5,6 +5,7 @@
     "minecraft:bogged",
     "minecraft:wither_skeleton",
     "minecraft:skeleton_horse",
-    "minecraft:creeper"
+    "minecraft:creeper",
+    "minecraft:iron_golem"
   ]
 }

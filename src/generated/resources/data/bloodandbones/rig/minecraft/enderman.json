@@ -1,0 +1,250 @@
+{
+  "bones": [
+    {
+      "box_max": [
+        4.0,
+        12.0,
+        2.0
+      ],
+      "box_min": [
+        -4.0,
+        0.0,
+        -2.0
+      ],
+      "name": "body",
+      "offset": [
+        0.0,
+        -14.0,
+        0.0
+      ],
+      "part": "body",
+      "rotation": [
+        0.0,
+        0.0,
+        0.0,
+        1.0
+      ]
+    },
+    {
+      "parent": "body",
+      "box_max": [
+        4.0,
+        0.0,
+        4.0
+      ],
+      "box_min": [
+        -4.0,
+        -8.0,
+        -4.0
+      ],
+      "extras": [
+        {
+          "offset": [
+            0.0,
+            0.0,
+            0.0
+          ],
+          "part": "hat",
+          "rotation": [
+            0.0,
+            0.0,
+            0.0,
+            1.0
+          ]
+        }
+      ],
+      "joint": {
+        "contacts": true,
+        "damping": 4.0,
+        "max_degrees": [
+          25.0,
+          30.0,
+          6.0
+        ],
+        "min_degrees": [
+          -15.0,
+          -30.0,
+          -6.0
+        ],
+        "stiffness": 2.0
+      },
+      "name": "head",
+      "offset": [
+        0.0,
+        -13.0,
+        0.0
+      ],
+      "part": "head",
+      "rotation": [
+        0.0,
+        0.0,
+        0.0,
+        1.0
+      ]
+    },
+    {
+      "parent": "body",
+      "box_max": [
+        1.0,
+        28.0,
+        1.0
+      ],
+      "box_min": [
+        -1.0,
+        -2.0,
+        -1.0
+      ],
+      "joint": {
+        "damping": 3.0,
+        "max_degrees": [
+          75.0,
+          10.0,
+          15.0
+        ],
+        "min_degrees": [
+          -75.0,
+          -10.0,
+          -15.0
+        ],
+        "stiffness": 0.1
+      },
+      "name": "right_arm",
+      "offset": [
+        -5.0,
+        -12.0,
+        0.0
+      ],
+      "part": "right_arm",
+      "rotation": [
+        0.0,
+        0.0,
+        0.0,
+        1.0
+      ]
+    },
+    {
+      "parent": "body",
+      "box_max": [
+        1.0,
+        30.0,
+        1.0
+      ],
+      "box_min": [
+        -1.0,
+        0.0,
+        -1.0
+      ],
+      "joint": {
+        "damping": 3.0,
+        "max_degrees": [
+          75.0,
+          10.0,
+          15.0
+        ],
+        "min_degrees": [
+          -75.0,
+          -10.0,
+          -15.0
+        ],
+        "stiffness": 0.1
+      },
+      "name": "left_leg",
+      "offset": [
+        2.0,
+        -5.0,
+        0.0
+      ],
+      "part": "left_leg",
+      "rotation": [
+        0.0,
+        0.0,
+        0.0,
+        1.0
+      ]
+    },
+    {
+      "parent": "body",
+      "box_max": [
+        1.0,
+        28.0,
+        1.0
+      ],
+      "box_min": [
+        -1.0,
+        -2.0,
+        -1.0
+      ],
+      "joint": {
+        "damping": 3.0,
+        "max_degrees": [
+          75.0,
+          10.0,
+          15.0
+        ],
+        "min_degrees": [
+          -75.0,
+          -10.0,
+          -15.0
+        ],
+        "stiffness": 0.1
+      },
+      "name": "left_arm",
+      "offset": [
+        5.0,
+        -12.0,
+        0.0
+      ],
+      "part": "left_arm",
+      "rotation": [
+        0.0,
+        0.0,
+        0.0,
+        1.0
+      ]
+    },
+    {
+      "parent": "body",
+      "box_max": [
+        1.0,
+        30.0,
+        1.0
+      ],
+      "box_min": [
+        -1.0,
+        0.0,
+        -1.0
+      ],
+      "joint": {
+        "damping": 3.0,
+        "max_degrees": [
+          75.0,
+          10.0,
+          15.0
+        ],
+        "min_degrees": [
+          -75.0,
+          -10.0,
+          -15.0
+        ],
+        "stiffness": 0.1
+      },
+      "name": "right_leg",
+      "offset": [
+        -2.0,
+        -5.0,
+        0.0
+      ],
+      "part": "right_leg",
+      "rotation": [
+        0.0,
+        0.0,
+        0.0,
+        1.0
+      ]
+    }
+  ],
+  "entity": "minecraft:enderman",
+  "model": "minecraft:enderman",
+  "texture": "minecraft:textures/entity/enderman/enderman.png",
+  "weight": 0.3359375
+}

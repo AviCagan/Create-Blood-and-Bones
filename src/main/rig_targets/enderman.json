@@ -1,0 +1,26 @@
+{
+  "entity": "minecraft:enderman",
+  "model": "minecraft:enderman",
+  "texture": "minecraft:textures/entity/enderman/enderman.png",
+  "rot_time": 24000,
+  "torso": "body",
+  "attach": {
+    "hat": "head"
+  },
+  "butchery": {
+    "meat": "none",
+    "hide": "none",
+    "bone": "none",
+    "offal_per_weight": 0.0,
+    "fat_per_weight": 0.0,
+    "part_extras": {
+      "body": [
+        {
+          "item": "minecraft:ender_pearl",
+          "count": 1.0,
+          "kind": "offal"
+        }
+      ]
+    }
+  }
+}

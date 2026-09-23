@@ -1,0 +1,113 @@
+{
+  "entity": "minecraft:turtle",
+  "model": "minecraft:turtle",
+  "texture": "minecraft:textures/entity/turtle/big_sea_turtle.png",
+  "rot_time": 30000,
+  "torso": "body",
+  "hidden": [
+    "egg_belly"
+  ],
+  "boxes": {
+    "body": {
+      "min": [
+        -9.5,
+        3,
+        -13
+      ],
+      "max": [
+        9.5,
+        23,
+        -4
+      ]
+    }
+  },
+  "joints": {
+    "head": {
+      "min_degrees": [
+        -15,
+        -30,
+        -6
+      ],
+      "max_degrees": [
+        25,
+        30,
+        6
+      ],
+      "damping": 4.0,
+      "stiffness": 2.0,
+      "contacts": false
+    },
+    "right_front_leg": {
+      "min_degrees": [
+        -30,
+        -40,
+        -45
+      ],
+      "max_degrees": [
+        30,
+        40,
+        45
+      ],
+      "damping": 3.0,
+      "stiffness": 0.1,
+      "contacts": false
+    },
+    "left_front_leg": {
+      "min_degrees": [
+        -30,
+        -40,
+        -45
+      ],
+      "max_degrees": [
+        30,
+        40,
+        45
+      ],
+      "damping": 3.0,
+      "stiffness": 0.1,
+      "contacts": false
+    },
+    "right_hind_leg": {
+      "min_degrees": [
+        -30,
+        -40,
+        -45
+      ],
+      "max_degrees": [
+        30,
+        40,
+        45
+      ],
+      "damping": 3.0,
+      "stiffness": 0.1,
+      "contacts": false
+    },
+    "left_hind_leg": {
+      "min_degrees": [
+        -30,
+        -40,
+        -45
+      ],
+      "max_degrees": [
+        30,
+        40,
+        45
+      ],
+      "damping": 3.0,
+      "stiffness": 0.1,
+      "contacts": false
+    }
+  },
+  "butchery": {
+    "hide": "none",
+    "part_extras": {
+      "body": [
+        {
+          "item": "minecraft:turtle_scute",
+          "count": 0.5,
+          "kind": "other"
+        }
+      ]
+    }
+  }
+}

@@ -1,0 +1,277 @@
+{
+  "bones": [
+    {
+      "box_max": [
+        7.0,
+        19.0,
+        13.0
+      ],
+      "box_min": [
+        -7.0,
+        -10.0,
+        -7.0
+      ],
+      "name": "body",
+      "offset": [
+        0.0,
+        1.0,
+        2.0
+      ],
+      "part": "body",
+      "rotation": [
+        0.70710677,
+        0.0,
+        0.0,
+        0.70710677
+      ]
+    },
+    {
+      "parent": "body",
+      "box_max": [
+        4.0,
+        37.0,
+        4.0
+      ],
+      "box_min": [
+        -4.0,
+        0.0,
+        -4.0
+      ],
+      "joint": {
+        "damping": 3.0,
+        "max_degrees": [
+          75.0,
+          10.0,
+          15.0
+        ],
+        "min_degrees": [
+          -75.0,
+          -10.0,
+          -15.0
+        ],
+        "stiffness": 0.1
+      },
+      "name": "right_front_leg",
+      "offset": [
+        -8.0,
+        -13.0,
+        -5.0
+      ],
+      "part": "right_front_leg",
+      "rotation": [
+        0.0,
+        0.0,
+        0.0,
+        1.0
+      ]
+    },
+    {
+      "parent": "body",
+      "box_max": [
+        4.0,
+        37.0,
+        4.0
+      ],
+      "box_min": [
+        -4.0,
+        0.0,
+        -4.0
+      ],
+      "joint": {
+        "damping": 3.0,
+        "max_degrees": [
+          75.0,
+          10.0,
+          15.0
+        ],
+        "min_degrees": [
+          -75.0,
+          -10.0,
+          -15.0
+        ],
+        "stiffness": 0.1
+      },
+      "name": "right_hind_leg",
+      "offset": [
+        -8.0,
+        -13.0,
+        18.0
+      ],
+      "part": "right_hind_leg",
+      "rotation": [
+        0.0,
+        0.0,
+        0.0,
+        1.0
+      ]
+    },
+    {
+      "parent": "body",
+      "box_max": [
+        4.0,
+        37.0,
+        4.0
+      ],
+      "box_min": [
+        -4.0,
+        0.0,
+        -4.0
+      ],
+      "joint": {
+        "damping": 3.0,
+        "max_degrees": [
+          75.0,
+          10.0,
+          15.0
+        ],
+        "min_degrees": [
+          -75.0,
+          -10.0,
+          -15.0
+        ],
+        "stiffness": 0.1
+      },
+      "name": "left_hind_leg",
+      "offset": [
+        8.0,
+        -13.0,
+        18.0
+      ],
+      "part": "left_hind_leg",
+      "rotation": [
+        0.0,
+        0.0,
+        0.0,
+        1.0
+      ]
+    },
+    {
+      "parent": "body",
+      "box_max": [
+        5.0,
+        9.0,
+        0.0
+      ],
+      "box_min": [
+        -5.0,
+        -1.0,
+        -18.0
+      ],
+      "hide": [
+        "head"
+      ],
+      "joint": {
+        "damping": 4.0,
+        "max_degrees": [
+          30.0,
+          25.0,
+          6.0
+        ],
+        "min_degrees": [
+          -20.0,
+          -25.0,
+          -6.0
+        ],
+        "stiffness": 2.0
+      },
+      "name": "neck",
+      "offset": [
+        0.0,
+        -7.0,
+        5.5
+      ],
+      "part": "neck",
+      "rotation": [
+        0.0,
+        0.0,
+        0.0,
+        1.0
+      ]
+    },
+    {
+      "parent": "neck",
+      "box_max": [
+        8.0,
+        0.0,
+        2.0
+      ],
+      "box_min": [
+        -8.0,
+        -20.0,
+        -14.0
+      ],
+      "joint": {
+        "damping": 4.0,
+        "max_degrees": [
+          25.0,
+          30.0,
+          6.0
+        ],
+        "min_degrees": [
+          -15.0,
+          -30.0,
+          -6.0
+        ],
+        "stiffness": 2.0
+      },
+      "name": "neck/head",
+      "offset": [
+        0.0,
+        9.0,
+        -11.5
+      ],
+      "part": "neck/head",
+      "rotation": [
+        0.0,
+        0.0,
+        0.0,
+        1.0
+      ]
+    },
+    {
+      "parent": "body",
+      "box_max": [
+        4.0,
+        37.0,
+        4.0
+      ],
+      "box_min": [
+        -4.0,
+        0.0,
+        -4.0
+      ],
+      "joint": {
+        "damping": 3.0,
+        "max_degrees": [
+          75.0,
+          10.0,
+          15.0
+        ],
+        "min_degrees": [
+          -75.0,
+          -10.0,
+          -15.0
+        ],
+        "stiffness": 0.1
+      },
+      "name": "left_front_leg",
+      "offset": [
+        8.0,
+        -13.0,
+        -5.0
+      ],
+      "part": "left_front_leg",
+      "rotation": [
+        0.0,
+        0.0,
+        0.0,
+        1.0
+      ]
+    }
+  ],
+  "entity": "minecraft:ravager",
+  "model": "minecraft:ravager",
+  "rot_time": 36000,
+  "texture": "minecraft:textures/entity/illager/ravager.png",
+  "weight": 5.984375
+}
