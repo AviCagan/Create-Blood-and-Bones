@@ -1,0 +1,35 @@
+{
+  "entity": "minecraft:bee",
+  "model": "minecraft:bee",
+  "texture": "minecraft:textures/entity/bee/bee.png",
+  "rot_time": 8000,
+  "torso": "bone/body",
+  "merge": [
+    "bone/body/right_antenna",
+    "bone/body/left_antenna",
+    "bone/body/stinger"
+  ],
+  "attach": {
+    "bone/front_legs": "bone/body",
+    "bone/middle_legs": "bone/body",
+    "bone/back_legs": "bone/body",
+    "bone/right_wing": "bone/body",
+    "bone/left_wing": "bone/body"
+  },
+  "butchery": {
+    "meat": "none",
+    "hide": "none",
+    "bone": "none",
+    "offal_per_weight": 0.0,
+    "fat_per_weight": 0.0,
+    "part_extras": {
+      "bone/body": [
+        {
+          "item": "minecraft:honeycomb",
+          "count": 0.3,
+          "kind": "offal"
+        }
+      ]
+    }
+  }
+}

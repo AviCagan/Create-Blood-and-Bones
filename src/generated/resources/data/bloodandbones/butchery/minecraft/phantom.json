@@ -1,0 +1,51 @@
+{
+  "entity": "minecraft:phantom",
+  "hide": [
+    {
+      "item": "minecraft:phantom_membrane",
+      "kind": "hide"
+    }
+  ],
+  "parts": {
+    "body": [
+      {
+        "count": 0.26,
+        "item": "minecraft:rotten_flesh",
+        "kind": "meat"
+      },
+      {
+        "count": 0.24,
+        "item": "bloodandbones:offal",
+        "kind": "offal"
+      }
+    ],
+    "body/head": [
+      {
+        "count": 0.21,
+        "item": "minecraft:rotten_flesh",
+        "kind": "meat"
+      }
+    ],
+    "body/left_wing_base": [
+      {
+        "count": 0.21,
+        "item": "minecraft:rotten_flesh",
+        "kind": "meat"
+      }
+    ],
+    "body/right_wing_base": [
+      {
+        "count": 0.21,
+        "item": "minecraft:rotten_flesh",
+        "kind": "meat"
+      }
+    ],
+    "body/tail_base": [
+      {
+        "count": 0.07,
+        "item": "minecraft:rotten_flesh",
+        "kind": "meat"
+      }
+    ]
+  }
+}

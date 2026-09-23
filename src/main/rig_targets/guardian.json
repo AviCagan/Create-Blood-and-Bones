@@ -1,0 +1,90 @@
+{
+  "entity": "minecraft:guardian",
+  "model": "minecraft:guardian",
+  "texture": "minecraft:textures/entity/guardian.png",
+  "rot_time": 24000,
+  "torso": "head",
+  "merge": [
+    "head/spike0",
+    "head/spike1",
+    "head/spike2",
+    "head/spike3",
+    "head/spike4",
+    "head/spike5",
+    "head/spike6",
+    "head/spike7",
+    "head/spike8",
+    "head/spike9",
+    "head/spike10",
+    "head/spike11",
+    "head/eye"
+  ],
+  "joints": {
+    "head/tail0": {
+      "min_degrees": [
+        -45,
+        -45,
+        -45
+      ],
+      "max_degrees": [
+        45,
+        45,
+        45
+      ],
+      "damping": 2.0,
+      "stiffness": 1.0,
+      "contacts": false
+    },
+    "head/tail0/tail1": {
+      "min_degrees": [
+        -45,
+        -45,
+        -45
+      ],
+      "max_degrees": [
+        45,
+        45,
+        45
+      ],
+      "damping": 2.0,
+      "stiffness": 1.0,
+      "contacts": false
+    },
+    "head/tail0/tail1/tail2": {
+      "min_degrees": [
+        -45,
+        -45,
+        -45
+      ],
+      "max_degrees": [
+        45,
+        45,
+        45
+      ],
+      "damping": 2.0,
+      "stiffness": 1.0,
+      "contacts": false
+    }
+  },
+  "butchery": {
+    "meat": "none",
+    "hide": "none",
+    "bone": "none",
+    "offal_per_weight": 0.0,
+    "fat_per_weight": 0.0,
+    "part_extras": {
+      "head": [
+        {
+          "item": "minecraft:prismarine_shard",
+          "count": 2.0,
+          "kind": "other"
+        },
+        {
+          "item": "minecraft:cod",
+          "count": 1.0,
+          "kind": "offal"
+        }
+      ]
+    }
+  }
+}

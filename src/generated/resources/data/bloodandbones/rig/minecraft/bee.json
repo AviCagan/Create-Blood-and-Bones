@@ -1,0 +1,106 @@
+{
+  "bones": [
+    {
+      "box_max": [
+        3.5,
+        3.0,
+        5.0
+      ],
+      "box_min": [
+        -3.5,
+        -4.0,
+        -5.0
+      ],
+      "extras": [
+        {
+          "offset": [
+            1.5,
+            3.0,
+            -2.0
+          ],
+          "part": "bone/front_legs",
+          "rotation": [
+            0.0,
+            0.0,
+            0.0,
+            1.0
+          ]
+        },
+        {
+          "offset": [
+            1.5,
+            3.0,
+            0.0
+          ],
+          "part": "bone/middle_legs",
+          "rotation": [
+            0.0,
+            0.0,
+            0.0,
+            1.0
+          ]
+        },
+        {
+          "offset": [
+            1.5,
+            3.0,
+            2.0
+          ],
+          "part": "bone/back_legs",
+          "rotation": [
+            0.0,
+            0.0,
+            0.0,
+            1.0
+          ]
+        },
+        {
+          "offset": [
+            -1.5,
+            -4.0,
+            -3.0
+          ],
+          "part": "bone/right_wing",
+          "rotation": [
+            0.0,
+            -0.1305265,
+            0.0,
+            0.9914448
+          ]
+        },
+        {
+          "offset": [
+            1.5,
+            -4.0,
+            -3.0
+          ],
+          "part": "bone/left_wing",
+          "rotation": [
+            0.0,
+            0.1305265,
+            0.0,
+            0.9914448
+          ]
+        }
+      ],
+      "name": "bone/body",
+      "offset": [
+        0.0,
+        19.0,
+        0.0
+      ],
+      "part": "bone/body",
+      "rotation": [
+        0.0,
+        0.0,
+        0.0,
+        1.0
+      ]
+    }
+  ],
+  "entity": "minecraft:bee",
+  "model": "minecraft:bee",
+  "rot_time": 8000,
+  "texture": "minecraft:textures/entity/bee/bee.png",
+  "weight": 0.119628906
+}

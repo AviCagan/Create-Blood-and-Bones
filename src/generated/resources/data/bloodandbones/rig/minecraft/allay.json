@@ -1,0 +1,104 @@
+{
+  "bones": [
+    {
+      "box_max": [
+        1.5,
+        5.0,
+        1.0
+      ],
+      "box_min": [
+        -1.5,
+        0.0,
+        -1.0
+      ],
+      "extras": [
+        {
+          "offset": [
+            -1.75,
+            0.5,
+            0.0
+          ],
+          "part": "root/body/right_arm",
+          "rotation": [
+            0.0,
+            0.0,
+            0.0,
+            1.0
+          ]
+        },
+        {
+          "offset": [
+            1.75,
+            0.5,
+            0.0
+          ],
+          "part": "root/body/left_arm",
+          "rotation": [
+            0.0,
+            0.0,
+            0.0,
+            1.0
+          ]
+        }
+      ],
+      "name": "root/body",
+      "offset": [
+        0.0,
+        19.5,
+        0.0
+      ],
+      "part": "root/body",
+      "rotation": [
+        0.0,
+        0.0,
+        0.0,
+        1.0
+      ]
+    },
+    {
+      "parent": "root/body",
+      "box_max": [
+        2.5,
+        0.0,
+        2.5
+      ],
+      "box_min": [
+        -2.5,
+        -5.0,
+        -2.5
+      ],
+      "joint": {
+        "damping": 4.0,
+        "max_degrees": [
+          25.0,
+          30.0,
+          6.0
+        ],
+        "min_degrees": [
+          -15.0,
+          -30.0,
+          -6.0
+        ],
+        "stiffness": 2.0
+      },
+      "name": "root/head",
+      "offset": [
+        0.0,
+        19.51,
+        0.0
+      ],
+      "part": "root/head",
+      "rotation": [
+        0.0,
+        0.0,
+        0.0,
+        1.0
+      ]
+    }
+  ],
+  "entity": "minecraft:allay",
+  "model": "minecraft:allay",
+  "rot_time": 6000,
+  "texture": "minecraft:textures/entity/allay/allay.png",
+  "weight": 0.037841797
+}

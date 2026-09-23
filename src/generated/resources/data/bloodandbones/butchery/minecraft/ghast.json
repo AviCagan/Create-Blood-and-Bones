@@ -1,0 +1,24 @@
+{
+  "entity": "minecraft:ghast",
+  "parts": {
+    "body": [
+      {
+        "item": "minecraft:ghast_tear",
+        "kind": "offal"
+      },
+      {
+        "count": 2.0,
+        "item": "minecraft:gunpowder"
+      }
+    ],
+    "tentacle0": [],
+    "tentacle1": [],
+    "tentacle2": [],
+    "tentacle3": [],
+    "tentacle4": [],
+    "tentacle5": [],
+    "tentacle6": [],
+    "tentacle7": [],
+    "tentacle8": []
+  }
+}

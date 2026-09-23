@@ -1,0 +1,166 @@
+{
+  "entity": "minecraft:ghast",
+  "model": "minecraft:ghast",
+  "texture": "minecraft:textures/entity/ghast/ghast.png",
+  "rot_time": 24000,
+  "torso": "body",
+  "scale": 4.5,
+  "joints": {
+    "tentacle0": {
+      "min_degrees": [
+        -60,
+        -30,
+        -60
+      ],
+      "max_degrees": [
+        60,
+        30,
+        60
+      ],
+      "damping": 1.5,
+      "stiffness": 0.05,
+      "contacts": false
+    },
+    "tentacle1": {
+      "min_degrees": [
+        -60,
+        -30,
+        -60
+      ],
+      "max_degrees": [
+        60,
+        30,
+        60
+      ],
+      "damping": 1.5,
+      "stiffness": 0.05,
+      "contacts": false
+    },
+    "tentacle2": {
+      "min_degrees": [
+        -60,
+        -30,
+        -60
+      ],
+      "max_degrees": [
+        60,
+        30,
+        60
+      ],
+      "damping": 1.5,
+      "stiffness": 0.05,
+      "contacts": false
+    },
+    "tentacle3": {
+      "min_degrees": [
+        -60,
+        -30,
+        -60
+      ],
+      "max_degrees": [
+        60,
+        30,
+        60
+      ],
+      "damping": 1.5,
+      "stiffness": 0.05,
+      "contacts": false
+    },
+    "tentacle4": {
+      "min_degrees": [
+        -60,
+        -30,
+        -60
+      ],
+      "max_degrees": [
+        60,
+        30,
+        60
+      ],
+      "damping": 1.5,
+      "stiffness": 0.05,
+      "contacts": false
+    },
+    "tentacle5": {
+      "min_degrees": [
+        -60,
+        -30,
+        -60
+      ],
+      "max_degrees": [
+        60,
+        30,
+        60
+      ],
+      "damping": 1.5,
+      "stiffness": 0.05,
+      "contacts": false
+    },
+    "tentacle6": {
+      "min_degrees": [
+        -60,
+        -30,
+        -60
+      ],
+      "max_degrees": [
+        60,
+        30,
+        60
+      ],
+      "damping": 1.5,
+      "stiffness": 0.05,
+      "contacts": false
+    },
+    "tentacle7": {
+      "min_degrees": [
+        -60,
+        -30,
+        -60
+      ],
+      "max_degrees": [
+        60,
+        30,
+        60
+      ],
+      "damping": 1.5,
+      "stiffness": 0.05,
+      "contacts": false
+    },
+    "tentacle8": {
+      "min_degrees": [
+        -60,
+        -30,
+        -60
+      ],
+      "max_degrees": [
+        60,
+        30,
+        60
+      ],
+      "damping": 1.5,
+      "stiffness": 0.05,
+      "contacts": false
+    }
+  },
+  "butchery": {
+    "meat": "none",
+    "hide": "none",
+    "bone": "none",
+    "offal_per_weight": 0.0,
+    "fat_per_weight": 0.0,
+    "part_extras": {
+      "body": [
+        {
+          "item": "minecraft:ghast_tear",
+          "count": 1.0,
+          "kind": "offal"
+        },
+        {
+          "item": "minecraft:gunpowder",
+          "count": 2.0,
+          "kind": "other"
+        }
+      ]
+    }
+  }
+}

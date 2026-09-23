@@ -1,0 +1,12 @@
+{
+  "entity": "minecraft:slime",
+  "parts": {
+    "cube": [
+      {
+        "count": 4.0,
+        "item": "minecraft:slime_ball",
+        "kind": "offal"
+      }
+    ]
+  }
+}

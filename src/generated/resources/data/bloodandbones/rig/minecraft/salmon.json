@@ -1,0 +1,144 @@
+{
+  "bones": [
+    {
+      "box_max": [
+        1.5,
+        2.5,
+        8.0
+      ],
+      "box_min": [
+        -1.5,
+        -2.5,
+        0.0
+      ],
+      "extras": [
+        {
+          "offset": [
+            1.5,
+            1.5,
+            0.0
+          ],
+          "part": "left_fin",
+          "rotation": [
+            0.0,
+            0.0,
+            0.38268346,
+            0.9238795
+          ]
+        },
+        {
+          "offset": [
+            -1.5,
+            1.5,
+            0.0
+          ],
+          "part": "right_fin",
+          "rotation": [
+            0.0,
+            0.0,
+            -0.38268346,
+            0.9238795
+          ]
+        }
+      ],
+      "name": "body_front",
+      "offset": [
+        0.0,
+        20.0,
+        0.0
+      ],
+      "part": "body_front",
+      "rotation": [
+        0.0,
+        0.0,
+        0.0,
+        1.0
+      ]
+    },
+    {
+      "parent": "body_front",
+      "box_max": [
+        1.0,
+        2.0,
+        0.0
+      ],
+      "box_min": [
+        -1.0,
+        -2.0,
+        -3.0
+      ],
+      "joint": {
+        "damping": 4.0,
+        "max_degrees": [
+          25.0,
+          30.0,
+          6.0
+        ],
+        "min_degrees": [
+          -15.0,
+          -30.0,
+          -6.0
+        ],
+        "stiffness": 2.0
+      },
+      "name": "head",
+      "offset": [
+        0.0,
+        20.0,
+        0.0
+      ],
+      "part": "head",
+      "rotation": [
+        0.0,
+        0.0,
+        0.0,
+        1.0
+      ]
+    },
+    {
+      "parent": "body_front",
+      "box_max": [
+        1.5,
+        2.5,
+        8.0
+      ],
+      "box_min": [
+        -1.5,
+        -2.5,
+        0.0
+      ],
+      "joint": {
+        "damping": 2.0,
+        "max_degrees": [
+          45.0,
+          45.0,
+          45.0
+        ],
+        "min_degrees": [
+          -45.0,
+          -45.0,
+          -45.0
+        ],
+        "stiffness": 1.0
+      },
+      "name": "body_back",
+      "offset": [
+        0.0,
+        20.0,
+        8.0
+      ],
+      "part": "body_back",
+      "rotation": [
+        0.0,
+        0.0,
+        0.0,
+        1.0
+      ]
+    }
+  ],
+  "entity": "minecraft:salmon",
+  "model": "minecraft:salmon",
+  "rot_time": 8000,
+  "texture": "minecraft:textures/entity/fish/salmon.png",
+  "weight": 0.064453125
+}

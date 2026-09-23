@@ -1,0 +1,28 @@
+{
+  "entity": "minecraft:axolotl",
+  "model": "minecraft:axolotl",
+  "texture": "minecraft:textures/entity/axolotl/axolotl_{variant}.png",
+  "rot_time": 12000,
+  "torso": "body",
+  "joints": {
+    "body/head": {
+      "min_degrees": [
+        -15,
+        -30,
+        -6
+      ],
+      "max_degrees": [
+        25,
+        30,
+        6
+      ],
+      "damping": 4.0,
+      "stiffness": 2.0,
+      "contacts": false
+    }
+  },
+  "butchery": {
+    "hide": "none",
+    "meat_per_block": 20.0
+  }
+}

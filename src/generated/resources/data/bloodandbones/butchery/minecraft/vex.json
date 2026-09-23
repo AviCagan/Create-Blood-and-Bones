@@ -1,0 +1,11 @@
+{
+  "entity": "minecraft:vex",
+  "parts": {
+    "root/body": [
+      {
+        "item": "minecraft:iron_nugget"
+      }
+    ],
+    "root/head": []
+  }
+}

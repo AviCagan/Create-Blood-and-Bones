@@ -818,6 +818,96 @@ public class BBGameTests {
         animalTest(helper, EntityType.STRIDER, 3);
     }
 
+    @GameTest(template = "empty", timeoutTicks = 200)
+    public static void batCarcassAssembles(GameTestHelper helper) {
+        animalTest(helper, EntityType.BAT, 2);
+    }
+
+    @GameTest(template = "empty", timeoutTicks = 200)
+    public static void beeCarcassAssembles(GameTestHelper helper) {
+        animalTest(helper, EntityType.BEE, 1);
+    }
+
+    @GameTest(template = "empty", timeoutTicks = 200)
+    public static void parrotCarcassAssembles(GameTestHelper helper) {
+        animalTest(helper, EntityType.PARROT, 4);
+    }
+
+    @GameTest(template = "empty", timeoutTicks = 200)
+    public static void squidCarcassAssembles(GameTestHelper helper) {
+        animalTest(helper, EntityType.SQUID, 9);
+    }
+
+    @GameTest(template = "empty", timeoutTicks = 200)
+    public static void glowSquidCarcassAssembles(GameTestHelper helper) {
+        animalTest(helper, EntityType.GLOW_SQUID, 9);
+    }
+
+    @GameTest(template = "empty", timeoutTicks = 200)
+    public static void dolphinCarcassAssembles(GameTestHelper helper) {
+        animalTest(helper, EntityType.DOLPHIN, 3);
+    }
+
+    @GameTest(template = "empty", timeoutTicks = 200)
+    public static void codCarcassAssembles(GameTestHelper helper) {
+        animalTest(helper, EntityType.COD, 2);
+    }
+
+    @GameTest(template = "empty", timeoutTicks = 200)
+    public static void salmonCarcassAssembles(GameTestHelper helper) {
+        animalTest(helper, EntityType.SALMON, 3);
+    }
+
+    @GameTest(template = "empty", timeoutTicks = 200)
+    public static void axolotlCarcassAssembles(GameTestHelper helper) {
+        animalTest(helper, EntityType.AXOLOTL, 2);
+    }
+
+    @GameTest(template = "empty", timeoutTicks = 200)
+    public static void allayCarcassAssembles(GameTestHelper helper) {
+        animalTest(helper, EntityType.ALLAY, 2);
+    }
+
+    @GameTest(template = "empty", timeoutTicks = 200)
+    public static void vexCarcassAssembles(GameTestHelper helper) {
+        animalTest(helper, EntityType.VEX, 2);
+    }
+
+    @GameTest(template = "empty", timeoutTicks = 200)
+    public static void phantomCarcassAssembles(GameTestHelper helper) {
+        animalTest(helper, EntityType.PHANTOM, 5);
+    }
+
+    @GameTest(template = "empty", timeoutTicks = 200)
+    public static void blazeCarcassAssembles(GameTestHelper helper) {
+        animalTest(helper, EntityType.BLAZE, 1);
+    }
+
+    @GameTest(template = "empty", timeoutTicks = 200)
+    public static void ghastCarcassAssembles(GameTestHelper helper) {
+        animalTest(helper, EntityType.GHAST, 10);
+    }
+
+    @GameTest(template = "empty", timeoutTicks = 200)
+    public static void slimeCarcassAssembles(GameTestHelper helper) {
+        animalTest(helper, EntityType.SLIME, 1);
+    }
+
+    @GameTest(template = "empty", timeoutTicks = 200)
+    public static void magmaCubeCarcassAssembles(GameTestHelper helper) {
+        animalTest(helper, EntityType.MAGMA_CUBE, 1);
+    }
+
+    @GameTest(template = "empty", timeoutTicks = 200)
+    public static void guardianCarcassAssembles(GameTestHelper helper) {
+        animalTest(helper, EntityType.GUARDIAN, 4);
+    }
+
+    @GameTest(template = "empty", timeoutTicks = 200)
+    public static void elderGuardianCarcassAssembles(GameTestHelper helper) {
+        animalTest(helper, EntityType.ELDER_GUARDIAN, 4);
+    }
+
     /** A white llama and a brown panda keep their colours on the carcass. */
     @GameTest(template = "empty", timeoutTicks = 100)
     public static void llamaAndPandaKeepTheirColours(GameTestHelper helper) {
@@ -1006,9 +1096,14 @@ public class BBGameTests {
         ServerLevel level = helper.getLevel();
         net.minecraft.world.entity.Mob mob = helper.spawn(type, new BlockPos(5, 2, 5));
         mob.setBaby(false);
+        if (mob instanceof net.minecraft.world.entity.monster.Slime slime) {
+            slime.setSize(4, true);
+        }
         Vec3 pos = mob.position();
         // a tall mob (an enderman) may not have finished falling over yet; nothing may be above its own height
         double ceiling = Math.max(2.6, mob.getBbHeight() + 0.2);
+        // a big mob's tail reaches further than a cow's
+        double reach = Math.max(4.0, 2.5 * mob.getBbWidth());
         if (CarcassAssembler.assemble(mob, null) == null) {
             helper.fail("Carcass assembly returned false for " + type);
         }
@@ -1022,7 +1117,7 @@ public class BBGameTests {
             for (Map.Entry<String, ServerSubLevel> bone : liveBones(helper, level, carcass).entrySet()) {
                 Vector3d p = bone.getValue().logicalPose().position();
                 double distance = p.distance(pos.x, pos.y, pos.z);
-                if (distance > 4.0) {
+                if (distance > reach) {
                     helper.fail("Bone " + bone.getKey() + " of " + type + " ended up " + distance + " blocks away at " + p);
                 }
                 if (p.y < pos.y - 0.2) {

@@ -1,0 +1,149 @@
+{
+  "bones": [
+    {
+      "box_max": [
+        16.0,
+        96.0,
+        16.0
+      ],
+      "box_min": [
+        -16.0,
+        64.0,
+        -16.0
+      ],
+      "extras": [
+        {
+          "offset": [
+            0.0,
+            0.0,
+            0.0
+          ],
+          "part": "cube0",
+          "rotation": [
+            0.0,
+            0.0,
+            0.0,
+            1.0
+          ]
+        },
+        {
+          "offset": [
+            0.0,
+            0.0,
+            0.0
+          ],
+          "part": "cube1",
+          "rotation": [
+            0.0,
+            0.0,
+            0.0,
+            1.0
+          ]
+        },
+        {
+          "offset": [
+            0.0,
+            0.0,
+            0.0
+          ],
+          "part": "cube2",
+          "rotation": [
+            0.0,
+            0.0,
+            0.0,
+            1.0
+          ]
+        },
+        {
+          "offset": [
+            0.0,
+            0.0,
+            0.0
+          ],
+          "part": "cube3",
+          "rotation": [
+            0.0,
+            0.0,
+            0.0,
+            1.0
+          ]
+        },
+        {
+          "offset": [
+            0.0,
+            0.0,
+            0.0
+          ],
+          "part": "cube4",
+          "rotation": [
+            0.0,
+            0.0,
+            0.0,
+            1.0
+          ]
+        },
+        {
+          "offset": [
+            0.0,
+            0.0,
+            0.0
+          ],
+          "part": "cube5",
+          "rotation": [
+            0.0,
+            0.0,
+            0.0,
+            1.0
+          ]
+        },
+        {
+          "offset": [
+            0.0,
+            0.0,
+            0.0
+          ],
+          "part": "cube6",
+          "rotation": [
+            0.0,
+            0.0,
+            0.0,
+            1.0
+          ]
+        },
+        {
+          "offset": [
+            0.0,
+            0.0,
+            0.0
+          ],
+          "part": "cube7",
+          "rotation": [
+            0.0,
+            0.0,
+            0.0,
+            1.0
+          ]
+        }
+      ],
+      "name": "inside_cube",
+      "offset": [
+        0.0,
+        0.0,
+        0.0
+      ],
+      "part": "inside_cube",
+      "rotation": [
+        0.0,
+        0.0,
+        0.0,
+        1.0
+      ]
+    }
+  ],
+  "entity": "minecraft:magma_cube",
+  "model": "minecraft:magma_cube",
+  "rot_time": 1000000,
+  "scale": 4.0,
+  "texture": "minecraft:textures/entity/slime/magmacube.png",
+  "weight": 8.0
+}

@@ -1,0 +1,18 @@
+{
+  "entity": "minecraft:guardian",
+  "parts": {
+    "head": [
+      {
+        "count": 2.0,
+        "item": "minecraft:prismarine_shard"
+      },
+      {
+        "item": "minecraft:cod",
+        "kind": "offal"
+      }
+    ],
+    "head/tail0": [],
+    "head/tail0/tail1": [],
+    "head/tail0/tail1/tail2": []
+  }
+}

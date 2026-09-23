@@ -1,0 +1,12 @@
+{
+  "entity": "minecraft:allay",
+  "parts": {
+    "root/body": [
+      {
+        "count": 0.5,
+        "item": "minecraft:amethyst_shard"
+      }
+    ],
+    "root/head": []
+  }
+}

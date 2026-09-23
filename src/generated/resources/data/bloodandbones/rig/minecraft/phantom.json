@@ -1,0 +1,200 @@
+{
+  "bones": [
+    {
+      "box_max": [
+        2.0,
+        1.0,
+        1.0
+      ],
+      "box_min": [
+        -3.0,
+        -2.0,
+        -8.0
+      ],
+      "hide": [
+        "head",
+        "right_wing_base",
+        "tail_base",
+        "left_wing_base"
+      ],
+      "name": "body",
+      "offset": [
+        0.0,
+        0.0,
+        0.0
+      ],
+      "part": "body",
+      "rotation": [
+        -0.04997917,
+        0.0,
+        0.0,
+        0.99875027
+      ]
+    },
+    {
+      "parent": "body",
+      "box_max": [
+        3.0,
+        1.0,
+        0.0
+      ],
+      "box_min": [
+        -4.0,
+        -2.0,
+        -5.0
+      ],
+      "joint": {
+        "damping": 4.0,
+        "max_degrees": [
+          25.0,
+          30.0,
+          6.0
+        ],
+        "min_degrees": [
+          -15.0,
+          -30.0,
+          -6.0
+        ],
+        "stiffness": 2.0
+      },
+      "name": "body/head",
+      "offset": [
+        0.0,
+        0.2961703,
+        -7.0648627
+      ],
+      "part": "body/head",
+      "rotation": [
+        0.049979173,
+        0.0,
+        0.0,
+        0.99875027
+      ]
+    },
+    {
+      "parent": "body",
+      "box_max": [
+        0.0,
+        2.0,
+        9.0
+      ],
+      "box_min": [
+        -6.0,
+        0.0,
+        0.0
+      ],
+      "joint": {
+        "damping": 2.0,
+        "max_degrees": [
+          45.0,
+          45.0,
+          45.0
+        ],
+        "min_degrees": [
+          -45.0,
+          -45.0,
+          -45.0
+        ],
+        "stiffness": 1.0
+      },
+      "name": "body/right_wing_base",
+      "offset": [
+        -3.0,
+        -2.7886758,
+        -7.7603664
+      ],
+      "part": "body/right_wing_base",
+      "rotation": [
+        -0.049916707,
+        -0.0024979173,
+        -0.049916707,
+        0.9975021
+      ]
+    },
+    {
+      "parent": "body",
+      "box_max": [
+        1.0,
+        2.0,
+        6.0
+      ],
+      "box_min": [
+        -2.0,
+        0.0,
+        0.0
+      ],
+      "joint": {
+        "damping": 2.0,
+        "max_degrees": [
+          45.0,
+          45.0,
+          45.0
+        ],
+        "min_degrees": [
+          -45.0,
+          -45.0,
+          -45.0
+        ],
+        "stiffness": 1.0
+      },
+      "name": "body/tail_base",
+      "offset": [
+        0.0,
+        -1.890175,
+        1.194671
+      ],
+      "part": "body/tail_base",
+      "rotation": [
+        -0.04997917,
+        0.0,
+        0.0,
+        0.99875027
+      ]
+    },
+    {
+      "parent": "body",
+      "box_max": [
+        6.0,
+        2.0,
+        9.0
+      ],
+      "box_min": [
+        0.0,
+        0.0,
+        0.0
+      ],
+      "joint": {
+        "damping": 2.0,
+        "max_degrees": [
+          45.0,
+          45.0,
+          45.0
+        ],
+        "min_degrees": [
+          -45.0,
+          -45.0,
+          -45.0
+        ],
+        "stiffness": 1.0
+      },
+      "name": "body/left_wing_base",
+      "offset": [
+        2.0,
+        -2.7886758,
+        -7.7603664
+      ],
+      "part": "body/left_wing_base",
+      "rotation": [
+        -0.049916707,
+        0.0024979173,
+        0.049916707,
+        0.9975021
+      ]
+    }
+  ],
+  "entity": "minecraft:phantom",
+  "model": "minecraft:phantom",
+  "rot_time": 6000,
+  "texture": "minecraft:textures/entity/phantom.png",
+  "weight": 0.12011719
+}

@@ -1,0 +1,201 @@
+{
+  "bones": [
+    {
+      "box_max": [
+        1.5,
+        6.0,
+        1.5
+      ],
+      "box_min": [
+        -1.5,
+        0.0,
+        -1.5
+      ],
+      "extras": [
+        {
+          "offset": [
+            1.0,
+            5.5,
+            1.95
+          ],
+          "part": "left_leg",
+          "rotation": [
+            0.0,
+            0.0,
+            0.0,
+            1.0
+          ]
+        },
+        {
+          "offset": [
+            -1.0,
+            5.5,
+            1.95
+          ],
+          "part": "right_leg",
+          "rotation": [
+            0.0,
+            0.0,
+            0.0,
+            1.0
+          ]
+        },
+        {
+          "offset": [
+            0.0,
+            4.5699997,
+            4.16
+          ],
+          "part": "tail",
+          "rotation": [
+            0.0,
+            0.0,
+            0.0,
+            1.0
+          ]
+        }
+      ],
+      "name": "body",
+      "offset": [
+        0.0,
+        16.5,
+        -3.0
+      ],
+      "part": "body",
+      "rotation": [
+        0.0,
+        0.0,
+        0.0,
+        1.0
+      ]
+    },
+    {
+      "parent": "body",
+      "box_max": [
+        1.0,
+        1.5,
+        1.0
+      ],
+      "box_min": [
+        -1.0,
+        -1.5,
+        -1.0
+      ],
+      "joint": {
+        "damping": 4.0,
+        "max_degrees": [
+          25.0,
+          30.0,
+          6.0
+        ],
+        "min_degrees": [
+          -15.0,
+          -30.0,
+          -6.0
+        ],
+        "stiffness": 2.0
+      },
+      "name": "head",
+      "offset": [
+        0.0,
+        15.69,
+        -2.76
+      ],
+      "part": "head",
+      "rotation": [
+        0.0,
+        0.0,
+        0.0,
+        1.0
+      ]
+    },
+    {
+      "parent": "body",
+      "box_max": [
+        0.5,
+        5.0,
+        1.5
+      ],
+      "box_min": [
+        -0.5,
+        0.0,
+        -1.5
+      ],
+      "joint": {
+        "damping": 2.0,
+        "max_degrees": [
+          45.0,
+          45.0,
+          45.0
+        ],
+        "min_degrees": [
+          -45.0,
+          -45.0,
+          -45.0
+        ],
+        "stiffness": 1.0
+      },
+      "name": "right_wing",
+      "offset": [
+        -1.5,
+        16.94,
+        -2.76
+      ],
+      "part": "right_wing",
+      "rotation": [
+        0.0,
+        0.0,
+        0.0,
+        1.0
+      ]
+    },
+    {
+      "parent": "body",
+      "box_max": [
+        0.5,
+        5.0,
+        1.5
+      ],
+      "box_min": [
+        -0.5,
+        0.0,
+        -1.5
+      ],
+      "joint": {
+        "damping": 2.0,
+        "max_degrees": [
+          45.0,
+          45.0,
+          45.0
+        ],
+        "min_degrees": [
+          -45.0,
+          -45.0,
+          -45.0
+        ],
+        "stiffness": 1.0
+      },
+      "name": "left_wing",
+      "offset": [
+        1.5,
+        16.94,
+        -2.76
+      ],
+      "part": "left_wing",
+      "rotation": [
+        0.0,
+        0.0,
+        0.0,
+        1.0
+      ]
+    }
+  ],
+  "entity": "minecraft:parrot",
+  "model": "minecraft:parrot",
+  "rot_time": 16000,
+  "texture": "minecraft:textures/entity/parrot/parrot_{variant}.png",
+  "variant_names": {
+    "gray": "grey"
+  },
+  "weight": 0.0234375
+}

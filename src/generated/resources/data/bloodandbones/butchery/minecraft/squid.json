@@ -1,0 +1,77 @@
+{
+  "entity": "minecraft:squid",
+  "parts": {
+    "body": [
+      {
+        "count": 4.5,
+        "item": "bloodandbones:raw_meat",
+        "kind": "meat"
+      },
+      {
+        "count": 1.27,
+        "item": "bloodandbones:offal",
+        "kind": "offal"
+      },
+      {
+        "item": "minecraft:ink_sac",
+        "kind": "offal"
+      }
+    ],
+    "tentacle0": [
+      {
+        "count": 0.07,
+        "item": "bloodandbones:raw_meat",
+        "kind": "meat"
+      }
+    ],
+    "tentacle1": [
+      {
+        "count": 0.07,
+        "item": "bloodandbones:raw_meat",
+        "kind": "meat"
+      }
+    ],
+    "tentacle2": [
+      {
+        "count": 0.07,
+        "item": "bloodandbones:raw_meat",
+        "kind": "meat"
+      }
+    ],
+    "tentacle3": [
+      {
+        "count": 0.07,
+        "item": "bloodandbones:raw_meat",
+        "kind": "meat"
+      }
+    ],
+    "tentacle4": [
+      {
+        "count": 0.07,
+        "item": "bloodandbones:raw_meat",
+        "kind": "meat"
+      }
+    ],
+    "tentacle5": [
+      {
+        "count": 0.07,
+        "item": "bloodandbones:raw_meat",
+        "kind": "meat"
+      }
+    ],
+    "tentacle6": [
+      {
+        "count": 0.07,
+        "item": "bloodandbones:raw_meat",
+        "kind": "meat"
+      }
+    ],
+    "tentacle7": [
+      {
+        "count": 0.07,
+        "item": "bloodandbones:raw_meat",
+        "kind": "meat"
+      }
+    ]
+  }
+}

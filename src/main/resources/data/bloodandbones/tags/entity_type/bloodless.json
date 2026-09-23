@@ -6,6 +6,13 @@
     "minecraft:wither_skeleton",
     "minecraft:skeleton_horse",
     "minecraft:creeper",
-    "minecraft:iron_golem"
+    "minecraft:iron_golem",
+    "minecraft:blaze",
+    "minecraft:vex",
+    "minecraft:allay",
+    "minecraft:slime",
+    "minecraft:magma_cube",
+    "minecraft:ghast",
+    "minecraft:bee"
   ]
 }

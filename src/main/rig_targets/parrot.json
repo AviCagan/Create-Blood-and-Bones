@@ -1,0 +1,44 @@
+{
+  "entity": "minecraft:parrot",
+  "model": "minecraft:parrot",
+  "texture": "minecraft:textures/entity/parrot/parrot_{variant}.png",
+  "variant_names": {
+    "gray": "grey"
+  },
+  "rot_time": 16000,
+  "torso": "body",
+  "merge": [
+    "head/beak1",
+    "head/beak2",
+    "head/feather",
+    "head/head2"
+  ],
+  "attach": {
+    "left_leg": "body",
+    "right_leg": "body",
+    "tail": "body"
+  },
+  "joints": {
+    "head": {
+      "min_degrees": [
+        -15,
+        -30,
+        -6
+      ],
+      "max_degrees": [
+        25,
+        30,
+        6
+      ],
+      "damping": 4.0,
+      "stiffness": 2.0,
+      "contacts": false
+    }
+  },
+  "butchery": {
+    "hide": "minecraft:feather",
+    "hide_per_weight": 40.0,
+    "meat": "minecraft:chicken",
+    "meat_per_block": 30.0
+  }
+}

@@ -1,0 +1,12 @@
+{
+  "entity": "minecraft:bee",
+  "parts": {
+    "bone/body": [
+      {
+        "count": 0.3,
+        "item": "minecraft:honeycomb",
+        "kind": "offal"
+      }
+    ]
+  }
+}

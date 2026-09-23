@@ -1,0 +1,31 @@
+{
+  "entity": "minecraft:bat",
+  "model": "minecraft:bat",
+  "texture": "minecraft:textures/entity/bat.png",
+  "rot_time": 12000,
+  "torso": "body",
+  "joints": {
+    "head": {
+      "min_degrees": [
+        -15,
+        -30,
+        -6
+      ],
+      "max_degrees": [
+        25,
+        30,
+        6
+      ],
+      "damping": 4.0,
+      "stiffness": 2.0,
+      "contacts": false
+    }
+  },
+  "butchery": {
+    "meat": "none",
+    "hide": "none",
+    "bone": "none",
+    "offal_per_weight": 2.0,
+    "fat_per_weight": 0.0
+  }
+}

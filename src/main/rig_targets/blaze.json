@@ -1,0 +1,42 @@
+{
+  "entity": "minecraft:blaze",
+  "model": "minecraft:blaze",
+  "texture": "minecraft:textures/entity/blaze.png",
+  "rot_time": 1000000,
+  "torso": "head",
+  "attach": {
+    "part0": "head",
+    "part1": "head",
+    "part2": "head",
+    "part3": "head",
+    "part4": "head",
+    "part5": "head",
+    "part6": "head",
+    "part7": "head",
+    "part8": "head",
+    "part9": "head",
+    "part10": "head",
+    "part11": "head"
+  },
+  "butchery": {
+    "meat": "none",
+    "hide": "none",
+    "bone": "none",
+    "offal_per_weight": 0.0,
+    "fat_per_weight": 0.0,
+    "part_extras": {
+      "head": [
+        {
+          "item": "minecraft:blaze_rod",
+          "count": 1.0,
+          "kind": "other"
+        },
+        {
+          "item": "minecraft:blaze_powder",
+          "count": 1.0,
+          "kind": "other"
+        }
+      ]
+    }
+  }
+}

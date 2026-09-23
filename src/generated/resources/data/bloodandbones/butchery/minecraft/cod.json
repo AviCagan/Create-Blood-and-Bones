@@ -1,0 +1,17 @@
+{
+  "entity": "minecraft:cod",
+  "parts": {
+    "body": [
+      {
+        "item": "minecraft:cod",
+        "kind": "meat"
+      },
+      {
+        "count": 0.1,
+        "item": "minecraft:bone_meal",
+        "kind": "bone"
+      }
+    ],
+    "head": []
+  }
+}

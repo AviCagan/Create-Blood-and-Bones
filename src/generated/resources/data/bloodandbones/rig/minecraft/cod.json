@@ -1,0 +1,148 @@
+{
+  "bones": [
+    {
+      "box_max": [
+        1.0,
+        2.0,
+        7.0
+      ],
+      "box_min": [
+        -1.0,
+        -2.0,
+        0.0
+      ],
+      "extras": [
+        {
+          "offset": [
+            1.0,
+            1.0,
+            0.0
+          ],
+          "part": "left_fin",
+          "rotation": [
+            0.0,
+            0.0,
+            0.38268346,
+            0.9238795
+          ]
+        },
+        {
+          "offset": [
+            -1.0,
+            1.0,
+            0.0
+          ],
+          "part": "right_fin",
+          "rotation": [
+            0.0,
+            0.0,
+            -0.38268346,
+            0.9238795
+          ]
+        },
+        {
+          "offset": [
+            0.0,
+            -2.0,
+            0.0
+          ],
+          "part": "top_fin",
+          "rotation": [
+            0.0,
+            0.0,
+            0.0,
+            1.0
+          ]
+        },
+        {
+          "offset": [
+            0.0,
+            0.0,
+            7.0
+          ],
+          "part": "tail_fin",
+          "rotation": [
+            0.0,
+            0.0,
+            0.0,
+            1.0
+          ]
+        }
+      ],
+      "name": "body",
+      "offset": [
+        0.0,
+        22.0,
+        0.0
+      ],
+      "part": "body",
+      "rotation": [
+        0.0,
+        0.0,
+        0.0,
+        1.0
+      ]
+    },
+    {
+      "parent": "body",
+      "box_max": [
+        1.0,
+        2.0,
+        0.0
+      ],
+      "box_min": [
+        -1.0,
+        -2.0,
+        -3.0
+      ],
+      "extras": [
+        {
+          "offset": [
+            0.0,
+            0.0,
+            -3.0
+          ],
+          "part": "nose",
+          "rotation": [
+            0.0,
+            0.0,
+            0.0,
+            1.0
+          ]
+        }
+      ],
+      "joint": {
+        "damping": 4.0,
+        "max_degrees": [
+          25.0,
+          30.0,
+          6.0
+        ],
+        "min_degrees": [
+          -15.0,
+          -30.0,
+          -6.0
+        ],
+        "stiffness": 2.0
+      },
+      "name": "head",
+      "offset": [
+        0.0,
+        22.0,
+        0.0
+      ],
+      "part": "head",
+      "rotation": [
+        0.0,
+        0.0,
+        0.0,
+        1.0
+      ]
+    }
+  ],
+  "entity": "minecraft:cod",
+  "model": "minecraft:cod",
+  "rot_time": 8000,
+  "texture": "minecraft:textures/entity/fish/cod.png",
+  "weight": 0.01953125
+}

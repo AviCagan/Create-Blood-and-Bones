@@ -1,0 +1,346 @@
+{
+  "bones": [
+    {
+      "box_max": [
+        6.0,
+        8.0,
+        6.0
+      ],
+      "box_min": [
+        -6.0,
+        -8.0,
+        -6.0
+      ],
+      "name": "body",
+      "offset": [
+        0.0,
+        8.0,
+        0.0
+      ],
+      "part": "body",
+      "rotation": [
+        0.0,
+        0.0,
+        0.0,
+        1.0
+      ]
+    },
+    {
+      "parent": "body",
+      "box_max": [
+        1.0,
+        9.0,
+        1.0
+      ],
+      "box_min": [
+        -1.0,
+        0.0,
+        -1.0
+      ],
+      "joint": {
+        "max_degrees": [
+          60.0,
+          30.0,
+          60.0
+        ],
+        "min_degrees": [
+          -60.0,
+          -30.0,
+          -60.0
+        ],
+        "stiffness": 0.05
+      },
+      "name": "tentacle0",
+      "offset": [
+        5.0,
+        15.0,
+        0.0
+      ],
+      "part": "tentacle0",
+      "rotation": [
+        0.0,
+        0.70710677,
+        0.0,
+        0.70710677
+      ]
+    },
+    {
+      "parent": "body",
+      "box_max": [
+        1.0,
+        9.0,
+        1.0
+      ],
+      "box_min": [
+        -1.0,
+        0.0,
+        -1.0
+      ],
+      "joint": {
+        "max_degrees": [
+          60.0,
+          30.0,
+          60.0
+        ],
+        "min_degrees": [
+          -60.0,
+          -30.0,
+          -60.0
+        ],
+        "stiffness": 0.05
+      },
+      "name": "tentacle1",
+      "offset": [
+        3.535534,
+        15.0,
+        3.535534
+      ],
+      "part": "tentacle1",
+      "rotation": [
+        0.0,
+        0.38268346,
+        0.0,
+        0.9238795
+      ]
+    },
+    {
+      "parent": "body",
+      "box_max": [
+        1.0,
+        9.0,
+        1.0
+      ],
+      "box_min": [
+        -1.0,
+        0.0,
+        -1.0
+      ],
+      "joint": {
+        "max_degrees": [
+          60.0,
+          30.0,
+          60.0
+        ],
+        "min_degrees": [
+          -60.0,
+          -30.0,
+          -60.0
+        ],
+        "stiffness": 0.05
+      },
+      "name": "tentacle6",
+      "offset": [
+        -9.18485E-16,
+        15.0,
+        -5.0
+      ],
+      "part": "tentacle6",
+      "rotation": [
+        0.0,
+        -1.0,
+        0.0,
+        0.0
+      ]
+    },
+    {
+      "parent": "body",
+      "box_max": [
+        1.0,
+        9.0,
+        1.0
+      ],
+      "box_min": [
+        -1.0,
+        0.0,
+        -1.0
+      ],
+      "joint": {
+        "max_degrees": [
+          60.0,
+          30.0,
+          60.0
+        ],
+        "min_degrees": [
+          -60.0,
+          -30.0,
+          -60.0
+        ],
+        "stiffness": 0.05
+      },
+      "name": "tentacle7",
+      "offset": [
+        3.535534,
+        15.0,
+        -3.535534
+      ],
+      "part": "tentacle7",
+      "rotation": [
+        0.0,
+        -0.92387956,
+        0.0,
+        -0.38268334
+      ]
+    },
+    {
+      "parent": "body",
+      "box_max": [
+        1.0,
+        9.0,
+        1.0
+      ],
+      "box_min": [
+        -1.0,
+        0.0,
+        -1.0
+      ],
+      "joint": {
+        "max_degrees": [
+          60.0,
+          30.0,
+          60.0
+        ],
+        "min_degrees": [
+          -60.0,
+          -30.0,
+          -60.0
+        ],
+        "stiffness": 0.05
+      },
+      "name": "tentacle4",
+      "offset": [
+        -5.0,
+        15.0,
+        6.123234E-16
+      ],
+      "part": "tentacle4",
+      "rotation": [
+        0.0,
+        -0.70710677,
+        0.0,
+        0.70710677
+      ]
+    },
+    {
+      "parent": "body",
+      "box_max": [
+        1.0,
+        9.0,
+        1.0
+      ],
+      "box_min": [
+        -1.0,
+        0.0,
+        -1.0
+      ],
+      "joint": {
+        "max_degrees": [
+          60.0,
+          30.0,
+          60.0
+        ],
+        "min_degrees": [
+          -60.0,
+          -30.0,
+          -60.0
+        ],
+        "stiffness": 0.05
+      },
+      "name": "tentacle5",
+      "offset": [
+        -3.535534,
+        15.0,
+        -3.535534
+      ],
+      "part": "tentacle5",
+      "rotation": [
+        0.0,
+        -0.9238795,
+        0.0,
+        0.3826835
+      ]
+    },
+    {
+      "parent": "body",
+      "box_max": [
+        1.0,
+        9.0,
+        1.0
+      ],
+      "box_min": [
+        -1.0,
+        0.0,
+        -1.0
+      ],
+      "joint": {
+        "max_degrees": [
+          60.0,
+          30.0,
+          60.0
+        ],
+        "min_degrees": [
+          -60.0,
+          -30.0,
+          -60.0
+        ],
+        "stiffness": 0.05
+      },
+      "name": "tentacle2",
+      "offset": [
+        3.061617E-16,
+        15.0,
+        5.0
+      ],
+      "part": "tentacle2",
+      "rotation": [
+        0.0,
+        0.0,
+        0.0,
+        1.0
+      ]
+    },
+    {
+      "parent": "body",
+      "box_max": [
+        1.0,
+        9.0,
+        1.0
+      ],
+      "box_min": [
+        -1.0,
+        0.0,
+        -1.0
+      ],
+      "joint": {
+        "max_degrees": [
+          60.0,
+          30.0,
+          60.0
+        ],
+        "min_degrees": [
+          -60.0,
+          -30.0,
+          -60.0
+        ],
+        "stiffness": 0.05
+      },
+      "name": "tentacle3",
+      "offset": [
+        -3.535534,
+        15.0,
+        3.535534
+      ],
+      "part": "tentacle3",
+      "rotation": [
+        0.0,
+        -0.38268346,
+        0.0,
+        0.9238795
+      ]
+    }
+  ],
+  "entity": "minecraft:glow_squid",
+  "model": "minecraft:glow_squid",
+  "rot_time": 12000,
+  "texture": "minecraft:textures/entity/squid/glow_squid.png",
+  "weight": 0.6328125
+}

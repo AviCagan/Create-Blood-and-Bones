@@ -1,0 +1,13 @@
+{
+  "entity": "minecraft:bat",
+  "parts": {
+    "body": [
+      {
+        "count": 0.03,
+        "item": "bloodandbones:offal",
+        "kind": "offal"
+      }
+    ],
+    "head": []
+  }
+}

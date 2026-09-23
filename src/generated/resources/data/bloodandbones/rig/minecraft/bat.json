@@ -1,0 +1,74 @@
+{
+  "bones": [
+    {
+      "box_max": [
+        1.5,
+        5.0,
+        1.0
+      ],
+      "box_min": [
+        -1.5,
+        0.0,
+        -1.0
+      ],
+      "name": "body",
+      "offset": [
+        0.0,
+        17.0,
+        0.0
+      ],
+      "part": "body",
+      "rotation": [
+        0.0,
+        0.0,
+        0.0,
+        1.0
+      ]
+    },
+    {
+      "parent": "body",
+      "box_max": [
+        2.0,
+        0.0,
+        1.0
+      ],
+      "box_min": [
+        -2.0,
+        -3.0,
+        -1.0
+      ],
+      "joint": {
+        "damping": 4.0,
+        "max_degrees": [
+          25.0,
+          30.0,
+          6.0
+        ],
+        "min_degrees": [
+          -15.0,
+          -30.0,
+          -6.0
+        ],
+        "stiffness": 2.0
+      },
+      "name": "head",
+      "offset": [
+        0.0,
+        17.0,
+        0.0
+      ],
+      "part": "head",
+      "rotation": [
+        0.0,
+        0.0,
+        0.0,
+        1.0
+      ]
+    }
+  ],
+  "entity": "minecraft:bat",
+  "model": "minecraft:bat",
+  "rot_time": 12000,
+  "texture": "minecraft:textures/entity/bat.png",
+  "weight": 0.013183594
+}

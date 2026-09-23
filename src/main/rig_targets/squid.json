@@ -1,0 +1,241 @@
+{
+  "entity": "minecraft:squid",
+  "model": "minecraft:squid",
+  "texture": "minecraft:textures/entity/squid/squid.png",
+  "rot_time": 12000,
+  "torso": "body",
+  "joints": {
+    "tentacle0": {
+      "min_degrees": [
+        -60,
+        -30,
+        -60
+      ],
+      "max_degrees": [
+        60,
+        30,
+        60
+      ],
+      "damping": 1.5,
+      "stiffness": 0.05,
+      "contacts": false
+    },
+    "tentacle1": {
+      "min_degrees": [
+        -60,
+        -30,
+        -60
+      ],
+      "max_degrees": [
+        60,
+        30,
+        60
+      ],
+      "damping": 1.5,
+      "stiffness": 0.05,
+      "contacts": false
+    },
+    "tentacle2": {
+      "min_degrees": [
+        -60,
+        -30,
+        -60
+      ],
+      "max_degrees": [
+        60,
+        30,
+        60
+      ],
+      "damping": 1.5,
+      "stiffness": 0.05,
+      "contacts": false
+    },
+    "tentacle3": {
+      "min_degrees": [
+        -60,
+        -30,
+        -60
+      ],
+      "max_degrees": [
+        60,
+        30,
+        60
+      ],
+      "damping": 1.5,
+      "stiffness": 0.05,
+      "contacts": false
+    },
+    "tentacle4": {
+      "min_degrees": [
+        -60,
+        -30,
+        -60
+      ],
+      "max_degrees": [
+        60,
+        30,
+        60
+      ],
+      "damping": 1.5,
+      "stiffness": 0.05,
+      "contacts": false
+    },
+    "tentacle5": {
+      "min_degrees": [
+        -60,
+        -30,
+        -60
+      ],
+      "max_degrees": [
+        60,
+        30,
+        60
+      ],
+      "damping": 1.5,
+      "stiffness": 0.05,
+      "contacts": false
+    },
+    "tentacle6": {
+      "min_degrees": [
+        -60,
+        -30,
+        -60
+      ],
+      "max_degrees": [
+        60,
+        30,
+        60
+      ],
+      "damping": 1.5,
+      "stiffness": 0.05,
+      "contacts": false
+    },
+    "tentacle7": {
+      "min_degrees": [
+        -60,
+        -30,
+        -60
+      ],
+      "max_degrees": [
+        60,
+        30,
+        60
+      ],
+      "damping": 1.5,
+      "stiffness": 0.05,
+      "contacts": false
+    }
+  },
+  "butchery": {
+    "hide": "none",
+    "bone": "none",
+    "fat_per_weight": 0.0,
+    "part_extras": {
+      "body": [
+        {
+          "item": "minecraft:ink_sac",
+          "count": 1.0,
+          "kind": "offal"
+        }
+      ]
+    }
+  },
+  "boxes": {
+    "tentacle0": {
+      "min": [
+        -1,
+        0,
+        -1
+      ],
+      "max": [
+        1,
+        9,
+        1
+      ]
+    },
+    "tentacle1": {
+      "min": [
+        -1,
+        0,
+        -1
+      ],
+      "max": [
+        1,
+        9,
+        1
+      ]
+    },
+    "tentacle2": {
+      "min": [
+        -1,
+        0,
+        -1
+      ],
+      "max": [
+        1,
+        9,
+        1
+      ]
+    },
+    "tentacle3": {
+      "min": [
+        -1,
+        0,
+        -1
+      ],
+      "max": [
+        1,
+        9,
+        1
+      ]
+    },
+    "tentacle4": {
+      "min": [
+        -1,
+        0,
+        -1
+      ],
+      "max": [
+        1,
+        9,
+        1
+      ]
+    },
+    "tentacle5": {
+      "min": [
+        -1,
+        0,
+        -1
+      ],
+      "max": [
+        1,
+        9,
+        1
+      ]
+    },
+    "tentacle6": {
+      "min": [
+        -1,
+        0,
+        -1
+      ],
+      "max": [
+        1,
+        9,
+        1
+      ]
+    },
+    "tentacle7": {
+      "min": [
+        -1,
+        0,
+        -1
+      ],
+      "max": [
+        1,
+        9,
+        1
+      ]
+    }
+  }
+}

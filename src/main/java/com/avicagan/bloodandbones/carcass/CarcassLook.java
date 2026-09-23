@@ -97,6 +97,12 @@ public record CarcassLook(ResourceLocation texture, List<Coat> passes) {
         if (entity instanceof net.minecraft.world.entity.animal.frog.Frog frog) {
             variables.put("frog_texture", frog.getVariant().value().texture().toString());
         }
+        if (entity instanceof net.minecraft.world.entity.animal.Parrot parrot) {
+            variables.put("variant", parrot.getVariant().getSerializedName());
+        }
+        if (entity instanceof net.minecraft.world.entity.animal.axolotl.Axolotl axolotl) {
+            variables.put("variant", axolotl.getVariant().getName());
+        }
         if (entity instanceof net.minecraft.world.entity.animal.Cat cat) {
             variables.put("cat_texture", cat.getVariant().value().texture().toString());
         }

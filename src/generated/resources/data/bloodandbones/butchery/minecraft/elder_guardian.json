@@ -1,0 +1,22 @@
+{
+  "entity": "minecraft:elder_guardian",
+  "parts": {
+    "head": [
+      {
+        "count": 3.0,
+        "item": "minecraft:prismarine_shard"
+      },
+      {
+        "item": "minecraft:wet_sponge"
+      },
+      {
+        "count": 2.0,
+        "item": "minecraft:cod",
+        "kind": "offal"
+      }
+    ],
+    "head/tail0": [],
+    "head/tail0/tail1": [],
+    "head/tail0/tail1/tail2": []
+  }
+}

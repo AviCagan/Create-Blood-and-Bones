@@ -1,0 +1,77 @@
+{
+  "bones": [
+    {
+      "box_max": [
+        4.0,
+        2.0,
+        1.0
+      ],
+      "box_min": [
+        -4.0,
+        -2.0,
+        -9.0
+      ],
+      "hide": [
+        "head"
+      ],
+      "name": "body",
+      "offset": [
+        0.0,
+        20.0,
+        5.0
+      ],
+      "part": "body",
+      "rotation": [
+        0.0,
+        0.0,
+        0.0,
+        1.0
+      ]
+    },
+    {
+      "parent": "body",
+      "box_max": [
+        4.0,
+        2.0,
+        0.0
+      ],
+      "box_min": [
+        -4.0,
+        -3.0,
+        -5.0
+      ],
+      "joint": {
+        "damping": 4.0,
+        "max_degrees": [
+          25.0,
+          30.0,
+          6.0
+        ],
+        "min_degrees": [
+          -15.0,
+          -30.0,
+          -6.0
+        ],
+        "stiffness": 2.0
+      },
+      "name": "body/head",
+      "offset": [
+        0.0,
+        20.0,
+        -4.0
+      ],
+      "part": "body/head",
+      "rotation": [
+        0.0,
+        0.0,
+        0.0,
+        1.0
+      ]
+    }
+  ],
+  "entity": "minecraft:axolotl",
+  "model": "minecraft:axolotl",
+  "rot_time": 12000,
+  "texture": "minecraft:textures/entity/axolotl/axolotl_{variant}.png",
+  "weight": 0.12695312
+}

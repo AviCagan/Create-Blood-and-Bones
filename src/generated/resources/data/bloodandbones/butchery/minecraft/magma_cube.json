@@ -1,0 +1,12 @@
+{
+  "entity": "minecraft:magma_cube",
+  "parts": {
+    "inside_cube": [
+      {
+        "count": 2.0,
+        "item": "minecraft:magma_cream",
+        "kind": "offal"
+      }
+    ]
+  }
+}

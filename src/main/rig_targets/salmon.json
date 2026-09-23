@@ -1,0 +1,64 @@
+{
+  "entity": "minecraft:salmon",
+  "model": "minecraft:salmon",
+  "texture": "minecraft:textures/entity/fish/salmon.png",
+  "rot_time": 8000,
+  "torso": "body_front",
+  "attach": {
+    "left_fin": "body_front",
+    "right_fin": "body_front"
+  },
+  "joints": {
+    "head": {
+      "min_degrees": [
+        -15,
+        -30,
+        -6
+      ],
+      "max_degrees": [
+        25,
+        30,
+        6
+      ],
+      "damping": 4.0,
+      "stiffness": 2.0,
+      "contacts": false
+    },
+    "body_back": {
+      "min_degrees": [
+        -45,
+        -45,
+        -45
+      ],
+      "max_degrees": [
+        45,
+        45,
+        45
+      ],
+      "damping": 2.0,
+      "stiffness": 1.0,
+      "contacts": false
+    }
+  },
+  "butchery": {
+    "meat": "none",
+    "hide": "none",
+    "bone": "none",
+    "offal_per_weight": 0.0,
+    "fat_per_weight": 0.0,
+    "part_extras": {
+      "body_front": [
+        {
+          "item": "minecraft:salmon",
+          "count": 1.0,
+          "kind": "meat"
+        },
+        {
+          "item": "minecraft:bone_meal",
+          "count": 0.1,
+          "kind": "bone"
+        }
+      ]
+    }
+  }
+}

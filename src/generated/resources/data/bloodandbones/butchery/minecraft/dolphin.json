@@ -1,0 +1,61 @@
+{
+  "entity": "minecraft:dolphin",
+  "hide": [
+    {
+      "item": "bloodandbones:raw_hide",
+      "kind": "hide"
+    }
+  ],
+  "parts": {
+    "body": [
+      {
+        "count": 1.42,
+        "item": "bloodandbones:raw_meat",
+        "kind": "meat"
+      },
+      {
+        "count": 0.53,
+        "item": "minecraft:bone",
+        "kind": "bone"
+      },
+      {
+        "count": 0.63,
+        "item": "bloodandbones:offal",
+        "kind": "offal"
+      },
+      {
+        "count": 0.31,
+        "item": "bloodandbones:animal_fat",
+        "kind": "fat"
+      },
+      {
+        "item": "minecraft:cod",
+        "kind": "offal"
+      }
+    ],
+    "body/head": [
+      {
+        "count": 0.66,
+        "item": "bloodandbones:raw_meat",
+        "kind": "meat"
+      },
+      {
+        "count": 0.5,
+        "item": "minecraft:bone",
+        "kind": "bone"
+      }
+    ],
+    "body/tail": [
+      {
+        "count": 0.43,
+        "item": "bloodandbones:raw_meat",
+        "kind": "meat"
+      },
+      {
+        "count": 0.5,
+        "item": "minecraft:bone",
+        "kind": "bone"
+      }
+    ]
+  }
+}

@@ -1,0 +1,385 @@
+{
+  "bones": [
+    {
+      "box_max": [
+        36.0,
+        36.0,
+        36.0
+      ],
+      "box_min": [
+        -36.0,
+        -36.0,
+        -36.0
+      ],
+      "name": "body",
+      "offset": [
+        0.0,
+        79.200005,
+        0.0
+      ],
+      "part": "body",
+      "rotation": [
+        0.0,
+        0.0,
+        0.0,
+        1.0
+      ]
+    },
+    {
+      "parent": "body",
+      "box_max": [
+        4.5,
+        36.0,
+        4.5
+      ],
+      "box_min": [
+        -4.5,
+        0.0,
+        -4.5
+      ],
+      "joint": {
+        "max_degrees": [
+          60.0,
+          30.0,
+          60.0
+        ],
+        "min_degrees": [
+          -60.0,
+          -30.0,
+          -60.0
+        ],
+        "stiffness": 0.05
+      },
+      "name": "tentacle0",
+      "offset": [
+        -16.875,
+        110.700005,
+        -22.5
+      ],
+      "part": "tentacle0",
+      "rotation": [
+        0.0,
+        0.0,
+        0.0,
+        1.0
+      ]
+    },
+    {
+      "parent": "body",
+      "box_max": [
+        4.5,
+        58.5,
+        4.5
+      ],
+      "box_min": [
+        -4.5,
+        0.0,
+        -4.5
+      ],
+      "joint": {
+        "max_degrees": [
+          60.0,
+          30.0,
+          60.0
+        ],
+        "min_degrees": [
+          -60.0,
+          -30.0,
+          -60.0
+        ],
+        "stiffness": 0.05
+      },
+      "name": "tentacle1",
+      "offset": [
+        5.625,
+        110.700005,
+        -22.5
+      ],
+      "part": "tentacle1",
+      "rotation": [
+        0.0,
+        0.0,
+        0.0,
+        1.0
+      ]
+    },
+    {
+      "parent": "body",
+      "box_max": [
+        4.5,
+        54.0,
+        4.5
+      ],
+      "box_min": [
+        -4.5,
+        0.0,
+        -4.5
+      ],
+      "joint": {
+        "max_degrees": [
+          60.0,
+          30.0,
+          60.0
+        ],
+        "min_degrees": [
+          -60.0,
+          -30.0,
+          -60.0
+        ],
+        "stiffness": 0.05
+      },
+      "name": "tentacle8",
+      "offset": [
+        28.125,
+        110.700005,
+        22.5
+      ],
+      "part": "tentacle8",
+      "rotation": [
+        0.0,
+        0.0,
+        0.0,
+        1.0
+      ]
+    },
+    {
+      "parent": "body",
+      "box_max": [
+        4.5,
+        54.0,
+        4.5
+      ],
+      "box_min": [
+        -4.5,
+        0.0,
+        -4.5
+      ],
+      "joint": {
+        "max_degrees": [
+          60.0,
+          30.0,
+          60.0
+        ],
+        "min_degrees": [
+          -60.0,
+          -30.0,
+          -60.0
+        ],
+        "stiffness": 0.05
+      },
+      "name": "tentacle6",
+      "offset": [
+        -16.875,
+        110.700005,
+        22.5
+      ],
+      "part": "tentacle6",
+      "rotation": [
+        0.0,
+        0.0,
+        0.0,
+        1.0
+      ]
+    },
+    {
+      "parent": "body",
+      "box_max": [
+        4.5,
+        40.5,
+        4.5
+      ],
+      "box_min": [
+        -4.5,
+        0.0,
+        -4.5
+      ],
+      "joint": {
+        "max_degrees": [
+          60.0,
+          30.0,
+          60.0
+        ],
+        "min_degrees": [
+          -60.0,
+          -30.0,
+          -60.0
+        ],
+        "stiffness": 0.05
+      },
+      "name": "tentacle7",
+      "offset": [
+        5.625,
+        110.700005,
+        22.5
+      ],
+      "part": "tentacle7",
+      "rotation": [
+        0.0,
+        0.0,
+        0.0,
+        1.0
+      ]
+    },
+    {
+      "parent": "body",
+      "box_max": [
+        4.5,
+        49.5,
+        4.5
+      ],
+      "box_min": [
+        -4.5,
+        0.0,
+        -4.5
+      ],
+      "joint": {
+        "max_degrees": [
+          60.0,
+          30.0,
+          60.0
+        ],
+        "min_degrees": [
+          -60.0,
+          -30.0,
+          -60.0
+        ],
+        "stiffness": 0.05
+      },
+      "name": "tentacle4",
+      "offset": [
+        -5.625,
+        110.700005,
+        0.0
+      ],
+      "part": "tentacle4",
+      "rotation": [
+        0.0,
+        0.0,
+        0.0,
+        1.0
+      ]
+    },
+    {
+      "parent": "body",
+      "box_max": [
+        4.5,
+        45.0,
+        4.5
+      ],
+      "box_min": [
+        -4.5,
+        0.0,
+        -4.5
+      ],
+      "joint": {
+        "max_degrees": [
+          60.0,
+          30.0,
+          60.0
+        ],
+        "min_degrees": [
+          -60.0,
+          -30.0,
+          -60.0
+        ],
+        "stiffness": 0.05
+      },
+      "name": "tentacle5",
+      "offset": [
+        16.875,
+        110.700005,
+        0.0
+      ],
+      "part": "tentacle5",
+      "rotation": [
+        0.0,
+        0.0,
+        0.0,
+        1.0
+      ]
+    },
+    {
+      "parent": "body",
+      "box_max": [
+        4.5,
+        40.5,
+        4.5
+      ],
+      "box_min": [
+        -4.5,
+        0.0,
+        -4.5
+      ],
+      "joint": {
+        "max_degrees": [
+          60.0,
+          30.0,
+          60.0
+        ],
+        "min_degrees": [
+          -60.0,
+          -30.0,
+          -60.0
+        ],
+        "stiffness": 0.05
+      },
+      "name": "tentacle2",
+      "offset": [
+        28.125,
+        110.700005,
+        -22.5
+      ],
+      "part": "tentacle2",
+      "rotation": [
+        0.0,
+        0.0,
+        0.0,
+        1.0
+      ]
+    },
+    {
+      "parent": "body",
+      "box_max": [
+        4.5,
+        49.5,
+        4.5
+      ],
+      "box_min": [
+        -4.5,
+        0.0,
+        -4.5
+      ],
+      "joint": {
+        "max_degrees": [
+          60.0,
+          30.0,
+          60.0
+        ],
+        "min_degrees": [
+          -60.0,
+          -30.0,
+          -60.0
+        ],
+        "stiffness": 0.05
+      },
+      "name": "tentacle3",
+      "offset": [
+        -28.125,
+        110.700005,
+        0.0
+      ],
+      "part": "tentacle3",
+      "rotation": [
+        0.0,
+        0.0,
+        0.0,
+        1.0
+      ]
+    }
+  ],
+  "entity": "minecraft:ghast",
+  "model": "minecraft:ghast",
+  "scale": 4.5,
+  "texture": "minecraft:textures/entity/ghast/ghast.png",
+  "weight": 99.57898
+}

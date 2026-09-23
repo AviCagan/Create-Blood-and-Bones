@@ -105,6 +105,10 @@ public final class CarcassAssembler {
         if (entity.isBaby()) {
             return null;
         }
+        // a slime's model is scaled by its size and the rig by the biggest; the small ones split and die as usual
+        if (entity instanceof net.minecraft.world.entity.monster.Slime slime && slime.getSize() < 4) {
+            return null;
+        }
         Optional<Rig> maybeRig = RigManager.forEntity(entity.getType());
         if (maybeRig.isEmpty()) {
             return null;
