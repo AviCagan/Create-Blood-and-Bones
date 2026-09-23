@@ -21,10 +21,11 @@ import java.util.Optional;
  * @param joint    swing limits of the joint to the parent
  * @param hide     descendant part paths (relative to this part) not to draw with it: other bones, hidden parts
  * @param extras   other parts drawn along with this bone
- * @param scale    drawn at this size on top of the rig's own scale: a baby's body is drawn at half size
+ * @param scale    drawn at this size on top of the rig's own scale, along the part's own axes: a baby's
+ *                 body is drawn at half size, a baby llama's squashed more one way than another
  */
 public record Bone(String name, String part, Optional<String> parent, Vector3f offset, Quaternionf rotation,
-                   Vector3f boxMin, Vector3f boxMax, Optional<JointSpec> joint, List<String> hide, List<ExtraPart> extras, float scale) {
+                   Vector3f boxMin, Vector3f boxMax, Optional<JointSpec> joint, List<String> hide, List<ExtraPart> extras, Vector3f scale) {
     public static final Codec<Bone> CODEC = RecordCodecBuilder.create(i -> i.group(
             Codec.STRING.fieldOf("name").forGetter(Bone::name),
             Codec.STRING.fieldOf("part").forGetter(Bone::part),
@@ -36,12 +37,12 @@ public record Bone(String name, String part, Optional<String> parent, Vector3f o
             JointSpec.CODEC.optionalFieldOf("joint").forGetter(Bone::joint),
             Codec.STRING.listOf().optionalFieldOf("hide", List.of()).forGetter(Bone::hide),
             ExtraPart.CODEC.listOf().optionalFieldOf("extras", List.of()).forGetter(Bone::extras),
-            Codec.FLOAT.optionalFieldOf("scale", 1.0F).forGetter(Bone::scale)
+            Codec.FLOAT.xmap(s -> new Vector3f(s), v -> v.x).optionalFieldOf("scale", new Vector3f(1.0F)).forGetter(Bone::scale)
     ).apply(i, Bone::new));
 
     public Bone(String name, String part, Optional<String> parent, Vector3f offset, Quaternionf rotation,
                 Vector3f boxMin, Vector3f boxMax, Optional<JointSpec> joint) {
-        this(name, part, parent, offset, rotation, boxMin, boxMax, joint, List.of(), List.of(), 1.0F);
+        this(name, part, parent, offset, rotation, boxMin, boxMax, joint, List.of(), List.of(), new Vector3f(1.0F));
     }
 
     public Vector3f boxSize() {

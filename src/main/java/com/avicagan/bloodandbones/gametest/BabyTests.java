@@ -56,7 +56,7 @@ public class BabyTests {
         }
         for (Bone bone : grown.bones()) {
             Bone baby = small.bone(bone.name()).orElseThrow();
-            float f = shape.isHead(bone.name()) ? shape.headScale() : shape.bodyScale();
+            Vector3f f = BabyShape.alongPart(shape.scaleOf(bone.name()), bone.rotation());
             Vector3f expected = shape.extension(bone.name()).mul(grown.scale()).add(bone.boxSize()).mul(f);
             if (baby.boxSize().distance(expected) > 1.0E-3F) {
                 helper.fail("Baby " + type + " bone " + bone.name() + " is " + baby.boxSize() + ", expected " + expected);
@@ -212,15 +212,42 @@ public class BabyTests {
         helper.succeed();
     }
 
-    /** A kind with no baby shape (a llama cria, drawn squashed unevenly) still dies as it always did. */
+    /** Kinds drawn with another kind's model take its baby shape: a baby zombified piglin, a zombie foal. */
+    @GameTest(template = "empty", timeoutTicks = 200)
+    public static void babyZombifiedPiglinCarcass(GameTestHelper helper) {
+        babyTest(helper, EntityType.ZOMBIFIED_PIGLIN);
+    }
+
+    @GameTest(template = "empty", timeoutTicks = 200)
+    public static void zombieFoalCarcass(GameTestHelper helper) {
+        babyTest(helper, EntityType.ZOMBIE_HORSE);
+    }
+
+    /** A baby llama: the game squashes its head, body and legs each by its own amount along each axis. */
+    @GameTest(template = "empty", timeoutTicks = 200)
+    public static void babyLlamaCarcass(GameTestHelper helper) {
+        babyTest(helper, EntityType.LLAMA);
+    }
+
+    /**
+     * The baby llama's parts, against LlamaModel's own numbers: the head 8x18x10 at (0.714, 0.649, 0.794);
+     * the body, turned a quarter about x so its own y runs along the model's z, at (0.625, 0.455, 0.455).
+     */
     @GameTest(template = "empty", timeoutTicks = 20)
-    public static void criaDiesAsUsual(GameTestHelper helper) {
-        Mob cria = helper.spawn(EntityType.LLAMA, new BlockPos(5, 2, 5));
-        cria.setBaby(true);
-        if (CarcassAssembler.assemble(cria, null) != null) {
-            helper.fail("A cria has no baby rig yet and should not become a carcass");
+    public static void babyLlamaSquashedAsDrawn(GameTestHelper helper) {
+        Rig baby = RigManager.forEntity(net.minecraft.resources.ResourceLocation.withDefaultNamespace("llama"), true).orElseThrow();
+        Vector3f head = baby.bone("head").orElseThrow().boxSize();
+        Vector3f leg = baby.bone("right_front_leg").orElseThrow().boxSize();
+        if (head.distance(8 * 0.71428573F, 18 * 0.64935064F, 10 * 0.7936508F) > 0.01F) {
+            helper.fail("The baby llama's head box is " + head);
         }
-        cria.discard();
+        if (leg.distance(4 * 0.45454544F, 14 * 0.41322312F, 4 * 0.45454544F) > 0.01F) {
+            helper.fail("The baby llama's leg box is " + leg);
+        }
+        Vector3f bodyScale = baby.bone("body").orElseThrow().scale();
+        if (bodyScale.distance(0.625F, 0.45454544F, 0.45454544F) > 0.01F) {
+            helper.fail("The baby llama's body should be drawn at (0.625, 0.455, 0.455) along its own axes, got " + bodyScale);
+        }
         helper.succeed();
     }
 }

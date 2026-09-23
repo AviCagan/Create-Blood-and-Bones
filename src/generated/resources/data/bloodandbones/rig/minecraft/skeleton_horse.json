@@ -1,4 +1,44 @@
 {
+  "baby": {
+    "body_offset": 20.0,
+    "extend": {
+      "left_front_leg": [
+        0.0,
+        5.5,
+        0.0
+      ],
+      "left_hind_leg": [
+        0.0,
+        5.5,
+        0.0
+      ],
+      "right_front_leg": [
+        0.0,
+        5.5,
+        0.0
+      ],
+      "right_hind_leg": [
+        0.0,
+        5.5,
+        0.0
+      ]
+    },
+    "head": [
+      "head_parts"
+    ],
+    "head_offset": [
+      0.0,
+      16.2,
+      1.36
+    ],
+    "head_scale": 0.55001,
+    "parts": {
+      "left_front_leg": "left_front_baby_leg",
+      "left_hind_leg": "left_hind_baby_leg",
+      "right_front_leg": "right_front_baby_leg",
+      "right_hind_leg": "right_hind_baby_leg"
+    }
+  },
   "bones": [
     {
       "box_max": [

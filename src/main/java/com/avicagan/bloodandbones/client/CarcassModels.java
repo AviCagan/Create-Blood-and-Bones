@@ -86,7 +86,7 @@ public final class CarcassModels {
             }
         }
         try {
-            drawPart(part, poseStack, buffer, packedLight, color, rig.scale() * bone.scale());
+            drawPart(part, poseStack, buffer, packedLight, color, new org.joml.Vector3f(bone.scale()).mul(rig.scale()));
         } finally {
             for (ModelPart child : hidden) {
                 child.visible = true;
@@ -100,7 +100,7 @@ public final class CarcassModels {
             poseStack.pushPose();
             poseStack.translate(extra.offset().x / 16.0F, extra.offset().y / 16.0F, extra.offset().z / 16.0F);
             poseStack.mulPose(extra.rotation());
-            drawPart(other, poseStack, buffer, packedLight, color, rig.scale() * bone.scale());
+            drawPart(other, poseStack, buffer, packedLight, color, new org.joml.Vector3f(bone.scale()).mul(rig.scale()));
             poseStack.popPose();
         }
     }
@@ -117,11 +117,11 @@ public final class CarcassModels {
         return new ModelLayerLocation(rig.model(), layer);
     }
 
-    private static void drawPart(ModelPart part, PoseStack poseStack, VertexConsumer buffer, int packedLight, int color, float scale) {
+    private static void drawPart(ModelPart part, PoseStack poseStack, VertexConsumer buffer, int packedLight, int color, org.joml.Vector3f scale) {
         PartPose saved = part.storePose();
         part.loadPose(PartPose.ZERO);
         poseStack.pushPose();
-        poseStack.scale(scale, scale, scale);
+        poseStack.scale(scale.x, scale.y, scale.z);
         try {
             part.render(poseStack, buffer, packedLight, OverlayTexture.NO_OVERLAY, color);
         } finally {

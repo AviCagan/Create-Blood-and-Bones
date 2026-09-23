@@ -38,5 +38,60 @@
       "stiffness": 2.0,
       "contacts": false
     }
+  },
+  "baby": {
+    "head": [
+      "head"
+    ],
+    "groups": [
+      {
+        "bones": [
+          "head"
+        ],
+        "scale": [
+          0.71428573,
+          0.64935064,
+          0.7936508
+        ],
+        "offset": [
+          0,
+          21,
+          3.52
+        ]
+      },
+      {
+        "bones": [
+          "body"
+        ],
+        "scale": [
+          0.625,
+          0.45454544,
+          0.45454544
+        ],
+        "offset": [
+          0,
+          33,
+          0
+        ]
+      },
+      {
+        "bones": [
+          "right_front_leg",
+          "right_hind_leg",
+          "left_hind_leg",
+          "left_front_leg"
+        ],
+        "scale": [
+          0.45454544,
+          0.41322312,
+          0.45454544
+        ],
+        "offset": [
+          0,
+          33,
+          0
+        ]
+      }
+    ]
   }
 }

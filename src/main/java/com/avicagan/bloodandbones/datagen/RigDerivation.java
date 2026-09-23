@@ -204,7 +204,7 @@ public final class RigDerivation {
         });
         Optional<JointSpec> joint = parent.isEmpty() ? Optional.empty()
                 : Optional.of(target.joints().getOrDefault(s.path(), jointFor(s.path())));
-        return new Bone(s.path(), s.path(), parent, new Vector3f(s.offset()).mul(target.scale()), s.rotation(), min, max, joint, hide, extras, 1.0F);
+        return new Bone(s.path(), s.path(), parent, new Vector3f(s.offset()).mul(target.scale()), s.rotation(), min, max, joint, hide, extras, new Vector3f(1.0F));
     }
 
     private static Vector3f boxSize(RigTarget target, Seen s) {

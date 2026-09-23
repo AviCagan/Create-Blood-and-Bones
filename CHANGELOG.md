@@ -10,9 +10,9 @@ Everything below is in development builds only; the art is placeholder (see the 
 - Cut limbs leave raw wounds, bone showing, on the stump and on the piece, and pour blood for a while.
 - Scraps of meat fly off when a limb is cut through or a piece is butchered or ground.
 - Cleavers and the Flensing Knife come away bloody from a cut or a hit and stay so for five minutes.
-- 79 rigged vanilla mobs with variants, the wither and the pufferfish included; babies of 31 kinds
-  (calves, piglets, lambs, chicks, pups, kittens, cubs, bunnies, foals on their long legs, baby
-  zombies and villagers...) shaped as the
+- 79 rigged vanilla mobs with variants, the wither and the pufferfish included; babies of all 36 kinds that have them
+  (calves, piglets, lambs, chicks, pups, kittens, cubs, bunnies, foals on their long legs, crias,
+  baby zombies and villagers...) shaped as the
   game draws them; hook kills drop the mob's gear and inventory.
 - Blood and Soul Blood fluids, the Bleeding Rack, fan-boosted bleeding, slower rot once bled.
 - Blood stains on the ground (they squelch underfoot) from kills, cuts, drag trails and uncaught bleeding; they dry, fade
@@ -37,8 +37,7 @@ Everything below is in development builds only; the art is placeholder (see the 
 
 ### Known gaps
 
-- Baby llamas and trader llamas (the game squashes their head, body and legs by different amounts
-  along each axis) and slimes smaller than size 4 still die normally.
+- Slimes and magma cubes smaller than size 4 still die normally.
 - Not rigged: the ender dragon and tropical fish.
 - Trolleys cannot ride chain conveyors that sit on a Sable sub-level (a moving ship).
 - A carcass hanging from a hook that a Create contraption moves falls off rather than going along.

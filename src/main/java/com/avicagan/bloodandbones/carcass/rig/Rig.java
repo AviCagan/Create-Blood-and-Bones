@@ -56,16 +56,16 @@ public record Rig(ResourceLocation entity, ResourceLocation model, String layer,
         List<Bone> out = new java.util.ArrayList<>();
         float mass = 0.0F;
         for (Bone bone : bones) {
-            boolean head = shape.isHead(bone.name());
-            float f = head ? shape.headScale() : shape.bodyScale();
-            org.joml.Vector3f shift = head ? new org.joml.Vector3f(shape.headOffset()) : new org.joml.Vector3f(0.0F, shape.bodyOffset(), 0.0F);
-            org.joml.Vector3f offset = shift.mul(scale).add(bone.offset()).mul(f);
+            // along the model's axes for the pivot; along the part's own for its box, extras and drawing
+            org.joml.Vector3f f = shape.scaleOf(bone.name());
+            org.joml.Vector3f local = BabyShape.alongPart(f, bone.rotation());
+            org.joml.Vector3f offset = shape.offsetOf(bone.name()).mul(scale).add(bone.offset()).mul(f);
             List<ExtraPart> extras = bone.extras().stream()
-                    .map(e -> new ExtraPart(e.part(), new org.joml.Vector3f(e.offset()).mul(f), e.rotation())).toList();
+                    .map(e -> new ExtraPart(e.part(), new org.joml.Vector3f(e.offset()).mul(local), e.rotation())).toList();
             // a part the baby draws instead (a foal's long legs) hangs from the same pivot, and may reach further
-            org.joml.Vector3f boxMax = shape.extension(bone.name()).mul(scale).add(bone.boxMax()).mul(f);
+            org.joml.Vector3f boxMax = shape.extension(bone.name()).mul(scale).add(bone.boxMax()).mul(local);
             Bone small = new Bone(bone.name(), shape.parts().getOrDefault(bone.name(), bone.part()), bone.parent(), offset, bone.rotation(),
-                    new org.joml.Vector3f(bone.boxMin()).mul(f), boxMax, bone.joint(), bone.hide(), extras, bone.scale() * f);
+                    new org.joml.Vector3f(bone.boxMin()).mul(local), boxMax, bone.joint(), bone.hide(), extras, new org.joml.Vector3f(bone.scale()).mul(local));
             org.joml.Vector3f size = small.boxSize();
             mass += (size.x / 16.0F) * (size.y / 16.0F) * (size.z / 16.0F);
             out.add(small);
