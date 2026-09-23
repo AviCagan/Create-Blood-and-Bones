@@ -1089,7 +1089,7 @@ public class BBGameTests {
      * A carcass that has been rotten long enough falls apart into rotten flesh and bones and its bodies go;
      * one kept on blue ice does not, however long it has been rotten.
      */
-    @GameTest(template = "empty", timeoutTicks = 120)
+    @GameTest(template = "empty", timeoutTicks = 400)
     public static void rottenCarcassFallsApart(GameTestHelper helper) {
         ServerLevel level = helper.getLevel();
         for (int x = 6; x <= 9; x++) {
@@ -1099,11 +1099,14 @@ public class BBGameTests {
         }
         Cow cow = helper.spawn(EntityType.COW, new BlockPos(3, 2, 3));
         Cow iced = helper.spawn(EntityType.COW, new BlockPos(7, 2, 7));
+        Cow still = helper.spawn(EntityType.COW, new BlockPos(2, 2, 8));
         CarcassSavedData.Carcass rotting = CarcassAssembler.assemble(cow, null);
         CarcassSavedData.Carcass kept = CarcassAssembler.assemble(iced, null);
+        CarcassSavedData.Carcass folded = CarcassAssembler.assemble(still, null);
         cow.discard();
         iced.discard();
-        if (rotting == null || kept == null) {
+        still.discard();
+        if (rotting == null || kept == null || folded == null) {
             helper.fail("Carcass assembly returned null");
             return;
         }
@@ -1128,6 +1131,23 @@ public class BBGameTests {
             }
             if (CarcassSavedData.get(level).carcass(kept.id) == null) {
                 helper.fail("The carcass on blue ice fell apart");
+            }
+        });
+        // a still carcass folds its limbs into the torso's body: falling apart must still count every piece
+        int allPieces = folded.bones.size();
+        helper.runAfterDelay(200, () -> {
+            if (!folded.resting) {
+                helper.fail("The third carcass should be resting by now");
+            }
+            if (com.avicagan.bloodandbones.carcass.CarcassRot.pieces(folded).size() != allPieces) {
+                helper.fail("A resting carcass lists " + com.avicagan.bloodandbones.carcass.CarcassRot.pieces(folded) + " of its " + allPieces + " pieces");
+            }
+            folded.freshness = 0.0F;
+            folded.decay = due - 5.0F;
+        });
+        helper.runAfterDelay(260, () -> {
+            if (CarcassSavedData.get(level).carcass(folded.id) != null) {
+                helper.fail("The resting rotten carcass is still here");
             }
             helper.succeed();
         });

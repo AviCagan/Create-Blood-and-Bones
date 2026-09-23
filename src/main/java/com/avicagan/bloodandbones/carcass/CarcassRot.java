@@ -106,6 +106,15 @@ public final class CarcassRot {
     /** Share of what a fresh butchering would give that a carcass leaves when it falls apart (before rot). */
     public static final float CRUMBLE_SHARE = 0.5F;
 
+    /** Every piece still part of the carcass: its own bodies and, while resting, the limbs folded into the torso. */
+    public static java.util.Set<String> pieces(CarcassSavedData.Carcass carcass) {
+        java.util.Set<String> pieces = new java.util.LinkedHashSet<>(carcass.bones.keySet());
+        if (carcass.resting) {
+            pieces.addAll(carcass.restPoses.keySet());
+        }
+        return pieces;
+    }
+
     /** End of the level tick: carcasses whose rot is done fall apart. */
     public static void levelTick(ServerLevel level) {
         CarcassSavedData data = CarcassSavedData.get(level);
@@ -142,7 +151,7 @@ public final class CarcassRot {
             return false;
         }
         var table = ButcheryManager.forEntity(carcass.entity);
-        for (String bone : carcass.bones.keySet()) {
+        for (String bone : pieces(carcass)) {
             Vector3d at = new Vector3d(bodies.getOrDefault(bone, torso).logicalPose().position());
             table.ifPresent(t -> CarcassButchery.dropYields(level, carcass, t.part(bone), CRUMBLE_SHARE, at));
             level.sendParticles(new ItemParticleOption(ParticleTypes.ITEM, new ItemStack(Items.ROTTEN_FLESH)),
