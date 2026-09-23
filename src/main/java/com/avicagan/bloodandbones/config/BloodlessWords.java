@@ -21,6 +21,8 @@ public final class BloodlessWords {
             swap("bleeds", "drains"),
             swap("bleed", "drain"),
             swap("bled", "drained"),
+            swap("guts", "cords"),
+            swap("gut", "cord"),
             swap("gory", "messy"),
             swap("gore", "mess"));
 

@@ -21,6 +21,7 @@ Everything below is in development builds only; the art is placeholder (see the 
 - Blood Steel, Blood Diamond, Soul Blood recipes; Blood Steel Cleaver.
 - Spit Roast, Specimen Jar and Butcher's Hook (a wall hook to hang a piece on).
 - Bloody Casing: andesite casing filled with blood, joining up like Create's casings.
+- Gut Chain: a string of guts hung like a chain (three offal make three); plain cord in bloodless mode.
 - Both hooks ride Create contraptions with the block they hang from.
 - Carcass pieces in Create's Attribute Filter: sort by mob, by part (head, body, limb, tail), fresh or
   rotting, skinned, or from a baby.

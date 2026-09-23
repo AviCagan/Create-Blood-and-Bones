@@ -776,6 +776,10 @@ pipes; chain clearance = hanging length + 1 block.
   mode it shows as plain andesite casing: the swap wraps the model after Create's connected-texture
   wrapper (lowest event priority) and finds the sprite a quad shows by where its UVs fall, since
   Create moves the UVs onto the connected sheet but leaves the quad's sprite field alone.
+- Gut Chain: a vanilla `ChainBlock` with our own two-plane model (4 px wide strips) and a lumpy, wet
+  texture; hand-breakable, slime sounds; three offal in a column make three. Bloodless mode swaps it to
+  a plain cord texture and rewords "gut" as "cord". (The design's other Gut Chain idea, a texture swap
+  on Create's chain conveyors, is not done.)
 - On Create contraptions (`BBMovementChecks`): both hooks count as attached to the block they hang from
   and as brittle, and the Butcher's Hook is a `create:movable_empty_collider`. The Shackle Hook now turns
   with a structure or bearing (it had no `rotate`/`mirror`). A hook carrying a carcass is not yet made

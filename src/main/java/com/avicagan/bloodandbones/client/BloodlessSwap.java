@@ -40,6 +40,11 @@ public final class BloodlessSwap extends BakedModelWrapper<BakedModel> {
     public static final Map<ResourceLocation, ResourceLocation> HOOK = Map.of(
             ResourceLocation.fromNamespaceAndPath("bloodandbones", "item/meat_hook_point"), ResourceLocation.fromNamespaceAndPath("bloodandbones", "item/meat_hook_point_clean"));
 
+    /** The Gut Chain comes out as plain cord. */
+    public static final Map<ResourceLocation, ResourceLocation> GUTS = Map.of(
+            ResourceLocation.fromNamespaceAndPath("bloodandbones", "block/gut_chain"), ResourceLocation.fromNamespaceAndPath("bloodandbones", "block/gut_chain_clean"),
+            ResourceLocation.fromNamespaceAndPath("bloodandbones", "item/gut_chain"), ResourceLocation.fromNamespaceAndPath("bloodandbones", "item/gut_chain_clean"));
+
     private final Map<ResourceLocation, ResourceLocation> swaps;
     /** Resolved on first use: the block atlas is only ready once baking is over. */
     @Nullable

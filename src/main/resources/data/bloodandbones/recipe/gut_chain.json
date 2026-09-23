@@ -1,0 +1,18 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "category": "building",
+  "pattern": [
+    "O",
+    "O",
+    "O"
+  ],
+  "key": {
+    "O": {
+      "item": "bloodandbones:offal"
+    }
+  },
+  "result": {
+    "id": "bloodandbones:gut_chain",
+    "count": 3
+  }
+}

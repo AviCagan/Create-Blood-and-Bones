@@ -43,7 +43,8 @@ provided by [Sable](https://github.com/ryanhcode/sable).
   limb, tail), fresh or rotting, skinned, or from a baby, so funnels and frogports can sort meat.
 - **Cooking and display.** The Spit Roast turns a carcass piece over a fire until it browns (or
   burns). The Specimen Jar keeps a piece on show, and so does the Butcher's Hook, on a wall. The
-  Bloody Casing (spout 250 mB of blood onto an Andesite Casing) joins up like Create's casings.
+  Bloody Casing (spout 250 mB of blood onto an Andesite Casing) joins up like Create's casings, and
+  the Gut Chain (three offal in a column) hangs like a chain.
 - **Bloodless mode.** `bloodless_mode` in the client config (`config/bloodandbones-client.toml`)
   hides blood drops and stains, shows skinned carcasses as pale meat, the hook in a carcass and
   the machines clean, and blood itself as a muddy brown. Names and descriptions are reworded too

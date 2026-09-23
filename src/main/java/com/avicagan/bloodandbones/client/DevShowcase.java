@@ -324,6 +324,14 @@ public final class DevShowcase {
                         dx <= -2 ? BBBlocks.BLOODY_CASING.getDefaultState() : AllBlocks.ANDESITE_CASING.getDefaultState());
             }
         }
+        // gut chains: a strand standing between the hooks, and one draped along the top of the bloody casing
+        for (int dy = 0; dy < 2; dy++) {
+            level.setBlockAndUpdate(new BlockPos(o.getX() - 1, o.getY() + dy, wallZ - 1), BBBlocks.GUT_CHAIN.getDefaultState());
+        }
+        for (int dx = -4; dx <= -2; dx++) {
+            level.setBlockAndUpdate(new BlockPos(o.getX() + dx, o.getY() + 2, wallZ), BBBlocks.GUT_CHAIN.getDefaultState()
+                    .setValue(net.minecraft.world.level.block.RotatedPillarBlock.AXIS, Direction.Axis.X));
+        }
         BlockPos[] hooks = {new BlockPos(o.getX() - 3, o.getY() + 1, wallZ - 1), new BlockPos(o.getX() + 1, o.getY() + 1, wallZ - 1)};
         CarcassSavedData.Carcass[] hookMeat = {jarPig, roastCow};
         String[] hookBones = {"right_front_leg", "head"};

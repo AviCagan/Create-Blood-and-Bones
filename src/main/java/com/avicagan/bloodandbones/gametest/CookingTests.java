@@ -203,4 +203,18 @@ public class CookingTests {
         }
         helper.succeed();
     }
+
+    /** A Gut Chain breaks by hand and drops itself, and three offal make three. */
+    @GameTest(template = "empty", timeoutTicks = 40)
+    public static void gutChainDropsItself(GameTestHelper helper) {
+        BlockPos pos = new BlockPos(3, 2, 3);
+        helper.setBlock(pos, BBBlocks.GUT_CHAIN.getDefaultState());
+        helper.getLevel().destroyBlock(helper.absolutePos(pos), true);
+        helper.assertItemEntityPresent(BBBlocks.GUT_CHAIN.asItem(), pos, 2.0);
+        var recipe = helper.getLevel().getRecipeManager().byKey(com.avicagan.bloodandbones.BloodAndBones.asResource("gut_chain"));
+        if (recipe.isEmpty() || recipe.get().value().getResultItem(helper.getLevel().registryAccess()).getCount() != 3) {
+            helper.fail("Three offal should make three gut chains");
+        }
+        helper.succeed();
+    }
 }

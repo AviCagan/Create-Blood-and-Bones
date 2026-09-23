@@ -82,6 +82,12 @@ public final class BBClientSetup {
             event.getModels().computeIfPresent(net.minecraft.client.resources.model.ModelResourceLocation.inventory(hook.getId()),
                     (key, model) -> new BloodlessSwap(model, BloodlessSwap.HOOK));
         }
+        for (net.minecraft.world.level.block.state.BlockState state : com.avicagan.bloodandbones.registry.BBBlocks.GUT_CHAIN.get().getStateDefinition().getPossibleStates()) {
+            event.getModels().computeIfPresent(net.minecraft.client.renderer.block.BlockModelShaper.stateToModelLocation(state),
+                    (key, model) -> new BloodlessSwap(model, BloodlessSwap.GUTS));
+        }
+        event.getModels().computeIfPresent(net.minecraft.client.resources.model.ModelResourceLocation.inventory(com.avicagan.bloodandbones.registry.BBBlocks.GUT_CHAIN.getId()),
+                (key, model) -> new BloodlessSwap(model, BloodlessSwap.GUTS));
         // the machines' bloody casings and blades come out clean, in the world and in the hand; so does the
         // Bloody Casing, wrapped outside Create's connected textures (hence the lowest priority) so its
         // joined-up edges are swapped too

@@ -159,6 +159,18 @@ public class BBBlocks {
             .lang("Bloody Casing")
             .register();
 
+    /** A string of guts hung like a chain. Squelches. */
+    public static final BlockEntry<net.minecraft.world.level.block.ChainBlock> GUT_CHAIN = BloodAndBones.REGISTRATE
+            .block("gut_chain", net.minecraft.world.level.block.ChainBlock::new)
+            .properties(p -> p.mapColor(MapColor.COLOR_PINK).forceSolidOn().strength(0.5F).noOcclusion()
+                    .sound(net.minecraft.world.level.block.SoundType.SLIME_BLOCK))
+            .blockstate((c, p) -> p.axisBlock(c.get(), p.models().getExistingFile(p.modLoc("block/gut_chain")),
+                    p.models().getExistingFile(p.modLoc("block/gut_chain"))))
+            .tag(net.minecraft.tags.BlockTags.MINEABLE_WITH_HOE)
+            .lang("Gut Chain")
+            .item().model((c, p) -> p.generated(c, p.modLoc("item/gut_chain"))).build()
+            .register();
+
     public static void register() {
     }
 }
