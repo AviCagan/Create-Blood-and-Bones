@@ -778,6 +778,16 @@ pipes; chain clearance = hanging length + 1 block.
   with a structure or bearing (it had no `rotate`/`mirror`). A hook carrying a carcass is not yet made
   into contraption data (§3.5): the carcass falls when its hook is moved.
 
+### 13.12a Sorting pieces with Create's filters (verified)
+
+- `BBItemAttributes` registers `ItemAttributeType`s through a `DeferredRegister` on
+  `CreateRegistries.ITEM_ATTRIBUTE_TYPE`, as Enchantment Industry does, with text under
+  `create.item_attributes.bloodandbones.*` so Create's own `format` finds it. Singletons: fresh meat
+  (freshness 0.6 or more, where butchering gives everything), rotting (under 0.3, where meat comes out
+  as rotten flesh), skinned, from a baby. With a value: a piece of a given mob, and a carcass part (head
+  and neck by name, the Beheader's rule; body = the rig's root; tail by name; the rest limbs). The filter
+  screen asks on the client, so the part lookup uses the client's copy of the rigs there.
+
 ### 13.13 JEI Butchery pages (verified)
 
 - One page per butchery table (`compat/jei/ButcheryCategory`): the mob's spawn egg in, the hide from

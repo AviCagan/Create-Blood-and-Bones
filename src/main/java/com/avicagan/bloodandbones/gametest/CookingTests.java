@@ -163,4 +163,44 @@ public class CookingTests {
         }
         helper.succeed();
     }
+
+    /**
+     * Carcass pieces in Create's Attribute Filter: a fresh cow body offers "a piece of cow", "a carcass
+     * body" and "fresh meat"; a pig filter or a head filter does not take it; rotted, it counts as rotting;
+     * and each attribute survives being saved in a filter.
+     */
+    @GameTest(template = "empty", timeoutTicks = 20)
+    public static void carcassPiecesInAttributeFilters(GameTestHelper helper) {
+        var level = helper.getLevel();
+        ItemStack body = cowBody(helper);
+        List<com.simibubi.create.content.logistics.item.filter.attribute.ItemAttribute> offered =
+                com.simibubi.create.content.logistics.item.filter.attribute.ItemAttribute.getAllAttributes(body, level);
+        var cow = new com.avicagan.bloodandbones.registry.BBItemAttributes.PieceOf(net.minecraft.resources.ResourceLocation.withDefaultNamespace("cow"));
+        var pig = new com.avicagan.bloodandbones.registry.BBItemAttributes.PieceOf(net.minecraft.resources.ResourceLocation.withDefaultNamespace("pig"));
+        var bodyPart = new com.avicagan.bloodandbones.registry.BBItemAttributes.PiecePart("body");
+        var headPart = new com.avicagan.bloodandbones.registry.BBItemAttributes.PiecePart("head");
+        var fresh = com.avicagan.bloodandbones.registry.BBItemAttributes.FRESH_PIECE.value().createAttribute();
+        var rotting = com.avicagan.bloodandbones.registry.BBItemAttributes.ROTTING_PIECE.value().createAttribute();
+        if (!offered.contains(cow) || !offered.contains(bodyPart) || !offered.contains(fresh) || offered.contains(rotting)) {
+            helper.fail("A fresh cow body should offer piece of cow, carcass body and fresh meat, got " + offered);
+        }
+        if (!cow.appliesTo(body, level) || pig.appliesTo(body, level) || !bodyPart.appliesTo(body, level) || headPart.appliesTo(body, level)) {
+            helper.fail("Mob and part filters should match only a cow body");
+        }
+        CarcassPieceItem.Piece piece = CarcassPieceItem.piece(body);
+        ItemStack old = body.copy();
+        old.set(com.avicagan.bloodandbones.registry.BBDataComponents.PIECE.get(), new CarcassPieceItem.Piece(piece.entity(), piece.bone(), piece.texture(),
+                piece.coats(), 0.1F, piece.skinned(), piece.traits(), piece.blood(), piece.bloodMax(), piece.decay(), piece.baby()));
+        if (!rotting.appliesTo(old, level) || fresh.appliesTo(old, level)) {
+            helper.fail("A piece at 10% fresh should count as rotting and not fresh");
+        }
+        for (var attribute : List.of(cow, bodyPart, fresh)) {
+            var saved = com.simibubi.create.content.logistics.item.filter.attribute.ItemAttribute.saveStatic(attribute, level.registryAccess());
+            var loaded = com.simibubi.create.content.logistics.item.filter.attribute.ItemAttribute.loadStatic(saved, level.registryAccess());
+            if (!attribute.equals(loaded)) {
+                helper.fail("Attribute " + attribute + " came back from a filter as " + loaded);
+            }
+        }
+        helper.succeed();
+    }
 }

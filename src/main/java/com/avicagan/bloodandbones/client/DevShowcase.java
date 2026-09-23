@@ -202,6 +202,16 @@ public final class DevShowcase {
                                 BBBlocks.BLOODY_CASING.asStack().getHoverName().getString(),
                                 com.avicagan.bloodandbones.registry.BBFluids.blood().getFluidType().getDescription().getString(),
                                 net.minecraft.client.resources.language.I18n.get("block.bloodandbones.bleeding_rack.tooltip.summary"));
+                        // what Create's Attribute Filter offers for a pig's head, as the player reads it
+                        ItemStack head = new ItemStack(BBItems.CARCASS_PIECE.get());
+                        head.set(com.avicagan.bloodandbones.registry.BBDataComponents.PIECE.get(), new CarcassPieceItem.Piece(
+                                net.minecraft.resources.ResourceLocation.withDefaultNamespace("pig"), "head",
+                                net.minecraft.resources.ResourceLocation.withDefaultNamespace("textures/entity/pig/pig.png"), List.of(), 1.0F,
+                                false, java.util.Map.of(), 0.0F, 0.0F, 0.0F, false));
+                        BloodAndBones.LOGGER.info("[showcase] filter: {}", com.simibubi.create.content.logistics.item.filter.attribute.ItemAttribute
+                                .getAllAttributes(head, mc.level).stream()
+                                .filter(a -> a.getTranslationKey().startsWith(BloodAndBones.MOD_ID))
+                                .map(a -> a.format(false).getString()).toList());
                         BloodAndBones.LOGGER.info("[showcase] done");
                         stage = 5;
                         mc.stop();

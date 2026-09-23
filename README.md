@@ -39,6 +39,8 @@ provided by [Sable](https://github.com/ryanhcode/sable).
 - **Materials.** Blood Steel (spout-fill iron with blood), Soul Blood (superheated mix with liquid
   experience, or a Diesel Generators fermenting basin), the Blood Diamond (spout-fill a diamond
   with soul blood), and the Blood Steel Cleaver (twice as deep a chop).
+- **Sorting.** Create's Attribute Filter knows carcass pieces: which mob, which part (head, body,
+  limb, tail), fresh or rotting, skinned, or from a baby, so funnels and frogports can sort meat.
 - **Cooking and display.** The Spit Roast turns a carcass piece over a fire until it browns (or
   burns). The Specimen Jar keeps a piece on show, and so does the Butcher's Hook, on a wall. The
   Bloody Casing (spout 250 mB of blood onto an Andesite Casing) joins up like Create's casings.
