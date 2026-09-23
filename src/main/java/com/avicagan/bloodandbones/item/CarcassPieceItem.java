@@ -91,6 +91,30 @@ public class CarcassPieceItem extends Item {
         return Component.translatable("item.bloodandbones.carcass_piece.named", animal, part);
     }
 
+    /** How it is keeping: fresh, going off or rotting (the butchery thresholds), skinned, from a baby. */
+    @Override
+    public void appendHoverText(ItemStack stack, Item.TooltipContext context, java.util.List<Component> tooltip, net.minecraft.world.item.TooltipFlag flag) {
+        Piece piece = piece(stack);
+        if (piece == null) {
+            return;
+        }
+        int percent = Math.round(Math.max(0.0F, Math.min(1.0F, piece.freshness())) * 100.0F);
+        String state = piece.freshness() >= com.avicagan.bloodandbones.registry.BBItemAttributes.FRESH ? "fresh"
+                : piece.freshness() >= com.avicagan.bloodandbones.registry.BBItemAttributes.ROTTING ? "going_off" : "rotting";
+        net.minecraft.ChatFormatting colour = switch (state) {
+            case "fresh" -> net.minecraft.ChatFormatting.GREEN;
+            case "going_off" -> net.minecraft.ChatFormatting.GOLD;
+            default -> net.minecraft.ChatFormatting.DARK_RED;
+        };
+        tooltip.add(Component.translatable("item.bloodandbones.carcass_piece." + state, percent).withStyle(colour));
+        if (piece.skinned()) {
+            tooltip.add(Component.translatable("item.bloodandbones.carcass_piece.skinned").withStyle(net.minecraft.ChatFormatting.GRAY));
+        }
+        if (piece.baby()) {
+            tooltip.add(Component.translatable("item.bloodandbones.carcass_piece.baby").withStyle(net.minecraft.ChatFormatting.GRAY));
+        }
+    }
+
     @Override
     public InteractionResult useOn(UseOnContext context) {
         Piece piece = piece(context.getItemInHand());

@@ -212,6 +212,8 @@ public final class DevShowcase {
                                 .getAllAttributes(head, mc.level).stream()
                                 .filter(a -> a.getTranslationKey().startsWith(BloodAndBones.MOD_ID))
                                 .map(a -> a.format(false).getString()).toList());
+                        BloodAndBones.LOGGER.info("[showcase] tooltip: {}", head.getTooltipLines(net.minecraft.world.item.Item.TooltipContext.of(mc.level), mc.player,
+                                net.minecraft.world.item.TooltipFlag.Default.NORMAL).stream().map(net.minecraft.network.chat.Component::getString).toList());
                         BloodAndBones.LOGGER.info("[showcase] done");
                         stage = 5;
                         mc.stop();

@@ -6,7 +6,9 @@ Everything below is in development builds only; the art is placeholder (see the 
 
 - Meat Hook kills leave physics carcasses; dragging, resting (a still carcass folds into one body
   and unfolds when disturbed), rot, and the death handover with no gap.
-- Butchery: Cleaver, Flensing Knife, carried pieces, data-driven yields that spoil with rot.
+- Butchery: Cleaver, Flensing Knife, carried pieces, data-driven yields that spoil with rot. A carried
+  piece's tooltip says how it is keeping (fresh, going off, rotting), and whether it is skinned or
+  from a baby.
 - Cut limbs leave raw wounds, bone showing, on the stump and on the piece, and pour blood for a while.
 - Scraps of meat fly off when a limb is cut through or a piece is butchered or ground.
 - Carcasses land with a wet thud, louder and deeper for heavier, faster falls; a hard landing splats blood.

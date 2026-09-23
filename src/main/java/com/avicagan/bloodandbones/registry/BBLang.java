@@ -109,6 +109,11 @@ public class BBLang {
         BloodAndBones.REGISTRATE.addRawLang("bloodandbones.gui.goggles.spit_roast.burnt", "Burnt to a crisp");
         BloodAndBones.REGISTRATE.addRawLang("bloodandbones.gui.goggles.spit_roast.no_heat", "Needs a fire below");
         BloodAndBones.REGISTRATE.addRawLang("item.bloodandbones.carcass_piece.named", "%s %s");
+        BloodAndBones.REGISTRATE.addRawLang("item.bloodandbones.carcass_piece.fresh", "Fresh (%s%%)");
+        BloodAndBones.REGISTRATE.addRawLang("item.bloodandbones.carcass_piece.going_off", "Going off (%s%%)");
+        BloodAndBones.REGISTRATE.addRawLang("item.bloodandbones.carcass_piece.rotting", "Rotting (%s%%)");
+        BloodAndBones.REGISTRATE.addRawLang("item.bloodandbones.carcass_piece.skinned", "Skinned");
+        BloodAndBones.REGISTRATE.addRawLang("item.bloodandbones.carcass_piece.baby", "From a baby");
 
         // ---- advancements
         advancement("butchery", "Create: Blood & Bones", "Make a Meat Hook. Whatever it kills stays whole");
