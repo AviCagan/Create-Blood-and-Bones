@@ -1112,6 +1112,58 @@ public class BBGameTests {
         });
     }
 
+    /** A nether mob drains Soul Blood, not blood: a hoglin hung over Bleeding Racks fills them with it. */
+    @GameTest(template = "empty", timeoutTicks = 400)
+    public static void hoglinBleedsSoulBlood(GameTestHelper helper) {
+        ServerLevel level = helper.getLevel();
+        net.minecraft.world.entity.monster.hoglin.Hoglin hoglin = helper.spawn(EntityType.HOGLIN, new BlockPos(5, 2, 5));
+        hoglin.setImmuneToZombification(true);
+        if (CarcassAssembler.assemble(hoglin, null) == null) {
+            helper.fail("Carcass assembly returned false");
+        }
+        hoglin.discard();
+        helper.setBlock(new BlockPos(5, 7, 5), net.minecraft.world.level.block.Blocks.STONE);
+        helper.setBlock(new BlockPos(5, 6, 5), com.avicagan.bloodandbones.registry.BBBlocks.SHACKLE_HOOK.get().defaultBlockState()
+                .setValue(com.avicagan.bloodandbones.carcass.ShackleHookBlock.FACING, net.minecraft.core.Direction.UP));
+        Player player = helper.makeMockPlayer(GameType.SURVIVAL);
+        player.setItemInHand(InteractionHand.MAIN_HAND, new ItemStack(BBItems.MEAT_HOOK.get()));
+        player.setPos(Vec3.atBottomCenterOf(helper.absolutePos(new BlockPos(5, 2, 5))));
+        player.setOldPosAndRot();
+        helper.runAfterDelay(10, () -> {
+            CarcassSavedData.Carcass carcass = onlyCarcass(helper, level);
+            ServerSubLevel leg = liveBones(helper, level, carcass).get("right_hind_leg");
+            if (!CarcassDrag.start(level, player, leg.getPlot().getCenterBlock(), null)) {
+                helper.fail("Could not start dragging");
+            }
+            ((com.avicagan.bloodandbones.carcass.ShackleHookBlockEntity) level.getBlockEntity(helper.absolutePos(new BlockPos(5, 6, 5)))).toggle(level, player);
+        });
+        helper.runAfterDelay(80, () -> {
+            for (int x = 3; x <= 7; x++) {
+                for (int z = 3; z <= 7; z++) {
+                    helper.setBlock(new BlockPos(x, 1, z), com.avicagan.bloodandbones.registry.BBBlocks.BLEEDING_RACK.getDefaultState());
+                }
+            }
+        });
+        helper.runAfterDelay(300, () -> {
+            int soul = 0;
+            for (int x = 3; x <= 7; x++) {
+                for (int z = 3; z <= 7; z++) {
+                    if (level.getBlockEntity(helper.absolutePos(new BlockPos(x, 1, z))) instanceof com.avicagan.bloodandbones.bleeding.BleedingRackBlockEntity rack) {
+                        net.neoforged.neoforge.fluids.FluidStack fluid = rack.getFluid();
+                        if (!fluid.isEmpty() && !fluid.is(com.avicagan.bloodandbones.registry.BBFluids.soulBlood())) {
+                            helper.fail("A hoglin should drain Soul Blood, a rack holds " + fluid.getFluid());
+                        }
+                        soul += fluid.getAmount();
+                    }
+                }
+            }
+            if (soul <= 0) {
+                helper.fail("No Soul Blood in the racks under a hung hoglin");
+            }
+            helper.succeed();
+        });
+    }
+
     /** A cow hung over Bleeding Racks drains into them; every drop that leaves the body is in a rack. */
     @GameTest(template = "empty", timeoutTicks = 400)
     public static void hangingCarcassBleedsIntoRack(GameTestHelper helper) {

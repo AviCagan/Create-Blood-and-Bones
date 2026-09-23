@@ -659,6 +659,10 @@ pipes; chain clearance = hanging length + 1 block.
   (`FanAirflow.fanSpeedAt`, which reads Create's `AirCurrent.bounds` on the server). A full rack stops
   the draining. A bled carcass rots at 70% speed.
 
+- The trickle path to Soul Blood: carcasses of mobs in `#bloodandbones:soul_bleeders` (piglins,
+  hoglins, zoglins, striders, zombified piglins) drain Soul Blood instead (`CarcassBleeding.fluidOf`).
+  A rack holds one fluid, so blood and Soul Blood need racks of their own. `hoglinBleedsSoulBlood`.
+
 ### 13.7a Blood stains (verified)
 
 - `blood_stain` (`BloodStainBlock`): a flat, non-colliding, replaceable block with `size` 1-4 and `age`

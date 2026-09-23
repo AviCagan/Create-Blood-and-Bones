@@ -13,6 +13,8 @@ public final class BBTags {
 
     /** Mobs with no blood to drain: the skeletons. */
     public static final TagKey<net.minecraft.world.entity.EntityType<?>> BLOODLESS = TagKey.create(Registries.ENTITY_TYPE, BloodAndBones.asResource("bloodless"));
+    /** Nether mobs: their carcasses drain Soul Blood, not blood (the trickle path to it). */
+    public static final TagKey<net.minecraft.world.entity.EntityType<?>> SOUL_BLEEDERS = TagKey.create(Registries.ENTITY_TYPE, BloodAndBones.asResource("soul_bleeders"));
 
     private BBTags() {
     }

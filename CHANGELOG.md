@@ -15,7 +15,8 @@ Everything below is in development builds only; the art is placeholder (see the 
   kinds that have them (calves, piglets, lambs, chicks, pups, kittens, cubs, bunnies, foals on their
   long legs, crias, baby zombies and villagers...) shaped as the game draws them; hook kills drop the
   mob's gear and inventory.
-- Blood and Soul Blood fluids, the Bleeding Rack, fan-boosted bleeding, slower rot once bled.
+- Blood and Soul Blood fluids, the Bleeding Rack, fan-boosted bleeding, slower rot once bled. Nether
+  mobs (piglins, hoglins, zoglins, striders) drain Soul Blood straight into the rack.
 - Blood stains on the ground (they squelch underfoot) from kills, cuts, drag trails and uncaught bleeding; they dry, fade
   and wash off in rain, and bloodless mode hides them. Bloodless mobs no longer spray blood.
 - Shackle Hook and Shackle Trolley on Create chain conveyors; trolleys queue a body's length apart.

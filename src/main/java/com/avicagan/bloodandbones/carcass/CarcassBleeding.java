@@ -82,6 +82,13 @@ public final class CarcassBleeding {
         carcass.gushing.put(parent + ">" + child, GUSH_TICKS);
     }
 
+    /** What drains out of this carcass: Soul Blood from a nether mob, blood from any other. */
+    public static net.minecraft.world.level.material.Fluid fluidOf(CarcassSavedData.Carcass carcass) {
+        boolean soul = net.minecraft.core.registries.BuiltInRegistries.ENTITY_TYPE.getOptional(carcass.entity)
+                .map(type -> type.is(com.avicagan.bloodandbones.registry.BBTags.SOUL_BLEEDERS)).orElse(false);
+        return soul ? BBFluids.soulBlood() : BBFluids.blood();
+    }
+
     /** Called every tick from the torso's root cell. */
     public static void tick(ServerLevel level, CarcassSavedData.Carcass carcass, ServerSubLevel torso) {
         if (++carcass.bleedTicks < INTERVAL) {
@@ -113,7 +120,7 @@ public final class CarcassBleeding {
             return;
         }
         if (rack != null) {
-            int taken = rack.collect(new FluidStack(BBFluids.blood(), amount), IFluidHandler.FluidAction.EXECUTE);
+            int taken = rack.collect(new FluidStack(fluidOf(carcass), amount), IFluidHandler.FluidAction.EXECUTE);
             if (taken <= 0) {
                 // the tray is full: the blood waits in the body until the rack is emptied
                 return;
@@ -167,7 +174,7 @@ public final class CarcassBleeding {
             if (carcass.bones.containsKey(parent) && carcass.blood > 0.0F) {
                 int amount = (int) Math.ceil(Math.min(carcass.blood, carcass.bloodMax * GUSH_SHARE));
                 if (rack != null) {
-                    amount = rack.collect(new FluidStack(BBFluids.blood(), amount), IFluidHandler.FluidAction.EXECUTE);
+                    amount = rack.collect(new FluidStack(fluidOf(carcass), amount), IFluidHandler.FluidAction.EXECUTE);
                 }
                 carcass.blood = Math.max(0.0F, carcass.blood - amount);
                 CarcassSavedData.get(level).setDirty();
