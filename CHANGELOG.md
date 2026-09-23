@@ -75,5 +75,5 @@ Everything below is in development builds only; the art is placeholder (see the 
 - A carcass hanging from a hook that a Create contraption moves falls off rather than going along.
 - The drag tests used to miss their mark by a hair about once in thirty runs (a body still swinging
   at the one tick they looked). They now judge the middle value over the last second; the whole
-  suite then passed every run since (fourteen), which is encouraging but not proof.
+  suite passed all six runs made with that check, which is encouraging but not proof.
 - All art is placeholder (see the README).
