@@ -61,7 +61,10 @@ public class SpitRoastBlockEntity extends KineticBlockEntity {
     /** Ticks the piece on the spit needs at a campfire. */
     public int cookTime() {
         CarcassPieceItem.Piece data = CarcassPieceItem.piece(piece);
-        Bone bone = data == null ? null : RigManager.forEntity(data.entity(), data.baby()).flatMap(rig -> rig.bone(data.bone())).orElse(null);
+        // asked on the client too (browning, goggles), where only the rigs the server sent are known
+        boolean client = level != null && level.isClientSide;
+        Bone bone = data == null ? null : (client ? RigManager.clientRig(data.entity(), data.baby()) : RigManager.forEntity(data.entity(), data.baby()))
+                .flatMap(rig -> rig.bone(data.bone())).orElse(null);
         if (bone == null) {
             return MIN_COOK;
         }
@@ -172,6 +175,7 @@ public class SpitRoastBlockEntity extends KineticBlockEntity {
         }
         CarcassSavedData.Carcass stand = new CarcassSavedData.Carcass(UUID.randomUUID(), data.entity(), data.bone());
         stand.freshness = data.freshness();
+        stand.baby = data.baby();
         stand.traits.putAll(data.traits());
         ButcheryManager.forEntity(data.entity()).ifPresent(table ->
                 CarcassButchery.capturing(raw::add, () -> {

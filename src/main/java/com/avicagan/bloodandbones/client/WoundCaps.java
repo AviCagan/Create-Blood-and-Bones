@@ -60,19 +60,27 @@ public final class WoundCaps {
     }
 
     /**
-     * One wound over the face of {@code limb}'s box that faces its parent (the face whose outward normal
-     * points most toward the parent's pivot; if the two pivots coincide, the face nearest the limb's own
-     * pivot), in the limb's frame: outside the box for the limb's own cut end, inside it for the stump.
+     * One wound over the face of {@code limb}'s box where it was cut: for a long limb, the end its pivot is
+     * at; for a blocky part, the face pointing most toward the parent's pivot (if the two pivots coincide,
+     * the face nearest its own pivot). Drawn in the limb's frame: outside the box for the limb's own cut end,
+     * inside it for the stump.
      */
     private static void cap(Bone limb, @org.jetbrains.annotations.Nullable Bone parent, boolean stump, int color, PoseStack poseStack, MultiBufferSource buffers, int packedLight) {
         Vector3f min = limb.boxMin();
         Vector3f max = limb.boxMax();
-        Vector3f toParent = parent == null ? new Vector3f()
-                : new Quaternionf(limb.rotation()).invert().transform(new Vector3f(parent.offset()).sub(limb.offset()));
+        Vector3f size = new Vector3f(max).sub(min);
         int axis = 0;
         boolean high = false;
-        if (toParent.lengthSquared() > 1.0E-4F) {
-            // the face pointing most toward the parent
+        // a long limb (a leg, an arm, a tail) is cut across at the end its pivot is at
+        int longest = size.x >= size.y && size.x >= size.z ? 0 : (size.y >= size.z ? 1 : 2);
+        float others = Math.max(size.get((longest + 1) % 3), size.get((longest + 2) % 3));
+        Vector3f toParent = parent == null ? new Vector3f()
+                : new Quaternionf(limb.rotation()).invert().transform(new Vector3f(parent.offset()).sub(limb.offset()));
+        if (size.get(longest) >= 1.5F * others) {
+            axis = longest;
+            high = Math.abs(max.get(axis)) < Math.abs(min.get(axis));
+        } else if (toParent.lengthSquared() > 1.0E-4F) {
+            // a blocky part (a head) is cut on the side facing what it hung from
             float best = -Float.MAX_VALUE;
             for (int a = 0; a < 3; a++) {
                 float along = toParent.get(a);

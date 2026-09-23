@@ -144,7 +144,20 @@ public final class CarcassAssembler {
             }
         }
         if (lowest < feet.y) {
-            base.y += feet.y - lowest + 0.01;
+            // only out of the ground: a ghast shot down in open air keeps its tentacles hanging
+            BlockPos.MutableBlockPos probe = BlockPos.containing(feet.x, feet.y - 0.01, feet.z).mutable();
+            double ground = Double.NEGATIVE_INFINITY;
+            for (int y = probe.getY(); y >= (int) Math.floor(lowest); y--) {
+                probe.setY(y);
+                net.minecraft.world.phys.shapes.VoxelShape shape = level.getBlockState(probe).getCollisionShape(level, probe);
+                if (!shape.isEmpty()) {
+                    ground = y + shape.max(net.minecraft.core.Direction.Axis.Y);
+                    break;
+                }
+            }
+            if (ground > lowest) {
+                base.y += ground - lowest + 0.01;
+            }
         }
 
         CarcassLook appearance = CarcassLook.of(entity, rig);

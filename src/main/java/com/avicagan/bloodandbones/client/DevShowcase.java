@@ -342,23 +342,28 @@ public final class DevShowcase {
                     continue;
                 }
                 double d = body.logicalPose().position().distance(player.getX(), player.getY(), player.getZ());
-                if (d < bestDistance && carcass.bones.size() > 3) {
+                // a still carcass lists only its torso; count the limbs folded into it too
+                if (d < bestDistance && com.avicagan.bloodandbones.carcass.CarcassRot.pieces(carcass).size() > 3
+                        && com.avicagan.bloodandbones.carcass.Blood.bloody(carcass)) {
                     bestDistance = d;
                     best = carcass;
                 }
             }
-            if (best != null) {
+            if (best != null && container.getSubLevel(best.bones.get(best.rootBone)) instanceof dev.ryanhcode.sable.sublevel.ServerSubLevel torso) {
+                // stand beside it, looking at it, then hook a leg
+                org.joml.Vector3dc at = torso.logicalPose().position();
+                player.teleportTo(level, at.x() + 1.8, at.y(), at.z(), 90, 35);
                 if (best.resting) {
                     com.avicagan.bloodandbones.carcass.CarcassRest.split(level, best);
                 }
                 for (java.util.UUID id : best.bones.values()) {
                     if (container.getSubLevel(id) instanceof dev.ryanhcode.sable.sublevel.ServerSubLevel limb && !id.equals(best.bones.get(best.rootBone))) {
-                        CarcassDrag.start(level, player, limb.getPlot().getCenterBlock(), null);
+                        boolean started = CarcassDrag.start(level, player, limb.getPlot().getCenterBlock(), null);
+                        BloodAndBones.LOGGER.info("[showcase] drag of {} started: {}", best.entity, started);
                         break;
                     }
                 }
             }
-            player.teleportTo(level, o.getX() + 0.5, o.getY(), o.getZ() + 1.0, 180, 30);
         }
     }
 

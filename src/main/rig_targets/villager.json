@@ -34,5 +34,6 @@
     ],
     "body_scale": 0.5,
     "body_offset": 24
-  }
+  },
+  "scale": 0.9375
 }

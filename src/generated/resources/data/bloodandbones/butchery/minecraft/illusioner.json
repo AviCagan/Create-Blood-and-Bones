@@ -2,7 +2,7 @@
   "entity": "minecraft:illusioner",
   "hide": [
     {
-      "count": 1.73,
+      "count": 1.43,
       "item": "bloodandbones:raw_hide",
       "kind": "hide"
     }
@@ -10,22 +10,22 @@
   "parts": {
     "body": [
       {
-        "count": 1.88,
+        "count": 1.54,
         "item": "bloodandbones:raw_meat",
         "kind": "meat"
       },
       {
-        "count": 0.7,
+        "count": 0.58,
         "item": "minecraft:bone",
         "kind": "bone"
       },
       {
-        "count": 1.16,
+        "count": 0.95,
         "item": "bloodandbones:offal",
         "kind": "offal"
       },
       {
-        "count": 0.58,
+        "count": 0.48,
         "item": "bloodandbones:animal_fat",
         "kind": "fat"
       },
@@ -36,7 +36,7 @@
     ],
     "head": [
       {
-        "count": 1.25,
+        "count": 1.03,
         "item": "bloodandbones:raw_meat",
         "kind": "meat"
       },
@@ -48,7 +48,7 @@
     ],
     "left_arm": [
       {
-        "count": 0.38,
+        "count": 0.31,
         "item": "bloodandbones:raw_meat",
         "kind": "meat"
       },
@@ -60,7 +60,7 @@
     ],
     "left_leg": [
       {
-        "count": 0.38,
+        "count": 0.31,
         "item": "bloodandbones:raw_meat",
         "kind": "meat"
       },
@@ -72,7 +72,7 @@
     ],
     "right_arm": [
       {
-        "count": 0.38,
+        "count": 0.31,
         "item": "bloodandbones:raw_meat",
         "kind": "meat"
       },
@@ -84,7 +84,7 @@
     ],
     "right_leg": [
       {
-        "count": 0.38,
+        "count": 0.31,
         "item": "bloodandbones:raw_meat",
         "kind": "meat"
       },

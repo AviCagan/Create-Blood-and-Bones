@@ -2,7 +2,7 @@
   "entity": "minecraft:wandering_trader",
   "hide": [
     {
-      "count": 1.27,
+      "count": 1.04,
       "item": "bloodandbones:raw_hide",
       "kind": "hide"
     }
@@ -10,7 +10,7 @@
   "parts": {
     "arms": [
       {
-        "count": 0.25,
+        "count": 0.21,
         "item": "bloodandbones:raw_meat",
         "kind": "meat"
       },
@@ -22,7 +22,7 @@
     ],
     "body": [
       {
-        "count": 1.13,
+        "count": 0.93,
         "item": "bloodandbones:raw_meat",
         "kind": "meat"
       },
@@ -32,12 +32,12 @@
         "kind": "bone"
       },
       {
-        "count": 0.84,
+        "count": 0.7,
         "item": "bloodandbones:offal",
         "kind": "offal"
       },
       {
-        "count": 0.42,
+        "count": 0.35,
         "item": "bloodandbones:animal_fat",
         "kind": "fat"
       },
@@ -47,7 +47,7 @@
     ],
     "head": [
       {
-        "count": 1.25,
+        "count": 1.03,
         "item": "bloodandbones:raw_meat",
         "kind": "meat"
       },
@@ -59,7 +59,7 @@
     ],
     "left_leg": [
       {
-        "count": 0.38,
+        "count": 0.31,
         "item": "bloodandbones:raw_meat",
         "kind": "meat"
       },
@@ -71,7 +71,7 @@
     ],
     "right_leg": [
       {
-        "count": 0.38,
+        "count": 0.31,
         "item": "bloodandbones:raw_meat",
         "kind": "meat"
       },

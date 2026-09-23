@@ -431,7 +431,7 @@ public final class CarcassDrag {
     }
 
     private static float dragPenalty(CarcassSavedData.Carcass carcass, float weight) {
-        Optional<Rig> rig = RigManager.all().values().stream().filter(r -> r.entity().equals(carcass.entity)).findFirst();
+        Optional<Rig> rig = RigManager.forCarcass(carcass);
         return rig.map(Rig::dragPenalty).orElseGet(() -> (float) Math.max(0.05, Math.min(0.55, 0.05 + 0.5 * Math.pow(weight / 3.0, 0.6))));
     }
 
