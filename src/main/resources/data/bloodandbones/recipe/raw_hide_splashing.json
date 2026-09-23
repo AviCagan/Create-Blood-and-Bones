@@ -1,0 +1,13 @@
+{
+  "type": "create:splashing",
+  "ingredients": [
+    {
+      "item": "bloodandbones:raw_hide"
+    }
+  ],
+  "results": [
+    {
+      "id": "minecraft:leather"
+    }
+  ]
+}

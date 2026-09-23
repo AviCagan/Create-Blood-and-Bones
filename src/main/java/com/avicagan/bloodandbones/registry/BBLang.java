@@ -47,6 +47,15 @@ public class BBLang {
                 "PH: A piece of carcass light enough to carry. Right-click the ground to put it back down as a body.",
                 "PH: Shift-right-click a head, a leg or a whole small animal with an empty hand to pick it up.",
                 "PH: A piece still attached to a body has to be cut off first.");
+        block("bleeding_rack",
+                "PH: A drip tray that catches blood. Hang a carcass on a Shackle Hook above it, or lay one on it, and the blood drains in.",
+                "PH: A hanging carcass drains faster than a lying one. An Encased Fan blowing across the body speeds it up.",
+                "PH: Pipes can pull blood from its sides and bottom, never fill it. When it is full the carcass stops draining.",
+                "PH: A carcass drained of its blood keeps longer before it rots.");
+        BloodAndBones.REGISTRATE.addRawLang("bloodandbones.jei.bleeding_rack.1",
+                "PH: Put the Bleeding Rack under a Shackle Hook (up to 8 blocks below) and hang a carcass: its blood drips into the tray. A carcass lying still on the rack drains too, more slowly.");
+        BloodAndBones.REGISTRATE.addRawLang("bloodandbones.jei.bleeding_rack.2",
+                "PH: A cow gives about a bucket. Fans across the body drain it up to four times faster. Pipe the blood out from the sides or bottom; a bled carcass rots slower.");
         item("meat_hook",
                 "PH: Kill an animal with this and it leaves a whole carcass instead of loot. Right-click a carcass to drag it, right-click again to let go.",
                 "PH: Dragging slows you down. Heavier animals slow you more.",

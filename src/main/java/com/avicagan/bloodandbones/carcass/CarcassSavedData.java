@@ -91,9 +91,20 @@ public class CarcassSavedData extends SavedData {
         /** ticks since the surroundings were sampled / the clients were told the freshness; not saved */
         public int rotSampleTicks = Integer.MAX_VALUE;
         public int rotSyncTicks;
+        /** blood left in the body, mB; -1 until first worked out from the rig (older saves, fresh records) */
+        public float blood = -1.0F;
+        /** blood the body held when it died, mB; 0 for bloodless things and severed pieces */
+        public float bloodMax = -1.0F;
+        /** ticks since the last bleed step; not saved */
+        public int bleedTicks;
 
         public boolean isRotten() {
             return freshness <= 0.0F;
+        }
+
+        /** Drained of blood on a rack: it keeps longer. */
+        public boolean isBled() {
+            return bloodMax > 0.0F && blood <= 0.0F;
         }
 
         public Carcass(UUID id, ResourceLocation entity, String rootBone) {
@@ -147,6 +158,8 @@ public class CarcassSavedData extends SavedData {
             tag.put("Severed", severedList);
             tag.putFloat("Freshness", freshness);
             tag.putLong("RotClock", rotClock);
+            tag.putFloat("Blood", blood);
+            tag.putFloat("BloodMax", bloodMax);
             tag.putString("Texture", look.texture().toString());
             ListTag passList = new ListTag();
             for (CarcassLook.Coat pass : look.passes()) {
@@ -199,6 +212,8 @@ public class CarcassSavedData extends SavedData {
             }
             carcass.freshness = tag.contains("Freshness") ? tag.getFloat("Freshness") : 1.0F;
             carcass.rotClock = tag.contains("RotClock") ? tag.getLong("RotClock") : -1L;
+            carcass.blood = tag.contains("Blood") ? tag.getFloat("Blood") : -1.0F;
+            carcass.bloodMax = tag.contains("BloodMax") ? tag.getFloat("BloodMax") : -1.0F;
             if (tag.contains("Texture")) {
                 List<CarcassLook.Coat> passes = new ArrayList<>();
                 for (Tag t : tag.getList("Passes", Tag.TAG_COMPOUND)) {
@@ -284,6 +299,9 @@ public class CarcassSavedData extends SavedData {
         piece.skinned = from.skinned;
         piece.traits.putAll(from.traits);
         piece.freshness = from.freshness;
+        // the blood drains from the body, not from a leg
+        piece.blood = 0.0F;
+        piece.bloodMax = 0.0F;
         piece.rotClock = from.rotClock;
         for (String name : moving) {
             UUID id = from.bones.remove(name);
@@ -348,6 +366,7 @@ public class CarcassSavedData extends SavedData {
         boolean torso = torsoId != null && torsoId.equals(rootSubLevel.getUniqueId());
         if (torso) {
             CarcassRot.tick(rootSubLevel.getLevel(), carcass, rootSubLevel);
+            CarcassBleeding.tick(rootSubLevel.getLevel(), carcass, rootSubLevel);
         }
         if (carcass.resting) {
             if (torso) {

@@ -1,0 +1,20 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "category": "misc",
+  "pattern": [
+    "C",
+    "H"
+  ],
+  "key": {
+    "C": {
+      "item": "minecraft:chain"
+    },
+    "H": {
+      "item": "bloodandbones:meat_hook"
+    }
+  },
+  "result": {
+    "id": "bloodandbones:shackle_hook",
+    "count": 1
+  }
+}

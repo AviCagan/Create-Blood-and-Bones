@@ -699,6 +699,109 @@ public class BBGameTests {
         });
     }
 
+    /** A cow hung over Bleeding Racks drains into them; every drop that leaves the body is in a rack. */
+    @GameTest(template = "empty", timeoutTicks = 400)
+    public static void hangingCarcassBleedsIntoRack(GameTestHelper helper) {
+        ServerLevel level = helper.getLevel();
+        Cow cow = helper.spawn(EntityType.COW, new BlockPos(5, 2, 5));
+        if (CarcassAssembler.assemble(cow, null) == null) {
+            helper.fail("Carcass assembly returned false");
+        }
+        cow.discard();
+        helper.setBlock(new BlockPos(5, 7, 5), net.minecraft.world.level.block.Blocks.STONE);
+        helper.setBlock(new BlockPos(5, 6, 5), com.avicagan.bloodandbones.registry.BBBlocks.SHACKLE_HOOK.get().defaultBlockState()
+                .setValue(com.avicagan.bloodandbones.carcass.ShackleHookBlock.FACING, net.minecraft.core.Direction.UP));
+        Player player = helper.makeMockPlayer(GameType.SURVIVAL);
+        player.setItemInHand(InteractionHand.MAIN_HAND, new ItemStack(BBItems.MEAT_HOOK.get()));
+        player.setPos(Vec3.atBottomCenterOf(helper.absolutePos(new BlockPos(5, 2, 5))));
+        player.setOldPosAndRot();
+        helper.runAfterDelay(10, () -> {
+            CarcassSavedData.Carcass carcass = onlyCarcass(helper, level);
+            ServerSubLevel leg = liveBones(helper, level, carcass).get("right_hind_leg");
+            if (!CarcassDrag.start(level, player, leg.getPlot().getCenterBlock(), null)) {
+                helper.fail("Could not start dragging");
+            }
+            ((com.avicagan.bloodandbones.carcass.ShackleHookBlockEntity) level.getBlockEntity(helper.absolutePos(new BlockPos(5, 6, 5)))).toggle(level, player);
+        });
+        helper.runAfterDelay(80, () -> {
+            for (int x = 3; x <= 7; x++) {
+                for (int z = 3; z <= 7; z++) {
+                    helper.setBlock(new BlockPos(x, 1, z), com.avicagan.bloodandbones.registry.BBBlocks.BLEEDING_RACK.getDefaultState());
+                }
+            }
+        });
+        helper.runAfterDelay(300, () -> {
+            CarcassSavedData.Carcass carcass = onlyCarcass(helper, level);
+            if (carcass.bloodMax <= 0.0F) {
+                helper.fail("A cow should hold blood, bloodMax " + carcass.bloodMax);
+            }
+            int inRacks = 0;
+            for (int x = 3; x <= 7; x++) {
+                for (int z = 3; z <= 7; z++) {
+                    if (level.getBlockEntity(helper.absolutePos(new BlockPos(x, 1, z))) instanceof com.avicagan.bloodandbones.bleeding.BleedingRackBlockEntity rack) {
+                        net.neoforged.neoforge.fluids.FluidStack fluid = rack.getFluid();
+                        if (!fluid.isEmpty() && !fluid.is(com.avicagan.bloodandbones.registry.BBFluids.blood())) {
+                            helper.fail("A rack holds " + fluid.getFluid() + ", not blood");
+                        }
+                        inRacks += fluid.getAmount();
+                    }
+                }
+            }
+            // before the racks were down the blood fell on the floor; count only what left after
+            if (inRacks < 100) {
+                helper.fail("Expected blood in the racks after 11 seconds of hanging over them, found " + inRacks + " mB (body has " + carcass.blood + " of " + carcass.bloodMax + ")");
+            }
+            helper.succeed();
+        });
+    }
+
+    /** Skeletons have no blood; a cow has about a bucket, all of it in the body, none in a severed leg. */
+    @GameTest(template = "empty", timeoutTicks = 200)
+    public static void bloodBelongsToTheBody(GameTestHelper helper) {
+        ServerLevel level = helper.getLevel();
+        net.minecraft.world.entity.monster.Skeleton skeleton = helper.spawn(EntityType.SKELETON, new BlockPos(2, 2, 2));
+        Cow cow = helper.spawn(EntityType.COW, new BlockPos(7, 2, 7));
+        CarcassSavedData.Carcass bones = CarcassAssembler.assemble(skeleton, null);
+        CarcassSavedData.Carcass meat = CarcassAssembler.assemble(cow, null);
+        skeleton.discard();
+        cow.discard();
+        com.avicagan.bloodandbones.carcass.CarcassBleeding.ensureBlood(bones);
+        com.avicagan.bloodandbones.carcass.CarcassBleeding.ensureBlood(meat);
+        if (bones.bloodMax != 0.0F) {
+            helper.fail("A skeleton should have no blood, has " + bones.bloodMax);
+        }
+        if (meat.bloodMax < 500.0F || meat.blood != meat.bloodMax) {
+            helper.fail("A cow should hold most of a bucket, has " + meat.blood + " of " + meat.bloodMax);
+        }
+        helper.runAfterDelay(SETTLE_TICKS, () -> {
+            for (int i = 0; i < com.avicagan.bloodandbones.carcass.CarcassButchery.CUTS_TO_SEVER; i++) {
+                com.avicagan.bloodandbones.carcass.CarcassButchery.cut(level, null, meat, "left_front_leg", null);
+            }
+            for (CarcassSavedData.Carcass other : CarcassSavedData.get(level).all()) {
+                if (other.rootBone.equals("left_front_leg") && other.bloodMax != 0.0F) {
+                    helper.fail("A severed leg should hold no blood, has " + other.bloodMax);
+                }
+            }
+            meat.blood = 0.0F;
+            if (!meat.isBled()) {
+                helper.fail("A drained cow should count as bled");
+            }
+            helper.succeed();
+        });
+    }
+
+    /** Every recipe file parsed: a broken one only logs an error, so check they all loaded. */
+    @GameTest(template = "empty", timeoutTicks = 20)
+    public static void recipesLoad(GameTestHelper helper) {
+        for (String name : new String[]{"meat_hook", "cleaver", "flensing_knife", "shackle_hook", "bleeding_rack", "raw_hide_splashing",
+                "cooked_meat_from_raw_meat_smelting"}) {
+            if (helper.getLevel().getRecipeManager().byKey(com.avicagan.bloodandbones.BloodAndBones.asResource(name)).isEmpty()) {
+                helper.fail("Recipe " + name + " did not load");
+            }
+        }
+        helper.succeed();
+    }
+
     /** A red mooshroom wears the red coat and yields red mushrooms when skinned. */
     @GameTest(template = "empty", timeoutTicks = 200)
     public static void mooshroomKeepsItsColour(GameTestHelper helper) {

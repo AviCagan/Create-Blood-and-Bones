@@ -1,0 +1,20 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "category": "misc",
+  "pattern": [
+    "SBS",
+    "SSS"
+  ],
+  "key": {
+    "S": {
+      "tag": "c:plates/copper"
+    },
+    "B": {
+      "item": "minecraft:iron_bars"
+    }
+  },
+  "result": {
+    "id": "bloodandbones:bleeding_rack",
+    "count": 1
+  }
+}

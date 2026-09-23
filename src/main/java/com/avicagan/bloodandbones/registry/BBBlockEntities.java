@@ -1,11 +1,14 @@
 package com.avicagan.bloodandbones.registry;
 
 import com.avicagan.bloodandbones.BloodAndBones;
+import com.avicagan.bloodandbones.bleeding.BleedingRackBlockEntity;
 import com.avicagan.bloodandbones.carcass.CarcassPartBlockEntity;
 import com.avicagan.bloodandbones.carcass.ShackleHookBlockEntity;
+import com.avicagan.bloodandbones.client.BleedingRackRenderer;
 import com.avicagan.bloodandbones.client.CarcassPartRenderer;
 import com.avicagan.bloodandbones.client.ShackleHookRenderer;
 import com.tterrag.registrate.util.entry.BlockEntityEntry;
+import net.neoforged.neoforge.capabilities.RegisterCapabilitiesEvent;
 
 public class BBBlockEntities {
     public static final BlockEntityEntry<CarcassPartBlockEntity> CARCASS_PART = BloodAndBones.REGISTRATE
@@ -20,6 +23,17 @@ public class BBBlockEntities {
             .renderer(() -> ShackleHookRenderer::new)
             .register();
 
+    public static final BlockEntityEntry<BleedingRackBlockEntity> BLEEDING_RACK = BloodAndBones.REGISTRATE
+            .blockEntity("bleeding_rack", BleedingRackBlockEntity::new)
+            .validBlock(BBBlocks.BLEEDING_RACK)
+            .renderer(() -> BleedingRackRenderer::new)
+            .register();
+
     public static void register() {
+    }
+
+    /** Mod bus listener; RegisterCapabilitiesEvent fires after registries freeze, so .get() is safe here. */
+    public static void registerCapabilities(RegisterCapabilitiesEvent event) {
+        BleedingRackBlockEntity.registerCapabilities(event);
     }
 }

@@ -54,7 +54,7 @@ public final class CarcassRot {
         BlockPos center = BlockPos.containing(position.x(), position.y(), position.z());
         if (++carcass.rotSampleTicks >= SAMPLE_INTERVAL || carcass.rotSampleTicks < 0) {
             carcass.rotSampleTicks = 0;
-            carcass.rotRate = rateAround(level, center);
+            carcass.rotRate = rateAround(level, center) * (carcass.isBled() ? CarcassBleeding.BLED_ROT : 1.0F);
         }
         long now = level.getGameTime();
         if (carcass.rotRate <= 0.0F) {

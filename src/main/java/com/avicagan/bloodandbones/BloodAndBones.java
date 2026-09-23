@@ -35,6 +35,7 @@ public class BloodAndBones {
         BBCreativeTabs.register();
         BBBlocks.register();
         BBItems.register();
+        com.avicagan.bloodandbones.registry.BBFluids.register();
         BBBlockEntities.register();
         BBLang.register();
 
@@ -46,6 +47,7 @@ public class BloodAndBones {
         }
         modEventBus.addListener(BBGameTests::register);
         modEventBus.addListener(BBNetwork::register);
+        modEventBus.addListener(BBBlockEntities::registerCapabilities);
         com.avicagan.bloodandbones.registry.BBDataComponents.COMPONENTS.register(modEventBus);
         com.avicagan.bloodandbones.registry.BBParticles.PARTICLES.register(modEventBus);
 

@@ -1,0 +1,21 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "category": "equipment",
+  "pattern": [
+    " N",
+    "N ",
+    "S "
+  ],
+  "key": {
+    "N": {
+      "tag": "c:ingots/iron"
+    },
+    "S": {
+      "tag": "c:rods/wooden"
+    }
+  },
+  "result": {
+    "id": "bloodandbones:meat_hook",
+    "count": 1
+  }
+}

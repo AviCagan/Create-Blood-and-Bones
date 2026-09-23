@@ -1,0 +1,5 @@
+{
+  "parent": "neoforge:item/bucket",
+  "fluid": "bloodandbones:soul_blood",
+  "loader": "neoforge:fluid_container"
+}

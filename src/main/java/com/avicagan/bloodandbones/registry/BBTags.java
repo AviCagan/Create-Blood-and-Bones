@@ -11,6 +11,9 @@ public final class BBTags {
     /** Blocks that stop rot entirely when near a carcass: the deep-cold ices. */
     public static final TagKey<Block> PRESERVES = TagKey.create(Registries.BLOCK, BloodAndBones.asResource("preserves"));
 
+    /** Mobs with no blood to drain: the skeletons. */
+    public static final TagKey<net.minecraft.world.entity.EntityType<?>> BLOODLESS = TagKey.create(Registries.ENTITY_TYPE, BloodAndBones.asResource("bloodless"));
+
     private BBTags() {
     }
 }

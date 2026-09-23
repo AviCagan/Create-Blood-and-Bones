@@ -3,6 +3,7 @@ package com.avicagan.bloodandbones.registry;
 import com.avicagan.bloodandbones.BloodAndBones;
 import com.avicagan.bloodandbones.carcass.CarcassPartBlock;
 import com.avicagan.bloodandbones.carcass.ShackleHookBlock;
+import com.avicagan.bloodandbones.bleeding.BleedingRackBlock;
 import com.tterrag.registrate.util.entry.BlockEntry;
 import com.tterrag.registrate.util.nullness.NonNullBiConsumer;
 import net.minecraft.world.level.material.MapColor;
@@ -40,6 +41,20 @@ public class BBBlocks {
             .blockstate((c, p) -> p.directionalBlock(c.get(), p.models().getExistingFile(p.modLoc("block/shackle_hook"))))
             .tag(net.minecraft.tags.BlockTags.MINEABLE_WITH_PICKAXE)
             .lang("Shackle Hook")
+            .simpleItem()
+            .register();
+
+    /** Drip tray with a 4000 mB tank; Create pipes pull from its sides and bottom. */
+    public static final BlockEntry<BleedingRackBlock> BLEEDING_RACK = BloodAndBones.REGISTRATE
+            .block("bleeding_rack", BleedingRackBlock::new)
+            .properties(p -> p.mapColor(MapColor.METAL)
+                    .strength(2.0F, 6.0F)
+                    .noOcclusion()
+                    .requiresCorrectToolForDrops()
+                    .sound(net.minecraft.world.level.block.SoundType.COPPER))
+            .blockstate((c, p) -> p.simpleBlock(c.get(), p.models().getExistingFile(p.modLoc("block/bleeding_rack"))))
+            .tag(net.minecraft.tags.BlockTags.MINEABLE_WITH_PICKAXE)
+            .lang("Bleeding Rack")
             .simpleItem()
             .register();
 
