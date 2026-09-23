@@ -603,3 +603,70 @@ pipes; chain clearance = hanging length + 1 block.
 - **Cleaver** (`CarcassButchery`): three cuts on a limb sever its joint (spec removed, `severed` set
   saved); the limb stays in the carcass record as a free body. The torso cannot be cut. Blood particles
   (`Blood`) on the kill, on a hook going in, dripping while dragged, on cuts.
+
+### 13.6 Butchery yields (verified)
+
+- Tables are generated per mob into `data/bloodandbones/butchery/<ns>/<path>.json` from the rig target's
+  `butchery` section: meat and bone by bone volume, hide by weight, offal and fat from the torso, plus
+  named `hide_extras` and `part_extras` (a sheep's `{wool}`, a polar bear's fish). Counts are expected
+  values; the fraction is rolled as a chance.
+- Rot spoils yields: past 60% fresh everything is whole; past 30% meat, offal and fat are halved; below
+  that meat turns to rotten flesh and hides are halved; rotten gives no hide.
+- `CarcassButchery.capturing(sink, action)` hands every yield of a butchery action to a sink instead of the
+  ground. Machines and the Spit Roast use it; players' tools do not.
+
+### 13.7 Blood and the Bleeding Rack (verified)
+
+- Blood and Soul Blood are Registrate fluids tinted from vanilla water textures (Create's
+  `AllFluids.TintedFluidType`); plain `BucketItem`s so spouts and drains accept them; tagged `c:blood`
+  and `create:bottomless/deny`.
+- A carcass holds `weight × 1000` mB (skeletons, spirits and golems are in `#bloodandbones:bloodless`).
+  Blood belongs to the body's record: severed pieces hold none.
+- It drains from the torso's lowest corner into the first Bleeding Rack straight below: up to 8 blocks
+  under a hanging body (hook or trolley), or 1 block under a resting one (half rate). Anywhere else a
+  hanging body's blood is lost. Encased fans blowing across the body multiply the rate up to 4x
+  (`FanAirflow.fanSpeedAt`, which reads Create's `AirCurrent.bounds` on the server). A full rack stops
+  the draining. A bled carcass rots at 70% speed.
+
+### 13.8 Machines (verified)
+
+- One block entity, four blocks (`MachineKind`): Mangler, Guillotine, Beheader, Deglover. Millstone
+  pattern: vertical shaft from below, stress impact registered with `BlockStressValues.IMPACTS` (addons
+  cannot use `CStress`), speed from `|rpm|/16` like the Millstone.
+- The work zone is the space over the machine (0.75 past each edge, 2.5 blocks up), so a body lying
+  across a machine set flush in a floor, or hanging over it, is reached. A resting carcass is unfolded
+  first. A body over the machine offers its nearest limb of the right kind.
+- Yields go to a 9-slot output exposed as an extract-only item handler; a full output stops the machine.
+
+### 13.9 Materials (verified)
+
+- Hand-written JSON recipes: spout-filling iron with blood (Blood Steel), diamond with soul blood (Blood
+  Diamond); soul blood by superheated mixing with CEI liquid experience, or by CDG basin fermenting.
+  The `recipesLoad` game test checks every recipe file parsed, since a broken one only logs an error.
+
+### 13.10 Every vanilla mob (verified; bosses and shape-changing fish excepted)
+
+- 77 rig targets. `LayerDumpProvider` (`-Dbloodandbones.dump_layers=ns:model#layer,...` on the data run)
+  prints part trees to `run/build/layer-dump.txt` for writing new ones.
+- Variants come through `CarcassLook` placeholders (`{variant}`, `{cat_texture}`, villager type,
+  profession and level). A coat can use another model's layer by full name (`minecraft:llama#decor`).
+- Hook kills drop the mob's belongings (saddles, armour, chests and contents, held items) by calling the
+  protected vanilla `dropCustomDeathLoot` and `dropEquipment` before the mob is removed.
+- Only full-size slimes and magma cubes become carcasses (the rig has one scale). Not rigged: the wither,
+  the ender dragon, pufferfish and tropical fish.
+
+### 13.11 Chain conveyors (verified)
+
+- `ChainCursor` follows a Create chain with Create's own rules through public API (`connectionStats`
+  after `prepareStats()`, `getSpeed()`, `reversed`, `loopThresholdCrossed`, routing table and ports).
+  `ShackleTrolleyEntity` moves in `LevelTickEvent.Pre` (before Sable steps) and slides the world end of a
+  ball joint each substep with `setFrame1`. A carcass on a trolley counts as hanging.
+- Open: trolleys do not queue on a shared strand; conveyors on Sable sub-levels are not supported.
+
+### 13.12 Cooking and display (verified)
+
+- Spit Roast: horizontal-axis kinetic block over heat (campfire, fire, lava, magma, Blaze Burner by heat
+  level). Cooks only while turning; done at a volume-based time, burnt at twice that. Taking it off
+  smelts each butchery yield through the vanilla smelting recipes.
+- Specimen Jar: holds one carcass piece in a translucent jar; the piece is drawn with the shared
+  `CarcassModels.drawPiece`.
