@@ -64,6 +64,8 @@ neoForge {
             data()
             programArguments.addAll '--mod', project.mod_id, '--all', '--output', file('src/generated/resources/').getAbsolutePath(), '--existing', file('src/main/resources/').getAbsolutePath()
             systemProperty 'bloodandbones.rig_targets', file('src/main/rig_targets').getAbsolutePath()
+            // -Dbloodandbones.dump_layers=minecraft:goat#main,... writes those models' part trees to build/layer-dump.txt
+            if (System.getProperty('bloodandbones.dump_layers') != null) systemProperty 'bloodandbones.dump_layers', System.getProperty('bloodandbones.dump_layers')
         }
         configureEach {
             systemProperty 'forge.logging.markers', 'REGISTRIES'
