@@ -20,23 +20,26 @@ provided by [Sable](https://github.com/ryanhcode/sable).
   showing on both ends, and breaks loose pieces down into meat, bone, offal and fat, with scraps of
   meat flying. Blades come away bloody and stay that way for a few minutes. The Flensing
   Knife takes the hide off (with a sheep's wool). Yields are data-driven per mob and spoil as the
-  carcass rots. Light pieces can be picked up and carried, and chopped up on a Butcher's Table (by hand,
-  or by a Deployer holding a Cleaver, fed by a funnel).
+  carcass rots. Light pieces can be picked up and carried, and chopped up on a Butcher's Table
+  (by hand, or by a Deployer holding a Cleaver, fed by a funnel). Carcasses land with a wet thud.
 - **Rot.** Carcasses rot over game time; cold slows it, ice stops it. Flies gather as the meat
   goes off, and maggots crawl over it near the end. Rotten meat turns to rotten flesh, and a
-  carcass left rotten for a day falls apart into bones and rotten flesh, so old ones don't pile up. Rot speed and the falling apart can be changed per world in
+  carcass left rotten for a day falls apart into bones and rotten flesh, so old ones don't pile up.
+  Rot speed and the falling apart can be changed per world in
   `serverconfig/bloodandbones-server.toml`, or in game under Mods, Blood & Bones, Config.
 - **Hanging and blood.** The Shackle Hook hangs a carcass by the neck. A Bleeding Rack under a
   hanging (or lying) carcass collects its blood, faster with an Encased Fan blowing across it.
   Blood and Soul Blood are real fluids for pipes, tanks, spouts and basins; nether mobs
-  (piglins, hoglins, striders) bleed Soul Blood. A bled carcass keeps longer. Blood that nothing catches stains the ground: kills, cuts, drag trails and carcasses
-  hanging over bare floor leave splashes that dry dark and wash away in the rain.
+  (piglins, hoglins, striders) bleed Soul Blood. A bled carcass keeps longer. Blood that nothing
+  catches stains the ground: kills, cuts, drag trails and carcasses hanging over bare floor leave
+  splashes that dry dark and wash away in the rain.
 - **Chain conveyors.** Right-click a Create chain conveyor with the Meat Hook while dragging a
   carcass: it rides the chain on a trolley and stops at frogports addressed for it. Trolleys queue
   behind each other instead of bunching up.
 - **Machines** (shaft from below, stress 4 to 8 per RPM): the Mangler tears a carcass apart and
   grinds it down; the Guillotine takes limbs off; the Beheader takes heads (sometimes the skull);
-  the Deglover strips hides. Each works whatever carcass lies on or hangs over it.
+  the Deglover strips hides. Each works whatever carcass lies on or hangs over it, and a filter slot
+  on its top edge can limit it to one kind of mob.
 - **Materials.** Blood Steel (spout-fill iron with blood), Soul Blood (superheated mix with liquid
   experience, or a Diesel Generators fermenting basin), the Blood Diamond (spout-fill a diamond
   with soul blood), and the Blood Steel Cleaver (twice as deep a chop).
@@ -44,15 +47,16 @@ provided by [Sable](https://github.com/ryanhcode/sable).
   limb, tail), fresh or rotting, skinned, or from a baby, so funnels and frogports can sort meat. The
   machines have a filter slot too: a spawn egg, a piece or a filter picks the carcasses they work on.
 - **Cooking and display.** The Spit Roast turns a carcass piece over a fire until it browns (or
-  burns). The Specimen Jar keeps a piece on show, and so does the Butcher's Hook, on a wall, where a
-  fresh piece drips blood on the floor. The
-  Bloody Casing (spout 250 mB of blood onto an Andesite Casing) joins up like Create's casings, and
-  the Gut Chain (three offal in a column) hangs like a chain.
+  burns). The Specimen Jar keeps a piece on show, and so does the Butcher's Hook, on a wall, where
+  a fresh piece drips blood on the floor. The Bloody Casing (spout 250 mB of blood onto an Andesite
+  Casing) joins up like Create's casings, and the Gut Chain (three offal in a column) hangs like a
+  chain.
 - **Bloodless mode.** `bloodless_mode` in the client config (`config/bloodandbones-client.toml`)
   hides blood drops and stains, shows skinned carcasses as pale meat, the hook in a carcass and
   the machines clean, and blood itself as a muddy brown. Names and descriptions are reworded too
-  (blood reads as "essence", bleeding as "draining", bloody as "stained"). A server can force it on for everyone with `/gamerule bloodandbonesBloodless true`.
-  Nothing about how the game plays changes.
+  (blood reads as "essence", bleeding as "draining", bloody as "stained"). A server can force it
+  on for everyone with `/gamerule bloodandbonesBloodless true`. Nothing about how the game plays
+  changes.
 - Tooltips (hold Shift), JEI pages (including a Butchery page per mob showing what its carcass
   gives), Ponder scenes and an advancement tab explain it all in game.
 
@@ -67,13 +71,14 @@ incremental. `./gradlew runClient` / `runServer` / `runData` are configured by M
 
 ### Development aids
 
-- `./gradlew runGameTestServer` runs the game tests headless (over a hundred: every rigged mob,
-  butchery, rot, bleeding, machines, cooking, chains, recipes and advancements).
+- `./gradlew runGameTestServer` runs the game tests headless (170: every rigged mob and baby,
+  butchery, rot, bleeding, machines and their filters, cooking and display, chains, recipes,
+  advancements and sounds).
 - `./gradlew runData -Dbloodandbones.dump_layers=minecraft:goat#main,...` writes those vanilla
   models' part trees to `run/build/layer-dump.txt`, for writing new rig targets in
   `src/main/rig_targets`.
 - `./gradlew runClient -Dbloodandbones.showcase=true` makes a flat world, builds a scene of
-  carcasses, machines and the rest, screenshots it (and three Ponder scenes and the cow's JEI
+  carcasses, machines and the rest, screenshots it (and five Ponder scenes and the cow's JEI
   page) into `run/screenshots/showcase_*.png`, and quits. It runs without a screen under
   `xvfb-run`. `-Dbloodandbones.showcase=bloodless` does the same with bloodless mode forced on.
 
@@ -103,9 +108,13 @@ before any public release. Until then, treat these as not releasable:
 
 - Recoloured from vanilla Minecraft textures (Mojang's assets cannot be redistributed under MIT):
   `item/blood_steel_ingot.png`, `item/blood_steel_nugget.png`, `item/blood_diamond.png`,
-  `block/blood_steel_block.png`.
-- Recoloured from Create's textures: `block/bloody_casing.png` (andesite casing),
-  `block/bloody_saw.png` and its bloodless twin `block/bloody_saw_clean.png` (the saw blade).
+  `block/blood_steel_block.png`, and the Butcher's Table's `block/butcher_table_top.png`,
+  `block/butcher_table_side.png` and their `_clean` twins (the iron block).
+- Recoloured from Create's textures: `block/bloody_casing.png` and `block/bloody_casing_connected.png`
+  (andesite casing and its connected sheet), `block/bloody_saw.png` and its bloodless twin
+  `block/bloody_saw_clean.png` (the saw blade).
+- This mod's own tool placeholders with blood added: `item/cleaver_bloody.png`,
+  `item/flensing_knife_bloody.png`, `item/blood_steel_cleaver_bloody.png`.
 - The other `*_clean.png` textures and `entity/flesh_bloodless.png` are this mod's own placeholders
   with the red taken out.
 - Recoloured from this mod's own cleaver: `item/blood_steel_cleaver.png`.
