@@ -9,6 +9,34 @@ provided by [Sable](https://github.com/ryanhcode/sable).
 - Target: Minecraft 1.21.1, NeoForge 21.1.x, Create 6.0.x, Sable 2.0.x, Java 21
 - Design: see `docs/ARCHITECTURE-PROPOSAL.md`
 
+## What it does
+
+- **The Meat Hook.** Kill a mob with it and the body stays behind as a ragdoll carcass (Sable
+  physics, one body per limb, jointed) instead of dropping loot. Its gear still drops. Hook a limb
+  to drag the body; heavier animals slow you more. 77 vanilla mobs are rigged, with their colours
+  and variants (not the wither, the ender dragon, pufferfish or tropical fish).
+- **Butchery.** The Cleaver takes limbs off at the joint and breaks loose pieces down into meat,
+  bone, offal and fat. The Flensing Knife takes the hide off (with a sheep's wool). Yields are
+  data-driven per mob and spoil as the carcass rots. Light pieces can be picked up and carried.
+- **Rot.** Carcasses rot over game time; cold slows it, ice stops it. Rotten meat turns to rotten
+  flesh.
+- **Hanging and blood.** The Shackle Hook hangs a carcass by the neck. A Bleeding Rack under a
+  hanging (or lying) carcass collects its blood, faster with an Encased Fan blowing across it.
+  Blood and Soul Blood are real fluids for pipes, tanks, spouts and basins. A bled carcass keeps
+  longer.
+- **Chain conveyors.** Right-click a Create chain conveyor with the Meat Hook while dragging a
+  carcass: it rides the chain on a trolley and stops at frogports addressed for it.
+- **Machines** (shaft from below, stress 4 to 8 per RPM): the Mangler tears a carcass apart and
+  grinds it down; the Guillotine takes limbs off; the Beheader takes heads (sometimes the skull);
+  the Deglover strips hides. Each works whatever carcass lies on or hangs over it.
+- **Materials.** Blood Steel (spout-fill iron with blood), Soul Blood (superheated mix with liquid
+  experience, or a Diesel Generators fermenting basin), the Blood Diamond (spout-fill a diamond
+  with soul blood), and the Blood Steel Cleaver (twice as deep a chop).
+- **Cooking and display.** The Spit Roast turns a carcass piece over a fire until it browns (or
+  burns). The Specimen Jar keeps a piece on show.
+- Tooltips (hold Shift), JEI information pages, Ponder scenes and an advancement tab explain it
+  all in game.
+
 ## Building
 
 ```
@@ -17,6 +45,17 @@ provided by [Sable](https://github.com/ryanhcode/sable).
 
 The first build downloads NeoForge and decompiles Minecraft (several minutes); later builds are
 incremental. `./gradlew runClient` / `runServer` / `runData` are configured by ModDevGradle.
+
+### Development aids
+
+- `./gradlew runGameTestServer` runs the game tests headless (over a hundred: every rigged mob,
+  butchery, rot, bleeding, machines, cooking, chains, recipes and advancements).
+- `./gradlew runData -Dbloodandbones.dump_layers=minecraft:goat#main,...` writes those vanilla
+  models' part trees to `run/build/layer-dump.txt`, for writing new rig targets in
+  `src/main/rig_targets`.
+- `./gradlew runClient -Dbloodandbones.showcase=true` makes a flat world, builds a scene of
+  carcasses, machines and the rest, screenshots it (and three Ponder scenes) into
+  `run/screenshots/showcase_*.png`, and quits. It runs without a screen under `xvfb-run`.
 
 ## Licence
 
@@ -37,8 +76,22 @@ direction, from the design brief in `docs/ARCHITECTURE-PROPOSAL.md`. Every commi
 carries a `Co-Authored-By` trailer naming the tool, so the history shows exactly what was
 AI-assisted.
 
-Textures, models, icons, gallery images and the mod page description are made by hand, not
-generated.
+**Art status (placeholder).** Every texture and block model in the repository right now is a
+development placeholder produced by Claude Code, drawn with small scripts so the features could be
+built and tested. None of it is final art. The intent is to replace all of it with hand-made art
+before any public release. Until then, treat these as not releasable:
+
+- Recoloured from vanilla Minecraft textures (Mojang's assets cannot be redistributed under MIT):
+  `item/blood_steel_ingot.png`, `item/blood_steel_nugget.png`, `item/blood_diamond.png`,
+  `block/blood_steel_block.png`.
+- Recoloured from Create's andesite casing: `block/bloody_casing.png`.
+- Recoloured from this mod's own cleaver: `item/blood_steel_cleaver.png`.
+- Everything else under `assets/bloodandbones/textures` was drawn pixel by pixel by script; check
+  its origin before release anyway.
+
+The screenshots in `docs/screenshots` are real in-game captures (from the developer showcase below),
+not generated images, but they show this placeholder art. The mod page will only ever use real
+screenshots of the final art.
 
 When this mod is published:
 
