@@ -23,6 +23,17 @@ public final class BBClientSetup {
     }
 
     @SubscribeEvent
+    public static void onClientExtensions(net.neoforged.neoforge.client.extensions.common.RegisterClientExtensionsEvent event) {
+        CarcassPieceItemRenderer renderer = new CarcassPieceItemRenderer();
+        event.registerItem(new net.neoforged.neoforge.client.extensions.common.IClientItemExtensions() {
+            @Override
+            public net.minecraft.client.renderer.BlockEntityWithoutLevelRenderer getCustomRenderer() {
+                return renderer;
+            }
+        }, BBItems.CARCASS_PIECE.get());
+    }
+
+    @SubscribeEvent
     public static void onParticles(RegisterParticleProvidersEvent event) {
         event.registerSpriteSet(BBParticles.BLOOD_DROP.get(), BloodDropParticle.Provider::new);
     }

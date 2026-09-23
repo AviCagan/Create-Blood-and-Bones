@@ -11,6 +11,7 @@ import net.neoforged.neoforge.client.event.ModelEvent;
 @EventBusSubscriber(modid = BloodAndBones.MOD_ID, value = Dist.CLIENT, bus = EventBusSubscriber.Bus.MOD)
 public final class BBClientModels {
     public static final ModelResourceLocation MEAT_HOOK_BLOODY = ModelResourceLocation.standalone(BloodAndBones.asResource("item/meat_hook_bloody"));
+    public static final ModelResourceLocation CARCASS_PIECE_ICON = ModelResourceLocation.standalone(BloodAndBones.asResource("item/carcass_piece_icon"));
 
     private BBClientModels() {
     }
@@ -18,5 +19,6 @@ public final class BBClientModels {
     @SubscribeEvent
     public static void onRegisterAdditional(ModelEvent.RegisterAdditional event) {
         event.register(MEAT_HOOK_BLOODY);
+        event.register(CARCASS_PIECE_ICON);
     }
 }

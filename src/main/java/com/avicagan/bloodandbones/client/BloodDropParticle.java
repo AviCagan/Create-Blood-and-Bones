@@ -59,6 +59,9 @@ public class BloodDropParticle extends TextureSheetParticle {
     public record Provider(SpriteSet sprites) implements ParticleProvider<SimpleParticleType> {
         @Override
         public Particle createParticle(SimpleParticleType type, ClientLevel level, double x, double y, double z, double dx, double dy, double dz) {
+            if (com.avicagan.bloodandbones.config.BBClientConfig.bloodless()) {
+                return null;
+            }
             return new BloodDropParticle(level, x, y, z, dx, dy, dz, sprites);
         }
     }
