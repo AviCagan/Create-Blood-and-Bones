@@ -69,6 +69,16 @@ Everything below is in development builds only; the art is placeholder (see the 
 - Drawn on the player for everyone: missing limbs gone, prosthetics in their place, in third and
   first person. The body is saved and kept through death.
 
+### The Fluid Backtank
+
+- Seven tiers worn in the chest slot, each with its own armour: copper (2 buckets), gold (3), iron
+  (4), diamond (6), blood steel (8), blood diamond (16) and soul netherite (32). Holds any fluid.
+- Set down as a block, pipes fill and empty it from any side, and it keeps its fluid when broken.
+  Spouts fill it and Item Drains empty it in the hand. Drawn on the wearer's back.
+- Soul Netherite Ingot: sequenced assembly, a netherite ingot filled with 1000 mB of soul blood and
+  pressed with a super experience block. The soul netherite tank is a smithing upgrade of the blood
+  diamond one.
+
 ### Presentation
 
 - Bloodless mode (a client setting, or the `bloodandbonesBloodless` game rule for everyone): no

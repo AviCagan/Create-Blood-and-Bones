@@ -57,6 +57,11 @@ provided by [Sable](https://github.com/ryanhcode/sable).
   a severed limb goes back where one is missing. Nothing takes a limb any other way, and surgery
   cannot go wrong. A missing arm can't use or swing anything and a missing leg slows you down; the
   prosthetics nearly make up for it. Other players see what you are missing and what is fitted.
+- **The Fluid Backtank.** A tank for any fluid, worn in the chest slot with the armour of its tier:
+  copper 2 buckets, gold 3, iron 4, diamond 6, blood steel 8, blood diamond 16, and soul netherite 32
+  (a smithing upgrade with a Soul Netherite Ingot: a netherite ingot filled with soul blood and pressed
+  with a super experience block). Set it down and pipes fill or empty it; a Spout or Item Drain works
+  on it in the hand. It is drawn on the wearer's back. Prosthetics and cybernetics will run on it.
 - **Bloodless mode.** `bloodless_mode` in the client config (`config/bloodandbones-client.toml`)
   hides blood drops and stains, shows skinned carcasses as pale meat, the hook in a carcass and
   the machines clean, and blood itself as a muddy brown. Names and descriptions are reworded too
@@ -77,8 +82,8 @@ incremental. `./gradlew runClient` / `runServer` / `runData` are configured by M
 
 ### Development aids
 
-- `./gradlew runGameTestServer` runs the game tests headless (181: every rigged mob and baby,
-  butchery, rot, bleeding, machines and their filters, cooking and display, surgery, chains, recipes,
+- `./gradlew runGameTestServer` runs the game tests headless (184: every rigged mob and baby,
+  butchery, rot, bleeding, machines and their filters, cooking and display, surgery, backtanks, chains, recipes,
   advancements and sounds).
 - `./gradlew runData -Dbloodandbones.dump_layers=minecraft:goat#main,...` writes those vanilla
   models' part trees to `run/build/layer-dump.txt`, for writing new rig targets in

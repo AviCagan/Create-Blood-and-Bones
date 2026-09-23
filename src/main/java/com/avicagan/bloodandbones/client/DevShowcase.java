@@ -239,6 +239,16 @@ public final class DevShowcase {
                 // the body: a peg leg, a hook hand and an arm gone, from the front and first-person; then the surgery screen
                 MinecraftServer server = mc.getSingleplayerServer();
                 int t = ticks++;
+                // the body turns after the head only slowly: face it the way the shot wants
+                if (mc.player != null && t > 0 && t <= 60) {
+                    float yaw = t <= 40 ? 180.0F : 0.0F;
+                    mc.player.setYRot(yaw);
+                    mc.player.yRotO = yaw;
+                    mc.player.setYBodyRot(yaw);
+                    mc.player.yBodyRotO = yaw;
+                    mc.player.setYHeadRot(yaw);
+                    mc.player.yHeadRotO = yaw;
+                }
                 if (t == 0) {
                     mc.options.setCameraType(net.minecraft.client.CameraType.THIRD_PERSON_FRONT);
                     mc.options.hideGui = true;
@@ -250,10 +260,26 @@ public final class DevShowcase {
                         body.lose(com.avicagan.bloodandbones.body.BodyPart.LEFT_ARM);
                         com.avicagan.bloodandbones.body.BodyEffects.changed(player);
                         player.setItemInHand(InteractionHand.MAIN_HAND, ItemStack.EMPTY);
+                        player.setItemSlot(net.minecraft.world.entity.EquipmentSlot.CHEST,
+                                new ItemStack(BBItems.backtank(com.avicagan.bloodandbones.backtank.BacktankTier.BLOOD_DIAMOND)));
                         player.teleportTo(player.serverLevel(), player.getX(), player.getY(), player.getZ(), 180.0F, -25.0F);
+                        // every tier of backtank set down in a row behind
+                        for (var tier : com.avicagan.bloodandbones.backtank.BacktankTier.values()) {
+                            BlockPos at = player.blockPosition().offset(tier.ordinal() - 3, 0, 5);
+                            player.serverLevel().setBlockAndUpdate(at, BBBlocks.FLUID_BACKTANK.getDefaultState()
+                                    .setValue(com.avicagan.bloodandbones.backtank.FluidBacktankBlock.TIER, tier));
+                        }
                     });
                 } else if (t == 40) {
                     Screenshot.grab(mc.gameDirectory, PREFIX + "body_0.png", mc.getMainRenderTarget(), message -> {
+                    });
+                    mc.options.setCameraType(net.minecraft.client.CameraType.THIRD_PERSON_BACK);
+                    server.execute(() -> {
+                        ServerPlayer player = server.getPlayerList().getPlayers().get(0);
+                        player.teleportTo(player.serverLevel(), player.getX(), player.getY(), player.getZ(), 0.0F, 25.0F);
+                    });
+                } else if (t == 60) {
+                    Screenshot.grab(mc.gameDirectory, PREFIX + "body_3.png", mc.getMainRenderTarget(), message -> {
                     });
                     mc.options.setCameraType(net.minecraft.client.CameraType.FIRST_PERSON);
                     mc.options.hideGui = false;
@@ -262,7 +288,7 @@ public final class DevShowcase {
                         player.setItemInHand(InteractionHand.MAIN_HAND, ItemStack.EMPTY);
                         player.teleportTo(player.serverLevel(), player.getX(), player.getY(), player.getZ(), 180.0F, 20.0F);
                     });
-                } else if (t == 70) {
+                } else if (t == 90) {
                     Screenshot.grab(mc.gameDirectory, PREFIX + "body_1.png", mc.getMainRenderTarget(), message -> {
                     });
                     server.execute(() -> {
@@ -276,7 +302,7 @@ public final class DevShowcase {
                             net.neoforged.neoforge.network.PacketDistributor.sendToPlayer(player, new com.avicagan.bloodandbones.body.Surgery.OpenPayload(at));
                         }
                     });
-                } else if (t == 110) {
+                } else if (t == 130) {
                     Screenshot.grab(mc.gameDirectory, PREFIX + "body_2.png", mc.getMainRenderTarget(), message -> {
                     });
                     BloodAndBones.LOGGER.info("[showcase] took body shots; screen {}", mc.screen == null ? "none" : mc.screen.getClass().getSimpleName());

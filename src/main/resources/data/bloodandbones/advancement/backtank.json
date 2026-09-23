@@ -1,0 +1,43 @@
+{
+  "parent": "bloodandbones:blood",
+  "display": {
+    "icon": {
+      "id": "bloodandbones:copper_fluid_backtank"
+    },
+    "title": {
+      "translate": "advancements.bloodandbones.backtank.title"
+    },
+    "description": {
+      "translate": "advancements.bloodandbones.backtank.description"
+    },
+    "frame": "task",
+    "show_toast": true,
+    "announce_to_chat": true,
+    "hidden": false
+  },
+  "criteria": {
+    "has": {
+      "trigger": "minecraft:inventory_changed",
+      "conditions": {
+        "items": [
+          {
+            "items": [
+              "bloodandbones:copper_fluid_backtank",
+              "bloodandbones:gold_fluid_backtank",
+              "bloodandbones:iron_fluid_backtank",
+              "bloodandbones:diamond_fluid_backtank",
+              "bloodandbones:blood_steel_fluid_backtank",
+              "bloodandbones:blood_diamond_fluid_backtank",
+              "bloodandbones:soul_netherite_fluid_backtank"
+            ]
+          }
+        ]
+      }
+    }
+  },
+  "requirements": [
+    [
+      "has"
+    ]
+  ]
+}

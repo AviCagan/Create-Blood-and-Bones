@@ -62,6 +62,7 @@ public class BloodAndBones {
         com.avicagan.bloodandbones.registry.BBItemAttributes.register(modEventBus);
         com.avicagan.bloodandbones.registry.BBSounds.register(modEventBus);
         com.avicagan.bloodandbones.body.BBAttachments.register(modEventBus);
+        com.avicagan.bloodandbones.backtank.BBArmorMaterials.register(modEventBus);
 
         LOGGER.info("Create: Blood & Bones loaded");
     }

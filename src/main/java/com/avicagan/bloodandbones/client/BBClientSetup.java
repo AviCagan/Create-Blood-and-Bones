@@ -49,6 +49,7 @@ public final class BBClientSetup {
         for (net.minecraft.client.resources.PlayerSkin.Model skin : event.getSkins()) {
             if (event.getSkin(skin) instanceof net.minecraft.client.renderer.entity.player.PlayerRenderer renderer) {
                 renderer.addLayer(new BodyRendering.ImplantLayer(renderer));
+                renderer.addLayer(new FluidBacktankLayer(renderer));
             }
         }
     }

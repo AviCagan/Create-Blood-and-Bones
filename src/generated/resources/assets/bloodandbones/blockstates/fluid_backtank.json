@@ -1,0 +1,109 @@
+{
+  "variants": {
+    "facing=east,tier=blood_diamond": {
+      "model": "bloodandbones:block/fluid_backtank_blood_diamond",
+      "y": 90
+    },
+    "facing=east,tier=blood_steel": {
+      "model": "bloodandbones:block/fluid_backtank_blood_steel",
+      "y": 90
+    },
+    "facing=east,tier=copper": {
+      "model": "bloodandbones:block/fluid_backtank_copper",
+      "y": 90
+    },
+    "facing=east,tier=diamond": {
+      "model": "bloodandbones:block/fluid_backtank_diamond",
+      "y": 90
+    },
+    "facing=east,tier=gold": {
+      "model": "bloodandbones:block/fluid_backtank_gold",
+      "y": 90
+    },
+    "facing=east,tier=iron": {
+      "model": "bloodandbones:block/fluid_backtank_iron",
+      "y": 90
+    },
+    "facing=east,tier=soul_netherite": {
+      "model": "bloodandbones:block/fluid_backtank_soul_netherite",
+      "y": 90
+    },
+    "facing=north,tier=blood_diamond": {
+      "model": "bloodandbones:block/fluid_backtank_blood_diamond"
+    },
+    "facing=north,tier=blood_steel": {
+      "model": "bloodandbones:block/fluid_backtank_blood_steel"
+    },
+    "facing=north,tier=copper": {
+      "model": "bloodandbones:block/fluid_backtank_copper"
+    },
+    "facing=north,tier=diamond": {
+      "model": "bloodandbones:block/fluid_backtank_diamond"
+    },
+    "facing=north,tier=gold": {
+      "model": "bloodandbones:block/fluid_backtank_gold"
+    },
+    "facing=north,tier=iron": {
+      "model": "bloodandbones:block/fluid_backtank_iron"
+    },
+    "facing=north,tier=soul_netherite": {
+      "model": "bloodandbones:block/fluid_backtank_soul_netherite"
+    },
+    "facing=south,tier=blood_diamond": {
+      "model": "bloodandbones:block/fluid_backtank_blood_diamond",
+      "y": 180
+    },
+    "facing=south,tier=blood_steel": {
+      "model": "bloodandbones:block/fluid_backtank_blood_steel",
+      "y": 180
+    },
+    "facing=south,tier=copper": {
+      "model": "bloodandbones:block/fluid_backtank_copper",
+      "y": 180
+    },
+    "facing=south,tier=diamond": {
+      "model": "bloodandbones:block/fluid_backtank_diamond",
+      "y": 180
+    },
+    "facing=south,tier=gold": {
+      "model": "bloodandbones:block/fluid_backtank_gold",
+      "y": 180
+    },
+    "facing=south,tier=iron": {
+      "model": "bloodandbones:block/fluid_backtank_iron",
+      "y": 180
+    },
+    "facing=south,tier=soul_netherite": {
+      "model": "bloodandbones:block/fluid_backtank_soul_netherite",
+      "y": 180
+    },
+    "facing=west,tier=blood_diamond": {
+      "model": "bloodandbones:block/fluid_backtank_blood_diamond",
+      "y": 270
+    },
+    "facing=west,tier=blood_steel": {
+      "model": "bloodandbones:block/fluid_backtank_blood_steel",
+      "y": 270
+    },
+    "facing=west,tier=copper": {
+      "model": "bloodandbones:block/fluid_backtank_copper",
+      "y": 270
+    },
+    "facing=west,tier=diamond": {
+      "model": "bloodandbones:block/fluid_backtank_diamond",
+      "y": 270
+    },
+    "facing=west,tier=gold": {
+      "model": "bloodandbones:block/fluid_backtank_gold",
+      "y": 270
+    },
+    "facing=west,tier=iron": {
+      "model": "bloodandbones:block/fluid_backtank_iron",
+      "y": 270
+    },
+    "facing=west,tier=soul_netherite": {
+      "model": "bloodandbones:block/fluid_backtank_soul_netherite",
+      "y": 270
+    }
+  }
+}

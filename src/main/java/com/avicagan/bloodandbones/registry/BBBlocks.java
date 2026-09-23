@@ -194,6 +194,22 @@ public class BBBlocks {
             .simpleItem()
             .register();
 
+    /** A Fluid Backtank set down, of any tier; its item form is the worn backtank, not this block's own item. */
+    public static final BlockEntry<com.avicagan.bloodandbones.backtank.FluidBacktankBlock> FLUID_BACKTANK = BloodAndBones.REGISTRATE
+            .block("fluid_backtank", com.avicagan.bloodandbones.backtank.FluidBacktankBlock::new)
+            .initialProperties(() -> net.minecraft.world.level.block.Blocks.IRON_BLOCK)
+            .properties(p -> p.noOcclusion().strength(2.0F, 6.0F).sound(net.minecraft.world.level.block.SoundType.NETHERITE_BLOCK))
+            .blockstate((c, p) -> p.horizontalBlock(c.get(), state -> p.models().getExistingFile(p.modLoc("block/fluid_backtank_"
+                    + state.getValue(com.avicagan.bloodandbones.backtank.FluidBacktankBlock.TIER).getSerializedName()))))
+            .loot((lt, b) -> lt.add(b, net.minecraft.world.level.storage.loot.LootTable.lootTable()))
+            .tag(net.minecraft.tags.BlockTags.MINEABLE_WITH_PICKAXE)
+            .lang("Fluid Backtank")
+            .item(net.minecraft.world.item.BlockItem::new)
+            .removeTab(BBCreativeTabs.MAIN.getKey())
+            .model((c, p) -> p.withExistingParent(c.getName(), p.modLoc("block/fluid_backtank_copper")))
+            .build()
+            .register();
+
     public static void register() {
     }
 }

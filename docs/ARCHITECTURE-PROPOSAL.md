@@ -961,3 +961,26 @@ later. The head and torso cannot be taken.
   arm, the walk and jump figures, the hands, the seat, and the screen's check. The showcase photographs a
   player with a Peg Leg, a Hook Hand and an arm gone, first-person, and the surgery screen.
 
+### 14.2 Slice 11b as built (verified)
+
+- One armour material per tier (`BBArmorMaterials`, a `DeferredRegister` on `Registries.ARMOR_MATERIAL`
+  as Create registers its copper), chest defence only: copper 4, gold 5, iron 6, diamond 8 (+2
+  toughness), blood steel 7 (+1), blood diamond 8 (+2.5, 5% knockback resistance), soul netherite 8 (+3,
+  10%). The armour layer is a strap harness per tier (`textures/models/armor/backtank_<tier>_layer_1`).
+- `FluidBacktankItem` keeps its fluid in a `SimpleFluidContent` component; NeoForge's
+  `FluidHandlerItemStack` is its item capability, so Create's Spout and Item Drain work on it. As
+  Create's backtank does, `useOn` hands placing to a separate block item (hidden from the tab): one
+  `fluid_backtank` block with a `tier` property, whose block entity's `FluidTank` is exposed to pipes on
+  every side. Broken, it drops the tier's item with the fluid (not in creative); middle-click gives an
+  empty one.
+- `FluidBacktankLayer` draws the tier's block model on the back as Create's `BacktankArmorLayer` does
+  (body transform, then flipped y and z). The showcase had to face the player's body the way it wanted,
+  since a teleport turns the head at once and the body only slowly.
+- Soul Netherite Ingot: `create:sequenced_assembly` (filling 1000 mB soul blood, deploying Enchantment
+  Industry's `super_experience_block`) with an incomplete ingot; the soul netherite tank is a
+  `smithing_transform` of the blood diamond one, which keeps the fluid.
+- The Backtank Port waits for 11c, since only a player with the port cybernetic can use it.
+- `BacktankTests`: each tier's capacity through the item handler, the armour, set down with a mock
+  player's `useOn`, drained and filled by a pipe (water refused), broken and dropped with the right
+  amount, and the fluid saved on the item.
+

@@ -19,6 +19,10 @@ public final class BBDataComponents {
     public static final DeferredHolder<DataComponentType<?>, DataComponentType<Long>> BLOODIED_AT = COMPONENTS.registerComponentType("bloodied_at",
             builder -> builder.persistent(com.mojang.serialization.Codec.LONG).networkSynchronized(ByteBufCodecs.VAR_LONG));
 
+    /** The fluid in a Fluid Backtank. */
+    public static final DeferredHolder<DataComponentType<?>, DataComponentType<net.neoforged.neoforge.fluids.SimpleFluidContent>> FLUID = COMPONENTS.registerComponentType("fluid",
+            builder -> builder.persistent(net.neoforged.neoforge.fluids.SimpleFluidContent.CODEC).networkSynchronized(net.neoforged.neoforge.fluids.SimpleFluidContent.STREAM_CODEC));
+
     private BBDataComponents() {
     }
 }

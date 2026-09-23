@@ -116,6 +116,45 @@ public class BBItems {
             .lang("Severed Leg")
             .register();
 
+    public static final ItemEntry<net.minecraft.world.item.Item> SOUL_NETHERITE_INGOT = BloodAndBones.REGISTRATE
+            .item("soul_netherite_ingot", net.minecraft.world.item.Item::new)
+            .properties(p -> p.fireResistant())
+            .lang("Soul Netherite Ingot")
+            .register();
+
+    public static final ItemEntry<com.simibubi.create.content.processing.sequenced.SequencedAssemblyItem> INCOMPLETE_SOUL_NETHERITE_INGOT = BloodAndBones.REGISTRATE
+            .item("incomplete_soul_netherite_ingot", com.simibubi.create.content.processing.sequenced.SequencedAssemblyItem::new)
+            .properties(p -> p.fireResistant())
+            .removeTab(BBCreativeTabs.MAIN.getKey())
+            .lang("Incomplete Soul Netherite Ingot")
+            .register();
+
+    /** A Fluid Backtank of each tier, worn in the chest slot. */
+    public static final java.util.Map<com.avicagan.bloodandbones.backtank.BacktankTier, ItemEntry<com.avicagan.bloodandbones.backtank.FluidBacktankItem>> BACKTANKS = backtanks();
+
+    private static java.util.Map<com.avicagan.bloodandbones.backtank.BacktankTier, ItemEntry<com.avicagan.bloodandbones.backtank.FluidBacktankItem>> backtanks() {
+        java.util.Map<com.avicagan.bloodandbones.backtank.BacktankTier, ItemEntry<com.avicagan.bloodandbones.backtank.FluidBacktankItem>> out =
+                new java.util.EnumMap<>(com.avicagan.bloodandbones.backtank.BacktankTier.class);
+        for (com.avicagan.bloodandbones.backtank.BacktankTier tier : com.avicagan.bloodandbones.backtank.BacktankTier.values()) {
+            String name = tier.getSerializedName();
+            String title = java.util.Arrays.stream(name.split("_")).map(w -> Character.toUpperCase(w.charAt(0)) + w.substring(1))
+                    .collect(java.util.stream.Collectors.joining(" "));
+            ItemEntry<com.avicagan.bloodandbones.backtank.FluidBacktankItem> entry = BloodAndBones.REGISTRATE
+                    .item(name + "_fluid_backtank", p -> new com.avicagan.bloodandbones.backtank.FluidBacktankItem(p, tier,
+                            () -> (net.minecraft.world.item.BlockItem) BBBlocks.FLUID_BACKTANK.asItem()))
+                    .properties(p -> tier == com.avicagan.bloodandbones.backtank.BacktankTier.SOUL_NETHERITE ? p.fireResistant() : p)
+                    .model((c, p) -> p.withExistingParent(c.getName(), p.modLoc("block/fluid_backtank_" + name)))
+                    .lang(title + " Fluid Backtank")
+                    .register();
+            out.put(tier, entry);
+        }
+        return out;
+    }
+
+    public static com.avicagan.bloodandbones.backtank.FluidBacktankItem backtank(com.avicagan.bloodandbones.backtank.BacktankTier tier) {
+        return BACKTANKS.get(tier).get();
+    }
+
     public static void register() {
     }
 }

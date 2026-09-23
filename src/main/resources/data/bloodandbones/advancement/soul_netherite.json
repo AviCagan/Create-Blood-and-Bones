@@ -1,0 +1,35 @@
+{
+  "parent": "bloodandbones:backtank",
+  "display": {
+    "icon": {
+      "id": "bloodandbones:soul_netherite_fluid_backtank"
+    },
+    "title": {
+      "translate": "advancements.bloodandbones.soul_netherite.title"
+    },
+    "description": {
+      "translate": "advancements.bloodandbones.soul_netherite.description"
+    },
+    "frame": "challenge",
+    "show_toast": true,
+    "announce_to_chat": true,
+    "hidden": false
+  },
+  "criteria": {
+    "has": {
+      "trigger": "minecraft:inventory_changed",
+      "conditions": {
+        "items": [
+          {
+            "items": "bloodandbones:soul_netherite_fluid_backtank"
+          }
+        ]
+      }
+    }
+  },
+  "requirements": [
+    [
+      "has"
+    ]
+  ]
+}

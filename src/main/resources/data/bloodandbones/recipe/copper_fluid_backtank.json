@@ -1,0 +1,23 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "category": "equipment",
+  "pattern": [
+    "MLM",
+    "MTM",
+    " M "
+  ],
+  "key": {
+    "M": {
+      "tag": "c:ingots/copper"
+    },
+    "L": {
+      "item": "minecraft:leather"
+    },
+    "T": {
+      "item": "create:fluid_tank"
+    }
+  },
+  "result": {
+    "id": "bloodandbones:copper_fluid_backtank"
+  }
+}

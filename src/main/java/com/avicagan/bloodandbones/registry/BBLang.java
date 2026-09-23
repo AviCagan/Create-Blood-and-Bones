@@ -130,6 +130,41 @@ public class BBLang {
         BloodAndBones.REGISTRATE.addRawLang("bloodandbones.surgery.nothing", "Nothing on the table can do that");
         BloodAndBones.REGISTRATE.addRawLang("bloodandbones.surgery.occupied", "Someone is already on the table");
 
+        // ---- the Fluid Backtank
+        item("copper_fluid_backtank",
+                "A tank for _any fluid_, worn on the back in the chest slot. Holds _2 buckets_ and gives the armour of copper.",
+                "When R-Clicked on a Block", "Sets it _down_, fluid and all. Pipes fill or empty it from any side; break it to pick it up again.",
+                "Filling and Emptying", "A _Spout_ fills it and an _Item Drain_ empties it. Organic prosthetics will run on the _blood_ in it, cybernetics on _soul blood_.");
+        item("gold_fluid_backtank",
+                "A tank for _any fluid_, worn on the back in the chest slot. Holds _3 buckets_ and gives the armour of gold.",
+                "When R-Clicked on a Block", "Sets it _down_, fluid and all. Pipes fill or empty it from any side; break it to pick it up again.",
+                "Filling and Emptying", "A _Spout_ fills it and an _Item Drain_ empties it. Organic prosthetics will run on the _blood_ in it, cybernetics on _soul blood_.");
+        item("iron_fluid_backtank",
+                "A tank for _any fluid_, worn on the back in the chest slot. Holds _4 buckets_ and gives the armour of iron.",
+                "When R-Clicked on a Block", "Sets it _down_, fluid and all. Pipes fill or empty it from any side; break it to pick it up again.",
+                "Filling and Emptying", "A _Spout_ fills it and an _Item Drain_ empties it. Organic prosthetics will run on the _blood_ in it, cybernetics on _soul blood_.");
+        item("diamond_fluid_backtank",
+                "A tank for _any fluid_, worn on the back in the chest slot. Holds _6 buckets_ and gives the armour of diamond.",
+                "When R-Clicked on a Block", "Sets it _down_, fluid and all. Pipes fill or empty it from any side; break it to pick it up again.",
+                "Filling and Emptying", "A _Spout_ fills it and an _Item Drain_ empties it. Organic prosthetics will run on the _blood_ in it, cybernetics on _soul blood_.");
+        item("blood_steel_fluid_backtank",
+                "A tank for _any fluid_, worn on the back in the chest slot. Holds _8 buckets_ and gives the armour of blood steel.",
+                "When R-Clicked on a Block", "Sets it _down_, fluid and all. Pipes fill or empty it from any side; break it to pick it up again.",
+                "Filling and Emptying", "A _Spout_ fills it and an _Item Drain_ empties it. Organic prosthetics will run on the _blood_ in it, cybernetics on _soul blood_.");
+        item("blood_diamond_fluid_backtank",
+                "A tank for _any fluid_, worn on the back in the chest slot. Holds _16 buckets_ and gives the armour of blood diamond.",
+                "When R-Clicked on a Block", "Sets it _down_, fluid and all. Pipes fill or empty it from any side; break it to pick it up again.",
+                "Filling and Emptying", "A _Spout_ fills it and an _Item Drain_ empties it. Organic prosthetics will run on the _blood_ in it, cybernetics on _soul blood_.");
+        item("soul_netherite_fluid_backtank",
+                "A tank for _any fluid_, worn on the back in the chest slot. Holds _32 buckets_ and gives the armour of soul netherite.",
+                "When R-Clicked on a Block", "Sets it _down_, fluid and all. Pipes fill or empty it from any side; break it to pick it up again.",
+                "Filling and Emptying", "A _Spout_ fills it and an _Item Drain_ empties it. Organic prosthetics will run on the _blood_ in it, cybernetics on _soul blood_.");
+        item("soul_netherite_ingot",
+                "Netherite with a _soul_ in it.",
+                "When Made", "_Sequenced assembly_: fill a netherite ingot with 1000 mB of soul blood, then press a _super experience block_ into it with a Deployer.");
+        BloodAndBones.REGISTRATE.addRawLang("bloodandbones.backtank.empty", "Empty: holds %s buckets of any fluid");
+        BloodAndBones.REGISTRATE.addRawLang("bloodandbones.backtank.holding", "%s: %s / %s mB");
+
         // ---- goggles
         BloodAndBones.REGISTRATE.addRawLang("bloodandbones.gui.goggles.carcass_machine.output", "%1$s items waiting");
         BloodAndBones.REGISTRATE.addRawLang("bloodandbones.gui.goggles.spit_roast.roasting", "Roasting: %1$s%%");
@@ -174,6 +209,8 @@ public class BBLang {
         advancement("surgery_table", "Under the Knife", "Make a Surgery Table");
         advancement("severed", "Disarming", "Take off one of your own limbs on a Surgery Table");
         advancement("prosthetic", "Spare Parts", "Make a Peg Leg or a Hook Hand");
+        advancement("backtank", "Tank Top", "Make a Fluid Backtank");
+        advancement("soul_netherite", "Thirty-Two Buckets", "Make a Soul Netherite Fluid Backtank");
 
         // ---- Ponder scenes (text_N in the order each scene shows its text)
         ponder("mangler", "Grinding Carcasses with the Mangler", "The Mangler tears the limbs off a carcass, then grinds every piece into meat, bone, offal and fat", "It is driven by a shaft from below. The faster it turns, the faster it works", "It works any carcass lying on it or hanging over it. Set it flush in a floor so a body lies across it", "What it makes waits inside. Take it with an empty hand, or pull it out with a funnel or hopper");
@@ -222,6 +259,9 @@ public class BBLang {
         jei("surgery",
                 "Lay a Cleaver on the Surgery Table and lie on it (right-click with an empty hand) to take one of your own limbs off. You get it back as a severed limb. Nothing takes a limb any other way, and nothing can go wrong.",
                 "A missing arm uses and swings nothing and a missing leg slows you down. Lay a Peg Leg, a Hook Hand or a severed limb on the table and lie down again to fit it; an empty table unclips a prosthetic.");
+        jei("backtank",
+                "The Fluid Backtank holds any fluid, worn in the chest slot with the armour of its tier: copper 2 buckets, gold 3, iron 4, diamond 6, blood steel 8, blood diamond 16, soul netherite 32.",
+                "Right-click a block to set it down; pipes fill or empty it from any side, and it keeps its fluid when broken. A Spout fills it and an Item Drain empties it in the hand. The soul netherite tank is a smithing upgrade of the blood diamond one.");
         jei("soul_blood",
                 "Soul Blood is blood with a soul in it. Mix blood, soul sand and a little liquid experience over a superheated Blaze Burner, or ferment blood with nether wart and soul soil under a Basin Lid.");
     }

@@ -1,0 +1,7 @@
+{
+  "parent": "bloodandbones:block/fluid_backtank",
+  "textures": {
+    "tank": "bloodandbones:block/fluid_backtank_iron",
+    "particle": "bloodandbones:block/fluid_backtank_iron"
+  }
+}
