@@ -1,0 +1,30 @@
+{
+  "entity": "minecraft:evoker",
+  "model": "minecraft:evoker",
+  "texture": "minecraft:textures/entity/illager/evoker.png",
+  "rot_time": 20000,
+  "torso": "body",
+  "hidden": [
+    "arms",
+    "head/hat"
+  ],
+  "merge": [
+    "head/nose"
+  ],
+  "butchery": {
+    "part_extras": {
+      "body": [
+        {
+          "item": "minecraft:totem_of_undying",
+          "count": 1.0,
+          "kind": "other"
+        },
+        {
+          "item": "minecraft:emerald",
+          "count": 0.5,
+          "kind": "other"
+        }
+      ]
+    }
+  }
+}

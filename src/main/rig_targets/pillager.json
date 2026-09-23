@@ -1,0 +1,25 @@
+{
+  "entity": "minecraft:pillager",
+  "model": "minecraft:pillager",
+  "texture": "minecraft:textures/entity/illager/pillager.png",
+  "rot_time": 20000,
+  "torso": "body",
+  "hidden": [
+    "arms",
+    "head/hat"
+  ],
+  "merge": [
+    "head/nose"
+  ],
+  "butchery": {
+    "part_extras": {
+      "body": [
+        {
+          "item": "minecraft:arrow",
+          "count": 2.0,
+          "kind": "other"
+        }
+      ]
+    }
+  }
+}

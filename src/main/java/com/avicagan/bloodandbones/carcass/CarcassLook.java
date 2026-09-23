@@ -36,6 +36,9 @@ public record CarcassLook(ResourceLocation texture, List<Coat> passes) {
             Markings.WHITE_DOTS, "whitedots",
             Markings.BLACK_DOTS, "blackdots");
 
+    /** A villager's badge by trade level, as its texture is named. */
+    private static final String[] LEVELS = {"stone", "iron", "gold", "emerald", "diamond"};
+
     /** What a skinned carcass wears: bare meat. Model UVs are relative, so one texture fits every model. */
     public static final ResourceLocation FLESH = ResourceLocation.fromNamespaceAndPath("bloodandbones", "textures/entity/flesh.png");
 
@@ -77,6 +80,19 @@ public record CarcassLook(ResourceLocation texture, List<Coat> passes) {
         }
         if (entity instanceof net.minecraft.world.entity.animal.horse.Llama llama) {
             variables.put("variant", llama.getVariant().getSerializedName());
+        }
+        if (entity instanceof net.minecraft.world.entity.npc.VillagerDataHolder villager) {
+            net.minecraft.world.entity.npc.VillagerData data = villager.getVillagerData();
+            String profession = net.minecraft.core.registries.BuiltInRegistries.VILLAGER_PROFESSION.getKey(data.getProfession()).getPath();
+            variables.put("villager_type", net.minecraft.core.registries.BuiltInRegistries.VILLAGER_TYPE.getKey(data.getType()).getPath());
+            variables.put("profession", profession);
+            variables.put("level", LEVELS[Math.max(0, Math.min(LEVELS.length - 1, data.getLevel() - 1))]);
+            if (profession.equals("none")) {
+                flags.add("no_profession");
+            }
+            if (profession.equals("none") || profession.equals("nitwit")) {
+                flags.add("no_level");
+            }
         }
         if (entity instanceof net.minecraft.world.entity.animal.Cat cat) {
             variables.put("cat_texture", cat.getVariant().value().texture().toString());

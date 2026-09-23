@@ -1,0 +1,264 @@
+{
+  "bones": [
+    {
+      "box_max": [
+        4.0,
+        20.0,
+        3.0
+      ],
+      "box_min": [
+        -4.0,
+        0.0,
+        -3.0
+      ],
+      "name": "body",
+      "offset": [
+        0.0,
+        0.0,
+        0.0
+      ],
+      "part": "body",
+      "rotation": [
+        0.0,
+        0.0,
+        0.0,
+        1.0
+      ]
+    },
+    {
+      "parent": "body",
+      "box_max": [
+        4.0,
+        0.0,
+        4.0
+      ],
+      "box_min": [
+        -4.0,
+        -10.0,
+        -4.0
+      ],
+      "extras": [
+        {
+          "offset": [
+            0.0,
+            0.0,
+            0.0
+          ],
+          "part": "hat",
+          "rotation": [
+            0.0,
+            0.0,
+            0.0,
+            1.0
+          ]
+        }
+      ],
+      "joint": {
+        "contacts": true,
+        "damping": 4.0,
+        "max_degrees": [
+          25.0,
+          30.0,
+          6.0
+        ],
+        "min_degrees": [
+          -15.0,
+          -30.0,
+          -6.0
+        ],
+        "stiffness": 2.0
+      },
+      "name": "head",
+      "offset": [
+        0.0,
+        0.0,
+        0.0
+      ],
+      "part": "head",
+      "rotation": [
+        0.0,
+        0.0,
+        0.0,
+        1.0
+      ]
+    },
+    {
+      "parent": "body",
+      "box_max": [
+        1.0,
+        10.0,
+        2.0
+      ],
+      "box_min": [
+        -3.0,
+        -2.0,
+        -2.0
+      ],
+      "joint": {
+        "damping": 3.0,
+        "max_degrees": [
+          75.0,
+          10.0,
+          15.0
+        ],
+        "min_degrees": [
+          -75.0,
+          -10.0,
+          -15.0
+        ],
+        "stiffness": 0.1
+      },
+      "name": "right_arm",
+      "offset": [
+        -5.0,
+        2.0,
+        0.0
+      ],
+      "part": "right_arm",
+      "rotation": [
+        0.0,
+        0.0,
+        0.0,
+        1.0
+      ]
+    },
+    {
+      "parent": "body",
+      "box_max": [
+        2.0,
+        12.0,
+        2.0
+      ],
+      "box_min": [
+        -2.0,
+        0.0,
+        -2.0
+      ],
+      "joint": {
+        "damping": 3.0,
+        "max_degrees": [
+          75.0,
+          10.0,
+          15.0
+        ],
+        "min_degrees": [
+          -75.0,
+          -10.0,
+          -15.0
+        ],
+        "stiffness": 0.1
+      },
+      "name": "left_leg",
+      "offset": [
+        2.0,
+        12.0,
+        0.0
+      ],
+      "part": "left_leg",
+      "rotation": [
+        0.0,
+        0.0,
+        0.0,
+        1.0
+      ]
+    },
+    {
+      "parent": "body",
+      "box_max": [
+        3.0,
+        10.0,
+        2.0
+      ],
+      "box_min": [
+        -1.0,
+        -2.0,
+        -2.0
+      ],
+      "joint": {
+        "damping": 3.0,
+        "max_degrees": [
+          75.0,
+          10.0,
+          15.0
+        ],
+        "min_degrees": [
+          -75.0,
+          -10.0,
+          -15.0
+        ],
+        "stiffness": 0.1
+      },
+      "name": "left_arm",
+      "offset": [
+        5.0,
+        2.0,
+        0.0
+      ],
+      "part": "left_arm",
+      "rotation": [
+        0.0,
+        0.0,
+        0.0,
+        1.0
+      ]
+    },
+    {
+      "parent": "body",
+      "box_max": [
+        2.0,
+        12.0,
+        2.0
+      ],
+      "box_min": [
+        -2.0,
+        0.0,
+        -2.0
+      ],
+      "joint": {
+        "damping": 3.0,
+        "max_degrees": [
+          75.0,
+          10.0,
+          15.0
+        ],
+        "min_degrees": [
+          -75.0,
+          -10.0,
+          -15.0
+        ],
+        "stiffness": 0.1
+      },
+      "name": "right_leg",
+      "offset": [
+        -2.0,
+        12.0,
+        0.0
+      ],
+      "part": "right_leg",
+      "rotation": [
+        0.0,
+        0.0,
+        0.0,
+        1.0
+      ]
+    }
+  ],
+  "entity": "minecraft:zombie_villager",
+  "model": "minecraft:zombie_villager",
+  "passes": [
+    {
+      "texture": "minecraft:textures/entity/zombie_villager/type/{villager_type}.png"
+    },
+    {
+      "texture": "minecraft:textures/entity/zombie_villager/profession/{profession}.png",
+      "unless": "no_profession"
+    },
+    {
+      "texture": "minecraft:textures/entity/zombie_villager/profession_level/{level}.png",
+      "unless": "no_level"
+    }
+  ],
+  "rot_time": 6000,
+  "texture": "minecraft:textures/entity/zombie_villager/zombie_villager.png",
+  "weight": 0.578125
+}

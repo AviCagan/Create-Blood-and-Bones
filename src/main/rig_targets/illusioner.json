@@ -1,0 +1,25 @@
+{
+  "entity": "minecraft:illusioner",
+  "model": "minecraft:illusioner",
+  "texture": "minecraft:textures/entity/illager/illusioner.png",
+  "rot_time": 20000,
+  "torso": "body",
+  "hidden": [
+    "arms",
+    "head/hat"
+  ],
+  "merge": [
+    "head/nose"
+  ],
+  "butchery": {
+    "part_extras": {
+      "body": [
+        {
+          "item": "minecraft:bow",
+          "count": 0.25,
+          "kind": "other"
+        }
+      ]
+    }
+  }
+}

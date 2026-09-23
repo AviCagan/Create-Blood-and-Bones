@@ -1,0 +1,31 @@
+{
+  "entity": "minecraft:drowned",
+  "model": "minecraft:drowned",
+  "texture": "minecraft:textures/entity/zombie/drowned.png",
+  "passes": [
+    {
+      "layer": "outer",
+      "texture": "minecraft:textures/entity/zombie/drowned_outer_layer.png"
+    }
+  ],
+  "rot_time": 6000,
+  "torso": "body",
+  "attach": {
+    "hat": "head"
+  },
+  "butchery": {
+    "meat": "minecraft:rotten_flesh",
+    "hide": "none",
+    "offal_per_weight": 0.5,
+    "fat_per_weight": 0.0,
+    "part_extras": {
+      "body": [
+        {
+          "item": "minecraft:copper_ingot",
+          "count": 0.2,
+          "kind": "other"
+        }
+      ]
+    }
+  }
+}

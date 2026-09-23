@@ -718,6 +718,86 @@ public class BBGameTests {
         animalTest(helper, EntityType.ENDERMAN, 6);
     }
 
+    @GameTest(template = "empty", timeoutTicks = 200)
+    public static void villagerCarcassAssembles(GameTestHelper helper) {
+        animalTest(helper, EntityType.VILLAGER, 5);
+    }
+
+    @GameTest(template = "empty", timeoutTicks = 200)
+    public static void wanderingTraderCarcassAssembles(GameTestHelper helper) {
+        animalTest(helper, EntityType.WANDERING_TRADER, 5);
+    }
+
+    @GameTest(template = "empty", timeoutTicks = 200)
+    public static void witchCarcassAssembles(GameTestHelper helper) {
+        animalTest(helper, EntityType.WITCH, 5);
+    }
+
+    @GameTest(template = "empty", timeoutTicks = 200)
+    public static void zombieVillagerCarcassAssembles(GameTestHelper helper) {
+        animalTest(helper, EntityType.ZOMBIE_VILLAGER, 6);
+    }
+
+    @GameTest(template = "empty", timeoutTicks = 200)
+    public static void pillagerCarcassAssembles(GameTestHelper helper) {
+        animalTest(helper, EntityType.PILLAGER, 6);
+    }
+
+    @GameTest(template = "empty", timeoutTicks = 200)
+    public static void vindicatorCarcassAssembles(GameTestHelper helper) {
+        animalTest(helper, EntityType.VINDICATOR, 6);
+    }
+
+    @GameTest(template = "empty", timeoutTicks = 200)
+    public static void evokerCarcassAssembles(GameTestHelper helper) {
+        animalTest(helper, EntityType.EVOKER, 6);
+    }
+
+    @GameTest(template = "empty", timeoutTicks = 200)
+    public static void illusionerCarcassAssembles(GameTestHelper helper) {
+        animalTest(helper, EntityType.ILLUSIONER, 6);
+    }
+
+    @GameTest(template = "empty", timeoutTicks = 200)
+    public static void piglinCarcassAssembles(GameTestHelper helper) {
+        animalTest(helper, EntityType.PIGLIN, 6);
+    }
+
+    @GameTest(template = "empty", timeoutTicks = 200)
+    public static void zombifiedPiglinCarcassAssembles(GameTestHelper helper) {
+        animalTest(helper, EntityType.ZOMBIFIED_PIGLIN, 6);
+    }
+
+    @GameTest(template = "empty", timeoutTicks = 200)
+    public static void piglinBruteCarcassAssembles(GameTestHelper helper) {
+        animalTest(helper, EntityType.PIGLIN_BRUTE, 6);
+    }
+
+    @GameTest(template = "empty", timeoutTicks = 200)
+    public static void drownedCarcassAssembles(GameTestHelper helper) {
+        animalTest(helper, EntityType.DROWNED, 6);
+    }
+
+    /** A desert farmer of trade level 3 wears the desert clothes, the farmer's apron and a gold badge. */
+    @GameTest(template = "empty", timeoutTicks = 100)
+    public static void villagerKeepsItsClothes(GameTestHelper helper) {
+        net.minecraft.world.entity.npc.Villager villager = helper.spawn(EntityType.VILLAGER, new BlockPos(5, 2, 5));
+        villager.setVillagerData(new net.minecraft.world.entity.npc.VillagerData(net.minecraft.world.entity.npc.VillagerType.DESERT,
+                net.minecraft.world.entity.npc.VillagerProfession.FARMER, 3));
+        CarcassSavedData.Carcass carcass = CarcassAssembler.assemble(villager, null);
+        villager.discard();
+        if (carcass == null) {
+            helper.fail("Carcass assembly returned false");
+        }
+        java.util.List<String> coats = carcass.look.passes().stream().map(c -> c.texture().getPath()).toList();
+        java.util.List<String> expected = java.util.List.of("textures/entity/villager/type/desert.png",
+                "textures/entity/villager/profession/farmer.png", "textures/entity/villager/profession_level/gold.png");
+        if (!coats.equals(expected)) {
+            helper.fail("Expected coats " + expected + ", got " + coats);
+        }
+        helper.succeed();
+    }
+
     /** A white llama and a brown panda keep their colours on the carcass. */
     @GameTest(template = "empty", timeoutTicks = 100)
     public static void llamaAndPandaKeepTheirColours(GameTestHelper helper) {

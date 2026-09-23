@@ -1,0 +1,29 @@
+{
+  "entity": "minecraft:zombie_villager",
+  "model": "minecraft:zombie_villager",
+  "texture": "minecraft:textures/entity/zombie_villager/zombie_villager.png",
+  "passes": [
+    {
+      "texture": "minecraft:textures/entity/zombie_villager/type/{villager_type}.png"
+    },
+    {
+      "texture": "minecraft:textures/entity/zombie_villager/profession/{profession}.png",
+      "unless": "no_profession"
+    },
+    {
+      "texture": "minecraft:textures/entity/zombie_villager/profession_level/{level}.png",
+      "unless": "no_level"
+    }
+  ],
+  "rot_time": 6000,
+  "torso": "body",
+  "attach": {
+    "hat": "head"
+  },
+  "butchery": {
+    "meat": "minecraft:rotten_flesh",
+    "hide": "none",
+    "offal_per_weight": 0.5,
+    "fat_per_weight": 0.0
+  }
+}

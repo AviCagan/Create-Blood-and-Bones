@@ -1,0 +1,34 @@
+{
+  "entity": "minecraft:piglin_brute",
+  "model": "minecraft:piglin_brute",
+  "texture": "minecraft:textures/entity/piglin/piglin_brute.png",
+  "rot_time": 20000,
+  "torso": "body",
+  "hidden": [
+    "cloak",
+    "ear"
+  ],
+  "merge": [
+    "head/right_ear",
+    "head/left_ear"
+  ],
+  "attach": {
+    "jacket": "body",
+    "left_sleeve": "left_arm",
+    "right_sleeve": "right_arm",
+    "left_pants": "left_leg",
+    "right_pants": "right_leg"
+  },
+  "butchery": {
+    "meat": "minecraft:porkchop",
+    "part_extras": {
+      "body": [
+        {
+          "item": "minecraft:gold_nugget",
+          "count": 2.0,
+          "kind": "other"
+        }
+      ]
+    }
+  }
+}

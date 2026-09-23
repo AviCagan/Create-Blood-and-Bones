@@ -1,0 +1,86 @@
+{
+  "entity": "minecraft:zombified_piglin",
+  "parts": {
+    "body": [
+      {
+        "count": 0.75,
+        "item": "minecraft:rotten_flesh",
+        "kind": "meat"
+      },
+      {
+        "count": 0.5,
+        "item": "minecraft:bone",
+        "kind": "bone"
+      },
+      {
+        "count": 0.22,
+        "item": "bloodandbones:offal",
+        "kind": "offal"
+      },
+      {
+        "count": 1.5,
+        "item": "minecraft:gold_nugget"
+      }
+    ],
+    "head": [
+      {
+        "count": 1.25,
+        "item": "minecraft:rotten_flesh",
+        "kind": "meat"
+      },
+      {
+        "count": 0.5,
+        "item": "minecraft:bone",
+        "kind": "bone"
+      }
+    ],
+    "left_arm": [
+      {
+        "count": 0.38,
+        "item": "minecraft:rotten_flesh",
+        "kind": "meat"
+      },
+      {
+        "count": 0.5,
+        "item": "minecraft:bone",
+        "kind": "bone"
+      }
+    ],
+    "left_leg": [
+      {
+        "count": 0.38,
+        "item": "minecraft:rotten_flesh",
+        "kind": "meat"
+      },
+      {
+        "count": 0.5,
+        "item": "minecraft:bone",
+        "kind": "bone"
+      }
+    ],
+    "right_arm": [
+      {
+        "count": 0.38,
+        "item": "minecraft:rotten_flesh",
+        "kind": "meat"
+      },
+      {
+        "count": 0.5,
+        "item": "minecraft:bone",
+        "kind": "bone"
+      }
+    ],
+    "right_leg": [
+      {
+        "count": 0.38,
+        "item": "minecraft:rotten_flesh",
+        "kind": "meat"
+      },
+      {
+        "count": 0.5,
+        "item": "minecraft:bone",
+        "kind": "bone"
+      }
+    ]
+  }
+}

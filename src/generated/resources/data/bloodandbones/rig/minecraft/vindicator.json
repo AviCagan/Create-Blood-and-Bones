@@ -1,0 +1,238 @@
+{
+  "bones": [
+    {
+      "box_max": [
+        4.0,
+        20.0,
+        3.0
+      ],
+      "box_min": [
+        -4.0,
+        0.0,
+        -3.0
+      ],
+      "name": "body",
+      "offset": [
+        0.0,
+        0.0,
+        0.0
+      ],
+      "part": "body",
+      "rotation": [
+        0.0,
+        0.0,
+        0.0,
+        1.0
+      ]
+    },
+    {
+      "parent": "body",
+      "box_max": [
+        4.0,
+        0.0,
+        4.0
+      ],
+      "box_min": [
+        -4.0,
+        -10.0,
+        -4.0
+      ],
+      "hide": [
+        "hat"
+      ],
+      "joint": {
+        "contacts": true,
+        "damping": 4.0,
+        "max_degrees": [
+          25.0,
+          30.0,
+          6.0
+        ],
+        "min_degrees": [
+          -15.0,
+          -30.0,
+          -6.0
+        ],
+        "stiffness": 2.0
+      },
+      "name": "head",
+      "offset": [
+        0.0,
+        0.0,
+        0.0
+      ],
+      "part": "head",
+      "rotation": [
+        0.0,
+        0.0,
+        0.0,
+        1.0
+      ]
+    },
+    {
+      "parent": "body",
+      "box_max": [
+        2.0,
+        12.0,
+        2.0
+      ],
+      "box_min": [
+        -2.0,
+        0.0,
+        -2.0
+      ],
+      "joint": {
+        "damping": 3.0,
+        "max_degrees": [
+          75.0,
+          10.0,
+          15.0
+        ],
+        "min_degrees": [
+          -75.0,
+          -10.0,
+          -15.0
+        ],
+        "stiffness": 0.1
+      },
+      "name": "left_leg",
+      "offset": [
+        2.0,
+        12.0,
+        0.0
+      ],
+      "part": "left_leg",
+      "rotation": [
+        0.0,
+        0.0,
+        0.0,
+        1.0
+      ]
+    },
+    {
+      "parent": "body",
+      "box_max": [
+        1.0,
+        10.0,
+        2.0
+      ],
+      "box_min": [
+        -3.0,
+        -2.0,
+        -2.0
+      ],
+      "joint": {
+        "damping": 3.0,
+        "max_degrees": [
+          75.0,
+          10.0,
+          15.0
+        ],
+        "min_degrees": [
+          -75.0,
+          -10.0,
+          -15.0
+        ],
+        "stiffness": 0.1
+      },
+      "name": "right_arm",
+      "offset": [
+        -5.0,
+        2.0,
+        0.0
+      ],
+      "part": "right_arm",
+      "rotation": [
+        0.0,
+        0.0,
+        0.0,
+        1.0
+      ]
+    },
+    {
+      "parent": "body",
+      "box_max": [
+        2.0,
+        12.0,
+        2.0
+      ],
+      "box_min": [
+        -2.0,
+        0.0,
+        -2.0
+      ],
+      "joint": {
+        "damping": 3.0,
+        "max_degrees": [
+          75.0,
+          10.0,
+          15.0
+        ],
+        "min_degrees": [
+          -75.0,
+          -10.0,
+          -15.0
+        ],
+        "stiffness": 0.1
+      },
+      "name": "right_leg",
+      "offset": [
+        -2.0,
+        12.0,
+        0.0
+      ],
+      "part": "right_leg",
+      "rotation": [
+        0.0,
+        0.0,
+        0.0,
+        1.0
+      ]
+    },
+    {
+      "parent": "body",
+      "box_max": [
+        3.0,
+        10.0,
+        2.0
+      ],
+      "box_min": [
+        -1.0,
+        -2.0,
+        -2.0
+      ],
+      "joint": {
+        "damping": 3.0,
+        "max_degrees": [
+          75.0,
+          10.0,
+          15.0
+        ],
+        "min_degrees": [
+          -75.0,
+          -10.0,
+          -15.0
+        ],
+        "stiffness": 0.1
+      },
+      "name": "left_arm",
+      "offset": [
+        5.0,
+        2.0,
+        0.0
+      ],
+      "part": "left_arm",
+      "rotation": [
+        0.0,
+        0.0,
+        0.0,
+        1.0
+      ]
+    }
+  ],
+  "entity": "minecraft:vindicator",
+  "model": "minecraft:vindicator",
+  "rot_time": 20000,
+  "texture": "minecraft:textures/entity/illager/vindicator.png",
+  "weight": 0.578125
+}

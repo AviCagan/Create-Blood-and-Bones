@@ -1,0 +1,103 @@
+{
+  "entity": "minecraft:witch",
+  "hide": [
+    {
+      "count": 1.27,
+      "item": "bloodandbones:raw_hide",
+      "kind": "hide"
+    }
+  ],
+  "parts": {
+    "arms": [
+      {
+        "count": 0.25,
+        "item": "bloodandbones:raw_meat",
+        "kind": "meat"
+      },
+      {
+        "count": 0.5,
+        "item": "minecraft:bone",
+        "kind": "bone"
+      }
+    ],
+    "body": [
+      {
+        "count": 1.13,
+        "item": "bloodandbones:raw_meat",
+        "kind": "meat"
+      },
+      {
+        "count": 0.5,
+        "item": "minecraft:bone",
+        "kind": "bone"
+      },
+      {
+        "count": 0.84,
+        "item": "bloodandbones:offal",
+        "kind": "offal"
+      },
+      {
+        "count": 0.42,
+        "item": "bloodandbones:animal_fat",
+        "kind": "fat"
+      },
+      {
+        "item": "minecraft:glowstone_dust",
+        "kind": "offal"
+      },
+      {
+        "item": "minecraft:redstone",
+        "kind": "offal"
+      },
+      {
+        "item": "minecraft:sugar",
+        "kind": "offal"
+      },
+      {
+        "count": 0.5,
+        "item": "minecraft:glass_bottle"
+      }
+    ],
+    "head": [
+      {
+        "count": 1.25,
+        "item": "bloodandbones:raw_meat",
+        "kind": "meat"
+      },
+      {
+        "count": 0.5,
+        "item": "minecraft:bone",
+        "kind": "bone"
+      },
+      {
+        "count": 0.5,
+        "item": "minecraft:spider_eye",
+        "kind": "offal"
+      }
+    ],
+    "left_leg": [
+      {
+        "count": 0.38,
+        "item": "bloodandbones:raw_meat",
+        "kind": "meat"
+      },
+      {
+        "count": 0.5,
+        "item": "minecraft:bone",
+        "kind": "bone"
+      }
+    ],
+    "right_leg": [
+      {
+        "count": 0.38,
+        "item": "bloodandbones:raw_meat",
+        "kind": "meat"
+      },
+      {
+        "count": 0.5,
+        "item": "minecraft:bone",
+        "kind": "bone"
+      }
+    ]
+  }
+}

@@ -1,0 +1,25 @@
+{
+  "entity": "minecraft:vindicator",
+  "model": "minecraft:vindicator",
+  "texture": "minecraft:textures/entity/illager/vindicator.png",
+  "rot_time": 20000,
+  "torso": "body",
+  "hidden": [
+    "arms",
+    "head/hat"
+  ],
+  "merge": [
+    "head/nose"
+  ],
+  "butchery": {
+    "part_extras": {
+      "body": [
+        {
+          "item": "minecraft:emerald",
+          "count": 0.5,
+          "kind": "other"
+        }
+      ]
+    }
+  }
+}

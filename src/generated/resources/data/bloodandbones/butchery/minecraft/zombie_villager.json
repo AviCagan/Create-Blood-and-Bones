@@ -1,0 +1,82 @@
+{
+  "entity": "minecraft:zombie_villager",
+  "parts": {
+    "body": [
+      {
+        "count": 1.88,
+        "item": "minecraft:rotten_flesh",
+        "kind": "meat"
+      },
+      {
+        "count": 0.7,
+        "item": "minecraft:bone",
+        "kind": "bone"
+      },
+      {
+        "count": 0.29,
+        "item": "bloodandbones:offal",
+        "kind": "offal"
+      }
+    ],
+    "head": [
+      {
+        "count": 1.25,
+        "item": "minecraft:rotten_flesh",
+        "kind": "meat"
+      },
+      {
+        "count": 0.5,
+        "item": "minecraft:bone",
+        "kind": "bone"
+      }
+    ],
+    "left_arm": [
+      {
+        "count": 0.38,
+        "item": "minecraft:rotten_flesh",
+        "kind": "meat"
+      },
+      {
+        "count": 0.5,
+        "item": "minecraft:bone",
+        "kind": "bone"
+      }
+    ],
+    "left_leg": [
+      {
+        "count": 0.38,
+        "item": "minecraft:rotten_flesh",
+        "kind": "meat"
+      },
+      {
+        "count": 0.5,
+        "item": "minecraft:bone",
+        "kind": "bone"
+      }
+    ],
+    "right_arm": [
+      {
+        "count": 0.38,
+        "item": "minecraft:rotten_flesh",
+        "kind": "meat"
+      },
+      {
+        "count": 0.5,
+        "item": "minecraft:bone",
+        "kind": "bone"
+      }
+    ],
+    "right_leg": [
+      {
+        "count": 0.38,
+        "item": "minecraft:rotten_flesh",
+        "kind": "meat"
+      },
+      {
+        "count": 0.5,
+        "item": "minecraft:bone",
+        "kind": "bone"
+      }
+    ]
+  }
+}

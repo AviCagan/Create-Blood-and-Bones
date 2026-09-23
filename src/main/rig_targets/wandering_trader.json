@@ -1,0 +1,23 @@
+{
+  "entity": "minecraft:wandering_trader",
+  "model": "minecraft:wandering_trader",
+  "texture": "minecraft:textures/entity/wandering_trader.png",
+  "rot_time": 20000,
+  "torso": "body",
+  "merge": [
+    "head/nose",
+    "head/hat",
+    "body/jacket"
+  ],
+  "butchery": {
+    "part_extras": {
+      "body": [
+        {
+          "item": "minecraft:emerald",
+          "count": 1.0,
+          "kind": "other"
+        }
+      ]
+    }
+  }
+}
