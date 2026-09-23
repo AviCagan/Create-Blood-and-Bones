@@ -32,11 +32,28 @@ public final class CarcassThuds {
     }
 
     /** Something solid close under a point: a stop there is a landing, not a snag in mid-air. */
-    private static boolean nearGround(ServerLevel level, Vector3d at) {
+    private static boolean nearGround(ServerLevel level, ServerSubLevelContainer container, Vector3d at) {
         for (double down = 0.2; down <= 1.2; down += 0.5) {
             net.minecraft.core.BlockPos below = net.minecraft.core.BlockPos.containing(at.x, at.y - down, at.z);
             if (!level.getBlockState(below).getCollisionShape(level, below).isEmpty()) {
                 return true;
+            }
+        }
+        // a ship's deck: the same points in each nearby sub-level's own blocks (another carcass's limbs don't count)
+        dev.ryanhcode.sable.companion.math.BoundingBox3d reach =
+                new dev.ryanhcode.sable.companion.math.BoundingBox3d(at.x - 0.1, at.y - 1.2, at.z - 0.1, at.x + 0.1, at.y, at.z + 0.1);
+        Vector3d local = new Vector3d();
+        for (dev.ryanhcode.sable.sublevel.SubLevel ship : container.queryIntersecting(reach)) {
+            if (ship.isRemoved()) {
+                continue;
+            }
+            for (double down = 0.2; down <= 1.2; down += 0.5) {
+                ship.logicalPose().transformPositionInverse(new Vector3d(at.x, at.y - down, at.z), local);
+                net.minecraft.core.BlockPos below = net.minecraft.core.BlockPos.containing(local.x, local.y, local.z);
+                net.minecraft.world.level.block.state.BlockState state = level.getBlockState(below);
+                if (!(state.getBlock() instanceof CarcassPartBlock) && !state.getCollisionShape(level, below).isEmpty()) {
+                    return true;
+                }
             }
         }
         return false;
@@ -74,7 +91,7 @@ public final class CarcassThuds {
                 continue;
             }
             Vector3d at = body.logicalPose().position();
-            if (!nearGround(level, at)) {
+            if (!nearGround(level, container, at)) {
                 continue;
             }
             Bone bone = rig == null ? null : rig.bone(entry.getKey()).orElse(null);

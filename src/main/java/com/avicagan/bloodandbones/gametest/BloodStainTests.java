@@ -200,6 +200,49 @@ public class BloodStainTests {
         });
     }
 
+    /**
+     * A carcass landing on a ship's deck thuds too. The deck is a sub-level on four corner posts, so there is
+     * nothing but air in the world under the middle, where the cow comes down.
+     */
+    @GameTest(template = "empty", timeoutTicks = 160)
+    public static void carcassThudsOnADeck(GameTestHelper helper) {
+        ServerLevel level = helper.getLevel();
+        java.util.List<BlockPos> deck = new java.util.ArrayList<>();
+        for (int x = 2; x <= 6; x++) {
+            for (int z = 2; z <= 6; z++) {
+                BlockPos at = helper.absolutePos(new BlockPos(x, 3, z));
+                level.setBlock(at, Blocks.STONE.defaultBlockState(), net.minecraft.world.level.block.Block.UPDATE_ALL);
+                deck.add(at);
+            }
+        }
+        for (int[] corner : new int[][]{{2, 2}, {2, 6}, {6, 2}, {6, 6}}) {
+            helper.setBlock(new BlockPos(corner[0], 2, corner[1]), Blocks.STONE);
+        }
+        ServerSubLevel ship = dev.ryanhcode.sable.api.SubLevelAssemblyHelper.assembleBlocks(level, deck.get(12), deck,
+                new dev.ryanhcode.sable.companion.math.BoundingBox3i(deck.get(0), deck.get(deck.size() - 1)));
+        if (ship == null || ship.isRemoved()) {
+            helper.fail("The deck did not become a sub-level");
+            return;
+        }
+        if (!helper.getBlockState(new BlockPos(4, 3, 4)).isAir()) {
+            helper.fail("The deck's blocks should have moved into the sub-level");
+            return;
+        }
+        Cow cow = helper.spawn(EntityType.COW, new BlockPos(4, 6, 4));
+        CarcassSavedData.Carcass falling = CarcassAssembler.assemble(cow, null);
+        cow.discard();
+        if (falling == null) {
+            helper.fail("Carcass assembly returned null");
+            return;
+        }
+        helper.runAfterDelay(100, () -> {
+            if (falling.thuds == 0) {
+                helper.fail("A carcass landing on a ship's deck should thud");
+            }
+            helper.succeed();
+        });
+    }
+
     /** A nether mob's wound stains the ground with Soul Blood, a cow's with blood. */
     @GameTest(template = "empty", timeoutTicks = 40)
     public static void hoglinStainsSoulBlood(GameTestHelper helper) {

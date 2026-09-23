@@ -696,9 +696,12 @@ dragon and tropical fish, small slimes, and final art.
   has slowed by 3 or more has landed. Slime and honey fall sounds, louder with speed and the bone's box
   volume, deeper for bigger bones; 6 or more splats blood (a burst and a stain) for a mob that bleeds.
   One thud per carcass per 8 ticks; none while it is dragged, hung or on a trolley, and only with
-  something solid within about a block under the bone. Skeletons and the wither clatter (bone block) instead. Only world blocks count as ground, so a
-  landing on a ship's deck or another carcass is silent. `droppedCarcassThuds` drops a cow four blocks and checks a cow built
-  on the ground stays quiet.
+  something solid within about a block under the bone. Skeletons and the wither clatter (bone block) instead. The ground can be world blocks or a
+  ship's deck: the same points are looked up in each sub-level near the bone
+  (`SubLevelContainer.queryIntersecting`, then the point in its own plot), skipping carcass limbs, so a
+  landing on another carcass stays silent. `droppedCarcassThuds` drops a cow four blocks and checks a cow
+  built on the ground stays quiet; `carcassThudsOnADeck` drops one onto a sub-level deck on corner posts,
+  with only air in the world under it.
 
 ### 13.7b Bloodless mode as built
 
