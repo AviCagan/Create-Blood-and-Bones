@@ -126,6 +126,21 @@ public class BabyTests {
         babyTest(helper, EntityType.VILLAGER);
     }
 
+    @GameTest(template = "empty", timeoutTicks = 200)
+    public static void babyCamelCarcass(GameTestHelper helper) {
+        babyTest(helper, EntityType.CAMEL);
+    }
+
+    @GameTest(template = "empty", timeoutTicks = 200)
+    public static void babyTurtleCarcass(GameTestHelper helper) {
+        babyTest(helper, EntityType.TURTLE);
+    }
+
+    @GameTest(template = "empty", timeoutTicks = 200)
+    public static void babySnifferCarcass(GameTestHelper helper) {
+        babyTest(helper, EntityType.SNIFFER);
+    }
+
     /** A kind with no baby shape (a horse foal) still dies as it always did. */
     @GameTest(template = "empty", timeoutTicks = 20)
     public static void foalDiesAsUsual(GameTestHelper helper) {

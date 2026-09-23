@@ -227,6 +227,11 @@ public final class DevShowcase {
             carcass(level, mobs[i], o.offset((int) Math.round(-9 + i * 2.6), 0, 5));
         }
 
+        // babies in front of the row: a calf, a piglet and a baby villager
+        carcass(level, EntityType.COW, o.offset(-4, 0, 2), true, true);
+        carcass(level, EntityType.PIG, o.offset(-1, 0, 2), true, true);
+        carcass(level, EntityType.VILLAGER, o.offset(3, 0, 2), true, true);
+
         // off to the side: the biggest and the smallest odd ones
         witherShown = carcass(level, EntityType.WITHER, o.offset(-17, 0, 6));
         carcass(level, EntityType.PUFFERFISH, o.offset(-20, 0, 4));
@@ -371,9 +376,14 @@ public final class DevShowcase {
     }
 
     private static CarcassSavedData.Carcass carcass(ServerLevel level, EntityType<?> type, BlockPos at, boolean shove) {
+        return carcass(level, type, at, shove, false);
+    }
+
+    private static CarcassSavedData.Carcass carcass(ServerLevel level, EntityType<?> type, BlockPos at, boolean shove, boolean baby) {
         if (!(type.create(level) instanceof Mob mob)) {
             return null;
         }
+        mob.setBaby(baby);
         mob.moveTo(at.getX() + 0.5, at.getY(), at.getZ() + 0.5, 0, 0);
         mob.setYHeadRot(0);
         mob.yBodyRot = 0;

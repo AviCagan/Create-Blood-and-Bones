@@ -630,8 +630,10 @@ pipes; chain clearance = hanging length + 1 block.
   the list (`CarcassPartBlockEntity.cuts`), refreshed with the look and freshness and at once after a
   sever or butcher.
 - `WoundCaps` draws a wound texture (raw meat, a bone ring) over the face of the lost limb's physics box
-  nearest its pivot: just outside it on the limb, just inside the space it left on the stump, placed in
-  the parent's frame from the two bones' rest offsets and rotations. Not drawn in bloodless mode.
+  that faces its parent (outward normal most toward the parent's pivot; the face nearest the limb's own
+  pivot if the two coincide): just outside it on the limb, just inside the space it left on the stump,
+  placed in the parent's frame from the two bones' rest offsets and rotations. Not drawn in bloodless
+  mode, nor for bloodless mobs (dry cut ends). A fresh cut over a Bleeding Rack pours into it.
 - A fresh cut pours for 15 seconds wherever the body lies (`CarcassBleeding.gush`): drops and a stain
   every couple of seconds under the stump (the child's pivot in the parent's frame, from the joint's own
   maths) and under the piece's cut end; the stump drains 1% of the body's blood per step. Carried pieces
@@ -717,8 +719,9 @@ pipes; chain clearance = hanging length + 1 block.
   scale (`Bone.scale`), weight from the new boxes. `RigManager.forCarcass` / `forEntity(id, baby)` /
   `clientRig(id, baby)` hand it out (cached, cleared on reload). The record, the root cells and carried
   pieces remember `baby`; butchery gives as much less as the baby weighs less.
-- 20 kinds so far (cow, mooshroom, pig, sheep, chicken, wolf, goat, polar bear, panda, ocelot, cat, fox,
-  hoglin, zoglin, zombie, husk, drowned, zombie villager, piglin, villager). Others with babies die as
+- 27 kinds so far (cow, mooshroom, pig, sheep, chicken, wolf, goat, polar bear, panda, ocelot, cat, fox,
+  hoglin, zoglin, zombie, husk, drowned, zombie villager, piglin, villager, turtle, and, shrunk whole
+  around the feet, axolotl, bee, sniffer, armadillo, camel, strider). Others with babies die as
   usual until they get a shape; horses and llamas draw their babies with their own rules.
 - Assembly lifts a body so no box starts below the feet: the ghast's tentacles hang below its feet in
   the model and used to start stuck through the ground. Its tentacle collision boxes are short (drawn

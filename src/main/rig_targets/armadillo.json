@@ -31,5 +31,16 @@
     "hide": "minecraft:armadillo_scute",
     "hide_per_weight": 12.0,
     "meat_per_block": 20.0
+  },
+  "baby": {
+    "head": [],
+    "head_scale": 0.6,
+    "head_offset": [
+      0,
+      16.02,
+      0
+    ],
+    "body_scale": 0.6,
+    "body_offset": 16.02
   }
 }
