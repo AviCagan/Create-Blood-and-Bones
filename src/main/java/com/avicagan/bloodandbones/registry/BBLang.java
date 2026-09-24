@@ -282,16 +282,22 @@ public class BBLang {
                 "When Used on a Brass Minion", "Swaps into it, and the empty comes back. On the Surgery Table it wakes a sheathed brass frame.");
         item("brass_sheathing",
                 "Brass plates for a frame of _skinned_ carcass pieces on the Surgery Table.",
-                "When R-Clicked on a Brass Frame", "Sheathes it. Then a _Soul Canister_ wakes it as a brass minion: slower to drain, immune to poison and drowning, but it never heals itself.");
+                "When R-Clicked on a Brass Frame", "Sheathes it. Then a _Soul Canister_ wakes it as a brass minion: slower to drain, immune to poison and drowning, but it never heals itself (a _brass sheet_ mends it, from a hand or a _Deployer_). Its maker crouch-R-Clicks it with a _Filter_ (or any item) to limit what it picks up, reaps or goes for; a crouching _Wrench_ takes the filter out.");
         block("charging_cradle",
                 "Where _brass minions_ get fresh soul blood. Needs a shaft from below turning at _16 RPM_ or more; the faster, the quicker the swap.",
                 "When Stocked", "Swaps a full _Soul Canister_ into any brass minion beside it that is running low or has powered down, and keeps the empty. With _brass sheets_ it mends one docked there.",
-                "With Funnels and Hoppers", "Full canisters and sheets go in, empties come out. By hand: R-Click with a canister or sheet to put it in, with an empty hand to take the empties.");
+                "With Funnels, Hoppers and Arms", "Full canisters and sheets go in, empties come out, by funnel, hopper, chute or _Mechanical Arm_. By hand: R-Click with a canister or sheet to put it in, with an empty hand to take the empties.");
         BloodAndBones.REGISTRATE.addRawLang("bloodandbones.minion.needs_sheathing", "A brass frame needs its Brass Sheathing before it can wake");
         BloodAndBones.REGISTRATE.addRawLang("bloodandbones.minion.wake_brass", "Brass wakes on a Soul Canister");
         BloodAndBones.REGISTRATE.addRawLang("bloodandbones.minion.wake_flesh", "Flesh wakes on a bucket of blood");
         bloodless("bloodandbones.minion.wake_flesh", "An essence construct wakes on a bucket of essence");
         BloodAndBones.REGISTRATE.addRawLang("bloodandbones.minion.sheathe_skinned", "Brass Sheathing goes over a frame of skinned pieces");
+        // a brass minion's filter slot
+        BloodAndBones.REGISTRATE.addRawLang("bloodandbones.minion.filter_set", "Filter: %s");
+        BloodAndBones.REGISTRATE.addRawLang("bloodandbones.minion.filter_taken", "Filter taken out");
+        BloodAndBones.REGISTRATE.addRawLang("bloodandbones.minion.filter_none", "It has no filter");
+        BloodAndBones.REGISTRATE.addRawLang("bloodandbones.minion.filter_brass_only", "Only brass minions take a filter");
+        BloodAndBones.REGISTRATE.addRawLang("bloodandbones.minion.status_filtered", "%s, blood %s of %s mB, filter: %s");
         item("dormant_minion",
                 "A minion that ran out of blood, _folded up_ to carry. It keeps everything: what it is built of, its job, what it carries.",
                 "When Used on a Block", "Sets it down there, still out of blood. Give it _blood_ to wake it.");

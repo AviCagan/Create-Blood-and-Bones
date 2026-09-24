@@ -54,7 +54,8 @@ public final class MinionGoals {
         });
         targets.addGoal(2, new DefendMaker(minion));
         targets.addGoal(3, new NearestAttackableTargetGoal<>(minion, Mob.class, 10, true, false,
-                target -> target instanceof Enemy && !(target instanceof MinionEntity) && target.distanceToSqr(Vec3.atCenterOf(minion.home())) < 256.0) {
+                target -> target instanceof Enemy && !(target instanceof MinionEntity) && target.distanceToSqr(Vec3.atCenterOf(minion.home())) < 256.0
+                        && minion.filter().allows(minion.level(), target)) {
             @Override
             public boolean canUse() {
                 return minion.hasJob("guard") && minion.stats().fights() && super.canUse();
@@ -605,7 +606,7 @@ public final class MinionGoals {
         }
     }
 
-    /** A courier or farmer picks up what lies about near home, while it has room. */
+    /** A courier or farmer picks up what lies about near home, while it has room (and, brass, what its filter passes). */
     public static class Collect extends Goal {
         private final MinionEntity minion;
         @Nullable
@@ -640,7 +641,8 @@ public final class MinionGoals {
                 forgotAt = minion.tickCount;
             }
             List<ItemEntity> items = minion.level().getEntitiesOfClass(ItemEntity.class, new AABB(minion.home()).inflate(MinionEntity.RANGE),
-                    e -> e.isAlive() && !e.hasPickUpDelay() && !unreachable.contains(e.getId()) && room(e.getItem()));
+                    e -> e.isAlive() && !e.hasPickUpDelay() && !unreachable.contains(e.getId()) && room(e.getItem())
+                            && minion.filter().allows(minion.level(), e.getItem()));
             item = items.stream().min(Comparator.comparingDouble(minion::distanceToSqr)).orElse(null);
             return item != null;
         }
@@ -784,7 +786,7 @@ public final class MinionGoals {
         }
     }
 
-    /** A farmer harvests ripe crops near home and plants them again from what it reaped. */
+    /** A farmer harvests ripe crops near home (brass: those its filter passes) and plants them again from what it reaped. */
     public static class Farm extends Goal {
         private final MinionEntity minion;
         @Nullable
@@ -807,7 +809,8 @@ public final class MinionGoals {
             }
             for (BlockPos pos : BlockPos.betweenClosed(home.offset(-8, -2, -8), home.offset(8, 2, 8))) {
                 BlockState state = minion.level().getBlockState(pos);
-                if (state.getBlock() instanceof CropBlock crop && crop.isMaxAge(state) && !unreachable.contains(minion, pos)) {
+                if (state.getBlock() instanceof CropBlock crop && crop.isMaxAge(state) && !unreachable.contains(minion, pos)
+                        && minion.filter().allowsCrop(minion.level(), state, pos)) {
                     double d = minion.distanceToSqr(Vec3.atCenterOf(pos));
                     if (d < bestDistance) {
                         bestDistance = d;

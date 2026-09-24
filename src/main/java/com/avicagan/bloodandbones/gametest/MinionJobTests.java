@@ -160,7 +160,7 @@ public class MinionJobTests {
     }
 
     /** Glass walls round the pen, three high, so a minion keeps to its own test and sees none of the others. */
-    private static void pen(GameTestHelper helper) {
+    static void pen(GameTestHelper helper) {
         for (int i = 0; i <= 10; i++) {
             for (int y = 2; y <= 4; y++) {
                 helper.setBlock(new BlockPos(i, y, 0), Blocks.GLASS);
@@ -750,5 +750,69 @@ public class MinionJobTests {
         Vec3 home = Vec3.atBottomCenterOf(minion.home());
         helper.succeedWhen(() -> helper.assertTrue(cow.position().distanceTo(home) < MinionJobs.HERD_HOME,
                 "the cow is still " + cow.position().distanceTo(home) + " from home (the herder at " + minion.position() + ")"));
+    }
+
+    // ---- a brass minion's filter (slice 8)
+
+    /** The armed zombie body under this head, in brass (a zombie has no hide, so its pieces do for either kind). */
+    private static MinionBuild brassArmed(PieceRef head) {
+        MinionBuild flesh = armed(head);
+        return new MinionBuild(true, flesh.torso(), flesh.parts(), true);
+    }
+
+    /** Its maker crouches and uses this on it: into its filter slot. */
+    private static void setFilter(MinionEntity minion, Player maker, ItemStack filter) {
+        maker.setShiftKeyDown(true);
+        maker.setItemInHand(InteractionHand.MAIN_HAND, filter);
+        minion.interact(maker, InteractionHand.MAIN_HAND);
+        maker.setShiftKeyDown(false);
+    }
+
+    /** A brass hunter with a Filter holding a pig's spawn egg hunts the pig and spares the cow standing nearer. */
+    @GameTest(template = "empty", timeoutTicks = 400)
+    public static void filteredHunterSparesTheCow(GameTestHelper helper) {
+        pen(helper);
+        Maker maker = new Maker(helper, new BlockPos(1, 2, 1));
+        MinionEntity minion = minion(helper, new BlockPos(2, 2, 2), brassArmed(ref("wolf", "head/real_head")), maker);
+        if (!minion.cybernetic() || !minion.hasJob("hunter")) {
+            helper.fail("A brass wolf's head should make a hunter: " + minion.job());
+            return;
+        }
+        setFilter(minion, maker, BrassMinionTests.listFilter(Items.PIG_SPAWN_EGG));
+        Cow cow = helper.spawn(EntityType.COW, new BlockPos(4, 2, 5));
+        net.minecraft.world.entity.animal.Pig pig = helper.spawn(EntityType.PIG, new BlockPos(8, 2, 8));
+        helper.succeedWhen(() -> {
+            helper.assertTrue(!pig.isAlive(), "the pig is still alive (" + pig.getHealth() + ")");
+            helper.assertTrue(cow.isAlive() && cow.getHealth() >= cow.getMaxHealth(), "it should leave the cow alone");
+        });
+    }
+
+    /**
+     * A brass scavenger with nothing in its hand fetches whatever its filter passes: an Attribute Filter for food brings
+     * its maker the apples, and the stick lying nearer stays where it is.
+     */
+    @GameTest(template = "empty", timeoutTicks = 400)
+    public static void filteredScavengerFetchesWhatItPasses(GameTestHelper helper) {
+        pen(helper);
+        ServerLevel level = helper.getLevel();
+        Maker maker = new Maker(helper, new BlockPos(2, 2, 2));
+        MinionEntity minion = minion(helper, new BlockPos(3, 2, 3), brassArmed(ref("chicken", "head")), maker);
+        if (!minion.setJob(job("scavenger"))) {
+            helper.fail("A chicken's head should offer scavenger: " + MinionJobs.offered(minion));
+            return;
+        }
+        setFilter(minion, maker, BrassMinionTests.attributeFilter(new com.simibubi.create.content.logistics.item.filter.attribute.ItemAttribute.ItemAttributeEntry(
+                com.simibubi.create.content.logistics.item.filter.attribute.AllItemAttributeTypes.CONSUMABLE.createAttribute(), false)));
+        BlockPos near = helper.absolutePos(new BlockPos(6, 2, 3));
+        ItemEntity stick = new ItemEntity(level, near.getX() + 0.5, near.getY() + 0.2, near.getZ() + 0.5, new ItemStack(Items.STICK));
+        level.addFreshEntity(stick);
+        BlockPos far = helper.absolutePos(new BlockPos(8, 2, 8));
+        level.addFreshEntity(new ItemEntity(level, far.getX() + 0.5, far.getY() + 0.2, far.getZ() + 0.5, new ItemStack(Items.APPLE, 3)));
+        helper.succeedWhen(() -> {
+            helper.assertTrue(maker.getInventory().countItem(Items.APPLE) == 3, "its maker has " + maker.getInventory().countItem(Items.APPLE)
+                    + " of the 3 apples (it carries " + count(minion, Items.APPLE) + ")");
+            helper.assertTrue(stick.isAlive() && count(minion, Items.STICK) == 0 && maker.getInventory().countItem(Items.STICK) == 0,
+                    "it should leave the stick alone");
+        });
     }
 }

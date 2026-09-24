@@ -92,6 +92,7 @@ public class BloodAndBones {
         com.avicagan.bloodandbones.parts.effect.UpkeepEffects.registerContent(modEventBus);
         com.avicagan.bloodandbones.registry.BBAttributes.register(modEventBus);
         com.avicagan.bloodandbones.minion.MinionSerializers.register(modEventBus);
+        com.avicagan.bloodandbones.minion.CradleArmPoint.register(modEventBus);
         // a changed trait strength or list of switched-off effect types reaches every creature's traits
         modEventBus.addListener((net.neoforged.fml.event.config.ModConfigEvent.Reloading event) -> {
             if (event.getConfig().getSpec() == com.avicagan.bloodandbones.config.BBServerConfig.SPEC) {

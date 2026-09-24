@@ -304,6 +304,10 @@ public final class MinionAssembly {
         if (minion.module() != null) {
             maker.getInventory().placeItemBackInInventory(new ItemStack(BBItems.module(minion.module())));
         }
+        ItemStack filter = minion.filter().takeOut();
+        if (!filter.isEmpty()) {
+            maker.getInventory().placeItemBackInInventory(filter);
+        }
         // and what it held (a bow, a rod, a Cleaver)
         for (net.minecraft.world.entity.EquipmentSlot slot : new net.minecraft.world.entity.EquipmentSlot[]{
                 net.minecraft.world.entity.EquipmentSlot.MAINHAND, net.minecraft.world.entity.EquipmentSlot.OFFHAND}) {

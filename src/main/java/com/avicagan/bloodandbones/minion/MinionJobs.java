@@ -94,7 +94,8 @@ import java.util.UUID;
  * the job stands only while its needs are met: a sentry needs a ranged attack in hand, a fisher a rod (or a fish's
  * mouth), a butcher a Cleaver or Flensing Knife. What it holds its maker hands it: one of whatever they use on it
  * (the old one comes back), and an empty hand takes it back. What a scavenger fetches and what a herder leads by is
- * whatever it holds.
+ * whatever it holds. A brass minion's filter ({@link MinionFilter}) narrows what the scavenger, herder, hunter and
+ * sentry take.
  * <p>
  * None of them breaks or places a block. The sapper waits for the detonate effect of the Motion group.
  */
@@ -163,7 +164,7 @@ public final class MinionJobs {
         goals.addGoal(5, new Scavenge(minion));
         // a sentry takes as its target a monster it can see within its reach; a hunter the prey near home
         targets.addGoal(3, new NearestAttackableTargetGoal<>(minion, Mob.class, 10, true, false,
-                target -> target instanceof Enemy && !(target instanceof MinionEntity)) {
+                target -> target instanceof Enemy && !(target instanceof MinionEntity) && minion.filter().allows(minion.level(), target)) {
             @Override
             public boolean canUse() {
                 return minion.hasJob("sentry") && !minion.stats().mindless() && minion.hasRangedAttack() && super.canUse();
@@ -527,7 +528,8 @@ public final class MinionJobs {
 
     /**
      * A scavenger fetches, as an allay does, items like the one in its hand from as far as 32 blocks (as far as its head
-     * sees), and brings them to its maker. With its maker away it keeps what it found until they are back.
+     * sees), and brings them to its maker. With its maker away it keeps what it found until they are back. Brass with a
+     * filter fetches only what the filter passes too, and with its hand empty, whatever the filter passes.
      */
     static class Scavenge extends Goal {
         private final MinionEntity minion;
@@ -551,7 +553,7 @@ public final class MinionJobs {
 
         @Override
         public boolean canUse() {
-            if (!minion.hasJob("scavenger") || minion.getMainHandItem().isEmpty() || minion.getRandom().nextInt(10) != 0) {
+            if (!minion.hasJob("scavenger") || minion.getMainHandItem().isEmpty() && minion.filter().isEmpty() || minion.getRandom().nextInt(10) != 0) {
                 return false;
             }
             if (minion.tickCount - forgotAt > 600) {
@@ -581,20 +583,25 @@ public final class MinionJobs {
             bringing = false;
         }
 
-        /** The nearest item like the one it holds that it has room for. */
+        /** The nearest item it fetches that it has room for. */
         @Nullable
         private ItemEntity find() {
-            ItemStack held = minion.getMainHandItem();
             double range = Math.min(FETCH_RANGE, minion.stats().sight());
             List<ItemEntity> near = minion.level().getEntitiesOfClass(ItemEntity.class, minion.getBoundingBox().inflate(range),
-                    e -> e.isAlive() && !e.hasPickUpDelay() && !unreachable.contains(e.getId()) && alike(held, e.getItem()) && minion.canCarry(e.getItem())
+                    e -> e.isAlive() && !e.hasPickUpDelay() && !unreachable.contains(e.getId()) && fetches(e.getItem()) && minion.canCarry(e.getItem())
                             && e.distanceToSqr(minion) < range * range);
             return near.stream().min(Comparator.comparingDouble(minion::distanceToSqr)).orElse(null);
         }
 
+        /** Like what it holds (anything, if it holds nothing), and passed by its filter. */
+        private boolean fetches(ItemStack stack) {
+            ItemStack held = minion.getMainHandItem();
+            return !stack.isEmpty() && (held.isEmpty() ? !minion.filter().isEmpty() : alike(held, stack)) && minion.filter().allows(minion.level(), stack);
+        }
+
         private boolean carrying() {
             for (int i = 0; i < minion.slots(); i++) {
-                if (alike(minion.getMainHandItem(), minion.inventory.getItem(i))) {
+                if (fetches(minion.inventory.getItem(i))) {
                     return true;
                 }
             }
@@ -634,7 +641,7 @@ public final class MinionJobs {
                 // into its maker's hands
                 for (int i = 0; i < minion.inventory.getContainerSize(); i++) {
                     ItemStack stack = minion.inventory.getItem(i);
-                    if (alike(minion.getMainHandItem(), stack)) {
+                    if (fetches(stack)) {
                         maker.getInventory().placeItemBackInInventory(minion.inventory.removeItemNoUpdate(i));
                     }
                 }
@@ -658,7 +665,7 @@ public final class MinionJobs {
     /**
      * A herder keeps the animals that would follow what it holds (wheat for cattle and sheep, seeds for chickens) within
      * 8 of home: it walks out to a stray and leads it back, the stray walking after it, as an animal follows a player
-     * with its food. Holding nothing, it herds nothing.
+     * with its food. Holding nothing, it herds nothing. Brass with a filter herds only the animals it passes.
      */
     static class Herd extends Goal {
         private static final int GIVE_UP = 600;
@@ -694,7 +701,8 @@ public final class MinionJobs {
             Vec3 home = Vec3.atBottomCenterOf(minion.home());
             double range = Math.min(HERD_SEARCH, minion.stats().sight());
             stray = minion.level().getEntitiesOfClass(Animal.class, new AABB(minion.home()).inflate(HERD_SEARCH),
-                            a -> a.isAlive() && a.isFood(held) && !a.isLeashed() && !a.isVehicle() && !a.isPassenger() && !lost.contains(a.getId())
+                            a -> a.isAlive() && a.isFood(held) && minion.filter().allows(minion.level(), a) && !a.isLeashed() && !a.isVehicle()
+                                    && !a.isPassenger() && !lost.contains(a.getId())
                                     && a.distanceToSqr(home) > HERD_HOME * HERD_HOME && a.distanceToSqr(minion) < range * range)
                     .stream().min(Comparator.comparingDouble(a -> a.distanceToSqr(home))).orElse(null);
             return stray != null;
@@ -1145,7 +1153,7 @@ public final class MinionJobs {
      * A hunter takes for its target grown prey near home that it can see (its head's data names the prey, "prey": ids
      * and #tags, else #bloodandbones:hunter_prey), never a named, tamed, leashed or ridden animal; its bite or arms kill
      * it. With a Meat Hook in hand the kill leaves an intact carcass, exactly as a player's Meat Hook kill does
-     * (CarcassEvents#onDeath reads the killer's hand).
+     * (CarcassEvents#onDeath reads the killer's hand). Brass with a filter hunts only the prey it passes.
      */
     static class Hunt extends NearestAttackableTargetGoal<Animal> {
         private final MinionEntity minion;
@@ -1174,7 +1182,8 @@ public final class MinionJobs {
 
         private boolean hunts(Animal animal) {
             if (animal.isBaby() || animal instanceof TamableAnimal tame && tame.isTame() || animal.isLeashed() || animal.hasCustomName()
-                    || animal.isVehicle() || animal.isPassenger() || animal.distanceToSqr(Vec3.atBottomCenterOf(minion.home())) > HUNT_RANGE * HUNT_RANGE) {
+                    || animal.isVehicle() || animal.isPassenger() || animal.distanceToSqr(Vec3.atBottomCenterOf(minion.home())) > HUNT_RANGE * HUNT_RANGE
+                    || !minion.filter().allows(minion.level(), animal)) {
                 return false;
             }
             if (prey.isEmpty()) {
