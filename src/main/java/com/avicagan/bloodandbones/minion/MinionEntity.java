@@ -4,6 +4,7 @@ import com.avicagan.bloodandbones.BloodAndBones;
 import com.avicagan.bloodandbones.config.BBServerConfig;
 import com.avicagan.bloodandbones.parts.PartsData;
 import com.avicagan.bloodandbones.registry.BBFluids;
+import com.avicagan.bloodandbones.registry.BBItems;
 import net.minecraft.core.BlockPos;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.nbt.NbtOps;
@@ -65,6 +66,13 @@ public class MinionEntity extends PathfinderMob implements net.minecraft.world.e
     public static final float FIGHTING = 40.0F;
     /** Below this share of its blood it goes to drink. */
     public static final float HUNGRY = 0.25F;
+    /** Brass runs on a quarter of what flesh does. */
+    public static final float BRASS_DRAIN = 0.25F;
+    /** Flesh mends: a heart every five seconds, for 5 mB of blood each, while it has more than a tenth left. */
+    public static final int REGEN_TICKS = 100;
+    public static final float REGEN_COST = 5.0F;
+    /** What a brass sheet mends on a brass minion. */
+    public static final float SHEET_REPAIR = 10.0F;
 
     @Nullable
     private UUID maker;
@@ -483,7 +491,11 @@ public class MinionEntity extends PathfinderMob implements net.minecraft.world.e
         } else if (working) {
             rate = WORKING;
         } else if (getDeltaMovement().horizontalDistanceSqr() > 1.0E-4 || !getNavigation().isDone()) {
-            rate = MOVING;
+            // keeping itself up in the air costs twice as much
+            rate = stats().flies() ? MOVING * 2.0F : MOVING;
+        }
+        if (cybernetic()) {
+            rate *= BRASS_DRAIN;
         }
         owed += rate * BBServerConfig.powerDrain() / 1200.0F;
         if (owed >= 0.05F) {
@@ -522,7 +534,37 @@ public class MinionEntity extends PathfinderMob implements net.minecraft.world.e
             }
         } else {
             drain();
+            // flesh mends itself on its blood; brass never does (a brass sheet, or a cradle stocked with them)
+            if (!cybernetic() && tickCount % REGEN_TICKS == 0 && getHealth() < getMaxHealth() && powerShare() > 0.1F) {
+                heal(1.0F);
+                entityData.set(POWER, Math.max(0.0F, power() - REGEN_COST));
+            }
         }
+    }
+
+    /** A soul canister's worth into a brass minion (a cradle or its maker's hand): wakes it if it was down. */
+    public boolean charge() {
+        if (!cybernetic() || stats().reservoir() - power() < MinionStats.CANISTER / 2.0F) {
+            return false;
+        }
+        feed(MinionStats.CANISTER);
+        return true;
+    }
+
+    /** Brass is not poisoned, withered or starved. */
+    @Override
+    public boolean canBeAffected(net.minecraft.world.effect.MobEffectInstance effect) {
+        if (cybernetic() && (effect.is(net.minecraft.world.effect.MobEffects.POISON) || effect.is(net.minecraft.world.effect.MobEffects.WITHER)
+                || effect.is(net.minecraft.world.effect.MobEffects.HUNGER))) {
+            return false;
+        }
+        return super.canBeAffected(effect);
+    }
+
+    /** Nor does it drown. */
+    @Override
+    public boolean canBreatheUnderwater() {
+        return cybernetic() || super.canBreatheUnderwater();
     }
 
     /** Powered down, nothing runs: no goals, no moving, no looking round. */
@@ -613,7 +655,23 @@ public class MinionEntity extends PathfinderMob implements net.minecraft.world.e
     @Override
     protected InteractionResult mobInteract(Player player, InteractionHand hand) {
         ItemStack held = player.getItemInHand(hand);
-        if (held.is(BBFluids.BLOOD.getBucket().get())) {
+        if (cybernetic() && held.is(BBItems.SOUL_CANISTER.get())) {
+            // a canister by hand: in goes the soul blood, back comes the empty
+            if (!level().isClientSide && charge() && !player.hasInfiniteMaterials()) {
+                held.shrink(1);
+                player.getInventory().placeItemBackInInventory(new ItemStack(BBItems.EMPTY_SOUL_CANISTER.get()));
+            }
+            return InteractionResult.sidedSuccess(level().isClientSide);
+        }
+        if (cybernetic() && held.is(com.simibubi.create.AllItems.BRASS_SHEET.get()) && getHealth() < getMaxHealth()) {
+            if (!level().isClientSide) {
+                heal(SHEET_REPAIR);
+                held.consume(1, player);
+                level().playSound(null, blockPosition(), SoundEvents.ANVIL_USE, SoundSource.NEUTRAL, 0.5F, 1.6F);
+            }
+            return InteractionResult.sidedSuccess(level().isClientSide);
+        }
+        if (!cybernetic() && held.is(BBFluids.BLOOD.getBucket().get())) {
             if (!level().isClientSide && feed(1000.0F) > 0.0F && !player.hasInfiniteMaterials()) {
                 held.shrink(1);
                 player.getInventory().placeItemBackInInventory(new ItemStack(Items.BUCKET));

@@ -67,7 +67,27 @@ public final class MinionAssembly {
         if (table.build().isPresent() || piece == null || !isFrame(stack, level)) {
             return false;
         }
-        table.setBuild(MinionBuild.of(PieceRef.of(piece)));
+        table.setBuild(MinionBuild.frame(PieceRef.of(piece)));
+        return true;
+    }
+
+    /**
+     * Brass Sheathing over the frame: a brass frame (a skinned torso, skinned pieces) can then be woken with soul blood;
+     * a frame of hideless pieces only (a skeleton's bones) can go either way, and becomes brass.
+     *
+     * @return whether it went on
+     */
+    public static boolean sheathe(SurgeryTableBlockEntity table) {
+        Optional<MinionBuild> maybe = table.build();
+        if (maybe.isEmpty() || maybe.get().sheathed()) {
+            return false;
+        }
+        MinionBuild build = maybe.get();
+        boolean hideless = hideless(build.torso().entity()) && build.parts().stream().allMatch(f -> hideless(f.piece().entity()));
+        if (!build.cybernetic() && !hideless) {
+            return false;
+        }
+        table.setBuild(build.sheathe());
         return true;
     }
 
@@ -86,7 +106,7 @@ public final class MinionAssembly {
             return false;
         }
         PieceRef torso = ref(carcass, carcass.rootBone);
-        MinionBuild build = MinionBuild.of(torso);
+        MinionBuild build = MinionBuild.frame(torso);
         for (CarcassJoints.Spec joint : carcass.joints) {
             if (joint.parent().equals(carcass.rootBone) && CarcassButchery.isAttached(carcass, joint.child())) {
                 build = build.with(joint.child(), ref(carcass, joint.child()));
@@ -249,7 +269,16 @@ public final class MinionAssembly {
     @Nullable
     public static MinionEntity wake(ServerLevel level, Player maker, SurgeryTableBlockEntity table, ItemStack bucket) {
         Optional<MinionBuild> build = table.build();
-        if (build.isEmpty() || !bucket.is(BBFluids.BLOOD.getBucket().get())) {
+        if (build.isEmpty()) {
+            return null;
+        }
+        // flesh wakes on a bucket of blood; brass, sheathed, on a soul canister
+        boolean brass = build.get().cybernetic();
+        if (brass ? !bucket.is(BBItems.SOUL_CANISTER.get()) : !bucket.is(BBFluids.BLOOD.getBucket().get())) {
+            return null;
+        }
+        if (brass && !build.get().sheathed()) {
+            maker.displayClientMessage(Component.translatable("bloodandbones.minion.needs_sheathing").withStyle(ChatFormatting.RED), true);
             return null;
         }
         if (build.get().torso().freshness() < FRESH_ENOUGH) {
@@ -266,7 +295,7 @@ public final class MinionAssembly {
             return null;
         }
         minion.moveTo(pos.getX() + 0.5, pos.getY() + 1.0, pos.getZ() + 0.5, maker.getYRot() + 180.0F, 0.0F);
-        minion.setup(maker, pos, build.get(), 1000.0F);
+        minion.setup(maker, pos, build.get(), brass ? MinionStats.CANISTER : 1000.0F);
         table.clearBuild();
         level.addFreshEntity(minion);
         MinionCensus.count(level.getServer(), maker.getUUID(), minion.getUUID());
@@ -275,7 +304,7 @@ public final class MinionAssembly {
         }
         if (!maker.hasInfiniteMaterials()) {
             bucket.shrink(1);
-            maker.getInventory().placeItemBackInInventory(new ItemStack(Items.BUCKET));
+            maker.getInventory().placeItemBackInInventory(new ItemStack(brass ? BBItems.EMPTY_SOUL_CANISTER.get() : Items.BUCKET));
         }
         level.playSound(null, pos, SoundEvents.ZOMBIE_VILLAGER_CURE, SoundSource.BLOCKS, 0.8F, 0.6F);
         com.avicagan.bloodandbones.carcass.Blood.burst(level, new Vector3d(pos.getX() + 0.5, pos.getY() + 1.2, pos.getZ() + 0.5), 16, false);

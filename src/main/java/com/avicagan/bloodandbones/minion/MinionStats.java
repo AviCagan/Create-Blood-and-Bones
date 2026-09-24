@@ -39,6 +39,8 @@ public record MinionStats(float health, float knockbackResistance, int slots, in
 
     /** Modes a torso moves by on its own, legs or none: they win over legs, which dangle. */
     public static final List<String> SELF_FLYING = List.of("fly", "hover", "float");
+    /** mB of soul blood in a Soul Canister. */
+    public static final int CANISTER = 1000;
     /** A rideable minion's torso must be at least this share of its whole bulk, so a rabbit on horse legs cannot carry you. */
     public static final float RIDER_SHARE = 0.4F;
 
@@ -60,7 +62,8 @@ public record MinionStats(float health, float knockbackResistance, int slots, in
         float weight = rig.map(Rig::weight).orElse(1.0F);
         float volume = rig.flatMap(r -> r.bone(torso.bone())).map(MinionStats::volume).orElse(0.2F);
         int slots = Math.max(3, Math.min(27, Math.round(18.0F * volume)));
-        int reservoir = Math.round(250.0F + 1000.0F * volume);
+        // flesh holds blood by its size; brass holds one soul canister, two in a big torso (over a block)
+        int reservoir = build.cybernetic() ? (volume > 1.0F ? 2 : 1) * CANISTER : Math.round(250.0F + 1000.0F * volume);
 
         List<MinionBody.Socket> sockets = MinionBody.sockets(store, torso);
         long ownLegs = sockets.stream().filter(s -> s.slot() == PartSlot.LEG).count();
