@@ -1,0 +1,21 @@
+{
+  "type": "bloodandbones:carcass_armour",
+  "category": "equipment",
+  "piece": "chestplate",
+  "pattern": [
+    "S S",
+    "TTT",
+    "TTT"
+  ],
+  "key": {
+    "S": {
+      "item": "bloodandbones:scraps"
+    },
+    "T": {
+      "item": "bloodandbones:scraps"
+    }
+  },
+  "result": {
+    "id": "bloodandbones:carcass_chestplate"
+  }
+}

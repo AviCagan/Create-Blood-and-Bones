@@ -17,9 +17,10 @@ public class ScrapsItem extends Item {
         super(properties);
     }
 
+    /** The mob and part scraps came from, or null for anything else (raw hides and organs are stamped with a source too). */
     @Nullable
     public static Source source(ItemStack stack) {
-        return stack.get(BBDataComponents.SOURCE.get());
+        return stack.getItem() instanceof ScrapsItem ? stack.get(BBDataComponents.SOURCE.get()) : null;
     }
 
     public static ItemStack of(Source source, int count) {

@@ -1527,7 +1527,90 @@ saved the old way falls apart on its first tick, dropping what it carried, the b
   Vent (drifts down slowly). The Grappling Spool needs aiming, so it is not for minions. `brassMinionTakesAModule`,
   `magnetCoilDrawsItems`, `couplerDrivesAShaft`, `lensSeesThroughWalls`.
 
-### 15.7 Review of the minion work (fixed)
+### 15.7 Slice 4 as built: armour B (verified in tests and on screen)
+
+The brief's Armor section: "Mangler scraps give the base material; hide modifies an existing piece rather than being a
+piece of its own; an organ adds one special ability; all three can come from different mobs, freely combined; a full
+set from a single mob grants an extra bonus with a drawback; tiers that upgrade the base armor points using blood
+iron, blood diamonds and soul blood netherite".
+
+- **The chestplate** (`recipe/carcass_chestplate.json`, the slice 1 `CarcassArmourRecipe`): six torso scraps of one
+  mob under two shoulder cells, arm scraps of any one mob or, where the body's mob has no arm bones (a cow), its own
+  torso scraps. Its traits are the torso's and the shoulder mob's arm traits. `craftCowChestplate` (a cow chestplate
+  with chicken-wing shoulders: a rabbit has no arm bones to give shoulders, and another mob's torso scraps do not
+  stand in).
+- **Stamped ingredients** (spec 7.1): the heart, lungs, stomach and eyes `Surgery.harvest` cuts out of a carcass piece
+  carry `bloodandbones:source` (mob, torso or head, baby) as well as their name ("Cow's Heart"). What a surgeon takes
+  out of a live mob on the Surgery Table (`Surgery.cutOut`) is named for its kind and stamped the same way, a limb with
+  its own part (arm, leg); a player's own parts are named for them and unstamped as before. A raw hide skinned off a
+  carcass (Flensing Knife or Deglover) is stamped and named for its mob ("Raw Cow Hide"). Hides mobs drop are
+  unstamped, so a data map says whose they are (`data_maps/item/hide_sources.json`, `parts/Hides`: leather a cow's,
+  rabbit hide a rabbit's, feathers a chicken's, the scutes, phantom membrane, shulker shell). A hide skinned off a mob
+  the map gives to another mob is stamped with the skinned one and keeps its own name (a parrot's feathers are the
+  parrot's); one the map already gives to its mob (a chicken's feathers) is left unstamped, so it stacks. A raw hide
+  with no stamp is a plain covering from no mob. `ScrapsItem.source` reads only scraps, so a stamped hide or organ is
+  never taken for scraps. `skinnedParrotFeathersAreTheParrots`, `organFromALiveMobFits`.
+- **Fitting** (`parts/CarcassArmourFittingRecipe`, `bloodandbones:carcass_armour_fitting`, one special shapeless
+  recipe): a piece and one kind of thing. Hides: one for a helmet or boots, two for leggings, three for a chestplate,
+  all of one mob but of any items its hide comes as (two leather and a raw cow hide); they add the mob's `hide` traits.
+  An organ: eyes in a helmet, a heart or lungs in a chestplate, a stomach in a chestplate or leggings; it adds the mob's
+  `organ_traits` for that organ (the data has none yet, so an organ fits and adds nothing until the per-mob data comes).
+  The next tier's item. A hide or organ replaces the one before, which comes back through `getRemainingItems` into the
+  slot the piece lay in, stamped and named as it was (hides of a second item go where new hides lay). The piece keeps
+  its wear, enchantments and strapped tank, and its durability is baked again. `CarcassArmour` has `hide` {mob or none,
+  the item of each hide} and `organ` {organ, mob, baby}. A hide or organ of another mob breaks a full set (a plain
+  covering does not). `hideReplacesAndReturns`, `hidesOfOneMobMayMix`, `fittingReturnsOldOrgan`, `mixedHideBreaksSet`.
+- **Mending and wear**: pieces are `setNoRepair`, since vanilla's `repair_item` crafting recipe and the grindstone's
+  merge make a blank piece of the larger durability and would lose what both are made of, tiers and tanks included:
+  two pieces never combine there. An anvil still mends a piece with scraps of its own mob (`isValidRepairItem`), and
+  still merges two pieces as vanilla does, the second used up whole. A strapped tank never breaks with its chestplate:
+  `damageItem` takes it off as the chestplate gives way and hands it to the wearer (or drops it at their feet;
+  with no wearer, the chestplate holds at its last point), and `onDestroyed` lets it fall free when the chestplate
+  burns or is blown up as an item, as a bundle's contents do. The chestplate itself is fire resistant only at tier 3,
+  so a soul netherite tank on a lower tier chestplate is left floating in the lava the chestplate burnt in.
+  `twoPiecesNeverCombine`, `onlyScrapsMendOnAnvil`, `brokenChestplateGivesTankBack`, `burntChestplateLetsTankFree`.
+- **Mechanical Crafters** (checked in `RecipeGridHandler` and `MechanicalCrafterBlockEntity`): they find crafting
+  recipes and call `assemble` as a grid does, but give back only what an item leaves by itself
+  (`getCraftingRemainingItem`), never a recipe's `getRemainingItems`. So when the input is a `MechanicalCraftingInput`
+  a fitting that would give something back, and taking a tank off, are refused and the crafters throw the items out
+  whole; first hides, first organs, tiers and strapping work. `mechanicalCraftersFitButNeverSwap`.
+- **Tiers** (`parts/ArmourTier`, `armour_tier/<id>.json`, loaded and sent to clients with the other parts files):
+  a Blood Steel Ingot (tier 1), a Blood Diamond (2, needs 1), a Soul Netherite Ingot (3, needs 2). Per piece: tier 1
+  +1/+2/+2/+1 armour, 0.5 toughness, durability x1.5; tier 2 +2/+3/+3/+2, 2, x2.5; tier 3 +2/+4/+3/+2, 3, 0.1
+  knockback resistance, x3.3 and `DataComponents.FIRE_RESISTANT`. Each replaces the last, added with the material's
+  in `ItemAttributeModifierEvent`; a hide plate set is 9, 15, 19 and 20 armour, 12 toughness at tier 3.
+  `tierNeedsPreviousTier`, `soulNetheriteIsFireResistant`.
+- **The Fluid Backtank strapped on** (spec 7.8; `backtank/BacktankStrapRecipe`, `bloodandbones:backtank_strap`):
+  a carcass chestplate and a backtank make the chestplate with `bloodandbones:strapped_tank` (the tier) and the tank's
+  fluid in `bloodandbones:fluid`. `FluidBacktankItem.wornBy` returns it, and `tier(stack)` and `capacity(stack)` read
+  either kind, so implants, the Vent Arm, the throttle and the Backtank Port work unchanged. A `FluidHandlerItemStack`
+  on the carcass chestplate, only while strapped, lets Spouts and Item Drains fill and empty it. Its chest armour and
+  toughness are the better of the chestplate's and the tank's. Crafted alone, the tank comes back with its fluid and
+  the chestplate stays in the grid. `FluidBacktankLayer` draws the tank a pixel further out, on the chestplate.
+  `spoutFillsStrappedTank` (through Create's `FillingBySpout` and `GenericItemEmptying`), `implantDrainsStrappedTank`
+  (a Flesh Arm on the strapped tank's blood), `unstrapReturnsTank`. A chestplate with no tank on has no fluid handler
+  at all.
+- **Words**: tooltip lines "Hide: Rabbit" (or "plain"), "Organ: Cow Heart", "Tier 1: Blood Steel Ingot", "Strapped
+  on: Iron Fluid Backtank" and its fluid; item descriptions; a JEI information page (JEI does not list special
+  recipes). Bloodless: plated armour of salvage, "Covering", "Raw Cow Covering", "Core: Cow Pump" (heart, lungs,
+  stomach, eye are pump, bellows, hopper, lens in armour's text, and so are the organ items, "Cow's Pump", and their
+  places on the surgery screen), "Fitting a Covering", "Installing a Core", essence steel and essence diamond tiers.
+  `fittingWordsHaveBloodlessWording` checks each of these keys has bloodless wording with none of the bloody words.
+- Traits are rebuilt on an equipment change only when what the piece is made of changes, not when it wears or its
+  strapped tank drains.
+- **Simplifications and what waits:**
+  - Of slice 4's list, the Organ Ability key, cooldowns and blood cost, the new triggers and effect types, and their
+    tests (`blazeCoreChestIgnoresFire`, `endermanHelmetIsEnderMask`, `creeperSacBlastSparesWearer`,
+    `fullZombieSetKinAndSunCursed`, `reductionFlooredAt20Percent`) are not built.
+  - Which piece takes which organ is in code (`ORGAN_PIECES`) until organ files with `armour_pieces` exist; the
+    gland item, `organ_sources` (rabbit's foot, ink sacs, spider eye) and `Surgery.harvest` reading organ lists by slot
+    are slice 3.
+  - Wool is in no data map and is not stamped, so it stacks with sheared wool and is no hide: a sheep's covering is
+    its raw hide.
+  - A strapped tank keeps its tier and fluid only; a name or enchantments on it are lost.
+  - Not drawn yet: a hide's tinted layer, a tier's trim, an organ's pip. The Deployer route waits for slice 10.
+
+### 15.8 Review of the minion work (fixed)
 
 - A minion could turn on its maker (a sweep of the sword made it the last attacker, and the hurt-by goal now runs
   for every job); `MinionEntity.canAttack` leaves out its maker and its maker's other minions. A pacifist (no arm

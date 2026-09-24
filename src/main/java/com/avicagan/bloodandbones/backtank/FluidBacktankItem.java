@@ -23,7 +23,9 @@ import java.util.function.Supplier;
 /**
  * A wearable tank for any fluid, in the chest slot, with the armour of its tier. Right-clicked on a block it
  * is set down as a Fluid Backtank block, fluid and all, for pipes to fill or empty; broken, it comes back.
- * Spouts fill it and Item Drains empty it as it is.
+ * Spouts fill it and Item Drains empty it as it is. It can also be strapped to the back of a carcass
+ * chestplate (docs/PARTS-AND-TRAITS.md section 7.8), which then carries its tier and its fluid and counts as
+ * the worn tank.
  */
 public class FluidBacktankItem extends ArmorItem {
     private final BacktankTier tier;
@@ -51,12 +53,70 @@ public class FluidBacktankItem extends ArmorItem {
         }
     }
 
-    /** The backtank worn in the chest slot, or empty. */
+    /** The tank worn in the chest slot, a backtank or a chestplate with one strapped on; or empty. */
     public static ItemStack wornBy(@Nullable Entity entity) {
-        if (entity instanceof LivingEntity living && living.getItemBySlot(EquipmentSlot.CHEST).getItem() instanceof FluidBacktankItem) {
+        if (entity instanceof LivingEntity living && tier(living.getItemBySlot(EquipmentSlot.CHEST)) != null) {
             return living.getItemBySlot(EquipmentSlot.CHEST);
         }
         return ItemStack.EMPTY;
+    }
+
+    /** The tank's tier: a backtank's own, or the one strapped to a chestplate; null if it is no tank. */
+    @Nullable
+    public static BacktankTier tier(ItemStack stack) {
+        return stack.getItem() instanceof FluidBacktankItem tank ? tank.tier() : stack.get(BBDataComponents.STRAPPED_TANK);
+    }
+
+    /** How much the tank holds, in millibuckets; 0 if it is no tank. */
+    public static int capacity(ItemStack stack) {
+        BacktankTier tier = tier(stack);
+        return tier == null ? 0 : tier.capacity();
+    }
+
+    /** A carcass chestplate with this backtank strapped to its back: its tier and fluid go onto a copy of the chestplate. */
+    public static ItemStack strap(ItemStack chestplate, ItemStack tank) {
+        ItemStack out = chestplate.copyWithCount(1);
+        out.set(BBDataComponents.STRAPPED_TANK, ((FluidBacktankItem) tank.getItem()).tier());
+        setFluid(out, fluid(tank));
+        return out;
+    }
+
+    /** The backtank strapped to this chestplate, with its fluid, as an item again. */
+    public static ItemStack unstrapped(ItemStack chestplate) {
+        BacktankTier tier = chestplate.get(BBDataComponents.STRAPPED_TANK);
+        if (tier == null) {
+            return ItemStack.EMPTY;
+        }
+        ItemStack tank = new ItemStack(com.avicagan.bloodandbones.registry.BBItems.backtank(tier));
+        setFluid(tank, fluid(chestplate));
+        return tank;
+    }
+
+    /** The chestplate with its backtank taken off (and the fluid with it). */
+    public static ItemStack withoutTank(ItemStack chestplate) {
+        ItemStack out = chestplate.copyWithCount(1);
+        takeOff(out);
+        return out;
+    }
+
+    /** Take the backtank off this chestplate where it is: the tank with its fluid, or empty if none was strapped on. */
+    public static ItemStack takeOff(ItemStack chestplate) {
+        ItemStack tank = unstrapped(chestplate);
+        chestplate.remove(BBDataComponents.STRAPPED_TANK);
+        chestplate.remove(BBDataComponents.FLUID);
+        return tank;
+    }
+
+    /** The tooltip line for what a tank holds. */
+    public static void describeFluid(ItemStack stack, List<Component> tooltip) {
+        FluidStack fluid = fluid(stack);
+        BacktankTier tier = tier(stack);
+        if (tier == null) {
+            return;
+        }
+        tooltip.add(fluid.isEmpty()
+                ? Component.translatable("bloodandbones.backtank.empty", tier.buckets()).withStyle(ChatFormatting.GRAY)
+                : Component.translatable("bloodandbones.backtank.holding", fluid.getHoverName(), fluid.getAmount(), tier.capacity()).withStyle(ChatFormatting.GRAY));
     }
 
     @Override
@@ -71,7 +131,7 @@ public class FluidBacktankItem extends ArmorItem {
 
     @Override
     public int getBarWidth(ItemStack stack) {
-        return Math.round(13.0F * Mth.clamp(fluid(stack).getAmount() / (float) tier.capacity(), 0.0F, 1.0F));
+        return Math.round(13.0F * Mth.clamp(fluid(stack).getAmount() / (float) capacity(stack), 0.0F, 1.0F));
     }
 
     @Override
@@ -81,9 +141,6 @@ public class FluidBacktankItem extends ArmorItem {
 
     @Override
     public void appendHoverText(ItemStack stack, TooltipContext context, List<Component> tooltip, TooltipFlag flag) {
-        FluidStack fluid = fluid(stack);
-        tooltip.add(fluid.isEmpty()
-                ? Component.translatable("bloodandbones.backtank.empty", tier.buckets()).withStyle(ChatFormatting.GRAY)
-                : Component.translatable("bloodandbones.backtank.holding", fluid.getHoverName(), fluid.getAmount(), tier.capacity()).withStyle(ChatFormatting.GRAY));
+        describeFluid(stack, tooltip);
     }
 }

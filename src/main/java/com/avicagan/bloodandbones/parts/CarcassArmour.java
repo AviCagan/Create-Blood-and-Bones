@@ -2,32 +2,81 @@ package com.avicagan.bloodandbones.parts;
 
 import com.mojang.serialization.Codec;
 import com.mojang.serialization.codecs.RecordCodecBuilder;
+import net.minecraft.core.registries.BuiltInRegistries;
 import net.minecraft.network.RegistryFriendlyByteBuf;
 import net.minecraft.network.codec.ByteBufCodecs;
 import net.minecraft.network.codec.StreamCodec;
 import net.minecraft.resources.ResourceLocation;
+import net.minecraft.world.item.Item;
 
 import java.util.List;
 import java.util.Optional;
 
 /**
  * What a piece of carcass armour is made of (docs/PARTS-AND-TRAITS.md section 7): its body's mob, the mob of
- * a chestplate's shoulders or a pair of leggings' hips if other, the hide fitted, the tier. The numbers are
- * looked up from these when worn.
+ * a chestplate's shoulders or a pair of leggings' hips if other, the hide and the organ fitted, the tier. The
+ * numbers are looked up from these when worn.
  */
 public record CarcassArmour(String piece, ResourceLocation body, boolean baby, Optional<ResourceLocation> shoulders,
-                            Optional<ResourceLocation> hips, Optional<ResourceLocation> hide, int tier) {
+                            Optional<ResourceLocation> hips, Optional<Hide> hide, Optional<Organ> organ, int tier) {
+    /**
+     * The hides fitted over the piece: the mob they came from (none for plain raw hides) and which item each was
+     * (two leather and a raw cow hide are all a cow's), to give them back as they went in when others replace them.
+     */
+    public record Hide(Optional<ResourceLocation> entity, List<Item> items) {
+        public static final Codec<Hide> CODEC = RecordCodecBuilder.create(i -> i.group(
+                ResourceLocation.CODEC.optionalFieldOf("entity").forGetter(Hide::entity),
+                BuiltInRegistries.ITEM.byNameCodec().listOf().fieldOf("items").forGetter(Hide::items)
+        ).apply(i, Hide::new));
+    }
+
+    /** An organ fitted into the piece: which organ (bloodandbones:heart...), and the mob it was cut out of. */
+    public record Organ(ResourceLocation organ, ResourceLocation entity, boolean baby) {
+        public static final Codec<Organ> CODEC = RecordCodecBuilder.create(i -> i.group(
+                ResourceLocation.CODEC.fieldOf("organ").forGetter(Organ::organ),
+                ResourceLocation.CODEC.fieldOf("entity").forGetter(Organ::entity),
+                Codec.BOOL.optionalFieldOf("baby", false).forGetter(Organ::baby)
+        ).apply(i, Organ::new));
+    }
+
     public static final Codec<CarcassArmour> CODEC = RecordCodecBuilder.create(i -> i.group(
             Codec.STRING.fieldOf("piece").forGetter(CarcassArmour::piece),
             ResourceLocation.CODEC.fieldOf("body").forGetter(CarcassArmour::body),
             Codec.BOOL.optionalFieldOf("baby", false).forGetter(CarcassArmour::baby),
             ResourceLocation.CODEC.optionalFieldOf("shoulders").forGetter(CarcassArmour::shoulders),
             ResourceLocation.CODEC.optionalFieldOf("hips").forGetter(CarcassArmour::hips),
-            ResourceLocation.CODEC.optionalFieldOf("hide").forGetter(CarcassArmour::hide),
+            Hide.CODEC.optionalFieldOf("hide").forGetter(CarcassArmour::hide),
+            Organ.CODEC.optionalFieldOf("organ").forGetter(CarcassArmour::organ),
             Codec.INT.optionalFieldOf("tier", 0).forGetter(CarcassArmour::tier)
     ).apply(i, CarcassArmour::new));
 
     public static final StreamCodec<RegistryFriendlyByteBuf, CarcassArmour> STREAM_CODEC = ByteBufCodecs.fromCodecWithRegistries(CODEC);
+
+    /** A new piece of one mob, nothing fitted. */
+    public static CarcassArmour of(String piece, ResourceLocation body, boolean baby) {
+        return new CarcassArmour(piece, body, baby, Optional.empty(), Optional.empty(), Optional.empty(), Optional.empty(), 0);
+    }
+
+    public CarcassArmour withHide(Optional<Hide> hide) {
+        return new CarcassArmour(piece, body, baby, shoulders, hips, hide, organ, tier);
+    }
+
+    public CarcassArmour withOrgan(Optional<Organ> organ) {
+        return new CarcassArmour(piece, body, baby, shoulders, hips, hide, organ, tier);
+    }
+
+    public CarcassArmour withTier(int tier) {
+        return new CarcassArmour(piece, body, baby, shoulders, hips, hide, organ, tier);
+    }
+
+    /** How many hides of one mob cover this piece: one a helmet or boots, two leggings, three a chestplate. */
+    public int hidesNeeded() {
+        return switch (piece) {
+            case "chestplate" -> 3;
+            case "leggings" -> 2;
+            default -> 1;
+        };
+    }
 
     /** The slot of the body's mob whose traits this piece takes. */
     public String bodySlot() {
@@ -38,7 +87,7 @@ public record CarcassArmour(String piece, ResourceLocation body, boolean baby, O
         };
     }
 
-    /** The armour traits of this piece, for its mob and its extra parts, at their levels. */
+    /** The armour traits of this piece, for its mob and its extra parts, its hide and its organ, at their levels. */
     public List<TraitList.Resolved> traits(PartsData.Store store) {
         List<TraitList.Resolved> out = store.resolve(body, baby).armourTraits(bodySlot(), piece);
         if (shoulders.isPresent()) {
@@ -47,15 +96,22 @@ public record CarcassArmour(String piece, ResourceLocation body, boolean baby, O
         if (hips.isPresent()) {
             out = TraitList.union(out, store.resolve(hips.get(), false).armourTraits("tail", "hips"));
         }
-        if (hide.isPresent()) {
-            out = TraitList.union(out, store.resolve(hide.get(), false).hide());
+        if (hide.isPresent() && hide.get().entity().isPresent()) {
+            out = TraitList.union(out, store.resolve(hide.get().entity().get(), false).hide());
+        }
+        if (organ.isPresent()) {
+            // the organ's armour traits for its mob; a mob whose data names none gives nothing, but it still fits
+            ResolvedMob.Organ traits = store.resolve(organ.get().entity(), organ.get().baby()).organs().get(organ.get().organ());
+            if (traits != null) {
+                out = TraitList.union(out, traits.armour());
+            }
         }
         return out;
     }
 
-    /** Whether everything in it came from this one mob (for a full set). */
+    /** Whether everything in it came from this one mob (for a full set). A plain raw hide comes from no mob, so it does not count. */
     public boolean pure(ResourceLocation mob) {
         return body.equals(mob) && shoulders.map(mob::equals).orElse(true) && hips.map(mob::equals).orElse(true)
-                && hide.map(mob::equals).orElse(true);
+                && hide.flatMap(Hide::entity).map(mob::equals).orElse(true) && organ.map(o -> o.entity().equals(mob)).orElse(true);
     }
 }

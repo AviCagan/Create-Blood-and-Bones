@@ -19,7 +19,7 @@ public final class BBDataComponents {
     public static final DeferredHolder<DataComponentType<?>, DataComponentType<Long>> BLOODIED_AT = COMPONENTS.registerComponentType("bloodied_at",
             builder -> builder.persistent(com.mojang.serialization.Codec.LONG).networkSynchronized(ByteBufCodecs.VAR_LONG));
 
-    /** The fluid in a Fluid Backtank. */
+    /** The fluid in a Fluid Backtank, or in one strapped to a carcass chestplate. */
     public static final DeferredHolder<DataComponentType<?>, DataComponentType<net.neoforged.neoforge.fluids.SimpleFluidContent>> FLUID = COMPONENTS.registerComponentType("fluid",
             builder -> builder.persistent(net.neoforged.neoforge.fluids.SimpleFluidContent.CODEC).networkSynchronized(net.neoforged.neoforge.fluids.SimpleFluidContent.STREAM_CODEC));
 
@@ -36,13 +36,17 @@ public final class BBDataComponents {
             builder -> builder.persistent(com.avicagan.bloodandbones.cyber.Module.CODEC.listOf())
                     .networkSynchronized(com.avicagan.bloodandbones.cyber.Module.STREAM_CODEC.apply(ByteBufCodecs.list())));
 
-    /** Where an ingredient came from: the mob, the part, a baby or not (scraps, and later hides and organs). */
+    /** Where an ingredient came from: the mob, the part, a baby or not (scraps, raw hides, organs cut out of carcasses). */
     public static final DeferredHolder<DataComponentType<?>, DataComponentType<com.avicagan.bloodandbones.parts.Source>> SOURCE = COMPONENTS.registerComponentType("source",
             builder -> builder.persistent(com.avicagan.bloodandbones.parts.Source.CODEC).networkSynchronized(com.avicagan.bloodandbones.parts.Source.STREAM_CODEC));
 
     /** What a piece of carcass armour is made of. */
     public static final DeferredHolder<DataComponentType<?>, DataComponentType<com.avicagan.bloodandbones.parts.CarcassArmour>> CARCASS_ARMOUR = COMPONENTS.registerComponentType("carcass_armour",
             builder -> builder.persistent(com.avicagan.bloodandbones.parts.CarcassArmour.CODEC).networkSynchronized(com.avicagan.bloodandbones.parts.CarcassArmour.STREAM_CODEC));
+
+    /** The tier of a Fluid Backtank strapped to a carcass chestplate; its fluid is in {@link #FLUID}. */
+    public static final DeferredHolder<DataComponentType<?>, DataComponentType<com.avicagan.bloodandbones.backtank.BacktankTier>> STRAPPED_TANK = COMPONENTS.registerComponentType("strapped_tank",
+            builder -> builder.persistent(com.avicagan.bloodandbones.backtank.BacktankTier.CODEC).networkSynchronized(com.avicagan.bloodandbones.backtank.BacktankTier.STREAM_CODEC));
 
     private BBDataComponents() {
     }

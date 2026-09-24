@@ -1,0 +1,14 @@
+{
+  "order": 3,
+  "item": "bloodandbones:soul_netherite_ingot",
+  "bonus": {
+    "helmet": 2,
+    "chestplate": 4,
+    "leggings": 3,
+    "boots": 2
+  },
+  "toughness": 3.0,
+  "knockback_resistance": 0.1,
+  "durability_mult": 3.3,
+  "fire_resistant": true
+}

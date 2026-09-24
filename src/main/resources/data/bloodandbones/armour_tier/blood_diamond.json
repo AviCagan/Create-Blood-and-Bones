@@ -1,0 +1,14 @@
+{
+  "order": 2,
+  "item": "bloodandbones:blood_diamond",
+  "bonus": {
+    "helmet": 2,
+    "chestplate": 3,
+    "leggings": 3,
+    "boots": 2
+  },
+  "toughness": 2.0,
+  "knockback_resistance": 0.0,
+  "durability_mult": 2.5,
+  "fire_resistant": false
+}

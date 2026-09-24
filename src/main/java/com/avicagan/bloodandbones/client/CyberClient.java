@@ -303,7 +303,7 @@ public final class CyberClient {
         graphics.fill(cx - 1, cy - 1, cx + 2, cy + 2, 0xFFB08A3E);
         // the tank: soul blood left, as a bar under the dial
         var fluid = FluidBacktankItem.fluid(FluidBacktankItem.wornBy(player));
-        int capacity = FluidBacktankItem.wornBy(player).getItem() instanceof FluidBacktankItem tank ? tank.tier().capacity() : 0;
+        int capacity = FluidBacktankItem.capacity(FluidBacktankItem.wornBy(player));
         float full = capacity <= 0 || !fluid.is(BBFluids.soulBlood()) ? 0.0F : fluid.getAmount() / (float) capacity;
         graphics.fill(cx - 12, cy + 4, cx + 13, cy + 7, 0xFF1A1A1A);
         graphics.fill(cx - 12, cy + 4, cx - 12 + Math.round(25 * full), cy + 7, 0xFF4FD1C5);

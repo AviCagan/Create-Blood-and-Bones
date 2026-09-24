@@ -78,7 +78,11 @@ public final class TraitEvents {
 
     // ---- base stats
 
-    /** Armour, toughness, knockback resistance and the quirk of a carcass piece, from its material. */
+    /**
+     * Armour, toughness, knockback resistance and the quirk of a carcass piece, from its material, with its
+     * tier's bonus on top (each tier's in place of the one before). A chestplate with a backtank strapped on
+     * has the better armour and toughness of the two.
+     */
     @SubscribeEvent
     public static void onItemAttributes(ItemAttributeModifierEvent event) {
         CarcassArmour armour = CarcassArmourItem.armour(event.getItemStack());
@@ -87,11 +91,20 @@ public final class TraitEvents {
         }
         PartsData.Store store = CarcassArmourItem.store();
         ScrapMaterial material = CarcassArmourItem.material(armour, store);
+        ArmourTier tier = store.tier(armour.tier());
+        double armourPoints = material.armourFor(armour.piece()) + (tier == null ? 0 : tier.bonusFor(armour.piece()));
+        double toughness = material.toughness() + (tier == null ? 0.0F : tier.toughness());
+        double knockback = material.knockbackResistance() + (tier == null ? 0.0F : tier.knockbackResistance());
+        com.avicagan.bloodandbones.backtank.BacktankTier tank = event.getItemStack().get(com.avicagan.bloodandbones.registry.BBDataComponents.STRAPPED_TANK);
+        if (tank != null) {
+            armourPoints = Math.max(armourPoints, tank.defense());
+            toughness = Math.max(toughness, tank.toughness());
+        }
         EquipmentSlotGroup group = EquipmentSlotGroup.bySlot(item.getEquipmentSlot());
         String base = "carcass_armour." + armour.piece();
-        add(event, Attributes.ARMOR, base + ".armour", material.armourFor(armour.piece()), group);
-        add(event, Attributes.ARMOR_TOUGHNESS, base + ".toughness", material.toughness(), group);
-        add(event, Attributes.KNOCKBACK_RESISTANCE, base + ".knockback", material.knockbackResistance(), group);
+        add(event, Attributes.ARMOR, base + ".armour", armourPoints, group);
+        add(event, Attributes.ARMOR_TOUGHNESS, base + ".toughness", toughness, group);
+        add(event, Attributes.KNOCKBACK_RESISTANCE, base + ".knockback", knockback, group);
         for (int i = 0; i < material.quirk().size(); i++) {
             ScrapMaterial.Quirk quirk = material.quirk().get(i);
             event.addModifier(quirk.attribute(), new AttributeModifier(BloodAndBones.asResource(base + ".quirk." + i), quirk.amount(), quirk.operation()), group);
@@ -109,8 +122,12 @@ public final class TraitEvents {
 
     @SubscribeEvent
     public static void onEquipment(LivingEquipmentChangeEvent event) {
+        CarcassArmour from = CarcassArmourItem.armour(event.getFrom());
+        CarcassArmour to = CarcassArmourItem.armour(event.getTo());
+        // the same piece worn a little more, or its strapped tank a little emptier, has the same traits
+        boolean same = from != null && from.equals(to) && event.getFrom().getItem() == event.getTo().getItem();
         if (event.getSlot().getType() == EquipmentSlot.Type.HUMANOID_ARMOR && !event.getEntity().level().isClientSide
-                && (CarcassArmourItem.armour(event.getFrom()) != null || CarcassArmourItem.armour(event.getTo()) != null)) {
+                && (from != null || to != null) && !same) {
             ActiveTraits.rebuild(event.getEntity());
         }
     }

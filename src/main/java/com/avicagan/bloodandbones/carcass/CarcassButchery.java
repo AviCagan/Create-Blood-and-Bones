@@ -257,13 +257,17 @@ public final class CarcassButchery {
             while (n > 0) {
                 int stackSize = Math.min(n, item.get().getDefaultMaxStackSize());
                 n -= stackSize;
+                net.minecraft.world.item.ItemStack stack = new net.minecraft.world.item.ItemStack(item.get(), stackSize);
+                if (yield.kind().equals("hide")) {
+                    // a hide remembers whose it was, for fitting over carcass armour, where the item alone would not say
+                    com.avicagan.bloodandbones.parts.Hides.stamp(stack, carcass.entity);
+                }
                 java.util.function.Consumer<net.minecraft.world.item.ItemStack> sink = SINK.get();
                 if (sink != null) {
-                    sink.accept(new net.minecraft.world.item.ItemStack(item.get(), stackSize));
+                    sink.accept(stack);
                     continue;
                 }
-                net.minecraft.world.entity.item.ItemEntity entity = new net.minecraft.world.entity.item.ItemEntity(level, at.x, at.y + 0.25, at.z,
-                        new net.minecraft.world.item.ItemStack(item.get(), stackSize));
+                net.minecraft.world.entity.item.ItemEntity entity = new net.minecraft.world.entity.item.ItemEntity(level, at.x, at.y + 0.25, at.z, stack);
                 entity.setDeltaMovement((level.random.nextDouble() - 0.5) * 0.15, 0.2, (level.random.nextDouble() - 0.5) * 0.15);
                 entity.setDefaultPickUpDelay();
                 level.addFreshEntity(entity);

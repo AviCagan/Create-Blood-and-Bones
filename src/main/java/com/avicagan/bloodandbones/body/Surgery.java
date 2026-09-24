@@ -276,10 +276,15 @@ public final class Surgery {
         }
     }
 
-    /** The part of flesh comes out, bloodily, into the surgeon's hands. */
+    /**
+     * The part of flesh comes out, bloodily, into the surgeon's hands. A player's is named for them; a mob's is
+     * named for its kind and stamped with it, as one cut out of its carcass is, so its organs fit carcass armour.
+     */
     private static void cutOut(ServerLevel level, net.minecraft.world.entity.LivingEntity patient, @org.jetbrains.annotations.Nullable Player surgeon,
                                BodyPart part, BlockPos pos, Vector3d at) {
-        give(surgeon, com.avicagan.bloodandbones.registry.BBItems.partItem(part.kind()).of(patient), pos, level);
+        SeveredLimbItem item = com.avicagan.bloodandbones.registry.BBItems.partItem(part.kind());
+        give(surgeon, patient instanceof Player ? item.of(patient)
+                : item.of(net.minecraft.core.registries.BuiltInRegistries.ENTITY_TYPE.getKey(patient.getType()), patient.isBaby()), pos, level);
         com.avicagan.bloodandbones.carcass.Blood.burst(level, at, 12);
         com.avicagan.bloodandbones.carcass.Blood.stain(level, at, 3);
         level.playSound(null, pos, com.avicagan.bloodandbones.registry.BBSounds.CARCASS_CUT.get(), SoundSource.PLAYERS, 1.0F, 0.9F);
@@ -316,7 +321,8 @@ public final class Surgery {
 
     /**
      * A Cleaver on a carcass piece lying on the table takes out its organs, one a cut: a body's heart, lungs
-     * and stomach, a head's eyes, each named for the animal. A mob with no blood has none.
+     * and stomach, a head's eyes, each named for the animal and stamped with it (for carcass armour). A mob
+     * with no blood has none.
      *
      * @return whether an organ came out
      */
@@ -351,7 +357,7 @@ public final class Surgery {
         BlockPos pos = table.getBlockPos();
         // a Deployer's stand-in would hold it and stall: it drops on the table, as the Butcher's Table's cuts do
         give(surgeon instanceof net.neoforged.neoforge.common.util.FakePlayer ? null : surgeon,
-                com.avicagan.bloodandbones.registry.BBItems.partItem(organs.get(taken)).of(type.get().getDescription()), pos, level);
+                com.avicagan.bloodandbones.registry.BBItems.partItem(organs.get(taken)).of(piece.entity(), piece.baby()), pos, level);
         com.avicagan.bloodandbones.carcass.Blood.bloody(blade, level);
         Vector3d at = new Vector3d(pos.getX() + 0.5, pos.getY() + 1.1, pos.getZ() + 0.5);
         com.avicagan.bloodandbones.carcass.Blood.burst(level, at, 8, com.avicagan.bloodandbones.carcass.Blood.soul(piece.entity()));

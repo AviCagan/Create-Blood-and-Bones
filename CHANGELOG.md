@@ -132,7 +132,7 @@ Everything below is in development builds only; the art is placeholder (see the 
   brass modules make the throttle a quarter cheaper and you hard to shove. Both kinds in one body get
   neither, and nothing worse.
 
-### Carcass armour (parts and traits, first slice)
+### Carcass armour (parts and traits)
 
 - The Mangler now also grinds every piece into armour scraps that remember their mob and part ("Cow Leg
   Scraps"): more from a bigger piece, half again from a skinned one, half from a rotten one.
@@ -142,6 +142,19 @@ Everything below is in development builds only; the art is placeholder (see the 
   softer), rabbit boots Fall Guard II (half fall damage). Mix mobs freely; a full set of one mob adds its bonus
   and its drawback (the Warren: Springy IV and Light-Boned III, but Frail II and wolves, foxes and cats hunt you).
 - A new attribute, Drag Strength, makes dragging carcasses easier (a full cow set gives 45%).
+- Chestplates: six torso scraps of one mob with two arm scraps of any mob on top for the shoulders (a mob with no
+  arms, like a cow, uses more of its torso scraps).
+- Fitting: craft a piece with hides of one mob (one for a helmet or boots, two for leggings, three for a
+  chestplate; two leather and a raw cow hide are all a cow's) for that mob's hide traits, or with an organ cut out of
+  a mob on the Surgery Table (eyes in a helmet, a heart or lungs in a chestplate, a stomach in a chestplate or
+  leggings). What it replaces comes back as it went in. Raw hides skinned off a carcass, and organs cut out of one or
+  out of a live mob, now remember their mob; leather counts as a cow's, rabbit hide as a rabbit's, and a parrot's
+  feathers as the parrot's. A hide or organ of another mob breaks a full set.
+- Two pieces no longer combine in a crafting grid or on a grindstone (that made a blank piece and lost everything in
+  both); scraps of the piece's own mob, and nothing else, mend it on an anvil.
+- Tiers: a Blood Steel Ingot, then a Blood Diamond, then a Soul Netherite Ingot, each giving more armour, toughness
+  and durability; soul netherite does not burn. A full hide set at tier 3 matches netherite.
+- Mechanical Crafters fit hides, organs and tiers too, but refuse a swap rather than lose what would come back.
 
 ### The Fluid Backtank
 
@@ -152,6 +165,10 @@ Everything below is in development builds only; the art is placeholder (see the 
 - Soul Netherite Ingot: sequenced assembly, a netherite ingot filled with 1000 mB of soul blood and
   pressed with a super experience block. The soul netherite tank is a smithing upgrade of the blood
   diamond one.
+- Strap one to a carcass chestplate by crafting the two together: the chestplate carries the tank and
+  its fluid, prosthetics run on it, Spouts and Item Drains fill and empty it, and its armour is the
+  better of the two. Craft the chestplate alone to take the tank off. If the chestplate breaks or burns,
+  the tank falls free, fluid and all.
 
 ### Minions
 
