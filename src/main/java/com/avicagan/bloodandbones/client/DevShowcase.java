@@ -55,6 +55,9 @@ public final class DevShowcase {
     public static final String PROPERTY = "bloodandbones.showcase";
     /** {@code -Dbloodandbones.showcase=bloodless}: the same run with the bloodless game rule on, into showcase_bloodless_*. */
     private static final boolean BLOODLESS = "bloodless".equals(System.getProperty(PROPERTY));
+    /** The zombie and the cow of the trait effects shot, by entity id. */
+    private static volatile int effectHost = -1;
+    private static volatile int effectTarget = -1;
     private static final String PREFIX = BLOODLESS ? "showcase_bloodless_" : "showcase_";
 
     private record View(double x, double y, double z, float yaw, float pitch) {
@@ -534,7 +537,50 @@ public final class DevShowcase {
                         player.setData(com.avicagan.bloodandbones.body.BBAttachments.BODY, new com.avicagan.bloodandbones.body.Body());
                         com.avicagan.bloodandbones.body.BodyEffects.changed(player);
                     });
+                    // trait effects at night: a glow squid's sac in a chestplate, and ahead a bleeding cow, a guardian's beam at it,
+                    // and both outlined as a sense would show them
+                    server.execute(() -> {
+                        ServerPlayer player = server.getPlayerList().getPlayers().get(0);
+                        ServerLevel level = player.serverLevel();
+                        level.setDayTime(18000);
+                        var squid = net.minecraft.resources.ResourceLocation.withDefaultNamespace("glow_squid");
+                        player.setItemSlot(net.minecraft.world.entity.EquipmentSlot.CHEST, com.avicagan.bloodandbones.parts.CarcassArmourItem.make(new ItemStack(BBItems.CARCASS_CHESTPLATE.get()),
+                                com.avicagan.bloodandbones.parts.CarcassArmour.of("chestplate", squid, false).withOrgan(java.util.Optional.of(new com.avicagan.bloodandbones.parts.CarcassArmour.Organ(
+                                        BloodAndBones.asResource("glow_sac"), squid, false))), com.avicagan.bloodandbones.parts.PartsData.of(level)));
+                        com.avicagan.bloodandbones.parts.ActiveTraits.rebuild(player);
+                        player.teleportTo(level, player.getX(), player.getY(), player.getZ(), 0.0F, 10.0F);
+                        net.minecraft.world.phys.Vec3 ahead = player.position().add(0.0, 0.0, 6.0);
+                        var cow = EntityType.COW.create(level);
+                        cow.moveTo(ahead.x + 1.5, level.getHeight(net.minecraft.world.level.levelgen.Heightmap.Types.MOTION_BLOCKING, (int) Math.floor(ahead.x + 1.5), (int) Math.floor(ahead.z)), ahead.z, 90.0F, 0.0F);
+                        cow.setNoAi(true);
+                        level.addFreshEntity(cow);
+                        cow.addEffect(new net.minecraft.world.effect.MobEffectInstance(com.avicagan.bloodandbones.parts.effect.RangedContent.BLEEDING, 1200, 1));
+                        // a snow golem for the beam's source: the world is peaceful, so no monster stays
+                        var zombie = EntityType.SNOW_GOLEM.create(level);
+                        zombie.moveTo(ahead.x - 3.0, level.getHeight(net.minecraft.world.level.levelgen.Heightmap.Types.MOTION_BLOCKING, (int) Math.floor(ahead.x - 3.0), (int) Math.floor(ahead.z + 1.5)), ahead.z + 1.5, -90.0F, 0.0F);
+                        zombie.setNoAi(true);
+                        level.addFreshEntity(zombie);
+                        effectHost = zombie.getId();
+                        effectTarget = cow.getId();
+                    });
+                    mc.options.setCameraType(net.minecraft.client.CameraType.THIRD_PERSON_FRONT);
+                    mc.options.hideGui = true;
+                } else if (t == 250) {
+                    com.avicagan.bloodandbones.client.effect.RangedClient.receive(new com.avicagan.bloodandbones.parts.effect.BeamPayload(effectHost, effectTarget, 400, 16.0F, "guardian_beam"));
+                    com.avicagan.bloodandbones.client.effect.SocialClient.receive(new com.avicagan.bloodandbones.parts.effect.SensePayload("reveal",
+                            java.util.List.of(effectHost, effectTarget), 400));
+                } else if (t == 262) {
+                    Screenshot.grab(mc.gameDirectory, PREFIX + "effects_0.png", mc.getMainRenderTarget(), message -> {
+                    });
                     mc.options.setCameraType(net.minecraft.client.CameraType.FIRST_PERSON);
+                } else if (t == 278) {
+                    Screenshot.grab(mc.gameDirectory, PREFIX + "effects_1.png", mc.getMainRenderTarget(), message -> {
+                    });
+                    server.execute(() -> {
+                        ServerPlayer player = server.getPlayerList().getPlayers().get(0);
+                        player.serverLevel().setDayTime(6000);
+                        player.setItemSlot(net.minecraft.world.entity.EquipmentSlot.CHEST, ItemStack.EMPTY);
+                    });
                     mc.options.hideGui = false;
                     stage = 4;
                     ticks = 0;
