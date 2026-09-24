@@ -18,7 +18,8 @@ import net.minecraft.world.phys.Vec3;
 
 /**
  * web {seconds} (docs/PARTS-AND-TRAITS.md section 5.5): spins a temporary web where it lands (round a creature's feet), if
- * that space is empty or only grass and the like, never in water. It wears away after its seconds (at most 15).
+ * that space is empty or only grass and the like (or holds a web of ours with less time left), never in water. It wears
+ * away after its seconds (at most 15).
  */
 public record WebAction(LevelBasedValue seconds) implements EnchantmentEntityEffect {
     public static final MapCodec<WebAction> CODEC = RecordCodecBuilder.mapCodec(i -> i.group(
@@ -29,11 +30,13 @@ public record WebAction(LevelBasedValue seconds) implements EnchantmentEntityEff
     public void apply(ServerLevel level, int enchantmentLevel, EnchantedItemInUse item, Entity entity, Vec3 origin) {
         BlockPos pos = BlockPos.containing(origin);
         BlockState here = level.getBlockState(pos);
-        if (!level.isInWorldBounds(pos) || !(here.isAir() || here.canBeReplaced()) || !here.getFluidState().isEmpty()
-                || here.is(RangedContent.TEMPORARY_WEB.get()) && here.getValue(TemporaryWebBlock.LIFE) >= seconds.calculate(enchantmentLevel)) {
+        int life = Math.round(seconds.calculate(enchantmentLevel));
+        // an older web of ours is spun again, if this one lasts longer
+        boolean respun = here.is(RangedContent.TEMPORARY_WEB.get()) && here.getValue(TemporaryWebBlock.LIFE) < Math.min(life, TemporaryWebBlock.MAX_LIFE);
+        if (life <= 0 || !level.isInWorldBounds(pos) || !here.getFluidState().isEmpty() || !(respun || here.isAir() || here.canBeReplaced())) {
             return;
         }
-        level.setBlockAndUpdate(pos, RangedContent.TEMPORARY_WEB.get().lasting(Math.round(seconds.calculate(enchantmentLevel))));
+        level.setBlockAndUpdate(pos, RangedContent.TEMPORARY_WEB.get().lasting(life));
         // a sticky splat of silk
         level.sendParticles(new BlockParticleOption(ParticleTypes.BLOCK, Blocks.COBWEB.defaultBlockState()), pos.getX() + 0.5, pos.getY() + 0.5, pos.getZ() + 0.5,
                 12, 0.3, 0.3, 0.3, 0.05);

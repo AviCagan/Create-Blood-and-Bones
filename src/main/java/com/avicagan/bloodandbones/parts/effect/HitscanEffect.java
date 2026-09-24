@@ -101,6 +101,10 @@ public record HitscanEffect(float range, LevelBasedValue damage, ResourceKey<Dam
 
     /** Every server tick: the charged shots whose time has come land (or fizzle, their host gone). */
     static void tickCharging() {
+        if (CHARGING.isEmpty()) {
+            return;
+        }
+        List<Charging> due = new ArrayList<>();
         Iterator<Charging> it = CHARGING.iterator();
         while (it.hasNext()) {
             Charging c = it.next();
@@ -109,9 +113,11 @@ public record HitscanEffect(float range, LevelBasedValue damage, ResourceKey<Dam
                 it.remove();
             } else if (host.level().getGameTime() >= c.at()) {
                 it.remove();
-                c.effect().fire(c.ctx(), c.locked());
+                due.add(c);
             }
         }
+        // fired after, as a shot landing can start another charging (a victim's own beam, hurt)
+        due.forEach(c -> c.effect().fire(c.ctx(), c.locked()));
     }
 
     static void forget() {
