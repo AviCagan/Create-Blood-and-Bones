@@ -563,8 +563,8 @@ public class MinionEntity extends PathfinderMob implements net.minecraft.world.e
 
     /** Nor does it drown. */
     @Override
-    public boolean canBreatheUnderwater() {
-        return cybernetic() || super.canBreatheUnderwater();
+    public boolean canDrownInFluidType(net.neoforged.neoforge.fluids.FluidType type) {
+        return !cybernetic() && super.canDrownInFluidType(type);
     }
 
     /** Powered down, nothing runs: no goals, no moving, no looking round. */
@@ -586,6 +586,7 @@ public class MinionEntity extends PathfinderMob implements net.minecraft.world.e
     protected void registerGoals() {
         goalSelector.addGoal(0, new FloatGoal(this));
         goalSelector.addGoal(1, new MinionGoals.SeekBlood(this));
+        goalSelector.addGoal(1, new MinionGoals.SeekCradle(this));
         goalSelector.addGoal(2, new MinionGoals.Bite(this));
         goalSelector.addGoal(3, new MinionGoals.Farm(this));
         goalSelector.addGoal(3, new MinionGoals.AttendTable(this));

@@ -17,6 +17,7 @@
     "bloodandbones:ribcage_arch",
     "bloodandbones:surgery_table",
     "bloodandbones:fluid_backtank",
-    "bloodandbones:backtank_port"
+    "bloodandbones:backtank_port",
+    "bloodandbones:charging_cradle"
   ]
 }

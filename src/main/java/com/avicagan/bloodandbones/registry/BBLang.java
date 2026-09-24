@@ -247,6 +247,23 @@ public class BBLang {
         block("blood_trough",
                 "A trough of _blood_ for flesh minions: they walk to the nearest one they can reach and drink when they run low.",
                 "When Filled", "Takes _four buckets_ of any blood, from a bucket, a _Spout_ or _pipes_ on any side.");
+        item("empty_soul_canister",
+                "A brass canister with a glass window, for _soul blood_ to animate a _brass minion_.",
+                "When Filled", "A _Spout_ fills it with a bucket's worth of soul blood; an _Item Drain_ empties it again.");
+        item("soul_canister",
+                "A canister of _soul blood_: a brass minion's power.",
+                "When Used on a Brass Minion", "Swaps into it, and the empty comes back. On the Surgery Table it wakes a sheathed brass frame.");
+        item("brass_sheathing",
+                "Brass plates for a frame of _skinned_ carcass pieces on the Surgery Table.",
+                "When R-Clicked on a Brass Frame", "Sheathes it. Then a _Soul Canister_ wakes it as a brass minion: slower to drain, immune to poison and drowning, but it never heals itself.");
+        block("charging_cradle",
+                "Where _brass minions_ get fresh soul blood. Needs a shaft from below turning at _16 RPM_ or more; the faster, the quicker the swap.",
+                "When Stocked", "Swaps a full _Soul Canister_ into any brass minion beside it that is running low or has powered down, and keeps the empty. With _brass sheets_ it mends one docked there.",
+                "With Funnels and Hoppers", "Full canisters and sheets go in, empties come out. By hand: R-Click with a canister or sheet to put it in, with an empty hand to take the empties.");
+        BloodAndBones.REGISTRATE.addRawLang("bloodandbones.minion.needs_sheathing", "A brass frame needs its Brass Sheathing before it can wake");
+        BloodAndBones.REGISTRATE.addRawLang("bloodandbones.minion.wake_brass", "Brass wakes on a Soul Canister");
+        BloodAndBones.REGISTRATE.addRawLang("bloodandbones.minion.wake_flesh", "Flesh wakes on a bucket of blood");
+        BloodAndBones.REGISTRATE.addRawLang("bloodandbones.minion.sheathe_skinned", "Brass Sheathing goes over a frame of skinned pieces");
         item("dormant_minion",
                 "A minion that ran out of blood, _folded up_ to carry. It keeps everything: what it is built of, its job, what it carries.",
                 "When Used on a Block", "Sets it down there, still out of blood. Give it _blood_ to wake it.");

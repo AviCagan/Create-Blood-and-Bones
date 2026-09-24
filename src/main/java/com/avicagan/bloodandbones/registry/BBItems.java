@@ -105,6 +105,23 @@ public class BBItems {
             .register();
 
     /** A powered-down minion folded up to carry; set it down and give it blood. */
+    // ---- brass minions: soul blood in canisters, filled at a Spout and emptied at an Item Drain
+    public static final ItemEntry<net.minecraft.world.item.Item> EMPTY_SOUL_CANISTER = BloodAndBones.REGISTRATE
+            .item("empty_soul_canister", net.minecraft.world.item.Item::new)
+            .properties(p -> p.stacksTo(16))
+            .lang("Empty Soul Canister")
+            .register();
+    public static final ItemEntry<net.minecraft.world.item.Item> SOUL_CANISTER = BloodAndBones.REGISTRATE
+            .item("soul_canister", net.minecraft.world.item.Item::new)
+            .properties(p -> p.stacksTo(16))
+            .lang("Soul Canister")
+            .register();
+    /** Plates over a skinned frame on the Surgery Table: it wakes as a brass minion, on soul blood. */
+    public static final ItemEntry<net.minecraft.world.item.Item> BRASS_SHEATHING = BloodAndBones.REGISTRATE
+            .item("brass_sheathing", net.minecraft.world.item.Item::new)
+            .lang("Brass Sheathing")
+            .register();
+
     public static final ItemEntry<com.avicagan.bloodandbones.minion.DormantMinionItem> DORMANT_MINION = BloodAndBones.REGISTRATE
             .item("dormant_minion", com.avicagan.bloodandbones.minion.DormantMinionItem::new)
             .removeTab(BBCreativeTabs.MAIN.getKey())

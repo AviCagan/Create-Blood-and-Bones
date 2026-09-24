@@ -220,6 +220,64 @@ public final class MinionGoals {
         return accuracy(minion) + 0.5 + minion.getBbWidth() / 2.0;
     }
 
+    /**
+     * Brass, running low, goes to the nearest Charging Cradle with a full canister in it and waits beside it; the
+     * cradle does the swap. Like the trough, it must be able to walk there.
+     */
+    public static class SeekCradle extends Goal {
+        private final MinionEntity minion;
+        @Nullable
+        private BlockPos cradle;
+
+        public SeekCradle(MinionEntity minion) {
+            this.minion = minion;
+            setFlags(EnumSet.of(Flag.MOVE, Flag.JUMP));
+        }
+
+        @Override
+        public boolean requiresUpdateEveryTick() {
+            return true;
+        }
+
+        @Override
+        public boolean canUse() {
+            if (!minion.cybernetic() || minion.powerShare() >= MinionEntity.HUNGRY || !minion.onGround() || minion.getRandom().nextInt(20) != 0) {
+                return false;
+            }
+            int radius = BBServerConfig.troughRadius();
+            cradle = ChargingCradleBlockEntity.all(minion.level()).stream()
+                    .filter(p -> p.distSqr(minion.blockPosition()) < (double) radius * radius
+                            && minion.level().getBlockEntity(p) instanceof ChargingCradleBlockEntity c && c.fullCanisters() > 0)
+                    .min(Comparator.comparingDouble(p -> p.distSqr(minion.blockPosition()))).orElse(null);
+            return cradle != null;
+        }
+
+        @Override
+        public boolean canContinueToUse() {
+            return cradle != null && minion.powerShare() < MinionEntity.HUNGRY && minion.level().getBlockEntity(cradle) instanceof ChargingCradleBlockEntity c
+                    && c.fullCanisters() > 0;
+        }
+
+        @Override
+        public void tick() {
+            if (cradle == null) {
+                return;
+            }
+            double near = ChargingCradleBlockEntity.REACH + 0.5;
+            if (minion.distanceToSqr(Vec3.atCenterOf(cradle)) < near * near) {
+                minion.getNavigation().stop();
+                minion.getLookControl().setLookAt(Vec3.atCenterOf(cradle));
+            } else if (minion.getNavigation().isDone() || minion.tickCount % 40 == 0) {
+                minion.getNavigation().moveTo(minion.getNavigation().createPath(cradle, 1), 1.1);
+            }
+        }
+
+        @Override
+        public void stop() {
+            cradle = null;
+        }
+    }
+
     /** A second's drink from a trough. */
     static void drink(MinionEntity minion, BlockPos trough) {
         if (minion.level().getBlockEntity(trough) instanceof BloodTroughBlockEntity t) {

@@ -354,6 +354,18 @@ public class BBBlocks {
             .item().model((c, p) -> p.withExistingParent(c.getName(), p.modLoc("block/blood_trough"))).build()
             .register();
 
+    /** Where brass minions get a fresh Soul Canister; a shaft from below drives it. */
+    public static final BlockEntry<com.avicagan.bloodandbones.minion.ChargingCradleBlock> CHARGING_CRADLE = BloodAndBones.REGISTRATE
+            .block("charging_cradle", com.avicagan.bloodandbones.minion.ChargingCradleBlock::new)
+            .initialProperties(com.simibubi.create.foundation.data.SharedProperties::softMetal)
+            .properties(p -> p.mapColor(MapColor.TERRACOTTA_YELLOW).noOcclusion().sound(net.minecraft.world.level.block.SoundType.NETHERITE_BLOCK))
+            .transform(com.simibubi.create.foundation.data.TagGen.pickaxeOnly())
+            .blockstate((c, p) -> p.simpleBlock(c.get(), p.models().getExistingFile(p.modLoc("block/charging_cradle"))))
+            .onRegister(block -> com.simibubi.create.api.stress.BlockStressValues.IMPACTS.register(block, () -> 2.0))
+            .lang("Charging Cradle")
+            .item().model((c, p) -> p.withExistingParent(c.getName(), p.modLoc("block/charging_cradle"))).build()
+            .register();
+
     public static void register() {
     }
 }

@@ -137,11 +137,24 @@ public class SurgeryTableBlock extends Block implements IBE<SurgeryTableBlockEnt
             return ItemInteractionResult.SUCCESS;
         }
         ServerLevel server = (ServerLevel) level;
-        if (stack.is(com.avicagan.bloodandbones.registry.BBFluids.BLOOD.getBucket().get())) {
+        // a bucket of blood wakes flesh, a soul canister brass
+        if (stack.is(com.avicagan.bloodandbones.registry.BBFluids.BLOOD.getBucket().get()) || stack.is(com.avicagan.bloodandbones.registry.BBItems.SOUL_CANISTER.get())) {
             if (table.build().isEmpty()) {
                 return ItemInteractionResult.PASS_TO_DEFAULT_BLOCK_INTERACTION;
             }
-            com.avicagan.bloodandbones.minion.MinionAssembly.wake(server, player, table, stack);
+            if (com.avicagan.bloodandbones.minion.MinionAssembly.wake(server, player, table, stack) == null && table.build().isPresent()) {
+                player.displayClientMessage(Component.translatable(table.build().get().cybernetic()
+                        ? "bloodandbones.minion.wake_brass" : "bloodandbones.minion.wake_flesh"), true);
+            }
+            return ItemInteractionResult.CONSUME;
+        }
+        if (stack.is(com.avicagan.bloodandbones.registry.BBItems.BRASS_SHEATHING.get())) {
+            if (com.avicagan.bloodandbones.minion.MinionAssembly.sheathe(table)) {
+                stack.consume(1, player);
+                level.playSound(null, table.getBlockPos(), net.minecraft.sounds.SoundEvents.ARMOR_EQUIP_IRON.value(), net.minecraft.sounds.SoundSource.BLOCKS, 1.0F, 0.8F);
+            } else {
+                player.displayClientMessage(Component.translatable("bloodandbones.minion.sheathe_skinned"), true);
+            }
             return ItemInteractionResult.CONSUME;
         }
         if (Surgery.isBlade(stack)) {

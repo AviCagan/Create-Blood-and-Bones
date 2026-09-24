@@ -1,0 +1,26 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "category": "misc",
+  "pattern": [
+    "B B",
+    "PCP",
+    " S "
+  ],
+  "key": {
+    "B": {
+      "tag": "c:plates/brass"
+    },
+    "P": {
+      "item": "create:precision_mechanism"
+    },
+    "C": {
+      "item": "create:brass_casing"
+    },
+    "S": {
+      "item": "create:shaft"
+    }
+  },
+  "result": {
+    "id": "bloodandbones:charging_cradle"
+  }
+}

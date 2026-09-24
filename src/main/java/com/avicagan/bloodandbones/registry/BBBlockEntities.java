@@ -102,6 +102,13 @@ public class BBBlockEntities {
             .renderer(() -> com.avicagan.bloodandbones.client.BloodTroughRenderer::new)
             .register();
 
+    public static final BlockEntityEntry<com.avicagan.bloodandbones.minion.ChargingCradleBlockEntity> CHARGING_CRADLE = BloodAndBones.REGISTRATE
+            .blockEntity("charging_cradle", com.avicagan.bloodandbones.minion.ChargingCradleBlockEntity::new)
+            .visual(() -> com.simibubi.create.content.kinetics.base.SingleAxisRotatingVisual::shaft, true)
+            .validBlocks(BBBlocks.CHARGING_CRADLE)
+            .renderer(() -> com.simibubi.create.content.kinetics.base.ShaftRenderer::new)
+            .register();
+
     public static void register() {
     }
 
@@ -119,6 +126,8 @@ public class BBBlockEntities {
                 (be, side) -> side == null || side == be.getBlockState().getValue(net.minecraft.world.level.block.DirectionalBlock.FACING) ? be.handler() : null);
         // pipes, Spouts and buckets fill a trough from any side
         event.registerBlockEntity(net.neoforged.neoforge.capabilities.Capabilities.FluidHandler.BLOCK, BLOOD_TROUGH.get(), (be, side) -> be.tank());
+        // funnels, hoppers and chutes: full canisters and sheets in, empties out
+        event.registerBlockEntity(net.neoforged.neoforge.capabilities.Capabilities.ItemHandler.BLOCK, CHARGING_CRADLE.get(), (be, side) -> be.automation());
         for (var entry : BBItems.BACKTANKS.values()) {
             event.registerItem(net.neoforged.neoforge.capabilities.Capabilities.FluidHandler.ITEM,
                     (stack, context) -> new net.neoforged.neoforge.fluids.capability.templates.FluidHandlerItemStack(BBDataComponents.FLUID, stack,

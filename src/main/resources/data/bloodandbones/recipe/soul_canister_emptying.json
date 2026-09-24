@@ -1,0 +1,17 @@
+{
+  "type": "create:emptying",
+  "ingredients": [
+    {
+      "item": "bloodandbones:soul_canister"
+    }
+  ],
+  "results": [
+    {
+      "id": "bloodandbones:empty_soul_canister"
+    },
+    {
+      "id": "bloodandbones:soul_blood",
+      "amount": 1000
+    }
+  ]
+}
