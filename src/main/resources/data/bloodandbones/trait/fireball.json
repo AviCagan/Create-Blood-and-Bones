@@ -1,0 +1,31 @@
+{
+  "name": "trait.bloodandbones.fireball",
+  "max_level": 1,
+  "effects": [
+    {
+      "trigger": "activate",
+      "context": "armour",
+      "cooldown": 160,
+      "cost_mb": 50,
+      "effect": {
+        "type": "bloodandbones:projectile",
+        "kind": "small_fireball",
+        "count": 3,
+        "spread": 6
+      }
+    },
+    {
+      "trigger": "activate",
+      "context": "minion",
+      "cooldown": 100,
+      "cost_mb": 9,
+      "range": 12,
+      "effect": {
+        "type": "bloodandbones:projectile",
+        "kind": "small_fireball",
+        "count": 3,
+        "spread": 6
+      }
+    }
+  ]
+}

@@ -1,0 +1,40 @@
+{
+  "name": "trait.bloodandbones.web_shot",
+  "max_level": 1,
+  "effects": [
+    {
+      "trigger": "activate",
+      "context": "armour",
+      "cooldown": 200,
+      "cost_mb": 25,
+      "range": 10,
+      "effect": {
+        "type": "bloodandbones:hitscan",
+        "range": 10,
+        "damage": 1,
+        "beam": "strand",
+        "hit": {
+          "type": "bloodandbones:web",
+          "seconds": 5
+        }
+      }
+    },
+    {
+      "trigger": "activate",
+      "context": "minion",
+      "cooldown": 160,
+      "cost_mb": 3,
+      "range": 10,
+      "effect": {
+        "type": "bloodandbones:hitscan",
+        "range": 10,
+        "damage": 1,
+        "beam": "strand",
+        "hit": {
+          "type": "bloodandbones:web",
+          "seconds": 5
+        }
+      }
+    }
+  ]
+}

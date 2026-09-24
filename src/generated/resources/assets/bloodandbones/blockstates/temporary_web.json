@@ -1,0 +1,49 @@
+{
+  "variants": {
+    "life=1": {
+      "model": "bloodandbones:block/temporary_web"
+    },
+    "life=10": {
+      "model": "bloodandbones:block/temporary_web"
+    },
+    "life=11": {
+      "model": "bloodandbones:block/temporary_web"
+    },
+    "life=12": {
+      "model": "bloodandbones:block/temporary_web"
+    },
+    "life=13": {
+      "model": "bloodandbones:block/temporary_web"
+    },
+    "life=14": {
+      "model": "bloodandbones:block/temporary_web"
+    },
+    "life=15": {
+      "model": "bloodandbones:block/temporary_web"
+    },
+    "life=2": {
+      "model": "bloodandbones:block/temporary_web"
+    },
+    "life=3": {
+      "model": "bloodandbones:block/temporary_web"
+    },
+    "life=4": {
+      "model": "bloodandbones:block/temporary_web"
+    },
+    "life=5": {
+      "model": "bloodandbones:block/temporary_web"
+    },
+    "life=6": {
+      "model": "bloodandbones:block/temporary_web"
+    },
+    "life=7": {
+      "model": "bloodandbones:block/temporary_web"
+    },
+    "life=8": {
+      "model": "bloodandbones:block/temporary_web"
+    },
+    "life=9": {
+      "model": "bloodandbones:block/temporary_web"
+    }
+  }
+}

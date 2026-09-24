@@ -1,0 +1,27 @@
+{
+  "name": "trait.bloodandbones.spit",
+  "max_level": 1,
+  "effects": [
+    {
+      "trigger": "activate",
+      "context": "armour",
+      "cooldown": 40,
+      "cost_mb": 10,
+      "effect": {
+        "type": "bloodandbones:projectile",
+        "kind": "llama_spit"
+      }
+    },
+    {
+      "trigger": "activate",
+      "context": "minion",
+      "cooldown": 40,
+      "cost_mb": 1,
+      "range": 10,
+      "effect": {
+        "type": "bloodandbones:projectile",
+        "kind": "llama_spit"
+      }
+    }
+  ]
+}

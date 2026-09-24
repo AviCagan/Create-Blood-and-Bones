@@ -1,0 +1,36 @@
+{
+  "name": "trait.bloodandbones.fangs",
+  "max_level": 1,
+  "effects": [
+    {
+      "trigger": "activate",
+      "context": "armour",
+      "cooldown": 200,
+      "cost_mb": 30,
+      "range": 10,
+      "effect": {
+        "type": "bloodandbones:vanilla",
+        "target": "look",
+        "effect": {
+          "type": "minecraft:summon_entity",
+          "entity": "minecraft:evoker_fangs"
+        }
+      }
+    },
+    {
+      "trigger": "activate",
+      "context": "minion",
+      "cooldown": 100,
+      "cost_mb": 5,
+      "range": 10,
+      "effect": {
+        "type": "bloodandbones:vanilla",
+        "target": "look",
+        "effect": {
+          "type": "minecraft:summon_entity",
+          "entity": "minecraft:evoker_fangs"
+        }
+      }
+    }
+  ]
+}

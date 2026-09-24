@@ -1,0 +1,29 @@
+{
+  "name": "trait.bloodandbones.great_fireball",
+  "max_level": 1,
+  "effects": [
+    {
+      "trigger": "activate",
+      "context": "armour",
+      "cooldown": 600,
+      "cost_mb": 100,
+      "effect": {
+        "type": "bloodandbones:projectile",
+        "kind": "large_fireball",
+        "power": 1
+      }
+    },
+    {
+      "trigger": "activate",
+      "context": "minion",
+      "cooldown": 600,
+      "cost_mb": 20,
+      "range": 16,
+      "effect": {
+        "type": "bloodandbones:projectile",
+        "kind": "large_fireball",
+        "power": 1
+      }
+    }
+  ]
+}

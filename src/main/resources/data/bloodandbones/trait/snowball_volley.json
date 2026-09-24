@@ -1,0 +1,29 @@
+{
+  "name": "trait.bloodandbones.snowball_volley",
+  "max_level": 1,
+  "effects": [
+    {
+      "trigger": "activate",
+      "context": "armour",
+      "cooldown": 60,
+      "cost_mb": 5,
+      "effect": {
+        "type": "bloodandbones:projectile",
+        "kind": "snowball",
+        "count": 5,
+        "spread": 10
+      }
+    },
+    {
+      "context": "minion",
+      "cooldown": 20,
+      "range": 10,
+      "effect": {
+        "type": "bloodandbones:projectile",
+        "kind": "snowball",
+        "count": 3,
+        "spread": 8
+      }
+    }
+  ]
+}

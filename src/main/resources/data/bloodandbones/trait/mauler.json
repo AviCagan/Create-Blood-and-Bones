@@ -1,0 +1,30 @@
+{
+  "name": "trait.bloodandbones.mauler",
+  "max_level": 1,
+  "effects": [
+    {
+      "effect": {
+        "type": "bloodandbones:attribute",
+        "attribute": "minecraft:generic.attack_damage",
+        "amount": 1
+      }
+    },
+    {
+      "trigger": "attack",
+      "requirements": {
+        "condition": "minecraft:damage_source_properties",
+        "predicate": {
+          "is_direct": true
+        }
+      },
+      "effect": {
+        "type": "bloodandbones:vanilla",
+        "target": "victim",
+        "effect": {
+          "type": "bloodandbones:bleed",
+          "seconds": 3
+        }
+      }
+    }
+  ]
+}

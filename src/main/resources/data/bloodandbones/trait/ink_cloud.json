@@ -4,14 +4,34 @@
   "effects": [
     {
       "trigger": "hurt",
+      "context": "minion",
       "cooldown": 300,
       "effect": {
-        "type": "bloodandbones:mob_effect",
-        "effect": "minecraft:blindness",
-        "amplifier": 0,
-        "duration": 60,
-        "target": "area",
-        "radius": 4
+        "type": "bloodandbones:vanilla",
+        "target": "self",
+        "effect": {
+          "type": "bloodandbones:ink_cloud",
+          "radius": 4,
+          "seconds": 3
+        }
+      }
+    },
+    {
+      "trigger": "hurt",
+      "context": "armour",
+      "cooldown": 600,
+      "requirements": {
+        "condition": "bloodandbones:health_below",
+        "fraction": 0.5
+      },
+      "effect": {
+        "type": "bloodandbones:vanilla",
+        "target": "self",
+        "effect": {
+          "type": "bloodandbones:ink_cloud",
+          "radius": 4,
+          "seconds": 3
+        }
       }
     }
   ]

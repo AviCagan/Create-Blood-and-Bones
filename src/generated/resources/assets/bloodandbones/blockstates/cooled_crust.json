@@ -1,0 +1,16 @@
+{
+  "variants": {
+    "age=0": {
+      "model": "bloodandbones:block/cooled_crust"
+    },
+    "age=1": {
+      "model": "bloodandbones:block/cooled_crust"
+    },
+    "age=2": {
+      "model": "bloodandbones:block/cooled_crust_hot"
+    },
+    "age=3": {
+      "model": "bloodandbones:block/cooled_crust_hot"
+    }
+  }
+}

@@ -49,7 +49,7 @@ import java.util.UUID;
  * when it moves, works or fights; low, it walks to a Blood Trough to drink; empty, it powers down where it is and
  * lies on its side, alive, until it gets blood again. Neglect never destroys it.
  */
-public class MinionEntity extends PathfinderMob implements net.minecraft.world.entity.Saddleable {
+public class MinionEntity extends PathfinderMob implements net.minecraft.world.entity.Saddleable, net.minecraft.world.entity.monster.RangedAttackMob {
     private static final EntityDataAccessor<Optional<MinionBuild>> BUILD = SynchedEntityData.defineId(MinionEntity.class, MinionSerializers.BUILD.get());
     private static final EntityDataAccessor<String> JOB = SynchedEntityData.defineId(MinionEntity.class, EntityDataSerializers.STRING);
     private static final EntityDataAccessor<Boolean> DOWN = SynchedEntityData.defineId(MinionEntity.class, EntityDataSerializers.BOOLEAN);
@@ -354,6 +354,12 @@ public class MinionEntity extends PathfinderMob implements net.minecraft.world.e
             knock(target, MinionModules.RAM_KNOCKBACK);
         }
         return true;
+    }
+
+    /** A ranged shot from its arms or organ, when vanilla's ranged goal fires (the Ranged group's trait effects). */
+    @Override
+    public void performRangedAttack(net.minecraft.world.entity.LivingEntity target, float velocity) {
+        com.avicagan.bloodandbones.parts.effect.RangedEffects.rangedAttack(this, target, velocity);
     }
 
     private void knock(net.minecraft.world.entity.Entity target, float strength) {

@@ -1,0 +1,23 @@
+{
+  "name": "trait.bloodandbones.thief",
+  "max_level": 1,
+  "effects": [
+    {
+      "trigger": "attack",
+      "chance": 0.05,
+      "requirements": {
+        "condition": "minecraft:damage_source_properties",
+        "predicate": {
+          "is_direct": true
+        }
+      },
+      "effect": {
+        "type": "bloodandbones:vanilla",
+        "target": "victim",
+        "effect": {
+          "type": "bloodandbones:steal_item"
+        }
+      }
+    }
+  ]
+}
