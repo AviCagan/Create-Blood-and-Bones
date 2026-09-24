@@ -10,8 +10,8 @@ import net.minecraft.network.chat.Component;
 import net.minecraft.resources.ResourceLocation;
 
 /**
- * JEI integration: a Butchery page per mob (what its carcass gives), and information pages for the tools,
- * machines and fluids.
+ * JEI integration: a Butchery page per mob (what its carcass gives), a Body Parts page per mob (what its parts, hide and
+ * organs do), how each organ fits carcass armour, and information pages for the tools, machines and fluids.
  */
 @JeiPlugin
 public class BBJeiPlugin implements IModPlugin {
@@ -28,6 +28,24 @@ public class BBJeiPlugin implements IModPlugin {
     @Override
     public void registerCategories(mezz.jei.api.registration.IRecipeCategoryRegistration registration) {
         registration.addRecipeCategories(new ButcheryCategory(registration.getJeiHelpers().getGuiHelper()));
+        registration.addRecipeCategories(new BodyPartsCategory(registration.getJeiHelpers().getGuiHelper()));
+    }
+
+    /** Glands are told apart by their organ (a powder sac is not a rumen), not by whose they are. */
+    @Override
+    public void registerItemSubtypes(mezz.jei.api.registration.ISubtypeRegistration registration) {
+        registration.registerSubtypeInterpreter(BBItems.GLAND.get(), new mezz.jei.api.ingredients.subtypes.ISubtypeInterpreter<net.minecraft.world.item.ItemStack>() {
+            @Override
+            public Object getSubtypeData(net.minecraft.world.item.ItemStack stack, mezz.jei.api.ingredients.subtypes.UidContext context) {
+                return stack.get(com.avicagan.bloodandbones.registry.BBDataComponents.ORGAN.get());
+            }
+
+            @Override
+            public String getLegacyStringSubtypeInfo(net.minecraft.world.item.ItemStack stack, mezz.jei.api.ingredients.subtypes.UidContext context) {
+                ResourceLocation organ = stack.get(com.avicagan.bloodandbones.registry.BBDataComponents.ORGAN.get());
+                return organ == null ? "" : organ.toString();
+            }
+        });
     }
 
     @Override
@@ -38,10 +56,15 @@ public class BBJeiPlugin implements IModPlugin {
         registration.addRecipeCatalyst(new net.minecraft.world.item.ItemStack(BBBlocks.MANGLER.get()), ButcheryCategory.TYPE);
         registration.addRecipeCatalyst(new net.minecraft.world.item.ItemStack(BBBlocks.DEGLOVER.get()), ButcheryCategory.TYPE);
         registration.addRecipeCatalyst(new net.minecraft.world.item.ItemStack(BBBlocks.BUTCHER_TABLE.get()), ButcheryCategory.TYPE);
+        registration.addRecipeCatalyst(new net.minecraft.world.item.ItemStack(BBItems.SURGICAL_RIG.get()), BodyPartsCategory.TYPE);
+        registration.addRecipeCatalyst(new net.minecraft.world.item.ItemStack(BBItems.ASSEMBLY_FRAME.get()), BodyPartsCategory.TYPE);
+        registration.addRecipeCatalyst(new net.minecraft.world.item.ItemStack(BBBlocks.MANGLER.get()), BodyPartsCategory.TYPE);
     }
 
     /** the Butchery pages JEI is showing, so they can be swapped when the server sends new tables */
     private static java.util.List<ButcheryCategory.Entry> shown = java.util.List.of();
+    /** the Body Parts pages likewise: their hides come from the tables */
+    private static java.util.List<BodyPartsCategory.Entry> shownParts = java.util.List.of();
 
     @Override
     public void onRuntimeAvailable(mezz.jei.api.runtime.IJeiRuntime jeiRuntime) {
@@ -65,12 +88,63 @@ public class BBJeiPlugin implements IModPlugin {
         if (!shown.isEmpty()) {
             runtime.getRecipeManager().addRecipes(ButcheryCategory.TYPE, shown);
         }
+        if (!shownParts.isEmpty()) {
+            runtime.getRecipeManager().hideRecipes(BodyPartsCategory.TYPE, shownParts);
+        }
+        shownParts = BodyPartsCategory.entries();
+        if (!shownParts.isEmpty()) {
+            runtime.getRecipeManager().addRecipes(BodyPartsCategory.TYPE, shownParts);
+        }
+    }
+
+    /**
+     * Fitting an organ is a special recipe JEI cannot list, so each is shown as a crafting recipe of its own: the piece of
+     * carcass armour its file allows and the organ, as the first mob holding it gives it, make the piece with it fitted.
+     */
+    private static java.util.List<net.minecraft.world.item.crafting.RecipeHolder<net.minecraft.world.item.crafting.CraftingRecipe>> organFittings() {
+        com.avicagan.bloodandbones.parts.PartsData.Store store = com.avicagan.bloodandbones.parts.PartsData.CLIENT;
+        java.util.List<net.minecraft.world.item.crafting.RecipeHolder<net.minecraft.world.item.crafting.CraftingRecipe>> out = new java.util.ArrayList<>();
+        for (ResourceLocation organ : store.organs().keySet()) {
+            java.util.List<ResourceLocation> mobs = com.avicagan.bloodandbones.parts.Organs.mobsWith(store, organ);
+            if (mobs.isEmpty()) {
+                continue;
+            }
+            ResourceLocation mob = mobs.get(0);
+            net.minecraft.world.item.ItemStack item = com.avicagan.bloodandbones.parts.Organs.stack(store, organ, mob, false);
+            for (String piece : com.avicagan.bloodandbones.parts.Organs.kind(store, organ).armourPieces()) {
+                net.minecraft.world.item.Item made = switch (piece) {
+                    case "helmet" -> BBItems.CARCASS_HELMET.get();
+                    case "chestplate" -> BBItems.CARCASS_CHESTPLATE.get();
+                    case "leggings" -> BBItems.CARCASS_LEGGINGS.get();
+                    default -> BBItems.CARCASS_BOOTS.get();
+                };
+                com.avicagan.bloodandbones.parts.CarcassArmour armour = com.avicagan.bloodandbones.parts.CarcassArmour.of(piece, mob, false);
+                net.minecraft.world.item.ItemStack blank = com.avicagan.bloodandbones.parts.CarcassArmourItem.make(new net.minecraft.world.item.ItemStack(made), armour, store);
+                net.minecraft.world.item.ItemStack fitted = com.avicagan.bloodandbones.parts.CarcassArmourItem.make(new net.minecraft.world.item.ItemStack(made),
+                        armour.withOrgan(java.util.Optional.of(new com.avicagan.bloodandbones.parts.CarcassArmour.Organ(organ, mob, false))), store);
+                out.add(new net.minecraft.world.item.crafting.RecipeHolder<>(BloodAndBones.asResource("jei/organ_fitting/" + organ.getPath() + "/" + piece),
+                        new net.minecraft.world.item.crafting.ShapelessRecipe("organ_fitting", net.minecraft.world.item.crafting.CraftingBookCategory.EQUIPMENT, fitted,
+                                net.minecraft.core.NonNullList.of(net.minecraft.world.item.crafting.Ingredient.EMPTY,
+                                        net.minecraft.world.item.crafting.Ingredient.of(blank), net.minecraft.world.item.crafting.Ingredient.of(item)))));
+            }
+        }
+        return out;
     }
 
     @Override
     public void registerRecipes(IRecipeRegistration registration) {
         shown = ButcheryCategory.entries();
         registration.addRecipes(ButcheryCategory.TYPE, shown);
+        shownParts = BodyPartsCategory.entries();
+        registration.addRecipes(BodyPartsCategory.TYPE, shownParts);
+        registration.addRecipes(mezz.jei.api.constants.RecipeTypes.CRAFTING, organFittings());
+        java.util.List<net.minecraft.world.item.ItemStack> glands = com.avicagan.bloodandbones.parts.PartsData.CLIENT.organs().keySet().stream()
+                .map(organ -> com.avicagan.bloodandbones.parts.Organs.example(com.avicagan.bloodandbones.parts.PartsData.CLIENT, organ))
+                .filter(stack -> stack.is(BBItems.GLAND.get())).toList();
+        if (!glands.isEmpty()) {
+            registration.addIngredientInfo(glands, mezz.jei.api.constants.VanillaTypes.ITEM_STACK,
+                    Component.translatable("bloodandbones.jei.gland.1"), Component.translatable("bloodandbones.jei.gland.2"));
+        }
         com.avicagan.bloodandbones.carcass.butchery.ButcheryManager.onClientTables = BBJeiPlugin::refreshButchery;
         registration.addIngredientInfo(BBItems.MEAT_HOOK.get(),
                 Component.translatable("bloodandbones.jei.meat_hook.1"),

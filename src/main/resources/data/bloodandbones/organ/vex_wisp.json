@@ -1,0 +1,11 @@
+{
+  "item": "bloodandbones:gland",
+  "name": "organ.bloodandbones.vex_wisp",
+  "bloodless_name": "bloodless.organ.bloodandbones.vex_wisp",
+  "look": "core",
+  "tint": "#a8b8c8",
+  "armour_pieces": [
+    "chestplate"
+  ],
+  "extra_drops": []
+}

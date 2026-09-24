@@ -1,0 +1,12 @@
+{
+  "item": "bloodandbones:gland",
+  "name": "organ.bloodandbones.mycelial_gut",
+  "bloodless_name": "bloodless.organ.bloodandbones.mycelial_gut",
+  "look": "gut",
+  "tint": "#9a6a8a",
+  "armour_pieces": [
+    "chestplate",
+    "leggings"
+  ],
+  "extra_drops": []
+}

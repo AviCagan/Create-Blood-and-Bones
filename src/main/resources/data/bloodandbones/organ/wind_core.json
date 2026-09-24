@@ -1,0 +1,11 @@
+{
+  "item": "bloodandbones:gland",
+  "name": "organ.bloodandbones.wind_core",
+  "bloodless_name": "bloodless.organ.bloodandbones.wind_core",
+  "look": "core",
+  "tint": "#a8c8e8",
+  "armour_pieces": [
+    "chestplate"
+  ],
+  "extra_drops": []
+}

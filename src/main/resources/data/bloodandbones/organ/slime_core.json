@@ -1,0 +1,17 @@
+{
+  "item": "bloodandbones:gland",
+  "name": "organ.bloodandbones.slime_core",
+  "bloodless_name": "bloodless.organ.bloodandbones.slime_core",
+  "look": "core",
+  "tint": "#7ac45a",
+  "armour_pieces": [
+    "chestplate"
+  ],
+  "extra_drops": [
+    {
+      "item": "minecraft:slime_ball",
+      "min": 1,
+      "max": 2
+    }
+  ]
+}

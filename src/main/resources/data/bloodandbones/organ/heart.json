@@ -1,0 +1,11 @@
+{
+  "item": "bloodandbones:heart",
+  "name": "organ.bloodandbones.heart",
+  "bloodless_name": "bloodless.organ.bloodandbones.heart",
+  "look": "heart",
+  "tint": "#9b1b1b",
+  "armour_pieces": [
+    "chestplate"
+  ],
+  "extra_drops": []
+}

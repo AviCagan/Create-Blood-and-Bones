@@ -1,0 +1,11 @@
+{
+  "item": "bloodandbones:gland",
+  "name": "organ.bloodandbones.scute_gland",
+  "bloodless_name": "bloodless.organ.bloodandbones.scute_gland",
+  "look": "gland",
+  "tint": "#b87a6a",
+  "armour_pieces": [
+    "chestplate"
+  ],
+  "extra_drops": []
+}

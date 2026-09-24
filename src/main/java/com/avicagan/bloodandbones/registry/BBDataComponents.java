@@ -40,6 +40,10 @@ public final class BBDataComponents {
     public static final DeferredHolder<DataComponentType<?>, DataComponentType<com.avicagan.bloodandbones.parts.Source>> SOURCE = COMPONENTS.registerComponentType("source",
             builder -> builder.persistent(com.avicagan.bloodandbones.parts.Source.CODEC).networkSynchronized(com.avicagan.bloodandbones.parts.Source.STREAM_CODEC));
 
+    /** Which organ a Gland is (its file under data/&lt;ns&gt;/organ/), or a stamped vanilla item cut out as one. */
+    public static final DeferredHolder<DataComponentType<?>, DataComponentType<net.minecraft.resources.ResourceLocation>> ORGAN = COMPONENTS.registerComponentType("organ",
+            builder -> builder.persistent(net.minecraft.resources.ResourceLocation.CODEC).networkSynchronized(net.minecraft.resources.ResourceLocation.STREAM_CODEC));
+
     /** What a piece of carcass armour is made of. */
     public static final DeferredHolder<DataComponentType<?>, DataComponentType<com.avicagan.bloodandbones.parts.CarcassArmour>> CARCASS_ARMOUR = COMPONENTS.registerComponentType("carcass_armour",
             builder -> builder.persistent(com.avicagan.bloodandbones.parts.CarcassArmour.CODEC).networkSynchronized(com.avicagan.bloodandbones.parts.CarcassArmour.STREAM_CODEC));

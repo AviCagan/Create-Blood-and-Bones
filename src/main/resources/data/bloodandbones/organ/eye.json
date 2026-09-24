@@ -1,0 +1,11 @@
+{
+  "item": "bloodandbones:eye",
+  "name": "organ.bloodandbones.eye",
+  "bloodless_name": "bloodless.organ.bloodandbones.eye",
+  "look": "eye",
+  "tint": "#e8e4d8",
+  "armour_pieces": [
+    "helmet"
+  ],
+  "extra_drops": []
+}

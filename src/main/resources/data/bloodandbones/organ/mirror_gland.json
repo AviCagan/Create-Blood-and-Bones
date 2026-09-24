@@ -1,0 +1,11 @@
+{
+  "item": "bloodandbones:gland",
+  "name": "organ.bloodandbones.mirror_gland",
+  "bloodless_name": "bloodless.organ.bloodandbones.mirror_gland",
+  "look": "gland",
+  "tint": "#4a6ad9",
+  "armour_pieces": [
+    "chestplate"
+  ],
+  "extra_drops": []
+}

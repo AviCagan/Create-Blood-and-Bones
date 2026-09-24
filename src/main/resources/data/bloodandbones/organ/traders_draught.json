@@ -1,0 +1,11 @@
+{
+  "item": "bloodandbones:gland",
+  "name": "organ.bloodandbones.traders_draught",
+  "bloodless_name": "bloodless.organ.bloodandbones.traders_draught",
+  "look": "bladder",
+  "tint": "#4a7ab8",
+  "armour_pieces": [
+    "chestplate"
+  ],
+  "extra_drops": []
+}

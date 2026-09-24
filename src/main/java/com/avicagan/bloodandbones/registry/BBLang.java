@@ -123,8 +123,10 @@ public class BBLang {
                 "When R-Clicked with an Empty Hand", "You _lie down_ on it and choose which part to operate on. _Sneak_ to get up.",
                 "When Sneak-R-Clicked with an Empty Hand", "Takes back what lies on the table.",
                 "With Someone Else on It", "R-Click with an _empty hand_ to operate on them: another player, or a _mob_ you led onto it on a lead. What comes out is yours.",
-                "With a Carcass Piece on It", "R-Click with a _Cleaver_ to take its _organs_ out, one a cut: a body's heart, lungs and stomach, a head's eyes.",
+                "With a Carcass Piece on It", "R-Click with a _Cleaver_ to take its _organs_ out, one a cut: a body's heart, lungs, stomach and the _special organ_ its mob has (a sac, a gland, a core), a head's eyes. With nothing laid on it, the Cleaver works on a _carcass lying over it_ that is too heavy to carry.",
                 "Building a Minion", "With an _Assembly Frame_ fitted, lay a carcass _torso_ on it (or R-Click with an empty hand to take a whole carcass lying on it), then R-Click with carcass _heads_, _legs_, _arms_ and _tails_ of any mob to stitch them on. A _Cleaver_ takes the last back off; a bucket of _blood_ wakes it.");
+        bloodless("block.bloodandbones.surgery_table.tooltip.behaviour5",
+                "R-Click with a _Cleaver_ to take its _cores_ out, one a cut: a body's pump, bellows, hopper and the _special core_ its mob has, a head's lenses. With nothing laid on it, the Cleaver works on a _body lying over it_ that is too heavy to carry.");
         item("peg_leg",
                 "A _crude prosthetic_ leg of iron, leather and bone. Needs nothing to run.",
                 "When Fitted", "The leg works as it did: you can _sprint_ again. Nothing more.");
@@ -374,13 +376,15 @@ public class BBLang {
         String tiers = "Craft it with a _Blood Steel Ingot_, then a _Blood Diamond_, then a _Soul Netherite Ingot_: each tier gives more armour, toughness and durability than the last. Soul netherite does not burn.";
         String tiersBloodless = "Craft it with an _Essence Steel Ingot_, then an _Essence Diamond_, then a _Soul Netherite Ingot_: each tier gives more armour, toughness and durability than the last. Soul netherite does not burn.";
         String strap = "Craft it with a _Fluid Backtank_ to strap the tank on its back: prosthetics run on it as if it were worn, Spouts and Item Drains fill and empty it, and the armour is the better of the two. Craft the chestplate alone to take the tank off; if the chestplate breaks or burns, the tank falls free.";
-        java.util.Map<String, String> organs = java.util.Map.of("helmet", "an _eye_", "chestplate", "a _heart_, _lungs_ or a _stomach_", "leggings", "a _stomach_");
-        java.util.Map<String, String> coreNames = java.util.Map.of("helmet", "a _lens_", "chestplate", "a _pump_, _bellows_ or a _hopper_", "leggings", "a _hopper_");
+        java.util.Map<String, String> organs = java.util.Map.of("helmet", "an _eye_ or an _olfactory bulb_", "chestplate", "a _heart_, _lungs_ or a creeper's _powder sac_",
+                "leggings", "a _stomach_ or a spider's _spinneret_", "boots", "a _rabbit's foot_ or a goat's _leap gland_");
+        java.util.Map<String, String> coreNames = java.util.Map.of("helmet", "a _lens_ or a _scent filter_", "chestplate", "a _pump_, _bellows_ or a creeper's _powder core_",
+                "leggings", "a _hopper_ or a spider's _thread spinner_", "boots", "a _lucky charm_ or a goat's _spring core_");
         for (String piece : new String[]{"helmet", "leggings", "boots", "chestplate"}) {
             java.util.List<String> pairs = new java.util.ArrayList<>(java.util.List.of("When Worn", worn, "Fitting a Hide", hide));
             String organ = organs.get(piece);
             if (organ != null) {
-                pairs.addAll(java.util.List.of("Fitting an Organ", "Craft it with " + organ + " taken out of a mob on the Surgery Table to add that mob's _organ traits_. One organ a piece; a new one replaces the old, which comes back."));
+                pairs.addAll(java.util.List.of("Fitting an Organ", "Craft it with an organ taken out of a mob on the Surgery Table, such as " + organ + ", to add that mob's _organ traits_ (each organ says which pieces take it). One organ a piece; a new one replaces the old, which comes back."));
             }
             pairs.addAll(java.util.List.of("Upgrading", tiers));
             int upgrading = pairs.size() / 2;
@@ -397,7 +401,7 @@ public class BBLang {
             bloodless(key + "behaviour2", covering);
             if (organ != null) {
                 bloodless(key + "condition3", "Installing a Core");
-                bloodless(key + "behaviour3", "Craft it with " + coreNames.get(piece) + " taken out of a mob on the Surgery Table, as its _core_, to add that mob's _core traits_. One core a piece; a new one replaces the old, which comes back.");
+                bloodless(key + "behaviour3", "Craft it with a core taken out of a mob on the Surgery Table, such as " + coreNames.get(piece) + ", to add that mob's _core traits_ (each core says which pieces take it). One core a piece; a new one replaces the old, which comes back.");
             }
             bloodless(key + "behaviour" + upgrading, tiersBloodless);
         }
@@ -469,6 +473,7 @@ public class BBLang {
             BloodAndBones.REGISTRATE.addRawLang("organ.bloodandbones." + organ[0], organ[1]);
             bloodless("organ.bloodandbones." + organ[0], organ[2]);
         }
+        organs();
         BloodAndBones.REGISTRATE.addRawLang("bloodandbones.carcass_armour.tier", "Tier %s: %s");
         BloodAndBones.REGISTRATE.addRawLang("bloodandbones.carcass_armour.strapped", "Strapped on: %s");
         BloodAndBones.REGISTRATE.addRawLang("item.bloodandbones.raw_hide.of", "Raw %s Hide");
@@ -723,12 +728,12 @@ public class BBLang {
                 "Crafted with a plated chestplate, it straps onto the chestplate's back, fluid and all: worn, it is your tank, and the chestplate has the better armour of the two. Craft the chestplate alone to take the tank off again.");
         jei("carcass_armour",
                 "Carcass armour is made of scraps from the Mangler. Five head scraps of one mob make a helmet, four leg scraps boots. A chestplate is six torso scraps with two arm scraps of any one mob on top (the shoulders); leggings are four leg scraps with three tail scraps of any one mob, or more legs, on top (the hips). A mob with no bone of a kind uses its torso scraps there.",
-                "Craft a piece with one thing to fit it: hides of one mob (one for a helmet or boots, two for leggings, three for a chestplate) for its hide traits; an organ taken out of a mob on the Surgery Table (eyes in a helmet, a heart or lungs in a chestplate, a stomach in a chestplate or leggings) for its organ traits. What it replaces comes back.",
+                "Craft a piece with one thing to fit it: hides of one mob (one for a helmet or boots, two for leggings, three for a chestplate) for its hide traits; an organ taken out of a mob on the Surgery Table (a heart, eyes, a Gland, a rabbit's foot: each says which pieces take it, eyes a helmet, a heart a chestplate) for its organ traits. What it replaces comes back.",
                 "Tiers, in order: a Blood Steel Ingot, then a Blood Diamond, then a Soul Netherite Ingot, each giving more armour, toughness and durability than the last. Mechanical Crafters fit hides, organs and tiers too, but only where nothing comes back out.");
         bloodless("bloodandbones.jei.carcass_armour.1",
                 "Plated armour is made of salvage from the Mangler. Five pieces of head salvage from one mob make a helmet, four of leg salvage boots. A chestplate is six of torso salvage with two of arm salvage from any one mob on top (the shoulders); leggings are four of leg salvage with three of tail salvage from any one mob, or more legs, on top (the hips). A mob with no bone of a kind uses its torso salvage there.");
         bloodless("bloodandbones.jei.carcass_armour.2",
-                "Craft a piece with one thing to fit it: coverings of one mob (one for a helmet or boots, two for leggings, three for a chestplate) for its covering traits; a core taken out of a mob on the Surgery Table (lenses in a helmet, a pump or bellows in a chestplate, a hopper in a chestplate or leggings) for its core traits. What it replaces comes back.");
+                "Craft a piece with one thing to fit it: coverings of one mob (one for a helmet or boots, two for leggings, three for a chestplate) for its covering traits; a core taken out of a mob on the Surgery Table (a pump, lenses, a lucky charm: each says which pieces take it, lenses a helmet, a pump a chestplate) for its core traits. What it replaces comes back.");
         bloodless("bloodandbones.jei.carcass_armour.3",
                 "Tiers, in order: an Essence Steel Ingot, then an Essence Diamond, then a Soul Netherite Ingot, each giving more armour, toughness and durability than the last. Mechanical Crafters fit coverings, cores and tiers too, but only where nothing comes back out.");
         jei("minions",
@@ -737,6 +742,73 @@ public class BBLang {
                 "It runs on blood: a little all the time, more moving, working and fighting. Low, it walks to a Blood Trough to drink. Empty, it lies down where it is, alive, and nothing but a player can hurt it; give it blood and it gets up. Crouch-R-Click one lying down a few times to fold it up and carry it; set down, it works from there. Its maker's Cleaver on one lying down on an Assembly Frame table takes it back apart into a frame there.");
         jei("soul_blood",
                 "Soul Blood is blood with a soul in it. Mix blood, soul sand and a little liquid experience over a superheated Blaze Burner, or ferment blood with nether wart and soul soil under a Basin Lid.");
+    }
+
+    /** Organs as items (the Gland), their words, the Body Parts pages and the traits commands. */
+    private static void organs() {
+        item("gland",
+                "A special _organ_ cut out of a mob on the Surgery Table: a sac, a gland, a bulb, a core. Each mob has its own, and what it does comes from that mob.",
+                "In Carcass Armour", "Craft it with a piece of _carcass armour_ it fits (it says which) to add its mob's _organ traits_. A new organ replaces the old, which comes back.",
+                "In a Minion", "R-Click a minion being built on the _Assembly Frame_ with it: its _one special_. A new one replaces the old, which comes back.");
+        bloodless("item.bloodandbones.gland", "Core");
+        bloodless("item.bloodandbones.gland.tooltip.summary",
+                "A special _core_ taken out of a mob on the Surgery Table: a cell, a filter, a press, a tank. Each mob has its own, and what it does comes from that mob.");
+        bloodless("item.bloodandbones.gland.tooltip.condition1", "In Plated Armour");
+        bloodless("item.bloodandbones.gland.tooltip.behaviour1",
+                "Craft it with a piece of _plated armour_ it fits (it says which) to add its mob's _core traits_. A new core replaces the old, which comes back.");
+        bloodless("item.bloodandbones.gland.tooltip.condition2", "In a Construct");
+        bloodless("item.bloodandbones.gland.tooltip.behaviour2",
+                "R-Click a construct being built on the _Assembly Frame_ with it: its _one special_. A new one replaces the old, which comes back.");
+        BloodAndBones.REGISTRATE.addRawLang("item.bloodandbones.gland.of", "%s's %s");
+        BloodAndBones.REGISTRATE.addRawLang("bloodandbones.organ.of", "Cut out of: %s");
+        bloodless("bloodandbones.organ.of", "Taken from: %s");
+        BloodAndBones.REGISTRATE.addRawLang("bloodandbones.organ.armour", "In armour (%s): ");
+        BloodAndBones.REGISTRATE.addRawLang("bloodandbones.organ.minion", "In a minion: ");
+        BloodAndBones.REGISTRATE.addRawLang("bloodandbones.organ.nothing", "nothing");
+        BloodAndBones.REGISTRATE.addRawLang("bloodandbones.organ.inside", "Organs still in it: %s");
+        bloodless("bloodandbones.organ.inside", "Cores still in it: %s");
+        // the parts of a body by their data keys, for the traits commands and the Body Parts pages
+        for (String[] part : new String[][]{{"torso", "Torso"}, {"torso_ext", "Torso extension"}, {"neck", "Neck"}, {"head", "Head"}, {"arm", "Arm"},
+                {"leg", "Leg"}, {"tail", "Tail"}, {"extra", "Decoration"}}) {
+            BloodAndBones.REGISTRATE.addRawLang("bloodandbones.part_key." + part[0], part[1]);
+        }
+        BloodAndBones.REGISTRATE.addRawLang("bloodandbones.command.explain.title", "%s (%s): what its parts do");
+        BloodAndBones.REGISTRATE.addRawLang("bloodandbones.command.explain.layers", "Layers: %s");
+        BloodAndBones.REGISTRATE.addRawLang("bloodandbones.command.explain.material", "Scrap material: %s");
+        bloodless("bloodandbones.command.explain.material", "Salvage material: %s");
+        BloodAndBones.REGISTRATE.addRawLang("bloodandbones.command.explain.part", "%s: minion %s; armour %s");
+        BloodAndBones.REGISTRATE.addRawLang("bloodandbones.command.explain.hide", "Hide: %s");
+        bloodless("bloodandbones.command.explain.hide", "Covering: %s");
+        BloodAndBones.REGISTRATE.addRawLang("bloodandbones.command.explain.organs", "Organs in its %s: %s");
+        bloodless("bloodandbones.command.explain.organs", "Cores in its %s: %s");
+        BloodAndBones.REGISTRATE.addRawLang("bloodandbones.command.explain.organ", "%s: minion %s; armour (%s) %s");
+        BloodAndBones.REGISTRATE.addRawLang("bloodandbones.command.explain.set", "Full set %s: bonus %s; drawback %s");
+        BloodAndBones.REGISTRATE.addRawLang("bloodandbones.command.explain.nothing", "nothing");
+        BloodAndBones.REGISTRATE.addRawLang("bloodandbones.command.dump.done", "Wrote %s traits of %s mobs to %s");
+        BloodAndBones.REGISTRATE.addRawLang("bloodandbones.command.dump.failed", "Could not write the traits: %s");
+        // JEI's Body Parts pages and the organ fitting
+        BloodAndBones.REGISTRATE.addRawLang("bloodandbones.jei.category.body_parts", "Body Parts");
+        bloodless("bloodandbones.jei.category.body_parts", "Parts and Cores");
+        BloodAndBones.REGISTRATE.addRawLang("bloodandbones.jei.body_parts.organs", "Organs");
+        bloodless("bloodandbones.jei.body_parts.organs", "Cores");
+        BloodAndBones.REGISTRATE.addRawLang("bloodandbones.jei.body_parts.minion", " As a minion part: %s");
+        BloodAndBones.REGISTRATE.addRawLang("bloodandbones.jei.body_parts.armour", " In armour: %s");
+        BloodAndBones.REGISTRATE.addRawLang("bloodandbones.jei.body_parts.armour_piece", " In its %s: %s");
+        BloodAndBones.REGISTRATE.addRawLang("bloodandbones.jei.body_parts.hide_line", "Hide: %s");
+        bloodless("bloodandbones.jei.body_parts.hide_line", "Covering: %s");
+        BloodAndBones.REGISTRATE.addRawLang("bloodandbones.jei.body_parts.organ_line", "%s (%s): ");
+        BloodAndBones.REGISTRATE.addRawLang("bloodandbones.jei.body_parts.organ_minion", " In a minion: %s");
+        BloodAndBones.REGISTRATE.addRawLang("bloodandbones.jei.body_parts.organ_armour", " In armour (%s): %s");
+        BloodAndBones.REGISTRATE.addRawLang("bloodandbones.jei.body_parts.set", "Full set: %s");
+        BloodAndBones.REGISTRATE.addRawLang("bloodandbones.jei.body_parts.set_traits", " %s; drawback %s");
+        BloodAndBones.REGISTRATE.addRawLang("bloodandbones.jei.body_parts.nothing", "nothing");
+        jei("gland",
+                "Every mob has a special organ, some several: a creeper's powder sac, a cow's rumen, a blaze's core, a skeleton's marrow. Lay a carcass piece on a Surgery Table with its Surgical Rig and R-Click with a Cleaver: out come its organs, one a cut, each named for its mob. A carcass too heavy to carry gives them up lying over the table. Some bring more with them (a powder sac spills gunpowder).",
+                "Fit one into a piece of carcass armour in a crafting grid (each says which pieces take it), or into a minion on the Assembly Frame. What it does there comes from its mob: the Body Parts page of each mob lists them.");
+        bloodless("bloodandbones.jei.gland.1",
+                "Every mob has a special core, some several: a creeper's powder core, a cow's fermenter, a blaze's core, a skeleton's lean core. Lay a part on a Surgery Table with its Surgical Rig and R-Click with a Cleaver: out come its cores, one a click, each named for its mob. A body too heavy to carry gives them up lying over the table. Some bring more with them (a powder core spills gunpowder).");
+        bloodless("bloodandbones.jei.gland.2",
+                "Install one into a piece of plated armour in a crafting grid (each says which pieces take it), or into a construct on the Assembly Frame. What it does there comes from its mob: the Parts and Cores page of each mob lists them.");
     }
 
     private static void config(String key, String name, String tooltip) {

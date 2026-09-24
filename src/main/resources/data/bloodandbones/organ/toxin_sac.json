@@ -1,0 +1,11 @@
+{
+  "item": "bloodandbones:gland",
+  "name": "organ.bloodandbones.toxin_sac",
+  "bloodless_name": "bloodless.organ.bloodandbones.toxin_sac",
+  "look": "sac",
+  "tint": "#d9c83a",
+  "armour_pieces": [
+    "chestplate"
+  ],
+  "extra_drops": []
+}

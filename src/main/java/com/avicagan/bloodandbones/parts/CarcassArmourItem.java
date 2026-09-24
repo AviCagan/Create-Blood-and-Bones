@@ -198,7 +198,7 @@ public class CarcassArmourItem extends ArmorItem {
                 ? Component.translatable("bloodandbones.carcass_armour.hide", ScrapsItem.mobName(hide.entity().get()))
                 : Component.translatable("bloodandbones.carcass_armour.hide_plain")).withStyle(ChatFormatting.GRAY)));
         armour.organ().ifPresent(organ -> tooltip.add(Component.translatable("bloodandbones.carcass_armour.organ", ScrapsItem.mobName(organ.entity()),
-                Component.translatable("organ." + organ.organ().getNamespace() + "." + organ.organ().getPath())).withStyle(ChatFormatting.GRAY)));
+                Organs.name(store, organ.organ())).withStyle(ChatFormatting.GRAY)));
         ArmourTier tier = store.tier(armour.tier());
         if (tier != null) {
             tooltip.add(Component.translatable("bloodandbones.carcass_armour.tier", armour.tier(), tier.item().getDescription()).withStyle(ChatFormatting.GOLD));

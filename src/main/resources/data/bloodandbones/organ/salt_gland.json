@@ -1,0 +1,11 @@
+{
+  "item": "bloodandbones:gland",
+  "name": "organ.bloodandbones.salt_gland",
+  "bloodless_name": "bloodless.organ.bloodandbones.salt_gland",
+  "look": "gland",
+  "tint": "#d8e0e0",
+  "armour_pieces": [
+    "helmet"
+  ],
+  "extra_drops": []
+}

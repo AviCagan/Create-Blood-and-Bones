@@ -1,0 +1,11 @@
+{
+  "item": "bloodandbones:gland",
+  "name": "organ.bloodandbones.melon",
+  "bloodless_name": "bloodless.organ.bloodandbones.melon",
+  "look": "bulb",
+  "tint": "#9ab8c8",
+  "armour_pieces": [
+    "helmet"
+  ],
+  "extra_drops": []
+}

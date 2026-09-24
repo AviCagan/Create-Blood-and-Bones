@@ -1,0 +1,12 @@
+{
+  "item": "bloodandbones:gland",
+  "name": "organ.bloodandbones.stinger",
+  "bloodless_name": "bloodless.organ.bloodandbones.stinger",
+  "look": "spinneret",
+  "tint": "#e8c84a",
+  "armour_pieces": [
+    "chestplate",
+    "leggings"
+  ],
+  "extra_drops": []
+}

@@ -1,0 +1,11 @@
+{
+  "item": "bloodandbones:gland",
+  "name": "organ.bloodandbones.spit_gland",
+  "bloodless_name": "bloodless.organ.bloodandbones.spit_gland",
+  "look": "gland",
+  "tint": "#d9d0b0",
+  "armour_pieces": [
+    "helmet"
+  ],
+  "extra_drops": []
+}

@@ -105,7 +105,10 @@ public class PatientTests {
         helper.succeed();
     }
 
-    /** A cow's body piece gives a heart, lungs and a stomach to a Cleaver, then nothing; its head, two eyes. */
+    /**
+     * A cow's body piece gives a heart, lungs, a stomach and its rumen to a Cleaver, then nothing; its head, two eyes. A
+     * skeleton has no blood, and gives its marrow (docs/PARTS-AND-TRAITS.md section 7.1), then nothing.
+     */
     @GameTest(template = "empty", timeoutTicks = 20)
     public static void organsFromACarcass(GameTestHelper helper) {
         ServerLevel level = helper.getLevel();
@@ -115,15 +118,16 @@ public class PatientTests {
         String root = com.avicagan.bloodandbones.carcass.rig.RigManager.forEntity(cow).orElseThrow().root().name();
         table.put(piece(cow, root));
         ItemStack blade = new ItemStack(BBItems.CLEAVER.get());
-        for (int i = 0; i < 3; i++) {
+        for (int i = 0; i < 4; i++) {
             if (!Surgery.harvest(level, surgeon, table, blade)) {
                 helper.fail("Cut " + (i + 1) + " should take an organ out of the cow's body");
                 return;
             }
         }
         if (Surgery.harvest(level, surgeon, table, blade) || count(surgeon, BBItems.HEART.get()) != 1 || count(surgeon, BBItems.LUNGS.get()) != 1
-                || count(surgeon, BBItems.STOMACH.get()) != 1 || !CarcassPieceItem.piece(table.item()).traits().get(Surgery.ORGANS_TAKEN).equals("3")) {
-            helper.fail("A cow's body should give exactly a heart, lungs and a stomach");
+                || count(surgeon, BBItems.STOMACH.get()) != 1 || count(surgeon, BBItems.GLAND.get()) != 1
+                || !CarcassPieceItem.piece(table.item()).traits().get(Surgery.ORGANS_TAKEN).equals("4")) {
+            helper.fail("A cow's body should give exactly a heart, lungs, a stomach and its rumen");
             return;
         }
         table.take();
@@ -136,8 +140,8 @@ public class PatientTests {
         }
         table.take();
         table.put(piece(ResourceLocation.withDefaultNamespace("skeleton"), "body"));
-        if (Surgery.harvest(level, surgeon, table, blade)) {
-            helper.fail("A skeleton has no organs");
+        if (!Surgery.harvest(level, surgeon, table, blade) || count(surgeon, BBItems.GLAND.get()) != 2 || Surgery.harvest(level, surgeon, table, blade)) {
+            helper.fail("A skeleton has no blood, but gives its marrow and then nothing");
             return;
         }
         helper.succeed();

@@ -1,0 +1,12 @@
+{
+  "item": "bloodandbones:gland",
+  "name": "organ.bloodandbones.bamboo_gut",
+  "bloodless_name": "bloodless.organ.bloodandbones.bamboo_gut",
+  "look": "gut",
+  "tint": "#8fb34a",
+  "armour_pieces": [
+    "chestplate",
+    "leggings"
+  ],
+  "extra_drops": []
+}

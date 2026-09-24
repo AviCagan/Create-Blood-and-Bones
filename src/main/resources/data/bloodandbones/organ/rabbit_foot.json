@@ -1,0 +1,12 @@
+{
+  "item": "minecraft:rabbit_foot",
+  "name": "organ.bloodandbones.rabbit_foot",
+  "bloodless_name": "bloodless.organ.bloodandbones.rabbit_foot",
+  "look": "gland",
+  "tint": "#b89a7a",
+  "armour_pieces": [
+    "leggings",
+    "boots"
+  ],
+  "extra_drops": []
+}

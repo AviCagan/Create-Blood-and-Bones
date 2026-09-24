@@ -13,10 +13,12 @@ import java.util.Optional;
  * @param layers   the layer ids applied, in order, for "explain"
  * @param parts    by part key: the armour traits, for any piece and per piece, resolved to levels for this mob
  * @param minion   by part key: the minion data of each layer, in order, for minions to read
+ * @param organs   by organ id: what that organ of this mob does, on a minion and in armour
+ * @param organLists by part key: the organs a piece of that part holds, in the order they are cut out
  */
 public record ResolvedMob(ResourceLocation entity, List<ResourceLocation> layers, ResourceLocation material, int colour,
                           Map<String, Part> parts, Map<String, List<com.google.gson.JsonElement>> minion, List<TraitList.Resolved> hide,
-                          Map<ResourceLocation, Organ> organs, Optional<FullSet> fullSet) {
+                          Map<ResourceLocation, Organ> organs, Optional<FullSet> fullSet, Map<String, List<ResourceLocation>> organLists) {
     public record Part(List<TraitList.Resolved> armour, Map<String, List<TraitList.Resolved>> pieces) {
     }
 
@@ -41,5 +43,10 @@ public record ResolvedMob(ResourceLocation entity, List<ResourceLocation> layers
             }
         }
         return out;
+    }
+
+    /** The organs listed under one part key ("torso", "leg.hind"); none if it lists none. */
+    public List<ResourceLocation> organList(String key) {
+        return organLists.getOrDefault(key, List.of());
     }
 }

@@ -1,0 +1,18 @@
+{
+  "item": "bloodandbones:gland",
+  "name": "organ.bloodandbones.honey_stomach",
+  "bloodless_name": "bloodless.organ.bloodandbones.honey_stomach",
+  "look": "gut",
+  "tint": "#e8a52a",
+  "armour_pieces": [
+    "chestplate",
+    "leggings"
+  ],
+  "extra_drops": [
+    {
+      "item": "minecraft:honeycomb",
+      "min": 1,
+      "max": 1
+    }
+  ]
+}

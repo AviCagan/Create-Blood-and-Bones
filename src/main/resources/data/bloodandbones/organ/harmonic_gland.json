@@ -1,0 +1,11 @@
+{
+  "item": "bloodandbones:gland",
+  "name": "organ.bloodandbones.harmonic_gland",
+  "bloodless_name": "bloodless.organ.bloodandbones.harmonic_gland",
+  "look": "gland",
+  "tint": "#4ab8e6",
+  "armour_pieces": [
+    "chestplate"
+  ],
+  "extra_drops": []
+}

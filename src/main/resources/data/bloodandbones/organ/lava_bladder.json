@@ -1,0 +1,12 @@
+{
+  "item": "bloodandbones:gland",
+  "name": "organ.bloodandbones.lava_bladder",
+  "bloodless_name": "bloodless.organ.bloodandbones.lava_bladder",
+  "look": "bladder",
+  "tint": "#e0582a",
+  "armour_pieces": [
+    "chestplate",
+    "leggings"
+  ],
+  "extra_drops": []
+}

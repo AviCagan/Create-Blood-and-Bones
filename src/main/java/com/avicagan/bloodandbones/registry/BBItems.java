@@ -171,6 +171,17 @@ public class BBItems {
             .model(NonNullBiConsumer.noop())
             .lang("Scraps")
             .register();
+    /**
+     * The special organs, one item for all: which organ and whose are on the stack, its name and look from the organ's
+     * file. The creative tab and JEI show one of each organ the data names (GlandClient), not a blank one.
+     */
+    public static final ItemEntry<com.avicagan.bloodandbones.parts.GlandItem> GLAND = BloodAndBones.REGISTRATE
+            .item("gland", com.avicagan.bloodandbones.parts.GlandItem::new)
+            .properties(p -> p.stacksTo(16))
+            .model(NonNullBiConsumer.noop()) // by hand: a shape per look, tinted, with its bloodless machined core
+            .removeTab(BBCreativeTabs.MAIN.getKey())
+            .lang("Gland")
+            .register();
     public static final ItemEntry<com.avicagan.bloodandbones.parts.CarcassArmourItem> CARCASS_HELMET = carcassArmour("carcass_helmet", "Carcass Helmet", net.minecraft.world.item.ArmorItem.Type.HELMET);
     public static final ItemEntry<com.avicagan.bloodandbones.parts.CarcassArmourItem> CARCASS_CHESTPLATE = carcassArmour("carcass_chestplate", "Carcass Chestplate", net.minecraft.world.item.ArmorItem.Type.CHESTPLATE);
     public static final ItemEntry<com.avicagan.bloodandbones.parts.CarcassArmourItem> CARCASS_LEGGINGS = carcassArmour("carcass_leggings", "Carcass Leggings", net.minecraft.world.item.ArmorItem.Type.LEGGINGS);

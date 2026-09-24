@@ -20,12 +20,13 @@ import java.util.Optional;
  * @param members   entity ids and "#tag"s (mob files have none: the file's own path names the mob)
  * @param parts     by part key ("head", "leg", "leg.hind", "arm.wing"...): what it does on a minion, and in armour
  * @param boneSlots a mob file's slot for a bone the naming rules get wrong (the shulker's lid is an arm)
+ * @param organs    by part key ("torso", "head", "leg.hind"): the organs cut out of that piece at the Surgical Rig, in order
  */
 public record MobGroup(ResourceLocation id, Kind kind, int priority, List<String> members,
                        Optional<ResourceLocation> archetype, Optional<ResourceLocation> family, List<ResourceLocation> overlays,
                        Optional<ResourceLocation> scrapMaterial, Map<String, PartEntry> parts, Optional<TraitList> hide,
                        Map<ResourceLocation, OrganEntry> organTraits, Optional<FullSet> fullSet, Map<String, SlotInfo> boneSlots,
-                       Optional<Integer> colour) {
+                       Optional<Integer> colour, Map<String, OrganList> organs) {
     public enum Kind {
         ARCHETYPE, FAMILY, OVERLAY, MOB
     }
@@ -41,6 +42,38 @@ public record MobGroup(ResourceLocation id, Kind kind, int priority, List<String
     }
 
     public record OrganEntry(Optional<TraitList> minion, Optional<TraitList> armour) {
+    }
+
+    /**
+     * A list of organs in one layer, for one part. A plain list adds to what the layers below gave (organs can come
+     * twice: two eyes); {"add": [...], "remove": [ids]} edits instead, a removed organ going however many times it was
+     * there, and "replace": true throws away what was inherited first.
+     */
+    public record OrganList(List<ResourceLocation> add, List<ResourceLocation> remove, boolean replace) {
+        static OrganList parse(JsonElement json) {
+            if (json.isJsonArray()) {
+                return new OrganList(ids(json), List.of(), false);
+            }
+            JsonObject o = json.getAsJsonObject();
+            return new OrganList(o.has("add") ? ids(o.get("add")) : List.of(), o.has("remove") ? ids(o.get("remove")) : List.of(),
+                    o.has("replace") && o.get("replace").getAsBoolean());
+        }
+
+        private static List<ResourceLocation> ids(JsonElement json) {
+            List<ResourceLocation> out = new ArrayList<>();
+            for (JsonElement e : json.getAsJsonArray()) {
+                out.add(ResourceLocation.parse(e.getAsString()));
+            }
+            return List.copyOf(out);
+        }
+
+        /** This edit applied to what the layers below gave. */
+        public List<ResourceLocation> applyTo(List<ResourceLocation> inherited) {
+            List<ResourceLocation> out = new ArrayList<>(replace ? List.of() : inherited);
+            out.removeIf(remove::contains);
+            out.addAll(add);
+            return List.copyOf(out);
+        }
     }
 
     /** A full set from this one mob: its bonus and its drawback, always together. */
@@ -95,12 +128,18 @@ public record MobGroup(ResourceLocation id, Kind kind, int priority, List<String
             }
         }
         Optional<Integer> colour = json.has("colour") ? Optional.of(Integer.parseInt(json.get("colour").getAsString().replace("#", ""), 16)) : Optional.empty();
+        Map<String, OrganList> organLists = new LinkedHashMap<>();
+        if (json.has("organs")) {
+            for (Map.Entry<String, JsonElement> e : json.getAsJsonObject("organs").entrySet()) {
+                organLists.put(e.getKey(), OrganList.parse(e.getValue()));
+            }
+        }
         return new MobGroup(id, kind, json.has("priority") ? json.get("priority").getAsInt() : 0, List.copyOf(members),
                 json.has("archetype") ? Optional.of(ResourceLocation.parse(json.get("archetype").getAsString())) : Optional.empty(),
                 json.has("family") ? Optional.of(ResourceLocation.parse(json.get("family").getAsString())) : Optional.empty(),
                 List.copyOf(overlays),
                 json.has("scrap_material") ? Optional.of(ResourceLocation.parse(json.get("scrap_material").getAsString())) : Optional.empty(),
-                parts, opt(json, "hide", TraitList.CODEC, ops, id), organs, set, boneSlots, colour);
+                parts, opt(json, "hide", TraitList.CODEC, ops, id), organs, set, boneSlots, colour, organLists);
     }
 
     private static PartEntry part(JsonObject o, DynamicOps<JsonElement> ops, ResourceLocation id) {

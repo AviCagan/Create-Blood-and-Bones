@@ -1,0 +1,18 @@
+{
+  "item": "bloodandbones:gland",
+  "name": "organ.bloodandbones.bacon_fat",
+  "bloodless_name": "bloodless.organ.bloodandbones.bacon_fat",
+  "look": "fat",
+  "tint": "#f0c8b4",
+  "armour_pieces": [
+    "chestplate",
+    "leggings"
+  ],
+  "extra_drops": [
+    {
+      "item": "bloodandbones:animal_fat",
+      "min": 1,
+      "max": 2
+    }
+  ]
+}

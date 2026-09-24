@@ -320,57 +320,154 @@ public final class Surgery {
     }
 
     /**
-     * A Cleaver on a carcass piece lying on the table takes out its organs, one a cut: a body's heart, lungs
-     * and stomach, a head's eyes, each named for the animal and stamped with it (for carcass armour). A mob
-     * with no blood has none.
+     * A Cleaver at the Surgical Rig takes a mob's organs out, one a cut, in the order its data lists them
+     * (docs/PARTS-AND-TRAITS.md section 7.1): out of a carcass piece laid on the table (a body's heart, lungs, stomach and
+     * any special organ its mob has, a head's eyes, a rabbit's hind leg its foot), or, with nothing laid on it, out of a
+     * carcass lying over it (a cow or a horse is too heavy to carry: the Assembly Frame's work zone), its torso's first,
+     * then whatever is still attached. Each comes out as its organ's file says (a heart, a Gland, a rabbit's foot),
+     * stamped with its mob, with anything that comes out with it (a creeper's powder sac spills gunpowder). A mob with no
+     * blood gives what it has instead (a skeleton its marrow, a blaze its core), dry.
      *
      * @return whether an organ came out
      */
     public static boolean harvest(ServerLevel level, Player surgeon, SurgeryTableBlockEntity table, ItemStack blade) {
+        com.avicagan.bloodandbones.parts.PartsData.Store store = com.avicagan.bloodandbones.parts.PartsData.SERVER;
         ItemStack stack = table.item();
         com.avicagan.bloodandbones.item.CarcassPieceItem.Piece piece = com.avicagan.bloodandbones.item.CarcassPieceItem.piece(stack);
-        if (piece == null) {
-            return false;
-        }
-        var type = net.minecraft.core.registries.BuiltInRegistries.ENTITY_TYPE.getOptional(piece.entity());
-        if (type.isEmpty() || type.get().is(com.avicagan.bloodandbones.registry.BBTags.BLOODLESS)) {
-            surgeon.displayClientMessage(Component.translatable("bloodandbones.surgery.no_organs"), true);
-            return false;
-        }
-        String kind = com.avicagan.bloodandbones.registry.BBItemAttributes.PiecePart.kindOf(piece, level);
-        java.util.List<BodyPart.Kind> organs = switch (kind) {
-            case "body" -> java.util.List.of(BodyPart.Kind.HEART, BodyPart.Kind.LUNGS, BodyPart.Kind.STOMACH);
-            case "head" -> java.util.List.of(BodyPart.Kind.EYE, BodyPart.Kind.EYE);
-            default -> java.util.List.of();
-        };
-        int taken = organsTaken(piece);
-        if (taken >= organs.size()) {
-            surgeon.displayClientMessage(Component.translatable("bloodandbones.surgery.no_organs"), true);
-            return false;
-        }
-        java.util.Map<String, String> traits = new java.util.HashMap<>(piece.traits());
-        traits.put(ORGANS_TAKEN, Integer.toString(taken + 1));
-        stack.set(com.avicagan.bloodandbones.registry.BBDataComponents.PIECE.get(), new com.avicagan.bloodandbones.item.CarcassPieceItem.Piece(
-                piece.entity(), piece.bone(), piece.texture(), piece.coats(), piece.freshness(), piece.skinned(), java.util.Map.copyOf(traits),
-                piece.blood(), piece.bloodMax(), piece.decay(), piece.baby()));
-        table.notifyUpdate();
         BlockPos pos = table.getBlockPos();
-        // a Deployer's stand-in would hold it and stall: it drops on the table, as the Butcher's Table's cuts do
-        give(surgeon instanceof net.neoforged.neoforge.common.util.FakePlayer ? null : surgeon,
-                com.avicagan.bloodandbones.registry.BBItems.partItem(organs.get(taken)).of(piece.entity(), piece.baby()), pos, level);
-        com.avicagan.bloodandbones.carcass.Blood.bloody(blade, level);
         Vector3d at = new Vector3d(pos.getX() + 0.5, pos.getY() + 1.1, pos.getZ() + 0.5);
-        com.avicagan.bloodandbones.carcass.Blood.burst(level, at, 8, com.avicagan.bloodandbones.carcass.Blood.soul(piece.entity()));
-        level.playSound(null, pos, com.avicagan.bloodandbones.registry.BBSounds.CARCASS_CUT.get(), SoundSource.PLAYERS, 1.0F, 1.1F);
+        net.minecraft.resources.ResourceLocation entity;
+        boolean baby;
+        net.minecraft.resources.ResourceLocation organ;
+        if (piece != null) {
+            java.util.List<net.minecraft.resources.ResourceLocation> held = com.avicagan.bloodandbones.parts.Organs.held(store, piece.entity(), piece.baby(), piece.bone());
+            int taken = organsTaken(piece);
+            if (taken >= held.size()) {
+                surgeon.displayClientMessage(Component.translatable("bloodandbones.surgery.no_organs"), true);
+                return false;
+            }
+            java.util.Map<String, String> traits = new java.util.HashMap<>(piece.traits());
+            traits.put(ORGANS_TAKEN, Integer.toString(taken + 1));
+            stack.set(com.avicagan.bloodandbones.registry.BBDataComponents.PIECE.get(), new com.avicagan.bloodandbones.item.CarcassPieceItem.Piece(
+                    piece.entity(), piece.bone(), piece.texture(), piece.coats(), piece.freshness(), piece.skinned(), java.util.Map.copyOf(traits),
+                    piece.blood(), piece.bloodMax(), piece.decay(), piece.baby()));
+            table.notifyUpdate();
+            entity = piece.entity();
+            baby = piece.baby();
+            organ = held.get(taken);
+        } else {
+            com.avicagan.bloodandbones.carcass.CarcassSavedData.Carcass carcass = stack.isEmpty() ? carcassOn(level, pos) : null;
+            if (carcass == null) {
+                return false;
+            }
+            // the torso first, then the rest still attached, each counting its own
+            java.util.List<String> bones = new java.util.ArrayList<>(java.util.List.of(carcass.rootBone));
+            carcass.bones.keySet().stream().filter(b -> !b.equals(carcass.rootBone)).forEach(bones::add);
+            String bone = null;
+            java.util.List<net.minecraft.resources.ResourceLocation> held = java.util.List.of();
+            int taken = 0;
+            for (String each : bones) {
+                held = com.avicagan.bloodandbones.parts.Organs.held(store, carcass.entity, carcass.baby, each);
+                taken = organsTaken(carcass.traits, each, each.equals(carcass.rootBone));
+                if (taken < held.size()) {
+                    bone = each;
+                    break;
+                }
+            }
+            if (bone == null) {
+                surgeon.displayClientMessage(Component.translatable("bloodandbones.surgery.no_organs"), true);
+                return false;
+            }
+            carcass.traits.put(ORGANS_TAKEN + ":" + bone, Integer.toString(taken + 1));
+            com.avicagan.bloodandbones.carcass.CarcassSavedData.get(level).setDirty();
+            Vector3d there = com.avicagan.bloodandbones.carcass.CarcassAssembler.boneWorldPosition(level, carcass, bone);
+            if (there != null) {
+                at = there;
+            }
+            entity = carcass.entity;
+            baby = carcass.baby;
+            organ = held.get(taken);
+        }
+        ItemStack out = com.avicagan.bloodandbones.parts.Organs.stack(store, organ, entity, baby);
+        // a Deployer's stand-in would hold it and stall: it drops on the table, as the Butcher's Table's cuts do
+        Player receiver = surgeon instanceof net.neoforged.neoforge.common.util.FakePlayer ? null : surgeon;
+        give(receiver, out.copy(), pos, level);
+        for (ItemStack extra : com.avicagan.bloodandbones.parts.Organs.extras(com.avicagan.bloodandbones.parts.Organs.kind(store, organ), level.random)) {
+            give(receiver, extra, pos, level);
+        }
+        // it tears out wet and squelching, bits of it flying; out of a mob with no blood it cracks out dry
+        level.sendParticles(new net.minecraft.core.particles.ItemParticleOption(net.minecraft.core.particles.ParticleTypes.ITEM, out), at.x, at.y, at.z,
+                6, 0.1, 0.05, 0.1, 0.08);
+        boolean bleeds = net.minecraft.core.registries.BuiltInRegistries.ENTITY_TYPE.getOptional(entity)
+                .map(type -> !type.is(com.avicagan.bloodandbones.registry.BBTags.BLOODLESS)).orElse(true);
+        if (bleeds) {
+            com.avicagan.bloodandbones.carcass.Blood.bloody(blade, level);
+            com.avicagan.bloodandbones.carcass.Blood.burst(level, at, 8, com.avicagan.bloodandbones.carcass.Blood.soul(entity));
+            com.avicagan.bloodandbones.carcass.Blood.gibs(level, at, 2);
+            level.playSound(null, pos, com.avicagan.bloodandbones.registry.BBSounds.CARCASS_CUT.get(), SoundSource.PLAYERS, 1.0F, 1.1F);
+            level.playSound(null, pos, SoundEvents.SLIME_SQUISH_SMALL, SoundSource.PLAYERS, 0.9F, 0.6F);
+            level.playSound(null, pos, SoundEvents.HONEY_BLOCK_SLIDE, SoundSource.PLAYERS, 0.6F, 0.7F);
+        } else {
+            level.sendParticles(new net.minecraft.core.particles.ItemParticleOption(net.minecraft.core.particles.ParticleTypes.ITEM,
+                    new ItemStack(net.minecraft.world.item.Items.BONE_MEAL)), at.x, at.y, at.z, 8, 0.1, 0.05, 0.1, 0.06);
+            level.playSound(null, pos, com.avicagan.bloodandbones.registry.BBSounds.CARCASS_SEVER.get(), SoundSource.PLAYERS, 0.8F, 1.4F);
+        }
         return true;
     }
 
-    /** The trait on a carcass piece counting the organs already taken from it. */
+    /**
+     * A carcass lying over this table, nearest first, that nobody is dragging: the Assembly Frame's work zone (0.75
+     * past each edge, 2.5 up), which the Surgical Rig works in too.
+     */
+    @org.jetbrains.annotations.Nullable
+    public static com.avicagan.bloodandbones.carcass.CarcassSavedData.Carcass carcassOn(ServerLevel level, BlockPos table) {
+        double spread = com.avicagan.bloodandbones.minion.MinionAssembly.SPREAD;
+        net.minecraft.world.phys.AABB zone = new net.minecraft.world.phys.AABB(table.getX() - spread, table.getY() + 0.5, table.getZ() - spread,
+                table.getX() + 1.0 + spread, table.getY() + 1.0 + com.avicagan.bloodandbones.minion.MinionAssembly.REACH, table.getZ() + 1.0 + spread);
+        com.avicagan.bloodandbones.carcass.CarcassSavedData.Carcass best = null;
+        double bestDistance = Double.MAX_VALUE;
+        for (com.avicagan.bloodandbones.carcass.CarcassSavedData.Carcass carcass : com.avicagan.bloodandbones.carcass.CarcassSavedData.get(level).all()) {
+            Vector3d at = com.avicagan.bloodandbones.carcass.CarcassAssembler.boneWorldPosition(level, carcass, carcass.rootBone);
+            if (at == null || !zone.contains(at.x, at.y, at.z) || com.avicagan.bloodandbones.carcass.CarcassDrag.isDraggingCarcass(carcass.id)) {
+                continue;
+            }
+            double d = at.distanceSquared(table.getX() + 0.5, table.getY() + 1.0, table.getZ() + 0.5);
+            if (d < bestDistance) {
+                bestDistance = d;
+                best = carcass;
+            }
+        }
+        return best;
+    }
+
+    /**
+     * The trait on a carcass piece counting the organs already taken from it. A carcass lying whole counts each bone's
+     * under its own key ("organs_taken:head"), which a piece cut off it still reads.
+     */
     public static final String ORGANS_TAKEN = "organs_taken";
 
     public static int organsTaken(com.avicagan.bloodandbones.item.CarcassPieceItem.Piece piece) {
+        String own = piece.traits().get(ORGANS_TAKEN);
+        return count(own != null ? own : piece.traits().get(ORGANS_TAKEN + ":" + piece.bone()));
+    }
+
+    /** How many organs were taken out of one bone of a carcass (a piece put down counted its own under the plain key). */
+    public static int organsTaken(java.util.Map<String, String> traits, String bone, boolean root) {
+        int own = count(traits.get(ORGANS_TAKEN + ":" + bone));
+        return root ? Math.max(own, count(traits.get(ORGANS_TAKEN))) : own;
+    }
+
+    /** A carried piece put down whole: what was taken out of it is its bone's own count now, not the whole carcass's. */
+    public static void putDown(java.util.Map<String, String> traits, String bone) {
+        String own = traits.remove(ORGANS_TAKEN);
+        if (own != null) {
+            traits.put(ORGANS_TAKEN + ":" + bone, own);
+        }
+    }
+
+    private static int count(@org.jetbrains.annotations.Nullable String value) {
         try {
-            return Integer.parseInt(piece.traits().getOrDefault(ORGANS_TAKEN, "0"));
+            return value == null ? 0 : Integer.parseInt(value);
         } catch (NumberFormatException e) {
             return 0;
         }

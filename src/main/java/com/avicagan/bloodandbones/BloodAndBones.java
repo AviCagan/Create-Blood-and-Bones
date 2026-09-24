@@ -55,6 +55,9 @@ public class BloodAndBones {
         NeoForge.EVENT_BUS.register(com.avicagan.bloodandbones.cyber.SetBonus.class);
         NeoForge.EVENT_BUS.register(com.avicagan.bloodandbones.parts.TraitEvents.class);
         NeoForge.EVENT_BUS.register(com.avicagan.bloodandbones.minion.MinionJobs.class);
+        // organs as items: their words on every organ item and carcass piece; the traits commands
+        NeoForge.EVENT_BUS.register(com.avicagan.bloodandbones.parts.Organs.class);
+        NeoForge.EVENT_BUS.addListener(com.avicagan.bloodandbones.parts.TraitsCommand::onRegisterCommands);
         // the four groups of trait effects, each with its own handlers (docs/ARCHITECTURE-PROPOSAL.md section 15.8)
         NeoForge.EVENT_BUS.register(com.avicagan.bloodandbones.parts.effect.MotionEffects.class);
         NeoForge.EVENT_BUS.register(com.avicagan.bloodandbones.parts.effect.RangedEffects.class);
@@ -103,6 +106,7 @@ public class BloodAndBones {
         modEventBus.addListener((net.neoforged.neoforge.registries.datamaps.RegisterDataMapTypesEvent event) -> {
             event.register(com.avicagan.bloodandbones.body.Vent.EFFECTS);
             event.register(com.avicagan.bloodandbones.parts.Hides.SOURCES);
+            event.register(com.avicagan.bloodandbones.parts.Organs.SOURCES);
         });
 
         LOGGER.info("Create: Blood & Bones loaded");

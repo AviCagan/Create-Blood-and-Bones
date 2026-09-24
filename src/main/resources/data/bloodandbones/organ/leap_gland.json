@@ -1,0 +1,12 @@
+{
+  "item": "bloodandbones:gland",
+  "name": "organ.bloodandbones.leap_gland",
+  "bloodless_name": "bloodless.organ.bloodandbones.leap_gland",
+  "look": "gland",
+  "tint": "#c9c0a8",
+  "armour_pieces": [
+    "leggings",
+    "boots"
+  ],
+  "extra_drops": []
+}

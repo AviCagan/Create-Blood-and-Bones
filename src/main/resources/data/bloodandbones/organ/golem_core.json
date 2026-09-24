@@ -1,0 +1,17 @@
+{
+  "item": "bloodandbones:gland",
+  "name": "organ.bloodandbones.golem_core",
+  "bloodless_name": "bloodless.organ.bloodandbones.golem_core",
+  "look": "core",
+  "tint": "#b8b0a0",
+  "armour_pieces": [
+    "chestplate"
+  ],
+  "extra_drops": [
+    {
+      "item": "minecraft:iron_nugget",
+      "min": 2,
+      "max": 5
+    }
+  ]
+}

@@ -48,7 +48,7 @@ public final class PartsData {
     /** The file kinds, each a folder under data/&lt;ns&gt;/. */
     public enum Kind {
         MOB_GROUP("mob_group"), MOB_TRAITS("mob_traits"), TRAIT("trait"), SCRAP_MATERIAL("scrap_material"), BONE_SLOT_RULES("bone_slot_rules"),
-        ARMOUR_TIER("armour_tier");
+        ARMOUR_TIER("armour_tier"), ORGAN("organ");
 
         public final String folder;
 
@@ -65,6 +65,7 @@ public final class PartsData {
         private volatile Map<ResourceLocation, Trait> traits = Map.of();
         private volatile Map<ResourceLocation, ScrapMaterial> materials = Map.of();
         private volatile Map<Integer, ArmourTier> tiers = Map.of();
+        private volatile Map<ResourceLocation, OrganKind> organs = Map.of();
         private volatile PartSlots.Rules slotRules = PartSlots.DEFAULT;
         private final Map<String, ResolvedMob> resolved = new ConcurrentHashMap<>();
         private volatile int generation;
@@ -113,6 +114,12 @@ public final class PartsData {
                         out.put(tier.order(), tier);
                     }));
                     tiers = Map.copyOf(out);
+                }
+                case ORGAN -> {
+                    // sorted, so an item two files name (never in the mod's own data) always answers to the same one
+                    Map<ResourceLocation, OrganKind> out = new java.util.TreeMap<>();
+                    files.forEach((id, text) -> parse(id, text, json -> out.put(id, MobGroup.decode(OrganKind.CODEC, json, ops, "organ " + id))));
+                    organs = java.util.Collections.unmodifiableMap(new LinkedHashMap<>(out));
                 }
                 case BONE_SLOT_RULES -> {
                     List<PartSlots.Rule> rules = new ArrayList<>();
@@ -202,6 +209,28 @@ public final class PartsData {
             return null;
         }
 
+        /** An organ's own file (its item, names, look, the armour pieces it fits), or null if it has none. */
+        @Nullable
+        public OrganKind organ(ResourceLocation id) {
+            return organs.get(id);
+        }
+
+        /** Every organ file, by id. */
+        public Map<ResourceLocation, OrganKind> organs() {
+            return organs;
+        }
+
+        /** The organ an item is, by the file naming it as its item (the heart item is the heart), or null for none. */
+        @Nullable
+        public ResourceLocation organFor(net.minecraft.world.item.Item item) {
+            for (Map.Entry<ResourceLocation, OrganKind> e : organs.entrySet()) {
+                if (e.getValue().item() == item) {
+                    return e.getKey();
+                }
+            }
+            return null;
+        }
+
         public PartSlots.Rules slotRules() {
             return slotRules;
         }
@@ -260,6 +289,7 @@ public final class PartsData {
             List<TraitList.Resolved> hide = List.of();
             Map<ResourceLocation, List<TraitList.Resolved>> organMinion = new LinkedHashMap<>();
             Map<ResourceLocation, List<TraitList.Resolved>> organArmour = new LinkedHashMap<>();
+            Map<String, List<ResourceLocation>> organLists = new LinkedHashMap<>();
             String setName = null;
             List<TraitList.Resolved> bonus = List.of();
             List<TraitList.Resolved> drawback = List.of();
@@ -292,6 +322,7 @@ public final class PartsData {
                     e.getValue().minion().ifPresent(t -> organMinion.put(organ, t.applyTo(organMinion.getOrDefault(organ, List.of()), entity)));
                     e.getValue().armour().ifPresent(t -> organArmour.put(organ, t.applyTo(organArmour.getOrDefault(organ, List.of()), entity)));
                 }
+                layer.organs().forEach((key, list) -> organLists.put(key, list.applyTo(organLists.getOrDefault(key, List.of()))));
                 if (layer.fullSet().isPresent()) {
                     MobGroup.FullSet set = layer.fullSet().get();
                     if (set.replace()) {
@@ -319,7 +350,9 @@ public final class PartsData {
                     : Optional.of(new ResolvedMob.FullSet(setName == null ? "set.bloodandbones.pure" : setName, bonus, drawback));
             Map<String, List<JsonElement>> minionCopy = new LinkedHashMap<>();
             minion.forEach((k, v) -> minionCopy.put(k, List.copyOf(v)));
-            return new ResolvedMob(entity, List.copyOf(ids), material, colour, Map.copyOf(parts), Map.copyOf(minionCopy), hide, Map.copyOf(organs), set);
+            organLists.values().removeIf(List::isEmpty);
+            return new ResolvedMob(entity, List.copyOf(ids), material, colour, Map.copyOf(parts), Map.copyOf(minionCopy), hide, Map.copyOf(organs), set,
+                    java.util.Collections.unmodifiableMap(organLists));
         }
 
         /** The group of this kind that lists the mob, by id or tag; the highest priority wins. */

@@ -1,0 +1,11 @@
+{
+  "item": "bloodandbones:gland",
+  "name": "organ.bloodandbones.elder_eye",
+  "bloodless_name": "bloodless.organ.bloodandbones.elder_eye",
+  "look": "eye",
+  "tint": "#cfc6a8",
+  "armour_pieces": [
+    "helmet"
+  ],
+  "extra_drops": []
+}

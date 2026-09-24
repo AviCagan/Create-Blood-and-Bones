@@ -1,0 +1,12 @@
+{
+  "item": "bloodandbones:gland",
+  "name": "organ.bloodandbones.gizzard",
+  "bloodless_name": "bloodless.organ.bloodandbones.gizzard",
+  "look": "gut",
+  "tint": "#b86a4a",
+  "armour_pieces": [
+    "chestplate",
+    "leggings"
+  ],
+  "extra_drops": []
+}

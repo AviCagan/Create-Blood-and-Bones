@@ -1,0 +1,163 @@
+{
+  "parent": "minecraft:item/generated",
+  "textures": {
+    "layer0": "bloodandbones:item/gland/gland",
+    "layer1": "bloodandbones:item/gland/gland_gore"
+  },
+  "overrides": [
+    {
+      "predicate": {
+        "bloodandbones:look": 0.0,
+        "bloodandbones:bloodless": 0
+      },
+      "model": "bloodandbones:item/gland_gland"
+    },
+    {
+      "predicate": {
+        "bloodandbones:look": 0.0,
+        "bloodandbones:bloodless": 1
+      },
+      "model": "bloodandbones:item/gland_gland_clean"
+    },
+    {
+      "predicate": {
+        "bloodandbones:look": 1.0,
+        "bloodandbones:bloodless": 0
+      },
+      "model": "bloodandbones:item/gland_sac"
+    },
+    {
+      "predicate": {
+        "bloodandbones:look": 1.0,
+        "bloodandbones:bloodless": 1
+      },
+      "model": "bloodandbones:item/gland_sac_clean"
+    },
+    {
+      "predicate": {
+        "bloodandbones:look": 2.0,
+        "bloodandbones:bloodless": 0
+      },
+      "model": "bloodandbones:item/gland_bulb"
+    },
+    {
+      "predicate": {
+        "bloodandbones:look": 2.0,
+        "bloodandbones:bloodless": 1
+      },
+      "model": "bloodandbones:item/gland_bulb_clean"
+    },
+    {
+      "predicate": {
+        "bloodandbones:look": 3.0,
+        "bloodandbones:bloodless": 0
+      },
+      "model": "bloodandbones:item/gland_core"
+    },
+    {
+      "predicate": {
+        "bloodandbones:look": 3.0,
+        "bloodandbones:bloodless": 1
+      },
+      "model": "bloodandbones:item/gland_core_clean"
+    },
+    {
+      "predicate": {
+        "bloodandbones:look": 4.0,
+        "bloodandbones:bloodless": 0
+      },
+      "model": "bloodandbones:item/gland_bladder"
+    },
+    {
+      "predicate": {
+        "bloodandbones:look": 4.0,
+        "bloodandbones:bloodless": 1
+      },
+      "model": "bloodandbones:item/gland_bladder_clean"
+    },
+    {
+      "predicate": {
+        "bloodandbones:look": 5.0,
+        "bloodandbones:bloodless": 0
+      },
+      "model": "bloodandbones:item/gland_spinneret"
+    },
+    {
+      "predicate": {
+        "bloodandbones:look": 5.0,
+        "bloodandbones:bloodless": 1
+      },
+      "model": "bloodandbones:item/gland_spinneret_clean"
+    },
+    {
+      "predicate": {
+        "bloodandbones:look": 6.0,
+        "bloodandbones:bloodless": 0
+      },
+      "model": "bloodandbones:item/gland_fat"
+    },
+    {
+      "predicate": {
+        "bloodandbones:look": 6.0,
+        "bloodandbones:bloodless": 1
+      },
+      "model": "bloodandbones:item/gland_fat_clean"
+    },
+    {
+      "predicate": {
+        "bloodandbones:look": 7.0,
+        "bloodandbones:bloodless": 0
+      },
+      "model": "bloodandbones:item/gland_marrow"
+    },
+    {
+      "predicate": {
+        "bloodandbones:look": 7.0,
+        "bloodandbones:bloodless": 1
+      },
+      "model": "bloodandbones:item/gland_marrow_clean"
+    },
+    {
+      "predicate": {
+        "bloodandbones:look": 8.0,
+        "bloodandbones:bloodless": 0
+      },
+      "model": "bloodandbones:item/gland_gut"
+    },
+    {
+      "predicate": {
+        "bloodandbones:look": 8.0,
+        "bloodandbones:bloodless": 1
+      },
+      "model": "bloodandbones:item/gland_gut_clean"
+    },
+    {
+      "predicate": {
+        "bloodandbones:look": 9.0,
+        "bloodandbones:bloodless": 0
+      },
+      "model": "bloodandbones:item/gland_heart"
+    },
+    {
+      "predicate": {
+        "bloodandbones:look": 9.0,
+        "bloodandbones:bloodless": 1
+      },
+      "model": "bloodandbones:item/gland_heart_clean"
+    },
+    {
+      "predicate": {
+        "bloodandbones:look": 10.0,
+        "bloodandbones:bloodless": 0
+      },
+      "model": "bloodandbones:item/gland_eye"
+    },
+    {
+      "predicate": {
+        "bloodandbones:look": 10.0,
+        "bloodandbones:bloodless": 1
+      },
+      "model": "bloodandbones:item/gland_eye_clean"
+    }
+  ]
+}
