@@ -317,6 +317,19 @@ Everything below is in development builds only; the art is placeholder (see the 
   shulker lid's frontal deflect, the phantom's night speed, the Elder Eye's curse on attackers, the hoglin's toss,
   evoker fangs on hit, the Golem Core mending a minion standing still, a zombie torso mending in the dark, and the
   zombie villager's Curable Heart.
+- Organs you can hold: every special organ (a cow's rumen, a creeper's powder sac, a sniffer's olfactory bulb, a blaze's
+  core, about seventy) comes out as a Gland, named for its mob and organ, a tinted sac, gland, bulb, core, bladder,
+  spinneret, fat, marrow, gut, heart or eye, wet and bloody (a machined core with a glowing window in bloodless mode).
+  A Cleaver at the Surgical Rig takes a piece's organs out one a cut, in order: a torso's heart, lungs, stomach and
+  special organ, a head's eyes, a rabbit's hind leg its foot. Some bring more with them (a powder sac spills gunpowder,
+  a blaze core blaze powder, marrow bone meal). Mobs with no blood give their core instead of nothing (a skeleton its
+  marrow). A carcass too heavy to carry gives up its organs lying over the table. Each organ fits only the armour
+  pieces it says (a powder sac a chestplate, a rabbit's foot leggings or boots), and a minion's organ slot; the one it
+  replaces comes back. Rabbit's feet, ink sacs, glow ink sacs and spider eyes that mobs drop count as their mobs'
+  organs. Tooltips say what an organ gives in armour and in a minion, and what is still inside a carcass piece.
+- JEI: a Body Parts page per mob (what each part, its hide and each organ gives, on a minion and in armour, and its
+  full set), and each organ's fitting shown as a crafting recipe. `/bloodandbones traits explain <mob>` says the same
+  in chat, and `/bloodandbones traits dump` writes every mob's traits to a CSV file for balancing.
 
 ### Presentation
 
@@ -350,8 +363,7 @@ Everything below is in development builds only; the art is placeholder (see the 
 - Minions: every job but the sapper is built (it waits for a way to set off a detonating organ on a
   marked target). What a minion holds is not drawn yet. A hauler with no room to walk on past a hook or rack gives
   up and tries again later.
-- Special organs (glands, sacs, cores) are in every mob's data but have no item yet, so they cannot be cut out and
-  fitted in survival; the heart, lungs, stomach and eyes can. What each mob's signature still waits for (movement
-  modes, mounts, variants) is logged by the signature lint game test.
+- What each mob's signature still waits for (movement modes, mounts, variants) is logged by the signature lint game
+  test. Both of a rabbit's hind legs give a foot. Squelching sounds do not turn to clanks in bloodless mode yet.
 - A half-built minion frame from a development build before the rebuild loses what had been fitted to it.
 - All art is placeholder (see the README).

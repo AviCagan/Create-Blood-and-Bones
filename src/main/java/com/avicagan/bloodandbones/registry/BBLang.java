@@ -779,8 +779,7 @@ public class BBLang {
         BloodAndBones.REGISTRATE.addRawLang("bloodandbones.command.explain.part", "%s: minion %s; armour %s");
         BloodAndBones.REGISTRATE.addRawLang("bloodandbones.command.explain.hide", "Hide: %s");
         bloodless("bloodandbones.command.explain.hide", "Covering: %s");
-        BloodAndBones.REGISTRATE.addRawLang("bloodandbones.command.explain.organs", "Organs in its %s: %s");
-        bloodless("bloodandbones.command.explain.organs", "Cores in its %s: %s");
+        BloodAndBones.REGISTRATE.addRawLang("bloodandbones.command.explain.organs", "%s holds: %s");
         BloodAndBones.REGISTRATE.addRawLang("bloodandbones.command.explain.organ", "%s: minion %s; armour (%s) %s");
         BloodAndBones.REGISTRATE.addRawLang("bloodandbones.command.explain.set", "Full set %s: bonus %s; drawback %s");
         BloodAndBones.REGISTRATE.addRawLang("bloodandbones.command.explain.nothing", "nothing");

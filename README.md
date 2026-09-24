@@ -70,7 +70,10 @@ provided by [Sable](https://github.com/ryanhcode/sable).
   sprays whatever the tank holds (lava burns, water douses, experience gives experience); the Port Arm
   plugs the tank into pipes at a Backtank Port. Everyone sees what you are missing and what is fitted.
   The table takes other patients too: another player, a mob led onto it on a lead, or a carcass piece
-  whose organs a Cleaver (or a Deployer holding one) takes out one a cut.
+  (or a carcass too heavy to carry, lying over it) whose organs a Cleaver (or a Deployer holding one)
+  takes out one a cut: its heart, lungs and stomach, its eyes, and its own special organs, a creeper's
+  powder sac, a cow's rumen, a sniffer's olfactory bulb, a skeleton's marrow. Each fits carcass armour or
+  a minion for that mob's ability.
 - **Minions.** Stitched together from carcass pieces on the Surgery Table (with its Assembly Frame): a
   torso, then the heads, legs, arms and tails of any mob. Every piece does its own thing: the torso sets
   size and health, the head the job and bite, the legs speed and how it moves, so a cow on rabbit legs
@@ -94,7 +97,9 @@ provided by [Sable](https://github.com/ryanhcode/sable).
   on for everyone with `/gamerule bloodandbonesBloodless true`. Nothing about how the game plays
   changes.
 - Tooltips (hold Shift), JEI pages (including a Butchery page per mob showing what its carcass
-  gives), Ponder scenes and an advancement tab explain it all in game.
+  gives and a Body Parts page showing what its parts and organs do), Ponder scenes and an
+  advancement tab explain it all in game. `/bloodandbones traits explain <mob>` says what a mob's
+  parts do; `/bloodandbones traits dump` writes them all to a CSV file.
 
 ## Building
 
@@ -107,15 +112,15 @@ incremental. `./gradlew runClient` / `runServer` / `runData` are configured by M
 
 ### Development aids
 
-- `./gradlew runGameTestServer` runs the game tests headless (417: every rigged mob and baby,
-  butchery, rot, bleeding, machines and their filters, cooking and display, decoration, surgery, implants, backtanks, carcass armour and its traits, trait effects, minions and their jobs, chains, recipes,
+- `./gradlew runGameTestServer` runs the game tests headless (428: every rigged mob and baby,
+  butchery, rot, bleeding, machines and their filters, cooking and display, decoration, surgery, organs, implants, backtanks, carcass armour and its traits, trait effects, minions and their jobs, chains, recipes,
   advancements and sounds).
 - `./gradlew runData -Dbloodandbones.dump_layers=minecraft:goat#main,...` writes those vanilla
   models' part trees to `run/build/layer-dump.txt`, for writing new rig targets in
   `src/main/rig_targets`.
 - `./gradlew runClient -Dbloodandbones.showcase=true` makes a flat world, builds a scene of
-  carcasses, machines and the rest, screenshots it (and five Ponder scenes and the cow's JEI
-  page) into `run/screenshots/showcase_*.png`, and quits. It runs without a screen under
+  carcasses, machines and the rest, screenshots it (and five Ponder scenes, the cow's JEI
+  page and a creeper's powder sac's) into `run/screenshots/showcase_*.png`, and quits. It runs without a screen under
   `xvfb-run`. `-Dbloodandbones.showcase=bloodless` does the same with bloodless mode forced on.
 
 ## Licence

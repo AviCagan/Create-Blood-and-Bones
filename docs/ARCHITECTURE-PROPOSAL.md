@@ -1604,7 +1604,7 @@ iron, blood diamonds and soul blood netherite".
     Organ Ability key, cooldowns and blood cost, and the new triggers are (15.8).
   - Which piece takes which organ is in code (`ORGAN_PIECES`) until organ files with `armour_pieces` exist; the
     gland item, `organ_sources` (rabbit's foot, ink sacs, spider eye) and `Surgery.harvest` reading organ lists by slot
-    are slice 3.
+    are slice 3. (All built since: 15.16.)
   - Wool is in no data map and is not stamped, so it stacks with sheared wool and is no hide: a sheep's covering is
     its raw hide.
   - A strapped tank keeps its tier and fluid only; a name or enchantments on it are lost.
@@ -2088,7 +2088,8 @@ its signature. 59 new mob files (69 in all), each listing its signature facets.
   Gizzard"), the goat's Leap Gland (a goat's long jump) and the sniffer's Olfactory Bulb (blood scent, until senses can
   outline blocks). Every special organ has a name and a bloodless one that is a machine part (spec 7.10: Rumen is a
   Fermenter, the Rot Gut an Iron Hopper, the Spleen a Reserve Cell), in `BBLang`. The organs have no item yet (the gland
-  item and harvesting by these lists are slice 3's), so in play only a piece or build given one directly has it.
+  item and harvesting by these lists are slice 3's), so in play only a piece or build given one directly has it. (They
+  have since: 15.16.)
 - **Sets.** The rotting and skeletal overlays' sets (Shambler, Ossuary) are now whole sets, replacing the archetype's and
   family's (spec 7.7: an overlay's set beats them). To let the tag overlays after them still add their drawbacks
   (undead's inverted healing, frozen's heat), rotting and skeletal apply first among overlays: priority 105 and 106 (the
@@ -2134,7 +2135,7 @@ its signature. 59 new mob files (69 in all), each listing its signature facets.
   does not; bacon fat and brown fat hold more blood; villager arms carry nine more; a cow's rumen and a rabbit's foot in
   armour). The cow now has its own file and the rabbit the snow overlay, which `cowAndRabbitResolve` and `allMobsResolve`
   expect.
-- **Section 9 tests still not possible**: `skeletonGivesMarrow` (harvesting organs by these lists), `phantomWingsLiftCow`
+- **Section 9 tests still not possible**: `skeletonGivesMarrow` (harvesting organs by these lists; built in 15.16), `phantomWingsLiftCow`
   and `chickenWingsDoNot` (flight from wing lift), `moddedZombieByTagIsRotting` (a modded entity type to tag).
 
 ### 15.10 Review of the minion work (fixed)
@@ -2468,3 +2469,103 @@ The effects and the jobs were built apart; together, four things broke that neit
   them beside their minions.
 - **Not fixed yet:** a lava walker stands on lava but cannot walk across it; its path treats lava as a wall and it wades
   in when it moves. It needs a strider's navigation (lava as a stable, walkable node), which is on the next minion list.
+
+### 15.16 Organs as items (slice 3's organ half; spec 4.9, 5.7, 7.1 and 7.3)
+
+The brief's Armor section: "An organ adds one special ability. Every mob has at least one; some have several." Every
+mob's data already named its organs and what they do (15.9), but only the heart, lungs, stomach and eyes had items, so
+in survival nobody could cut a rumen or a powder sac out and fit it.
+
+- **Organ files** (`parts/OrganKind`, `data/<ns>/organ/<id>.json`, spec 4.9: item, name, bloodless_name, look, tint,
+  armour_pieces, extra_drops), loaded by `PartsData` as a sixth kind and sent to clients with the others. One for each
+  of the 77 organs the groups and mob files name (`everyOrganHasAFile` lists any that has none). The generic heart,
+  lungs, stomach and eye point at their own items, so self-surgery and the fittings made before work as they did; the
+  rabbit's foot, ink sac and glow sac are the vanilla items; the other 70 are the Gland. An organ with no file (a
+  datapack's) comes out as a plain Gland that fits a chestplate.
+- **Organ lists** (`MobGroup.organs`, `ResolvedMob.organLists`): the "organs" of each layer are now read, by part key,
+  layered as trait lists are (a plain list adds, and organs may come twice: two eyes; `remove` takes every one of that
+  organ; `replace` starts again), so the bloodless overlay's removals and the skeletal overlay's marrow apply.
+- **The Gland** (`parts/GlandItem`, `bloodandbones:gland`): one item carrying the organ's id (`bloodandbones:organ`, a new
+  component) and the `source` stamp (mob, the part it came out of, baby), stacking to 16 with its like. Its name comes from
+  the organ file ("Creeper's Powder Sac"; in bloodless mode its `bloodless_name`, "Creeper's Powder Core"). Every organ
+  item, the heart and a plain rabbit's foot too, says on its tooltip whose it is, which armour pieces take it and what it
+  gives there, and what it gives a minion, from its mob's `organ_traits` (what each does while Ctrl is held); a carcass
+  piece says which organs are still in it (`Organs.onTooltip`). Its look is one of eleven shapes by the file's "look"
+  (gland, sac, bulb, core, bladder, spinneret, fat, marrow, gut, heart, eye), grey flesh tinted with the file's colour
+  through an item colour handler, with a wet overlay on top (a shine, dark veins, a torn vessel, blood running off the
+  bottom); in bloodless mode the same outline as a machined steel core, riveted, the colour glowing through a window
+  (`client/GlandClient`, item properties `look` and `bloodless`). The creative tab lists one of each organ, as the first
+  mob holding it gives it. Placeholder art, drawn by a script, checked on screen in both modes.
+- **Whose an unstamped item is** (`Organs.SOURCES`, `data_maps/item/organ_sources.json`, as `hide_sources`): a rabbit's
+  foot is a rabbit's rabbit_foot, an ink sac a squid's ink_sac, a glow ink sac a glow squid's glow_sac, a spider eye a
+  spider's eye. An organ the map already gives to its own mob comes out plain, so it stacks with the ones mobs drop; one
+  cut out of another mob is stamped (a glow squid's ink sac). `organSourcesInkSacIsSquid`.
+- **Harvesting** (`Surgery.harvest`, the Surgical Rig): the Cleaver takes a piece's organs out in its lists' order, one a
+  cut (`Organs.held`: its slot's list, then its form's and sub-slot's, "leg.hind" for a rabbit's haunch; a body that is
+  its own head, a blaze or a slime, holds its head's organs too; a neck or torso extension holds none). Each comes out as
+  its file says, stamped, with its extra drops (a powder sac 1 to 2 gunpowder, a blaze core blaze powder, marrow bone
+  meal, a golem core iron nuggets...). A mob with no blood is no longer refused: it gives what it has (a skeleton its
+  marrow, a creeper its sac), dry, the blade left clean, a puff of bone dust and a crack instead of the squelch and spray.
+  The piece counts what was taken (`organs_taken`, as before, so a blind head is still two eyes out).
+  `cleaverTakesTorsoOrgansInOrder` (a cow's torso: heart, lungs, stomach, rumen; a creeper's: its sac and gunpowder; a
+  rabbit's hind leg its foot, its front leg nothing), `skeletonGivesMarrow` (`PatientTests.organsFromACarcass` now expects
+  the rumen and the marrow too).
+- **From a heavy carcass** (spec 6.2: "the same work-zone rule lets the Surgical Rig take organs out of a heavy carcass
+  lying over it"): with nothing laid on the table and nobody on it, a Cleaver used on it goes into the nearest carcass
+  lying in the Assembly Frame's work zone (`Surgery.carcassOn`, 0.75 past each edge, 2.5 up, not one being dragged)
+  instead of being laid down: its torso's organs first, then each bone still attached, each bone counting its own
+  (`organs_taken:<bone>` on the carcass, which a piece cut off it reads, and a piece put down again turns its own count
+  into its bone's). `heavyCarcassOrgansOnRig` (a whole cow: its four, then its head's two eyes, the Cleaver kept in hand).
+- **Fitting** (`CarcassArmourFittingRecipe`, `MinionAssembly.fitOrgan` unchanged): `Organs.of` reads any stack as an
+  organ (a stamped Gland, a stamped heart, a mapped vanilla item) and `Organs.stack` makes one again, so the old one comes
+  back exactly as it went in, in armour and on the Assembly Frame. Which pieces take it is the file's `armour_pieces`,
+  no longer a map in code: eyes and head organs a helmet, hearts and most cores a chestplate, guts and fats a chestplate or
+  leggings, a rabbit's foot or a leap gland leggings or boots, a lanolin gland any piece. Its traits then work where
+  15.8 built them: the chestplate's Organ Ability key, a minion's organ slot. `glandFitsOnlyAllowedPieces`,
+  `creeperSacChestplateEndToEnd` (cut out with a Cleaver click, fitted in a grid, worn with a tank of blood, the key
+  pressed below half health: the blast spares the wearer, hurts the zombie beside, costs 50 mB), `glandInMinionGivesTraits`.
+- **JEI** (`compat/jei/BodyPartsCategory`, `BBJeiPlugin`): a Body Parts page per rigged mob ("Parts and Cores" in
+  bloodless mode) beside its Butchery page: its spawn egg, the organ items the Surgical Rig cuts out of it (so JEI finds
+  the page from a Gland), its hide items, and a scrolling list of what each part gives a minion and armour (per piece
+  where the data says), its hide, each organ (which piece holds it, which armour pieces take it, what it gives in each),
+  and its full set. Each organ fitting is shown as a crafting recipe of its own (a piece its file allows and the organ, as
+  the first mob holding it gives it, make the piece with it fitted), and the Gland has an information page. Glands are one
+  JEI entry per organ (a subtype by organ id). Checked on screen in both modes.
+- **Commands** (`parts/TraitsCommand`, spec 4.11): `/bloodandbones traits explain <mob> [baby]` lists its layers (with
+  their kinds), its scrap material, each part key's minion and armour traits, its hide, the organs each part holds, what
+  each organ does (on a minion, and in which pieces of armour) and its full set. `/bloodandbones traits dump` (operators)
+  writes `bloodandbones-traits.csv` in the server's folder: one row per trait of every rigged mob, with its archetype,
+  family, overlays, material, facet (a part key, the hide, an organ, a set) and host (minion, armour, a piece, a set's
+  bonus or drawback), and a row per organ in each part's list, about 2500 rows. `explainCommandRuns`.
+- **Words**: the organ names were already in `BBLang` with bloodless machine-part names (15.9); now the files point at
+  them. New wording for the Gland (a Core in bloodless mode), its tooltip, the Body Parts page, the commands, the Surgery
+  Table's and every armour piece's description (every piece now names organs that fit it), each with bloodless wording.
+  `bloodlessOrganNames` (every organ's bloodless name free of flesh words, the new words, and a clean model and textures
+  for every look).
+- **Shared files touched, and why**: `body/Surgery` (harvest by organ lists, the heavy carcass, the counts),
+  `body/SurgeryTableBlock` (a Cleaver on an empty table over a carcass), `item/CarcassPieceItem` (one line: a piece put
+  down keeps its organ count as its bone's), `parts/CarcassArmourFittingRecipe` (organs by file), `parts/CarcassArmourItem`
+  (the organ's name from its file), `parts/MobGroup`, `ResolvedMob` and `PartsData` (organ lists and files),
+  `registry/BBItems`, `BBDataComponents` and `BBLang`, `BloodAndBones` (the data map, the tooltip handler, the command),
+  `compat/jei/BBJeiPlugin`, `client/DevShowcase` (the Gland in the hotbar, and the creeper's Body Parts and fitting pages
+  photographed), `gametest/PatientTests` (the rumen and the marrow). No file in `minion/` changed: the Assembly Frame's
+  organ slot takes a Gland through `CarcassArmourFittingRecipe.organ`, which it already called.
+- **Found on the way, not fixed here (the minion jobs are another branch's)**: two job tests fail now and then on the
+  starting commit as well, shown by running many copies of each at once there (`haulerLaysCarcassOnRack` once in 50 to
+  100 copies, `hunterWithMeatHookLeavesCarcass` twice in 50); one or the other failed in 2 of the 19 full runs made for
+  this slice. The hauler lets a body down when its torso is within 0.8 of the tray's middle (`Haul.ON_TRAY`), which is
+  past the tray's rim (a rack is a block with 8-pixel rims): let down over the rim, the body tips off onto the floor
+  beside the rack, out of the reach the bleeding looks in; its next passes start from right beside the rack, the tow line
+  too short to bring the torso inside the rims, and it lets it down there again (its lowest point, still by the rim,
+  finds the rack through the tray's catch round it), until after three it gives up. The hunter closes to about two
+  blocks of a cow standing still, its navigation done, and never strikes: vanilla's melee goal paths to the target again
+  only if the target has moved a block (or one tick in twenty), and each path ends where it stands, out of reach.
+- **Left out**: the sounds do not change to clanks in bloodless mode (nothing in the mod swaps sounds by that setting
+  yet). A Deployer holding a Cleaver over a heavy carcass should work as it does over a piece (it clicks as a player
+  does), but is not tested. Organ lists name which part holds an organ, not which bone of it, so both of a rabbit's
+  haunches give a foot. The explain command lists every organ its data gives traits to, the ones a live mob gives up on
+  the table (a creeper's heart) as well as those its carcass holds. The creative tab and JEI take the organ files the
+  client had when they were built; a `/reload` that adds organ files shows in JEI (which restarts) but not in the
+  creative tab until the next world. The spec's powder sac bloodless name is "Charge Cell"; the data's is "Powder Core"
+  (Motion's wording, kept).
+- The suite is 428 tests (417 before, and eleven new in `OrganTests`).

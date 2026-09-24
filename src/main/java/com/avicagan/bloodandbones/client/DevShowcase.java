@@ -194,18 +194,33 @@ public final class DevShowcase {
                 int phase = ticks % PONDER_GAP;
                 ticks++;
                 if (scene >= PONDERS.size()) {
+                    // the cow's pages first, then where a creeper's powder sac comes from (its Body Parts page), then where it goes (fitting it)
+                    int page = scene - PONDERS.size();
+                    String[] names = {"jei.png", "jei_organs.png", "jei_fitting.png"};
+                    ItemStack sac = com.avicagan.bloodandbones.parts.Organs.stack(com.avicagan.bloodandbones.parts.PartsData.CLIENT,
+                            BloodAndBones.asResource("powder_sac"), net.minecraft.resources.ResourceLocation.withDefaultNamespace("creeper"), false);
                     if (phase == 0 && com.avicagan.bloodandbones.compat.jei.BBJeiPlugin.runtime != null) {
                         mc.setScreen(null);
                         // the cow's page: what a cow's carcass gives
                         var jei = com.avicagan.bloodandbones.compat.jei.BBJeiPlugin.runtime;
                         // and every item of this mod in the list beside it, to see their icons
-                        jei.getIngredientFilter().setFilterText("@bloodandbones");
+                        jei.getIngredientFilter().setFilterText(page > 0 ? "@bloodandbones gland" : "@bloodandbones");
                         jei.getRecipesGui().show(jei.getJeiHelpers().getFocusFactory().createFocus(
-                                mezz.jei.api.recipe.RecipeIngredientRole.INPUT, mezz.jei.api.constants.VanillaTypes.ITEM_STACK,
-                                new ItemStack(net.minecraft.world.item.Items.COW_SPAWN_EGG)));
-                    } else if (phase == PONDER_GAP - 1 || com.avicagan.bloodandbones.compat.jei.BBJeiPlugin.runtime == null) {
-                        Screenshot.grab(mc.gameDirectory, PREFIX + "jei.png", mc.getMainRenderTarget(), message -> {
+                                page == 1 ? mezz.jei.api.recipe.RecipeIngredientRole.OUTPUT : mezz.jei.api.recipe.RecipeIngredientRole.INPUT,
+                                mezz.jei.api.constants.VanillaTypes.ITEM_STACK, page > 0 ? sac : new ItemStack(net.minecraft.world.item.Items.COW_SPAWN_EGG)));
+                    } else if (page < names.length - 1 && phase == PONDER_GAP - 1 && com.avicagan.bloodandbones.compat.jei.BBJeiPlugin.runtime != null) {
+                        Screenshot.grab(mc.gameDirectory, PREFIX + names[page], mc.getMainRenderTarget(), message -> {
                         });
+                    } else if (phase == PONDER_GAP - 1 || com.avicagan.bloodandbones.compat.jei.BBJeiPlugin.runtime == null) {
+                        Screenshot.grab(mc.gameDirectory, PREFIX + names[Math.min(page, names.length - 1)], mc.getMainRenderTarget(), message -> {
+                        });
+                        BloodAndBones.LOGGER.info("[showcase] gland: {} | {}", sac.getHoverName().getString(), sac.getTooltipLines(
+                                net.minecraft.world.item.Item.TooltipContext.of(mc.level), mc.player, net.minecraft.world.item.TooltipFlag.Default.NORMAL)
+                                .stream().map(net.minecraft.network.chat.Component::getString).toList());
+                        // what /bloodandbones traits explain says of a creeper, as a player reads it
+                        BloodAndBones.LOGGER.info("[showcase] explain:\n{}", String.join("\n", com.avicagan.bloodandbones.parts.TraitsCommand.explain(
+                                com.avicagan.bloodandbones.parts.PartsData.CLIENT, net.minecraft.resources.ResourceLocation.withDefaultNamespace("creeper"), false)
+                                .stream().map(net.minecraft.network.chat.Component::getString).toList()));
                         // names as the player reads them: reworded in bloodless mode
                         BloodAndBones.LOGGER.info("[showcase] names: {} | {} | {} | {} | {}",
                                 BBItems.BLOOD_STEEL_INGOT.asStack().getHoverName().getString(),
@@ -393,6 +408,9 @@ public final class DevShowcase {
                         player.getInventory().setItem(5, player.getItemBySlot(net.minecraft.world.entity.EquipmentSlot.HEAD).copy());
                         player.getInventory().setItem(6, player.getItemBySlot(net.minecraft.world.entity.EquipmentSlot.LEGS).copy());
                         player.getInventory().setItem(7, player.getItemBySlot(net.minecraft.world.entity.EquipmentSlot.FEET).copy());
+                        // and in hand, a creeper's powder sac cut out of it
+                        player.getInventory().setItem(8, com.avicagan.bloodandbones.parts.Organs.stack(store, BloodAndBones.asResource("powder_sac"),
+                                net.minecraft.resources.ResourceLocation.withDefaultNamespace("creeper"), false));
                         player.getInventory().selected = 8;
                         player.teleportTo(player.serverLevel(), player.getX(), player.getY(), player.getZ(), 180.0F, 10.0F);
                     });
