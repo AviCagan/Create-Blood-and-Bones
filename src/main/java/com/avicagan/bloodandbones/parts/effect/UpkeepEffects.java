@@ -125,10 +125,11 @@ public final class UpkeepEffects {
         BBLang.bloodless("trait.bloodandbones.glow_gland", "Glow Reservoir");
         BBLang.bloodless("trait.bloodandbones.glow_gland.desc", "A minion presses out a glow ink sac every 10 minutes, for 15 mB of essence.");
         BBLang.trait("honey_stomach", "Honey Stomach", "A minion brings up honey into a glass bottle it carries every minute, for 20 mB of blood. "
-                + "Use a glass bottle on it to have honey there and then, for the same.");
+                + "Use a glass bottle on it to have honey there and then, for the same. Each minute it also grows a crop within 4 blocks, as a bee does.");
         BBLang.bloodless("trait.bloodandbones.honey_stomach", "Honey Hopper");
         BBLang.bloodless("trait.bloodandbones.honey_stomach.desc", "A minion dispenses honey into a glass bottle it carries every minute, "
-                + "for 20 mB of essence. Use a glass bottle on it to have honey there and then, for the same.");
+                + "for 20 mB of essence. Use a glass bottle on it to have honey there and then, for the same. Each minute it also grows a crop "
+                + "within 4 blocks, as a bee does.");
         BBLang.trait("scute_shed", "Scute Shed", "A minion sheds an armadillo scute into what it carries every 5 minutes, for 20 mB of blood.");
         BBLang.trait("morning_gift", "Morning Gift", "At dawn a minion turns up a gift, as a cat does for its owner, and keeps it.");
         // diet
@@ -155,6 +156,7 @@ public final class UpkeepEffects {
         BBLang.trait("leaky", "Leaky", "A minion goes through half as much blood again.");
         BBLang.trait("marrow", "Marrow", "A minion goes through a fifth less blood.");
         BBLang.bloodless("trait.bloodandbones.marrow", "Lean Core");
+        BBLang.trait("lean", "Lean", "Your implants, or a minion's body, go through a tenth less blood a level.");
         // mending, healing and saves
         BBLang.trait("repair_with_iron", "Iron Mending", "An iron ingot used on a minion mends 25 health, flesh or brass.");
         BBLang.trait("cleanse", "Cleanse", "Ability: clears every harmful effect on you. 50 mB of blood.");

@@ -14,6 +14,15 @@
         "cost_mb": 20,
         "sound": "minecraft:item.bottle.fill"
       }
+    },
+    {
+      "trigger": "tick",
+      "interval": 1200,
+      "effect": {
+        "type": "bloodandbones:aura",
+        "action": "bonemeal",
+        "radius": 4
+      }
     }
   ]
 }

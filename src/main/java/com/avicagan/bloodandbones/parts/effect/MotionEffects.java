@@ -135,7 +135,7 @@ public final class MotionEffects {
         BBLang.bloodless("organ.bloodandbones.powder_sac", "Powder Core");
         BBLang.raw("bloodandbones.configuration.minion_block_damage", "Minions break blocks");
         BBLang.raw("bloodandbones.configuration.minion_block_damage.tooltip",
-                "Whether minions and trait blasts may break blocks (a self-destruct, trampling), where the mobGriefing game rule also allows it.");
+                "Whether minions and trait blasts may break blocks (a self-destruct, trampling, a minion's fireballs), where the mobGriefing game rule also allows it.");
     }
 
     /** Its network payloads; a client-bound one's handler calls into {@code MotionClient} inside its lambda. */
@@ -493,8 +493,11 @@ public final class MotionEffects {
         }
     }
 
-    /** Endermen never go for a minion with the ender mask (ender calm). */
-    @SubscribeEvent
+    /**
+     * Endermen never go for a minion with the ender mask. Early, with Social's kin, so a target called off here never sets
+     * off the minion's targeted effects or an alert.
+     */
+    @SubscribeEvent(priority = EventPriority.HIGH)
     public static void onTargeting(LivingChangeTargetEvent event) {
         if (event.getEntity() instanceof EnderMan && event.getNewAboutToBeSetTarget() instanceof MinionEntity minion
                 && flag(minion, FlagEffect.ENDER_MASK) > 0) {

@@ -241,12 +241,13 @@ Everything below is in development builds only; the art is placeholder (see the 
   pack hunting, auras (a purr that heals your minions, an item magnet, a calm, a roar, a horde called to your
   defence, poison, wither and fatigue), and glowing armour pieces and minions.
 - Upkeep traits: flesh minions lay eggs, give milk and stew (use a bucket or bowl on them), grow wool in their sheep's
-  colour, spin string, squeeze out ink and bring up honey, paying blood for each; brass makes nothing. Minions mend on
-  their blood (brass never mends itself), take an iron ingot for 25 health, carry more (saddlebags, a chest on a beast of
-  burden), hold more blood (a hump) or less efficiently (leaky), eat rotten flesh and raw meat for blood, and forage
-  grass, seeds or mushrooms until half full. Armour can make seeds, bamboo and mushrooms food, fill you more, poison you
-  on cookies, cheat death once in a while (a minion collapses instead), and burn you in the sun, hurt you in water or
-  heat, or slow you once you have been dry too long. A new Blood Upkeep attribute scales what implants and minions drink.
+  colour, spin string, squeeze out ink and bring up honey (growing crops nearby as a bee does), paying blood for each;
+  brass makes nothing. Minions mend on their blood (brass never mends itself), take an iron ingot for 25 health, carry
+  more (saddlebags, a chest on a beast of burden), hold more blood (a hump) or less efficiently (leaky), eat rotten
+  flesh and raw meat for blood, and forage grass, seeds or mushrooms until half full. Armour can make seeds, bamboo and
+  mushrooms food, fill you more, poison you on cookies, cheat death once in a while (a minion collapses instead), and
+  burn you in the sun, hurt you in water or heat, or slow you once you have been dry too long. A new Blood Upkeep
+  attribute scales what implants and minions drink, and the Lean trait lowers it.
 
 ### Presentation
 

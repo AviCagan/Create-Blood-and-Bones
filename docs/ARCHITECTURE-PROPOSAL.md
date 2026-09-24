@@ -1771,7 +1771,7 @@ glides or bounces: design risk 2's run with lag on a real client and a dedicated
     having zeroed it.
   - powder_snow, ender_mask, piglin_neutral: the armour's own hooks. Vanilla asks only the boots about powder snow and
     only the helmet about the mask, so the mask from any other piece also cancels `EnderManAngerEvent`; on a minion it
-    stops endermen taking it as a target (ender calm).
+    stops endermen taking it as a target (the ender_calm trait itself is Social's kin since the merge, below).
   - silent_steps: `VanillaGameEvent` STEP, HIT_GROUND and SPLASH from the host cancelled; a minion `dampensVibrations`.
   - quick_draw: `LivingEntityUseItemEvent.Tick` takes `strength` extra ticks off a bow or crossbow each tick (twice as
     fast at 1), the same on both sides.
@@ -1819,7 +1819,7 @@ glides or bounces: design risk 2's run with lag on a real client and a dedicated
   `impulseLeapOnActivate`, `windBurstCushionsLanding`, `silentStepsNoVibration`, `minionLavaWalkStandsOnLava`,
   `hissHalvesVisibility`, `quickDrawDrawsTwiceAsFast`, `invertedHealingSwaps`, `trampleNeedsGriefingAndConfig`.
 - **Left out**, waiting on other groups' types: lava_wader and frost_path (the vanilla adapter's `replace_disk` and the
-  `cooled_crust` block, Ranged), displacer (`blink_target`, Ranged), rideable (mount, no group yet). `loyal` has no test:
+  `cooled_crust` block, Ranged), displacer (`blink_target`, Ranged), all three since built by Ranged (below); rideable (mount, no group yet). `loyal` has no test:
   its maker must be a player in the world's player list, which a game test sharing one world should not add.
 - **Shared files touched**: `BBServerConfig` (the `minion_block_damage` setting spec 6.11 names), and
   `bloodandbones.mixins.json` (one line for the mixin).
@@ -1862,8 +1862,8 @@ client under xvfb in both modes):
   target; a hurt or attack entry at whoever else is in it. Falling kinds are aimed a little high as a skeleton aims.
   `damage` is an arrow's base damage and, for the other kinds, what the hit does in place of their own (blasts left
   alone; the shot is marked with the `trait_shot` attachment). A shot passes through its host's side. A minion's blasts
-  and fires break and light nothing (`EntityMobGriefingEvent`, asked of the shot or of its minion as it lands): the
-  spec's `minion_block_damage` is off by default, and there is no such setting yet. Innate arrows and a thrown trident
+  and fires break and light nothing unless the server's `minion_block_damage` (Motion's setting, off by default) allows
+  it on top of mobGriefing (`EntityMobGriefingEvent`, asked of the shot or of its minion as it lands). Innate arrows and a thrown trident
   (only when the host holds one) cannot be picked up; a splash potion comes out of the host's inventory (a minion's too),
   else from `potion`.
 - **A minion's ranged attack**: a passive projectile or hitscan entry (its arms' or organ's) makes it fight at a distance
@@ -1903,8 +1903,7 @@ client under xvfb in both modes):
   which a minion's strikes do not read (their damage comes from its build), so on a minion only its bleed works, as with
   brawler. Only the skeleton's arms are wired to a trait; every other mob's ranged signature (blaze core, ghast, spider,
   llama, shulker, warden, guardian, evoker, snow golem, frog, strider) waits for the wiring step. Fangs are one fang, where
-  the evoker's are a row. The spec's `minion_block_damage` setting does not exist yet: minion shots never grief until it
-  does.
+  the evoker's are a row.
 
 **Social, as built** (verified in tests and on a headless client; `SocialEffects`, `SocialClient`, records in
 `parts/effect/`). Five types, and two new reaction modes:
@@ -2006,12 +2005,14 @@ so `UpkeepClient` is still empty):
   a totem's flicker and a spray of blood (bloodless mode leaves the flicker: the drops' own check hides them).
 - **exposure** (`ExposureEffect` {damage, damage_type, ignite}), not one of the spec's 30: the harm a drawback's
   surroundings do. The spec reaches sun_cursed, water_hurts and heat_hurts through the vanilla adapter's ignite and
-  damage_entity (Ranged's, not in this branch); once merged they could move there and this type go.
+  damage_entity (Ranged's). They stay on exposure after the merge: vanilla's `damage_entity` names the host as the one
+  who hurt it, so it would die "whilst trying to escape" itself and its own attack traits (a bleed, a theft, a harder
+  hit) would go off against it; and exposure's harm is scaled by `trait_strength` as the rest of a trait's is.
 - **Traits** (new files, lang, bloodless names where the word is flesh: Milk Tap, Stew Tap, Egg Dispenser, Silk
   Spinner, Ink and Glow Reservoir, Honey Hopper, Bamboo and Mycelial Stomach, Lean Core): milk_udder, stew_udder
   (5 min, 50 mB; by hand too), egg_layer (minion 5 min, 10 mB; armour 10 min), wool_regrowth (5 min, 20 mB, its sheep's
-  colour), silk_gland, ink_gland, glow_gland, honey_stomach (a bottle a minute; the spec's bonemealing is aura's, left
-  out), scute_shed, morning_gift (the cat's gift table in the first minute of the morning, once a day), four_chambers
+  colour), silk_gland, ink_gland, glow_gland, honey_stomach (a bottle a minute; since the merge also Social's bonemeal
+  aura, a crop within 4 each minute, as the spec's bee has), scute_shed, morning_gift (the cat's gift table in the first minute of the morning, once a day), four_chambers
   (plant foods +50% saturation), omnivore (+1), seed_eater, bamboo_gut, mycelial_gut (mushrooms edible; mushrooms and
   stews give Regeneration I 5 s), forager (wheat, hay, grass: 100 mB each), cookie_poison, iron_gut (extended: rotten flesh
   and raw meat safe; a minion's blood food at 25 mB), beast_of_burden (drag strength +0.15, a chest for +18; minions now
@@ -2031,3 +2032,27 @@ so `UpkeepClient` is still empty):
   (54 slots; the census after a called-off death), `BodyEffects.drain` (blood upkeep).
 - **Left for later**: the beast of burden's chest is not drawn; the evoker's totem undying (500 mB, 20 minutes) and every
   other mob's wiring wait for the per-mob data.
+
+**The four groups merged** (Motion, Ranged, Social, Upkeep, in that order; verified by the full suite, run three times):
+
+- **One trait, two files.** Motion (as flags) and Social (as kin) both wrote `ender_calm` and `piglin_kin`, and both
+  registered their words, which datagen refuses. `ender_calm` is Social's kin for endermen, with its 30 second window
+  for an enderman the minion hurt; Motion's ender mask still keeps endermen off any minion that has one. `piglin_kin`
+  carries both: the `piglin_neutral` flag (vanilla's gold check, for worn armour) and the kin for piglins and brutes
+  (minions too, with the window). The words are Social's, reworded to cover both.
+- **Handlers meeting on one event.** Motion's ender mask check on `LivingChangeTargetEvent` runs early (high), with
+  Social's kin and calm, so a target called off never sets off the host's targeted effects or an alert. Ranged's
+  "a shot passes through its own side" runs early on `ProjectileImpactEvent`, before Motion's deflect, so a friend's
+  deflector never turns a shot that was going through it; its note of a minion's shot landing stays late.
+- **Settings and blocks.** A minion's shots now break and light blocks where `minion_block_damage` and mobGriefing both
+  allow it, as its blasts and trampling do. Trampling tears the temporary web as it does a cobweb
+  (`#bloodandbones:trampleable`).
+- **What the merge unblocked.** honey_stomach gains Social's bonemeal aura (a crop within 4 each minute, the spec's
+  bee). lean (blood upkeep −10% a level, spec 5.10) is data on Upkeep's `blood_upkeep` attribute. The drawbacks stay
+  on exposure, for the reason given under Upkeep.
+- **Tests** (`MergedEffectTests`): `piglinKinBothHalves`, `calledOffTargetFiresNoAlert`,
+  `friendlyShotPassesFriendsDeflector`, `minionBlockDamageCoversShotsAndWebs`, `honeyStomachGrowsCrops`,
+  `leanLowersUpkeep`.
+- **Still waiting**: rideable and the hump's second seat (the mount type, slice 6); keen_butcher (the `butchery_yield`
+  attribute of spec 5.7); held weapons and a minion's own strikes reading attack damage (strike, slice 6); and the
+  per-mob wiring of the signatures (spec 8.2) beyond the enderman, creeper, skeleton, chicken and zombie set.

@@ -54,7 +54,7 @@ public class BBServerConfig {
                 .comment("How fast minions use their blood or soul blood. 1 is normal, 0 never.")
                 .defineInRange("power_drain", 1.0, 0.0, 100.0);
         MINION_BLOCK_DAMAGE = builder
-                .comment("Whether minions and trait blasts may break blocks (a self-destruct, trampling), where the mobGriefing game rule also allows it.")
+                .comment("Whether minions and trait blasts may break blocks (a self-destruct, trampling, a minion's fireballs), where the mobGriefing game rule also allows it.")
                 .define("minion_block_damage", false);
         builder.pop();
         builder.push("traits");

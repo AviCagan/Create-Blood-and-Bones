@@ -1,6 +1,7 @@
 package com.avicagan.bloodandbones.parts.effect;
 
 import com.avicagan.bloodandbones.carcass.Blood;
+import com.avicagan.bloodandbones.config.BBServerConfig;
 import com.avicagan.bloodandbones.minion.MinionEntity;
 import com.avicagan.bloodandbones.parts.ActiveTraits;
 import com.avicagan.bloodandbones.parts.TraitContext;
@@ -46,7 +47,10 @@ import java.util.List;
 public final class RangedEffects {
     /** Work to do once the tick is over (a throw that must land after the knockback of the hit that caused it). */
     private static final List<Runnable> AFTER_TICK = new ArrayList<>();
-    /** A minion's shot landing this tick: while it does, its minion may not break or light blocks. */
+    /**
+     * A minion's shot landing this tick: while it does, its minion may not break or light blocks (unless the server's
+     * minion_block_damage allows it).
+     */
     @Nullable
     private static Projectile landing;
 
@@ -188,32 +192,39 @@ public final class RangedEffects {
         }
     }
 
-    /** A shot of ours passes through its own side; one of a minion's that lands is noted, so it breaks and lights nothing. */
+    /**
+     * A shot of ours passes through its own side. Early, before anything else looks at the hit, so a friend's deflector
+     * (Motion's) never turns a shot that was never going to hit it.
+     */
+    @SubscribeEvent(priority = EventPriority.HIGH)
+    public static void onFriendlyImpact(ProjectileImpactEvent event) {
+        Projectile shot = event.getProjectile();
+        if (isShot(shot) && !shot.level().isClientSide && event.getRayTraceResult() instanceof EntityHitResult hit
+                && RangedAim.friendly(shot.getOwner(), hit.getEntity())) {
+            event.setCanceled(true);
+        }
+    }
+
+    /** One of a minion's shots that lands is noted, so it breaks and lights nothing unless the server allows it. */
     @SubscribeEvent(priority = EventPriority.LOW)
     public static void onImpact(ProjectileImpactEvent event) {
         Projectile shot = event.getProjectile();
-        if (!isShot(shot) || shot.level().isClientSide) {
-            return;
-        }
-        if (event.getRayTraceResult() instanceof EntityHitResult hit && RangedAim.friendly(shot.getOwner(), hit.getEntity())) {
-            event.setCanceled(true);
-            return;
-        }
-        if (shot.getOwner() instanceof MinionEntity) {
+        if (isShot(shot) && !shot.level().isClientSide && shot.getOwner() instanceof MinionEntity) {
             landing = shot;
         }
     }
 
     /**
-     * A minion's blasts and fires break and light nothing (the design's minion_block_damage, off, on top of mobGriefing):
-     * asked of the shot itself (a great fireball's or wither skull's blast) or of its minion while its shot lands (a small
-     * fireball's fire).
+     * A minion's blasts and fires break and light nothing unless the server's {@code minion_block_damage} allows it, on top
+     * of mobGriefing (which vanilla asks anyway): asked of the shot itself (a great fireball's or wither skull's blast) or
+     * of its minion while its shot lands (a small fireball's fire).
      */
     @SubscribeEvent
     public static void onGrief(EntityMobGriefingEvent event) {
         Entity entity = event.getEntity();
-        if (isShot(entity) && ((Projectile) entity).getOwner() instanceof MinionEntity
-                || entity instanceof MinionEntity && landing != null && landing.getOwner() == entity) {
+        if ((isShot(entity) && ((Projectile) entity).getOwner() instanceof MinionEntity
+                || entity instanceof MinionEntity && landing != null && landing.getOwner() == entity)
+                && !BBServerConfig.minionBlockDamage()) {
             event.setCanGrief(false);
         }
     }
