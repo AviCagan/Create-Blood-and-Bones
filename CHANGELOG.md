@@ -208,12 +208,18 @@ Everything below is in development builds only; the art is placeholder (see the 
   Sheathing, and wake it with a Soul Canister (an empty canister filled at a Spout; an Item Drain empties
   it). Brass drains a quarter as fast, shrugs off poison and drowning, and never heals itself (a brass
   sheet mends it). The Charging Cradle, a shaft-driven block, swaps full canisters into brass minions
-  beside it and keeps the empties for a hopper; stocked with brass sheets it mends them. A low brass minion
+  beside it and keeps the empties for a funnel or Mechanical Arm to take; stocked with brass sheets it mends them. A low brass minion
   walks to the nearest cradle it can reach that is turning with a full canister and room for the empty.
   Its maker can fit a brass minion with one of the player's cybernetic modules: a Magnet Coil draws items
   in, an Analytical Lens sees through walls, a Rotational Coupler drives a shaft it stands beside (at the
   working rate of soul blood; only into air, never over water, snow or plants, and never into someone
   else's coupler), and more.
+- Brass, finished. A brass minion has a filter slot: its maker crouches and right-clicks it with a Create
+  Filter or Attribute Filter (or any item), and it picks up, reaps, fetches, herds, hunts and fights only
+  what the filter passes, as a funnel would; a spawn egg in the filter names a mob. A crouching Wrench takes
+  the filter out (a module now comes out with a standing Wrench). Mechanical Arms work the Charging Cradle,
+  putting full canisters and brass sheets in and taking the empties out. A Deployer holding brass sheets
+  mends a brass minion as a hand does; no Deployer can hurt a minion or take it apart, whoever placed it.
 
 - Heads and jobs: what a head offers now depends on whose head it was. A villager keeps its profession
   when it dies, and its head offers surgeon and its trade's job (a farmer's farms, a fisherman's fishes, a

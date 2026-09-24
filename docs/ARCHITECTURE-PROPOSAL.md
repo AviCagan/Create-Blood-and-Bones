@@ -1896,3 +1896,63 @@ the server (`ctx.level()` is a ServerLevel), and movement a client predicts read
   yet. The brass filter slot (slice 8) will narrow what a hunter, herder or scavenger takes. Variants patch only a
   part's minion data (armour scraps keep no traits). The zombie villager's slow surgeon, the fox thief, the panda's
   genes, the llama's caravan and the trader llama's guard (8.2) are signature work for slice 9.
+
+### 15.11 Slice 8 finished: brass (brief § Minions: "some sort of charging station"; spec 6.6 to 6.8)
+
+Most of slice 8 was built with the minion rebuild (15.6): Brass Sheathing, skinned-only fitting, the Soul Canister and
+its filling and emptying recipes, the Charging Cradle (kinetic, item handler, contraption-safe, sheet repair), the module
+socket, and brass repair by hand. This finishes it.
+
+- **The filter slot** (`minion/MinionFilter`, brass only: spec 6.6 puts it among what only brass has, beside the module;
+  flesh has its hides, its mending and its organs' produce). Its maker crouches and uses an item on the minion, as on one
+  of Create's filter slots (`FilteringBehaviour#onShortInteract`): a Filter or Attribute Filter goes in itself, the one
+  there before coming back; any other item puts a copy there and stays in hand. A crouching Wrench takes it out (so the
+  module now comes out with a standing Wrench only); with a Filter, a flesh minion's maker is told only brass takes one.
+  The status line (a plain click) names the filter. It is saved with the minion, stays with it folded, comes back when it
+  is taken apart on the table, and drops with it where minions may die (a plain item's copy is not an item to give back).
+  What passes is Create's own test (`FilterItemStack#test`), so a Filter's list, allow or deny, and an Attribute Filter's
+  attributes work as on a funnel. A mob is asked about as its spawn egg, as the carcass machines' filters ask: an egg or
+  a carcass piece names that mob (alone or in a Filter's list), an Attribute Filter is asked about the mob's egg, and a
+  mob with no egg passes only a deny list. Who obeys it:
+  - the courier and farmer pick up only what it passes (`MinionGoals.Collect`), and the farmer reaps only crops whose
+    seed or a drop passes;
+  - the scavenger fetches what is like what it holds and passes; with nothing in hand, whatever passes;
+  - the herder herds, and the hunter hunts, only the animals it passes (still only those its held food leads, and its
+    head's prey);
+  - the guard and sentry take only monsters it passes for targets (defending itself or its maker is not filtered).
+  `filterSlotWorksAsCreates` (flesh refused, the swap and the copy, a list, a deny list, an Attribute Filter, eggs alone,
+  in a list and asked by attribute, saved and loaded, the Wrench), `filteredCourierOnlyMovesIron` (the cobblestone lies
+  nearer than the iron, so a courier that ignored the filter would take it first), `filteredHunterSparesTheCow` (a pig's
+  egg in the list; the cow stands nearer), `filteredScavengerFetchesWhatItPasses` (an empty hand and an Attribute Filter
+  for food: the apples come, the nearer stick stays).
+- **The cradle as a Mechanical Arm point** (`minion/CradleArmPoint`): a type in Create's
+  `arm_interaction_point_type` registry (`CreateRegistries.ARM_INTERACTION_POINT_TYPE`, through our own
+  DeferredRegister, as Create's own are in `AllArmInteractionPointTypes`), reaching for the cradle's top (10 pixels up).
+  The arm works through the cradle's item handler, the one funnels and hoppers use: set to put things there, it puts full
+  canisters and brass sheets in; set to take from it, it takes the empties out; nothing else either way. `armLoadsCradle`:
+  one arm takes a full canister off a Depot and puts it in the cradle, the cradle swaps it into a brass minion powered down
+  beside it, and a second arm takes the empty out onto another Depot. `cradleSwapsFromHopper`: a hopper beside the
+  cradle feeds it two full canisters; one wakes the minion, one waits, the empty stays. A hopper cannot take the empties
+  from under the cradle, where its shaft is: a funnel on its side or an arm does.
+- **Brass repair by Deployer**: the Deployer uses its item on an entity through `entity.interact` with its stand-in
+  player (`DeployerHandler.activateInner`), so a Deployer holding brass sheets over a hurt brass minion mends it 10 a
+  sheet through the hand's own path, and keeps its sheets once the minion is whole. The stand-in carries the UUID of the
+  player who placed the Deployer (`DeployerFakePlayer#getUUID`), so it passed for the minion's maker: a Deployer holding
+  a Cleaver could have taken a powered-down minion apart on the table, and one holding a Wrench taken its module out. Now
+  any `FakePlayer` only charges (a canister), feeds (a blood bucket) and mends (a sheet); everything else to do with the
+  minion (taking apart, folding, riding, module, filter, job, what it holds) passes it by. Nor does a stand-in's damage
+  (a Deployer's punch) ever hurt a minion, awake or down. `deployerRepairsBrass` (a real Deployer: two sheets mend 12, the
+  third stays in hand; then set to punch with a diamond sword, it leaves the minion whole), `deployerNeverTakesMinionApart`
+  (a stand-in placed by the maker: module, Wrench, filter, empty hand, blows awake and down, Cleaver and fold on the
+  table all do nothing; the maker's own Cleaver still takes it apart, the Filter coming back).
+- **Tests of section 9** now all present but one: `spoutFillsCanister` (now also a real Spout over a Depot filling an
+  empty canister from a bucket's worth), `cradleSwapsFromHopper`, `cradleRevivesPoweredDown`,
+  `filteredCourierOnlyMovesIron`, `deployerRepairsBrass`, `cyberImmuneToPoison` (brass takes no poison, wither or hunger
+  and does not drown out of air under water; flesh is poisoned and drowns). `produceInertOnCyber` waits for the produce
+  effect (the Upkeep group's, not on this branch); spec 6.4's rule that produce does nothing on brass goes in with it.
+- Found on the way: NeoForge's breathing hook (`CommonHooks.onLivingBreathe`) leaves a mob that cannot drown with the air
+  it had (none refilled) but never hurts it, so the test looks at health, not air. A Mechanical Arm's base is a small cog
+  with no shaft: it turns from a cogwheel beside it, not a motor under it.
+- Left out: no screen for the filter slot (Create's slots have none; the crouching click is theirs). The filter is not
+  drawn on the minion, nor sent to clients beyond the status line.
+- The suite is 337 tests (328 before, and nine new; `spoutFillsCanister` was already there).
