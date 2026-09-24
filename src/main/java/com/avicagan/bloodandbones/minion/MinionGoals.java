@@ -54,10 +54,17 @@ public final class MinionGoals {
         });
         targets.addGoal(2, new DefendMaker(minion));
         targets.addGoal(3, new NearestAttackableTargetGoal<>(minion, Mob.class, 10, true, false,
-                target -> target instanceof Enemy && !(target instanceof MinionEntity) && target.distanceToSqr(Vec3.atCenterOf(minion.home())) < 256.0) {
+                target -> target instanceof Enemy && !(target instanceof MinionEntity) && target.distanceToSqr(Vec3.atCenterOf(minion.home())) < 256.0
+                        && minion.filter().allows(minion.level(), target)) {
             @Override
             public boolean canUse() {
                 return minion.hasJob("guard") && minion.stats().fights() && super.canUse();
+            }
+
+            /** No further than its head notices things (a blind head: 4 blocks); asked first while it is being made. */
+            @Override
+            protected double getFollowDistance() {
+                return minion.build().isEmpty() ? super.getFollowDistance() : Math.min(super.getFollowDistance(), minion.stats().sight());
             }
         });
     }
@@ -184,8 +191,9 @@ public final class MinionGoals {
 
         @Override
         public boolean canUse() {
-            // a pacifist (a villager's pair of arms and no bite of its own worth using) never attacks
-            return !minion.stats().mindless() && minion.stats().fights() && super.canUse();
+            // a pacifist (a villager's pair of arms and no bite of its own worth using) never attacks, and a sentry
+            // shoots from where it stands rather than closing in
+            return !minion.stats().mindless() && minion.stats().fights() && !minion.hasJob("sentry") && super.canUse();
         }
     }
 
@@ -572,7 +580,7 @@ public final class MinionGoals {
         }
     }
 
-    /** Minions with work at home wander back there when idle. */
+    /** Minions with work at home wander back there when idle (a sentry to its post). */
     public static class StayNearHome extends Goal {
         private final MinionEntity minion;
 
@@ -583,8 +591,7 @@ public final class MinionGoals {
 
         @Override
         public boolean canUse() {
-            return (minion.hasJob("farmer") || minion.hasJob("courier") || minion.hasJob("guard"))
-                    && minion.distanceToSqr(Vec3.atCenterOf(minion.home())) > 16.0;
+            return MinionJobs.HOMEBODIES.contains(minion.job()) && minion.distanceToSqr(Vec3.atCenterOf(minion.home())) > 16.0;
         }
 
         @Override
@@ -599,7 +606,7 @@ public final class MinionGoals {
         }
     }
 
-    /** A courier or farmer picks up what lies about near home, while it has room. */
+    /** A courier or farmer picks up what lies about near home, while it has room (and, brass, what its filter passes). */
     public static class Collect extends Goal {
         private final MinionEntity minion;
         @Nullable
@@ -634,14 +641,15 @@ public final class MinionGoals {
                 forgotAt = minion.tickCount;
             }
             List<ItemEntity> items = minion.level().getEntitiesOfClass(ItemEntity.class, new AABB(minion.home()).inflate(MinionEntity.RANGE),
-                    e -> e.isAlive() && !e.hasPickUpDelay() && !unreachable.contains(e.getId()) && room(e.getItem()));
+                    e -> e.isAlive() && !e.hasPickUpDelay() && !unreachable.contains(e.getId()) && room(e.getItem())
+                            && minion.filter().allows(minion.level(), e.getItem()));
             item = items.stream().min(Comparator.comparingDouble(minion::distanceToSqr)).orElse(null);
             return item != null;
         }
 
         /** Every slot taken and every stack full: nothing on the ground could go in, so none is looked at. */
         private boolean full() {
-            for (int i = 0; i < minion.stats().slots(); i++) {
+            for (int i = 0; i < minion.slots(); i++) {
                 ItemStack in = minion.inventory.getItem(i);
                 if (in.isEmpty() || in.getCount() < in.getMaxStackSize()) {
                     return false;
@@ -687,7 +695,7 @@ public final class MinionGoals {
         }
     }
 
-    /** A courier or farmer carries what it holds to a container by home. */
+    /** A courier, farmer, fisher, butcher, digger or barterer carries what it holds to a container by home. */
     public static class Deposit extends Goal {
         private final MinionEntity minion;
         @Nullable
@@ -730,7 +738,7 @@ public final class MinionGoals {
 
         @Override
         public boolean canUse() {
-            if ((!minion.hasJob("courier") && !minion.hasJob("farmer")) || minion.inventory.isEmpty() || minion.getRandom().nextInt(10) != 0) {
+            if (!MinionJobs.STORERS.contains(minion.job()) || minion.inventory.isEmpty() || minion.getRandom().nextInt(10) != 0) {
                 return false;
             }
             container = findContainer();
@@ -778,7 +786,7 @@ public final class MinionGoals {
         }
     }
 
-    /** A farmer harvests ripe crops near home and plants them again from what it reaped. */
+    /** A farmer harvests ripe crops near home (brass: those its filter passes) and plants them again from what it reaped. */
     public static class Farm extends Goal {
         private final MinionEntity minion;
         @Nullable
@@ -801,7 +809,8 @@ public final class MinionGoals {
             }
             for (BlockPos pos : BlockPos.betweenClosed(home.offset(-8, -2, -8), home.offset(8, 2, 8))) {
                 BlockState state = minion.level().getBlockState(pos);
-                if (state.getBlock() instanceof CropBlock crop && crop.isMaxAge(state) && !unreachable.contains(minion, pos)) {
+                if (state.getBlock() instanceof CropBlock crop && crop.isMaxAge(state) && !unreachable.contains(minion, pos)
+                        && minion.filter().allowsCrop(minion.level(), state, pos)) {
                     double d = minion.distanceToSqr(Vec3.atCenterOf(pos));
                     if (d < bestDistance) {
                         bestDistance = d;

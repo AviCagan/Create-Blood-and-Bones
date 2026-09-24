@@ -2247,3 +2247,199 @@ wait while it is down). `fleshKeepsItsHidesTraits` now asks that brass has no hi
 - **Hot paths make nothing each tick**: `ActiveTraits.find` and the activate facets are worked out once per built traits
   and kept; the flag and drain loops walk those lists by index; the ranged goal looks at its shots again only when the
   traits change; the sense goal asks for senses before jobs, with no stream; slot counts are read once per loop.
+
+### 15.12 Slice 7 as built: heads and jobs (brief § Minions: "the head sets behaviour")
+
+- **Job options from the head** (`MinionStats`, `MinionData`): a head's "jobs" are read for the very piece fitted. A
+  part's minion object may hold "variants", matched against the piece's captured traits (`{"if": {"trait":
+  "profession", "equals": "farmer"}, "jobs": [...]}`, or `"in": [...]`, or neither for any value; the last match wins,
+  and a later layer, a mob's own file, still comes before the variants of the layers under it, spec 4.2's order). A head
+  offers only jobs that are built (`MinionStats.JOBS`), less those needing a hand it lacks (`HANDS`: farmer, surgeon,
+  butcher, medic, which need an arm of hand grip; a paw or claw does for the farmer) or eyes (below). Of those, a minion is offered what it can do now (`MinionJobs.offered`): a sentry
+  needs a ranged attack (`MinionEntity.hasRangedAttack`: a bow, crossbow or trident in a hand that fights, for the
+  innate shots to extend), a fisher a rod in hand or a head whose data says `"no_tool"` (the fish archetype: a fish
+  fishes with its mouth), a butcher a Cleaver or Flensing Knife; with none, it keeps company. It wakes as the first but
+  hunting (`MinionJobs.wakeJob`: it would go straight for the animals round the table it was made at); its
+  maker's crouching empty-hand click cycles them, naming the new one on the action bar. A job it can no longer do (its
+  bow taken back or broken) gives way to the first it can, checked each second. A sentry takes its post where it
+  stands. `cycleJobWithEmptyHand`, `pillagerHeadOffersSurgeon`.
+- **Villager heads by profession**: `CarcassLook.traits` now keeps a villager's (or zombie villager's) profession on the
+  carcass, and so on its pieces. The villager family's head carries the variants: surgeon, then farmer for a farmer,
+  fisher for a fisherman, butcher, medic for a cleric, herder for a shepherd, sentry for a fletcher, hauler for a
+  leatherworker, guard for an armorer, weaponsmith or toolsmith, courier for any other; a nitwit keeps company only. The
+  villager's own file no longer names jobs, so the family's apply (a head from before professions were kept: surgeon,
+  farmer, courier). Pillager heads: surgeon and sentry. Heads section 8.2 names, in mob files of their own: piglin
+  (barterer, guard, courier), sniffer (digger, hauler), witch (medic, surgeon, courier). `villagerHeadOffersSurgeon`,
+  `nitwitOffersCompanionOnly`.
+- **Blind heads**: a head piece with both eyes taken out at the Surgical Rig (`Surgery.ORGANS_TAKEN` 2 on a head bone)
+  loses farmer, sentry, surgeon, hunter and fisher, and its sight (`MinionStats.sight`: the head mob's FOLLOW_RANGE, 8
+  with no head) is 4; a "senses" list naming echolocate or tremor would keep them (no head has one yet). Sight bounds
+  what it notices, not how far it paths: the FOLLOW_RANGE attribute stays 48, which the path budget (FOLLOW_RANGE × 16)
+  needs for troughs; the guard's, sentry's and hunter's target searches and the scavenger's, herder's and medic's
+  looking round are capped by it. `blindHeadLosesSightJobs`.
+- **Holding things**: its maker uses an item on it (not a saddle, lead, name tag or egg, which do their own thing) and it
+  takes one into its hand (a head's mouth will do; what it held comes back); an empty hand takes it back (saddled, an
+  empty hand climbs on instead). Arrows for the bow or crossbow it holds, and healing potions for a medic's head, go in
+  with what it carries, the whole stack, its hand kept ("Carrying ..."). What it holds
+  drops with what it carries if it dies, comes back when it is taken apart on the table, and stays with it folded. A
+  minion keeps hold of the player who woke it while that player is about, so a test's stand-in maker counts too.
+- **The jobs** (`MinionJobs`, a package of goals each, added in `registerGoals` by one line; none breaks or places a
+  block):
+  - sentry: takes a monster it can see within 16 for its target, turns and shoots with the bow (drawn for a second, as
+    `RangedBowAttackGoal` does), the crossbow (charged and loosed as `RangedCrossbowAttackGoal` does; loaded through
+    `getProjectile`, which hands vanilla the arrows from its inventory) or the trident (a copy thrown as the drowned
+    throws one, the held one wearing). It never leaves its post nor closes to melee; its arrows, the crossbow's too, can
+    be picked up where they land, and they pass through its own side. `sentryShootsWithHeldBow`,
+    `crossbowSentryArrowsCanBePickedUp`, `sentryArrowsSpareItsSide`.
+  - scavenger: as an allay, items like the one it holds (the same item, the same potion) within 32 and its sight, taken
+    up and brought to its maker's hands while its maker is within 32 of home. `scavengerFetchesMatchingItem`.
+  - herder: the animals that would follow what it holds (`Animal#isFood`) found within 20 of home and more than 8 from
+    it: it walks out to the stray and leads it home, the stray pathing after it and waited for; never a tamed or named
+    animal. Holding nothing, it herds nothing. `herderKeepsAnimalsHome` (the cow is kept from wandering home by itself).
+  - fisher: by still, open water within 8 of home, `minecraft:gameplay/fishing` every 30 to 60 s it spends there (less
+    with Lure; luck from the rod; no treasure, which needs a bobber in open water), into what it carries; a rod wears a
+    point a catch. The wait counts only time at the water and is kept with the minion. `fisherFishesByWater`.
+  - hunter: grown prey near home (within 12) that it can see, never a named, tamed, leashed or ridden animal, for the
+    whole chase; the prey is the head's "prey" list (ids and #tags of any passive mob, fish too) or
+    `#bloodandbones:hunter_prey` (livestock and game). It hunts only where the mobGriefing rule lets mobs do harm (spec
+    10.13). Its blows kill; with a
+    Meat Hook in hand, `CarcassEvents.onDeath` (which reads the killer's hand) leaves an intact carcass, exactly a
+    player's hook kill. `hunterWithMeatHookLeavesCarcass`.
+  - butcher: carcasses within 6 of home, a blow every three quarters of a second through `CarcassButchery.cut` or
+    `skin` with no player, so the yields are hand yields, caught into what it carries (`CarcassButchery.capturing`, as a
+    machine's are): with a Cleaver the loose pieces first, then a limb at the end of a chain; with a Flensing Knife the
+    hide. The blade comes away bloody. `butcherButchersWithCleaver`.
+  - medic: a splash (or lingering) potion of healing or regeneration from what it carries, thrown as a witch throws at
+    the worst-hurt ally it can see (two hearts down or more): its maker, its maker's other flesh minions, villagers; one throw,
+    then three seconds. `medicThrowsHealingAtHurtMaker` (the stand-in maker is not in the world, so the test sees the
+    throw aimed at the maker, and the healing land on a hurt villager).
+  - barterer: a gold ingot from the nearest container within 6 of home, looked over for six seconds (in what it carries
+    meanwhile), `minecraft:gameplay/piglin_bartering` rolled and put back into that container, only while it has a slot
+    free. `bartererTradesGold`.
+  - digger: sniffs a random `#minecraft:sniffer_diggable_block` with room over it within 6 of home, and every one to two
+    minutes it spends there turns up `minecraft:gameplay/sniffer_digging`, into what it carries; the ground is left as
+    it was. `diggerDigsUp`.
+  - Fishers, butchers, diggers and barterers store what they have in the container nearest home, as couriers do; every
+    job goes home when idle.
+- **Hauling with the player's drag**: `CarcassDrag` now takes any living dragger. A hauler walks to a whole carcass
+  within 24 of home that nothing holds, hooks its torso from arm's length (`CarcassDrag.start`: the same spring pull,
+  drips and trail, and the same slowdown by the carcass's weight, eased by its `drag_strength`, which minions now have,
+  so a horse torso's hauler trait counts), and walks a straight line through the nearest free Shackle Hook or Bleeding
+  Rack, the body towed behind. A body that comes under the hook is hung by its torso through
+  `ShackleHookBlockEntity.hang`, the Meat Hook click's own code (a broad hauler that cannot stand close enough hangs it
+  from a player's reach, the hook's joint lifting it the rest of the way); one towed over the middle of a rack is let
+  down there and bleeds into it. Only the pull point differs from a player's: held at arm's length back along the line to
+  the body rather than in front of the feet, so the body trails wherever the hauler walks. A drag that is not a
+  player's is kept by the level tick and let go when its hauler is unloaded, killed or powered down. In the tests it tows
+  the body three to five blocks and hangs or lays it; in a cramped place it gives up after five seconds stuck and tries
+  again half a minute later. The tow is jank (the body swings round behind it), not buggy.
+  `haulerDragsCarcassToHook`, `haulerLaysCarcassOnRack`.
+- **Tests changed**: the design's cow on rabbit legs is a herder (6.5), no longer a courier; the courier test and the
+  brass test's pig-headed minion are put to courier (a pig's head hunts, and would hunt the other tests' animals).
+- Found on the way: a job goal ticked every tick is asked whether to go on only every other tick, so a medic threw two
+  potions at once; each job goal now stops acting the moment its work is done. Game tests stand things at y 2 (the
+  template's floor is at y 1).
+- **Left out**: the sapper waits for the detonate effect (the Motion group's). Held items are not drawn on the minion
+  yet. The brass filter slot (slice 8) will narrow what a hunter, herder or scavenger takes. Variants patch only a
+  part's minion data (armour scraps keep no traits). The zombie villager's slow surgeon, the fox thief, the panda's
+  genes, the llama's caravan and the trader llama's guard (8.2) are signature work for slice 9.
+
+### 15.13 Slice 8 finished: brass (brief § Minions: "some sort of charging station"; spec 6.6 to 6.8)
+
+Most of slice 8 was built with the minion rebuild (15.6): Brass Sheathing, skinned-only fitting, the Soul Canister and
+its filling and emptying recipes, the Charging Cradle (kinetic, item handler, contraption-safe, sheet repair), the module
+socket, and brass repair by hand. This finishes it.
+
+- **The filter slot** (`minion/MinionFilter`, brass only: spec 6.6 puts it among what only brass has, beside the module;
+  flesh has its hides, its mending and its organs' produce). Its maker crouches and uses an item on the minion, as on one
+  of Create's filter slots (`FilteringBehaviour#onShortInteract`): a Filter or Attribute Filter goes in itself, the one
+  there before coming back; any other item puts a copy there and stays in hand. A crouching Wrench takes it out (so the
+  module now comes out with a standing Wrench only); with a Filter, a flesh minion's maker is told only brass takes one.
+  The status line (a plain click) names the filter. It is saved with the minion, stays with it folded, comes back when it
+  is taken apart on the table, and drops with it where minions may die (a plain item's copy is not an item to give back).
+  What passes is Create's own test (`FilterItemStack#test`), so a Filter's list, allow or deny, and an Attribute Filter's
+  attributes work as on a funnel. A mob is asked about as its spawn egg, as the carcass machines' filters ask: an egg or
+  a carcass piece names that mob (alone or in a Filter's list), an Attribute Filter is asked about the mob's egg, and a
+  mob with no egg passes only a deny list. Who obeys it:
+  - the courier and farmer pick up only what it passes (`MinionGoals.Collect`), and the farmer reaps only crops whose
+    seed or a drop passes;
+  - the scavenger fetches what is like what it holds and passes; with nothing in hand, whatever passes;
+  - the herder herds, and the hunter hunts, only the animals it passes (still only those its held food leads, and its
+    head's prey);
+  - the guard and sentry take only monsters it passes for targets (defending itself or its maker is not filtered).
+  `filterSlotWorksAsCreates` (flesh refused, the swap and the copy, a list, a deny list, an Attribute Filter, eggs alone,
+  in a list and asked by attribute, saved and loaded, the Wrench), `filteredCourierOnlyMovesIron` (the cobblestone lies
+  nearer than the iron, so a courier that ignored the filter would take it first), `filteredHunterSparesTheCow` (a pig's
+  egg in the list; the cow stands nearer), `filteredScavengerFetchesWhatItPasses` (an empty hand and an Attribute Filter
+  for food: the apples come, the nearer stick stays).
+- **The cradle as a Mechanical Arm point** (`minion/CradleArmPoint`): a type in Create's
+  `arm_interaction_point_type` registry (`CreateRegistries.ARM_INTERACTION_POINT_TYPE`, through our own
+  DeferredRegister, as Create's own are in `AllArmInteractionPointTypes`), reaching for the cradle's top (10 pixels up).
+  The arm works through the cradle's item handler, the one funnels and hoppers use: set to put things there, it puts full
+  canisters and brass sheets in; set to take from it, it takes the empties out; nothing else either way. `armLoadsCradle`:
+  one arm takes a full canister off a Depot and puts it in the cradle, the cradle swaps it into a brass minion powered down
+  beside it, and a second arm takes the empty out onto another Depot. `cradleSwapsFromHopper`: a hopper beside the
+  cradle feeds it two full canisters; one wakes the minion, one waits, the empty stays. A hopper cannot take the empties
+  from under the cradle, where its shaft is: a funnel on its side or an arm does.
+- **Brass repair by Deployer**: the Deployer uses its item on an entity through `entity.interact` with its stand-in
+  player (`DeployerHandler.activateInner`), so a Deployer holding brass sheets over a hurt brass minion mends it 10 a
+  sheet through the hand's own path, and keeps its sheets once the minion is whole. The stand-in carries the UUID of the
+  player who placed the Deployer (`DeployerFakePlayer#getUUID`), so it passed for the minion's maker: a Deployer holding
+  a Cleaver could have taken a powered-down minion apart on the table, and one holding a Wrench taken its module out. Now
+  any `FakePlayer` only charges (a canister), feeds (a blood bucket) and mends (a sheet); everything else to do with the
+  minion (taking apart, folding, riding, module, filter, job, what it holds) passes it by. Nor does a stand-in's damage
+  (a Deployer's punch) ever hurt a minion, awake or down. `deployerRepairsBrass` (a real Deployer: two sheets mend 12, the
+  third stays in hand; then set to punch with a diamond sword, it leaves the minion whole), `deployerNeverTakesMinionApart`
+  (a stand-in placed by the maker: module, Wrench, filter, empty hand, blows awake and down, Cleaver and fold on the
+  table all do nothing; the maker's own Cleaver still takes it apart, the Filter coming back).
+- **Tests of section 9** now all present but one: `spoutFillsCanister` (now also a real Spout over a Depot filling an
+  empty canister from a bucket's worth), `cradleSwapsFromHopper`, `cradleRevivesPoweredDown`,
+  `filteredCourierOnlyMovesIron`, `deployerRepairsBrass`, `cyberImmuneToPoison` (brass takes no poison, wither or hunger
+  and does not drown out of air under water; flesh is poisoned and drowns). `produceInertOnCyber` waits for the produce
+  effect (the Upkeep group's, not on this branch); spec 6.4's rule that produce does nothing on brass goes in with it.
+- Found on the way: NeoForge's breathing hook (`CommonHooks.onLivingBreathe`) leaves a mob that cannot drown with the air
+  it had (none refilled) but never hurts it, so the test looks at health, not air. A Mechanical Arm's base is a small cog
+  with no shaft: it turns from a cogwheel beside it, not a motor under it.
+- Left out: no screen for the filter slot (Create's slots have none; the crouching click is theirs). The filter is not
+  drawn on the minion, nor sent to clients beyond the status line.
+- The suite is 337 tests (328 before, and nine new; `spoutFillsCanister` was already there).
+
+### 15.14 Review of the jobs (fixed)
+
+- Stocking: a player had no way to give a sentry its arrows or a medic its potions (a use put one item in its hand and
+  gave back the bow; the tests filled the inventory directly), so only the trident sentry worked. Arrows for the weapon
+  it holds (`ProjectileWeaponItem#getAllSupportedProjectiles`) and healing potions for a head that offers medic now go in
+  with what it carries, the whole stack. `sentryShootsWithHeldBow` and `medicThrowsHealingAtHurtMaker` stock them by
+  hand now.
+- Grips: any arm counted as a hand. `MinionStats.Strike` now carries the arm's grip from its data (an arm naming none has
+  a hand): surgeon, butcher, medic and held weapons need an arm of hand grip, the farmer a hand, paw or claw (spec 5.6).
+  `wingsAreNoHands`.
+- One head for everything: `MinionStats` took the last head fitted, the jobs' own data (`no_tool`, `prey`) the first.
+  Both use `MinionStats.head` now, the first, as spec 6.4 says.
+- The barterer held the ingot it looked over in a goal field, which a save, a fold, a take-apart or a death lost. It is
+  in what it carries now, and it trades only with a slot free, so a full chest's gold is no longer turned into litter at
+  its feet. `bartererTradesGold` sees the ingot in what it carries.
+- The hauler could hang a body from a hook on the storey above, through the floor, by the joint. It picks hooks and
+  racks on the body's own storey, and hangs a body only from a tip within 4 above it with nothing solid between, as a
+  player could. It lets go when someone else takes hold of the body (a player's Meat Hook, another hauler), and checks
+  first that nobody has; a butcher stops cutting a body being dragged. The hook's chunk is never loaded to look at
+  (`isLoaded` first, the review's rule), and a pick tests the distance from home before the costly rack tests, working
+  out once which racks are taken.
+- The hunter kept chasing prey leashed, named, ridden or filtered out meanwhile, or run off from its 12 blocks; its rules
+  hold for the whole chase now. It searched only `Animal`, so a "prey" list of fish (the axolotl's tag) matched nothing;
+  it searches any passive `PathfinderMob`. It obeys mobGriefing (spec 10.13), and a minion wakes to another of its jobs, so a
+  spider or pig head woken at the table does not go straight for the animals kept by it (`hunterWithMeatHookLeavesCarcass`
+  and `filteredHunterSparesTheCow` put their wolf heads to hunting by hand). The digger changes no block
+  (as the sniffer's own digging, which vanilla does not gate), so it is left as it was.
+- The herder led tamed and named animals (a saddled horse from its stable, a sitting wolf) home; it leaves someone's own
+  animals be now, as the hunter does.
+- The sentry's arrows and tridents hit its maker, its maker's other minions and villagers in the line of fire; they
+  pass through its side now (`ProjectileImpactEvent`, cancelled for a minion's arrow hitting its side). A crossbow's arrows could never be picked up (vanilla allows that only for a
+  player's); the arrows its crossbow looses are marked as its bow's are.
+- The scavenger followed its maker any distance in the same dimension; it brings what it found only while its maker is
+  within 32 of home, and keeps it until they are back.
+- A saddled minion holding something could not be mounted with an empty hand (the hand took the item back first); an
+  empty hand climbs on now. `horseLegsAcceptRider` gives it wheat first.
+- A medic no longer heals brass minions: brass is mended by brass sheets, by hand or cradle (spec 6.6).
+- `butcherButchersWithCleaver` checks that what came off is in the butcher's hands, not only off the ground.
+- The suite is 340 tests.

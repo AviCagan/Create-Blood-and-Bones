@@ -25,6 +25,110 @@
           "bloodandbones:farmer",
           "bloodandbones:courier"
         ],
+        "variants": [
+          {
+            "if": {
+              "trait": "profession"
+            },
+            "jobs": [
+              "bloodandbones:surgeon",
+              "bloodandbones:courier"
+            ]
+          },
+          {
+            "if": {
+              "trait": "profession",
+              "equals": "farmer"
+            },
+            "jobs": [
+              "bloodandbones:surgeon",
+              "bloodandbones:farmer"
+            ]
+          },
+          {
+            "if": {
+              "trait": "profession",
+              "equals": "fisherman"
+            },
+            "jobs": [
+              "bloodandbones:surgeon",
+              "bloodandbones:fisher"
+            ]
+          },
+          {
+            "if": {
+              "trait": "profession",
+              "equals": "butcher"
+            },
+            "jobs": [
+              "bloodandbones:surgeon",
+              "bloodandbones:butcher"
+            ]
+          },
+          {
+            "if": {
+              "trait": "profession",
+              "equals": "cleric"
+            },
+            "jobs": [
+              "bloodandbones:surgeon",
+              "bloodandbones:medic"
+            ]
+          },
+          {
+            "if": {
+              "trait": "profession",
+              "equals": "shepherd"
+            },
+            "jobs": [
+              "bloodandbones:surgeon",
+              "bloodandbones:herder"
+            ]
+          },
+          {
+            "if": {
+              "trait": "profession",
+              "equals": "fletcher"
+            },
+            "jobs": [
+              "bloodandbones:surgeon",
+              "bloodandbones:sentry"
+            ]
+          },
+          {
+            "if": {
+              "trait": "profession",
+              "equals": "leatherworker"
+            },
+            "jobs": [
+              "bloodandbones:surgeon",
+              "bloodandbones:hauler"
+            ]
+          },
+          {
+            "if": {
+              "trait": "profession",
+              "in": [
+                "armorer",
+                "weaponsmith",
+                "toolsmith"
+              ]
+            },
+            "jobs": [
+              "bloodandbones:surgeon",
+              "bloodandbones:guard"
+            ]
+          },
+          {
+            "if": {
+              "trait": "profession",
+              "equals": "nitwit"
+            },
+            "jobs": [
+              "bloodandbones:companion"
+            ]
+          }
+        ],
         "disposition": "meek"
       },
       "armour": [

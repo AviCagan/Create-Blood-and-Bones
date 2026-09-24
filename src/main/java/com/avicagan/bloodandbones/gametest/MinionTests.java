@@ -160,8 +160,9 @@ public class MinionTests {
     }
 
     /**
-     * The design's own example: a cow torso and head on four rabbit legs, built on the table a click at a time,
-     * is 15 health, hops at 0.325 and carries things. Woken with a bucket of blood, it gets up so.
+     * The design's own example (docs/PARTS-AND-TRAITS.md section 6.5): a cow torso and head on four rabbit legs, built
+     * on the table a click at a time, is 15 health, hops at 0.325 and is a herder. Woken with a bucket of blood, it gets
+     * up so.
      */
     @GameTest(template = "empty", timeoutTicks = 40)
     public static void buildCowOnFourRabbitLegs(GameTestHelper helper) {
@@ -191,8 +192,8 @@ public class MinionTests {
         }
         MinionStats stats = MinionStats.of(PartsData.SERVER, table.build().orElseThrow());
         if (Math.abs(stats.health() - 15.0F) > 0.01F || Math.abs(stats.speed() - 0.325F) > 0.001F || !"hop".equals(stats.mode())
-                || !stats.jobs().get(0).equals(BloodAndBones.asResource("courier")) || stats.mindless()) {
-            helper.fail("A cow on rabbit legs should be 15 health, hop at 0.325 and start as a courier: " + stats);
+                || !stats.jobs().get(0).equals(BloodAndBones.asResource("herder")) || stats.mindless()) {
+            helper.fail("A cow on rabbit legs should be 15 health, hop at 0.325 and start as a herder: " + stats);
             return;
         }
         MinionEntity minion = MinionAssembly.wake(level, maker, table, new ItemStack(BBFluids.BLOOD.getBucket().get()));
@@ -558,6 +559,8 @@ public class MinionTests {
     public static void courierCarries(GameTestHelper helper) {
         helper.setBlock(new BlockPos(1, 2, 1), Blocks.CHEST);
         MinionEntity minion = minion(helper, new BlockPos(3, 2, 3), wholeCow(), 1000.0F);
+        // a cow's head starts as a herder; it also offers courier
+        minion.setJob(BloodAndBones.asResource("courier"));
         BlockPos drop = helper.absolutePos(new BlockPos(8, 2, 8));
         helper.getLevel().addFreshEntity(new ItemEntity(helper.getLevel(), drop.getX() + 0.5, drop.getY() + 0.2, drop.getZ() + 0.5, new ItemStack(Items.BONE, 3)));
         helper.succeedWhen(() -> {

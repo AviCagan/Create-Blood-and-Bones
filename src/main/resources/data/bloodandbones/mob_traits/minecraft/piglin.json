@@ -1,0 +1,13 @@
+{
+  "parts": {
+    "head": {
+      "minion": {
+        "jobs": [
+          "bloodandbones:barterer",
+          "bloodandbones:guard",
+          "bloodandbones:courier"
+        ]
+      }
+    }
+  }
+}

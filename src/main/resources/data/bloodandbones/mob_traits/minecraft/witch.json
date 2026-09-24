@@ -17,6 +17,15 @@
           "bloodandbones:potion_thrower"
         ]
       }
+    },
+    "head": {
+      "minion": {
+        "jobs": [
+          "bloodandbones:medic",
+          "bloodandbones:surgeon",
+          "bloodandbones:courier"
+        ]
+      }
     }
   },
   "organ_traits": {

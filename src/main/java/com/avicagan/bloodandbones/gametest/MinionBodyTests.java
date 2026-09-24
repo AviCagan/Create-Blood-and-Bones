@@ -90,8 +90,9 @@ public class MinionBodyTests {
     }
 
     /**
-     * Horse legs under a cow make it rideable: a saddle goes on, its maker climbs on and steers. A rabbit's torso on
-     * horse legs is too light to carry anyone, and a single horse leg is not enough.
+     * Horse legs under a cow make it rideable: a saddle goes on, its maker climbs on and steers, with an empty hand even
+     * while it holds something (the wheat a herder leads by stays in its mouth). A rabbit's torso on horse legs is too
+     * light to carry anyone, and a single horse leg is not enough.
      */
     @GameTest(template = "empty", timeoutTicks = 20)
     public static void horseLegsAcceptRider(GameTestHelper helper) {
@@ -113,10 +114,12 @@ public class MinionBodyTests {
             return;
         }
         minion.equipSaddle(new ItemStack(Items.SADDLE), null);
+        maker.setItemInHand(InteractionHand.MAIN_HAND, new ItemStack(Items.WHEAT));
+        minion.interact(maker, InteractionHand.MAIN_HAND);
         maker.setItemInHand(InteractionHand.MAIN_HAND, ItemStack.EMPTY);
         minion.interact(maker, InteractionHand.MAIN_HAND);
-        if (maker.getVehicle() != minion || minion.getControllingPassenger() != maker) {
-            helper.fail("Saddled, its maker should climb on and steer it");
+        if (maker.getVehicle() != minion || minion.getControllingPassenger() != maker || !minion.getMainHandItem().is(Items.WHEAT)) {
+            helper.fail("Saddled, its maker should climb on and steer it, the wheat it holds left in its mouth: holding " + minion.getMainHandItem());
             return;
         }
         // seated on its back where the saddle is drawn, below the top of its raised head

@@ -178,8 +178,8 @@ Everything below is in development builds only; the art is placeholder (see the 
   piece back. A bucket of blood wakes it ("It's Alive!").
 - Every piece does its own thing, from its mob's data: the torso its size, health and what it carries,
   the head its jobs and bite, the legs how fast and how it moves. A cow on four rabbit legs with a cow's
-  head is 15 health, hops at 0.325 and starts as a courier. A villager's head makes a farmer. Crouch and
-  right-click it with an empty hand to change its job.
+  head is 15 health, hops at 0.325 and is a herder. Crouch and right-click it with an empty hand to change
+  its job; the action bar names the new one.
 - Drawn as what it is: each piece in its own mob's skin, raw where it was cut, legs walking (or a
   hopper bounding), head looking round. The table shows the minion being built.
 - It runs on blood, more when it moves, works or fights. Low, it walks to the nearest Blood Trough it
@@ -208,12 +208,41 @@ Everything below is in development builds only; the art is placeholder (see the 
   Sheathing, and wake it with a Soul Canister (an empty canister filled at a Spout; an Item Drain empties
   it). Brass drains a quarter as fast, shrugs off poison and drowning, and never heals itself (a brass
   sheet mends it). The Charging Cradle, a shaft-driven block, swaps full canisters into brass minions
-  beside it and keeps the empties for a hopper; stocked with brass sheets it mends them. A low brass minion
+  beside it and keeps the empties for a funnel or Mechanical Arm to take; stocked with brass sheets it mends them. A low brass minion
   walks to the nearest cradle it can reach that is turning with a full canister and room for the empty.
   Its maker can fit a brass minion with one of the player's cybernetic modules: a Magnet Coil draws items
   in, an Analytical Lens sees through walls, a Rotational Coupler drives a shaft it stands beside (at the
   working rate of soul blood; only into air, never over water, snow or plants, and never into someone
   else's coupler), and more.
+- Brass, finished. A brass minion has a filter slot: its maker crouches and right-clicks it with a Create
+  Filter or Attribute Filter (or any item), and it picks up, reaps, fetches, herds, hunts and fights only
+  what the filter passes, as a funnel would; a spawn egg in the filter names a mob. A crouching Wrench takes
+  the filter out (a module now comes out with a standing Wrench). Mechanical Arms work the Charging Cradle,
+  putting full canisters and brass sheets in and taking the empties out. A Deployer holding brass sheets
+  mends a brass minion as a hand does; no Deployer can hurt a minion or take it apart, whoever placed it.
+
+- Heads and jobs: what a head offers now depends on whose head it was. A villager keeps its profession
+  when it dies, and its head offers surgeon and its trade's job (a farmer's farms, a fisherman's fishes, a
+  cleric's is a medic, a fletcher's a sentry, a leatherworker's a hauler...); a nitwit's only keeps
+  company. Pillager heads offer surgeon and sentry; piglin heads barter, sniffer heads dig. A head whose
+  eyes were both cut out at the Surgical Rig loses the jobs that need sight and notices things only four
+  blocks off.
+- Ten new jobs. Hand your minion something by using it on it (an empty hand takes it back), and it works
+  with it; arrows for its bow and healing potions for a medic go in with what it carries, a stack at a time:
+  - a sentry holding a bow, crossbow or trident stands its post and shoots monsters, arrows from what it
+    carries; its arrows fly through you, your other minions and villagers, and can be picked up where they land;
+  - a scavenger fetches items like the one it holds, from up to 32 blocks, and brings them to you when you are
+    near home;
+  - a herder holding wheat (or seeds, carrots...) walks animals that stray back home, leaving pets and named
+    animals be;
+  - a fisher with a rod (or a fish's head) fishes by water near home;
+  - a hunter kills livestock and game near home, and with a Meat Hook in hand leaves intact carcasses (only where
+    mobGriefing is on; a minion wakes to another of its jobs, and is put to hunting by hand);
+  - a hauler drags carcasses to the nearest Shackle Hook and hangs them, or onto a Bleeding Rack to bleed;
+  - a butcher with a Cleaver or Flensing Knife takes carcasses by home apart by hand;
+  - a medic throws splash potions of healing at you, your other flesh minions and villagers when they are hurt;
+  - a barterer trades gold from the chest by home as a piglin does;
+  - a digger sniffs the grass and moss round home and turns up what a sniffer finds.
 
 ### Parts and traits
 
@@ -313,11 +342,11 @@ Everything below is in development builds only; the art is placeholder (see the 
 - A patient on the Surgery Table is drawn sitting, not lying. An item held in a missing hand, and
   armour over a missing limb, still show in third person. Nothing is drawn on mobs that have been
   operated on.
-- Minions: only the cow, rabbit, zombie-shaped and villager heads have their own minion data so far;
-  other mobs' pieces work from their body shape's defaults. Of the jobs, companion, courier, farmer,
-  bodyguard, guard and surgeon are built; the herder and the rest are still to come.
+- Minions: every job but the sapper is built (it waits for a way to set off a detonating organ on a
+  marked target). What a minion holds is not drawn yet. A hauler with no room to walk on past a hook or rack gives
+  up and tries again later.
 - Special organs (glands, sacs, cores) are in every mob's data but have no item yet, so they cannot be cut out and
-  fitted in survival; the heart, lungs, stomach and eyes can. What each mob's signature still waits for (jobs, movement
-  modes, mounts, variants, held weapons) is logged by the signature lint game test.
+  fitted in survival; the heart, lungs, stomach and eyes can. What each mob's signature still waits for (movement
+  modes, mounts, variants) is logged by the signature lint game test.
 - A half-built minion frame from a development build before the rebuild loses what had been fitted to it.
 - All art is placeholder (see the README).

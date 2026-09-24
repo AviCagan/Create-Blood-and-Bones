@@ -22,6 +22,7 @@ import net.minecraft.ChatFormatting;
 import net.minecraft.core.BlockPos;
 import net.minecraft.network.chat.Component;
 import net.minecraft.network.chat.MutableComponent;
+import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.sounds.SoundEvents;
 import net.minecraft.sounds.SoundSource;
@@ -303,6 +304,18 @@ public final class MinionAssembly {
         if (minion.module() != null) {
             maker.getInventory().placeItemBackInInventory(new ItemStack(BBItems.module(minion.module())));
         }
+        ItemStack filter = minion.filter().takeOut();
+        if (!filter.isEmpty()) {
+            maker.getInventory().placeItemBackInInventory(filter);
+        }
+        // and what it held (a bow, a rod, a Cleaver)
+        for (net.minecraft.world.entity.EquipmentSlot slot : new net.minecraft.world.entity.EquipmentSlot[]{
+                net.minecraft.world.entity.EquipmentSlot.MAINHAND, net.minecraft.world.entity.EquipmentSlot.OFFHAND}) {
+            if (!minion.getItemBySlot(slot).isEmpty()) {
+                maker.getInventory().placeItemBackInInventory(minion.getItemBySlot(slot));
+                minion.setItemSlot(slot, ItemStack.EMPTY);
+            }
+        }
         MinionCensus.forget(minion);
         minion.discard();
         level.playSound(null, table.getBlockPos(), com.avicagan.bloodandbones.registry.BBSounds.CARCASS_CUT.get(), SoundSource.BLOCKS, 1.0F, 0.8F);
@@ -389,11 +402,12 @@ public final class MinionAssembly {
         return minion;
     }
 
-    /** A line on what is built so far: its health, speed and what it would do. */
+    /** A line on what is built so far: its health, speed and what it would do (woken with nothing in hand). */
     public static Component status(PartsData.Store store, MinionBuild build) {
         MinionStats stats = MinionStats.of(store, build);
+        ResourceLocation job = MinionJobs.wakeJob(MinionJobs.offered(store, build, stats, ItemStack.EMPTY, false));
         MutableComponent line = Component.translatable("bloodandbones.minion.frame_stats", Math.round(stats.health()), String.format("%.2f", stats.speed()),
-                Component.translatable(MinionEntity.jobKey(stats.jobs().get(0))), build.parts().size(), MinionBody.sockets(store, build.torso()).size());
+                Component.translatable(MinionEntity.jobKey(job)), build.parts().size(), MinionBody.sockets(store, build.torso()).size());
         return line;
     }
 }

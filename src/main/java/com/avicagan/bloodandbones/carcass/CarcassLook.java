@@ -46,7 +46,11 @@ public record CarcassLook(ResourceLocation texture, List<Coat> passes) {
         return new CarcassLook(FLESH, List.of());
     }
 
-    /** Facts about the living mob that butchery yields can name: {wool} for an unsheared sheep's colour. */
+    /**
+     * Facts about the living mob that butchery yields and minion data can name: {wool} for an unsheared sheep's
+     * colour, a villager's (or zombie villager's) {profession}, which sets the jobs its head offers
+     * ("farmer"; a modded one by its full id).
+     */
     public static Map<String, String> traits(LivingEntity entity) {
         Map<String, String> traits = new HashMap<>();
         if (entity instanceof Sheep sheep && !sheep.isSheared()) {
@@ -54,6 +58,10 @@ public record CarcassLook(ResourceLocation texture, List<Coat> passes) {
         }
         if (entity instanceof net.minecraft.world.entity.animal.MushroomCow mooshroom) {
             traits.put("mushroom", mooshroom.getVariant().getSerializedName());
+        }
+        if (entity instanceof net.minecraft.world.entity.npc.VillagerDataHolder villager) {
+            ResourceLocation profession = net.minecraft.core.registries.BuiltInRegistries.VILLAGER_PROFESSION.getKey(villager.getVillagerData().getProfession());
+            traits.put("profession", profession.getNamespace().equals("minecraft") ? profession.getPath() : profession.toString());
         }
         return traits;
     }

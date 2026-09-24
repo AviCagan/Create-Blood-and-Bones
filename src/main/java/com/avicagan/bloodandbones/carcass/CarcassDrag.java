@@ -18,6 +18,7 @@ import net.minecraft.core.BlockPos;
 import net.minecraft.core.registries.BuiltInRegistries;
 import net.minecraft.util.Mth;
 import net.minecraft.server.level.ServerLevel;
+import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.entity.ai.attributes.AttributeInstance;
 import net.minecraft.world.entity.ai.attributes.AttributeModifier;
 import net.minecraft.world.entity.ai.attributes.Attributes;
@@ -28,6 +29,7 @@ import org.joml.Quaterniond;
 import org.joml.Vector3d;
 
 import java.util.EnumSet;
+import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.UUID;
@@ -35,7 +37,9 @@ import java.util.concurrent.ConcurrentHashMap;
 
 /**
  * Dragging a carcass with the Meat Hook: a spring joint between the point you hooked and a spot just in
- * front of your feet, moved every tick. Heavier carcasses slow you down more and yank harder.
+ * front of your feet, moved every tick. Heavier carcasses slow you down more and yank harder. A hauler minion
+ * drags one the same way (docs/PARTS-AND-TRAITS.md section 6.9), the spot held at arm's length back along the
+ * line to the carcass, so it trails behind wherever the minion walks.
  */
 public final class CarcassDrag {
     private static final double HOLD_DISTANCE = 1.1;
@@ -47,6 +51,7 @@ public final class CarcassDrag {
     private static final net.minecraft.resources.ResourceLocation SLOWDOWN_ID = BloodAndBones.asResource("dragging");
 
     public static final class Drag {
+        /** Who drags it: a player, or a hauler minion. */
         public final UUID player;
         /** changes when the hooked limb is cut off into a record of its own */
         public UUID carcass;
@@ -56,9 +61,9 @@ public final class CarcassDrag {
         /** which way the hook went in, in plot space: the player's look at the moment of the grab */
         public final Vector3d entryPlot = new Vector3d(0, -1, 0);
         public final float weight;
-        /** The dragging player, refreshed every tick; not looked up by UUID because test players are not in the level. */
+        /** Whoever drags it, refreshed every tick; not looked up by UUID because test players are not in the level. */
         @Nullable
-        Player playerEntity;
+        LivingEntity playerEntity;
 
         Drag(UUID player, UUID carcass, String bone, UUID subLevel, Vector3d anchorPlot, float weight) {
             this.player = player;
@@ -76,11 +81,11 @@ public final class CarcassDrag {
     }
 
     @Nullable
-    public static Drag current(Player player) {
+    public static Drag current(LivingEntity player) {
         return DRAGS.get(player.getUUID());
     }
 
-    public static boolean isDragging(Player player) {
+    public static boolean isDragging(LivingEntity player) {
         return DRAGS.containsKey(player.getUUID());
     }
 
@@ -129,7 +134,17 @@ public final class CarcassDrag {
         return false;
     }
 
-    public static boolean start(ServerLevel level, Player player, BlockPos plotPos, @Nullable Vec3 hitLocation) {
+    /** Whether anyone but this dragger has hold of the carcass too (a player's Meat Hook on the body a hauler tows). */
+    public static boolean isDraggedByAnother(UUID carcassId, LivingEntity dragger) {
+        for (Drag drag : DRAGS.values()) {
+            if (drag.carcass.equals(carcassId) && !drag.player.equals(dragger.getUUID())) {
+                return true;
+            }
+        }
+        return false;
+    }
+
+    public static boolean start(ServerLevel level, LivingEntity player, BlockPos plotPos, @Nullable Vec3 hitLocation) {
         if (!(level.getBlockEntity(plotPos) instanceof CarcassPartBlockEntity part) || part.carcassId() == null) {
             return false;
         }
@@ -202,7 +217,7 @@ public final class CarcassDrag {
     }
 
     /** The player's look direction, turned into the limb's own frame: the way the hook was pushed in. */
-    private static Vector3d entryDirection(ServerSubLevel subLevel, Player player) {
+    private static Vector3d entryDirection(ServerSubLevel subLevel, LivingEntity player) {
         Vec3 look = player.getLookAngle();
         Vector3d entry = new Vector3d(look.x, look.y, look.z);
         subLevel.logicalPose().orientation().transformInverse(entry);
@@ -213,7 +228,7 @@ public final class CarcassDrag {
         return new DragSyncPayload(drag.player, Optional.of(drag.subLevel), new Vector3d(drag.anchorPlot), new Vector3d(drag.entryPlot));
     }
 
-    public static void stop(ServerLevel level, Player player) {
+    public static void stop(ServerLevel level, LivingEntity player) {
         Drag drag = DRAGS.remove(player.getUUID());
         removeSlowdown(player);
         if (drag != null) {
@@ -225,8 +240,11 @@ public final class CarcassDrag {
         DRAGS.clear();
     }
 
-    /** Called once per server tick for every player: release rules and client sync. */
-    public static void tick(ServerLevel level, Player player) {
+    /**
+     * Called once per server tick for everyone dragging (players from their tick, everyone else from
+     * {@link #tickOthers}): release rules and client sync.
+     */
+    public static void tick(ServerLevel level, LivingEntity player) {
         Drag drag = DRAGS.get(player.getUUID());
         if (drag == null) {
             return;
@@ -242,8 +260,8 @@ public final class CarcassDrag {
             stop(level, player);
             return;
         }
-        Vector3d target = target(player, 1.0);
         Vector3d hookWorld = subLevel.logicalPose().transformPosition(drag.anchorPlot, new Vector3d());
+        Vector3d target = target(player, hookWorld, 1.0);
         if (hookWorld.distance(target) > MAX_DISTANCE) {
             stop(level, player);
             return;
@@ -264,6 +282,30 @@ public final class CarcassDrag {
         }
     }
 
+    /**
+     * Once a server tick, the drags of everyone who is not a player (hauler minions), which no player tick keeps: one
+     * whose dragger is gone (unloaded, killed) lets go.
+     */
+    public static void tickOthers(ServerLevel level) {
+        for (Drag drag : List.copyOf(DRAGS.values())) {
+            LivingEntity by = drag.playerEntity;
+            if (by instanceof Player) {
+                continue;
+            }
+            if (by == null || by.isRemoved() || by.level() != level) {
+                if (by == null || by.level() == level) {
+                    DRAGS.remove(drag.player);
+                    if (by != null) {
+                        removeSlowdown(by);
+                    }
+                    broadcast(level, DragSyncPayload.ended(drag.player));
+                }
+                continue;
+            }
+            tick(level, by);
+        }
+    }
+
     /** Called every physics substep with the player's position interpolated to the substep. */
     public static void physicsTick(ServerLevel level, double partial, double timeStep) {
         if (DRAGS.isEmpty()) {
@@ -274,7 +316,7 @@ public final class CarcassDrag {
             return;
         }
         for (Drag drag : DRAGS.values()) {
-            Player player = drag.playerEntity != null ? drag.playerEntity : level.getPlayerByUUID(drag.player);
+            LivingEntity player = drag.playerEntity != null ? drag.playerEntity : level.getPlayerByUUID(drag.player);
             if (player == null || player.level() != level) {
                 continue;
             }
@@ -292,12 +334,12 @@ public final class CarcassDrag {
     }
 
     /** The hooked body is already touching the player: pulling any harder would only shove them. */
-    private static boolean isAgainstPlayer(ServerSubLevel subLevel, Player player) {
+    private static boolean isAgainstPlayer(ServerSubLevel subLevel, LivingEntity player) {
         return subLevel.boundingBox().intersects(player.getBoundingBox().inflate(0.15));
     }
 
     /** The player's feet are on (or in) one of the carcass's bodies. */
-    private static boolean isStandingOnCarcass(ServerLevel level, Player player, Drag drag) {
+    private static boolean isStandingOnCarcass(ServerLevel level, LivingEntity player, Drag drag) {
         if (!player.onGround()) {
             return false;
         }
@@ -332,11 +374,11 @@ public final class CarcassDrag {
      * {@code applyImpulseAtPoint} takes an impulse in the body's local frame at a plot-space point
      * (verified by the impulse probe test), which gives a smooth, fully predictable pull.
      */
-    private static void pull(Drag drag, ServerSubLevel subLevel, Player player, double partial, double timeStep, SubLevelPhysicsSystem physics) {
+    private static void pull(Drag drag, ServerSubLevel subLevel, LivingEntity player, double partial, double timeStep, SubLevelPhysicsSystem physics) {
         RigidBodyHandle handle = physics.getPhysicsHandle(subLevel);
         Pose3d pose = subLevel.logicalPose();
-        Vector3d target = target(player, partial);
         Vector3d hook = pose.transformPosition(drag.anchorPlot, new Vector3d());
+        Vector3d target = target(player, hook, partial);
         // velocity of the hooked point: body velocity plus spin about the center of mass
         Vector3d linear = handle.getLinearVelocity(new Vector3d());
         Vector3d angular = handle.getAngularVelocity(new Vector3d());
@@ -372,7 +414,7 @@ public final class CarcassDrag {
      * the tether target, and heavy angular damping stops it flailing about the joint. The rest of the body
      * then follows the limb through the joints. The torso has no joint above it and only gets the damping.
      */
-    private static void aim(ServerLevel level, Drag drag, ServerSubLevel subLevel, Player player, double partial, double timeStep, SubLevelPhysicsSystem physics) {
+    private static void aim(ServerLevel level, Drag drag, ServerSubLevel subLevel, LivingEntity player, double partial, double timeStep, SubLevelPhysicsSystem physics) {
         RigidBodyHandle handle = physics.getPhysicsHandle(subLevel);
         Pose3d pose = subLevel.logicalPose();
         double mass = Math.max(0.02, subLevel.getMassTracker().getMass());
@@ -393,7 +435,7 @@ public final class CarcassDrag {
             Vector3d joint = pose.transformPosition(spec.anchorChild(subLevel), new Vector3d());
             Vector3d hook = pose.transformPosition(drag.anchorPlot, new Vector3d());
             Vector3d now = new Vector3d(hook).sub(joint);
-            Vector3d want = target(player, partial).sub(joint);
+            Vector3d want = target(player, hook, partial).sub(joint);
             if (now.lengthSquared() > 1.0e-4 && want.lengthSquared() > 1.0e-4) {
                 now.normalize();
                 want.normalize();
@@ -410,11 +452,22 @@ public final class CarcassDrag {
         handle.applyLinearAndAngularImpulse(new Vector3d(), impulse);
     }
 
-    /** A point a little in front of the player's feet, so the carcass drags on the ground behind you. */
-    private static Vector3d target(Player player, double partial) {
+    /**
+     * A point a little in front of the player's feet, so the carcass drags on the ground behind you. Anyone else (a
+     * hauler) holds it at arm's length back along the line to the hook, low down, so it trails behind them.
+     */
+    private static Vector3d target(LivingEntity player, Vector3d hook, double partial) {
         double px = Mth.lerp(partial, player.xo, player.getX());
         double py = Mth.lerp(partial, player.yo, player.getY());
         double pz = Mth.lerp(partial, player.zo, player.getZ());
+        if (!(player instanceof Player)) {
+            Vec3 back = new Vec3(hook.x - px, 0.0, hook.z - pz);
+            if (back.lengthSqr() < 1.0e-4) {
+                back = Vec3.directionFromRotation(0.0F, player.yBodyRot + 180.0F);
+            }
+            back = back.normalize().scale(HOLD_DISTANCE + player.getBbWidth() / 2.0);
+            return new Vector3d(px + back.x, py + Math.min(0.7, player.getBbHeight() * 0.5), pz + back.z);
+        }
         Vec3 look = player.getLookAngle();
         Vec3 flat = new Vec3(look.x, 0.0, look.z);
         if (flat.lengthSqr() < 1.0e-4) {
@@ -427,7 +480,7 @@ public final class CarcassDrag {
 
 
     public static Vector3d debugTarget(Player player) {
-        return target(player, 1.0);
+        return target(player, new Vector3d(), 1.0);
     }
 
     private static float dragPenalty(CarcassSavedData.Carcass carcass, float weight) {
@@ -435,7 +488,7 @@ public final class CarcassDrag {
         return rig.map(Rig::dragPenalty).orElseGet(() -> (float) Math.max(0.05, Math.min(0.55, 0.05 + 0.5 * Math.pow(weight / 3.0, 0.6))));
     }
 
-    private static void applySlowdown(Player player, float penalty) {
+    private static void applySlowdown(LivingEntity player, float penalty) {
         AttributeInstance speed = player.getAttribute(Attributes.MOVEMENT_SPEED);
         if (speed == null) {
             return;
@@ -447,7 +500,7 @@ public final class CarcassDrag {
         speed.addTransientModifier(new AttributeModifier(SLOWDOWN_ID, -eased, AttributeModifier.Operation.ADD_MULTIPLIED_TOTAL));
     }
 
-    private static void removeSlowdown(Player player) {
+    private static void removeSlowdown(LivingEntity player) {
         AttributeInstance speed = player.getAttribute(Attributes.MOVEMENT_SPEED);
         if (speed != null) {
             speed.removeModifier(SLOWDOWN_ID);

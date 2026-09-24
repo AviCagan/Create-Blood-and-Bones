@@ -7,6 +7,7 @@ import com.avicagan.bloodandbones.parts.ResolvedMob;
 import com.avicagan.bloodandbones.parts.SlotInfo;
 import com.avicagan.bloodandbones.parts.TraitList;
 import com.google.gson.JsonElement;
+import com.google.gson.JsonObject;
 import com.mojang.serialization.JsonOps;
 import net.minecraft.core.registries.BuiltInRegistries;
 import net.minecraft.resources.ResourceLocation;
@@ -18,6 +19,7 @@ import net.minecraft.world.entity.ai.attributes.DefaultAttributes;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
 
 /**
@@ -31,6 +33,17 @@ public final class MinionData {
 
     /** A field of a part's minion data, if any layer gives it. */
     public static Optional<JsonElement> field(ResolvedMob mob, String key, String field) {
+        return field(mob, Map.of(), key, field);
+    }
+
+    /**
+     * A field of a part's minion data for one particular piece: a layer's "variants" the piece's captured traits
+     * match (docs/PARTS-AND-TRAITS.md section 4.2) come before that layer's own value, so a villager's head offers its
+     * profession's jobs. A variant is {"if": {"trait": "profession", "equals": "farmer"}, "jobs": [...]} ("in": [...]
+     * for several values, neither for any value at all); the last one that matches wins, and a later layer (a mob's
+     * own file) still comes before the variants of the layers under it.
+     */
+    public static Optional<JsonElement> field(ResolvedMob mob, Map<String, String> traits, String key, String field) {
         List<String> keys = new ArrayList<>();
         keys.add(key);
         int dot = key.indexOf('.');
@@ -41,16 +54,68 @@ public final class MinionData {
             List<JsonElement> layers = mob.minion().getOrDefault(k, List.of());
             for (int i = layers.size() - 1; i >= 0; i--) {
                 JsonElement layer = layers.get(i);
-                if (layer.isJsonObject() && layer.getAsJsonObject().has(field)) {
-                    return Optional.of(layer.getAsJsonObject().get(field));
+                if (!layer.isJsonObject()) {
+                    continue;
+                }
+                JsonObject o = layer.getAsJsonObject();
+                Optional<JsonElement> variant = variant(o, traits, field);
+                if (variant.isPresent()) {
+                    return variant;
+                }
+                if (o.has(field)) {
+                    return Optional.of(o.get(field));
                 }
             }
         }
         return Optional.empty();
     }
 
+    /** The field from the last of a layer's variants this piece matches that gives it. */
+    private static Optional<JsonElement> variant(JsonObject layer, Map<String, String> traits, String field) {
+        if (traits.isEmpty() || !layer.has("variants") || !layer.get("variants").isJsonArray()) {
+            return Optional.empty();
+        }
+        var variants = layer.getAsJsonArray("variants");
+        for (int i = variants.size() - 1; i >= 0; i--) {
+            if (variants.get(i).isJsonObject()) {
+                JsonObject variant = variants.get(i).getAsJsonObject();
+                if (variant.has(field) && matches(variant.getAsJsonObject("if"), traits)) {
+                    return Optional.of(variant.get(field));
+                }
+            }
+        }
+        return Optional.empty();
+    }
+
+    private static boolean matches(@org.jetbrains.annotations.Nullable JsonObject when, Map<String, String> traits) {
+        if (when == null || !when.has("trait")) {
+            return false;
+        }
+        String value = traits.get(when.get("trait").getAsString());
+        if (value == null) {
+            return false;
+        }
+        if (when.has("equals")) {
+            return value.equals(when.get("equals").getAsString());
+        }
+        if (when.has("in") && when.get("in").isJsonArray()) {
+            for (JsonElement e : when.getAsJsonArray("in")) {
+                if (value.equals(e.getAsString())) {
+                    return true;
+                }
+            }
+            return false;
+        }
+        return true;
+    }
+
     public static float number(ResolvedMob mob, String key, String field, String inner, float fallback) {
-        return field(mob, key, field).filter(JsonElement::isJsonObject).map(JsonElement::getAsJsonObject)
+        return number(mob, Map.of(), key, field, inner, fallback);
+    }
+
+    /** A number inside a part's minion object, for one piece (its variants first). */
+    public static float number(ResolvedMob mob, Map<String, String> traits, String key, String field, String inner, float fallback) {
+        return field(mob, traits, key, field).filter(JsonElement::isJsonObject).map(JsonElement::getAsJsonObject)
                 .filter(o -> o.has(inner)).map(o -> o.get(inner).getAsFloat()).orElse(fallback);
     }
 
@@ -66,12 +131,21 @@ public final class MinionData {
     }
 
     public static float scalar(ResolvedMob mob, String key, String field, float fallback) {
-        return field(mob, key, field).filter(JsonElement::isJsonPrimitive).map(JsonElement::getAsFloat).orElse(fallback);
+        return scalar(mob, Map.of(), key, field, fallback);
+    }
+
+    public static float scalar(ResolvedMob mob, Map<String, String> traits, String key, String field, float fallback) {
+        return field(mob, traits, key, field).filter(JsonElement::isJsonPrimitive).map(JsonElement::getAsFloat).orElse(fallback);
     }
 
     public static List<ResourceLocation> ids(ResolvedMob mob, String key, String field) {
+        return ids(mob, Map.of(), key, field);
+    }
+
+    /** A list of ids in a part's minion object, for one piece (its variants first): a head's jobs. */
+    public static List<ResourceLocation> ids(ResolvedMob mob, Map<String, String> traits, String key, String field) {
         List<ResourceLocation> out = new ArrayList<>();
-        field(mob, key, field).filter(JsonElement::isJsonArray).ifPresent(a -> a.getAsJsonArray().forEach(e -> out.add(ResourceLocation.parse(e.getAsString()))));
+        field(mob, traits, key, field).filter(JsonElement::isJsonArray).ifPresent(a -> a.getAsJsonArray().forEach(e -> out.add(ResourceLocation.parse(e.getAsString()))));
         return out;
     }
 

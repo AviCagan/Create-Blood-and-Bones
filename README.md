@@ -74,11 +74,14 @@ provided by [Sable](https://github.com/ryanhcode/sable).
 - **Minions.** Stitched together from carcass pieces on the Surgery Table (with its Assembly Frame): a
   torso, then the heads, legs, arms and tails of any mob. Every piece does its own thing: the torso sets
   size and health, the head the job and bite, the legs speed and how it moves, so a cow on rabbit legs
-  hops, spider legs climb, horse legs can be saddled and ridden, and arms hit in their own styles. Woken
+  hops, spider legs climb, horse legs can be saddled and ridden, and arms hit in their own styles. The
+  head decides the jobs on offer (a villager's by its trade): sentry, scavenger, herder, fisher, hunter,
+  hauler, butcher, medic, barterer, digger and the rest, worked with whatever you hand it. Woken
   with a bucket of blood, it runs on blood and drinks from a Blood Trough; run dry, it lies down alive
   until it gets more, and is never destroyed by neglect. Built of skinned pieces under Brass Sheathing,
-  it is a brass minion instead: woken and kept going on Soul Canisters that a Charging Cradle swaps in,
-  with a cybernetic module of its own.
+  it is a brass minion instead: woken and kept going on Soul Canisters that a Charging Cradle swaps in
+  (Mechanical Arms and funnels keep the cradle stocked), with a cybernetic module of its own and a filter
+  slot that takes a Create filter.
 - **The Fluid Backtank.** A tank for any fluid, worn in the chest slot with the armour of its tier:
   copper 2 buckets, gold 3, iron 4, diamond 6, blood steel 8, blood diamond 16, and soul netherite 32
   (a smithing upgrade with a Soul Netherite Ingot: a netherite ingot filled with soul blood and pressed
@@ -104,8 +107,8 @@ incremental. `./gradlew runClient` / `runServer` / `runData` are configured by M
 
 ### Development aids
 
-- `./gradlew runGameTestServer` runs the game tests headless (386: every rigged mob and baby,
-  butchery, rot, bleeding, machines and their filters, cooking and display, decoration, surgery, implants, backtanks, carcass armour and its traits, minions, chains, recipes,
+- `./gradlew runGameTestServer` runs the game tests headless (NNN: every rigged mob and baby,
+  butchery, rot, bleeding, machines and their filters, cooking and display, decoration, surgery, implants, backtanks, carcass armour and its traits, trait effects, minions and their jobs, chains, recipes,
   advancements and sounds).
 - `./gradlew runData -Dbloodandbones.dump_layers=minecraft:goat#main,...` writes those vanilla
   models' part trees to `run/build/layer-dump.txt`, for writing new rig targets in

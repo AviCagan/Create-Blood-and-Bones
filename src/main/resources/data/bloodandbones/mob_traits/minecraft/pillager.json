@@ -8,8 +8,7 @@
       "minion": {
         "jobs": [
           "bloodandbones:surgeon",
-          "bloodandbones:guard",
-          "bloodandbones:companion"
+          "bloodandbones:sentry"
         ],
         "disposition": "brave",
         "bite": {

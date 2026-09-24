@@ -82,9 +82,14 @@ public class MinionEntity extends PathfinderMob implements net.minecraft.world.e
 
     @Nullable
     private UUID maker;
+    /** The maker who woke it, while that very player is still about (a test's stand-in maker is never in the level). */
+    @Nullable
+    private Player makerEntity;
     private BlockPos home = BlockPos.ZERO;
     /** Room for the most a minion can carry (spec 6.4: up to 54 with storage traits); {@link #slots} says how much it may use. */
     public final SimpleContainer inventory = new SimpleContainer(54);
+    /** Brass only: what it may pick up, reap or go for (a Create filter, or any item). */
+    private final MinionFilter filter = new MinionFilter();
     @Nullable
     private MinionStats stats;
     private int statsGeneration = -1;
@@ -132,11 +137,13 @@ public class MinionEntity extends PathfinderMob implements net.minecraft.world.e
     /** Just woken: its maker, where it was made, what it is built of, and the blood it was woken with. */
     public void setup(@Nullable Player maker, BlockPos home, MinionBuild build, float power) {
         this.maker = maker == null ? null : maker.getUUID();
+        this.makerEntity = maker;
         this.home = home.immutable();
         setBuild(build);
         setHealth(getMaxHealth());
         entityData.set(POWER, Math.min(power, stats().reservoir()));
-        entityData.set(JOB, stats().jobs().get(0).toString());
+        // the first job its head offers that it can do now, with nothing in hand (never straight to hunting)
+        entityData.set(JOB, MinionJobs.wakeJob(MinionJobs.offered(this)).toString());
     }
 
     public Optional<MinionBuild> build() {
@@ -158,7 +165,8 @@ public class MinionEntity extends PathfinderMob implements net.minecraft.world.e
         PartsData.Store store = PartsData.of(level());
         if (stats == null || statsGeneration != store.generation()) {
             MinionBuild build = build().orElse(null);
-            stats = build == null ? new MinionStats(10, 0, 3, 250, "crawl", 0.12F, 1, 0, List.of(), List.of(MinionStats.COMPANION), true, false, false, false, 0.6F, 0.6F, 0.6F, 0.6F)
+            stats = build == null ? new MinionStats(10, 0, 3, 250, "crawl", 0.12F, 1, 0, List.of(), List.of(MinionStats.COMPANION), true, false, false, false, 0.6F, 0.6F, 0.6F, 0.6F,
+                    MinionStats.MINDLESS_SIGHT)
                     : MinionStats.of(store, build);
             // the saddle's place, turned into the frame a passenger's place is given in (the renderer turns it a half turn more)
             org.joml.Vector3f saddle = build == null ? new org.joml.Vector3f(0.0F, stats.height(), 0.0F) : MinionBody.saddlePoint(MinionBody.layout(store, build));
@@ -426,9 +434,9 @@ public class MinionEntity extends PathfinderMob implements net.minecraft.world.e
         return job == null ? MinionStats.COMPANION : job;
     }
 
-    /** Put it to one of the jobs its head offers; false if it offers no such job. */
+    /** Put it to one of the jobs its head offers and it can do now (a sentry needs its bow in hand); false if not. */
     public boolean setJob(ResourceLocation job) {
-        if (!stats().jobs().contains(job)) {
+        if (!MinionJobs.offered(this).contains(job)) {
             return false;
         }
         entityData.set(JOB, job.toString());
@@ -455,7 +463,32 @@ public class MinionEntity extends PathfinderMob implements net.minecraft.world.e
 
     @Nullable
     public Player maker() {
-        return maker == null ? null : level().getPlayerByUUID(maker);
+        if (maker == null) {
+            return null;
+        }
+        Player found = level().getPlayerByUUID(maker);
+        if (makerEntity != null && makerEntity.isRemoved()) {
+            // logged out or respawned as another: only the id is kept from now on
+            makerEntity = null;
+        }
+        if (found == null && makerEntity != null && makerEntity.level() == level()) {
+            found = makerEntity;
+        }
+        return found;
+    }
+
+    /**
+     * Whether it has a ranged attack: a bow, crossbow or trident in a hand that fights (docs/PARTS-AND-TRAITS.md
+     * section 6.4). Innate shots from its traits join this when they come.
+     */
+    public boolean hasRangedAttack() {
+        return MinionJobs.heldWeapon(this) != null;
+    }
+
+    /** Arrows (or rockets) for the bow or crossbow in its hand, from what it carries: the stack itself, so a shot uses one up. */
+    @Override
+    public ItemStack getProjectile(ItemStack weapon) {
+        return MinionJobs.ammo(this, weapon);
     }
 
     public boolean isMaker(Player player) {
@@ -494,6 +527,11 @@ public class MinionEntity extends PathfinderMob implements net.minecraft.world.e
 
     public boolean cybernetic() {
         return build().map(MinionBuild::cybernetic).orElse(false);
+    }
+
+    /** Its filter slot (brass only; flesh's stays empty and lets everything through). */
+    public MinionFilter filter() {
+        return filter;
     }
 
     /** How many of its inventory's slots it can use: its torso's, and what its traits add (storage). */
@@ -583,6 +621,8 @@ public class MinionEntity extends PathfinderMob implements net.minecraft.world.e
             setNoGravity(false);
             if (!level().isClientSide) {
                 com.avicagan.bloodandbones.cyber.Coupler.release(this);
+                // a hauler lets go of what it drags
+                com.avicagan.bloodandbones.carcass.CarcassDrag.stop((ServerLevel) level(), this);
             }
             getNavigation().stop();
             setTarget(null);
@@ -647,6 +687,8 @@ public class MinionEntity extends PathfinderMob implements net.minecraft.world.e
             applyStats();
             // its traits, built again if its build or the data changed
             com.avicagan.bloodandbones.parts.ActiveTraits.of(this);
+            // a job it can no longer do (its bow broke, a data reload took it from its head) gives way to one it can
+            MinionJobs.keepValid(this);
         }
         if ((tickCount + getId()) % 10 == 0) {
             // its traits' tick, staggered as players' are (tick effects wait while it is down)
@@ -761,6 +803,8 @@ public class MinionEntity extends PathfinderMob implements net.minecraft.world.e
         goalSelector.addGoal(8, new LookAtPlayerGoal(this, Player.class, 8.0F));
         goalSelector.addGoal(9, new RandomLookAroundGoal(this));
         MinionGoals.targets(this, targetSelector);
+        // the jobs of slice 7 (docs/PARTS-AND-TRAITS.md section 6.9): sentry, scavenger, herder, fisher, hunter...
+        MinionJobs.goals(this, goalSelector, targetSelector);
         // what each group of trait effects adds (a ranged minion's keep-away, say)
         com.avicagan.bloodandbones.parts.effect.MotionEffects.minionGoals(this, goalSelector, targetSelector);
         com.avicagan.bloodandbones.parts.effect.RangedEffects.minionGoals(this, goalSelector, targetSelector);
@@ -770,10 +814,17 @@ public class MinionEntity extends PathfinderMob implements net.minecraft.world.e
 
     // ---- never destroyed by neglect
 
-    /** Powered down, only a player (or the void, /kill) can hurt it. */
+    /**
+     * Powered down, only a player (or the void, /kill) can hurt it. A machine's stand-in player (a Deployer's punch)
+     * never hurts it, down or up, whoever placed the machine.
+     */
     @Override
     public boolean isInvulnerableTo(DamageSource source) {
-        if (poweredDown() && !(source.getEntity() instanceof Player) && !source.is(DamageTypeTags.BYPASSES_INVULNERABILITY)) {
+        if (source.is(DamageTypeTags.BYPASSES_INVULNERABILITY)) {
+            return super.isInvulnerableTo(source);
+        }
+        if (source.getEntity() instanceof net.neoforged.neoforge.common.util.FakePlayer
+                || poweredDown() && !(source.getEntity() instanceof Player)) {
             return true;
         }
         return super.isInvulnerableTo(source);
@@ -843,12 +894,15 @@ public class MinionEntity extends PathfinderMob implements net.minecraft.world.e
         for (int i = 0; i < inventory.getContainerSize(); i++) {
             spawnAtLocation(inventory.removeItemNoUpdate(i));
         }
+        MinionJobs.dropHeld(this);
         if (isSaddled()) {
             spawnAtLocation(Items.SADDLE);
         }
         if (module() != null) {
             spawnAtLocation(BBItems.module(module()));
         }
+        // a Create filter in its slot (a plain item there was only a copy)
+        spawnAtLocation(filter.takeOut());
         if (BBServerConfig.minionDeath() == BBServerConfig.MinionDeath.SCATTER && build().isPresent()) {
             // it falls apart into what it was built of, half gone off
             MinionBuild build = build().get();
@@ -864,8 +918,10 @@ public class MinionEntity extends PathfinderMob implements net.minecraft.world.e
     // ---- hands on
 
     /**
-     * A bucket of blood feeds it. Its maker, crouching with an empty hand: changes its job while it is up, and
-     * held for three seconds on it powered down, folds it into a Dormant Minion to carry. Anyone else: what it is.
+     * A bucket of blood feeds flesh; a Soul Canister charges brass and a brass sheet mends it, from a hand or a Deployer
+     * (a machine does nothing else to it). Its maker, crouching with an empty hand: changes its job while it is up, and
+     * held for three seconds on it powered down, folds it into a Dormant Minion to carry; crouching with an item, sets a
+     * brass minion's filter. Anyone else: what it is.
      */
     @Override
     protected InteractionResult mobInteract(Player player, InteractionHand hand) {
@@ -883,29 +939,8 @@ public class MinionEntity extends PathfinderMob implements net.minecraft.world.e
             }
             return InteractionResult.sidedSuccess(level().isClientSide);
         }
-        if (cybernetic() && isMaker(player) && held.getItem() instanceof com.avicagan.bloodandbones.cyber.ModuleItem item && MinionModules.FITS.contains(item.module())) {
-            // its maker fits a module into its socket; one already there comes back
-            if (!level().isClientSide) {
-                com.avicagan.bloodandbones.cyber.Module old = module();
-                setModule(item.module());
-                held.consume(1, player);
-                if (old != null) {
-                    player.getInventory().placeItemBackInInventory(new ItemStack(BBItems.module(old)));
-                }
-                level().playSound(null, blockPosition(), SoundEvents.CHAIN_PLACE, SoundSource.NEUTRAL, 1.0F, 1.3F);
-            }
-            return InteractionResult.sidedSuccess(level().isClientSide);
-        }
-        if (cybernetic() && isMaker(player) && held.is(com.simibubi.create.AllItems.WRENCH.get()) && module() != null) {
-            if (!level().isClientSide) {
-                player.getInventory().placeItemBackInInventory(new ItemStack(BBItems.module(module())));
-                setModule(null);
-                com.avicagan.bloodandbones.cyber.Coupler.release(this);
-                level().playSound(null, blockPosition(), SoundEvents.CHAIN_BREAK, SoundSource.NEUTRAL, 1.0F, 1.3F);
-            }
-            return InteractionResult.sidedSuccess(level().isClientSide);
-        }
         if (cybernetic() && held.is(com.simibubi.create.AllItems.BRASS_SHEET.get()) && getHealth() < getMaxHealth()) {
+            // a brass sheet mends brass, from a hand or a Deployer's
             if (!level().isClientSide) {
                 heal(SHEET_REPAIR);
                 held.consume(1, player);
@@ -924,12 +959,49 @@ public class MinionEntity extends PathfinderMob implements net.minecraft.world.e
             }
             return InteractionResult.sidedSuccess(level().isClientSide);
         }
+        if (player instanceof net.neoforged.neoforge.common.util.FakePlayer) {
+            // a machine's stand-in (a Deployer's) only charges, feeds and mends it: whoever placed the machine, it never
+            // takes it apart, folds it, rides it, or changes its module, filter, job or what it holds
+            return InteractionResult.PASS;
+        }
+        if (cybernetic() && isMaker(player) && held.getItem() instanceof com.avicagan.bloodandbones.cyber.ModuleItem item && MinionModules.FITS.contains(item.module())) {
+            // its maker fits a module into its socket; one already there comes back
+            if (!level().isClientSide) {
+                com.avicagan.bloodandbones.cyber.Module old = module();
+                setModule(item.module());
+                held.consume(1, player);
+                if (old != null) {
+                    player.getInventory().placeItemBackInInventory(new ItemStack(BBItems.module(old)));
+                }
+                level().playSound(null, blockPosition(), SoundEvents.CHAIN_PLACE, SoundSource.NEUTRAL, 1.0F, 1.3F);
+            }
+            return InteractionResult.sidedSuccess(level().isClientSide);
+        }
+        if (cybernetic() && isMaker(player) && held.is(com.simibubi.create.AllItems.WRENCH.get()) && module() != null && !player.isSecondaryUseActive()) {
+            if (!level().isClientSide) {
+                player.getInventory().placeItemBackInInventory(new ItemStack(BBItems.module(module())));
+                setModule(null);
+                com.avicagan.bloodandbones.cyber.Coupler.release(this);
+                level().playSound(null, blockPosition(), SoundEvents.CHAIN_BREAK, SoundSource.NEUTRAL, 1.0F, 1.3F);
+            }
+            return InteractionResult.sidedSuccess(level().isClientSide);
+        }
         if (isMaker(player) && poweredDown() && com.avicagan.bloodandbones.body.Surgery.isBlade(held)) {
             // its maker takes it apart, lying on an Assembly Frame table: back to a frame there
             if (!level().isClientSide) {
                 MinionAssembly.takeApart((ServerLevel) level(), this, player);
             }
             return InteractionResult.sidedSuccess(level().isClientSide);
+        }
+        // its maker, crouching, sets its filter (brass only) or takes it out with a Wrench
+        InteractionResult filtered = MinionFilter.interact(this, player, hand);
+        if (filtered != null) {
+            return filtered;
+        }
+        // its maker hands it something to hold (a bow, a rod, a Cleaver, what a scavenger fetches), or takes it back
+        InteractionResult hands = MinionJobs.handInteract(this, player, hand);
+        if (hands != null) {
+            return hands;
         }
         if (!held.isEmpty()) {
             return super.mobInteract(player, hand);
@@ -954,11 +1026,16 @@ public class MinionEntity extends PathfinderMob implements net.minecraft.world.e
                 }
                 return InteractionResult.CONSUME;
             }
-            List<ResourceLocation> jobs = stats().jobs();
+            // the jobs its head offers that it can do now, in turn
+            List<ResourceLocation> jobs = MinionJobs.offered(this);
             ResourceLocation next = jobs.get((jobs.indexOf(job()) + 1) % jobs.size());
-            entityData.set(JOB, next.toString());
-            setTarget(null);
+            MinionJobs.startJob(this, next);
             player.displayClientMessage(Component.translatable("bloodandbones.minion.job_now", Component.translatable(jobKey(next))), true);
+            return InteractionResult.CONSUME;
+        }
+        if (!poweredDown() && !filter.isEmpty()) {
+            player.displayClientMessage(Component.translatable("bloodandbones.minion.status_filtered", Component.translatable(jobKey(job())),
+                    Math.round(power()), stats().reservoir(), filter.stack().getHoverName()), true);
             return InteractionResult.CONSUME;
         }
         player.displayClientMessage(Component.translatable(poweredDown() ? "bloodandbones.minion.status_down" : "bloodandbones.minion.status",
@@ -986,6 +1063,7 @@ public class MinionEntity extends PathfinderMob implements net.minecraft.world.e
         tag.putBoolean("Saddled", isSaddled());
         tag.putString("Module", entityData.get(MODULE));
         tag.put("Inventory", inventory.createTag(registryAccess()));
+        filter.save(tag, registryAccess());
     }
 
     @Override
@@ -1004,6 +1082,7 @@ public class MinionEntity extends PathfinderMob implements net.minecraft.world.e
         entityData.set(DOWN, tag.getBoolean("Down"));
         entityData.set(SADDLED, tag.getBoolean("Saddled"));
         entityData.set(MODULE, tag.getString("Module"));
+        filter.load(tag, registryAccess());
         stats = null;
         if (!level().isClientSide && tag.contains("Health", net.minecraft.nbt.Tag.TAG_ANY_NUMERIC)) {
             // its traits' health (a Golem Core's hardy) is not saved with it: back on first, so the health it was saved
