@@ -273,25 +273,6 @@ public final class DevShowcase {
                                 com.avicagan.bloodandbones.registry.BBFluids.soulBlood(), 32000));
                         player.setItemSlot(net.minecraft.world.entity.EquipmentSlot.CHEST, tank);
                         player.serverLevel().setBlockAndUpdate(player.blockPosition().offset(4, 0, 5), BBBlocks.BACKTANK_PORT.getDefaultState());
-                        // three minions beside: a farmer (whole), a fighter (a Hook Hand, a Peg Leg), a courier (no eyes)
-                        for (int m = 0; m < 3; m++) {
-                            var built = new com.avicagan.bloodandbones.body.Body();
-                            if (m == 1) {
-                                built.fit(com.avicagan.bloodandbones.body.BodyPart.RIGHT_ARM, new ItemStack(BBItems.HOOK_HAND.get()));
-                                built.fit(com.avicagan.bloodandbones.body.BodyPart.LEFT_LEG, new ItemStack(BBItems.PEG_LEG.get()));
-                            } else if (m == 2) {
-                                built.lose(com.avicagan.bloodandbones.body.BodyPart.LEFT_EYE);
-                                built.lose(com.avicagan.bloodandbones.body.BodyPart.RIGHT_EYE);
-                                built.lose(com.avicagan.bloodandbones.body.BodyPart.LEFT_LEG);
-                            }
-                            var minion = com.avicagan.bloodandbones.registry.BBEntities.MINION.get().create(player.serverLevel());
-                            BlockPos at = player.blockPosition().offset(m * 2 - 2, 0, 2);
-                            minion.moveTo(at.getX() + 0.5, at.getY(), at.getZ() + 0.5, 180.0F, 0.0F);
-                            minion.setup(player, at, new com.avicagan.bloodandbones.minion.MinionFrame.Frame(built, java.util.Optional.empty()));
-                            minion.setNoAi(true);
-                            player.serverLevel().addFreshEntity(minion);
-                            com.avicagan.bloodandbones.body.BodyEffects.changed(minion);
-                        }
                         player.teleportTo(player.serverLevel(), player.getX(), player.getY(), player.getZ(), 180.0F, -25.0F);
                         // every tier of backtank set down in a row behind
                         for (var tier : com.avicagan.bloodandbones.backtank.BacktankTier.values()) {
@@ -414,7 +395,63 @@ public final class DevShowcase {
                             player.setItemSlot(slot, ItemStack.EMPTY);
                         }
                         player.getInventory().clearContent();
+                        // minions, somewhere clear: four stitched ones in a row, a trough, and one being built on the table
+                        player.teleportTo(player.serverLevel(), player.getBlockX() + 0.5, player.getY(), player.getBlockZ() - 40.5, 0.0F, 20.0F);
+                        // four stitched minions beside: a cow on rabbit legs, a whole cow, a zombie with a pig's head on a
+                        // rabbit's haunches, and a legless cow out of blood on its side
+                        java.util.function.BiFunction<String, String, com.avicagan.bloodandbones.minion.PieceRef> ref = (mob, bone) ->
+                                new com.avicagan.bloodandbones.minion.PieceRef(net.minecraft.resources.ResourceLocation.withDefaultNamespace(mob), bone,
+                                        net.minecraft.resources.ResourceLocation.withDefaultNamespace("textures/entity/" + mob + "/" + (mob.equals("rabbit") ? "brown" : mob) + ".png"),
+                                        java.util.List.of(), 1.0F, false, java.util.Map.of(), false);
+                        var cow = com.avicagan.bloodandbones.minion.MinionBuild.of(ref.apply("cow", "body")).with("head", ref.apply("cow", "head"));
+                        var hopper = cow.with("right_front_leg", ref.apply("rabbit", "right_front_leg")).with("left_front_leg", ref.apply("rabbit", "left_front_leg"))
+                                .with("right_hind_leg", ref.apply("rabbit", "right_haunch")).with("left_hind_leg", ref.apply("rabbit", "left_haunch"));
+                        var whole = cow;
+                        for (String leg : new String[]{"right_front_leg", "left_front_leg", "right_hind_leg", "left_hind_leg"}) {
+                            whole = whole.with(leg, ref.apply("cow", leg));
+                        }
+                        var odd = com.avicagan.bloodandbones.minion.MinionBuild.of(ref.apply("zombie", "body")).with("head", ref.apply("pig", "head"))
+                                .with("right_leg", ref.apply("rabbit", "right_haunch")).with("left_leg", ref.apply("rabbit", "left_haunch"))
+                                .with("left_arm", ref.apply("zombie", "left_arm"));
+                        var builds = java.util.List.of(hopper, whole, odd, cow);
+                        for (int m = 0; m < builds.size(); m++) {
+                            var minion = com.avicagan.bloodandbones.registry.BBEntities.MINION.get().create(player.serverLevel());
+                            BlockPos at = player.blockPosition().offset(m * 3 - 4, 0, 7);
+                            minion.moveTo(at.getX() + 0.5, at.getY(), at.getZ() + 0.5, 180.0F, 0.0F);
+                            minion.setup(player, at, builds.get(m), 1000.0F);
+                            minion.setNoAi(true);
+                            player.serverLevel().addFreshEntity(minion);
+                            if (m == 3) {
+                                minion.powerDown();
+                            }
+                        }
+                        BlockPos troughAt = player.blockPosition().offset(7, 0, 7);
+                        player.serverLevel().setBlockAndUpdate(troughAt, BBBlocks.BLOOD_TROUGH.getDefaultState());
+                        if (player.serverLevel().getBlockEntity(troughAt) instanceof com.avicagan.bloodandbones.minion.BloodTroughBlockEntity trough) {
+                            trough.tank().fill(new net.neoforged.neoforge.fluids.FluidStack(com.avicagan.bloodandbones.registry.BBFluids.blood(), 2500),
+                                    net.neoforged.neoforge.fluids.capability.IFluidHandler.FluidAction.EXECUTE);
+                        }
+                        BlockPos tableAt = player.blockPosition().offset(0, 0, 3);
+                        player.serverLevel().setBlockAndUpdate(tableAt, BBBlocks.SURGERY_TABLE.getDefaultState()
+                                .setValue(com.avicagan.bloodandbones.body.SurgeryTableBlock.ATTACHMENT, com.avicagan.bloodandbones.body.TableAttachment.ASSEMBLY));
+                        if (player.serverLevel().getBlockEntity(tableAt) instanceof com.avicagan.bloodandbones.body.SurgeryTableBlockEntity table) {
+                            table.setBuild(cow.with("right_front_leg", ref.apply("rabbit", "right_front_leg")).with("right_hind_leg", ref.apply("rabbit", "right_haunch")));
+                        }
                     });
+                    mc.options.setCameraType(net.minecraft.client.CameraType.FIRST_PERSON);
+                    mc.options.hideGui = true;
+                } else if (t == 200) {
+                    Screenshot.grab(mc.gameDirectory, PREFIX + "minions_0.png", mc.getMainRenderTarget(), message -> {
+                    });
+                    // and from behind and to the side: legs and stumps
+                    server.execute(() -> {
+                        ServerPlayer player = server.getPlayerList().getPlayers().get(0);
+                        player.teleportTo(player.serverLevel(), player.getX() - 6.0, player.getY(), player.getZ() + 12.0, -135.0F, 12.0F);
+                    });
+                } else if (t == 220) {
+                    Screenshot.grab(mc.gameDirectory, PREFIX + "minions_1.png", mc.getMainRenderTarget(), message -> {
+                    });
+                    mc.options.hideGui = false;
                     stage = 4;
                     ticks = 0;
                 }

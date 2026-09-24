@@ -15,16 +15,39 @@
   "colour": "#6b4a2f",
   "parts": {
     "torso": {
+      "minion": {
+        "health_factor": 1.5
+      },
       "armour": [
         "bloodandbones:barrel_chest"
       ]
     },
     "head": {
+      "minion": {
+        "jobs": [
+          "bloodandbones:herder",
+          "bloodandbones:courier",
+          "bloodandbones:companion"
+        ],
+        "disposition": "docile",
+        "bite": {
+          "style": "punch",
+          "damage": 1.0,
+          "knockback": 0.6
+        }
+      },
       "armour": [
         "bloodandbones:cud_chewer"
       ]
     },
     "leg": {
+      "minion": {
+        "movement": {
+          "mode": "walk",
+          "speed": 0.2,
+          "gait": "amble"
+        }
+      },
       "armour": {
         "leggings": [
           "bloodandbones:sturdy"

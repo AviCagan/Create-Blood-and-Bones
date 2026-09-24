@@ -75,6 +75,7 @@ public class BloodAndBones {
         com.avicagan.bloodandbones.registry.BBRecipes.register(modEventBus);
         com.avicagan.bloodandbones.parts.TraitEffects.register(modEventBus);
         com.avicagan.bloodandbones.registry.BBAttributes.register(modEventBus);
+        com.avicagan.bloodandbones.minion.MinionSerializers.register(modEventBus);
         modEventBus.addListener((net.neoforged.neoforge.registries.datamaps.RegisterDataMapTypesEvent event) -> event.register(com.avicagan.bloodandbones.body.Vent.EFFECTS));
 
         LOGGER.info("Create: Blood & Bones loaded");

@@ -4,6 +4,13 @@
   ],
   "parts": {
     "leg.hind": {
+      "minion": {
+        "movement": {
+          "mode": "hop",
+          "speed": 0.35,
+          "gait": "bound"
+        }
+      },
       "armour": {
         "leggings": [
           {

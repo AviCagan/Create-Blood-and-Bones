@@ -210,8 +210,8 @@ public class PatientTests {
         click.apply(new ItemStack(BBItems.CLEAVER.get()));
         ResourceLocation cow = ResourceLocation.withDefaultNamespace("cow");
         click.apply(piece(cow, com.avicagan.bloodandbones.carcass.rig.RigManager.forEntity(cow).orElseThrow().root().name()));
-        if (!com.avicagan.bloodandbones.minion.MinionFrame.isBody(table.item(), level)) {
-            helper.fail("With the Assembly Frame the table should take a carcass body, not a Cleaver: " + table.item());
+        if (!table.item().isEmpty() || table.build().map(b -> !b.torso().entity().equals(cow)).orElse(true)) {
+            helper.fail("With the Assembly Frame the table should take a carcass body as a minion's torso, not a Cleaver: " + table.item());
             return;
         }
         helper.succeed();

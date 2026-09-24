@@ -84,6 +84,12 @@ public class BBBlockEntities {
             .validBlocks(BBBlocks.BACKTANK_PORT)
             .register();
 
+    public static final BlockEntityEntry<com.avicagan.bloodandbones.minion.BloodTroughBlockEntity> BLOOD_TROUGH = BloodAndBones.REGISTRATE
+            .blockEntity("blood_trough", com.avicagan.bloodandbones.minion.BloodTroughBlockEntity::new)
+            .validBlocks(BBBlocks.BLOOD_TROUGH)
+            .renderer(() -> com.avicagan.bloodandbones.client.BloodTroughRenderer::new)
+            .register();
+
     public static void register() {
     }
 
@@ -97,6 +103,8 @@ public class BBBlockEntities {
         // the port's nozzle side only
         event.registerBlockEntity(net.neoforged.neoforge.capabilities.Capabilities.FluidHandler.BLOCK, BACKTANK_PORT.get(),
                 (be, side) -> side == null || side == be.getBlockState().getValue(net.minecraft.world.level.block.DirectionalBlock.FACING) ? be.handler() : null);
+        // pipes, Spouts and buckets fill a trough from any side
+        event.registerBlockEntity(net.neoforged.neoforge.capabilities.Capabilities.FluidHandler.BLOCK, BLOOD_TROUGH.get(), (be, side) -> be.tank());
         for (var entry : BBItems.BACKTANKS.values()) {
             event.registerItem(net.neoforged.neoforge.capabilities.Capabilities.FluidHandler.ITEM,
                     (stack, context) -> new net.neoforged.neoforge.fluids.capability.templates.FluidHandlerItemStack(BBDataComponents.FLUID, stack,

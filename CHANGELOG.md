@@ -134,17 +134,23 @@ Everything below is in development builds only; the art is placeholder (see the 
 
 ### Minions
 
-- Built on the Surgery Table on a carcass body (which keeps the organs not taken out of it): a carcass
-  head (with its eyes), severed limbs, organs and implants, one a click. Woken with a bucket of soul
-  blood once it has a head and a heart ("It's Alive!").
-- Its parts decide its job, checked every second: a weapon arm (Hook Hand, Hydraulic Arm, Vent Arm)
-  makes a fighter that follows its maker and fights monsters (a Vent Arm sprays from range); two working
-  arms and an eye, a farmer that reaps and replants ripe crops near where it was made and stores the
-  harvest in a chest there; two arms and no eye, a courier that carries dropped things to that chest;
-  anything less, a companion that follows its maker.
-- Legs, arms, heart and eyes work on it as on anyone. Its maker can give it a backtank (right-click)
-  to run powered implants, and take it back (sneak, empty hand). It can be led back onto the table to
-  be changed. Killed, it drops what it carried and its implants. Drawn as a stitched, pale body.
+- Rebuilt from carcass pieces: fit an Assembly Frame to the Surgery Table, lay a carcass torso on it
+  (or take a whole carcass lying on it with an empty hand, whatever is still attached coming along),
+  then stitch on the heads, legs, arms and tails of any mob, one a click. A Cleaver takes the last
+  piece back. A bucket of blood wakes it ("It's Alive!").
+- Every piece does its own thing, from its mob's data: the torso its size, health and what it carries,
+  the head its jobs and bite, the legs how fast and how it moves. A cow on four rabbit legs with a cow's
+  head is 15 health, hops at 0.325 and starts as a courier. A villager's head makes a farmer. Crouch and
+  right-click it with an empty hand to change its job.
+- Drawn as what it is: each piece in its own mob's skin, raw where it was cut, legs walking (or a
+  hopper bounding), head looking round. The table shows the minion being built.
+- It runs on blood, more when it moves, works or fights. Low, it walks to the nearest Blood Trough it
+  can reach (four buckets of blood, filled by bucket, Spout or pipe) and drinks. Empty, it lies down
+  where it is, alive: only a player can hurt it and mobs ignore it. Blood wakes it again. Its maker can
+  fold one that is down into a Dormant Minion to carry. A killing blow collapses it the same way (a
+  server setting can make it fall apart into its pieces, or die). A server can cap minions per player
+  (no cap by default).
+- A minion from an older build falls apart, dropping what it carried.
 
 ### Presentation
 
@@ -172,5 +178,8 @@ Everything below is in development builds only; the art is placeholder (see the 
   proof.
 - A patient on the Surgery Table is drawn sitting, not lying. An item held in a missing hand, and
   armour over a missing limb, still show in third person. Nothing is drawn on mobs that have been
-  operated on. A minion carries a carcass head's name but is drawn with its own stitched head.
+  operated on.
+- Minions: only the cow, rabbit, zombie-shaped and villager heads have their own minion data so far;
+  other mobs' pieces work from their body shape's defaults. Brass (cybernetic) minions, organs in
+  minions, and the herder and surgeon jobs are still to come.
 - All art is placeholder (see the README).

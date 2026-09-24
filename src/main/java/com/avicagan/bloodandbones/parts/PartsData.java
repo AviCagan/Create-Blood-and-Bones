@@ -317,7 +317,7 @@ public final class PartsData {
             return n;
         }
 
-        Optional<Rig> rig(ResourceLocation entity, boolean baby) {
+        public Optional<Rig> rig(ResourceLocation entity, boolean baby) {
             return this == CLIENT ? RigManager.clientRig(entity, baby) : RigManager.forEntity(entity, baby);
         }
     }

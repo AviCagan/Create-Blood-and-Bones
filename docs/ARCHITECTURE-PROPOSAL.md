@@ -1263,3 +1263,47 @@ file, composed from about 30 effect types.
   every sub-key of the slot ("leg" and "leg.hind" alike); minions, built from whole pieces, will tell them apart.
 - Seen in the headless client: a player in a cow hide hood and boots and rabbit sinew leggings; scraps and pieces
   in the hotbar.
+
+### 15.3 Slice 2 as built: a cow torso on rabbit legs (the minion rebuild)
+
+The old minion (a player-shaped body with implants, its job from which arms and eyes it had) is gone; a minion
+saved the old way falls apart on its first tick, dropping what it carried.
+
+- **The build** (`minion/MinionBuild`, `PieceRef`): a torso and a piece in each socket, each piece remembered as it
+  was fitted (mob, bone, look, freshness, skinned, baby). Pieces never rot once fitted. Kept on the Surgery Table
+  while built and on the minion once woken, synced to clients as entity data (`MinionSerializers`).
+- **Building** (`minion/MinionAssembly`, on the table with the Assembly Frame): lay a carried torso down, or
+  claim a whole carcass lying on the table with an empty hand (what is still jointed to its torso comes along,
+  and the carcass leaves the world: `cowFrameClaimedFromTable`). A piece goes into the free socket it suits:
+  a head the head's, legs the lowest limb sockets, arms the highest. A flesh frame takes pieces with their hide on,
+  a brass one only skinned pieces (hideless mobs either way). Too big (3 wide or 4 tall) is refused. A Cleaver takes
+  back the last piece, then the torso (`cleaverTakesBackLastPiece`). A bucket of blood wakes it.
+- **Sockets and shape** (`minion/MinionBody`): the torso's own rig gives the sockets (its head, limb, tail and
+  extension bones); a body with no head or fewer than two limbs gets a made-up set. Each piece is placed at its
+  socket, at its own size and in its own rest turn: a rabbit's leg under a cow is a rabbit's leg. The whole is
+  lowered or raised so its lowest point stands on the ground. The server sizes the hitbox and the client draws
+  from the same layout (`feetNeverBelowGround`, `hitboxContainsParts`).
+- **What it adds up to** (`minion/MinionStats`, `MinionData`), read from each piece's own mob data, the most
+  specific key first ("leg.hind" before "leg"): health is the torso mob's times its `health_factor` (6 to 150);
+  slots and blood held from the torso's size; speed the mean of its legs' speeds, cut by the share of the torso's
+  own legs present; the mode (walk, hop) the one most legs share; no legs, the torso's own way (most crawl at
+  0.05); jobs and bite from the head. A cow on four rabbit legs with a cow's head is 15 health, hops at 0.325 and
+  starts as a courier (`buildCowOnFourRabbitLegs`, `cowOnRabbitLegsOutpacesCow`). Data so far: the quadruped and
+  biped archetypes, the grazer and small prey families, the rabbit's hind legs, the villager's head (farmer).
+- **Blood** (`MinionEntity`): it drinks 3 mB a minute idle, 15 moving, 25 working, 40 fighting (times the
+  `power_drain` config). Below a quarter it walks to the nearest Blood Trough it can reach (a path must reach it;
+  within `trough_radius`, 48) and drinks its fill (`walksToTroughAndRefills`, `cannotReachTroughStaysDown`).
+- **Never destroyed by neglect**: empty, it powers down where it is and lies on its side, alive; nothing runs;
+  only a player can hurt it and mobs do not see it (`drainToZeroPowersDownAlive`, `zombieCannotKillPoweredDown`).
+  A lethal blow collapses it the same way by default (`minion_death`: collapse, scatter, destroy). Blood from a
+  bucket or a trough beside it wakes it. Its maker can fold one that is down into a Dormant Minion item and set it
+  down elsewhere (`foldAndUnfold`). A cap per player (`max_minions_per_player`, default none) is kept in a census
+  (`minionCapRespected`).
+- **Blood Trough** (`minion/BloodTroughBlock`): four buckets of any `c:blood`, Create's fluid tank behaviour; pipes,
+  Spouts and buckets fill it from any side; its surface rises and falls as the Bleeding Rack's does.
+- **Drawing** (`client/StitchedBody`, `StitchedMinionRenderer`): every piece in its own mob's look, gone off as far
+  as it was when fitted, raw where it was cut and at each empty socket. Legs swing as a walking animal's (one side
+  against the other, front against hind), a hopper's together with the body bounding, a head turns to look, a
+  tail sways. Down, it lies on its side. The table draws the minion being built lying on it.
+- Jobs kept from before: companion, courier, farmer, bodyguard, guard (`courierCarries`, `farmerReaps`); the
+  others heads name (herder, surgeon, ...) come with slice 7.

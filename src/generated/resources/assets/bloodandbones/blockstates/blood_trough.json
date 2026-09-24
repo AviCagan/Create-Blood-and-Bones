@@ -1,0 +1,19 @@
+{
+  "variants": {
+    "facing=east": {
+      "model": "bloodandbones:block/blood_trough",
+      "y": 90
+    },
+    "facing=north": {
+      "model": "bloodandbones:block/blood_trough"
+    },
+    "facing=south": {
+      "model": "bloodandbones:block/blood_trough",
+      "y": 180
+    },
+    "facing=west": {
+      "model": "bloodandbones:block/blood_trough",
+      "y": 270
+    }
+  }
+}

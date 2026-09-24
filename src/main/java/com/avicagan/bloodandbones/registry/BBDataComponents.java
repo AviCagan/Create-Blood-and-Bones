@@ -23,10 +23,9 @@ public final class BBDataComponents {
     public static final DeferredHolder<DataComponentType<?>, DataComponentType<net.neoforged.neoforge.fluids.SimpleFluidContent>> FLUID = COMPONENTS.registerComponentType("fluid",
             builder -> builder.persistent(net.neoforged.neoforge.fluids.SimpleFluidContent.CODEC).networkSynchronized(net.neoforged.neoforge.fluids.SimpleFluidContent.STREAM_CODEC));
 
-    /** A minion being built on a carcass body: what it has so far. */
-    public static final DeferredHolder<DataComponentType<?>, DataComponentType<com.avicagan.bloodandbones.minion.MinionFrame.Frame>> FRAME = COMPONENTS.registerComponentType("minion_frame",
-            builder -> builder.persistent(com.avicagan.bloodandbones.minion.MinionFrame.Frame.CODEC)
-                    .networkSynchronized(ByteBufCodecs.fromCodecWithRegistries(com.avicagan.bloodandbones.minion.MinionFrame.Frame.CODEC)));
+    /** A powered-down minion folded up to carry: the whole of it, saved. */
+    public static final DeferredHolder<DataComponentType<?>, DataComponentType<net.minecraft.world.item.component.CustomData>> DORMANT = COMPONENTS.registerComponentType("dormant_minion",
+            builder -> builder.persistent(net.minecraft.world.item.component.CustomData.CODEC).networkSynchronized(net.minecraft.world.item.component.CustomData.STREAM_CODEC));
 
     /** How far an organic prosthetic has rotted from use, 0 to Necrosis.MAX. */
     public static final DeferredHolder<DataComponentType<?>, DataComponentType<Integer>> NECROSIS = COMPONENTS.registerComponentType("necrosis",

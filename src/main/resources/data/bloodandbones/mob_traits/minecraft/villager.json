@@ -1,0 +1,19 @@
+{
+  "parts": {
+    "head": {
+      "minion": {
+        "jobs": [
+          "bloodandbones:surgeon",
+          "bloodandbones:farmer",
+          "bloodandbones:courier",
+          "bloodandbones:companion"
+        ],
+        "disposition": "meek",
+        "bite": {
+          "style": "punch",
+          "damage": 0.5
+        }
+      }
+    }
+  }
+}

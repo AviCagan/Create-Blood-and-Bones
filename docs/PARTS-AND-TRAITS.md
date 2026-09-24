@@ -3,7 +3,8 @@
      request and docs/DESIGN-BRIEF.md, then checked against the brief. Build status is kept in
      docs/ARCHITECTURE-PROPOSAL.md section 15. Where this and the brief differ, the brief wins. -->
 
-> **Status.** Being built in the slices of section 9. The open questions in section 11 were answered with
+> **Status.** Being built in the slices of section 9; slices 1 (cow and rabbit armour) and 2 (a cow torso on
+> rabbit legs) are done. The open questions in section 11 were answered with
 > this document's defaults so the work could go on; each is listed in ARCHITECTURE-PROPOSAL.md section 15,
 > for the user to overturn.
 
@@ -661,14 +662,14 @@ The lungs and eyes are left out on purpose: they come from the quadruped archety
     {"score": 20, "aspect": [0.8, 99], "category": "creature"}
   ],
   "generic_rig": "bloodandbones:generic/quadruped",
-  "self_move": {"mode": "crawl", "speed": 0.05},
   "scrap_material": "bloodandbones:gristle",
   "organs": {
     "torso": ["bloodandbones:heart", "bloodandbones:lungs", "bloodandbones:stomach"],
     "head": ["bloodandbones:eye", "bloodandbones:eye"]
   },
   "parts": {
-    "torso": {"minion": {"health_factor": 1.0}, "armour": [{"trait": "bloodandbones:hardy", "level": 1}]},
+    "torso": {"minion": {"health_factor": 1.0, "self_move": {"mode": "crawl", "speed": 0.05}},
+              "armour": [{"trait": "bloodandbones:hardy", "level": 1}]},
     "head":  {"minion": {"jobs": ["bloodandbones:companion", "bloodandbones:courier"], "disposition": "loyal",
                          "bite": {"style": "bite", "damage": 1.0}},
               "armour": [{"trait": "bloodandbones:steady", "level": 1}]},

@@ -66,12 +66,11 @@ provided by [Sable](https://github.com/ryanhcode/sable).
   plugs the tank into pipes at a Backtank Port. Everyone sees what you are missing and what is fitted.
   The table takes other patients too: another player, a mob led onto it on a lead, or a carcass piece
   whose organs a Cleaver (or a Deployer holding one) takes out one a cut.
-- **Minions.** Lay a carcass body on the Surgery Table and build on it: a carcass head, limbs, organs
-  and implants. A bucket of soul blood wakes it once it has a head and a heart. Its parts decide its
-  job: a weapon arm makes a fighter that follows you and fights monsters; two arms and an eye, a farmer
-  that reaps and replants crops where it was made; two arms and no eye, a courier that carries dropped
-  things to a chest there; anything less, a companion. It can wear a backtank for powered implants, and
-  can go back on the table to be changed.
+- **Minions.** Stitched together from carcass pieces on the Surgery Table (with its Assembly Frame): a
+  torso, then the heads, legs, arms and tails of any mob. Every piece does its own thing: the torso sets
+  size and health, the head the job and bite, the legs speed and how it moves, so a cow on rabbit legs
+  hops. Woken with a bucket of blood, it runs on blood and drinks from a Blood Trough; run dry, it lies
+  down alive until it gets more, and is never destroyed by neglect.
 - **The Fluid Backtank.** A tank for any fluid, worn in the chest slot with the armour of its tier:
   copper 2 buckets, gold 3, iron 4, diamond 6, blood steel 8, blood diamond 16, and soul netherite 32
   (a smithing upgrade with a Soul Netherite Ingot: a netherite ingot filled with soul blood and pressed
@@ -97,7 +96,7 @@ incremental. `./gradlew runClient` / `runServer` / `runData` are configured by M
 
 ### Development aids
 
-- `./gradlew runGameTestServer` runs the game tests headless (226: every rigged mob and baby,
+- `./gradlew runGameTestServer` runs the game tests headless (235: every rigged mob and baby,
   butchery, rot, bleeding, machines and their filters, cooking and display, surgery, implants, backtanks, minions, chains, recipes,
   advancements and sounds).
 - `./gradlew runData -Dbloodandbones.dump_layers=minecraft:goat#main,...` writes those vanilla

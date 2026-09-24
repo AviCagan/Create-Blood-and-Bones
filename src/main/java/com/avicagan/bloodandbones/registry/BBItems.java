@@ -104,6 +104,13 @@ public class BBItems {
             .lang("Assembly Frame")
             .register();
 
+    /** A powered-down minion folded up to carry; set it down and give it blood. */
+    public static final ItemEntry<com.avicagan.bloodandbones.minion.DormantMinionItem> DORMANT_MINION = BloodAndBones.REGISTRATE
+            .item("dormant_minion", com.avicagan.bloodandbones.minion.DormantMinionItem::new)
+            .removeTab(BBCreativeTabs.MAIN.getKey())
+            .lang("Dormant Minion")
+            .register();
+
     // ---- implants: basic (nothing to run), organic (blood from the backtank), cybernetic (soul blood)
     // the crude prosthetics are the safety floor: iron, leather and bone, no nether needed; each gives back
     // normal working and nothing more, so a part taken out can always be made good

@@ -31,7 +31,7 @@ import net.neoforged.neoforge.network.PacketDistributor;
  * choose what to do to which part of you. With someone else on it, an empty hand opens the same screen for
  * them. A mob on a lead is laid on it by right-clicking with an empty hand while leading it. A carcass piece
  * laid on it gives up its organs to a Cleaver, one a cut.</li>
- * <li>Assembly Frame: a carcass body laid on it is a minion in the making (see MinionFrame).</li>
+ * <li>Assembly Frame: a carcass torso laid on it, or claimed from a carcass lying over it, is a minion in the making (see MinionAssembly).</li>
  * </ul>
  * Sneak and right-click with an empty hand to take back what lies on it.
  */
@@ -98,7 +98,7 @@ public class SurgeryTableBlock extends Block implements IBE<SurgeryTableBlockEnt
         }
         TableAttachment fitting = attachmentOf(stack);
         if (fitting != null) {
-            if (fitting == state.getValue(ATTACHMENT) || !table.item().isEmpty() || Surgery.patientAt(level, pos) != null) {
+            if (fitting == state.getValue(ATTACHMENT) || !table.item().isEmpty() || table.build().isPresent() || Surgery.patientAt(level, pos) != null) {
                 return ItemInteractionResult.PASS_TO_DEFAULT_BLOCK_INTERACTION;
             }
             if (!level.isClientSide) {
@@ -107,32 +107,11 @@ public class SurgeryTableBlock extends Block implements IBE<SurgeryTableBlockEnt
             return ItemInteractionResult.sidedSuccess(level.isClientSide);
         }
         TableAttachment attachment = state.getValue(ATTACHMENT);
-        boolean building = attachment == TableAttachment.ASSEMBLY;
-        if (attachment == TableAttachment.NONE
-                || (building ? !(com.avicagan.bloodandbones.minion.MinionFrame.isBody(stack, level) && table.item().isEmpty())
-                        && !(com.avicagan.bloodandbones.minion.MinionFrame.isBody(table.item(), level))
-                : !Surgery.accepts(stack))) {
+        if (attachment == TableAttachment.ASSEMBLY) {
+            return assemble(stack, level, player, table);
+        }
+        if (attachment == TableAttachment.NONE || !Surgery.accepts(stack)) {
             return ItemInteractionResult.PASS_TO_DEFAULT_BLOCK_INTERACTION;
-        }
-        if (building && table.item().isEmpty()) {
-            // a carcass body laid on the frame
-            if (!level.isClientSide && table.put(stack)) {
-                stack.consume(1, player);
-            }
-            return ItemInteractionResult.sidedSuccess(level.isClientSide);
-        }
-        // a carcass body on the frame is a minion being built: parts go on it, soul blood wakes it
-        if (building) {
-            if (stack.is(com.avicagan.bloodandbones.registry.BBFluids.SOUL_BLOOD.getBucket().get())) {
-                if (!level.isClientSide) {
-                    com.avicagan.bloodandbones.minion.MinionFrame.wake((ServerLevel) level, player, table, stack);
-                }
-                return ItemInteractionResult.sidedSuccess(level.isClientSide);
-            }
-            if (!level.isClientSide && com.avicagan.bloodandbones.minion.MinionFrame.fit((ServerLevel) level, player, table, stack)) {
-                player.displayClientMessage(com.avicagan.bloodandbones.minion.MinionFrame.status(com.avicagan.bloodandbones.minion.MinionFrame.frame(table.item())), true);
-            }
-            return ItemInteractionResult.sidedSuccess(level.isClientSide);
         }
         if (Surgery.isBlade(stack) && table.item().is(com.avicagan.bloodandbones.registry.BBItems.CARCASS_PIECE.get())) {
             if (!level.isClientSide) {
@@ -149,6 +128,48 @@ public class SurgeryTableBlock extends Block implements IBE<SurgeryTableBlockEnt
         return ItemInteractionResult.sidedSuccess(level.isClientSide);
     }
 
+    /**
+     * The Assembly Frame: a carried torso starts a minion, pieces go into its sockets, a Cleaver takes the last
+     * back, a bucket of blood wakes it.
+     */
+    private static ItemInteractionResult assemble(ItemStack stack, Level level, Player player, SurgeryTableBlockEntity table) {
+        if (level.isClientSide) {
+            return ItemInteractionResult.SUCCESS;
+        }
+        ServerLevel server = (ServerLevel) level;
+        if (stack.is(com.avicagan.bloodandbones.registry.BBFluids.BLOOD.getBucket().get())) {
+            if (table.build().isEmpty()) {
+                return ItemInteractionResult.PASS_TO_DEFAULT_BLOCK_INTERACTION;
+            }
+            com.avicagan.bloodandbones.minion.MinionAssembly.wake(server, player, table, stack);
+            return ItemInteractionResult.CONSUME;
+        }
+        if (Surgery.isBlade(stack)) {
+            return com.avicagan.bloodandbones.minion.MinionAssembly.takeBack(server, table, player) ? ItemInteractionResult.CONSUME
+                    : ItemInteractionResult.PASS_TO_DEFAULT_BLOCK_INTERACTION;
+        }
+        if (!stack.is(com.avicagan.bloodandbones.registry.BBItems.CARCASS_PIECE.get())) {
+            return ItemInteractionResult.PASS_TO_DEFAULT_BLOCK_INTERACTION;
+        }
+        if (table.build().isEmpty()) {
+            if (com.avicagan.bloodandbones.minion.MinionAssembly.layDown(table, stack, level)) {
+                stack.consume(1, player);
+            } else {
+                player.displayClientMessage(Component.translatable("bloodandbones.minion.lay_body"), true);
+            }
+            return ItemInteractionResult.CONSUME;
+        }
+        Component problem = com.avicagan.bloodandbones.minion.MinionAssembly.fit(server, table, stack);
+        if (problem == null) {
+            stack.consume(1, player);
+            table.build().ifPresent(b -> player.displayClientMessage(com.avicagan.bloodandbones.minion.MinionAssembly.status(
+                    com.avicagan.bloodandbones.parts.PartsData.SERVER, b), true));
+        } else {
+            player.displayClientMessage(problem, true);
+        }
+        return ItemInteractionResult.CONSUME;
+    }
+
     @Override
     protected InteractionResult useWithoutItem(BlockState state, Level level, BlockPos pos, Player player, BlockHitResult hit) {
         if (!(level.getBlockEntity(pos) instanceof SurgeryTableBlockEntity table)) {
@@ -156,7 +177,7 @@ public class SurgeryTableBlock extends Block implements IBE<SurgeryTableBlockEnt
         }
         TableAttachment attachment = state.getValue(ATTACHMENT);
         if (player.isShiftKeyDown()) {
-            if (table.item().isEmpty()) {
+            if (table.item().isEmpty() && table.build().isEmpty()) {
                 // nothing on it: the attachment comes off
                 if (attachment == TableAttachment.NONE || Surgery.patientAt(level, pos) != null) {
                     return InteractionResult.PASS;
@@ -167,7 +188,7 @@ public class SurgeryTableBlock extends Block implements IBE<SurgeryTableBlockEnt
                 }
                 return InteractionResult.sidedSuccess(level.isClientSide);
             }
-            if (!level.isClientSide) {
+            if (!level.isClientSide && !table.item().isEmpty()) {
                 player.getInventory().placeItemBackInInventory(table.take());
             }
             return InteractionResult.sidedSuccess(level.isClientSide);
@@ -181,12 +202,13 @@ public class SurgeryTableBlock extends Block implements IBE<SurgeryTableBlockEnt
             return InteractionResult.CONSUME;
         }
         if (attachment == TableAttachment.ASSEMBLY) {
-            if (!com.avicagan.bloodandbones.minion.MinionFrame.isBody(table.item(), level)) {
+            // a carcass lying over the frame is claimed as the minion's body; a minion being built says how it is coming on
+            if (table.build().isEmpty() && !com.avicagan.bloodandbones.minion.MinionAssembly.claim(server, table)) {
                 player.displayClientMessage(Component.translatable("bloodandbones.minion.lay_body"), true);
                 return InteractionResult.CONSUME;
             }
-            // a minion being built: say what it has and what it still needs
-            player.displayClientMessage(com.avicagan.bloodandbones.minion.MinionFrame.status(com.avicagan.bloodandbones.minion.MinionFrame.frame(table.item())), true);
+            table.build().ifPresent(b -> player.displayClientMessage(com.avicagan.bloodandbones.minion.MinionAssembly.status(
+                    com.avicagan.bloodandbones.parts.PartsData.SERVER, b), true));
             return InteractionResult.CONSUME;
         }
         net.minecraft.world.entity.LivingEntity patient = Surgery.patientAt(level, pos);
@@ -234,8 +256,17 @@ public class SurgeryTableBlock extends Block implements IBE<SurgeryTableBlockEnt
 
     @Override
     protected void onRemove(BlockState state, Level level, BlockPos pos, BlockState newState, boolean movedByPiston) {
-        if (!state.is(newState.getBlock()) && level.getBlockEntity(pos) instanceof SurgeryTableBlockEntity table && !table.item().isEmpty()) {
-            Block.popResource(level, pos, table.take());
+        if (!state.is(newState.getBlock()) && level.getBlockEntity(pos) instanceof SurgeryTableBlockEntity table) {
+            if (!table.item().isEmpty()) {
+                Block.popResource(level, pos, table.take());
+            }
+            // a minion half built comes apart into its pieces
+            table.build().ifPresent(build -> {
+                Block.popResource(level, pos, com.avicagan.bloodandbones.minion.MinionAssembly.pieceItem(build.torso(), 1.0F));
+                for (var fitted : build.parts()) {
+                    Block.popResource(level, pos, com.avicagan.bloodandbones.minion.MinionAssembly.pieceItem(fitted.piece(), 1.0F));
+                }
+            });
         }
         if (!state.is(newState.getBlock()) && itemOf(state.getValue(ATTACHMENT)) != null) {
             Block.popResource(level, pos, new ItemStack(itemOf(state.getValue(ATTACHMENT))));

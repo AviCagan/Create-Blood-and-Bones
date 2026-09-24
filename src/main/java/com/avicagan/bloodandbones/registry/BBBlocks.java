@@ -239,6 +239,17 @@ public class BBBlocks {
             .simpleItem()
             .register();
 
+    /** Where organic minions drink: four buckets of blood, filled by pipe, Spout or bucket. */
+    public static final BlockEntry<com.avicagan.bloodandbones.minion.BloodTroughBlock> BLOOD_TROUGH = BloodAndBones.REGISTRATE
+            .block("blood_trough", com.avicagan.bloodandbones.minion.BloodTroughBlock::new)
+            .initialProperties(() -> net.minecraft.world.level.block.Blocks.SPRUCE_PLANKS)
+            .properties(p -> p.noOcclusion().strength(2.0F, 3.0F))
+            .blockstate((c, p) -> p.horizontalBlock(c.get(), p.models().getExistingFile(p.modLoc("block/blood_trough"))))
+            .tag(net.minecraft.tags.BlockTags.MINEABLE_WITH_AXE)
+            .lang("Blood Trough")
+            .item().model((c, p) -> p.withExistingParent(c.getName(), p.modLoc("block/blood_trough"))).build()
+            .register();
+
     public static void register() {
     }
 }

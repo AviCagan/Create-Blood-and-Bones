@@ -9,6 +9,17 @@
   "colour": "#a08060",
   "parts": {
     "head": {
+      "minion": {
+        "jobs": [
+          "bloodandbones:courier",
+          "bloodandbones:companion"
+        ],
+        "disposition": "skittish",
+        "bite": {
+          "style": "bite",
+          "damage": 1.0
+        }
+      },
       "armour": [
         "bloodandbones:alert"
       ]
@@ -19,6 +30,13 @@
       ]
     },
     "leg": {
+      "minion": {
+        "movement": {
+          "mode": "hop",
+          "speed": 0.3,
+          "gait": "bound"
+        }
+      },
       "armour": {
         "leggings": [
           "bloodandbones:springy"

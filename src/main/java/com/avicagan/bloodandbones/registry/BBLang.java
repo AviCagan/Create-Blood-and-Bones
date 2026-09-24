@@ -100,7 +100,7 @@ public class BBLang {
                 "When Sneak-R-Clicked with an Empty Hand", "Takes back what lies on the table.",
                 "With Someone Else on It", "R-Click with an _empty hand_ to operate on them: another player, or a _mob_ you led onto it on a lead. What comes out is yours.",
                 "With a Carcass Piece on It", "R-Click with a _Cleaver_ to take its _organs_ out, one a cut: a body's heart, lungs and stomach, a head's eyes.",
-                "Building a Minion", "A carcass _body_ on the table is a minion in the making. R-Click with a carcass _head_, severed limbs, organs or implants to add them; with a bucket of _soul blood_ to wake it once it has a head and a heart.");
+                "Building a Minion", "With an _Assembly Frame_ fitted, lay a carcass _torso_ on it (or R-Click with an empty hand to take a whole carcass lying on it), then R-Click with carcass _heads_, _legs_, _arms_ and _tails_ of any mob to stitch them on. A _Cleaver_ takes the last back off; a bucket of _blood_ wakes it.");
         item("peg_leg",
                 "A _crude prosthetic_ leg of iron, leather and bone. Needs nothing to run.",
                 "When Fitted", "The leg works as it did: you can _sprint_ again. Nothing more.");
@@ -187,32 +187,45 @@ public class BBLang {
         BloodAndBones.REGISTRATE.addRawLang("bloodandbones.surgery.action.replace", "Swap in what is on the table");
         BloodAndBones.REGISTRATE.addRawLang("bloodandbones.surgery.action.swap", "Swap it for what is on the table");
         BloodAndBones.REGISTRATE.addRawLang("bloodandbones.surgery.state.dead", "%s (dry)");
-        BloodAndBones.REGISTRATE.addRawLang("bloodandbones.minion.job.fighter", "Fighter");
-        BloodAndBones.REGISTRATE.addRawLang("bloodandbones.minion.job.farmer", "Farmer");
-        BloodAndBones.REGISTRATE.addRawLang("bloodandbones.minion.job.courier", "Courier");
-        BloodAndBones.REGISTRATE.addRawLang("bloodandbones.minion.job.companion", "Companion");
-        BloodAndBones.REGISTRATE.addRawLang("bloodandbones.minion.frame", "A minion in the making, a %s so far.");
-        BloodAndBones.REGISTRATE.addRawLang("bloodandbones.minion.needs", "Needs %s.");
-        BloodAndBones.REGISTRATE.addRawLang("bloodandbones.minion.needs.head", "a head");
-        BloodAndBones.REGISTRATE.addRawLang("bloodandbones.minion.needs.heart", "a heart");
-        BloodAndBones.REGISTRATE.addRawLang("bloodandbones.minion.ready", "Ready: wake it with a bucket of soul blood.");
-        BloodAndBones.REGISTRATE.addRawLang("bloodandbones.minion.status", "Minion: %s");
+        // ---- minions (docs/PARTS-AND-TRAITS.md section 6)
+        for (String[] job : new String[][]{{"companion", "Companion"}, {"courier", "Courier"}, {"farmer", "Farmer"}, {"bodyguard", "Bodyguard"},
+                {"guard", "Guard"}, {"herder", "Herder"}, {"surgeon", "Surgeon"}}) {
+            BloodAndBones.REGISTRATE.addRawLang("bloodandbones.minion.job." + job[0], job[1]);
+        }
+        BloodAndBones.REGISTRATE.addRawLang("bloodandbones.minion.job_now", "Job: %s");
+        BloodAndBones.REGISTRATE.addRawLang("bloodandbones.minion.status", "%s, blood %s of %s mB");
+        BloodAndBones.REGISTRATE.addRawLang("bloodandbones.minion.status_down", "%s, out of blood (%s of %s mB): give it blood to wake it");
+        BloodAndBones.REGISTRATE.addRawLang("bloodandbones.minion.frame_stats", "%s health, speed %s, %s; %s of %s sockets filled");
+        BloodAndBones.REGISTRATE.addRawLang("bloodandbones.minion.no_fit", "That doesn't go on a minion");
+        BloodAndBones.REGISTRATE.addRawLang("bloodandbones.minion.needs_hide", "A flesh minion takes pieces with their hide still on");
+        BloodAndBones.REGISTRATE.addRawLang("bloodandbones.minion.needs_skinned", "A brass minion takes only skinned pieces");
+        BloodAndBones.REGISTRATE.addRawLang("bloodandbones.minion.no_socket", "There is nowhere left on it for that");
+        BloodAndBones.REGISTRATE.addRawLang("bloodandbones.minion.too_big", "It would be too big to get up");
+        BloodAndBones.REGISTRATE.addRawLang("bloodandbones.minion.too_rotten", "The body has gone off too far to wake");
+        BloodAndBones.REGISTRATE.addRawLang("bloodandbones.minion.cap", "You have as many minions as this world allows");
+        BloodAndBones.REGISTRATE.addRawLang("bloodandbones.minion.dormant", "Folded up, out of blood. Set it down and give it blood to wake it.");
         BloodAndBones.REGISTRATE.addRawLang("bloodandbones.body.left_arm", "Left arm");
         BloodAndBones.REGISTRATE.addRawLang("bloodandbones.body.right_arm", "Right arm");
         BloodAndBones.REGISTRATE.addRawLang("bloodandbones.body.left_leg", "Left leg");
         BloodAndBones.REGISTRATE.addRawLang("bloodandbones.body.right_leg", "Right leg");
         BloodAndBones.REGISTRATE.addRawLang("bloodandbones.surgery.title", "Surgery");
         BloodAndBones.REGISTRATE.addRawLang("bloodandbones.surgery.bare", "Fit a Surgical Rig to operate, or an Assembly Frame to build minions");
-        BloodAndBones.REGISTRATE.addRawLang("bloodandbones.minion.lay_body", "Lay a carcass body on the frame to build a minion on it");
+        BloodAndBones.REGISTRATE.addRawLang("bloodandbones.minion.lay_body", "Lay a carcass torso on the frame to build a minion on it");
         item("surgical_rig",
                 "A Surgery Table _attachment_: an overhead arm of lamps, clamps and blades. Makes the table a place to _operate_.",
                 "When R-Clicked on a Surgery Table", "Fits it (swapping out any other attachment). Then patients can lie on the table, and carcass pieces give up their _organs_.",
                 "When Sneak-R-Clicked off an Empty Table", "An empty hand takes it back off.");
         item("assembly_frame",
                 "A Surgery Table _attachment_: clamps and a jig for stitching bodies together. Makes the table a place to build _minions_.",
-                "When R-Clicked on a Surgery Table", "Fits it (swapping out any other attachment). Then a carcass _body_ laid on it can be built into a minion.",
+                "When R-Clicked on a Surgery Table", "Fits it (swapping out any other attachment). Then a carcass _torso_ laid on it can be built into a minion, with the heads, legs and arms of _any_ mob.",
                 "When Sneak-R-Clicked off an Empty Table", "An empty hand takes it back off.");
         BloodAndBones.REGISTRATE.addRawLang("bloodandbones.surgery.title_other", "Surgery on %s");
+        block("blood_trough",
+                "A trough of _blood_ for flesh minions: they walk to the nearest one they can reach and drink when they run low.",
+                "When Filled", "Takes _four buckets_ of any blood, from a bucket, a _Spout_ or _pipes_ on any side.");
+        item("dormant_minion",
+                "A minion that ran out of blood, _folded up_ to carry. It keeps everything: what it is built of, its job, what it carries.",
+                "When Used on a Block", "Sets it down there, still out of blood. Give it _blood_ to wake it.");
         BloodAndBones.REGISTRATE.addRawLang("bloodandbones.surgery.no_organs", "Nothing more to take out of it");
         BloodAndBones.REGISTRATE.addRawLang("bloodandbones.surgery.empty", "Nothing on the table: lay a Cleaver, a prosthetic or a limb on it");
         BloodAndBones.REGISTRATE.addRawLang("bloodandbones.surgery.on_table", "On the table: %s");
@@ -396,7 +409,7 @@ public class BBLang {
         advancement("organic", "Grown, Not Made", "Make an organic prosthetic");
         advancement("cybernetic", "More Machine Than Man", "Make a cybernetic");
         advancement("heart", "Heartless", "Hold your own heart");
-        advancement("minion", "It's Alive!", "Wake a minion with soul blood");
+        advancement("minion", "It's Alive!", "Stitch a minion together and wake it with blood");
         advancement("soul_netherite", "Thirty-Two Buckets", "Make a Soul Netherite Fluid Backtank");
 
         // ---- Ponder scenes (text_N in the order each scene shows its text)
@@ -453,8 +466,9 @@ public class BBLang {
                 "The Fluid Backtank holds any fluid, worn in the chest slot with the armour of its tier: copper 2 buckets, gold 3, iron 4, diamond 6, blood steel 8, blood diamond 16, soul netherite 32.",
                 "Right-click a block to set it down; pipes fill or empty it from any side, and it keeps its fluid when broken. A Spout fills it and an Item Drain empties it in the hand. The soul netherite tank is a smithing upgrade of the blood diamond one.");
         jei("minions",
-                "Lay a carcass body on the Surgery Table (it keeps whatever organs were not taken out of it) and build a minion on it: a carcass head, then severed limbs, organs and implants where parts are missing, one a click. Wake it with a bucket of soul blood once it has a head and a heart.",
-                "Its parts decide its job. A weapon arm (Hook Hand, Hydraulic Arm, Vent Arm) makes a fighter that follows you and fights monsters. Two working arms and an eye make a farmer that reaps and replants ripe crops by where it was made; two arms and no eye, a courier that carries dropped things to a chest there; anything less, a companion. Give it a backtank to run powered implants; change it on the table.");
+                "Fit an Assembly Frame to a Surgery Table and lay a carcass torso on it, or take a whole carcass lying on it with an empty hand (what is still attached comes along). Stitch on heads, legs, arms and tails of any mob, one a click: a cow on rabbit legs is a cow that hops. A Cleaver takes the last piece back. Wake it with a bucket of blood.",
+                "Every part does its own thing. The torso sets its size, health and how much it carries; the head its jobs and its bite; the legs how fast and how it moves; arms its blows. Crouch and R-Click it with an empty hand to change its job.",
+                "It runs on blood: a little all the time, more moving, working and fighting. Low, it walks to a Blood Trough to drink. Empty, it lies down where it is, alive, and nothing but a player can hurt it; give it blood and it gets up. Crouch-R-Click one lying down a few times to fold it up and carry it.");
         jei("soul_blood",
                 "Soul Blood is blood with a soul in it. Mix blood, soul sand and a little liquid experience over a superheated Blaze Burner, or ferment blood with nether wart and soul soil under a Basin Lid.");
     }
