@@ -1,0 +1,25 @@
+{
+  "name": "trait.bloodandbones.self_destruct",
+  "max_level": 2,
+  "contexts": [
+    "minion"
+  ],
+  "effects": [
+    {
+      "trigger": "activate",
+      "cooldown": 200,
+      "range": 3,
+      "effect": {
+        "type": "bloodandbones:detonate",
+        "power": {
+          "type": "minecraft:linear",
+          "base": 2,
+          "per_level_above_first": 2
+        },
+        "block_damage": true,
+        "fuse": 30,
+        "minion_powers_down": true
+      }
+    }
+  ]
+}

@@ -1,0 +1,13 @@
+{
+  "name": "trait.bloodandbones.inverted_healing",
+  "max_level": 1,
+  "effects": [
+    {
+      "trigger": "passive",
+      "effect": {
+        "type": "bloodandbones:flag",
+        "flag": "inverted_healing"
+      }
+    }
+  ]
+}

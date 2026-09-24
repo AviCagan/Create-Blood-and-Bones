@@ -1,0 +1,16 @@
+{
+  "name": "trait.bloodandbones.ender_calm",
+  "max_level": 1,
+  "contexts": [
+    "minion"
+  ],
+  "effects": [
+    {
+      "trigger": "passive",
+      "effect": {
+        "type": "bloodandbones:flag",
+        "flag": "ender_mask"
+      }
+    }
+  ]
+}

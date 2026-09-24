@@ -1,0 +1,13 @@
+{
+  "name": "trait.bloodandbones.hiss",
+  "max_level": 1,
+  "effects": [
+    {
+      "trigger": "passive",
+      "effect": {
+        "type": "bloodandbones:visibility",
+        "multiplier": 0.5
+      }
+    }
+  ]
+}

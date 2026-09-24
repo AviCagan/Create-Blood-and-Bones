@@ -1,0 +1,13 @@
+{
+  "name": "trait.bloodandbones.bouncy",
+  "max_level": 1,
+  "effects": [
+    {
+      "trigger": "passive",
+      "effect": {
+        "type": "bloodandbones:flag",
+        "flag": "bounce"
+      }
+    }
+  ]
+}

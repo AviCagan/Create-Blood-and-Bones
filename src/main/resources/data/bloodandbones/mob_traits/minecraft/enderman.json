@@ -1,0 +1,12 @@
+{
+  "signature": [
+    "parts.head"
+  ],
+  "parts": {
+    "head": {
+      "armour": [
+        "bloodandbones:ender_mask"
+      ]
+    }
+  }
+}

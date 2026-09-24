@@ -1,0 +1,25 @@
+{
+  "name": "trait.bloodandbones.lava_walk",
+  "max_level": 1,
+  "contexts": [
+    "minion"
+  ],
+  "effects": [
+    {
+      "trigger": "passive",
+      "effect": {
+        "type": "bloodandbones:flag",
+        "flag": "lava_walk"
+      }
+    },
+    {
+      "trigger": "passive",
+      "effect": {
+        "type": "bloodandbones:immunity",
+        "damage_tags": [
+          "minecraft:is_fire"
+        ]
+      }
+    }
+  ]
+}

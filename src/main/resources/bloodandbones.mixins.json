@@ -6,6 +6,7 @@
   "refmap": "bloodandbones.refmap.json",
   "mixins": [
     "GameTestServerMixin",
+    "InvertedHealingMixin",
     "KineticBlockEntityAccessor"
   ],
   "injectors": {

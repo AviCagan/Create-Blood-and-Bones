@@ -1,0 +1,19 @@
+{
+  "name": "trait.bloodandbones.evasive",
+  "max_level": 3,
+  "effects": [
+    {
+      "trigger": "passive",
+      "effect": {
+        "type": "bloodandbones:deflect",
+        "chance": {
+          "type": "minecraft:linear",
+          "base": 0.1,
+          "per_level_above_first": 0.1
+        },
+        "mode": "dodge",
+        "against": "melee"
+      }
+    }
+  ]
+}

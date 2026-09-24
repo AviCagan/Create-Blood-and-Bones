@@ -1,0 +1,21 @@
+{
+  "name": "trait.bloodandbones.dash",
+  "max_level": 2,
+  "effects": [
+    {
+      "trigger": "activate",
+      "cooldown": 100,
+      "range": 8,
+      "cost_mb": 20,
+      "effect": {
+        "type": "bloodandbones:impulse",
+        "forward": {
+          "type": "minecraft:linear",
+          "base": 1.6,
+          "per_level_above_first": 0.3
+        },
+        "up": 0.2
+      }
+    }
+  ]
+}

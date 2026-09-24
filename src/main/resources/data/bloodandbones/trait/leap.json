@@ -1,0 +1,20 @@
+{
+  "name": "trait.bloodandbones.leap",
+  "max_level": 2,
+  "effects": [
+    {
+      "trigger": "activate",
+      "cooldown": 60,
+      "range": 6,
+      "effect": {
+        "type": "bloodandbones:impulse",
+        "forward": {
+          "type": "minecraft:linear",
+          "base": 0.9,
+          "per_level_above_first": 0.2
+        },
+        "up": 0.65
+      }
+    }
+  ]
+}
