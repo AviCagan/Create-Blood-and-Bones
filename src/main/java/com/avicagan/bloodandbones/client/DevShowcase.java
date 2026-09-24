@@ -373,7 +373,12 @@ public final class DevShowcase {
                         var store = com.avicagan.bloodandbones.parts.PartsData.SERVER;
                         player.setItemSlot(net.minecraft.world.entity.EquipmentSlot.HEAD, com.avicagan.bloodandbones.parts.CarcassArmourItem.make(new ItemStack(BBItems.CARCASS_HELMET.get()),
                                 com.avicagan.bloodandbones.parts.CarcassArmour.of("helmet", cow, false), store));
-                        player.setItemSlot(net.minecraft.world.entity.EquipmentSlot.CHEST, ItemStack.EMPTY);
+                        // a polar bear's pelt chestplate with a copper backtank of blood strapped to its back
+                        ItemStack tank = new ItemStack(BBItems.backtank(com.avicagan.bloodandbones.backtank.BacktankTier.COPPER));
+                        com.avicagan.bloodandbones.backtank.FluidBacktankItem.setFluid(tank, new net.neoforged.neoforge.fluids.FluidStack(com.avicagan.bloodandbones.registry.BBFluids.blood(), 1500));
+                        player.setItemSlot(net.minecraft.world.entity.EquipmentSlot.CHEST, com.avicagan.bloodandbones.backtank.FluidBacktankItem.strap(
+                                com.avicagan.bloodandbones.parts.CarcassArmourItem.make(new ItemStack(BBItems.CARCASS_CHESTPLATE.get()),
+                                        com.avicagan.bloodandbones.parts.CarcassArmour.of("chestplate", net.minecraft.resources.ResourceLocation.withDefaultNamespace("polar_bear"), false), store), tank));
                         player.setItemSlot(net.minecraft.world.entity.EquipmentSlot.LEGS, com.avicagan.bloodandbones.parts.CarcassArmourItem.make(new ItemStack(BBItems.CARCASS_LEGGINGS.get()),
                                 com.avicagan.bloodandbones.parts.CarcassArmour.of("leggings", rabbit, false), store));
                         player.setItemSlot(net.minecraft.world.entity.EquipmentSlot.FEET, com.avicagan.bloodandbones.parts.CarcassArmourItem.make(new ItemStack(BBItems.CARCASS_BOOTS.get()),
@@ -393,6 +398,11 @@ public final class DevShowcase {
                 } else if (t == 165) {
                     Screenshot.grab(mc.gameDirectory, PREFIX + "armour_0.png", mc.getMainRenderTarget(), message -> {
                     });
+                    // and from behind: the tank strapped over the chestplate
+                    mc.options.setCameraType(net.minecraft.client.CameraType.THIRD_PERSON_BACK);
+                } else if (t == 170) {
+                    Screenshot.grab(mc.gameDirectory, PREFIX + "armour_2.png", mc.getMainRenderTarget(), message -> {
+                    });
                     mc.options.setCameraType(net.minecraft.client.CameraType.FIRST_PERSON);
                     mc.options.hideGui = false;
                 } else if (t == 175) {
@@ -402,8 +412,8 @@ public final class DevShowcase {
                             mc.player.getInventory().getItem(6).getHoverName().getString(), mc.player.getAttributeValue(net.minecraft.world.entity.ai.attributes.Attributes.JUMP_STRENGTH));
                     server.execute(() -> {
                         ServerPlayer player = server.getPlayerList().getPlayers().get(0);
-                        for (var slot : new net.minecraft.world.entity.EquipmentSlot[]{net.minecraft.world.entity.EquipmentSlot.HEAD, net.minecraft.world.entity.EquipmentSlot.LEGS,
-                                net.minecraft.world.entity.EquipmentSlot.FEET}) {
+                        for (var slot : new net.minecraft.world.entity.EquipmentSlot[]{net.minecraft.world.entity.EquipmentSlot.HEAD, net.minecraft.world.entity.EquipmentSlot.CHEST,
+                                net.minecraft.world.entity.EquipmentSlot.LEGS, net.minecraft.world.entity.EquipmentSlot.FEET}) {
                             player.setItemSlot(slot, ItemStack.EMPTY);
                         }
                         player.getInventory().clearContent();
