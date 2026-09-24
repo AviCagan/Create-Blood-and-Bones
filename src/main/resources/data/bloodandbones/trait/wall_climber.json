@@ -1,0 +1,19 @@
+{
+  "name": "trait.bloodandbones.wall_climber",
+  "max_level": 2,
+  "stacking": "sum",
+  "effects": [
+    {
+      "trigger": "passive",
+      "effect": {
+        "type": "bloodandbones:flag",
+        "flag": "climb",
+        "strength": {
+          "type": "minecraft:linear",
+          "base": 1,
+          "per_level_above_first": 1
+        }
+      }
+    }
+  ]
+}

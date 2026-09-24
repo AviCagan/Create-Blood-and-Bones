@@ -216,6 +216,13 @@ Everything below is in development builds only; the art is placeholder (see the 
   cooldown, shown on the piece, and some cost blood from your backtank or the tank strapped to your chestplate. A
   minion fires its organ's ability at what it fights, paying from its own blood. (The abilities themselves come
   with the next traits.)
+- Movement and blast traits: wall climbing (one piece clings, two climb while you hold jump), gliding on a carcass
+  chestplate for hunger instead of durability, bouncing back up from long falls, walking on powder snow, silent steps,
+  quick draw, the ender mask and piglin kinship, dodging blows and sending projectiles back, leaping, dashing,
+  charging, warping where you look, a wind burst with a soft landing, blinking away when hurt, and the creeper's powder
+  sac: a blast that spares its wearer or, in a minion, a self-destruct that leaves it powered down, never destroyed.
+  Minions can walk on lava, trample through leaves and grass, and blink back to a maker they fall behind. Blocks break
+  only where mobGriefing and the new `minion_block_damage` server setting (off by default) both allow it.
 - Traits work only where they belong: armour traits on players, minion traits on minions; a mob that picks up
   carcass armour gets its armour points only. Traits can now depend on your health, your blood, what is near you
   and how long you have been dry, and can act when you land or make a kill.

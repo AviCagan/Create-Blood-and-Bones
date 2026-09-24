@@ -1,0 +1,22 @@
+{
+  "signature": [
+    "organs.bloodandbones:powder_sac"
+  ],
+  "organs": {
+    "torso": {
+      "add": [
+        "bloodandbones:powder_sac"
+      ]
+    }
+  },
+  "organ_traits": {
+    "bloodandbones:powder_sac": {
+      "minion": [
+        "bloodandbones:self_destruct"
+      ],
+      "armour": [
+        "bloodandbones:blast"
+      ]
+    }
+  }
+}

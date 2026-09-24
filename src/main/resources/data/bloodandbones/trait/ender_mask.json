@@ -1,0 +1,13 @@
+{
+  "name": "trait.bloodandbones.ender_mask",
+  "max_level": 1,
+  "effects": [
+    {
+      "trigger": "passive",
+      "effect": {
+        "type": "bloodandbones:flag",
+        "flag": "ender_mask"
+      }
+    }
+  ]
+}

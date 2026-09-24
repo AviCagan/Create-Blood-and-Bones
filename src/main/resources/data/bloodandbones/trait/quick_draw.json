@@ -1,0 +1,13 @@
+{
+  "name": "trait.bloodandbones.quick_draw",
+  "max_level": 1,
+  "effects": [
+    {
+      "trigger": "passive",
+      "effect": {
+        "type": "bloodandbones:flag",
+        "flag": "quick_draw"
+      }
+    }
+  ]
+}

@@ -1,0 +1,17 @@
+{
+  "name": "trait.bloodandbones.warp",
+  "max_level": 1,
+  "effects": [
+    {
+      "trigger": "activate",
+      "cooldown": 120,
+      "range": 12,
+      "cost_mb": 50,
+      "effect": {
+        "type": "bloodandbones:teleport",
+        "mode": "look",
+        "radius": 8
+      }
+    }
+  ]
+}

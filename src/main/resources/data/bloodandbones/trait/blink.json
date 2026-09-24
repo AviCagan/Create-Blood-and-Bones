@@ -1,0 +1,16 @@
+{
+  "name": "trait.bloodandbones.blink",
+  "max_level": 1,
+  "effects": [
+    {
+      "trigger": "hurt",
+      "chance": 0.5,
+      "cooldown": 100,
+      "effect": {
+        "type": "bloodandbones:teleport",
+        "mode": "random",
+        "radius": 16
+      }
+    }
+  ]
+}

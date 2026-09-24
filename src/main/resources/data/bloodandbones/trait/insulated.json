@@ -1,0 +1,22 @@
+{
+  "name": "trait.bloodandbones.insulated",
+  "max_level": 1,
+  "effects": [
+    {
+      "trigger": "passive",
+      "effect": {
+        "type": "bloodandbones:immunity",
+        "damage_tags": [
+          "minecraft:is_freezing"
+        ]
+      }
+    },
+    {
+      "trigger": "passive",
+      "effect": {
+        "type": "bloodandbones:flag",
+        "flag": "powder_snow"
+      }
+    }
+  ]
+}

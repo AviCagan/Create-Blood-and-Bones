@@ -1,0 +1,27 @@
+{
+  "name": "trait.bloodandbones.blast",
+  "max_level": 2,
+  "effects": [
+    {
+      "trigger": "activate",
+      "cooldown": 1200,
+      "range": 3,
+      "cost_mb": 50,
+      "requirements": {
+        "condition": "bloodandbones:health_below",
+        "fraction": 0.5
+      },
+      "effect": {
+        "type": "bloodandbones:detonate",
+        "power": {
+          "type": "minecraft:linear",
+          "base": 3,
+          "per_level_above_first": 1
+        },
+        "fire": false,
+        "block_damage": false,
+        "minion_powers_down": true
+      }
+    }
+  ]
+}

@@ -1748,3 +1748,78 @@ through the existing bloodless checks, not another logic path; new blocks are or
 contraptions; an effect on a minion never destroys it (power it down instead: `MinionEntity.powerDown`); effects run on
 the server (`ctx.level()` is a ServerLevel), and movement a client predicts reads the same traits there through
 `ActiveTraits.of`, which notices a change of armour on either side.
+
+**Motion as built** (`parts/effect/MotionEffects`, `MotionFlags`, `FlagEffect`, `ImpulseEffect`, `TeleportEffect`,
+`DeflectEffect`, `DetonateEffect`, `VisibilityEffect`; `client/effect/MotionClient`; verified in tests. On the
+headless client the client side loads and runs through the showcase with no new errors, but nothing there climbs,
+glides or bounces: design risk 2's run with lag on a real client and a dedicated server is still to do).
+
+- **flag** {flag, strength (1)}: the closed list of spec 5.6, read where each acts through `MotionEffects.flag(host,
+  name)` (the strongest passive one). A player's own client builds their traits from the armour it sees (`ActiveTraits.of`
+  on the client, `peek` on the server). The four a client predicts (climb, glide, bounce, powder_snow) ignore their
+  entry's condition on both sides, since a condition only holds on the server; the rest honour it.
+  - climb: `MotionFlags.climb`, run by both sides at the start of the player's tick (`PlayerTickEvent.Pre`; the client
+    passes whether jump is held, which the server never knows). Against a wall and off the ground, strength 1 clings
+    (no faster than 0.05 down), 2 or more climbs at 0.2 with jump held; the fall is forgotten. "Against a wall" is a
+    solid block just past the host's sides, worked out from the world rather than `horizontalCollision`, because the
+    server never moves a player itself and so never sees them collide. A minion clings while `horizontalCollision`
+    (`climbing`); only climbing legs swap its navigation to `WallClimberNavigation`, since the hooks cannot reach it.
+  - glide: the chestplate's `canElytraFly` and `elytraFlightTick`, the carcass chestplate worn on the chest only; 0.4
+    exhaustion a second, no durability, and it ends when the wearer is too hungry to sprint.
+  - bounce: `LivingFallEvent` (high priority, both sides) cancelled for a fall of 2 or more, not while crouching; the
+    speed back up comes from the fall's length (both sides agree on it) and is put back on the next tick, the landing
+    having zeroed it.
+  - powder_snow, ender_mask, piglin_neutral: the armour's own hooks. Vanilla asks only the boots about powder snow and
+    only the helmet about the mask, so the mask from any other piece also cancels `EnderManAngerEvent`; on a minion it
+    stops endermen taking it as a target (ender calm).
+  - silent_steps: `VanillaGameEvent` STEP, HIT_GROUND and SPLASH from the host cancelled; a minion `dampensVibrations`.
+  - quick_draw: `LivingEntityUseItemEvent.Tick` takes `strength` extra ticks off a bow or crossbow each tick (twice as
+    fast at 1), the same on both sides.
+  - inverted_healing: a mixin (`InvertedHealingMixin`) on `LivingEntity#isInvertedHealAndHarm`, the switch vanilla's
+    undead use, instead of the spec's `MobEffectEvent.Applicable`: drunk, splashed and cloud potions apply instant
+    health directly and never pass that event.
+  - trample: a minion breaks `#bloodandbones:trampleable` (leaves, grass, flowers, snow, cobweb...) it walks into or
+    through, only where mobGriefing and the new server setting `minion_block_damage` (false) both allow it.
+  - lava_walk: `canStandOnFluid` for lava, floating as a strider does after each move, and a goal above the float goal
+    that holds the jump while it stands on lava so it does not paddle. Found on the way: Sable replaces the entity
+    collision context (`TheFasterEntityCollisionContext`), whose `canStandOnFluid(above, fluid)` asks the entity about
+    the fluid *above* the surface rather than the lava, so under Sable nothing stands on lava, the vanilla strider
+    included. `standsOn` counts the empty fluid over lava the minion is on as that lava.
+- **impulse** {target: self, other or area; forward, up, away; radius; arc: any, front, behind; cushion}: set with
+  `hurtMarked` (a player gets it as knockback is sent). "forward" is the host's flat facing, or toward a minion's target;
+  a self lunge with `away` and `radius` throws what is round it aside (charge); `arc` is where the other must be (fly
+  swat: behind); `cushion` spares whoever is thrown fall damage until they next land (wind burst).
+- **teleport** {mode: random, look, behind_target, to_owner; radius; who: self or other; beyond}: every mode lands the
+  enderman's way (`EntityTeleportEvent.EnderEntity` may stop or move it, then `randomTeleport` drops it to solid ground
+  and takes the spot only if it fits and is dry), random with a chorus fruit's sixteen tries at whole-block heights;
+  to_owner only for a companion or bodyguard further than `beyond` from its maker, ten tries round them as a tamed
+  wolf's.
+- **deflect** {chance, projectiles (ids or "#tags"), mode: reflect, dodge, pass; arc: any or front; against:
+  projectile, melee or both}: `ProjectileImpactEvent` cancelled, reflect sending it back with
+  `ProjectileDeflection.REVERSE` as the host's; a projectile dodged or let pass is let by for the rest of its flight.
+  Blows (a creature's own melee) are dodged in `LivingIncomingDamageEvent`. Its own chance comes up once a blow; the
+  entry's cooldown starts when it works.
+- **detonate** {power, fire, block_damage, fuse, minion_powers_down}: `Level#explode` with the host as its source, the
+  host taken off the list it hits (`ExplosionEvent.Detonate`); blocks only with the trait's `block_damage`,
+  `minion_block_damage` and mobGriefing (then fire too); a fuse hisses and smokes first; a minion then powers down.
+- **visibility** {multiplier, vs}: `LivingVisibilityEvent#modifyVisibility`, the change scaled by the trait strength.
+- Look and sound: a wet burst of blood where a blink leaves and where a blast goes off, scraps of meat from a minion's
+  self-destruct, sparks from brass; bloodless mode draws none of the blood (the drops' own check) and keeps the vanilla
+  portal and explosion particles. Vanilla sounds pitched down and layered (slime and honey for the squelch).
+- **Traits** (new data, with names, descriptions and a bloodless reading): wall_climber (sums), glider, bouncy,
+  powder_walker, silent_steps, quick_draw, trample, lava_walk (fire does not hurt it either), ender_mask, ender_calm,
+  piglin_kin, inverted_healing, insulated, evasive, deflector, hiss, leap, dash, charge, warp, wind_burst, blast,
+  self_destruct, rift, blink, fly_swat, loyal. stubborn needed no flag and is unchanged. Mob data only where a test
+  needs it: the enderman's head armour is an ender mask, and the creeper's `bloodandbones:powder_sac` gives blast
+  (armour) and self_destruct (minion); the sac has no item yet, so only a piece or build given it directly has it.
+- **Tests** (`gametest/MotionEffectTests`, 18): `endermanHelmetIsEnderMask`, `enderCalmMinionNeverTargeted`,
+  `creeperSacBlastSparesWearer` (the wearer in the world, and blocks untouched with mobGriefing off even for a blast
+  that may break them), `creeperSacPowersDownNotDestroyed`, `climbFlagClingsAndClimbs`, `bounceCancelsFall`,
+  `gliderChestplateGlidesOnHunger`, `deflectReflectsArrow`, `evasiveDodgesMelee`, `teleportRandomStaysOnGround`,
+  `impulseLeapOnActivate`, `windBurstCushionsLanding`, `silentStepsNoVibration`, `minionLavaWalkStandsOnLava`,
+  `hissHalvesVisibility`, `quickDrawDrawsTwiceAsFast`, `invertedHealingSwaps`, `trampleNeedsGriefingAndConfig`.
+- **Left out**, waiting on other groups' types: lava_wader and frost_path (the vanilla adapter's `replace_disk` and the
+  `cooled_crust` block, Ranged), displacer (`blink_target`, Ranged), rideable (mount, no group yet). `loyal` has no test:
+  its maker must be a player in the world's player list, which a game test sharing one world should not add.
+- **Shared files touched**: `BBServerConfig` (the `minion_block_damage` setting spec 6.11 names), and
+  `bloodandbones.mixins.json` (one line for the mixin).

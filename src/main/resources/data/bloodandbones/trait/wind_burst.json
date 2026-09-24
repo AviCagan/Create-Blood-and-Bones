@@ -1,0 +1,17 @@
+{
+  "name": "trait.bloodandbones.wind_burst",
+  "max_level": 1,
+  "effects": [
+    {
+      "trigger": "activate",
+      "cooldown": 200,
+      "range": 4,
+      "cost_mb": 40,
+      "effect": {
+        "type": "bloodandbones:impulse",
+        "up": 1.2,
+        "cushion": true
+      }
+    }
+  ]
+}

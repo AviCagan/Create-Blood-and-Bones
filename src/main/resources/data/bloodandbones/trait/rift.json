@@ -1,0 +1,16 @@
+{
+  "name": "trait.bloodandbones.rift",
+  "max_level": 1,
+  "effects": [
+    {
+      "trigger": "hurt",
+      "chance": 0.3,
+      "cooldown": 20,
+      "effect": {
+        "type": "bloodandbones:teleport",
+        "mode": "random",
+        "radius": 4
+      }
+    }
+  ]
+}

@@ -1,0 +1,17 @@
+{
+  "name": "trait.bloodandbones.fly_swat",
+  "max_level": 1,
+  "effects": [
+    {
+      "trigger": "hurt",
+      "filter": "melee",
+      "effect": {
+        "type": "bloodandbones:impulse",
+        "target": "other",
+        "away": 0.8,
+        "up": 0.2,
+        "arc": "behind"
+      }
+    }
+  ]
+}

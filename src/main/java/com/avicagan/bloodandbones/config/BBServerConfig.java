@@ -18,6 +18,7 @@ public class BBServerConfig {
     public static final ModConfigSpec.EnumValue<MinionDeath> MINION_DEATH;
     public static final ModConfigSpec.IntValue TROUGH_RADIUS;
     public static final ModConfigSpec.DoubleValue POWER_DRAIN;
+    public static final ModConfigSpec.BooleanValue MINION_BLOCK_DAMAGE;
     public static final ModConfigSpec.DoubleValue TRAIT_STRENGTH;
     public static final ModConfigSpec.ConfigValue<List<? extends String>> DISABLED_EFFECT_TYPES;
 
@@ -52,6 +53,9 @@ public class BBServerConfig {
         POWER_DRAIN = builder
                 .comment("How fast minions use their blood or soul blood. 1 is normal, 0 never.")
                 .defineInRange("power_drain", 1.0, 0.0, 100.0);
+        MINION_BLOCK_DAMAGE = builder
+                .comment("Whether minions and trait blasts may break blocks (a self-destruct, trampling), where the mobGriefing game rule also allows it.")
+                .define("minion_block_damage", false);
         builder.pop();
         builder.push("traits");
         TRAIT_STRENGTH = builder
@@ -109,6 +113,14 @@ public class BBServerConfig {
             return SPEC.isLoaded() ? POWER_DRAIN.get().floatValue() : 1.0F;
         } catch (IllegalStateException e) {
             return 1.0F;
+        }
+    }
+
+    public static boolean minionBlockDamage() {
+        try {
+            return SPEC.isLoaded() && MINION_BLOCK_DAMAGE.get();
+        } catch (IllegalStateException e) {
+            return false;
         }
     }
 
