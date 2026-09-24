@@ -7,6 +7,7 @@ import com.avicagan.bloodandbones.parts.effect.AlertPayload;
 import com.avicagan.bloodandbones.parts.effect.GlowEffect;
 import com.avicagan.bloodandbones.parts.effect.SensePayload;
 import com.avicagan.bloodandbones.registry.BBParticles;
+import com.mojang.blaze3d.systems.RenderSystem;
 import com.mojang.blaze3d.vertex.DefaultVertexFormat;
 import com.mojang.blaze3d.vertex.PoseStack;
 import com.mojang.blaze3d.vertex.VertexConsumer;
@@ -41,6 +42,7 @@ import net.neoforged.neoforge.client.event.RegisterGuiLayersEvent;
 import net.neoforged.neoforge.client.event.RenderLevelStageEvent;
 import net.neoforged.neoforge.client.gui.VanillaGuiLayers;
 import net.neoforged.neoforge.common.NeoForge;
+import org.lwjgl.opengl.GL11;
 
 import java.util.ArrayList;
 import java.util.Comparator;
@@ -86,11 +88,26 @@ public final class SocialClient {
 
     /** Lines drawn over everything, walls included: the senses' outlines. Made the first time one is drawn. */
     private static final class Outlines {
+        /** Whether the depth test was on before the outlines turned it off, to put it back as it was. */
+        private static boolean depthWasOn;
+        /**
+         * Vanilla's "no depth test" only leaves the test alone, trusting it is off already; after the particles it is
+         * not, so this turns it off for the outlines itself.
+         */
+        private static final RenderStateShard.LayeringStateShard THROUGH_ANYTHING = new RenderStateShard.LayeringStateShard(
+                BloodAndBones.MOD_ID + "_through_walls", () -> {
+                    depthWasOn = GL11.glIsEnabled(GL11.GL_DEPTH_TEST);
+                    RenderSystem.disableDepthTest();
+                }, () -> {
+                    if (depthWasOn) {
+                        RenderSystem.enableDepthTest();
+                    }
+                });
         static final RenderType THROUGH_WALLS = RenderType.create(BloodAndBones.MOD_ID + ":sense_outline", DefaultVertexFormat.POSITION_COLOR_NORMAL,
                 VertexFormat.Mode.LINES, 1536, RenderType.CompositeState.builder()
                         .setShaderState(RenderStateShard.RENDERTYPE_LINES_SHADER)
                         .setLineState(new RenderStateShard.LineStateShard(OptionalDouble.of(2.5)))
-                        .setLayeringState(RenderStateShard.VIEW_OFFSET_Z_LAYERING)
+                        .setLayeringState(THROUGH_ANYTHING)
                         .setTransparencyState(RenderStateShard.TRANSLUCENT_TRANSPARENCY)
                         .setWriteMaskState(RenderStateShard.COLOR_WRITE)
                         .setDepthTestState(RenderStateShard.NO_DEPTH_TEST)

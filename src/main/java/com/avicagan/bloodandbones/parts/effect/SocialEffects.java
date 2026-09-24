@@ -97,6 +97,8 @@ public final class SocialEffects {
                 "Skeletons take you for one of their own and leave you be. One you hurt fights back for 30 seconds.");
         BBLang.trait("raider_kin", "Raider Kin",
                 "Illagers, witches and ravagers take you for one of the raid and leave you be. One you hurt fights back for 30 seconds.");
+        BBLang.trait("piglin_kin", "Piglin Kin",
+                "Piglins and their brutes take you for one of their own, gold or no gold. One you hurt fights back for 30 seconds.");
         BBLang.trait("ender_calm", "Ender Calm",
                 "Endermen take no notice of it, even looked at. One it hurts fights back for 30 seconds.");
         BBLang.trait("golem_trust", "Trustworthy",

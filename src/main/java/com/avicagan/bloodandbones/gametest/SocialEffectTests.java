@@ -91,6 +91,46 @@ public class SocialEffectTests {
         return zombie;
     }
 
+    /** Social's traits, each a data file of its own with a name and a description. */
+    private static final List<String> TRAITS = List.of("dead_face", "skeleton_kin", "raider_kin", "piglin_kin", "ender_calm", "golem_trust", "beloved",
+            "echo_sense", "tremor_sense", "spectral_sight", "blood_scent", "wide_eyes", "pack_hunter", "item_magnet", "horde_call", "purr", "toxin_puff",
+            "glow_aura", "wither_aura", "fatigue_aura", "roar", "play_dead", "cat_terror", "warped_dread", "luminous");
+
+    /**
+     * Every one of Social's traits loads (its effects parse), has a name and a description, and reads right in bloodless
+     * mode: what it shows there (its own bloodless wording, or the general rewording) says nothing of blood, gore, guts
+     * or organs.
+     */
+    @GameTest(template = "empty", timeoutTicks = 20)
+    public static void socialTraitsLoadWithWords(GameTestHelper helper) {
+        java.util.regex.Pattern bloody = java.util.regex.Pattern.compile("(?i)(?<![a-z])(blood\\w*|bleed\\w*|gor[ey]|guts?|organs?)(?![a-z])");
+        try (var in = BloodAndBones.class.getResourceAsStream("/assets/bloodandbones/lang/en_us.json")) {
+            var json = com.google.gson.JsonParser.parseReader(new java.io.InputStreamReader(in)).getAsJsonObject();
+            for (String id : TRAITS) {
+                if (com.avicagan.bloodandbones.parts.PartsData.SERVER.trait(bb(id)) == null) {
+                    helper.fail("Trait " + id + " did not load");
+                    return;
+                }
+                for (String key : List.of("trait.bloodandbones." + id, "trait.bloodandbones." + id + ".desc")) {
+                    if (!json.has(key)) {
+                        helper.fail("No words for " + key);
+                        return;
+                    }
+                    String shown = json.has("bloodless." + key) ? json.get("bloodless." + key).getAsString()
+                            : com.avicagan.bloodandbones.config.BloodlessWords.soften(json.get(key).getAsString());
+                    if (bloody.matcher(shown).find()) {
+                        helper.fail("In bloodless mode " + key + " still says: " + shown);
+                        return;
+                    }
+                }
+            }
+        } catch (Exception e) {
+            helper.fail("Could not read the language file: " + e);
+            return;
+        }
+        helper.succeed();
+    }
+
     /**
      * A full set of zombie armour has the Shambler set's dead_face: a zombie's aim at the wearer is called off, until the
      * wearer hits it, and then it turns on them by itself.

@@ -1026,6 +1026,8 @@
   "trait.bloodandbones.pack_hunter": "Pack Hunter",
   "trait.bloodandbones.pack_hunter.desc": "15% more damage for each ally within 8 blocks, up to 3: your minions, your pets and any wolf or fox.",
   "trait.bloodandbones.pecking_order": "Pecking Order",
+  "trait.bloodandbones.piglin_kin": "Piglin Kin",
+  "trait.bloodandbones.piglin_kin.desc": "Piglins and their brutes take you for one of their own, gold or no gold. One you hurt fights back for 30 seconds.",
   "trait.bloodandbones.play_dead": "Play Dead",
   "trait.bloodandbones.play_dead.desc": "Below a quarter health, a hit sets you playing dead: Regeneration II, and hostile creatures within 16 blocks lose you for 5 seconds. Once a minute.",
   "trait.bloodandbones.prey": "Prey",

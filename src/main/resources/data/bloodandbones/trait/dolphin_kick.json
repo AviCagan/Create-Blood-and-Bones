@@ -25,6 +25,19 @@
         "amplifier": 0,
         "target": "self"
       }
+    },
+    {
+      "trigger": "passive",
+      "context": "minion",
+      "effect": {
+        "type": "bloodandbones:aura",
+        "action": "mob_effect",
+        "effect": "minecraft:dolphins_grace",
+        "duration": 60,
+        "radius": 8,
+        "interval": 40,
+        "filter": "allies"
+      }
     }
   ]
 }
