@@ -18,6 +18,17 @@ public final class Traits {
         return def != null && def.maxLevel() > 1 ? name.append(" " + roman(level)) : name;
     }
 
+    /** A trait's description key ("trait.bloodandbones.venomous.desc"), if the language has one; null if not. */
+    @org.jetbrains.annotations.Nullable
+    public static String descriptionKey(PartsData.Store store, TraitList.Resolved trait) {
+        Trait def = store.trait(trait.id());
+        if (def == null) {
+            return null;
+        }
+        String key = def.name() + ".desc";
+        return net.minecraft.locale.Language.getInstance().has(key) ? key : null;
+    }
+
     public static String roman(int level) {
         return level >= 0 && level < ROMAN.length ? ROMAN[level] : Integer.toString(level);
     }

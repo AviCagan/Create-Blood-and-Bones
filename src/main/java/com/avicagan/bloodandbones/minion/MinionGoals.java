@@ -110,6 +110,45 @@ public final class MinionGoals {
         }
     }
 
+    /**
+     * Its organ at work in a fight (docs/PARTS-AND-TRAITS.md section 6.4): with a target within an activate effect's
+     * range and that effect's condition holding, it fires it, paying its cost from its own blood (brass: its canister).
+     * It takes no control of moving or looking, so it fires while it closes in.
+     */
+    public static class UseOrgan extends Goal {
+        private final MinionEntity minion;
+        @Nullable
+        private com.avicagan.bloodandbones.parts.Activation.Facet facet;
+
+        public UseOrgan(MinionEntity minion) {
+            this.minion = minion;
+            setFlags(EnumSet.noneOf(Flag.class));
+        }
+
+        @Override
+        public boolean canUse() {
+            LivingEntity target = minion.getTarget();
+            if (target == null || !target.isAlive() || minion.poweredDown() || minion.stats().mindless()) {
+                return false;
+            }
+            facet = com.avicagan.bloodandbones.parts.Activation.readyFor(minion, target);
+            return facet != null;
+        }
+
+        @Override
+        public boolean canContinueToUse() {
+            return false;
+        }
+
+        @Override
+        public void start() {
+            if (facet != null && minion.getTarget() != null) {
+                com.avicagan.bloodandbones.parts.Activation.fire(minion, facet, minion.getTarget());
+            }
+            facet = null;
+        }
+    }
+
     /** Low on blood, it walks to the nearest Blood Trough it can reach and drinks its fill. */
     public static class SeekBlood extends Goal {
         private final MinionEntity minion;

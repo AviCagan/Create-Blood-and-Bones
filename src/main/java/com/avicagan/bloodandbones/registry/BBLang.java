@@ -465,6 +465,18 @@ public class BBLang {
         }
         // softening "gut" would make it "Iron Cord"
         BloodAndBones.REGISTRATE.addRawLang("bloodless.trait.bloodandbones.iron_gut", "Iron Stomach");
+        // the four groups of trait effects add their own (docs/ARCHITECTURE-PROPOSAL.md section 15.8)
+        com.avicagan.bloodandbones.parts.effect.MotionEffects.lang();
+        com.avicagan.bloodandbones.parts.effect.RangedEffects.lang();
+        com.avicagan.bloodandbones.parts.effect.SocialEffects.lang();
+        com.avicagan.bloodandbones.parts.effect.UpkeepEffects.lang();
+        BloodAndBones.REGISTRATE.addRawLang("bloodandbones.carcass_armour.hold_ctrl", "Hold Ctrl for what they do");
+        // the Organ Ability (bloodless mode's organs are cores)
+        BloodAndBones.REGISTRATE.addRawLang("key.bloodandbones.organ_ability", "Organ Ability");
+        bloodless("key.bloodandbones.organ_ability", "Core Ability");
+        BloodAndBones.REGISTRATE.addRawLang("bloodandbones.organ.no_blood", "Not enough blood in your tank: that takes %s mB");
+        BloodAndBones.REGISTRATE.addRawLang("bloodandbones.minion.organ_fitted", "Stitched in: %s");
+        bloodless("bloodandbones.minion.organ_fitted", "Installed: %s");
         BloodAndBones.REGISTRATE.addRawLang("bloodandbones.set_bonus.flesh", "Flesh set: you heal from what you hit, and rot half as fast");
         BloodAndBones.REGISTRATE.addRawLang("bloodandbones.set_bonus.brass", "Brass set: the throttle costs a quarter less, and you are hard to shove");
         BloodAndBones.REGISTRATE.addRawLang("bloodandbones.surgery.nothing", "Nothing on the table can do that");
@@ -516,6 +528,9 @@ public class BBLang {
         config("rot_speed", "Rot speed", "How fast carcasses rot: 1 is normal, 2 twice as fast, 0 never.");
         config("rotten_carcasses_crumble", "Rotten carcasses fall apart", "A carcass left rotten falls apart into bones and a little rotten flesh, so old ones do not pile up.");
         config("crumble_after_days", "Falls apart after (days)", "How long a rotten carcass lasts before it falls apart, in Minecraft days of 20 minutes, counted at the rot speed.");
+        config("traits", "Traits", "The traits of carcass armour and minions.");
+        config("trait_strength", "Trait strength", "Trait amounts (attribute changes, damage changes, heals, pushes, damage dealt) are multiplied by this: 1 is normal, 0 takes them away.");
+        config("disabled_effect_types", "Switched-off effect types", "Trait effect types that do nothing on this server, by id, such as bloodandbones:teleport. Traits that use them keep their other effects.");
         BloodAndBones.REGISTRATE.addRawLang("gamerule.bloodandbonesBloodless", "Bloodless mode for everyone");
         BloodAndBones.REGISTRATE.addRawLang("gamerule.bloodandbonesBloodless.description",
                 "Hides blood, gore and wet textures for every player, whatever their own setting. Carcasses and machines work the same.");
@@ -653,8 +668,22 @@ public class BBLang {
     }
 
     /** Bloodless mode's own wording for a key, where the general rewording ({@code BloodlessWords}) would not fit what is drawn. */
-    private static void bloodless(String key, String text) {
+    public static void bloodless(String key, String text) {
         BloodAndBones.REGISTRATE.addRawLang("bloodless." + key, text);
+    }
+
+    /** A line of text under its own key; bloodless mode rewords it with {@code BloodlessWords} unless it has its own. */
+    public static void raw(String key, String text) {
+        BloodAndBones.REGISTRATE.addRawLang(key, text);
+    }
+
+    /**
+     * A trait's name ({@code trait.bloodandbones.<id>}, what its file's "name" points at) and what it does
+     * ({@code trait.bloodandbones.<id>.desc}, shown on armour while Ctrl is held).
+     */
+    public static void trait(String id, String name, String description) {
+        BloodAndBones.REGISTRATE.addRawLang("trait.bloodandbones." + id, name);
+        BloodAndBones.REGISTRATE.addRawLang("trait.bloodandbones." + id + ".desc", description);
     }
 
     private static void jei(String id, String... pages) {

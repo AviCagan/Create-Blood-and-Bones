@@ -54,6 +54,11 @@ public class BloodAndBones {
         NeoForge.EVENT_BUS.register(com.avicagan.bloodandbones.cyber.ModuleActions.class);
         NeoForge.EVENT_BUS.register(com.avicagan.bloodandbones.cyber.SetBonus.class);
         NeoForge.EVENT_BUS.register(com.avicagan.bloodandbones.parts.TraitEvents.class);
+        // the four groups of trait effects, each with its own handlers (docs/ARCHITECTURE-PROPOSAL.md section 15.8)
+        NeoForge.EVENT_BUS.register(com.avicagan.bloodandbones.parts.effect.MotionEffects.class);
+        NeoForge.EVENT_BUS.register(com.avicagan.bloodandbones.parts.effect.RangedEffects.class);
+        NeoForge.EVENT_BUS.register(com.avicagan.bloodandbones.parts.effect.SocialEffects.class);
+        NeoForge.EVENT_BUS.register(com.avicagan.bloodandbones.parts.effect.UpkeepEffects.class);
         NeoForge.EVENT_BUS.addListener((net.neoforged.neoforge.event.server.ServerStoppedEvent event) -> com.avicagan.bloodandbones.cyber.Coupler.clear());
         // an Analytical Lens reads machines as Create's goggles do
         com.simibubi.create.content.equipment.goggles.GogglesItem.addIsWearingPredicate(player ->
@@ -63,6 +68,7 @@ public class BloodAndBones {
             modEventBus.addListener(BBDatagen::gatherData);
             com.avicagan.bloodandbones.client.DevShowcase.init();
             com.avicagan.bloodandbones.client.BBClientSetup.registerConfigScreen(modContainer);
+            com.avicagan.bloodandbones.client.BBClientSetup.initEffects(modEventBus);
         }
         modEventBus.addListener(BBGameTests::register);
         modEventBus.addListener(BBNetwork::register);
@@ -75,8 +81,19 @@ public class BloodAndBones {
         com.avicagan.bloodandbones.backtank.BBArmorMaterials.register(modEventBus);
         com.avicagan.bloodandbones.registry.BBRecipes.register(modEventBus);
         com.avicagan.bloodandbones.parts.TraitEffects.register(modEventBus);
+        com.avicagan.bloodandbones.parts.TraitConditions.register(modEventBus);
+        com.avicagan.bloodandbones.parts.effect.MotionEffects.registerContent(modEventBus);
+        com.avicagan.bloodandbones.parts.effect.RangedEffects.registerContent(modEventBus);
+        com.avicagan.bloodandbones.parts.effect.SocialEffects.registerContent(modEventBus);
+        com.avicagan.bloodandbones.parts.effect.UpkeepEffects.registerContent(modEventBus);
         com.avicagan.bloodandbones.registry.BBAttributes.register(modEventBus);
         com.avicagan.bloodandbones.minion.MinionSerializers.register(modEventBus);
+        // a changed trait strength or list of switched-off effect types reaches every creature's traits
+        modEventBus.addListener((net.neoforged.fml.event.config.ModConfigEvent.Reloading event) -> {
+            if (event.getConfig().getSpec() == com.avicagan.bloodandbones.config.BBServerConfig.SPEC) {
+                com.avicagan.bloodandbones.parts.PartsData.SERVER.invalidate();
+            }
+        });
         modEventBus.addListener((net.neoforged.neoforge.registries.datamaps.RegisterDataMapTypesEvent event) -> {
             event.register(com.avicagan.bloodandbones.body.Vent.EFFECTS);
             event.register(com.avicagan.bloodandbones.parts.Hides.SOURCES);

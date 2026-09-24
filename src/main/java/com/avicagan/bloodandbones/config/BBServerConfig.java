@@ -1,6 +1,10 @@
 package com.avicagan.bloodandbones.config;
 
+import net.minecraft.resources.ResourceLocation;
 import net.neoforged.neoforge.common.ModConfigSpec;
+
+import java.util.List;
+import java.util.Set;
 
 /**
  * Per-world gameplay settings, kept in the world's serverconfig folder and sent to players who join.
@@ -14,6 +18,8 @@ public class BBServerConfig {
     public static final ModConfigSpec.EnumValue<MinionDeath> MINION_DEATH;
     public static final ModConfigSpec.IntValue TROUGH_RADIUS;
     public static final ModConfigSpec.DoubleValue POWER_DRAIN;
+    public static final ModConfigSpec.DoubleValue TRAIT_STRENGTH;
+    public static final ModConfigSpec.ConfigValue<List<? extends String>> DISABLED_EFFECT_TYPES;
 
     /** What a lethal blow does to a minion that has power: powers it down, scatters it into its parts, or destroys it. */
     public enum MinionDeath {
@@ -46,6 +52,14 @@ public class BBServerConfig {
         POWER_DRAIN = builder
                 .comment("How fast minions use their blood or soul blood. 1 is normal, 0 never.")
                 .defineInRange("power_drain", 1.0, 0.0, 100.0);
+        builder.pop();
+        builder.push("traits");
+        TRAIT_STRENGTH = builder
+                .comment("How strong the traits of carcass armour and minions are: their amounts (attribute changes, damage changes, heals, pushes, damage dealt) are multiplied by this. 1 is normal, 0 takes the amounts away.")
+                .defineInRange("trait_strength", 1.0, 0.0, 10.0);
+        DISABLED_EFFECT_TYPES = builder
+                .comment("Trait effect types that do nothing on this server, by id, for example \"bloodandbones:teleport\". Traits that use them keep their other effects.")
+                .defineListAllowEmpty("disabled_effect_types", List.of(), () -> "bloodandbones:", o -> o instanceof String s && ResourceLocation.tryParse(s) != null);
         builder.pop();
         SPEC = builder.build();
     }
@@ -96,6 +110,39 @@ public class BBServerConfig {
         } catch (IllegalStateException e) {
             return 1.0F;
         }
+    }
+
+    public static float traitStrength() {
+        try {
+            return SPEC.isLoaded() ? TRAIT_STRENGTH.get().floatValue() : 1.0F;
+        } catch (IllegalStateException e) {
+            return 1.0F;
+        }
+    }
+
+    private static volatile List<? extends String> disabledRead;
+    private static volatile Set<ResourceLocation> disabled = Set.of();
+
+    /** The effect types switched off, read again only when the setting changes. */
+    public static Set<ResourceLocation> disabledEffectTypes() {
+        List<? extends String> now;
+        try {
+            now = SPEC.isLoaded() ? DISABLED_EFFECT_TYPES.get() : List.of();
+        } catch (IllegalStateException e) {
+            now = List.of();
+        }
+        if (now != disabledRead) {
+            java.util.Set<ResourceLocation> out = new java.util.HashSet<>();
+            for (String id : now) {
+                ResourceLocation parsed = ResourceLocation.tryParse(id);
+                if (parsed != null) {
+                    out.add(parsed);
+                }
+            }
+            disabled = Set.copyOf(out);
+            disabledRead = now;
+        }
+        return disabled;
     }
 
     /** Game ticks of rot a rotten carcass lasts. */

@@ -68,6 +68,9 @@ public final class PartsData {
         private volatile PartSlots.Rules slotRules = PartSlots.DEFAULT;
         private final Map<String, ResolvedMob> resolved = new ConcurrentHashMap<>();
         private volatile int generation;
+        /** What game tests add on top (under ids of their own): looked up like the rest, never listed, sent or linted. */
+        private final Map<ResourceLocation, Trait> testTraits = new ConcurrentHashMap<>();
+        private final Map<ResourceLocation, MobGroup> testMobFiles = new ConcurrentHashMap<>();
 
         /** Every file of one kind, as written, by id. */
         public Map<ResourceLocation, String> raw(Kind kind) {
@@ -140,7 +143,8 @@ public final class PartsData {
 
         @Nullable
         public MobGroup mobFile(ResourceLocation entity) {
-            return mobFiles.get(entity);
+            MobGroup file = mobFiles.get(entity);
+            return file != null ? file : testMobFiles.get(entity);
         }
 
         public Map<ResourceLocation, MobGroup> mobFiles() {
@@ -149,7 +153,23 @@ public final class PartsData {
 
         @Nullable
         public Trait trait(ResourceLocation id) {
-            return traits.get(id);
+            Trait trait = traits.get(id);
+            return trait != null ? trait : testTraits.get(id);
+        }
+
+        /**
+         * For game tests: a trait under an id of the test's own, for the rest of the run. Lookups see it; the lists
+         * ({@link #traits()}), the sync to clients and the data lints do not.
+         */
+        public void addTestTrait(ResourceLocation id, Trait trait) {
+            testTraits.put(id, trait);
+            invalidate();
+        }
+
+        /** For game tests: a mob file for a made-up mob id, the same way (it resolves on top of an archetype, as any mob). */
+        public void addTestMobFile(ResourceLocation entity, MobGroup file) {
+            testMobFiles.put(entity, file);
+            invalidate();
         }
 
         public Map<ResourceLocation, Trait> traits() {
@@ -203,7 +223,7 @@ public final class PartsData {
         }
 
         private ResolvedMob build(ResourceLocation entity, boolean baby) {
-            MobGroup file = mobFiles.get(entity);
+            MobGroup file = mobFile(entity);
             Optional<EntityType<?>> type = BuiltInRegistries.ENTITY_TYPE.getOptional(entity);
             List<MobGroup> layers = new ArrayList<>();
             MobGroup archetype = file != null && file.archetype().isPresent() ? groups.get(file.archetype().get()) : best(MobGroup.Kind.ARCHETYPE, entity, type);

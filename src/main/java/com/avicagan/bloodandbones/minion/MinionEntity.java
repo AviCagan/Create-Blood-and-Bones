@@ -140,6 +140,10 @@ public class MinionEntity extends PathfinderMob implements net.minecraft.world.e
         entityData.set(BUILD, Optional.of(build));
         stats = null;
         applyStats();
+        if (!level().isClientSide) {
+            // its parts' traits, and their attribute changes, go on with it
+            com.avicagan.bloodandbones.parts.ActiveTraits.rebuild(this);
+        }
     }
 
     /** What its build adds up to, worked out again when data changes. */
@@ -221,7 +225,19 @@ public class MinionEntity extends PathfinderMob implements net.minecraft.world.e
     /** Climbing legs cling to the wall it is up against, as a spider's do. */
     @Override
     public boolean onClimbable() {
-        return entityData.get(CLIMBING) || super.onClimbable();
+        return entityData.get(CLIMBING) || com.avicagan.bloodandbones.parts.effect.MotionEffects.climbing(this) || super.onClimbable();
+    }
+
+    /** A trait may let it walk on a fluid (lava_walk). */
+    @Override
+    public boolean canStandOnFluid(net.minecraft.world.level.material.FluidState fluid) {
+        return com.avicagan.bloodandbones.parts.effect.MotionEffects.standsOn(this, fluid) || super.canStandOnFluid(fluid);
+    }
+
+    /** A trait may quiet its steps (silent_steps): sculk does not hear it. */
+    @Override
+    public boolean dampensVibrations() {
+        return com.avicagan.bloodandbones.parts.effect.MotionEffects.silent(this) || super.dampensVibrations();
     }
 
     /** A flier does not take fall damage from its own landings; a climber none from the walls it climbs. */
@@ -422,9 +438,15 @@ public class MinionEntity extends PathfinderMob implements net.minecraft.world.e
         return build().map(MinionBuild::cybernetic).orElse(false);
     }
 
+    /** How many of its inventory's slots it can use: its torso's, and what its traits add (storage). */
+    public int slots() {
+        return Math.max(0, Math.min(inventory.getContainerSize(),
+                stats().slots() + com.avicagan.bloodandbones.parts.effect.UpkeepEffects.extraSlots(this)));
+    }
+
     /** Whether it has room for this in the slots its torso gives it. */
     public boolean canCarry(ItemStack stack) {
-        int slots = stats().slots();
+        int slots = slots();
         for (int i = 0; i < slots; i++) {
             ItemStack in = inventory.getItem(i);
             if (in.isEmpty() || ItemStack.isSameItemSameComponents(in, stack) && in.getCount() < in.getMaxStackSize()) {
@@ -436,7 +458,7 @@ public class MinionEntity extends PathfinderMob implements net.minecraft.world.e
 
     /** Put this in its slots; what did not fit. */
     public ItemStack carry(ItemStack stack) {
-        int slots = stats().slots();
+        int slots = slots();
         for (int i = 0; i < slots && !stack.isEmpty(); i++) {
             ItemStack in = inventory.getItem(i);
             if (in.isEmpty()) {
@@ -479,6 +501,21 @@ public class MinionEntity extends PathfinderMob implements net.minecraft.world.e
         return in;
     }
 
+    /**
+     * Pay for an organ or an innate shot out of its own blood (brass: its canister's soul blood). False, and nothing
+     * taken, if it has too little; it never pays with its last drop, so an ability never powers it down.
+     */
+    public boolean usePower(float mb) {
+        if (mb <= 0.0F) {
+            return true;
+        }
+        if (poweredDown() || power() - mb < 1.0F) {
+            return false;
+        }
+        entityData.set(POWER, power() - mb);
+        return true;
+    }
+
     /** Out of blood: it stops where it is and lies down (a flier drops), throwing off anyone riding it. */
     public void powerDown() {
         entityData.set(POWER, 0.0F);
@@ -510,6 +547,7 @@ public class MinionEntity extends PathfinderMob implements net.minecraft.world.e
         if (cybernetic()) {
             rate *= BRASS_DRAIN;
         }
+        rate *= com.avicagan.bloodandbones.parts.effect.UpkeepEffects.drainMultiplier(this);
         owed += rate * BBServerConfig.powerDrain() / 1200.0F;
         if (owed >= 0.05F) {
             float left = power() - owed;
@@ -538,6 +576,12 @@ public class MinionEntity extends PathfinderMob implements net.minecraft.world.e
         }
         if (tickCount % 20 == 0 || movedBy.isEmpty()) {
             applyStats();
+            // its traits, built again if its build or the data changed
+            com.avicagan.bloodandbones.parts.ActiveTraits.of(this);
+        }
+        if ((tickCount + getId()) % 10 == 0) {
+            // its traits' tick, staggered as players' are (tick effects wait while it is down)
+            com.avicagan.bloodandbones.parts.TraitEvents.tick(this);
         }
         entityData.set(CLIMBING, stats().climbs() && horizontalCollision && !poweredDown());
         if (poweredDown()) {
@@ -637,6 +681,7 @@ public class MinionEntity extends PathfinderMob implements net.minecraft.world.e
         goalSelector.addGoal(0, new FloatGoal(this));
         goalSelector.addGoal(1, new MinionGoals.SeekBlood(this));
         goalSelector.addGoal(1, new MinionGoals.SeekCradle(this));
+        goalSelector.addGoal(2, new MinionGoals.UseOrgan(this));
         goalSelector.addGoal(2, new MinionGoals.Bite(this));
         goalSelector.addGoal(3, new MinionGoals.Farm(this));
         goalSelector.addGoal(3, new MinionGoals.AttendTable(this));
@@ -647,6 +692,11 @@ public class MinionEntity extends PathfinderMob implements net.minecraft.world.e
         goalSelector.addGoal(8, new LookAtPlayerGoal(this, Player.class, 8.0F));
         goalSelector.addGoal(9, new RandomLookAroundGoal(this));
         MinionGoals.targets(this, targetSelector);
+        // what each group of trait effects adds (a ranged minion's keep-away, say)
+        com.avicagan.bloodandbones.parts.effect.MotionEffects.minionGoals(this, goalSelector, targetSelector);
+        com.avicagan.bloodandbones.parts.effect.RangedEffects.minionGoals(this, goalSelector, targetSelector);
+        com.avicagan.bloodandbones.parts.effect.SocialEffects.minionGoals(this, goalSelector, targetSelector);
+        com.avicagan.bloodandbones.parts.effect.UpkeepEffects.minionGoals(this, goalSelector, targetSelector);
     }
 
     // ---- never destroyed by neglect
@@ -697,6 +747,8 @@ public class MinionEntity extends PathfinderMob implements net.minecraft.world.e
             for (MinionBuild.Fitted fitted : build.parts()) {
                 spawnAtLocation(MinionAssembly.pieceItem(fitted.piece(), 0.5F));
             }
+            build.organ().map(com.avicagan.bloodandbones.parts.CarcassArmourFittingRecipe::organItem).filter(organ -> !organ.isEmpty())
+                    .ifPresent(this::spawnAtLocation);
         }
     }
 
@@ -708,6 +760,11 @@ public class MinionEntity extends PathfinderMob implements net.minecraft.world.e
      */
     @Override
     protected InteractionResult mobInteract(Player player, InteractionHand hand) {
+        // what its traits make of an item in hand first (mending with iron, refuelling, milking)
+        InteractionResult traits = com.avicagan.bloodandbones.parts.effect.UpkeepEffects.interact(this, player, hand);
+        if (traits != null) {
+            return traits;
+        }
         ItemStack held = player.getItemInHand(hand);
         if (cybernetic() && held.is(BBItems.SOUL_CANISTER.get())) {
             // a canister by hand: in goes the soul blood, back comes the empty

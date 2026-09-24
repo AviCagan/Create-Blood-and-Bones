@@ -1,5 +1,6 @@
 package com.avicagan.bloodandbones.minion;
 
+import com.avicagan.bloodandbones.parts.CarcassArmour;
 import com.mojang.serialization.Codec;
 import com.mojang.serialization.codecs.RecordCodecBuilder;
 import net.minecraft.network.RegistryFriendlyByteBuf;
@@ -11,11 +12,12 @@ import java.util.List;
 import java.util.Optional;
 
 /**
- * What a minion is built of (docs/PARTS-AND-TRAITS.md section 6): a torso, and a piece in each socket that has
- * one. Organic (blood, unskinned pieces) or cybernetic (soul blood, skinned pieces, and Brass Sheathing over it all
- * before it can wake). Kept on the Surgery Table while it is built and on the minion once woken.
+ * What a minion is built of (docs/PARTS-AND-TRAITS.md section 6): a torso, a piece in each socket that has one, and
+ * at most one organ (its special: the organ's minion traits). Organic (blood, unskinned pieces) or cybernetic (soul
+ * blood, skinned pieces, and Brass Sheathing over it all before it can wake). Kept on the Surgery Table while it is
+ * built and on the minion once woken.
  */
-public record MinionBuild(boolean cybernetic, PieceRef torso, List<Fitted> parts, boolean sheathed) {
+public record MinionBuild(boolean cybernetic, PieceRef torso, List<Fitted> parts, boolean sheathed, Optional<CarcassArmour.Organ> organ) {
     /** A piece in a socket; the socket is named for the torso bone it stands in for ("right_front_leg", "head"). */
     public record Fitted(String socket, PieceRef piece) {
         public static final Codec<Fitted> CODEC = RecordCodecBuilder.create(i -> i.group(
@@ -28,10 +30,16 @@ public record MinionBuild(boolean cybernetic, PieceRef torso, List<Fitted> parts
             Codec.BOOL.optionalFieldOf("cybernetic", false).forGetter(MinionBuild::cybernetic),
             PieceRef.CODEC.fieldOf("torso").forGetter(MinionBuild::torso),
             Fitted.CODEC.listOf().optionalFieldOf("parts", List.of()).forGetter(MinionBuild::parts),
-            Codec.BOOL.optionalFieldOf("sheathed", false).forGetter(MinionBuild::sheathed)
+            Codec.BOOL.optionalFieldOf("sheathed", false).forGetter(MinionBuild::sheathed),
+            CarcassArmour.Organ.CODEC.optionalFieldOf("organ").forGetter(MinionBuild::organ)
     ).apply(i, MinionBuild::new));
 
     public static final StreamCodec<RegistryFriendlyByteBuf, MinionBuild> STREAM_CODEC = ByteBufCodecs.fromCodecWithRegistries(CODEC);
+
+    /** A build with no organ in it. */
+    public MinionBuild(boolean cybernetic, PieceRef torso, List<Fitted> parts, boolean sheathed) {
+        this(cybernetic, torso, parts, sheathed, Optional.empty());
+    }
 
     public static MinionBuild of(PieceRef torso) {
         return new MinionBuild(false, torso, List.of(), false);
@@ -44,7 +52,12 @@ public record MinionBuild(boolean cybernetic, PieceRef torso, List<Fitted> parts
 
     /** Brass Sheathing over it: it becomes brass, and can be woken with soul blood. */
     public MinionBuild sheathe() {
-        return new MinionBuild(true, torso, parts, true);
+        return new MinionBuild(true, torso, parts, true, organ);
+    }
+
+    /** With this organ in it (or none). */
+    public MinionBuild withOrgan(Optional<CarcassArmour.Organ> organ) {
+        return new MinionBuild(cybernetic, torso, parts, sheathed, organ);
     }
 
     public Optional<PieceRef> in(String socket) {
@@ -60,11 +73,11 @@ public record MinionBuild(boolean cybernetic, PieceRef torso, List<Fitted> parts
         List<Fitted> out = new ArrayList<>(parts);
         out.removeIf(f -> f.socket().equals(socket));
         out.add(new Fitted(socket, piece));
-        return new MinionBuild(cybernetic, torso, List.copyOf(out), sheathed);
+        return new MinionBuild(cybernetic, torso, List.copyOf(out), sheathed, organ);
     }
 
     /** Without the last piece fitted. */
     public MinionBuild withoutLast() {
-        return parts.isEmpty() ? this : new MinionBuild(cybernetic, torso, List.copyOf(parts.subList(0, parts.size() - 1)), sheathed);
+        return parts.isEmpty() ? this : new MinionBuild(cybernetic, torso, List.copyOf(parts.subList(0, parts.size() - 1)), sheathed, organ);
     }
 }
