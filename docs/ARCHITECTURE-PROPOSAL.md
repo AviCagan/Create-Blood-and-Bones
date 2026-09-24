@@ -1324,13 +1324,14 @@ The brief says to build the throttle once, as shared infrastructure, and then th
   elsewhere) and tends whoever lies there, a heart every five seconds. `villagerAndPillagerHeadsOfferSurgeon`,
   `surgeonKeepsToItsTable`.
 - **The ragged stump**: what a surgeon cuts off leaves the stump ragged (`Body.ragged`, saved with the body).
-  Fitting anything into a ragged stump (a prosthetic, or the limb back) takes a bucket's worth of blood as well,
-  from a bucket or any fluid item the operator carries, a worn Fluid Backtank included. Once fitted the stump is
+  Fitting anything but a crude prosthetic into a ragged stump (an implant, or the limb back) takes a bucket's worth
+  of blood as well (`Surgery.costsBlood`), from a bucket or any fluid item the operator carries, a worn Fluid
+  Backtank included. Once fitted the stump is
   dressed: take the implant out and it is an ordinary empty slot. Swapping an implant straight in for flesh
   leaves no stump. `raggedStumpCostsBlood`, `raggedStumpPaidFromBacktank`.
-- **The safety floor holds**: fitting, reattaching, swapping implants and modules never need a surgeon, and blood
-  is cheap and early (a Bleeding Rack needs no power), so a crude prosthetic can always go on.
-  `safetyFloorNeverNeedsSurgeon`.
+- **The safety floor holds**: fitting, reattaching, swapping implants and modules never need a surgeon, and a crude
+  prosthetic (`ImplantItem.crude`: runs on nothing, gives nothing past flesh) never needs blood, even in a ragged
+  stump, so one can always go on. `safetyFloorNeverNeedsSurgeon`.
 - **Drawn**: a limb gone leaves a stump on the player, the top of the limb in their own skin (sleeve or trouser
   leg and all) with a raw end; a ragged one is longer, its end torn, flaps of flesh hanging off it. In bloodless
   mode the end is plain.
@@ -1407,7 +1408,7 @@ file, composed from about 30 effect types.
 ### 15.3 Slice 2 as built: a cow torso on rabbit legs (the minion rebuild)
 
 The old minion (a player-shaped body with implants, its job from which arms and eyes it had) is gone; a minion
-saved the old way falls apart on its first tick, dropping what it carried.
+saved the old way falls apart on its first tick, dropping what it carried, the backtank it wore and its implants.
 
 - **The build** (`minion/MinionBuild`, `PieceRef`): a torso and a piece in each socket, each piece remembered as it
   was fitted (mob, bone, look, freshness, skinned, baby). Pieces never rot once fitted. Kept on the Surgery Table
@@ -1525,3 +1526,61 @@ saved the old way falls apart on its first tick, dropping what it carried.
   it moves off or runs dry), Piston Ram (its blows throw hard), Gyroscopic Stabilizer (no fall damage), Barometric
   Vent (drifts down slowly). The Grappling Spool needs aiming, so it is not for minions. `brassMinionTakesAModule`,
   `magnetCoilDrawsItems`, `couplerDrivesAShaft`, `lensSeesThroughWalls`.
+
+### 15.7 Review of the minion work (fixed)
+
+- A minion could turn on its maker (a sweep of the sword made it the last attacker, and the hurt-by goal now runs
+  for every job); `MinionEntity.canAttack` leaves out its maker and its maker's other minions. A pacifist (no arm
+  that hits) took targets it never fought, paying the fighting rate and refusing to follow; no target goal starts
+  for one now. `neverTurnsOnItsMaker`, `pacifistTakesNoTarget`.
+- Minions drank through walls and floors: a trough within reach was taken with no path, and one powered down woke
+  from any trough near it. Now a trough must be reached by a path, and drinking needs a clear line from its head
+  to the trough (`MinionGoals.overTheRim`). `troughBehindAWallIsNoUse`; `cannotReachTroughStaysDown` now starts
+  it hungry with blood enough to walk there, so it tests the rule.
+- Seeking and job goals searched a new path every tick once a path ended short, and never gave up. They re-path
+  once a second now (`MinionGoals.Approach`; asking again while a path is followed costs nothing), give up after
+  five seconds without moving a block, and remember what they could not reach for half a minute, so the next
+  trough, cradle, crop, chest or item is tried. The Charging Cradle is chosen only if a path reaches it and it can
+  swap now (turning, a full canister, room for the empty: `ChargingCradleBlockEntity.canServe`). A surgeon whose
+  table cannot be reached stands down for ten seconds; it counts as at its table from as far as a path of its width
+  ends (it stood too far off to tend when broad). `lowBrassWalksToTheCradle`, `walledInCradleIsNoUse`.
+- A flier (never on the ground) or a swimmer never set off for a trough; the gate is now whether its navigation can
+  path from where it is. `hungryFlierDrinks`.
+- A folded minion kept its old home, so a surgeon walked back to its old table and farmers and couriers read the
+  blocks round a far-off home (loading those chunks). Unfolding sets its home where it is set down, and job goals
+  never read blocks in unloaded chunks. `foldAndUnfold`, `unfoldedSurgeonTakesTheTableBesideIt`.
+- Never lost: a Dormant Minion item is fire resistant, cannot be hurt, never ages away, and one fallen out of the
+  world is set down on solid ground (where it was made, else the world's spawn, else the End's platform:
+  `MinionEntity.safeGround`); a minion fallen out of the world is set down powered down, as a killing blow leaves it
+  (by default). `foldedMinionIsNeverLost`, `fallenOutOfTheWorldIsSetDown`. Its maker's Cleaver takes a powered-down
+  minion lying on a clear Assembly Frame table back into a frame there (spec 6.2.6), freeing its place under the cap.
+  `takenApartOnTheTable`.
+- An old-style minion fell apart dropping only its inventory; its worn Fluid Backtank and fitted implants now come
+  too. Where minions may die, what they carried, their saddle, module and scattered parts drop with their equipment
+  (as a horse's chest does), not with mob loot, so `doMobLoot` off no longer eats them.
+  `oldMinionFallsApartKeepingEverything`.
+- The safety floor: a crude prosthetic needed a bucket of blood to go into a surgeon's ragged stump. It never does
+  now; other implants and the limb itself still pay. `safetyFloorNeverNeedsSurgeon`, `raggedStumpCostsBlood` (now
+  with a Flesh Arm and a reattached arm), and `amputationNeedsSurgeon` also tries swapping a Hook Hand in with no
+  surgeon.
+- Flesh against brass: flesh now keeps the hide traits of up to three different mobs among its pieces (spec 6.6;
+  `ActiveTraits` builds them for a flesh minion, and trait effects are read in the "minion" context there), a real
+  thing brass cannot do. A coupled brass minion pays the working rate. A ridden minion paid the idle rate (the server
+  holds a ridden mob's own motion at nothing); a rider pressing on counts as moving, and a ridden brass minion does
+  not couple. `fleshKeepsItsHidesTraits`; `brassDrainsAQuarter` now runs a full minute and checks the ratio.
+- The rider sat on top of the whole hitbox (a raised head and all); it sits on the saddle now, the torso's top worked
+  out once in common code (`MinionBody.saddlePoint`) for both the seat and the drawn saddle. `horseLegsAcceptRider`.
+- Couplers: a coupler someone else holds was taken as free space, and letting go removed it for both; a minion's
+  coupler went over water, snow and plants, leaving air. Only its owner's own coupler counts as free now, a release
+  removes only one's own, and a minion couples only into air. A coupler reloaded with its minion sends the minion's
+  new entity id, so the shaft is drawn to it again. `couplerLeavesSnowAlone`.
+- Smaller: the Magnet Coil marks the items it pulls so clients see them glide; a blood bucket by hand goes in only
+  when half of it fits; trough and cradle lists are cleared when the server stops; a courier or farmer looks for
+  items one tick in ten, and not at all when full; drawing a minion no longer rebuilds per piece, every frame, what
+  its layout already fixes (`StitchedBody`), nor a stump's key and random source.
+- Bloodless: new wording for the ragged stump ("Open socket"), the surgery and trough pages and the flesh-only
+  messages, minion and stitch reworded as construct and rivet by `BloodlessWords`, and a clean riveted icon for the
+  Dormant Minion.
+- Left as it is: a half-built frame on a carcass body from before the rebuild (the old `minion_frame` component) loses
+  what was fitted to it. Only development builds ever had it. `minion_death` scatter and destroy still let the void
+  kill.
