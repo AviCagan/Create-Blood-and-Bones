@@ -1,0 +1,17 @@
+{
+  "name": "trait.bloodandbones.draft_chest",
+  "max_level": 2,
+  "effects": [
+    {
+      "effect": {
+        "type": "bloodandbones:attribute",
+        "attribute": "bloodandbones:drag_strength",
+        "amount": {
+          "type": "minecraft:linear",
+          "base": 0.15,
+          "per_level_above_first": 0.15
+        }
+      }
+    }
+  ]
+}

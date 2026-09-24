@@ -1,0 +1,15 @@
+{
+  "name": "trait.bloodandbones.zombie_bait",
+  "max_level": 1,
+  "effects": [
+    {
+      "trigger": "passive",
+      "effect": {
+        "type": "bloodandbones:reaction",
+        "entities": "minecraft:zombies",
+        "mode": "hunt",
+        "radius": 16
+      }
+    }
+  ]
+}

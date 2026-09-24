@@ -1,0 +1,14 @@
+{
+  "kind": "overlay",
+  "priority": 53,
+  "members": [
+    "#minecraft:raiders"
+  ],
+  "parts": {
+    "torso": {
+      "minion": {
+        "ignored_by_raids": true
+      }
+    }
+  }
+}

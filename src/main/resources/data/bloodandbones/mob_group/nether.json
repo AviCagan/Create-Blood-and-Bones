@@ -1,0 +1,23 @@
+{
+  "kind": "overlay",
+  "priority": 120,
+  "members": [
+    "#bloodandbones:overlay/nether"
+  ],
+  "parts": {
+    "torso": {
+      "minion": {
+        "traits": {
+          "add": [
+            "bloodandbones:fireproof"
+          ]
+        }
+      },
+      "armour": {
+        "add": [
+          "bloodandbones:fireproof"
+        ]
+      }
+    }
+  }
+}

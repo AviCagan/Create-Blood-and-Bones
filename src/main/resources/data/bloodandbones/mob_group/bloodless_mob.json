@@ -1,0 +1,24 @@
+{
+  "kind": "overlay",
+  "priority": 180,
+  "members": [
+    "#bloodandbones:bloodless"
+  ],
+  "organs": {
+    "torso": {
+      "remove": [
+        "bloodandbones:heart",
+        "bloodandbones:lungs",
+        "bloodandbones:stomach"
+      ]
+    },
+    "head": {
+      "remove": [
+        "bloodandbones:eye"
+      ]
+    }
+  },
+  "hide": {
+    "replace": true
+  }
+}

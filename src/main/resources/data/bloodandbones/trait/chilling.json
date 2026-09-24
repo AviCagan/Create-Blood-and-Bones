@@ -1,0 +1,26 @@
+{
+  "name": "trait.bloodandbones.chilling",
+  "max_level": 2,
+  "effects": [
+    {
+      "trigger": "attack",
+      "requirements": {
+        "condition": "minecraft:damage_source_properties",
+        "predicate": {
+          "is_direct": true
+        }
+      },
+      "effect": {
+        "type": "bloodandbones:mob_effect",
+        "effect": "minecraft:slowness",
+        "amplifier": {
+          "type": "minecraft:linear",
+          "base": 0,
+          "per_level_above_first": 1
+        },
+        "duration": 60,
+        "target": "victim"
+      }
+    }
+  ]
+}

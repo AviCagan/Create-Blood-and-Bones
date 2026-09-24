@@ -1,0 +1,21 @@
+{
+  "name": "trait.bloodandbones.relentless",
+  "max_level": 1,
+  "contexts": [
+    "minion"
+  ],
+  "effects": [
+    {
+      "context": "minion",
+      "effect": {
+        "type": "bloodandbones:attribute",
+        "attribute": "minecraft:generic.follow_range",
+        "amount": {
+          "type": "minecraft:linear",
+          "base": 8,
+          "per_level_above_first": 0.0
+        }
+      }
+    }
+  ]
+}

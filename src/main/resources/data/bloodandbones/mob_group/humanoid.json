@@ -1,0 +1,70 @@
+{
+  "kind": "family",
+  "priority": 100,
+  "members": [
+    "minecraft:zombie",
+    "minecraft:husk",
+    "minecraft:drowned",
+    "minecraft:skeleton",
+    "minecraft:stray",
+    "minecraft:bogged",
+    "minecraft:wither_skeleton",
+    "minecraft:enderman",
+    "#bloodandbones:family/humanoid"
+  ],
+  "scrap_material": "bloodandbones:skin",
+  "colour": "#a8927e",
+  "parts": {
+    "head": {
+      "minion": {
+        "jobs": [
+          "bloodandbones:guard",
+          "bloodandbones:companion",
+          "bloodandbones:courier"
+        ],
+        "bite": {
+          "style": "bite",
+          "damage": 1.0
+        }
+      },
+      "armour": [
+        "bloodandbones:clear_eyed"
+      ]
+    },
+    "torso": {
+      "armour": [
+        "bloodandbones:hardy"
+      ]
+    },
+    "arm": {
+      "minion": {
+        "strike": {
+          "style": "punch"
+        },
+        "grip": "hand"
+      },
+      "armour": {
+        "shoulders": [
+          "bloodandbones:quick_hands"
+        ]
+      }
+    },
+    "leg": {
+      "minion": {
+        "movement": {
+          "mode": "walk",
+          "speed": 0.23,
+          "gait": "stride"
+        }
+      },
+      "armour": {
+        "leggings": [
+          "bloodandbones:swift"
+        ],
+        "boots": [
+          "bloodandbones:sure_footed"
+        ]
+      }
+    }
+  }
+}

@@ -1,0 +1,21 @@
+{
+  "name": "trait.bloodandbones.keen_eye",
+  "max_level": 3,
+  "contexts": [
+    "minion"
+  ],
+  "effects": [
+    {
+      "context": "minion",
+      "effect": {
+        "type": "bloodandbones:attribute",
+        "attribute": "minecraft:generic.follow_range",
+        "amount": {
+          "type": "minecraft:linear",
+          "base": 4,
+          "per_level_above_first": 4
+        }
+      }
+    }
+  ]
+}

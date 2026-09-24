@@ -1,0 +1,27 @@
+{
+  "name": "trait.bloodandbones.hog_wild",
+  "max_level": 2,
+  "effects": [
+    {
+      "trigger": "passive",
+      "requirements": {
+        "condition": "minecraft:entity_properties",
+        "entity": "this",
+        "predicate": {
+          "flags": {
+            "is_sprinting": true
+          }
+        }
+      },
+      "effect": {
+        "type": "bloodandbones:attribute",
+        "attribute": "minecraft:generic.attack_damage",
+        "amount": {
+          "type": "minecraft:linear",
+          "base": 1,
+          "per_level_above_first": 1
+        }
+      }
+    }
+  ]
+}

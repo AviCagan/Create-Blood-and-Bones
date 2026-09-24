@@ -1,0 +1,18 @@
+{
+  "name": "trait.bloodandbones.ink_cloud",
+  "max_level": 1,
+  "effects": [
+    {
+      "trigger": "hurt",
+      "cooldown": 300,
+      "effect": {
+        "type": "bloodandbones:mob_effect",
+        "effect": "minecraft:blindness",
+        "amplifier": 0,
+        "duration": 60,
+        "target": "area",
+        "radius": 4
+      }
+    }
+  ]
+}

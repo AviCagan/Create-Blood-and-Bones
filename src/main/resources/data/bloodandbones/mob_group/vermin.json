@@ -1,0 +1,87 @@
+{
+  "kind": "family",
+  "priority": 100,
+  "members": [
+    "minecraft:silverfish",
+    "minecraft:endermite",
+    "#bloodandbones:family/vermin"
+  ],
+  "scrap_material": "bloodandbones:chitin",
+  "colour": "#8c9198",
+  "organs": {
+    "torso": {
+      "add": [
+        "bloodandbones:burrow_gland"
+      ]
+    }
+  },
+  "parts": {
+    "torso": {
+      "minion": {
+        "self_move": {
+          "mode": "slither",
+          "speed": 0.25,
+          "gait": "undulate"
+        }
+      },
+      "armour": [
+        "bloodandbones:shell_guard"
+      ]
+    },
+    "head": {
+      "minion": {
+        "jobs": [
+          "bloodandbones:scavenger",
+          "bloodandbones:digger"
+        ],
+        "disposition": "skittish",
+        "bite": {
+          "style": "bite",
+          "damage": 1.0
+        }
+      },
+      "armour": [
+        "bloodandbones:dark_sight"
+      ]
+    },
+    "leg": {
+      "armour": {
+        "leggings": [
+          "bloodandbones:stealthy"
+        ]
+      }
+    }
+  },
+  "organ_traits": {
+    "bloodandbones:burrow_gland": {
+      "minion": [
+        {
+          "trait": "bloodandbones:burrower",
+          "level": 2
+        }
+      ],
+      "armour": [
+        {
+          "trait": "bloodandbones:burrower",
+          "level": 2
+        }
+      ]
+    }
+  },
+  "full_set": {
+    "replace": true,
+    "name": "set.bloodandbones.infestation",
+    "bonus": [
+      {
+        "trait": "bloodandbones:stealthy",
+        "level": 2
+      }
+    ],
+    "drawback": [
+      {
+        "trait": "bloodandbones:frail",
+        "level": 2
+      }
+    ]
+  }
+}

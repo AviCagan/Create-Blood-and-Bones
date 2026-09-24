@@ -7,6 +7,13 @@
   ],
   "scrap_material": "bloodandbones:sinew",
   "colour": "#a08060",
+  "organs": {
+    "torso": {
+      "add": [
+        "bloodandbones:racing_heart"
+      ]
+    }
+  },
   "parts": {
     "head": {
       "minion": {
@@ -49,5 +56,21 @@
   },
   "hide": [
     "bloodandbones:swift"
-  ]
+  ],
+  "organ_traits": {
+    "bloodandbones:racing_heart": {
+      "minion": [
+        {
+          "trait": "bloodandbones:swift",
+          "level": 2
+        }
+      ],
+      "armour": [
+        {
+          "trait": "bloodandbones:swift",
+          "level": 2
+        }
+      ]
+    }
+  }
 }

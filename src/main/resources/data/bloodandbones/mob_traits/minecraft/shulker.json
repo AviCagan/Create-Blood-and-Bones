@@ -1,0 +1,8 @@
+{
+  "bone_slots": {
+    "lid": {
+      "slot": "arm",
+      "form": "shell"
+    }
+  }
+}

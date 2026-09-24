@@ -1,0 +1,29 @@
+{
+  "name": "trait.bloodandbones.gold_fever",
+  "max_level": 1,
+  "effects": [
+    {
+      "trigger": "passive",
+      "requirements": {
+        "condition": "minecraft:entity_properties",
+        "entity": "this",
+        "predicate": {
+          "equipment": {
+            "mainhand": {
+              "items": "#minecraft:piglin_loved"
+            }
+          }
+        }
+      },
+      "effect": {
+        "type": "bloodandbones:attribute",
+        "attribute": "minecraft:generic.attack_damage",
+        "amount": {
+          "type": "minecraft:linear",
+          "base": 1,
+          "per_level_above_first": 0.0
+        }
+      }
+    }
+  ]
+}

@@ -1,0 +1,22 @@
+{
+  "name": "trait.bloodandbones.hungering",
+  "max_level": 1,
+  "effects": [
+    {
+      "trigger": "attack",
+      "requirements": {
+        "condition": "minecraft:damage_source_properties",
+        "predicate": {
+          "is_direct": true
+        }
+      },
+      "effect": {
+        "type": "bloodandbones:mob_effect",
+        "effect": "minecraft:hunger",
+        "amplifier": 0,
+        "duration": 200,
+        "target": "victim"
+      }
+    }
+  ]
+}

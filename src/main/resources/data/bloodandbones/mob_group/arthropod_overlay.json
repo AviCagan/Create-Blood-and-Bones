@@ -1,0 +1,16 @@
+{
+  "kind": "overlay",
+  "priority": 160,
+  "members": [
+    "#minecraft:arthropod",
+    "#bloodandbones:overlay/arthropod"
+  ],
+  "scrap_material": "bloodandbones:chitin",
+  "full_set": {
+    "drawback": {
+      "add": [
+        "bloodandbones:bane_weak"
+      ]
+    }
+  }
+}

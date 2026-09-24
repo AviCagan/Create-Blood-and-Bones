@@ -1,0 +1,78 @@
+{
+  "kind": "family",
+  "priority": 100,
+  "members": [
+    "minecraft:squid",
+    "minecraft:glow_squid",
+    "#bloodandbones:family/cephalopod"
+  ],
+  "scrap_material": "bloodandbones:gristle",
+  "colour": "#3d5878",
+  "organs": {
+    "torso": {
+      "add": [
+        "bloodandbones:ink_sac"
+      ]
+    }
+  },
+  "parts": {
+    "torso": {
+      "minion": {
+        "self_move": {
+          "mode": "swim",
+          "speed": 0.3,
+          "gait": "undulate"
+        }
+      },
+      "armour": [
+        "bloodandbones:waterborn"
+      ]
+    },
+    "head": {
+      "armour": [
+        "bloodandbones:gills"
+      ]
+    },
+    "leg": {
+      "minion": {
+        "movement": {
+          "mode": "amphibious",
+          "speed": 0.1,
+          "gait": "undulate",
+          "swim_speed": 0.35,
+          "land_mode": "slither"
+        }
+      },
+      "armour": {
+        "leggings": [
+          "bloodandbones:slick"
+        ],
+        "boots": [
+          "bloodandbones:waterborn"
+        ]
+      }
+    }
+  },
+  "organ_traits": {
+    "bloodandbones:ink_sac": {
+      "minion": [
+        "bloodandbones:ink_cloud"
+      ],
+      "armour": [
+        "bloodandbones:ink_cloud"
+      ]
+    }
+  },
+  "full_set": {
+    "replace": true,
+    "name": "set.bloodandbones.kraken",
+    "bonus": [
+      "bloodandbones:gills",
+      {
+        "trait": "bloodandbones:waterborn",
+        "level": 3
+      },
+      "bloodandbones:murk_sight"
+    ]
+  }
+}

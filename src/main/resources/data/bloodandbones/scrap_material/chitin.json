@@ -1,0 +1,21 @@
+{
+  "look": "chitin",
+  "armour": {
+    "helmet": 2,
+    "chestplate": 4,
+    "leggings": 3,
+    "boots": 1
+  },
+  "toughness": 1.0,
+  "knockback_resistance": 0.0,
+  "durability": 14,
+  "enchantability": 10,
+  "density": 28,
+  "quirk": [
+    {
+      "attribute": "minecraft:generic.safe_fall_distance",
+      "amount": 0.5,
+      "operation": "add_value"
+    }
+  ]
+}

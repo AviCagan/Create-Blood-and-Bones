@@ -1,0 +1,21 @@
+{
+  "look": "scale",
+  "armour": {
+    "helmet": 1,
+    "chestplate": 3,
+    "leggings": 3,
+    "boots": 1
+  },
+  "toughness": 0.0,
+  "knockback_resistance": 0.0,
+  "durability": 11,
+  "enchantability": 14,
+  "density": 24,
+  "quirk": [
+    {
+      "attribute": "minecraft:generic.oxygen_bonus",
+      "amount": 0.5,
+      "operation": "add_value"
+    }
+  ]
+}

@@ -31,7 +31,38 @@
     "minecraft:sniffer",
     "minecraft:axolotl"
   ],
+  "match": [
+    {
+      "score": 50,
+      "rig": {
+        "legs": [
+          4,
+          6
+        ],
+        "arms": 0
+      }
+    },
+    {
+      "score": 20,
+      "aspect": [
+        0.8,
+        99
+      ],
+      "category": "creature"
+    }
+  ],
   "scrap_material": "bloodandbones:gristle",
+  "organs": {
+    "torso": [
+      "bloodandbones:heart",
+      "bloodandbones:lungs",
+      "bloodandbones:stomach"
+    ],
+    "head": [
+      "bloodandbones:eye",
+      "bloodandbones:eye"
+    ]
+  },
   "parts": {
     "torso": {
       "minion": {
@@ -76,6 +107,37 @@
     "tail": {
       "armour": [
         "bloodandbones:swift"
+      ],
+      "minion": {
+        "traits": [
+          "bloodandbones:steady"
+        ]
+      }
+    }
+  },
+  "organ_traits": {
+    "bloodandbones:heart": {
+      "minion": [
+        "bloodandbones:hardy"
+      ],
+      "armour": [
+        "bloodandbones:hardy"
+      ]
+    },
+    "bloodandbones:lungs": {
+      "minion": [
+        "bloodandbones:long_winded"
+      ],
+      "armour": [
+        "bloodandbones:long_winded"
+      ]
+    },
+    "bloodandbones:eye": {
+      "minion": [
+        "bloodandbones:keen_eye"
+      ],
+      "armour": [
+        "bloodandbones:dark_sight"
       ]
     }
   },

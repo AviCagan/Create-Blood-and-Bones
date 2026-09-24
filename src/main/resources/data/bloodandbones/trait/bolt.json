@@ -1,0 +1,16 @@
+{
+  "name": "trait.bloodandbones.bolt",
+  "max_level": 1,
+  "effects": [
+    {
+      "trigger": "hurt",
+      "effect": {
+        "type": "bloodandbones:mob_effect",
+        "effect": "minecraft:speed",
+        "amplifier": 1,
+        "duration": 40,
+        "target": "self"
+      }
+    }
+  ]
+}

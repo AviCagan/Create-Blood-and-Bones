@@ -1,0 +1,17 @@
+{
+  "name": "trait.bloodandbones.trotters",
+  "max_level": 1,
+  "effects": [
+    {
+      "effect": {
+        "type": "bloodandbones:attribute",
+        "attribute": "minecraft:generic.movement_efficiency",
+        "amount": {
+          "type": "minecraft:linear",
+          "base": 0.25,
+          "per_level_above_first": 0.25
+        }
+      }
+    }
+  ]
+}

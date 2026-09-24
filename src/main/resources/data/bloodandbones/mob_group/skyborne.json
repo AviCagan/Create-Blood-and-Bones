@@ -1,0 +1,68 @@
+{
+  "kind": "family",
+  "priority": 100,
+  "members": [
+    "minecraft:bat",
+    "minecraft:phantom",
+    "minecraft:bee",
+    "#bloodandbones:family/skyborne"
+  ],
+  "scrap_material": "bloodandbones:feather",
+  "colour": "#4e5372",
+  "parts": {
+    "torso": {
+      "minion": {
+        "self_move": {
+          "mode": "fly",
+          "speed": 0.2
+        }
+      },
+      "armour": [
+        "bloodandbones:light_boned"
+      ]
+    },
+    "head": {
+      "minion": {
+        "jobs": [
+          "bloodandbones:sentry",
+          "bloodandbones:scavenger"
+        ],
+        "disposition": "nocturnal"
+      },
+      "armour": [
+        "bloodandbones:dark_sight"
+      ]
+    },
+    "arm.wing": {
+      "minion": {
+        "lift": 0.4
+      },
+      "armour": {
+        "shoulders": [
+          "bloodandbones:featherfall"
+        ]
+      }
+    },
+    "leg": {
+      "armour": {
+        "leggings": [
+          "bloodandbones:light_boned"
+        ],
+        "boots": [
+          "bloodandbones:fall_guard"
+        ]
+      }
+    }
+  },
+  "full_set": {
+    "replace": true,
+    "name": "set.bloodandbones.night_wing",
+    "bonus": [
+      "bloodandbones:featherfall",
+      "bloodandbones:dark_sight"
+    ],
+    "drawback": [
+      "bloodandbones:light_hurts"
+    ]
+  }
+}

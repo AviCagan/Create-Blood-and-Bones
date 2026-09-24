@@ -1,0 +1,58 @@
+{
+  "kind": "family",
+  "priority": 100,
+  "members": [
+    "minecraft:allay",
+    "minecraft:vex",
+    "#bloodandbones:family/spirit"
+  ],
+  "scrap_material": "bloodandbones:ectoplasm",
+  "colour": "#a6dbe9",
+  "parts": {
+    "torso": {
+      "minion": {
+        "self_move": {
+          "mode": "fly",
+          "speed": 0.2
+        }
+      },
+      "armour": [
+        {
+          "trait": "bloodandbones:light_boned",
+          "level": 2
+        }
+      ]
+    },
+    "head": {
+      "minion": {
+        "jobs": [
+          "bloodandbones:scavenger",
+          "bloodandbones:bodyguard"
+        ]
+      }
+    },
+    "leg": {
+      "armour": {
+        "leggings": [
+          "bloodandbones:light_boned"
+        ],
+        "boots": [
+          "bloodandbones:featherfall"
+        ]
+      }
+    }
+  },
+  "full_set": {
+    "replace": true,
+    "name": "set.bloodandbones.ethereal",
+    "bonus": [
+      "bloodandbones:featherfall"
+    ],
+    "drawback": [
+      {
+        "trait": "bloodandbones:frail",
+        "level": 3
+      }
+    ]
+  }
+}

@@ -1,0 +1,31 @@
+{
+  "name": "trait.bloodandbones.hibernator",
+  "max_level": 1,
+  "effects": [
+    {
+      "trigger": "tick",
+      "interval": 40,
+      "requirements": {
+        "condition": "minecraft:entity_properties",
+        "entity": "this",
+        "predicate": {
+          "flags": {
+            "is_sneaking": true
+          },
+          "movement": {
+            "horizontal_speed": {
+              "max": 0.1
+            }
+          }
+        }
+      },
+      "effect": {
+        "type": "bloodandbones:mob_effect",
+        "effect": "minecraft:regeneration",
+        "amplifier": 0,
+        "duration": 50,
+        "target": "self"
+      }
+    }
+  ]
+}

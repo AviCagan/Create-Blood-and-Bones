@@ -1,0 +1,33 @@
+{
+  "kind": "overlay",
+  "priority": 50,
+  "members": [
+    "#minecraft:fall_damage_immune"
+  ],
+  "parts": {
+    "torso": {
+      "minion": {
+        "traits": {
+          "add": [
+            {
+              "trait": "bloodandbones:fall_guard",
+              "level": 4
+            }
+          ]
+        }
+      }
+    },
+    "leg": {
+      "armour": {
+        "boots": {
+          "add": [
+            {
+              "trait": "bloodandbones:fall_guard",
+              "level": 1
+            }
+          ]
+        }
+      }
+    }
+  }
+}

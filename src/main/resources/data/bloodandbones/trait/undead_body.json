@@ -1,0 +1,20 @@
+{
+  "name": "trait.bloodandbones.undead_body",
+  "max_level": 1,
+  "contexts": [
+    "minion"
+  ],
+  "effects": [
+    {
+      "trigger": "passive",
+      "context": "minion",
+      "effect": {
+        "type": "bloodandbones:immunity",
+        "mob_effects": [
+          "minecraft:poison",
+          "minecraft:regeneration"
+        ]
+      }
+    }
+  ]
+}

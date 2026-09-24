@@ -1,0 +1,23 @@
+{
+  "name": "trait.bloodandbones.drowsy",
+  "max_level": 1,
+  "effects": [
+    {
+      "trigger": "passive",
+      "requirements": {
+        "condition": "minecraft:time_check",
+        "value": {
+          "min": 0,
+          "max": 12000
+        },
+        "period": 24000
+      },
+      "effect": {
+        "type": "bloodandbones:mob_effect",
+        "effect": "minecraft:mining_fatigue",
+        "amplifier": 0,
+        "target": "self"
+      }
+    }
+  ]
+}

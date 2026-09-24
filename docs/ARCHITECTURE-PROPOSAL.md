@@ -1448,6 +1448,35 @@ saved the old way falls apart on its first tick, dropping what it carried.
 - Jobs kept from before: companion, courier, farmer, bodyguard, guard (`courierCarries`, `farmerReaps`); the
   others heads name (herder, surgeon, ...) come with slice 7.
 
+### 15.4 Slice 3a as built: every one of the 79 mobs resolves (data breadth)
+
+- **Groups** (`mob_group/`): the 11 archetypes of spec 3.2 (biped, quadruped, bird, flier, arthropod, fish,
+  tentacled, floater, blob, shelled, colossus), each with a complete default for every slot its body has, minion
+  side and armour side, so a mob with only an archetype is fully usable (a modded mob by body shape on day one);
+  the 27 families of 3.3, each open to modded mobs through `#bloodandbones:family/<id>`; the 16 overlays of 3.4,
+  keyed off the tags modded mobs already carry (`#minecraft:undead`, `#minecraft:arthropod`, `#minecraft:aquatic`,
+  `#minecraft:fall_damage_immune` and so on, plus our `overlay/nether`, `overlay/ender` and `bosses`). Mob files
+  for the strider, the wither and the shulker (its lid is a shell arm), besides the rabbit's, villager's and
+  pillager's. `allMobsResolve` checks all 79 against the 3.5 table.
+- **Slots**: every bone of every rig gets a slot by rule, not by falling through to its parent; the segment rule
+  (spec 2.2) now puts silverfish and endermite segments at head, neck and tail by chain position.
+  `everyBoneHasASlot` (with 55 bone-to-slot expectations from the 2.6 table).
+- **Materials**: the 15 of spec 3.6, each with its own armour sheets and a clean bloodless set (chitin purple-black,
+  bone bloodied white, ember charred with orange cracks, sculk veined teal, golem plate rusted...).
+  `everyMaterialLoads`.
+- **Traits**: 100 traits in all, those the six built effect types (attribute, mob effect, damage, immunity, diet,
+  reaction) with loot conditions can express faithfully. The design names 214: the rest wait on later effect types
+  (flags such as wall_climber and silent_steps, kin, senses, produce, auras, pack, impulses, teleports,
+  projectiles, hitscans, deflect, detonate, mount, storage, power) and are left out of the data until those exist,
+  rather than referenced as names that do nothing. `everyTraitReferenceExists`, `everyPartsFileParses`,
+  `everyNameTranslated`.
+- Found on the way: trait conditions are read before fluid tags load, so a condition on `#minecraft:water` dropped
+  the whole trait; they name the fluids instead. A family's full set now replaces the archetype's (the cow's is
+  exactly Herd Beast / Placid), as the rabbit's already did.
+- Deliberate numbers the data agents chose where the spec gives none: fish flop on land at 0.05; a shulker
+  blink-steps at 0.12; the parrot's tail bone is a tail; `bear_hide` and `golem_plate` read "Pelt" and "Plate" in
+  item names ("Polar Bear Pelt Chestplate", not "Polar Bear Bear Hide Chestplate").
+
 ### 15.5 Minion bodies: legs set movement, arms the attack (brief § Minions)
 
 - **Legs** (`MinionStats`): at least half the legs climbing (spider legs, `"movement": {"mode": "climb"}`) makes it

@@ -1,0 +1,62 @@
+{
+  "kind": "family",
+  "priority": 100,
+  "members": [
+    "minecraft:iron_golem",
+    "minecraft:snow_golem",
+    "#bloodandbones:family/golem"
+  ],
+  "scrap_material": "bloodandbones:golem_plate",
+  "colour": "#a8a298",
+  "parts": {
+    "torso": {
+      "minion": {
+        "health_factor": 0.5
+      },
+      "armour": [
+        "bloodandbones:iron_skin"
+      ]
+    },
+    "head": {
+      "minion": {
+        "jobs": [
+          "bloodandbones:guard",
+          "bloodandbones:sentry",
+          "bloodandbones:bodyguard"
+        ],
+        "disposition": "territorial"
+      },
+      "armour": [
+        "bloodandbones:steady"
+      ]
+    },
+    "arm": {
+      "minion": {
+        "strike": {
+          "style": "fling"
+        },
+        "grip": "hand"
+      }
+    },
+    "leg": {
+      "minion": {
+        "movement": {
+          "mode": "walk",
+          "speed": 0.2,
+          "gait": "stride"
+        },
+        "traits": [
+          "bloodandbones:heavy"
+        ]
+      },
+      "armour": {
+        "leggings": [
+          "bloodandbones:heavy"
+        ],
+        "boots": [
+          "bloodandbones:steady"
+        ]
+      }
+    }
+  }
+}

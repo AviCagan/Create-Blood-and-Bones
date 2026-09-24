@@ -1,0 +1,21 @@
+{
+  "name": "trait.bloodandbones.magic_ward",
+  "max_level": 3,
+  "effects": [
+    {
+      "trigger": "hurt",
+      "effect": {
+        "type": "bloodandbones:damage",
+        "direction": "in",
+        "multiplier": {
+          "type": "minecraft:linear",
+          "base": 0.9,
+          "per_level_above_first": -0.1
+        },
+        "damage_tags": [
+          "minecraft:witch_resistant_to"
+        ]
+      }
+    }
+  ]
+}

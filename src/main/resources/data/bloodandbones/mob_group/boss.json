@@ -1,0 +1,19 @@
+{
+  "kind": "overlay",
+  "priority": 190,
+  "members": [
+    "#c:bosses",
+    "#bloodandbones:bosses"
+  ],
+  "requires_config": "boss_parts",
+  "scrap_material_patch": {
+    "density_mult": 2.0
+  },
+  "parts": {
+    "torso": {
+      "minion": {
+        "health_factor": 0.3
+      }
+    }
+  }
+}

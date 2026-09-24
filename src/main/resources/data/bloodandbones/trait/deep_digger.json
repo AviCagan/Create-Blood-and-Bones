@@ -1,0 +1,17 @@
+{
+  "name": "trait.bloodandbones.deep_digger",
+  "max_level": 2,
+  "effects": [
+    {
+      "effect": {
+        "type": "bloodandbones:attribute",
+        "attribute": "minecraft:player.submerged_mining_speed",
+        "amount": {
+          "type": "minecraft:linear",
+          "base": 0.4,
+          "per_level_above_first": 0.4
+        }
+      }
+    }
+  ]
+}

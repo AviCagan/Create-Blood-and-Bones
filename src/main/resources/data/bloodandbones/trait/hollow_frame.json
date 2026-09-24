@@ -1,0 +1,21 @@
+{
+  "name": "trait.bloodandbones.hollow_frame",
+  "max_level": 1,
+  "effects": [
+    {
+      "trigger": "passive",
+      "effect": {
+        "type": "bloodandbones:immunity",
+        "mob_effects": [
+          "minecraft:poison"
+        ],
+        "damage_tags": [
+          "minecraft:is_drowning"
+        ]
+      }
+    }
+  ],
+  "contexts": [
+    "minion"
+  ]
+}
