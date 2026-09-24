@@ -138,13 +138,24 @@ public final class TraitEffects {
     }
 
     /**
-     * What the host can eat, and to what end. So far "graze": crouch and use grass bare-handed to eat it
-     * (it turns to dirt) for this much hunger.
+     * What the host can eat, and to what end, for the {@code foods} named (item ids or "#tags"; none named: any food).
+     * "graze": crouch and use grass bare-handed to eat it (it turns to dirt) for {@code hunger}. "safe": the food's bad
+     * effects are left off. "bonus_saturation": {@code saturation} more, and {@code amount} (a share) more of the food's
+     * own. "cure_one": it clears one harmful effect. "edible": they become food, eaten with a use while hungry, for
+     * {@code hunger} and {@code saturation}. "toxic": they give {@code mob_effect}, poison if none is named. Any of them
+     * may give {@code mob_effect}. A minion forages them for {@code forage_mb} of blood each, up to half full. The
+     * Upkeep group does the eating ({@code parts/effect/Diet}).
      */
-    public record DietEffect(String effect, int hunger) implements TraitEffect.Effect {
+    public record DietEffect(String effect, int hunger, List<String> foods, float saturation, float amount,
+                             java.util.Optional<MobEffectInstance> mobEffect, int forageMb) implements TraitEffect.Effect {
         public static final MapCodec<DietEffect> CODEC = RecordCodecBuilder.mapCodec(i -> i.group(
                 Codec.STRING.fieldOf("effect").forGetter(DietEffect::effect),
-                Codec.INT.optionalFieldOf("hunger", 1).forGetter(DietEffect::hunger)
+                Codec.INT.optionalFieldOf("hunger", 1).forGetter(DietEffect::hunger),
+                Codec.STRING.listOf().optionalFieldOf("foods", List.of()).forGetter(DietEffect::foods),
+                Codec.FLOAT.optionalFieldOf("saturation", 0.0F).forGetter(DietEffect::saturation),
+                Codec.FLOAT.optionalFieldOf("amount", 0.0F).forGetter(DietEffect::amount),
+                MobEffectInstance.CODEC.optionalFieldOf("mob_effect").forGetter(DietEffect::mobEffect),
+                Codec.INT.optionalFieldOf("forage_mb", 0).forGetter(DietEffect::forageMb)
         ).apply(i, DietEffect::new));
 
         @Override

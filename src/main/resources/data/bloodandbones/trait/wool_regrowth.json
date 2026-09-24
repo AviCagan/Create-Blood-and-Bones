@@ -1,0 +1,25 @@
+{
+  "name": "trait.bloodandbones.wool_regrowth",
+  "max_level": 2,
+  "contexts": [
+    "minion"
+  ],
+  "effects": [
+    {
+      "trigger": "tick",
+      "interval": 6000,
+      "effect": {
+        "type": "bloodandbones:produce",
+        "item": "minecraft:white_wool",
+        "count": {
+          "type": "minecraft:linear",
+          "base": 1,
+          "per_level_above_first": 1
+        },
+        "coloured": true,
+        "cost_mb": 20,
+        "sound": "minecraft:entity.sheep.shear"
+      }
+    }
+  ]
+}

@@ -1,0 +1,24 @@
+{
+  "name": "trait.bloodandbones.seed_eater",
+  "effects": [
+    {
+      "trigger": "passive",
+      "effect": {
+        "type": "bloodandbones:diet",
+        "effect": "edible",
+        "foods": [
+          "#c:seeds",
+          "minecraft:wheat_seeds",
+          "minecraft:beetroot_seeds",
+          "minecraft:melon_seeds",
+          "minecraft:pumpkin_seeds",
+          "minecraft:torchflower_seeds",
+          "minecraft:pitcher_pod"
+        ],
+        "hunger": 1,
+        "saturation": 0.4,
+        "forage_mb": 25
+      }
+    }
+  ]
+}

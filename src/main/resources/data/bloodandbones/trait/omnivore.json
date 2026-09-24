@@ -1,0 +1,13 @@
+{
+  "name": "trait.bloodandbones.omnivore",
+  "effects": [
+    {
+      "trigger": "passive",
+      "effect": {
+        "type": "bloodandbones:diet",
+        "effect": "bonus_saturation",
+        "saturation": 1.0
+      }
+    }
+  ]
+}

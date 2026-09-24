@@ -1,0 +1,15 @@
+{
+  "name": "trait.bloodandbones.hump",
+  "contexts": [
+    "minion"
+  ],
+  "effects": [
+    {
+      "trigger": "passive",
+      "effect": {
+        "type": "bloodandbones:power",
+        "capacity_mult": 2.0
+      }
+    }
+  ]
+}

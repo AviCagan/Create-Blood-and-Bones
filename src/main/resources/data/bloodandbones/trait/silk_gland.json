@@ -1,0 +1,24 @@
+{
+  "name": "trait.bloodandbones.silk_gland",
+  "max_level": 2,
+  "contexts": [
+    "minion"
+  ],
+  "effects": [
+    {
+      "trigger": "tick",
+      "interval": 3000,
+      "effect": {
+        "type": "bloodandbones:produce",
+        "item": "minecraft:string",
+        "count": {
+          "type": "minecraft:linear",
+          "base": 1,
+          "per_level_above_first": 1
+        },
+        "cost_mb": 10,
+        "sound": "minecraft:entity.spider.ambient"
+      }
+    }
+  ]
+}

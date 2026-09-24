@@ -227,7 +227,7 @@ public final class BodyEffects {
             }
         }
         if (total > 0) {
-            take(player, total);
+            take(player, com.avicagan.bloodandbones.parts.effect.UpkeepEffects.upkeep(player, total));
         }
     }
 

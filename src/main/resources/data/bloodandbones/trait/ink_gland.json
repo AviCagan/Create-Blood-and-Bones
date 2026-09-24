@@ -1,0 +1,18 @@
+{
+  "name": "trait.bloodandbones.ink_gland",
+  "contexts": [
+    "minion"
+  ],
+  "effects": [
+    {
+      "trigger": "tick",
+      "interval": 12000,
+      "effect": {
+        "type": "bloodandbones:produce",
+        "item": "minecraft:ink_sac",
+        "cost_mb": 15,
+        "sound": "minecraft:entity.squid.squirt"
+      }
+    }
+  ]
+}

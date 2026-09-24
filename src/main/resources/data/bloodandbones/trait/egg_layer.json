@@ -1,0 +1,26 @@
+{
+  "name": "trait.bloodandbones.egg_layer",
+  "effects": [
+    {
+      "trigger": "tick",
+      "interval": 6000,
+      "context": "minion",
+      "effect": {
+        "type": "bloodandbones:produce",
+        "item": "minecraft:egg",
+        "cost_mb": 10,
+        "sound": "minecraft:entity.chicken.egg"
+      }
+    },
+    {
+      "trigger": "tick",
+      "interval": 12000,
+      "context": "armour",
+      "effect": {
+        "type": "bloodandbones:produce",
+        "item": "minecraft:egg",
+        "sound": "minecraft:entity.chicken.egg"
+      }
+    }
+  ]
+}

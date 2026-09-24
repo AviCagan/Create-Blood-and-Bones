@@ -1,0 +1,19 @@
+{
+  "name": "trait.bloodandbones.repair_with_iron",
+  "contexts": [
+    "minion"
+  ],
+  "effects": [
+    {
+      "trigger": "passive",
+      "effect": {
+        "type": "bloodandbones:mend",
+        "mode": "item",
+        "items": [
+          "minecraft:iron_ingot"
+        ],
+        "amount": 25
+      }
+    }
+  ]
+}

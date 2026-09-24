@@ -1,0 +1,19 @@
+{
+  "name": "trait.bloodandbones.honey_stomach",
+  "contexts": [
+    "minion"
+  ],
+  "effects": [
+    {
+      "trigger": "tick",
+      "interval": 1200,
+      "effect": {
+        "type": "bloodandbones:produce",
+        "item": "minecraft:honey_bottle",
+        "consumes": "minecraft:glass_bottle",
+        "cost_mb": 20,
+        "sound": "minecraft:item.bottle.fill"
+      }
+    }
+  ]
+}

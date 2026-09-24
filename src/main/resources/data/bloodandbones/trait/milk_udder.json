@@ -1,0 +1,19 @@
+{
+  "name": "trait.bloodandbones.milk_udder",
+  "contexts": [
+    "minion"
+  ],
+  "effects": [
+    {
+      "trigger": "tick",
+      "interval": 6000,
+      "effect": {
+        "type": "bloodandbones:produce",
+        "item": "minecraft:milk_bucket",
+        "consumes": "minecraft:bucket",
+        "cost_mb": 50,
+        "sound": "minecraft:entity.cow.milk"
+      }
+    }
+  ]
+}

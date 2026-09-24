@@ -1,6 +1,5 @@
 {
   "name": "trait.bloodandbones.iron_gut",
-  "max_level": 1,
   "effects": [
     {
       "trigger": "passive",
@@ -9,6 +8,38 @@
         "mob_effects": [
           "minecraft:hunger"
         ]
+      }
+    },
+    {
+      "trigger": "passive",
+      "effect": {
+        "type": "bloodandbones:diet",
+        "effect": "safe",
+        "foods": [
+          "minecraft:rotten_flesh",
+          "#c:foods/raw_meat",
+          "minecraft:beef",
+          "minecraft:porkchop",
+          "minecraft:chicken",
+          "minecraft:mutton",
+          "minecraft:rabbit"
+        ]
+      }
+    },
+    {
+      "trigger": "passive",
+      "context": "minion",
+      "effect": {
+        "type": "bloodandbones:power",
+        "refuel": {
+          "minecraft:rotten_flesh": 25,
+          "#c:foods/raw_meat": 25,
+          "minecraft:beef": 25,
+          "minecraft:porkchop": 25,
+          "minecraft:chicken": 25,
+          "minecraft:mutton": 25,
+          "minecraft:rabbit": 25
+        }
       }
     }
   ]

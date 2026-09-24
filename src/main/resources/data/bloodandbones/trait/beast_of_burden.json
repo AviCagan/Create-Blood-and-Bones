@@ -1,0 +1,24 @@
+{
+  "name": "trait.bloodandbones.beast_of_burden",
+  "contexts": [
+    "minion"
+  ],
+  "effects": [
+    {
+      "trigger": "passive",
+      "effect": {
+        "type": "bloodandbones:attribute",
+        "attribute": "bloodandbones:drag_strength",
+        "amount": 0.15
+      }
+    },
+    {
+      "trigger": "passive",
+      "effect": {
+        "type": "bloodandbones:storage",
+        "slots": 18,
+        "chest": true
+      }
+    }
+  ]
+}

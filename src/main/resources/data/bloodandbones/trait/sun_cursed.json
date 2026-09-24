@@ -1,0 +1,36 @@
+{
+  "name": "trait.bloodandbones.sun_cursed",
+  "effects": [
+    {
+      "trigger": "tick",
+      "interval": 20,
+      "requirements": {
+        "condition": "minecraft:all_of",
+        "terms": [
+          {
+            "condition": "minecraft:time_check",
+            "value": {
+              "min": 0,
+              "max": 12000
+            },
+            "period": 24000
+          },
+          {
+            "condition": "minecraft:location_check",
+            "predicate": {
+              "can_see_sky": true
+            }
+          },
+          {
+            "condition": "bloodandbones:dry_for",
+            "seconds": 1
+          }
+        ]
+      },
+      "effect": {
+        "type": "bloodandbones:exposure",
+        "ignite": 8
+      }
+    }
+  ]
+}

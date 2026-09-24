@@ -1,0 +1,26 @@
+{
+  "name": "trait.bloodandbones.morning_gift",
+  "contexts": [
+    "minion"
+  ],
+  "effects": [
+    {
+      "trigger": "tick",
+      "interval": 100,
+      "cooldown": 12000,
+      "requirements": {
+        "condition": "minecraft:time_check",
+        "value": {
+          "min": 0,
+          "max": 1200
+        },
+        "period": 24000
+      },
+      "effect": {
+        "type": "bloodandbones:produce",
+        "loot_table": "minecraft:gameplay/cat_morning_gift",
+        "sound": "minecraft:entity.cat.purreow"
+      }
+    }
+  ]
+}

@@ -64,6 +64,10 @@ public record MinionStats(float health, float knockbackResistance, int slots, in
         int slots = Math.max(3, Math.min(27, Math.round(18.0F * volume)));
         // flesh holds blood by its size; brass holds one soul canister, two in a big torso (over a block)
         int reservoir = build.cybernetic() ? (volume > 1.0F ? 2 : 1) * CANISTER : Math.round(250.0F + 1000.0F * volume);
+        if (!build.cybernetic()) {
+            // power traits (a camel's hump) hold more blood; brass holds whole canisters
+            reservoir = Math.round(reservoir * com.avicagan.bloodandbones.parts.effect.PowerEffect.capacity(store, build));
+        }
 
         List<MinionBody.Socket> sockets = MinionBody.sockets(store, torso);
         long ownLegs = sockets.stream().filter(s -> s.slot() == PartSlot.LEG).count();

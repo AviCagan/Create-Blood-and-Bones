@@ -1,0 +1,37 @@
+{
+  "name": "trait.bloodandbones.four_chambers",
+  "effects": [
+    {
+      "trigger": "passive",
+      "effect": {
+        "type": "bloodandbones:diet",
+        "effect": "bonus_saturation",
+        "foods": [
+          "#c:foods/fruit",
+          "#c:foods/vegetable",
+          "#c:foods/berry",
+          "#c:foods/bread",
+          "minecraft:apple",
+          "minecraft:carrot",
+          "minecraft:potato",
+          "minecraft:baked_potato",
+          "minecraft:beetroot",
+          "minecraft:beetroot_soup",
+          "minecraft:bread",
+          "minecraft:melon_slice",
+          "minecraft:sweet_berries",
+          "minecraft:glow_berries",
+          "minecraft:dried_kelp",
+          "minecraft:pumpkin_pie",
+          "minecraft:cookie",
+          "minecraft:mushroom_stew",
+          "minecraft:chorus_fruit",
+          "minecraft:golden_carrot",
+          "minecraft:golden_apple",
+          "minecraft:enchanted_golden_apple"
+        ],
+        "amount": 0.5
+      }
+    }
+  ]
+}
