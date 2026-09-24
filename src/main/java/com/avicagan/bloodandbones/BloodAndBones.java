@@ -48,6 +48,7 @@ public class BloodAndBones {
         NeoForge.EVENT_BUS.register(CarcassEvents.class);
         NeoForge.EVENT_BUS.register(com.avicagan.bloodandbones.carcass.trolley.TrolleyEvents.class);
         NeoForge.EVENT_BUS.register(com.avicagan.bloodandbones.body.BodyEffects.class);
+        NeoForge.EVENT_BUS.register(com.avicagan.bloodandbones.body.Necrosis.class);
         if (net.neoforged.fml.loading.FMLEnvironment.dist.isClient()) {
             // the rig exporter reads client-only model classes; a dedicated server must never link it
             modEventBus.addListener(BBDatagen::gatherData);

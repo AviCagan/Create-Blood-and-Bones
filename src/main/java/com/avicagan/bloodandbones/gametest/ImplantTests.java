@@ -174,6 +174,39 @@ public class ImplantTests {
         });
     }
 
+    /** Necrosis: a Flesh Arm rots with every swing, stops giving its bonus when rotted through, and blood from the tank clears it. */
+    @GameTest(template = "empty", timeoutTicks = 20)
+    public static void fleshArmRotsFromUse(GameTestHelper helper) {
+        Player player = helper.makeMockPlayer(GameType.SURVIVAL);
+        BodyPart arm = BodyEffects.armFor(player, net.minecraft.world.InteractionHand.MAIN_HAND);
+        Body body = BodyEffects.body(player);
+        body.fit(arm, new ItemStack(BBItems.FLESH_ARM.get()));
+        wear(player, BacktankTier.COPPER, BBFluids.soulBlood(), 1000);
+        for (int i = 0; i < com.avicagan.bloodandbones.body.Necrosis.MAX + 10; i++) {
+            com.avicagan.bloodandbones.body.Necrosis.use(player, arm, com.avicagan.bloodandbones.body.Necrosis.SWING);
+        }
+        wear(player, BacktankTier.COPPER, BBFluids.blood(), 1000);
+        if (com.avicagan.bloodandbones.body.Necrosis.of(body.implant(arm)) != com.avicagan.bloodandbones.body.Necrosis.MAX || body.works(arm, player)) {
+            helper.fail("A hundred swings should rot the Flesh Arm through, so it stops working even with blood in the tank");
+            return;
+        }
+        BodyEffects.second(player);
+        if (com.avicagan.bloodandbones.body.Necrosis.of(body.implant(arm)) >= com.avicagan.bloodandbones.body.Necrosis.MAX || !body.works(arm, player)
+                || tank(player) >= 1000) {
+            helper.fail("A second of blood from the tank should clear some rot and bring it back; tank " + tank(player));
+            return;
+        }
+        // soul blood does not perfuse, and time alone does nothing
+        int rot = com.avicagan.bloodandbones.body.Necrosis.of(body.implant(arm));
+        wear(player, BacktankTier.COPPER, BBFluids.soulBlood(), 1000);
+        com.avicagan.bloodandbones.body.Necrosis.perfuse(player);
+        if (com.avicagan.bloodandbones.body.Necrosis.of(body.implant(arm)) != rot) {
+            helper.fail("Soul blood should not clear necrosis");
+            return;
+        }
+        helper.succeed();
+    }
+
     /** No stomach: nothing can be eaten, but hunger never gets to starving. */
     @GameTest(template = "empty", timeoutTicks = 20)
     public static void noStomachNeverStarves(GameTestHelper helper) {

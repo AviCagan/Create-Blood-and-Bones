@@ -1116,3 +1116,14 @@ contradicted it. Fixed:
   (`CalculateDetachedCameraDistanceEvent`); the camera and tilt go back when the screen closes. NeoForge's
   `ComputeCameraAngles` only turns the camera, it cannot move it, hence the tilt.
 
+### 14.9 Necrosis (brief § Self-augmentation: "Decay is use-based, never wall-clock")
+
+- `body/Necrosis`: a `necrosis` component (0 to 100) on a fitted organic implant (one that runs on blood).
+  A hit or a block broken rots the main arm's by 1, a meal the stomach's by 3, every 4 blocks walked on the
+  ground (6 sprinted) each leg's by 1. Nothing happens while logged off. Once a second, each rotting organic
+  implant takes 1 mB of blood from the worn tank and clears 2 (soul blood does not perfuse). At 100 the
+  implant is not working (`ImplantItem.working(stack, wearer)`), which is the small empty-slot penalty; it
+  works again as soon as perfusion takes it below. The body is re-sent when rot crosses a tenth.
+- Drawn: the implant's texture tinted by the carcass rot colour. Tooltip shows the percentage.
+- `fleshArmRotsFromUse`.
+

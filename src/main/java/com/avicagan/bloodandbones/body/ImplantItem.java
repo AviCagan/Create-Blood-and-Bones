@@ -70,7 +70,20 @@ public class ImplantItem extends Item {
         return "any".equals(spec.fuel());
     }
 
-    /** Whether it is doing its job on this wearer: a basic one always; a powered one while the worn tank has its fuel. */
+    /** An organic prosthetic, the kind that rots with use (it runs on blood). */
+    public boolean organic() {
+        return "blood".equals(spec.fuel());
+    }
+
+    /**
+     * Whether this fitted implant is doing its job on this wearer: its kind must be working, and an organic one
+     * must not have rotted all the way (Necrosis).
+     */
+    public boolean working(ItemStack stack, @Nullable LivingEntity wearer) {
+        return working(wearer) && (!organic() || Necrosis.of(stack) < Necrosis.MAX);
+    }
+
+    /** Whether its kind is doing its job on this wearer: a basic one always; a powered one while the worn tank has its fuel. */
     public boolean working(@Nullable LivingEntity wearer) {
         if (spec.fuel() == null) {
             return true;
@@ -90,6 +103,11 @@ public class ImplantItem extends Item {
         } else if (fuel != null) {
             tooltip.add(Component.translatable("bloodandbones.implant.runs_on", new FluidStack(fuel, 1).getHoverName(), spec.drain())
                     .withStyle(ChatFormatting.GRAY));
+        }
+        int necrosis = Necrosis.of(stack);
+        if (organic() && necrosis > 0) {
+            tooltip.add(Component.translatable("bloodandbones.implant.necrosis", necrosis * 100 / Necrosis.MAX)
+                    .withStyle(necrosis >= Necrosis.MAX ? ChatFormatting.DARK_RED : ChatFormatting.RED));
         }
     }
 }

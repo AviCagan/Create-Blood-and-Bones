@@ -218,8 +218,10 @@ public final class BodyRendering {
                     ModelPart model = part(getParentModel(), part);
                     boolean visible = model.visible;
                     model.visible = true;
+                    // an organic part greys and greens as it rots from use
+                    float rot = implant.organic() ? com.avicagan.bloodandbones.body.Necrosis.of(body.implant(part)) / (float) com.avicagan.bloodandbones.body.Necrosis.MAX : 0.0F;
                     model.render(poseStack, buffers.getBuffer(RenderType.entityCutoutNoCull(implant.texture())), packedLight,
-                            net.minecraft.client.renderer.entity.LivingEntityRenderer.getOverlayCoords(player, 0.0F));
+                            net.minecraft.client.renderer.entity.LivingEntityRenderer.getOverlayCoords(player, 0.0F), CarcassModels.rotColor(1.0F - rot));
                     model.visible = visible;
                 }
             }

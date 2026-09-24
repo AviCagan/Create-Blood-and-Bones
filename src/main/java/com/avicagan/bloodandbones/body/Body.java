@@ -67,7 +67,7 @@ public final class Body {
         return switch (state(part)) {
             case NATURAL -> true;
             case MISSING -> false;
-            case IMPLANT -> implant(part).getItem() instanceof ImplantItem implant && implant.working(wearer);
+            case IMPLANT -> implant(part).getItem() instanceof ImplantItem implant && implant.working(implant(part), wearer);
         };
     }
 
@@ -97,7 +97,7 @@ public final class Body {
     /** Whether a working implant somewhere in this body has that ability. */
     public boolean has(ImplantSpec.Ability ability, @org.jetbrains.annotations.Nullable net.minecraft.world.entity.LivingEntity wearer) {
         for (Map.Entry<BodyPart, ItemStack> e : implants.entrySet()) {
-            if (e.getValue().getItem() instanceof ImplantItem implant && implant.spec().ability() == ability && implant.working(wearer)) {
+            if (e.getValue().getItem() instanceof ImplantItem implant && implant.spec().ability() == ability && implant.working(e.getValue(), wearer)) {
                 return true;
             }
         }

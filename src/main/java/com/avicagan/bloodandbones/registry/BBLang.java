@@ -127,10 +127,12 @@ public class BBLang {
                 "On a Surgery Table", "Goes back on where a leg is _missing_, anyone's, either side. It is flesh again.");
         item("flesh_arm",
                 "An _organic_ arm of meat and sinew, stitched on. Runs on _blood_ from a worn Fluid Backtank.",
-                "While It Has Blood", "Blocks break _30%_ faster and it hits _harder_. When the tank runs dry it hangs _dead_, as good as no arm.");
+                "While It Has Blood", "Blocks break _30%_ faster and it hits _harder_. When the tank runs dry it hangs _dead_, as good as no arm.",
+                "Necrosis", "Every swing _rots_ it a little. Blood in your backtank clears the rot as you go; fully rotted, it gives no bonus until it has been _perfused_.");
         item("sinew_leg",
                 "An _organic_ leg, all muscle. Runs on _blood_ from a worn Fluid Backtank.",
-                "While It Has Blood", "Walks a little faster and jumps _higher_. When the tank runs dry it is _dead weight_.");
+                "While It Has Blood", "Walks a little faster and jumps _higher_. When the tank runs dry it is _dead weight_.",
+                "Necrosis", "Every stretch you _run_ rots it a little. Blood in your backtank clears the rot as you go; fully rotted, it gives no bonus.");
         item("hydraulic_arm",
                 "A _cybernetic_ arm of brass and blood steel. Runs on _soul blood_ from a worn Fluid Backtank.",
                 "While It Has Soul Blood", "Blocks break _80%_ faster, it hits _much_ harder, and it reaches a block further. Dry, it stops.");
@@ -154,7 +156,8 @@ public class BBLang {
                 "While They Have Soul Blood", "You breathe _underwater_. Dry, you are too winded to sprint.");
         item("furnace_stomach",
                 "An _organic_ stomach with a fire in it. Runs on _blood_.",
-                "While It Has Blood", "Nothing you eat makes you _sick_: no hunger, no poison. Dry, you cannot eat (but you do not starve).");
+                "While It Has Blood", "Nothing you eat makes you _sick_: no hunger, no poison. Dry, you cannot eat (but you do not starve).",
+                "Necrosis", "Every meal rots it a little. Blood in your backtank clears the rot as you go.");
         item("eye",
                 "Somebody's _eye_.",
                 "On a Surgery Table", "Goes back in where an eye is _missing_. An eye gone closes in your _view_; with none you see only a few blocks.");
@@ -172,6 +175,7 @@ public class BBLang {
                 "With a Port Arm", "_Crouch_ next to it with a _Port Arm_ and a backtank on to plug in: to the pipes, the port _is_ your tank. Pump into it to fill, out of it to empty.");
         BloodAndBones.REGISTRATE.addRawLang("bloodandbones.implant.runs_on", "Runs on %s: %s mB a second");
         BloodAndBones.REGISTRATE.addRawLang("bloodandbones.implant.runs_on_any", "Runs on whatever is in the tank, a shot at a time");
+        BloodAndBones.REGISTRATE.addRawLang("bloodandbones.implant.necrosis", "Necrosis: %s%% (blood in your backtank clears it)");
         BloodAndBones.REGISTRATE.addRawLang("bloodandbones.body.left_eye", "Left eye");
         BloodAndBones.REGISTRATE.addRawLang("bloodandbones.body.right_eye", "Right eye");
         BloodAndBones.REGISTRATE.addRawLang("bloodandbones.body.heart", "Heart");

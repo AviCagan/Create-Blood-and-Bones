@@ -28,6 +28,10 @@ public final class BBDataComponents {
             builder -> builder.persistent(com.avicagan.bloodandbones.minion.MinionFrame.Frame.CODEC)
                     .networkSynchronized(ByteBufCodecs.fromCodecWithRegistries(com.avicagan.bloodandbones.minion.MinionFrame.Frame.CODEC)));
 
+    /** How far an organic prosthetic has rotted from use, 0 to Necrosis.MAX. */
+    public static final DeferredHolder<DataComponentType<?>, DataComponentType<Integer>> NECROSIS = COMPONENTS.registerComponentType("necrosis",
+            builder -> builder.persistent(com.mojang.serialization.Codec.INT).networkSynchronized(ByteBufCodecs.VAR_INT));
+
     private BBDataComponents() {
     }
 }

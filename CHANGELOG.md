@@ -82,6 +82,9 @@ Everything below is in development builds only; the art is placeholder (see the 
   (Hydraulic Arm, Piston Leg, Optic Eye with a glowing lens, Pump Heart, Bellows Lungs) draw a mB or two
   a second from the worn Fluid Backtank, and stop working, as if the part were missing, when it runs
   dry.
+- Necrosis, from the brief: organic prosthetics rot from use (swings, running, meals), never from time.
+  Blood in the backtank clears it cheaply as you go; rotted through, the part gives no bonus (a small
+  penalty) until perfused. It never falls off and never kills. The part greys and greens as it rots.
 - Vent Arm: hold use empty-handed to spray the tank ahead of you. What it does comes from a data map
   (`data_maps/fluid/vent_effects.json`): lava burns, water puts fires out, liquid experience gives
   experience, milk clears effects, anything else spills.

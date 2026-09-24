@@ -168,6 +168,9 @@ public final class BodyEffects {
             return;
         }
         drain(player);
+        if (Necrosis.perfuse(player)) {
+            BodySync.send(player);
+        }
         if (!sees(body, player) && !(player instanceof Player)) {
             // a player's reduced vision is fog on their own screen; a mob with no eyes is blind
             effect(player, net.minecraft.world.effect.MobEffects.BLINDNESS, 0, 60);
