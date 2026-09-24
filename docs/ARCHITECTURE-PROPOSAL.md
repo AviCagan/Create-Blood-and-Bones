@@ -449,6 +449,11 @@ what they do, across a wide range of jobs. Cybernetics cover every body part. A 
 that runs on the backtank stops working when the tank runs dry. The Fluid Backtank is worn in the chest
 slot and has armour variants. The plan for building it is §14.
 
+**Decided after the jobs were built (24 September 2026)**: no jobs. Any task, from a list drawn up with the owner,
+can be given to any minion. Some minions do a task better than others because of the stats they get from what they are
+built of. This replaces heads offering jobs (spec 6.4 and 6.9). It is not built yet; what is still to settle is listed in
+docs/NEXT.md, item 1.
+
 **Still open** (as of the latest build): everything up to and including machines, materials,
 cooking, display and decoration is built and tested (§13). What remains needs design decisions
 before code: the body-horror progression (Block 11: Surgery Table, prosthetics, minions,
