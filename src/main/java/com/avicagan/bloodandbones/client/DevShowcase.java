@@ -449,6 +449,39 @@ public final class DevShowcase {
                         if (player.serverLevel().getBlockEntity(tableAt) instanceof com.avicagan.bloodandbones.body.SurgeryTableBlockEntity table) {
                             table.setBuild(cow.with("right_front_leg", ref.apply("rabbit", "right_front_leg")).with("right_hind_leg", ref.apply("rabbit", "right_haunch")));
                         }
+                        // a brass cow of skinned pieces with a Magnet Coil, beside a Charging Cradle turned by a motor below
+                        java.util.function.Function<String, com.avicagan.bloodandbones.minion.PieceRef> skinned = bone ->
+                                new com.avicagan.bloodandbones.minion.PieceRef(net.minecraft.resources.ResourceLocation.withDefaultNamespace("cow"), bone,
+                                        com.avicagan.bloodandbones.carcass.CarcassLook.FLESH, java.util.List.of(), 1.0F, true, java.util.Map.of(), false);
+                        var brass = new com.avicagan.bloodandbones.minion.MinionBuild(true, skinned.apply("body"), java.util.List.of(), true)
+                                .with("head", skinned.apply("head")).with("right_front_leg", skinned.apply("right_front_leg"))
+                                .with("left_front_leg", skinned.apply("left_front_leg")).with("right_hind_leg", skinned.apply("right_hind_leg"))
+                                .with("left_hind_leg", skinned.apply("left_hind_leg"));
+                        BlockPos cradleAt = player.blockPosition().offset(-7, 0, 9);
+                        player.serverLevel().setBlockAndUpdate(cradleAt.below(), com.simibubi.create.AllBlocks.CREATIVE_MOTOR.getDefaultState()
+                                .setValue(com.simibubi.create.content.kinetics.base.DirectionalKineticBlock.FACING, net.minecraft.core.Direction.UP));
+                        player.serverLevel().setBlockAndUpdate(cradleAt, BBBlocks.CHARGING_CRADLE.getDefaultState());
+                        if (player.serverLevel().getBlockEntity(cradleAt) instanceof com.avicagan.bloodandbones.minion.ChargingCradleBlockEntity cradle) {
+                            cradle.inventory.insertItem(0, new ItemStack(BBItems.SOUL_CANISTER.get()), false);
+                            cradle.inventory.insertItem(1, new ItemStack(BBItems.SOUL_CANISTER.get()), false);
+                        }
+                        var brassMinion = com.avicagan.bloodandbones.registry.BBEntities.MINION.get().create(player.serverLevel());
+                        BlockPos brassAt = player.blockPosition().offset(-7, 0, 7);
+                        brassMinion.moveTo(brassAt.getX() + 0.5, brassAt.getY(), brassAt.getZ() + 0.5, 150.0F, 0.0F);
+                        brassMinion.setup(player, brassAt, brass, 1000.0F);
+                        brassMinion.setModule(com.avicagan.bloodandbones.cyber.Module.MAGNET_COIL);
+                        brassMinion.setNoAi(true);
+                        player.serverLevel().addFreshEntity(brassMinion);
+                        // and a cow on horse legs, saddled
+                        var mount = cow.with("right_front_leg", ref.apply("horse", "right_front_leg")).with("left_front_leg", ref.apply("horse", "left_front_leg"))
+                                .with("right_hind_leg", ref.apply("horse", "right_hind_leg")).with("left_hind_leg", ref.apply("horse", "left_hind_leg"));
+                        var horse = com.avicagan.bloodandbones.registry.BBEntities.MINION.get().create(player.serverLevel());
+                        BlockPos horseAt = player.blockPosition().offset(8, 0, 10);
+                        horse.moveTo(horseAt.getX() + 0.5, horseAt.getY(), horseAt.getZ() + 0.5, 200.0F, 0.0F);
+                        horse.setup(player, horseAt, mount, 1000.0F);
+                        horse.setNoAi(true);
+                        player.serverLevel().addFreshEntity(horse);
+                        horse.equipSaddle(new ItemStack(net.minecraft.world.item.Items.SADDLE), null);
                     });
                     mc.options.setCameraType(net.minecraft.client.CameraType.FIRST_PERSON);
                     mc.options.hideGui = true;
