@@ -1,0 +1,15 @@
+{
+  "name": "trait.bloodandbones.leaky",
+  "contexts": [
+    "minion"
+  ],
+  "effects": [
+    {
+      "trigger": "passive",
+      "effect": {
+        "type": "bloodandbones:power",
+        "drain_mult": 1.5
+      }
+    }
+  ]
+}

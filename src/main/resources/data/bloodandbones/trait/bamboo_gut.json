@@ -1,0 +1,19 @@
+{
+  "name": "trait.bloodandbones.bamboo_gut",
+  "effects": [
+    {
+      "trigger": "passive",
+      "effect": {
+        "type": "bloodandbones:diet",
+        "effect": "edible",
+        "foods": [
+          "minecraft:bamboo",
+          "minecraft:sugar_cane"
+        ],
+        "hunger": 1,
+        "saturation": 0.6,
+        "forage_mb": 25
+      }
+    }
+  ]
+}

@@ -1,0 +1,15 @@
+{
+  "name": "trait.bloodandbones.saddlebags",
+  "contexts": [
+    "minion"
+  ],
+  "effects": [
+    {
+      "trigger": "passive",
+      "effect": {
+        "type": "bloodandbones:storage",
+        "slots": 15
+      }
+    }
+  ]
+}

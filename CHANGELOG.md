@@ -216,6 +216,11 @@ Everything below is in development builds only; the art is placeholder (see the 
   cooldown, shown on the piece, and some cost blood from your backtank or the tank strapped to your chestplate. A
   minion fires its organ's ability at what it fights, paying from its own blood. (The abilities themselves come
   with the next traits.)
+- Traits work only where they belong: armour traits on players, minion traits on minions; a mob that picks up
+  carcass armour gets its armour points only. Traits can now depend on your health, your blood, what is near you
+  and how long you have been dry, and can act when you land or make a kill.
+- Server settings for traits: their strength, and effect types to switch off.
+- Hold Ctrl over a carcass piece to read what its traits do, for traits that say.
 - Movement and blast traits: wall climbing (one piece clings, two climb while you hold jump), gliding on a carcass
   chestplate for hunger instead of durability, bouncing back up from long falls, walking on powder snow, silent steps,
   quick draw, the ender mask and piglin kinship, dodging blows and sending projectiles back, leaping, dashing,
@@ -223,10 +228,6 @@ Everything below is in development builds only; the art is placeholder (see the 
   sac: a blast that spares its wearer or, in a minion, a self-destruct that leaves it powered down, never destroyed.
   Minions can walk on lava, trample through leaves and grass, and blink back to a maker they fall behind. Blocks break
   only where mobGriefing and the new `minion_block_damage` server setting (off by default) both allow it.
-- Traits work only where they belong: armour traits on players, minion traits on minions; a mob that picks up
-  carcass armour gets its armour points only. Traits can now depend on your health, your blood, what is near you
-  and how long you have been dry, and can act when you land or make a kill.
-- Server settings for traits: their strength, and effect types to switch off.
 - Ranged abilities and on-hit traits: fireballs (small and great), a web shot that leaves a temporary web, spit, a
   shulker's bolt, the warden's sonic boom and the guardian's beam (charged, drawn as a beam), evoker fangs, a snowball
   volley and a frog's tongue; hits that web, bleed, fling, blink away, set alight or steal what a mob holds; spikes and
@@ -234,12 +235,18 @@ Everything below is in development builds only; the art is placeholder (see the 
   under a frost path. Minions with skeleton arms keep their distance and shoot arrows. The new Bleeding effect drips and
   stains the ground ("Leaking", with grey sparks, in bloodless mode, and on anything with no blood). A squid organ's ink
   now puffs out a real cloud.
-- Hold Ctrl over a carcass piece to read what its traits do, for traits that say.
 - Social traits: kin (zombies, skeletons, raiders or piglins take you for one of their own until you hurt one),
   golems that trust and defend you, senses that outline creatures through walls for you alone (echolocation's wet
   click, tremors, the scent of blood, the invisible) and an alert with which way to look when something takes aim,
   pack hunting, auras (a purr that heals your minions, an item magnet, a calm, a roar, a horde called to your
   defence, poison, wither and fatigue), and glowing armour pieces and minions.
+- Upkeep traits: flesh minions lay eggs, give milk and stew (use a bucket or bowl on them), grow wool in their sheep's
+  colour, spin string, squeeze out ink and bring up honey, paying blood for each; brass makes nothing. Minions mend on
+  their blood (brass never mends itself), take an iron ingot for 25 health, carry more (saddlebags, a chest on a beast of
+  burden), hold more blood (a hump) or less efficiently (leaky), eat rotten flesh and raw meat for blood, and forage
+  grass, seeds or mushrooms until half full. Armour can make seeds, bamboo and mushrooms food, fill you more, poison you
+  on cookies, cheat death once in a while (a minion collapses instead), and burn you in the sun, hurt you in water or
+  heat, or slow you once you have been dry too long. A new Blood Upkeep attribute scales what implants and minions drink.
 
 ### Presentation
 

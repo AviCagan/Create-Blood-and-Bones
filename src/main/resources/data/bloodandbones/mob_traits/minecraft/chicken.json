@@ -1,0 +1,22 @@
+{
+  "signature": [
+    "organs.bloodandbones:egg_gland"
+  ],
+  "organs": {
+    "torso": {
+      "add": [
+        "bloodandbones:egg_gland"
+      ]
+    }
+  },
+  "organ_traits": {
+    "bloodandbones:egg_gland": {
+      "minion": [
+        "bloodandbones:egg_layer"
+      ],
+      "armour": [
+        "bloodandbones:egg_layer"
+      ]
+    }
+  }
+}

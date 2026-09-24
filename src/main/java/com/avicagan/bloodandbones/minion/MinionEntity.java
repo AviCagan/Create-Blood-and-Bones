@@ -79,7 +79,8 @@ public class MinionEntity extends PathfinderMob implements net.minecraft.world.e
     @Nullable
     private UUID maker;
     private BlockPos home = BlockPos.ZERO;
-    public final SimpleContainer inventory = new SimpleContainer(27);
+    /** Room for the most a minion can carry (spec 6.4: up to 54 with storage traits); {@link #slots} says how much it may use. */
+    public final SimpleContainer inventory = new SimpleContainer(54);
     @Nullable
     private MinionStats stats;
     private int statsGeneration = -1;
@@ -731,7 +732,10 @@ public class MinionEntity extends PathfinderMob implements net.minecraft.world.e
             return;
         }
         super.die(source);
-        MinionCensus.forget(this);
+        if (isDeadOrDying()) {
+            // a lethal save (a trait) may have called the death off
+            MinionCensus.forget(this);
+        }
     }
 
     @Override

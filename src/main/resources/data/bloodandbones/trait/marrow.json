@@ -1,0 +1,15 @@
+{
+  "name": "trait.bloodandbones.marrow",
+  "contexts": [
+    "minion"
+  ],
+  "effects": [
+    {
+      "trigger": "passive",
+      "effect": {
+        "type": "bloodandbones:power",
+        "drain_mult": 0.8
+      }
+    }
+  ]
+}

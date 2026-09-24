@@ -1,0 +1,16 @@
+{
+  "name": "trait.bloodandbones.cleanse",
+  "effects": [
+    {
+      "trigger": "activate",
+      "cost_mb": 50,
+      "cooldown": 2400,
+      "effect": {
+        "type": "bloodandbones:regen",
+        "cure": [
+          "harmful"
+        ]
+      }
+    }
+  ]
+}

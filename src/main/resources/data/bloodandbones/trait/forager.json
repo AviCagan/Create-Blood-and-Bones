@@ -1,0 +1,24 @@
+{
+  "name": "trait.bloodandbones.forager",
+  "contexts": [
+    "minion"
+  ],
+  "effects": [
+    {
+      "trigger": "passive",
+      "effect": {
+        "type": "bloodandbones:diet",
+        "effect": "edible",
+        "foods": [
+          "minecraft:wheat",
+          "minecraft:hay_block",
+          "minecraft:short_grass",
+          "minecraft:tall_grass",
+          "minecraft:grass_block"
+        ],
+        "hunger": 1,
+        "forage_mb": 100
+      }
+    }
+  ]
+}

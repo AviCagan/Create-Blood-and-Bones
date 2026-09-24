@@ -1,0 +1,30 @@
+{
+  "name": "trait.bloodandbones.dry_out",
+  "effects": [
+    {
+      "trigger": "passive",
+      "requirements": {
+        "condition": "bloodandbones:dry_for",
+        "seconds": 60
+      },
+      "effect": {
+        "type": "bloodandbones:mob_effect",
+        "effect": "minecraft:slowness",
+        "amplifier": 0,
+        "target": "self"
+      }
+    },
+    {
+      "trigger": "passive",
+      "requirements": {
+        "condition": "bloodandbones:dry_for",
+        "seconds": 60
+      },
+      "effect": {
+        "type": "bloodandbones:attribute",
+        "attribute": "minecraft:generic.armor",
+        "amount": -2
+      }
+    }
+  ]
+}

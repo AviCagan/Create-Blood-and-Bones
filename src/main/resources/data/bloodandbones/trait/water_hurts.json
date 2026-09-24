@@ -1,0 +1,19 @@
+{
+  "name": "trait.bloodandbones.water_hurts",
+  "effects": [
+    {
+      "trigger": "tick",
+      "interval": 20,
+      "requirements": {
+        "condition": "bloodandbones:dry_for",
+        "seconds": 0,
+        "at_most": true
+      },
+      "effect": {
+        "type": "bloodandbones:exposure",
+        "damage": 1,
+        "damage_type": "minecraft:drown"
+      }
+    }
+  ]
+}

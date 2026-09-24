@@ -1,0 +1,19 @@
+{
+  "name": "trait.bloodandbones.stew_udder",
+  "contexts": [
+    "minion"
+  ],
+  "effects": [
+    {
+      "trigger": "tick",
+      "interval": 6000,
+      "effect": {
+        "type": "bloodandbones:produce",
+        "item": "minecraft:mushroom_stew",
+        "consumes": "minecraft:bowl",
+        "cost_mb": 50,
+        "sound": "minecraft:entity.mooshroom.milk"
+      }
+    }
+  ]
+}
