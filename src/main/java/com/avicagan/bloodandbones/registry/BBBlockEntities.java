@@ -68,6 +68,18 @@ public class BBBlockEntities {
             .renderer(() -> com.avicagan.bloodandbones.cooking.ButcherTableRenderer::new)
             .register();
 
+    public static final BlockEntityEntry<com.avicagan.bloodandbones.decoration.SteelTableBlockEntity> STEEL_TABLE = BloodAndBones.REGISTRATE
+            .blockEntity("steel_table", com.avicagan.bloodandbones.decoration.SteelTableBlockEntity::new)
+            .validBlocks(BBBlocks.STEEL_TABLE)
+            .renderer(() -> com.avicagan.bloodandbones.decoration.SteelTableRenderer::new)
+            .register();
+
+    public static final BlockEntityEntry<com.avicagan.bloodandbones.decoration.SteelRackBlockEntity> STEEL_RACK = BloodAndBones.REGISTRATE
+            .blockEntity("steel_rack", com.avicagan.bloodandbones.decoration.SteelRackBlockEntity::new)
+            .validBlocks(BBBlocks.STEEL_RACK)
+            .renderer(() -> com.avicagan.bloodandbones.decoration.SteelRackRenderer::new)
+            .register();
+
     public static final BlockEntityEntry<com.avicagan.bloodandbones.body.SurgeryTableBlockEntity> SURGERY_TABLE = BloodAndBones.REGISTRATE
             .blockEntity("surgery_table", com.avicagan.bloodandbones.body.SurgeryTableBlockEntity::new)
             .validBlocks(BBBlocks.SURGERY_TABLE)
@@ -98,6 +110,8 @@ public class BBBlockEntities {
         BleedingRackBlockEntity.registerCapabilities(event);
         com.avicagan.bloodandbones.machine.CarcassMachineBlockEntity.registerCapabilities(event);
         com.avicagan.bloodandbones.cooking.ButcherTableBlockEntity.registerCapabilities(event);
+        com.avicagan.bloodandbones.decoration.SteelTableBlockEntity.registerCapabilities(event);
+        com.avicagan.bloodandbones.decoration.SteelRackBlockEntity.registerCapabilities(event);
         // a backtank set down is open to pipes on every side; worn or held, spouts and item drains fill and empty it
         event.registerBlockEntity(net.neoforged.neoforge.capabilities.Capabilities.FluidHandler.BLOCK, FLUID_BACKTANK.get(), (be, side) -> be.tank());
         // the port's nozzle side only

@@ -4,19 +4,20 @@ import com.simibubi.create.content.kinetics.chainConveyor.ChainConveyorBlockEnti
 import com.simibubi.create.content.kinetics.chainConveyor.ChainConveyorBlockEntity.ConnectionStats;
 import com.simibubi.create.infrastructure.config.AllConfigs;
 import net.minecraft.core.BlockPos;
-import net.minecraft.server.level.ServerLevel;
 import net.minecraft.util.Mth;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.level.ChunkPos;
+import net.minecraft.world.level.Level;
 import net.minecraft.world.level.block.entity.BlockEntity;
 import net.minecraft.world.level.chunk.LevelChunk;
 import net.minecraft.world.phys.Vec3;
 import org.jetbrains.annotations.Nullable;
 
 /**
- * Server-side pick of the chain strand a player is looking at. Create's own picker
- * (ChainConveyorInteractionHandler) is client-only and only active for chain-rideable items, frogports and
- * packages, and ChainConveyorShape.ChainConveyorOBB#connection is package-private, so we redo the math.
+ * Pick of the chain strand a player is looking at, on either side (the client asks too, so it does not
+ * place a held block behind the chain). Create's own picker (ChainConveyorInteractionHandler) is client-only
+ * and only active for chain-rideable items, frogports and packages, and
+ * ChainConveyorShape.ChainConveyorOBB#connection is package-private, so we redo the math.
  */
 public final class ChainPicker {
     /** Chain strands are thin; Create's OBB uses radius 0.175 (ChainConveyorShape.ChainConveyorOBB#radius). */
@@ -29,7 +30,7 @@ public final class ChainPicker {
     }
 
     @Nullable
-    public static Hit pick(ServerLevel level, Player player, double reach) {
+    public static Hit pick(Level level, Player player, double reach) {
         Vec3 from = player.getEyePosition();
         Vec3 look = player.getLookAngle();
         int maxLength = AllConfigs.server().kinetics.maxChainConveyorLength.get();

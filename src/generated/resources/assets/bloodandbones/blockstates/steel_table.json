@@ -1,0 +1,146 @@
+{
+  "multipart": [
+    {
+      "apply": {
+        "model": "bloodandbones:block/steel_table_top"
+      }
+    },
+    {
+      "apply": {
+        "model": "bloodandbones:block/steel_table_lip"
+      },
+      "when": {
+        "north": "false"
+      }
+    },
+    {
+      "apply": {
+        "model": "bloodandbones:block/steel_table_lip_corner"
+      },
+      "when": {
+        "OR": [
+          {
+            "north": "false"
+          },
+          {
+            "west": "false"
+          }
+        ]
+      }
+    },
+    {
+      "apply": {
+        "model": "bloodandbones:block/steel_table_leg"
+      },
+      "when": {
+        "north": "false",
+        "west": "false"
+      }
+    },
+    {
+      "apply": {
+        "model": "bloodandbones:block/steel_table_lip",
+        "y": 90
+      },
+      "when": {
+        "east": "false"
+      }
+    },
+    {
+      "apply": {
+        "model": "bloodandbones:block/steel_table_lip_corner",
+        "y": 90
+      },
+      "when": {
+        "OR": [
+          {
+            "east": "false"
+          },
+          {
+            "north": "false"
+          }
+        ]
+      }
+    },
+    {
+      "apply": {
+        "model": "bloodandbones:block/steel_table_leg",
+        "y": 90
+      },
+      "when": {
+        "east": "false",
+        "north": "false"
+      }
+    },
+    {
+      "apply": {
+        "model": "bloodandbones:block/steel_table_lip",
+        "y": 180
+      },
+      "when": {
+        "south": "false"
+      }
+    },
+    {
+      "apply": {
+        "model": "bloodandbones:block/steel_table_lip_corner",
+        "y": 180
+      },
+      "when": {
+        "OR": [
+          {
+            "south": "false"
+          },
+          {
+            "east": "false"
+          }
+        ]
+      }
+    },
+    {
+      "apply": {
+        "model": "bloodandbones:block/steel_table_leg",
+        "y": 180
+      },
+      "when": {
+        "east": "false",
+        "south": "false"
+      }
+    },
+    {
+      "apply": {
+        "model": "bloodandbones:block/steel_table_lip",
+        "y": 270
+      },
+      "when": {
+        "west": "false"
+      }
+    },
+    {
+      "apply": {
+        "model": "bloodandbones:block/steel_table_lip_corner",
+        "y": 270
+      },
+      "when": {
+        "OR": [
+          {
+            "west": "false"
+          },
+          {
+            "south": "false"
+          }
+        ]
+      }
+    },
+    {
+      "apply": {
+        "model": "bloodandbones:block/steel_table_leg",
+        "y": 270
+      },
+      "when": {
+        "south": "false",
+        "west": "false"
+      }
+    }
+  ]
+}

@@ -1,0 +1,140 @@
+{
+  "variants": {
+    "layers=1": [
+      {
+        "model": "bloodandbones:block/bone_pile_height2"
+      },
+      {
+        "model": "bloodandbones:block/bone_pile_height2",
+        "y": 90
+      },
+      {
+        "model": "bloodandbones:block/bone_pile_height2",
+        "y": 180
+      },
+      {
+        "model": "bloodandbones:block/bone_pile_height2",
+        "y": 270
+      }
+    ],
+    "layers=2": [
+      {
+        "model": "bloodandbones:block/bone_pile_height4"
+      },
+      {
+        "model": "bloodandbones:block/bone_pile_height4",
+        "y": 90
+      },
+      {
+        "model": "bloodandbones:block/bone_pile_height4",
+        "y": 180
+      },
+      {
+        "model": "bloodandbones:block/bone_pile_height4",
+        "y": 270
+      }
+    ],
+    "layers=3": [
+      {
+        "model": "bloodandbones:block/bone_pile_height6"
+      },
+      {
+        "model": "bloodandbones:block/bone_pile_height6",
+        "y": 90
+      },
+      {
+        "model": "bloodandbones:block/bone_pile_height6",
+        "y": 180
+      },
+      {
+        "model": "bloodandbones:block/bone_pile_height6",
+        "y": 270
+      }
+    ],
+    "layers=4": [
+      {
+        "model": "bloodandbones:block/bone_pile_height8"
+      },
+      {
+        "model": "bloodandbones:block/bone_pile_height8",
+        "y": 90
+      },
+      {
+        "model": "bloodandbones:block/bone_pile_height8",
+        "y": 180
+      },
+      {
+        "model": "bloodandbones:block/bone_pile_height8",
+        "y": 270
+      }
+    ],
+    "layers=5": [
+      {
+        "model": "bloodandbones:block/bone_pile_height10"
+      },
+      {
+        "model": "bloodandbones:block/bone_pile_height10",
+        "y": 90
+      },
+      {
+        "model": "bloodandbones:block/bone_pile_height10",
+        "y": 180
+      },
+      {
+        "model": "bloodandbones:block/bone_pile_height10",
+        "y": 270
+      }
+    ],
+    "layers=6": [
+      {
+        "model": "bloodandbones:block/bone_pile_height12"
+      },
+      {
+        "model": "bloodandbones:block/bone_pile_height12",
+        "y": 90
+      },
+      {
+        "model": "bloodandbones:block/bone_pile_height12",
+        "y": 180
+      },
+      {
+        "model": "bloodandbones:block/bone_pile_height12",
+        "y": 270
+      }
+    ],
+    "layers=7": [
+      {
+        "model": "bloodandbones:block/bone_pile_height14"
+      },
+      {
+        "model": "bloodandbones:block/bone_pile_height14",
+        "y": 90
+      },
+      {
+        "model": "bloodandbones:block/bone_pile_height14",
+        "y": 180
+      },
+      {
+        "model": "bloodandbones:block/bone_pile_height14",
+        "y": 270
+      }
+    ],
+    "layers=8": [
+      {
+        "model": "bloodandbones:block/bone_pile_height16"
+      },
+      {
+        "model": "bloodandbones:block/bone_pile_height16",
+        "y": 90
+      },
+      {
+        "model": "bloodandbones:block/bone_pile_height16",
+        "y": 180
+      },
+      {
+        "model": "bloodandbones:block/bone_pile_height16",
+        "y": 270
+      }
+    ]
+  }
+}

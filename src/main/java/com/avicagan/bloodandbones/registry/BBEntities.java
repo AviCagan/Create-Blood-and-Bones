@@ -15,6 +15,14 @@ public class BBEntities {
             .lang("Shackle Trolley")
             .register();
 
+    /** A length of Gut Chain hung from a Create chain conveyor, riding it. */
+    public static final EntityEntry<com.avicagan.bloodandbones.decoration.HangingGutChainEntity> HANGING_GUT_CHAIN = BloodAndBones.REGISTRATE
+            .<com.avicagan.bloodandbones.decoration.HangingGutChainEntity>entity("hanging_gut_chain", com.avicagan.bloodandbones.decoration.HangingGutChainEntity::new, MobCategory.MISC)
+            .properties(b -> b.sized(0.4f, 0.4f).clientTrackingRange(10).updateInterval(1).fireImmune().noSummon())
+            .renderer(() -> com.avicagan.bloodandbones.decoration.HangingGutChainRenderer::new)
+            .lang("Hanging Gut Chain")
+            .register();
+
     /** The invisible seat a patient lies on at the Surgery Table. */
     public static final EntityEntry<com.avicagan.bloodandbones.body.SurgerySeatEntity> SURGERY_SEAT = BloodAndBones.REGISTRATE
             .<com.avicagan.bloodandbones.body.SurgerySeatEntity>entity("surgery_seat", com.avicagan.bloodandbones.body.SurgerySeatEntity::new, MobCategory.MISC)

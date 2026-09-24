@@ -89,8 +89,8 @@ public final class BBClientSetup {
     }
 
     /**
-     * In bloodless mode blood stains draw nothing (they still exist, and wash away the same), and the
-     * machines draw clean casings and blades.
+     * In bloodless mode blood stains draw nothing (they still exist, and wash away the same), the machines
+     * draw clean casings and blades, the bloody casings Create's own, and bones come out bleached.
      */
     @SubscribeEvent(priority = net.neoforged.bus.api.EventPriority.LOWEST)
     public static void onModifyBakingResult(net.neoforged.neoforge.client.event.ModelEvent.ModifyBakingResult event) {
@@ -137,6 +137,22 @@ public final class BBClientSetup {
             event.getModels().computeIfPresent(net.minecraft.client.resources.model.ModelResourceLocation.inventory(machine.getId()),
                     (key, model) -> new BloodlessSwap(model, BloodlessSwap.MACHINES));
         }
+        // the brass and copper casings the same way; ribs and bone piles bleached
+        swap(event, com.avicagan.bloodandbones.registry.BBBlocks.BLOODY_BRASS_CASING, BloodlessSwap.CLADDING);
+        swap(event, com.avicagan.bloodandbones.registry.BBBlocks.BLOODY_COPPER_CASING, BloodlessSwap.CLADDING);
+        swap(event, com.avicagan.bloodandbones.registry.BBBlocks.RIBCAGE_ARCH, BloodlessSwap.BONES);
+        swap(event, com.avicagan.bloodandbones.registry.BBBlocks.BONE_PILE, BloodlessSwap.BONES);
+    }
+
+    /** Every block state of a block, and its item, drawn through a bloodless swap. */
+    private static void swap(net.neoforged.neoforge.client.event.ModelEvent.ModifyBakingResult event,
+                             com.tterrag.registrate.util.entry.BlockEntry<?> block, java.util.Map<net.minecraft.resources.ResourceLocation, net.minecraft.resources.ResourceLocation> swaps) {
+        for (net.minecraft.world.level.block.state.BlockState state : block.get().getStateDefinition().getPossibleStates()) {
+            event.getModels().computeIfPresent(net.minecraft.client.renderer.block.BlockModelShaper.stateToModelLocation(state),
+                    (key, model) -> new BloodlessSwap(model, swaps));
+        }
+        event.getModels().computeIfPresent(net.minecraft.client.resources.model.ModelResourceLocation.inventory(block.getId()),
+                (key, model) -> new BloodlessSwap(model, swaps));
     }
 
     /** Changing bloodless mode redraws the world, so stains appear or go without a restart. */

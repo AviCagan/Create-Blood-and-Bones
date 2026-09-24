@@ -23,8 +23,9 @@ import java.util.Map;
 
 /**
  * A baked model that, in bloodless mode, draws its bloody textures as clean ones: each quad keeps its shape
- * and has its texture coordinates moved from the bloody sprite to the clean one. Block models are baked into
- * chunk meshes, so a change of mode redraws the world (BBClientConfig#redraw); items follow at once.
+ * and has its texture coordinates moved from the bloody sprite to the clean one, and its particles come off
+ * clean. Block models are baked into chunk meshes, so a change of mode redraws the world
+ * (BBClientConfig#redraw); items and particles follow at once.
  */
 public final class BloodlessSwap extends BakedModelWrapper<BakedModel> {
     /** Bloody texture -> clean texture, for every machine and the Bloody Casing (its joined-up edges too). */
@@ -52,6 +53,21 @@ public final class BloodlessSwap extends BakedModelWrapper<BakedModel> {
     public static final Map<ResourceLocation, ResourceLocation> GUTS = Map.of(
             ResourceLocation.fromNamespaceAndPath("bloodandbones", "block/gut_chain"), ResourceLocation.fromNamespaceAndPath("bloodandbones", "block/gut_chain_clean"),
             ResourceLocation.fromNamespaceAndPath("bloodandbones", "item/gut_chain"), ResourceLocation.fromNamespaceAndPath("bloodandbones", "item/gut_chain_clean"));
+
+    /** Ribs and bone piles come out bleached and dry: no wet gristle at the joints, no blood between the bones. */
+    public static final Map<ResourceLocation, ResourceLocation> BONES = Map.of(
+            ResourceLocation.fromNamespaceAndPath("bloodandbones", "block/rib_bone"), ResourceLocation.fromNamespaceAndPath("bloodandbones", "block/rib_bone_clean"),
+            ResourceLocation.fromNamespaceAndPath("bloodandbones", "block/rib_joint"), ResourceLocation.fromNamespaceAndPath("bloodandbones", "block/rib_joint_clean"),
+            ResourceLocation.fromNamespaceAndPath("bloodandbones", "block/bone_pile_top"), ResourceLocation.fromNamespaceAndPath("bloodandbones", "block/bone_pile_top_clean"),
+            ResourceLocation.fromNamespaceAndPath("bloodandbones", "block/bone_pile_side"), ResourceLocation.fromNamespaceAndPath("bloodandbones", "block/bone_pile_side_clean"),
+            ResourceLocation.fromNamespaceAndPath("bloodandbones", "item/bone_pile"), ResourceLocation.fromNamespaceAndPath("bloodandbones", "item/bone_pile_clean"));
+
+    /** The bloody brass and copper casings come out as Create's own, as the Bloody Casing comes out andesite. */
+    public static final Map<ResourceLocation, ResourceLocation> CLADDING = Map.of(
+            ResourceLocation.fromNamespaceAndPath("bloodandbones", "block/bloody_brass_casing"), ResourceLocation.fromNamespaceAndPath("create", "block/brass_casing"),
+            ResourceLocation.fromNamespaceAndPath("bloodandbones", "block/bloody_brass_casing_connected"), ResourceLocation.fromNamespaceAndPath("create", "block/brass_casing_connected"),
+            ResourceLocation.fromNamespaceAndPath("bloodandbones", "block/bloody_copper_casing"), ResourceLocation.fromNamespaceAndPath("create", "block/copper_casing"),
+            ResourceLocation.fromNamespaceAndPath("bloodandbones", "block/bloody_copper_casing_connected"), ResourceLocation.fromNamespaceAndPath("create", "block/copper_casing_connected"));
 
     private final Map<ResourceLocation, ResourceLocation> swaps;
     /** Resolved on first use: the block atlas is only ready once baking is over. */
@@ -88,7 +104,23 @@ public final class BloodlessSwap extends BakedModelWrapper<BakedModel> {
         return this;
     }
 
-    private List<BakedQuad> swap(List<BakedQuad> quads) {
+    /**
+     * The bits that fly off when the block is broken, dug, run or landed on, and off the item when it breaks:
+     * the clean texture too. Particles ask the model each time, so this follows the mode at once.
+     */
+    @Override
+    public TextureAtlasSprite getParticleIcon() {
+        TextureAtlasSprite sprite = super.getParticleIcon();
+        return BBClientConfig.bloodless() ? sprites().getOrDefault(sprite, sprite) : sprite;
+    }
+
+    @Override
+    public TextureAtlasSprite getParticleIcon(ModelData data) {
+        TextureAtlasSprite sprite = super.getParticleIcon(data);
+        return BBClientConfig.bloodless() ? sprites().getOrDefault(sprite, sprite) : sprite;
+    }
+
+    private Map<TextureAtlasSprite, TextureAtlasSprite> sprites() {
         // chunk builder threads get here too: build the map whole, then publish it
         Map<TextureAtlasSprite, TextureAtlasSprite> map = sprites;
         if (map == null) {
@@ -98,6 +130,11 @@ public final class BloodlessSwap extends BakedModelWrapper<BakedModel> {
             map = Map.copyOf(resolved);
             sprites = map;
         }
+        return map;
+    }
+
+    private List<BakedQuad> swap(List<BakedQuad> quads) {
+        Map<TextureAtlasSprite, TextureAtlasSprite> map = sprites();
         List<BakedQuad> out = new ArrayList<>(quads.size());
         for (BakedQuad quad : quads) {
             TextureAtlasSprite from = drawnFrom(quad, map);

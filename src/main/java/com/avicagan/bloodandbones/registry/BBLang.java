@@ -84,7 +84,31 @@ public class BBLang {
                 "When R-Clicked with an Empty Hand", "Takes the piece back.");
         block("gut_chain",
                 "A string of _guts_, hung like a chain. Squelches underfoot and in the hand.",
-                "When Made", "Three pieces of _offal_ in a column make three.");
+                "When Made", "Three pieces of _offal_ in a column make three.",
+                "When R-Clicked on a Chain Conveyor", "_Hangs_ a link from the chain, to ride it round and swing. R-Click the hanging string to add links, up to _eight_. _Hit_ it to take it down.");
+        block("bloody_brass_casing",
+                "Brass casing _splashed with blood_. Joins up with its neighbours like any casing.",
+                "When Made", "_Fill_ a Brass Casing with 250 mB of blood using a _Spout_.");
+        block("bloody_copper_casing",
+                "Copper casing _splashed with blood_. Joins up with its neighbours like any casing.",
+                "When Made", "_Fill_ a Copper Casing with 250 mB of blood using a _Spout_.");
+        block("steel_table",
+                "A cold steel _morgue table_. Tables side by side _join into one run_, with legs only where it ends or turns.",
+                "When R-Clicked on the Top", "Lays the held item on it: _one item_, any item. A carcass piece lies on its back.",
+                "When R-Clicked with an Empty Hand", "Takes it back. A _funnel_ or _hopper_ can lay things on it and take them off.");
+        block("steel_rack",
+                "Cold steel _shelves_ to show parts on: two shelves, _two places_ on each.",
+                "When R-Clicked on the Front", "Puts the held item on the place you are _looking at_, one item a place.",
+                "When R-Clicked with an Empty Hand", "Takes back the thing you are looking at. Funnels and hoppers fill it from the _lower left_.");
+        block("ribcage_arch",
+                "A segment of _giant rib_, wet and bloody at the joints. Stacked, ribs rise straight; the top one _bends in_; ribs hung in the air beside it run level, the _crown_ of the arch.",
+                "When Placed", "Faces you, so a stack built from inside the arch bends towards you. Placed against another rib, it _lines up_ with it.");
+        bloodless("block.bloodandbones.ribcage_arch.tooltip.summary",
+                "A segment of _giant rib_, bleached clean. Stacked, ribs rise straight; the top one _bends in_; ribs hung in the air beside it run level, the _crown_ of the arch.");
+        block("bone_pile",
+                "Bones _heaped in layers_, as snow lies. A thin scatter can be walked through.",
+                "When Used on a Bone Pile", "Adds a _layer_, up to a full block.",
+                "When Broken", "Drops _two bones_ a layer.");
         block("butcher_hook",
                 "A hook for a wall, to hang a carcass piece on for show.",
                 "When R-Clicked with a Carcass Piece", "Hangs it on the hook. It _keeps_ there. R-Click with an _empty hand_ to take it down.");
@@ -457,8 +481,12 @@ public class BBLang {
                 "Show off your work. The Butcher's Hook hangs on the side of a solid block and the Specimen Jar sits anywhere; either holds one carcass piece, which keeps there. Right-click with the piece, and with an empty hand to take it back.",
                 "The Butcher's Table holds a piece too, lying on its top: right-click it with a Cleaver and it comes apart into meat, bone, offal and fat, spoiled as far as it had rotted.");
         jei("decoration",
-                "Bloody Casing: fill an Andesite Casing with 250 mB of blood from a Spout. It joins up with its neighbours like Create's own casings.",
-                "Gut Chain: three pieces of offal in a column make three. It hangs and lies like a chain.");
+                "Bloody Casing: fill an Andesite Casing with 250 mB of blood from a Spout. It joins up with its neighbours like Create's own casings. Brass and Copper Casings take blood the same way.",
+                "Gut Chain: three pieces of offal in a column make three. It hangs and lies like a chain. Used on a Create chain conveyor's chain, it hangs a link from it that rides round with the chain; use more on the string to lengthen it, up to eight links, and hit it to take it down.",
+                "Ribcage Arch: build two stacks facing each other; the top of each bends inward, and ribs hung in the air between them run level to close the arch. A row of arches makes the inside of a ribcage. Bone Pile: use it on a pile to add a layer; each layer drops two bones.");
+        jei("morgue",
+                "The Steel Table holds one item, any item, on its top. Tables side by side join into one run, with legs only where the run ends or turns. Funnels and hoppers can load it.",
+                "The Steel Rack has two shelves of two places. Right-click its front with an item on the place you are looking at; an empty hand takes it back. Funnels and hoppers fill it from the lower left.");
         jei("surgery",
                 "Amputation is a ritual: lay a Cleaver on the Surgery Table (with its Surgical Rig), have a surgeon minion (one with a villager's or a pillager's head, and an arm) awake beside it, and lie on the table (right-click with an empty hand) to have one of your own limbs, eyes or organs taken out. You get it back, with your name on it. Nothing takes a part any other way, and nothing can go wrong.",
                 "The surgeon hacks: what it takes off leaves a ragged stump, and fitting anything there later takes a bucket of blood as well (from a bucket or a Fluid Backtank you carry). Swap an implant straight in for a part of flesh and there is no stump at all.",
@@ -492,6 +520,11 @@ public class BBLang {
         for (int i = 0; i < texts.length; i++) {
             BloodAndBones.REGISTRATE.addRawLang("bloodandbones.ponder." + scene + ".text_" + (i + 1), texts[i]);
         }
+    }
+
+    /** Bloodless mode's own wording for a key, where the general rewording ({@code BloodlessWords}) would not fit what is drawn. */
+    private static void bloodless(String key, String text) {
+        BloodAndBones.REGISTRATE.addRawLang("bloodless." + key, text);
     }
 
     private static void jei(String id, String... pages) {

@@ -724,7 +724,8 @@ dragon and tropical fish, middle-sized (size 2) slimes, and final art.
   blood stains (baked model wrapper), the flesh texture of a skinned carcass (a pale bloodless copy), the
   hook drawn in a carcass (the clean model), and the machines' bloody casings, blades, saw, roller and
   Mangler top (`BloodlessSwap` re-points each quad's UVs from the bloody sprite to a clean one, for block
-  and item models; the clean textures are the bloody ones with the red taken out), and the blood fluid,
+  and item models; the clean textures are the bloody ones with the red taken out; it swaps the model's
+  particle texture too, so the bits that fly off when one is broken, dug, run or landed on are clean), and the blood fluid,
   drawn a muddy brown in the world, tanks, pipes and buckets (`TintedFluidType` picks its tint per
   frame).
 - Names and descriptions: `BloodlessLanguage` wraps the game's language (`Language.inject`, and I18n's
@@ -851,7 +852,8 @@ dragon and tropical fish, middle-sized (size 2) slimes, and final art.
   mode it shows as plain andesite casing: the swap wraps the model after Create's connected-texture
   wrapper (lowest event priority) and finds the sprite a quad shows by where its UVs fall, since
   Create moves the UVs onto the connected sheet but leaves the quad's sprite field alone.
-- Butcher's Table (the design's "Steel Table"): holds one piece like the jar, drawn lying on the top;
+- Butcher's Table: a work table, not the brief's morgue Steel Table (that is its own block, §13.14). It
+  holds one piece like the jar, drawn lying on the top;
   a Cleaver chops it into `CarcassButchery.pieceYields` (the same yields a loose piece gives, now shared
   with the Spit Roast), dropped on the top, with the spray, the sound and a bloodied cleaver. Clean steel
   in bloodless mode. A piece with nothing to cut it into (no butchery table for its mob, or none for
@@ -861,8 +863,8 @@ dragon and tropical fish, middle-sized (size 2) slimes, and final art.
   feeds two pieces in and checks both are chopped.
 - Gut Chain: a vanilla `ChainBlock` with our own two-plane model (4 px wide strips) and a lumpy, wet
   texture; hand-breakable, slime sounds; three offal in a column make three. Bloodless mode swaps it to
-  a plain cord texture and rewords "gut" as "cord". (The design's other Gut Chain idea, a texture swap
-  on Create's chain conveyors, is not done.)
+  a plain cord texture and rewords "gut" as "cord". It also hangs from Create's chain conveyors and
+  rides them (§13.14).
 - On Create contraptions (`BBMovementChecks`): both hooks count as attached to the block they hang from
   and as brittle, and the Butcher's Hook is a `create:movable_empty_collider`. The Shackle Hook now turns
   with a structure or bearing (it had no `rotate`/`mirror`). A hook carrying a carcass is not yet made
@@ -890,6 +892,115 @@ dragon and tropical fish, middle-sized (size 2) slimes, and final art.
   about 52 KB for 77 mobs) alongside the rigs on `OnDatapackSyncEvent`. JEI may start before they arrive,
   so on arrival the plugin hides the pages it had and adds fresh ones. `NetworkTests` writes the rig and
   butchery packets to bytes and back, since a single-player world never serialises them.
+
+### 13.14 Decoration from the brief (verified)
+
+What the brief's Machines table (Steel Table, Steel Rack) and Decoration list (Gut Chain on chain
+conveyors, ribcage arches, bone piles, blood-stained cladding) asked for that did not exist yet. The new
+blocks live in `decoration/`. Each has a loot table, a recipe in `data/.../recipe`, a name and a Create
+description in `BBLang`, a place in the creative tab and JEI information pages ("morgue" and a longer
+"decoration"). `DecorationTests` covers them.
+
+- Steel Table (`SteelTableBlock`): the morgue table, separate from the Butcher's Table. Four joins in the
+  block state (north, east, south, west), true when the neighbour that way is another Steel Table,
+  worked out on placement and kept up to date as neighbours change. The model is a multipart: the top
+  always, a raised lip along each side that joins nothing (and its corner piece when either side of the
+  corner is open), and a leg in a corner only when neither side of that corner joins. So a straight run
+  stands on legs at its two ends, a turn has one leg on its outside corner, and a table in the middle has
+  none; the block's shape follows the same rule and the model's heights (the top 12 to 15 pixels, the
+  legs up to it; the test reads them from the model files). Turning the block (a contraption, a structure block)
+  turns the joins, as a fence's do. It holds one item, any item, reusing the Specimen Jar's block entity:
+  put on by clicking the top (clicking a side places a held block as usual, so a run can be built out),
+  taken back with an empty hand, loaded and emptied by funnels and hoppers through a one-slot item
+  handler, dropped when broken. A carcass piece lies on its back, drawn with the shared
+  `CarcassModels.drawPiece` at its own size (only a piece longer than the table is shrunk); a flat item
+  lies face up; a block or a skull sits on the top as it would lie on the ground. Cold brushed steel, no
+  copper and no blood, so nothing changes in bloodless mode. Recipe: three iron sheets over two iron
+  ingots make two.
+- Steel Rack (`SteelRackBlock`): steel shelving, facing whoever placed it, two shelves of two places.
+  Things go on from the front: the place a click goes to is worked out from where it landed and which
+  way the rack faces (`slotAt`: the upper or lower half, and the left or right half as seen from the
+  front); a click on a side places a held block as usual, so racks can stand in a row. An empty hand
+  takes back the thing at that place. Four one-item slots for funnels and hoppers, filled from the lower
+  left; everything drops when it is broken. Things stand on the shelves facing out, turned a little each.
+  Same cold steel. Recipe: iron bars and iron sheets.
+- Ribcage Arch (`RibcageArchBlock`): one segment of a giant rib, with a facing and a shape that follows
+  its neighbours: straight when another rib is above it, curving in towards its facing when it is the top
+  of a stack or on its own, and level (the crown) when it hangs over air with another rib beside it along
+  its facing. Two stacks facing each other with level ribs between make an arch; a row of arches is the
+  inside of a ribcage. Placed, a rib faces the player, or takes the facing of the rib it was placed
+  against, so stacks and spans stay in line. The curve is built from segments tilted 22.5 and 45 degrees
+  (all a block model allows), and every face's texture coordinates are kept inside the texture, since
+  segments poking out of the block would otherwise read the next texture on the atlas. Bone coloured with
+  wet red joints; in bloodless mode the bone and joints swap to bleached, dry ones (`BloodlessSwap.BONES`)
+  and the description has its own bleached wording (a `bloodless.` key in `BBLang`). Recipe: three bones
+  in a curve make two.
+- Bone Pile (`BonePileBlock`): layers like snow, one to eight, two pixels each. Using a Bone Pile on one
+  adds a layer (the snow rule: the pile can be replaced by its own item); on a full pile it starts a new
+  one on top. Collision is a layer lower than it looks, as snow's, so a single layer is walked through.
+  It needs a solid floor or a full pile under it. The loot table drops two bones a layer (data, one
+  set-count per layer). Four turned versions of each height, picked by position, so the loose 3D bones
+  on top do not repeat. Bloodless: clean bones, no blood between them. Recipe: four bones make two, so
+  crafting and breaking come out even.
+- Gut Chain on chain conveyors (`HangingGutChainEntity`, `GutChainHanging`): using Gut Chain on a chain
+  conveyor's chain hangs one link there. It rides the chain with the same `ChainCursor` the Shackle
+  Trolley uses (it has no address, so it never stops at a frogport, and like Create's packages it does not
+  queue). Using more Gut Chain on the hanging string adds a link, up to eight; hitting it takes it down
+  and drops all its links (none for a creative player). A broken chain drops it the same way. The chain is
+  found with `ChainPicker`, which now works on either side: the client asks too, and when the chain is
+  nearer than the block behind it, it does not place the held Gut Chain on that block. The length is
+  synced entity data, so every client draws the right length. Each link is a hit box of its own, a
+  NeoForge part entity (`HangingGutChainEntity.Link`, as the Ender Dragon's parts), passing hits and
+  clicks on to the string: the game files an entity under the 16-block section its position is in and a
+  search for entities looks only a little below its box, so one long box hanging from the chain was
+  missed by a player or an arrow aiming at its lower end once that hung below a section line. Parts are
+  kept in a list of their own that every search looks through. The position follows the usual entity
+  tracking, every tick, and a client glides to each new position over a few ticks (`lerpTo`, as a
+  minecart), so it moves smoothly between ticks. Each client swings its own copy of
+  the string (a Verlet rope, two joints a link, the top held on the chain, gravity and air drag), so it
+  trails and sways as it goes round wheels and stops; the swinging is drawn only, never simulated on the
+  server, and the renderer culls by a box round the swinging joints, since on a fast chain the string
+  trails several blocks behind its top. Drawn with the Gut Chain block's texture as two crossed strips four pixels wide, bending at
+  each joint; the plain cord texture in bloodless mode, and "Hanging Cord Chain" as its name. The hit
+  boxes hang straight down, so a string trailing behind a fast chain is hit where it would hang, not
+  where it is drawn.
+  Not done: a chain conveyor on a Sable sub-level, as for trolleys (§13.11); a conveyor moved by a
+  contraption drops its strings.
+- Blood-stained cladding: Bloody Brass Casing and Bloody Copper Casing, made exactly as the Bloody
+  Casing: a Create `CasingBlock` with `BuilderTransformers.casing` and its own connected sheet in
+  `BBSpriteShifts`, by spout-filling a Brass or Copper Casing with 250 mB of blood. The textures are
+  Create's own brass and copper casing sheets (copied out of the Create jar) with blood drips and splats
+  painted over each tile. In bloodless mode they show as Create's plain brass and copper casings
+  (`BloodlessSwap.CLADDING`, wrapped after Create's connected textures like the Bloody Casing), named
+  "Stained Brass Casing" and "Stained Copper Casing"; the bits that fly off them when broken are the
+  plain casings' too (the showcase throws them in mid-air to check).
+- On contraptions: the table, rack, rib and casings are ordinary solid blocks, and the table's and rack's
+  item handlers are not a plain `ItemStackHandler`, so Create carries their contents as block data rather
+  than as the contraption's storage. A bone pile lies on the block below as a carpet does: attached
+  downwards and brittle (`BBMovementChecks`), which also makes a single layer, which has no collision,
+  move at all. Create counts a brittle block as holding nothing up on any side, so a pile would not push
+  the block in front of it and the piston stalled against it; as Create does for carpets, only a pile's
+  top holds nothing up (a full pile's top does). `decorationRidesAContraption` pushes a table with a
+  carcass piece on it, a rack with two things on it, a rib, both new casings, a three-layer pile on one of
+  them and a stone that pile pushes, with a single layer on that stone, two blocks with a Mechanical
+  Piston, and checks they are set down whole with nothing dropped.
+  Not done: a pile right in front of a piston's head is not picked up, since Create's piston makes that
+  exception for its own carpets only (as for a torch there): a single layer is broken by the head,
+  dropping its bones, and a thicker pile stops the piston. Tried in a game test, not guessed.
+- Tests (`DecorationTests`): `steelTablesJoinIntoARun`, `steelTableHoldsOneItem`,
+  `steelRackPlacesWhatYouLookAt`, `ribcageArchesShapeThemselves`, `bonePilesLayerUp`,
+  `gutChainRidesAChainConveyor` (a player aims at the chain and hangs a link, lengthens it past eight,
+  a client's copy gets the length from the synced data, it saves and loads, it rides the moving chain,
+  and hit it drops eight links), `gutChainIsHitBelowASectionLine` (a string hung across a section line,
+  aimed at from below the line the way the game aims: found, lengthened and taken down),
+  `gutChainGlidesOnClients` (a client's copy fed a position a tick moves at the chain's speed every tick,
+  and trailing behind a fast chain stays inside its culling box), `decorationRidesAContraption`,
+  `bloodyCladdingRecipes`; the recipes are in `recipesLoad`. The tests pick up what they drop before they
+  finish, to keep their ground tidy. The minion test `courierCarries` timed out once in an earlier run;
+  the cause is not known. It was not these tests' bones: from a neighbouring test's ground they land at
+  least 15 blocks from its courier's home along x or z, and it looks 10 blocks round. Looked at in the showcase, normal and bloodless (row E: a run of tables and a rack with
+  things on them, four rib arches, piles of each height, the casings beside Create's own, gut chains
+  riding a turning conveyor, and the bits that fly off each bloody block when broken, thrown in mid-air).
 
 ---
 

@@ -55,7 +55,21 @@ Everything below is in development builds only; the art is placeholder (see the 
 - Butcher's Hook: a wall hook to hang a piece on; a fresh piece drips blood onto the floor below
   until it runs dry.
 - Bloody Casing: andesite casing filled with blood, joining up like Create's casings.
-- Gut Chain: a string of guts hung like a chain (three offal make three).
+- Gut Chain: a string of guts hung like a chain (three offal make three). Used on a Create chain
+  conveyor's chain it hangs there and rides the chain round, swinging as it goes; use more on it to
+  lengthen it (up to eight links), hit it to take it down.
+- Steel Table: morgue table in cold steel. Tables side by side join into one run, with legs only where
+  it ends or turns; each holds one item, any item (a carcass piece lies on its back). Funnels and hoppers
+  load it.
+- Steel Rack: steel shelves, two shelves of two places; right-click its front to put the held item on
+  the place you look at, an empty hand takes it back. Funnels and hoppers fill it.
+- Ribcage Arch: segments of giant rib that shape themselves by their neighbours (straight in a stack,
+  bending in at the top, level across the crown), so stacks and spans build the inside of a ribcage. Wet
+  red joints; bleached bone in bloodless mode.
+- Bone Pile: bones heaped in layers like snow; use one on a pile to add a layer, two bones back a layer.
+- Bloody Brass Casing and Bloody Copper Casing: Create's brass and copper casing filled with blood, as
+  the Bloody Casing.
+- All of these ride Create contraptions, keeping what they hold.
 
 ### The body
 
@@ -162,7 +176,8 @@ Everything below is in development builds only; the art is placeholder (see the 
 ### Presentation
 
 - Bloodless mode (a client setting, or the `bloodandbonesBloodless` game rule for everyone): no
-  blood drops or stains, skinned carcasses pale, the hook in a carcass and the machines clean, blood
+  blood drops or stains, skinned carcasses pale, the hook in a carcass and the machines clean (and
+  the bits that fly off them when broken), blood
   a muddy brown, the Gut Chain plain cord, and names and descriptions reworded (Blood Steel reads as
   Essence Steel, the Bleeding Rack as the Draining Rack).
 - The mod's own sounds with subtitles ("Carcass thuds", "Bone snaps", "Blade falls"...), playing

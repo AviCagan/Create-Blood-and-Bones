@@ -1,0 +1,7 @@
+{
+  "parent": "bloodandbones:block/ribcage_arch_curve",
+  "display": {
+    "gui": {"rotation": [20, 120, 0], "translation": [1, 0, 0], "scale": [0.95, 0.95, 0.95]},
+    "fixed": {"rotation": [0, 90, 0], "scale": [0.8, 0.8, 0.8]}
+  }
+}

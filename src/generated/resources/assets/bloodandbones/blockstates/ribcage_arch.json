@@ -1,0 +1,49 @@
+{
+  "variants": {
+    "facing=east,shape=curve": {
+      "model": "bloodandbones:block/ribcage_arch_curve",
+      "y": 90
+    },
+    "facing=east,shape=straight": {
+      "model": "bloodandbones:block/ribcage_arch_straight",
+      "y": 90
+    },
+    "facing=east,shape=top": {
+      "model": "bloodandbones:block/ribcage_arch_top",
+      "y": 90
+    },
+    "facing=north,shape=curve": {
+      "model": "bloodandbones:block/ribcage_arch_curve"
+    },
+    "facing=north,shape=straight": {
+      "model": "bloodandbones:block/ribcage_arch_straight"
+    },
+    "facing=north,shape=top": {
+      "model": "bloodandbones:block/ribcage_arch_top"
+    },
+    "facing=south,shape=curve": {
+      "model": "bloodandbones:block/ribcage_arch_curve",
+      "y": 180
+    },
+    "facing=south,shape=straight": {
+      "model": "bloodandbones:block/ribcage_arch_straight",
+      "y": 180
+    },
+    "facing=south,shape=top": {
+      "model": "bloodandbones:block/ribcage_arch_top",
+      "y": 180
+    },
+    "facing=west,shape=curve": {
+      "model": "bloodandbones:block/ribcage_arch_curve",
+      "y": 270
+    },
+    "facing=west,shape=straight": {
+      "model": "bloodandbones:block/ribcage_arch_straight",
+      "y": 270
+    },
+    "facing=west,shape=top": {
+      "model": "bloodandbones:block/ribcage_arch_top",
+      "y": 270
+    }
+  }
+}
