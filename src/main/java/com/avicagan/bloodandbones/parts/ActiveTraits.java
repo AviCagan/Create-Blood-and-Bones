@@ -21,7 +21,7 @@ import java.util.WeakHashMap;
 
 /**
  * The traits working on one creature now (docs/PARTS-AND-TRAITS.md section 5.1): from the carcass armour it
- * wears (and, later, a minion's fitted parts). The same trait from several pieces counts once at its highest
+ * wears, and on a flesh minion the hide traits of the mobs it is built of (section 6.6). The same trait from several pieces counts once at its highest
  * level, unless it sums; a full set of one mob adds that mob's bonus and drawback. Built when equipment
  * changes or data reloads, never every tick.
  */
@@ -93,7 +93,12 @@ public final class ActiveTraits {
         return cached == null ? NONE : cached;
     }
 
-    /** Work out the creature's traits from what it wears, and put their attribute changes on it. */
+    /** Where a trait's effects are working: on a minion, or in armour someone wears. */
+    public static String context(LivingEntity host) {
+        return host instanceof com.avicagan.bloodandbones.minion.MinionEntity ? "minion" : "armour";
+    }
+
+    /** Work out the creature's traits from what it wears (a flesh minion, the hides it keeps), and put their attribute changes on it. */
     public static ActiveTraits rebuild(LivingEntity host) {
         PartsData.Store store = PartsData.of(host.level());
         ActiveTraits old = CACHE.remove(host);
@@ -121,6 +126,17 @@ public final class ActiveTraits {
                 add(store, levels, t);
             }
         }
+        if (host instanceof com.avicagan.bloodandbones.minion.MinionEntity minion) {
+            // flesh keeps each different mob's hide traits, up to three; brass none
+            for (ResourceLocation hide : minion.hides()) {
+                for (TraitList.Resolved t : store.resolve(hide, false).hide()) {
+                    Trait trait = store.trait(t.id());
+                    if (trait == null || trait.contexts().contains("minion")) {
+                        add(store, levels, t);
+                    }
+                }
+            }
+        }
         Optional<ResolvedMob.FullSet> set = Optional.empty();
         if (pure && pieces == ARMOUR.length && mob != null) {
             set = store.resolve(mob, false).fullSet();
@@ -141,7 +157,7 @@ public final class ActiveTraits {
             if (trait != null) {
                 entries.add(new Entry(id, trait, Math.min(level, Math.max(1, trait.maxLevel())), fromSet.getOrDefault(id, false)));
             } else if (!host.level().isClientSide) {
-                BloodAndBones.LOGGER.warn("Carcass armour names trait {}, which is not loaded", id);
+                BloodAndBones.LOGGER.warn("Carcass armour or a minion's hide names trait {}, which is not loaded", id);
             }
         });
         ActiveTraits built = new ActiveTraits(List.copyOf(entries), store.generation(), set, set.isPresent() ? mob : null);
@@ -173,7 +189,7 @@ public final class ActiveTraits {
             List<TraitEffect> effects = entry.trait().effects();
             for (int i = 0; i < effects.size(); i++) {
                 TraitEffect effect = effects.get(i);
-                if (effect.trigger() != Trigger.PASSIVE || !(effect.effect() instanceof TraitEffects.AttributeEffect attribute) || !effect.appliesIn("armour")) {
+                if (effect.trigger() != Trigger.PASSIVE || !(effect.effect() instanceof TraitEffects.AttributeEffect attribute) || !effect.appliesIn(context(host))) {
                     continue;
                 }
                 if (effect.requirements().isPresent()) {

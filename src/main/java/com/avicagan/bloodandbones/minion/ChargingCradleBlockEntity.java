@@ -125,6 +125,19 @@ public class ChargingCradleBlockEntity extends KineticBlockEntity {
         return n;
     }
 
+    /** Whether it can swap a canister in now: turning fast enough, a full one in it, and a place for the empty. */
+    public boolean canServe() {
+        if (Math.abs(getSpeed()) < MIN_RPM || fullCanisters() == 0) {
+            return false;
+        }
+        for (int i = FULL; i < SHEETS; i++) {
+            if (inventory.getStackInSlot(i).isEmpty()) {
+                return true;
+            }
+        }
+        return false;
+    }
+
     @Override
     public void initialize() {
         super.initialize();
@@ -147,6 +160,11 @@ public class ChargingCradleBlockEntity extends KineticBlockEntity {
     /** Every cradle in this level now. */
     public static Set<BlockPos> all(Level level) {
         return CRADLES.getOrDefault(level.dimension(), Set.of());
+    }
+
+    /** Forget every cradle (the server stopped: chunks are saved, not broken, so none took itself off). */
+    public static void clear() {
+        CRADLES.clear();
     }
 
     @Override

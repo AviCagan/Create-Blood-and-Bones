@@ -124,6 +124,7 @@ public class BBItems {
 
     public static final ItemEntry<com.avicagan.bloodandbones.minion.DormantMinionItem> DORMANT_MINION = BloodAndBones.REGISTRATE
             .item("dormant_minion", com.avicagan.bloodandbones.minion.DormantMinionItem::new)
+            .model(NonNullBiConsumer.noop()) // by hand, with its bloodless look (assets/bloodandbones/models/item)
             .removeTab(BBCreativeTabs.MAIN.getKey())
             .lang("Dormant Minion")
             .register();

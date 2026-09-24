@@ -25,13 +25,13 @@ public final class BBClientSetup {
     public static void onClientSetup(FMLClientSetupEvent event) {
         net.createmod.ponder.foundation.PonderIndex.addPlugin(new com.avicagan.bloodandbones.client.ponder.BBPonderPlugin());
         event.enqueueWork(() -> {
-            // scraps show their part; scraps and carcass armour lose their gore in bloodless mode
+            // scraps show their part; scraps, carcass armour and a folded minion lose their gore in bloodless mode
             ItemProperties.register(BBItems.SCRAPS.get(), BloodAndBones.asResource("part"), (stack, level, entity, seed) -> {
                 com.avicagan.bloodandbones.parts.Source source = com.avicagan.bloodandbones.parts.ScrapsItem.source(stack);
                 return source == null ? 0.25F : java.util.List.of("head", "torso", "arm", "leg", "tail").indexOf(source.part()) * 0.25F;
             });
             for (net.minecraft.world.item.Item item : java.util.List.of(BBItems.SCRAPS.get(), BBItems.CARCASS_HELMET.get(), BBItems.CARCASS_CHESTPLATE.get(),
-                    BBItems.CARCASS_LEGGINGS.get(), BBItems.CARCASS_BOOTS.get())) {
+                    BBItems.CARCASS_LEGGINGS.get(), BBItems.CARCASS_BOOTS.get(), BBItems.DORMANT_MINION.get())) {
                 ItemProperties.register(item, BloodAndBones.asResource("bloodless"), (stack, level, entity, seed) -> com.avicagan.bloodandbones.config.BBClientConfig.bloodless() ? 1.0F : 0.0F);
             }
             ItemProperties.register(BBItems.MEAT_HOOK.get(), BloodAndBones.asResource("dragging"),

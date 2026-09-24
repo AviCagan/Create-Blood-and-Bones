@@ -142,7 +142,7 @@ public final class TraitEvents {
             List<TraitEffect> effects = entry.trait().effects();
             for (int i = 0; i < effects.size(); i++) {
                 TraitEffect effect = effects.get(i);
-                if (!effect.appliesIn("armour")) {
+                if (!effect.appliesIn(ActiveTraits.context(host))) {
                     continue;
                 }
                 if (effect.trigger() == Trigger.PASSIVE && effect.effect() instanceof TraitEffects.MobEffectEffect mob && holds(host, entry, effect, null)) {
@@ -172,7 +172,7 @@ public final class TraitEvents {
             List<TraitEffect> effects = entry.trait().effects();
             for (int i = 0; i < effects.size(); i++) {
                 TraitEffect effect = effects.get(i);
-                if (!effect.appliesIn("armour")) {
+                if (!effect.appliesIn(ActiveTraits.context(victim))) {
                     continue;
                 }
                 if (effect.effect() instanceof TraitEffects.ImmunityEffect immunity && matches(source, immunity.damageTags()) && !immunity.damageTags().isEmpty()) {
@@ -195,7 +195,7 @@ public final class TraitEvents {
             for (ActiveTraits.Entry entry : ActiveTraits.peek(attacker).entries()) {
                 for (TraitEffect effect : entry.trait().effects()) {
                     if (effect.trigger() == Trigger.ATTACK && effect.effect() instanceof TraitEffects.DamageEffect damage && "out".equals(damage.direction())
-                            && effect.appliesIn("armour") && holds(attacker, entry, effect, source)) {
+                            && effect.appliesIn(ActiveTraits.context(attacker)) && holds(attacker, entry, effect, source)) {
                         multiplier *= damage.multiplier().calculate(entry.level());
                     }
                 }
@@ -240,7 +240,7 @@ public final class TraitEvents {
             List<TraitEffect> effects = entry.trait().effects();
             for (int i = 0; i < effects.size(); i++) {
                 TraitEffect effect = effects.get(i);
-                if (effect.trigger() != trigger || effect.effect() instanceof TraitEffects.DamageEffect || !effect.appliesIn("armour")
+                if (effect.trigger() != trigger || effect.effect() instanceof TraitEffects.DamageEffect || !effect.appliesIn(ActiveTraits.context(host))
                         || source != null && !filter(source, effect.filter())) {
                     continue;
                 }
@@ -277,7 +277,7 @@ public final class TraitEvents {
         LivingEntity host = event.getEntity();
         for (ActiveTraits.Entry entry : ActiveTraits.peek(host).entries()) {
             for (TraitEffect effect : entry.trait().effects()) {
-                if (effect.effect() instanceof TraitEffects.ImmunityEffect immunity && effect.appliesIn("armour")
+                if (effect.effect() instanceof TraitEffects.ImmunityEffect immunity && effect.appliesIn(ActiveTraits.context(host))
                         && immunity.mobEffects().contains(event.getEffectInstance().getEffect())) {
                     event.setResult(MobEffectEvent.Applicable.Result.DO_NOT_APPLY);
                     return;
@@ -290,7 +290,7 @@ public final class TraitEvents {
     public static void onBreathe(LivingBreatheEvent event) {
         for (ActiveTraits.Entry entry : ActiveTraits.peek(event.getEntity()).entries()) {
             for (TraitEffect effect : entry.trait().effects()) {
-                if (effect.effect() instanceof TraitEffects.ImmunityEffect immunity && immunity.breathe() && effect.appliesIn("armour")) {
+                if (effect.effect() instanceof TraitEffects.ImmunityEffect immunity && immunity.breathe() && effect.appliesIn(ActiveTraits.context(event.getEntity()))) {
                     event.setCanBreathe(true);
                     event.setRefillAirAmount(Math.max(event.getRefillAirAmount(), 4));
                     return;

@@ -235,7 +235,8 @@ public final class BodyRendering {
         if (limb == null || limb.isEmpty()) {
             return;
         }
-        ModelPart.Cube box = limb.getRandomCube(net.minecraft.util.RandomSource.create(0));
+        // a player's limb is one box: any pick is it
+        ModelPart.Cube box = limb.getRandomCube(PICK);
         float length = ragged ? RAGGED_STUMP : CLEAN_STUMP;
         float end = box.minY + length;
         poseStack.pushPose();
@@ -263,7 +264,12 @@ public final class BodyRendering {
         poseStack.popPose();
     }
 
-    private static final java.util.Map<String, ModelPart> STUMPS = new java.util.concurrent.ConcurrentHashMap<>();
+    private static final net.minecraft.util.RandomSource PICK = net.minecraft.util.RandomSource.createThreadSafe();
+
+    private record StumpKey(BodyPart part, float width, float length) {
+    }
+
+    private static final java.util.Map<StumpKey, ModelPart> STUMPS = new java.util.concurrent.ConcurrentHashMap<>();
 
     /**
      * A short box over the top of a limb, textured from the same place on the player skin as the limb (and its
@@ -271,7 +277,7 @@ public final class BodyRendering {
      */
     private static ModelPart stumpPart(BodyPart part, ModelPart.Cube box, float length) {
         float width = box.maxX - box.minX;
-        return STUMPS.computeIfAbsent(part + "/" + width + "/" + length, key -> {
+        return STUMPS.computeIfAbsent(new StumpKey(part, width, length), key -> {
             int[] uv = switch (part) {
                 case RIGHT_ARM -> new int[]{40, 16, 40, 32};
                 case LEFT_ARM -> new int[]{32, 48, 48, 48};

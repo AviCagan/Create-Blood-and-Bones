@@ -43,7 +43,7 @@ public class SurgeryTableRenderer extends SafeBlockEntityRenderer<SurgeryTableBl
         ms.scale(scale, scale, scale);
         ms.scale(-1.0F, -1.0F, 1.0F);
         ms.translate(0.0F, -1.501F, 0.0F);
-        StitchedBody.draw(layout, StitchedBody.Motion.STILL, true, -1, ms, buffer, light);
+        StitchedBody.draw(build, StitchedBody.Motion.STILL, true, -1, ms, buffer, light);
         ms.popPose();
     }
 }

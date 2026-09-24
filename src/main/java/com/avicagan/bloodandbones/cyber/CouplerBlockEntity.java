@@ -30,16 +30,25 @@ public class CouplerBlockEntity extends GeneratingKineticBlockEntity {
     void drive(net.minecraft.world.entity.Entity driver, int rpm) {
         boolean changed = this.rpm != rpm || !driver.getUUID().equals(owner);
         owner = driver.getUUID();
-        ownerId = driver.getId();
         if (changed) {
             this.rpm = rpm;
+            ownerId = driver.getId();
             updateGeneratedRotation();
+            sendData();
+        } else if (ownerId != driver.getId()) {
+            // the same owner under a new entity id (it and this were unloaded and loaded again): clients draw the shaft to it
+            ownerId = driver.getId();
             sendData();
         }
     }
 
     public int ownerId() {
         return ownerId;
+    }
+
+    @Nullable
+    public UUID owner() {
+        return owner;
     }
 
     @Override

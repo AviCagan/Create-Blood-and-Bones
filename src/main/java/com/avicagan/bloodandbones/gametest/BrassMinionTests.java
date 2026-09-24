@@ -132,17 +132,17 @@ public class BrassMinionTests {
         helper.succeed();
     }
 
-    /** Brass drains a quarter as fast as flesh doing the same. */
-    @GameTest(template = "empty", timeoutTicks = 300)
+    /** Brass drains a quarter as fast as flesh doing the same: a minute idle, long enough that the drain's 0.05 mB steps do not hide it. */
+    @GameTest(template = "empty", timeoutTicks = 1300)
     public static void brassDrainsAQuarter(GameTestHelper helper) {
         MinionEntity brass = minion(helper, new BlockPos(2, 2, 2), brassCow(), 500.0F);
         MinionEntity flesh = minion(helper, new BlockPos(7, 2, 7), fleshCow(), 500.0F);
         brass.setNoAi(true);
         flesh.setNoAi(true);
-        helper.runAfterDelay(280, () -> {
+        helper.runAfterDelay(1200, () -> {
             float brassUsed = 500.0F - brass.power();
             float fleshUsed = 500.0F - flesh.power();
-            if (!(fleshUsed > 0.0F) || Math.abs(brassUsed - fleshUsed * MinionEntity.BRASS_DRAIN) > fleshUsed * 0.2F + 0.06F) {
+            if (!(fleshUsed > 2.0F) || !(brassUsed > 0.0F) || Math.abs(brassUsed / fleshUsed - MinionEntity.BRASS_DRAIN) > 0.05F) {
                 helper.fail("Brass should use a quarter of what flesh uses: " + brassUsed + " vs " + fleshUsed);
                 return;
             }
@@ -168,6 +168,52 @@ public class BrassMinionTests {
             helper.assertTrue(!minion.poweredDown() && minion.power() >= MinionStats.CANISTER - 1.0F, "the cradle has not swapped a canister in yet");
             helper.assertTrue(cradle.fullCanisters() == 0 && cradle.inventory.getStackInSlot(ChargingCradleBlockEntity.FULL).is(BBItems.EMPTY_SOUL_CANISTER.get()),
                     "the empty should stay in the cradle");
+        });
+    }
+
+    /** A cradle turning at 64 RPM with a full canister in it, stocked by hand. */
+    private static ChargingCradleBlockEntity turningCradle(GameTestHelper helper, BlockPos at) {
+        BlockPos motor = at.below();
+        helper.setBlock(motor, AllBlocks.CREATIVE_MOTOR.getDefaultState().setValue(DirectionalKineticBlock.FACING, Direction.UP));
+        helper.setBlock(at, BBBlocks.CHARGING_CRADLE.getDefaultState());
+        if (helper.getLevel().getBlockEntity(helper.absolutePos(motor)) instanceof CreativeMotorBlockEntity creative) {
+            creative.generatedSpeed.setValue(64);
+        }
+        ChargingCradleBlockEntity cradle = (ChargingCradleBlockEntity) helper.getBlockEntity(at);
+        cradle.inventory.insertItem(0, new ItemStack(BBItems.SOUL_CANISTER.get()), false);
+        return cradle;
+    }
+
+    /** Low on soul blood and awake, a brass minion walks to a turning, stocked cradle across the room by itself, and is charged. */
+    @GameTest(template = "empty", timeoutTicks = 400)
+    public static void lowBrassWalksToTheCradle(GameTestHelper helper) {
+        ChargingCradleBlockEntity cradle = turningCradle(helper, new BlockPos(2, 2, 5));
+        MinionEntity minion = minion(helper, new BlockPos(8, 2, 5), brassCow(), 200.0F);
+        helper.succeedWhen(() -> {
+            helper.assertTrue(minion.power() >= MinionStats.CANISTER - 1.0F && cradle.fullCanisters() == 0,
+                    "it has not walked to the cradle and been charged yet (at " + minion.position() + ", " + minion.power() + " mB)");
+        });
+    }
+
+    /** A cradle walled in where it cannot get to is no use: it never sets off for it, and the canister stays. */
+    @GameTest(template = "empty", timeoutTicks = 300)
+    public static void walledInCradleIsNoUse(GameTestHelper helper) {
+        BlockPos at = new BlockPos(2, 2, 5);
+        ChargingCradleBlockEntity cradle = turningCradle(helper, at);
+        for (Direction side : Direction.Plane.HORIZONTAL) {
+            for (int up = 0; up < 3; up++) {
+                helper.setBlock(at.relative(side).above(up), net.minecraft.world.level.block.Blocks.GLASS);
+                helper.setBlock(at.relative(side).relative(side.getClockWise()).above(up), net.minecraft.world.level.block.Blocks.GLASS);
+            }
+        }
+        helper.setBlock(at.above(), net.minecraft.world.level.block.Blocks.GLASS);
+        MinionEntity minion = minion(helper, new BlockPos(8, 2, 5), brassCow(), 200.0F);
+        helper.runAfterDelay(250, () -> {
+            if (minion.power() > 200.0F || cradle.fullCanisters() != 1) {
+                helper.fail("It should not be charged by a cradle it cannot reach (" + minion.power() + " mB, at " + minion.position() + ")");
+                return;
+            }
+            helper.succeed();
         });
     }
 
@@ -239,6 +285,39 @@ public class BrassMinionTests {
         });
     }
 
+    /**
+     * Flesh keeps the hide traits of the mobs it is built of (a cow's thick hide: armour), up to three different mobs;
+     * brass keeps none.
+     */
+    @GameTest(template = "empty", timeoutTicks = 40)
+    public static void fleshKeepsItsHidesTraits(GameTestHelper helper) {
+        MinionEntity flesh = minion(helper, new BlockPos(2, 2, 2), fleshCow(), 500.0F);
+        MinionEntity brass = minion(helper, new BlockPos(7, 2, 7), brassCow(), 500.0F);
+        MinionBuild mixed = MinionBuild.of(ref("cow", "body", false)).with("head", ref("pig", "head", false))
+                .with("right_front_leg", ref("rabbit", "right_front_leg", false)).with("left_front_leg", ref("horse", "left_front_leg", false))
+                .with("right_hind_leg", ref("sheep", "right_hind_leg", false));
+        MinionEntity many = minion(helper, new BlockPos(2, 2, 7), mixed, 500.0F);
+        ResourceLocation thickHide = BloodAndBones.asResource("thick_hide");
+        helper.runAfterDelay(25, () -> {
+            if (com.avicagan.bloodandbones.parts.ActiveTraits.of(flesh).level(thickHide) < 1
+                    || !(flesh.getAttributeValue(net.minecraft.world.entity.ai.attributes.Attributes.ARMOR) >= 1.0)) {
+                helper.fail("A flesh cow should keep the cow's thick hide: " + com.avicagan.bloodandbones.parts.ActiveTraits.of(flesh).entries());
+                return;
+            }
+            if (!com.avicagan.bloodandbones.parts.ActiveTraits.of(brass).isEmpty()
+                    || brass.getAttributeValue(net.minecraft.world.entity.ai.attributes.Attributes.ARMOR) != 0.0) {
+                helper.fail("Brass keeps no hide traits");
+                return;
+            }
+            if (!many.hides().equals(List.of(ResourceLocation.withDefaultNamespace("cow"), ResourceLocation.withDefaultNamespace("pig"),
+                    ResourceLocation.withDefaultNamespace("rabbit")))) {
+                helper.fail("Flesh keeps the hides of three different mobs at most, torso first: " + many.hides());
+                return;
+            }
+            helper.succeed();
+        });
+    }
+
     private static MinionEntity withModule(GameTestHelper helper, BlockPos pos, com.avicagan.bloodandbones.cyber.Module module) {
         MinionEntity minion = minion(helper, pos, brassCow(), 800.0F);
         minion.setNoAi(true);
@@ -300,6 +379,26 @@ public class BrassMinionTests {
         withModule(helper, new BlockPos(3, 2, 3), com.avicagan.bloodandbones.cyber.Module.ROTATIONAL_COUPLER);
         helper.succeedWhen(() -> helper.assertTrue(helper.getBlockEntity(shaft) instanceof com.simibubi.create.content.kinetics.base.KineticBlockEntity kinetic
                 && Math.abs(kinetic.getSpeed()) > 0.0F, "the shaft is not turning yet"));
+    }
+
+    /**
+     * A minion's coupler goes only into air: standing on a snow layer by a shaft end it does not couple, which would
+     * leave the snow gone (as air) when it let go.
+     */
+    @GameTest(template = "empty", timeoutTicks = 100)
+    public static void couplerLeavesSnowAlone(GameTestHelper helper) {
+        BlockPos shaft = new BlockPos(4, 2, 3);
+        BlockPos feet = new BlockPos(3, 2, 3);
+        helper.setBlock(shaft, AllBlocks.SHAFT.getDefaultState().setValue(net.minecraft.world.level.block.RotatedPillarBlock.AXIS, Direction.Axis.X));
+        helper.setBlock(feet, net.minecraft.world.level.block.Blocks.SNOW);
+        MinionEntity minion = withModule(helper, feet, com.avicagan.bloodandbones.cyber.Module.ROTATIONAL_COUPLER);
+        helper.runAfterDelay(60, () -> {
+            if (!helper.getBlockState(feet).is(net.minecraft.world.level.block.Blocks.SNOW) || com.avicagan.bloodandbones.cyber.Coupler.coupled(minion)) {
+                helper.fail("It should leave the snow where it is, not couple over it: " + helper.getBlockState(feet));
+                return;
+            }
+            helper.succeed();
+        });
     }
 
     /** An Analytical Lens sees a zombie through a wall; without one it does not. */

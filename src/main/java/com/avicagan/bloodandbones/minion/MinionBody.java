@@ -144,6 +144,29 @@ public final class MinionBody {
         return new Layout(pieces, sockets, lift, min, max);
     }
 
+    /**
+     * The middle of the top of its torso, where a saddle sits and a rider is seated: in blocks, in the frame the
+     * renderer turns with the body (x and y back the right way up), standing. The same on both sides.
+     */
+    public static Vector3f saddlePoint(Layout layout) {
+        for (Placement placement : layout.pieces()) {
+            if (placement.socket() == null) {
+                Vector3f min = new Vector3f(Float.MAX_VALUE);
+                Vector3f max = new Vector3f(-Float.MAX_VALUE);
+                for (Vector3f c : corners(placement.pose(), placement.bone())) {
+                    min.min(c);
+                    max.max(c);
+                }
+                float centreX = (layout.min().x + layout.max().x) / 2.0F;
+                float centreZ = (layout.min().z + layout.max().z) / 2.0F;
+                // model space is drawn flipped in x and y: back to the entity's frame
+                return new Vector3f(-((min.x + max.x) / 2.0F - centreX) / 16.0F, (GROUND - (min.y + layout.lift())) / 16.0F,
+                        ((min.z + max.z) / 2.0F - centreZ) / 16.0F);
+            }
+        }
+        return new Vector3f(0.0F, layout.height(), 0.0F);
+    }
+
     /** The eight corners of a bone's box, placed. */
     public static Vector3f[] corners(Matrix4f pose, Bone bone) {
         Vector3f lo = bone.boxMin();

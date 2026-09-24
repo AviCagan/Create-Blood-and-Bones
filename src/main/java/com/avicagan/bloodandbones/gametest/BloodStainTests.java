@@ -288,6 +288,8 @@ public class BloodStainTests {
                 {"_Bloodless_ mode keeps its name", "_Bloodless_ mode keeps its name"},
                 {"Create: Blood & Bones", "Create: Blood & Bones"},
                 {"A _bloody_ blade: blood-soaked meat bleeds, and bled out", "A _stained_ blade: essence-soaked meat drains, and drained out"},
+                {"Dormant Minion", "Dormant Construct"},
+                {"Stitch a minion together; stitched minions", "Rivet a construct together; riveted constructs"},
         };
         for (String[] c : cases) {
             String out = com.avicagan.bloodandbones.config.BloodlessWords.soften(c[0]);

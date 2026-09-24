@@ -50,6 +50,8 @@ public final class MinionModules {
                         Vec3 pull = at.subtract(item.position());
                         if (pull.lengthSqr() > 1.0) {
                             item.setDeltaMovement(item.getDeltaMovement().scale(0.8).add(pull.normalize().scale(0.12)));
+                            // sent now, not at the item's next once-a-second update, so it glides on every client too
+                            item.hurtMarked = true;
                         }
                     }
                 }
@@ -71,12 +73,13 @@ public final class MinionModules {
     }
 
     /**
-     * Standing still beside the end of a machine's shaft (at its feet or at its middle), it couples into it; moving off,
-     * it lets go.
+     * Standing still beside the end of a machine's shaft (at its feet or at its middle), it couples into it; moving off
+     * (or ridden on), it lets go. Its coupler goes only into air (never over water, snow or grass, which letting go would
+     * leave as air) or where its own already is, never into someone else's.
      */
     private static void couple(MinionEntity minion) {
         Level level = minion.level();
-        if (minion.getDeltaMovement().horizontalDistanceSqr() > 1.0E-3) {
+        if (minion.getDeltaMovement().horizontalDistanceSqr() > 1.0E-3 || minion.steered()) {
             Coupler.release(minion);
             return;
         }
@@ -84,7 +87,7 @@ public final class MinionModules {
         for (BlockPos base : List.of(feet, BlockPos.containing(minion.getX(), minion.getY() + minion.getBbHeight() * 0.5, minion.getZ()))) {
             BlockState here = level.getBlockState(base);
             boolean ours = here.getBlock() instanceof CouplerBlock && Coupler.owns(minion.getUUID(), level, base);
-            if (!here.canBeReplaced() && !ours) {
+            if (!here.isAir() && !ours) {
                 continue;
             }
             for (Direction side : Direction.Plane.HORIZONTAL) {

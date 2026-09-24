@@ -77,14 +77,22 @@ public class SurgeonTests {
 
     /**
      * A Cleaver on the table does nothing to a player's arm with no surgeon there, nor with one out of blood, nor
-     * with one across the room; with one awake beside the table, the arm comes off and leaves a ragged stump.
+     * with one across the room; nor does a prosthetic swapped straight in for it. With a surgeon awake beside the
+     * table, the arm comes off and leaves a ragged stump.
      */
     @GameTest(template = "empty", timeoutTicks = 20)
     public static void amputationNeedsSurgeon(GameTestHelper helper) {
         ServerLevel level = helper.getLevel();
         SurgeryTableBlockEntity table = table(helper, new BlockPos(3, 2, 3));
-        table.put(new ItemStack(BBItems.CLEAVER.get()));
         Player player = helper.makeMockPlayer(GameType.SURVIVAL);
+        table.put(new ItemStack(BBItems.HOOK_HAND.get()));
+        if (Surgery.operate(level, player, table, BodyPart.RIGHT_ARM) != Surgery.Action.NONE || BodyEffects.body(player).state(BodyPart.RIGHT_ARM) != Body.State.NATURAL
+                || !table.item().is(BBItems.HOOK_HAND.get())) {
+            helper.fail("With no surgeon a Hook Hand should not be swapped in for the arm: that cuts flesh too");
+            return;
+        }
+        table.take();
+        table.put(new ItemStack(BBItems.CLEAVER.get()));
         if (Surgery.operate(level, player, table, BodyPart.LEFT_ARM) != Surgery.Action.NONE || BodyEffects.body(player).state(BodyPart.LEFT_ARM) != Body.State.NATURAL) {
             helper.fail("With no surgeon the arm should stay");
             return;
@@ -115,8 +123,9 @@ public class SurgeonTests {
     }
 
     /**
-     * Fitting into a ragged stump takes a bucket of blood as well: without one nothing happens; with one it goes on
-     * and the bucket comes back empty; the stump is dressed, so taking the implant out and fitting again is free.
+     * Fitting anything but a crude prosthetic into a ragged stump takes a bucket of blood as well: without one nothing
+     * happens; with one it goes on and the bucket comes back empty; the stump is dressed, so taking the implant out and
+     * fitting again is free. Putting the limb itself back into a ragged stump costs the same.
      */
     @GameTest(template = "empty", timeoutTicks = 20)
     public static void raggedStumpCostsBlood(GameTestHelper helper) {
@@ -124,9 +133,9 @@ public class SurgeonTests {
         SurgeryTableBlockEntity table = table(helper, new BlockPos(3, 2, 3));
         Player player = helper.makeMockPlayer(GameType.SURVIVAL);
         BodyEffects.body(player).lose(BodyPart.RIGHT_ARM, true);
-        table.put(new ItemStack(BBItems.HOOK_HAND.get()));
-        if (Surgery.operate(level, player, table, BodyPart.RIGHT_ARM) != Surgery.Action.NONE || !table.item().is(BBItems.HOOK_HAND.get())) {
-            helper.fail("With no blood the Hook Hand should not go into a ragged stump");
+        table.put(new ItemStack(BBItems.FLESH_ARM.get()));
+        if (Surgery.operate(level, player, table, BodyPart.RIGHT_ARM) != Surgery.Action.NONE || !table.item().is(BBItems.FLESH_ARM.get())) {
+            helper.fail("With no blood a Flesh Arm should not go into a ragged stump");
             return;
         }
         player.getInventory().add(new ItemStack(BBFluids.BLOOD.getBucket().get()));
@@ -139,10 +148,22 @@ public class SurgeonTests {
             helper.fail("Taken out again, the stump should be dressed, not ragged");
             return;
         }
-        ItemStack hook = player.getInventory().items.stream().filter(s -> s.is(BBItems.HOOK_HAND.get())).findFirst().orElseThrow();
-        table.put(hook.split(1));
+        ItemStack arm = player.getInventory().items.stream().filter(s -> s.is(BBItems.FLESH_ARM.get())).findFirst().orElseThrow();
+        table.put(arm.split(1));
         if (Surgery.operate(level, player, table, BodyPart.RIGHT_ARM) != Surgery.Action.FIT) {
-            helper.fail("A dressed stump takes the Hook Hand with no blood");
+            helper.fail("A dressed stump takes the Flesh Arm with no blood");
+            return;
+        }
+        BodyEffects.body(player).lose(BodyPart.LEFT_ARM, true);
+        table.put(BBItems.partItem(BodyPart.Kind.ARM).of(player));
+        if (Surgery.operate(level, player, table, BodyPart.LEFT_ARM) != Surgery.Action.NONE || BodyEffects.body(player).state(BodyPart.LEFT_ARM) != Body.State.MISSING) {
+            helper.fail("With no blood the arm should not go back into a ragged stump");
+            return;
+        }
+        player.getInventory().add(new ItemStack(BBFluids.BLOOD.getBucket().get()));
+        if (Surgery.operate(level, player, table, BodyPart.LEFT_ARM) != Surgery.Action.REATTACH || count(player, BBFluids.BLOOD.getBucket().get()) != 0
+                || BodyEffects.body(player).state(BodyPart.LEFT_ARM) != Body.State.NATURAL) {
+            helper.fail("With a bucket of blood the arm should go back on, the bucket used");
             return;
         }
         helper.succeed();
@@ -158,7 +179,7 @@ public class SurgeonTests {
         com.avicagan.bloodandbones.backtank.FluidBacktankItem.setFluid(tank, new net.neoforged.neoforge.fluids.FluidStack(BBFluids.blood(), 1500));
         player.setItemSlot(EquipmentSlot.CHEST, tank);
         BodyEffects.body(player).lose(BodyPart.LEFT_LEG, true);
-        table.put(new ItemStack(BBItems.PEG_LEG.get()));
+        table.put(new ItemStack(BBItems.SINEW_LEG.get()));
         if (Surgery.operate(level, player, table, BodyPart.LEFT_LEG) != Surgery.Action.FIT) {
             helper.fail("The backtank's blood should pay for the ragged stump");
             return;
@@ -172,8 +193,9 @@ public class SurgeonTests {
     }
 
     /**
-     * The safety floor: a crude prosthetic goes into a clean empty slot with no surgeon and no blood; and swapping an
-     * implant straight in for flesh (with the surgeon) leaves no stump at all.
+     * The safety floor: a crude prosthetic goes into a clean empty slot with no surgeon and no blood, and into a
+     * surgeon's ragged stump with no blood too (dressing it); and swapping an implant straight in for flesh (with the
+     * surgeon) leaves no stump at all.
      */
     @GameTest(template = "empty", timeoutTicks = 20)
     public static void safetyFloorNeverNeedsSurgeon(GameTestHelper helper) {
@@ -184,6 +206,12 @@ public class SurgeonTests {
         table.put(new ItemStack(BBItems.PEG_LEG.get()));
         if (Surgery.operate(level, player, table, BodyPart.LEFT_LEG) != Surgery.Action.FIT) {
             helper.fail("A Peg Leg should always go into a clean empty slot, surgeon or not");
+            return;
+        }
+        BodyEffects.body(player).lose(BodyPart.LEFT_ARM, true);
+        table.put(new ItemStack(BBItems.HOOK_HAND.get()));
+        if (Surgery.operate(level, player, table, BodyPart.LEFT_ARM) != Surgery.Action.FIT || BodyEffects.body(player).ragged(BodyPart.LEFT_ARM)) {
+            helper.fail("A Hook Hand should go into a ragged stump with no blood, dressing it");
             return;
         }
         MinionTests.surgeon(helper, new BlockPos(4, 2, 4));
@@ -207,5 +235,36 @@ public class SurgeonTests {
         Vec3 centre = Vec3.atCenterOf(helper.absolutePos(tableAt));
         helper.succeedWhen(() -> helper.assertTrue(surgeon.distanceToSqr(centre) < Surgery.SURGEON_REACH * Surgery.SURGEON_REACH
                 && Surgery.surgeonAt(helper.getLevel(), helper.absolutePos(tableAt)) == surgeon, "the surgeon has not got back to its table yet"));
+    }
+
+    /**
+     * A surgeon folded up at one table and set down beside another, far off, takes the table beside it: it works from
+     * where it is set down, and its old table's far-off chunk is never looked at.
+     */
+    @GameTest(template = "empty", timeoutTicks = 300)
+    public static void unfoldedSurgeonTakesTheTableBesideIt(GameTestHelper helper) {
+        ServerLevel level = helper.getLevel();
+        BlockPos first = new BlockPos(1, 2, 1);
+        BlockPos second = new BlockPos(9, 2, 9);
+        table(helper, first);
+        table(helper, second);
+        MinionEntity surgeon = MinionTests.surgeon(helper, new BlockPos(2, 2, 2));
+        surgeon.setNoAi(false);
+        surgeon.setHome(helper.absolutePos(first));
+        surgeon.powerDown();
+        Player maker = helper.makeMockPlayer(GameType.SURVIVAL);
+        com.avicagan.bloodandbones.minion.DormantMinionItem.fold(surgeon, maker);
+        ItemStack folded = maker.getInventory().items.stream().filter(st -> st.is(BBItems.DORMANT_MINION.get())).findFirst().orElseThrow();
+        BlockPos floor = helper.absolutePos(new BlockPos(8, 1, 7));
+        folded.getItem().useOn(new net.minecraft.world.item.context.UseOnContext(level, maker, net.minecraft.world.InteractionHand.MAIN_HAND, folded,
+                new net.minecraft.world.phys.BlockHitResult(Vec3.atCenterOf(floor), net.minecraft.core.Direction.UP, floor, false)));
+        MinionEntity back = level.getEntitiesOfClass(MinionEntity.class, new net.minecraft.world.phys.AABB(floor).inflate(2)).stream().findFirst().orElse(null);
+        if (back == null) {
+            helper.fail("It should unfold");
+            return;
+        }
+        back.feed(500.0F);
+        helper.succeedWhen(() -> helper.assertTrue(back.home().equals(helper.absolutePos(second)),
+                "the surgeon has not taken the table beside it yet (home " + back.home() + ")"));
     }
 }

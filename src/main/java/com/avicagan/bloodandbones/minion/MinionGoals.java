@@ -41,12 +41,15 @@ public final class MinionGoals {
     private MinionGoals() {
     }
 
-    /** Who it fights: a companion or bodyguard what hurts it or its maker, and what its maker hits; a guard monsters near home. */
+    /**
+     * Who it fights: a companion or bodyguard what hurts it or its maker, and what its maker hits; a guard monsters near
+     * home. Never its maker (MinionEntity#canAttack), and a pacifist (no arm that hits) takes no target at all.
+     */
     static void targets(MinionEntity minion, GoalSelector targets) {
         targets.addGoal(1, new HurtByTargetGoal(minion) {
             @Override
             public boolean canUse() {
-                return minion.stats().mindless() == false && super.canUse();
+                return minion.stats().mindless() == false && minion.stats().fights() && super.canUse();
             }
         });
         targets.addGoal(2, new DefendMaker(minion));
@@ -54,9 +57,85 @@ public final class MinionGoals {
                 target -> target instanceof Enemy && !(target instanceof MinionEntity) && target.distanceToSqr(Vec3.atCenterOf(minion.home())) < 256.0) {
             @Override
             public boolean canUse() {
-                return minion.hasJob("guard") && super.canUse();
+                return minion.hasJob("guard") && minion.stats().fights() && super.canUse();
             }
         });
+    }
+
+    /**
+     * Whether its navigation can make a path from where it is: on the ground, in water, or (a flier) in the air. A
+     * walker in the air cannot, which is not the same as there being no way.
+     */
+    static boolean canPath(MinionEntity minion) {
+        return minion.onGround() || minion.isInLiquid() || minion.isNoGravity();
+    }
+
+    /**
+     * The way to a place a goal chose: a fresh path each second (not each tick: a path search is dear, and asking again
+     * while one is being followed costs nothing), and giving up when it gets nowhere: five seconds without moving a
+     * block (its path ran out short of the place, a door shut behind it, a climber could not get over).
+     */
+    static final class Approach {
+        private static final int REPATH = 20;
+        private static final int STALL = 100;
+        private int pathedAt;
+        private int movedAt;
+        private Vec3 from = Vec3.ZERO;
+
+        /** Setting out, or there already. */
+        void reset(MinionEntity minion) {
+            pathedAt = minion.tickCount - REPATH;
+            movedAt = minion.tickCount;
+            from = minion.position();
+        }
+
+        /** A step toward it; false once it is plain it cannot get there. */
+        boolean step(MinionEntity minion, BlockPos target, int accuracy, double speed) {
+            if (minion.position().distanceToSqr(from) > 1.0) {
+                from = minion.position();
+                movedAt = minion.tickCount;
+            } else if (minion.tickCount - movedAt > STALL) {
+                return false;
+            }
+            if (minion.tickCount - pathedAt >= REPATH) {
+                Path path = minion.getNavigation().createPath(target, accuracy);
+                // none in mid-hop or mid-jump: ask again shortly, keeping the path it has
+                pathedAt = path == null ? minion.tickCount - REPATH + 5 : minion.tickCount;
+                if (path != null) {
+                    minion.getNavigation().moveTo(path, speed);
+                }
+            }
+            return true;
+        }
+    }
+
+    /** Places a goal found it could not get to, forgotten every half minute (a wall may have come down since). */
+    static final class Unreachable {
+        private final List<BlockPos> places = new ArrayList<>();
+        private int forgotAt;
+
+        boolean contains(MinionEntity minion, BlockPos pos) {
+            if (minion.tickCount - forgotAt > 600) {
+                places.clear();
+                forgotAt = minion.tickCount;
+            }
+            return places.contains(pos);
+        }
+
+        void add(BlockPos pos) {
+            places.add(pos.immutable());
+        }
+    }
+
+    /** Whether it can reach this place by a path now: one that gets there, or (a climber) any at all, its own way going over. */
+    static boolean reaches(MinionEntity minion, BlockPos pos, int accuracy) {
+        Path path = minion.getNavigation().createPath(pos, accuracy);
+        return path != null && (path.canReach() || minion.stats().climbs());
+    }
+
+    /** Whether every block from here to there is loaded: a goal never reads a far-off place and so loads it. */
+    static boolean loaded(MinionEntity minion, BlockPos from, BlockPos to) {
+        return minion.level().hasChunksAt(from, to);
     }
 
     /** A companion or bodyguard goes for what hurts its maker, and what its maker goes for. */
@@ -73,7 +152,7 @@ public final class MinionGoals {
 
         @Override
         public boolean canUse() {
-            if (!(minion.hasJob("companion") || minion.hasJob("bodyguard")) || minion.stats().mindless()) {
+            if (!(minion.hasJob("companion") || minion.hasJob("bodyguard")) || minion.stats().mindless() || !minion.stats().fights()) {
                 return false;
             }
             Player maker = minion.maker();
@@ -115,9 +194,8 @@ public final class MinionGoals {
         private final MinionEntity minion;
         @Nullable
         private BlockPos trough;
-        private final List<BlockPos> unreachable = new ArrayList<>();
-        /** When it last forgot which troughs it could not reach (a wall may have come down since). */
-        private int forgotAt;
+        private final Unreachable unreachable = new Unreachable();
+        private final Approach approach = new Approach();
 
         public SeekBlood(MinionEntity minion) {
             this.minion = minion;
@@ -132,34 +210,25 @@ public final class MinionGoals {
 
         @Override
         public boolean canUse() {
-            // off the ground no path can be made, which is not the same as there being none
-            if (minion.cybernetic() || minion.powerShare() >= MinionEntity.HUNGRY || !minion.onGround() || minion.getRandom().nextInt(20) != 0) {
+            if (minion.cybernetic() || minion.powerShare() >= MinionEntity.HUNGRY || !canPath(minion) || minion.getRandom().nextInt(20) != 0) {
                 return false;
-            }
-            if (minion.tickCount - forgotAt > 600) {
-                unreachable.clear();
-                forgotAt = minion.tickCount;
             }
             trough = find();
             return trough != null;
         }
 
-        /** The nearest trough with blood in it that a path reaches. */
+        /** The nearest trough with blood in it that a path reaches (one right beside it through a wall does not count). */
         @Nullable
         private BlockPos find() {
             int radius = BBServerConfig.troughRadius();
             List<BlockPos> near = BloodTroughBlockEntity.all(minion.level()).stream()
-                    .filter(p -> p.distSqr(minion.blockPosition()) < (double) radius * radius && !unreachable.contains(p)
-                            && minion.level().getBlockEntity(p) instanceof BloodTroughBlockEntity t && t.amount() > 0)
+                    .filter(p -> p.distSqr(minion.blockPosition()) < (double) radius * radius && !unreachable.contains(minion, p)
+                            && minion.level().isLoaded(p) && minion.level().getBlockEntity(p) instanceof BloodTroughBlockEntity t && t.amount() > 0)
                     .sorted(Comparator.comparingDouble(p -> p.distSqr(minion.blockPosition()))).toList();
             for (BlockPos pos : near) {
-                if (minion.distanceToSqr(Vec3.atCenterOf(pos)) < reach(minion) * reach(minion)) {
-                    return pos;
-                }
-                Path path = minion.getNavigation().createPath(pos, accuracy(minion));
                 // a climber goes straight up and over what a walking path cannot (its navigation heads for the spot
                 // itself when the path runs out, as a spider's does)
-                if (path != null && (path.canReach() || minion.stats().climbs())) {
+                if (reaches(minion, pos, accuracy(minion))) {
                     return pos;
                 }
                 // it must walk there itself: a trough it cannot reach is no use to it
@@ -170,19 +239,13 @@ public final class MinionGoals {
 
         @Override
         public boolean canContinueToUse() {
-            return trough != null && minion.powerShare() < 0.98F && minion.level().getBlockEntity(trough) instanceof BloodTroughBlockEntity t
-                    && t.amount() > 0;
+            return trough != null && minion.powerShare() < 0.98F && minion.level().isLoaded(trough)
+                    && minion.level().getBlockEntity(trough) instanceof BloodTroughBlockEntity t && t.amount() > 0;
         }
 
         @Override
         public void start() {
-            moveTo();
-        }
-
-        private void moveTo() {
-            if (trough != null) {
-                minion.getNavigation().moveTo(minion.getNavigation().createPath(trough, accuracy(minion)), 1.1);
-            }
+            approach.reset(minion);
         }
 
         @Override
@@ -190,14 +253,17 @@ public final class MinionGoals {
             if (trough == null) {
                 return;
             }
-            if (minion.distanceToSqr(Vec3.atCenterOf(trough)) < reach(minion) * reach(minion)) {
+            if (minion.distanceToSqr(Vec3.atCenterOf(trough)) < reach(minion) * reach(minion) && overTheRim(minion, trough)) {
                 minion.getNavigation().stop();
                 minion.getLookControl().setLookAt(Vec3.atCenterOf(trough));
+                approach.reset(minion);
                 if (minion.tickCount % 20 == 0) {
                     drink(minion, trough);
                 }
-            } else if (minion.getNavigation().isDone() || minion.tickCount % 40 == 0) {
-                moveTo();
+            } else if (!approach.step(minion, trough, accuracy(minion), 1.1)) {
+                // it cannot get there after all: the next trough, if there is one
+                unreachable.add(trough);
+                trough = null;
             }
         }
 
@@ -228,6 +294,8 @@ public final class MinionGoals {
         private final MinionEntity minion;
         @Nullable
         private BlockPos cradle;
+        private final Unreachable unreachable = new Unreachable();
+        private final Approach approach = new Approach();
 
         public SeekCradle(MinionEntity minion) {
             this.minion = minion;
@@ -241,21 +309,37 @@ public final class MinionGoals {
 
         @Override
         public boolean canUse() {
-            if (!minion.cybernetic() || minion.powerShare() >= MinionEntity.HUNGRY || !minion.onGround() || minion.getRandom().nextInt(20) != 0) {
+            if (!minion.cybernetic() || minion.powerShare() >= MinionEntity.HUNGRY || !canPath(minion) || minion.getRandom().nextInt(20) != 0) {
                 return false;
             }
             int radius = BBServerConfig.troughRadius();
-            cradle = ChargingCradleBlockEntity.all(minion.level()).stream()
-                    .filter(p -> p.distSqr(minion.blockPosition()) < (double) radius * radius
-                            && minion.level().getBlockEntity(p) instanceof ChargingCradleBlockEntity c && c.fullCanisters() > 0)
-                    .min(Comparator.comparingDouble(p -> p.distSqr(minion.blockPosition()))).orElse(null);
+            List<BlockPos> near = ChargingCradleBlockEntity.all(minion.level()).stream()
+                    .filter(p -> p.distSqr(minion.blockPosition()) < (double) radius * radius && !unreachable.contains(minion, p) && serves(p))
+                    .sorted(Comparator.comparingDouble(p -> p.distSqr(minion.blockPosition()))).toList();
+            cradle = null;
+            for (BlockPos pos : near) {
+                if (reaches(minion, pos, accuracy(minion))) {
+                    cradle = pos;
+                    break;
+                }
+                unreachable.add(pos);
+            }
             return cradle != null;
+        }
+
+        /** A cradle that can swap one in now: turning, a full canister in it, room for the empty. */
+        private boolean serves(BlockPos pos) {
+            return minion.level().isLoaded(pos) && minion.level().getBlockEntity(pos) instanceof ChargingCradleBlockEntity c && c.canServe();
         }
 
         @Override
         public boolean canContinueToUse() {
-            return cradle != null && minion.powerShare() < MinionEntity.HUNGRY && minion.level().getBlockEntity(cradle) instanceof ChargingCradleBlockEntity c
-                    && c.fullCanisters() > 0;
+            return cradle != null && minion.powerShare() < MinionEntity.HUNGRY && serves(cradle);
+        }
+
+        @Override
+        public void start() {
+            approach.reset(minion);
         }
 
         @Override
@@ -267,8 +351,10 @@ public final class MinionGoals {
             if (minion.distanceToSqr(Vec3.atCenterOf(cradle)) < near * near) {
                 minion.getNavigation().stop();
                 minion.getLookControl().setLookAt(Vec3.atCenterOf(cradle));
-            } else if (minion.getNavigation().isDone() || minion.tickCount % 40 == 0) {
-                minion.getNavigation().moveTo(minion.getNavigation().createPath(cradle, 1), 1.1);
+                approach.reset(minion);
+            } else if (!approach.step(minion, cradle, 1, 1.1)) {
+                unreachable.add(cradle);
+                cradle = null;
             }
         }
 
@@ -290,18 +376,25 @@ public final class MinionGoals {
         }
     }
 
-    /** Powered down: a trough within reach of where it lies revives it. */
+    /** Powered down: a trough within reach of where it lies, and not behind a wall or a floor, revives it. */
     static void drinkNearby(MinionEntity minion) {
         if (minion.cybernetic()) {
             return;
         }
         double reach = reach(minion);
         for (BlockPos pos : BloodTroughBlockEntity.all(minion.level())) {
-            if (pos.distToCenterSqr(minion.position()) < reach * reach) {
+            if (pos.distToCenterSqr(minion.position()) < reach * reach && overTheRim(minion, pos)) {
                 drink(minion, pos);
                 return;
             }
         }
+    }
+
+    /** Whether nothing solid stands between its head and the trough: it drinks over the rim, never through a wall. */
+    static boolean overTheRim(MinionEntity minion, BlockPos trough) {
+        net.minecraft.world.phys.BlockHitResult hit = minion.level().clip(new net.minecraft.world.level.ClipContext(minion.getEyePosition(),
+                Vec3.atCenterOf(trough), net.minecraft.world.level.ClipContext.Block.COLLIDER, net.minecraft.world.level.ClipContext.Fluid.NONE, minion));
+        return hit.getType() == net.minecraft.world.phys.HitResult.Type.MISS || hit.getBlockPos().equals(trough);
     }
 
     /** A companion keeps near its maker. */
@@ -352,6 +445,9 @@ public final class MinionGoals {
         private static final int SEARCH = 6;
         private final MinionEntity minion;
         private int nextSearch;
+        /** Its table out of its reach (a door shut): it tries again after this. */
+        private int restUntil;
+        private final Approach approach = new Approach();
 
         public AttendTable(MinionEntity minion) {
             this.minion = minion;
@@ -365,7 +461,7 @@ public final class MinionGoals {
 
         @Override
         public boolean canUse() {
-            return minion.hasJob("surgeon") && table() != null;
+            return minion.hasJob("surgeon") && minion.tickCount >= restUntil && table() != null;
         }
 
         @Override
@@ -373,17 +469,29 @@ public final class MinionGoals {
             return canUse();
         }
 
+        @Override
+        public void start() {
+            approach.reset(minion);
+        }
+
         @Nullable
         private BlockPos table() {
-            if (minion.level().getBlockState(minion.home()).getBlock() instanceof com.avicagan.bloodandbones.body.SurgeryTableBlock) {
+            // a home far off, unloaded, is not looked at (looking would load it)
+            if (minion.level().isLoaded(minion.home())
+                    && minion.level().getBlockState(minion.home()).getBlock() instanceof com.avicagan.bloodandbones.body.SurgeryTableBlock) {
                 return minion.home();
             }
             if (minion.tickCount < nextSearch) {
                 return null;
             }
             nextSearch = minion.tickCount + 100;
+            BlockPos from = minion.blockPosition().offset(-SEARCH, -2, -SEARCH);
+            BlockPos to = minion.blockPosition().offset(SEARCH, 2, SEARCH);
+            if (!loaded(minion, from, to)) {
+                return null;
+            }
             BlockPos best = null;
-            for (BlockPos pos : BlockPos.betweenClosed(minion.blockPosition().offset(-SEARCH, -2, -SEARCH), minion.blockPosition().offset(SEARCH, 2, SEARCH))) {
+            for (BlockPos pos : BlockPos.betweenClosed(from, to)) {
                 if (minion.level().getBlockState(pos).getBlock() instanceof com.avicagan.bloodandbones.body.SurgeryTableBlock
                         && (best == null || pos.distSqr(minion.blockPosition()) < best.distSqr(minion.blockPosition()))) {
                     best = pos.immutable();
@@ -399,13 +507,17 @@ public final class MinionGoals {
         public void tick() {
             BlockPos table = minion.home();
             Vec3 centre = Vec3.atCenterOf(table);
-            double near = com.avicagan.bloodandbones.body.Surgery.SURGEON_REACH - 1.5;
+            // as near as a path of its width ends (a broad body stops further off), still well within the ritual's reach
+            double near = reach(minion);
             if (minion.distanceToSqr(centre) > near * near) {
-                if (minion.getNavigation().isDone() || minion.tickCount % 20 == 0) {
-                    minion.getNavigation().moveTo(minion.getNavigation().createPath(table, accuracy(minion)), 1.0);
+                if (!approach.step(minion, table, accuracy(minion), 1.0)) {
+                    // it cannot get to its table now: it stands down a while
+                    minion.getNavigation().stop();
+                    restUntil = minion.tickCount + 200;
                 }
                 return;
             }
+            approach.reset(minion);
             minion.getNavigation().stop();
             net.minecraft.world.entity.LivingEntity patient = com.avicagan.bloodandbones.body.Surgery.patientAt(minion.level(), table);
             if (patient != null) {
@@ -453,6 +565,10 @@ public final class MinionGoals {
         private final MinionEntity minion;
         @Nullable
         private ItemEntity item;
+        private final Approach approach = new Approach();
+        /** Items it could not get to, by entity id, forgotten every half minute. */
+        private final List<Integer> unreachable = new ArrayList<>();
+        private int forgotAt;
 
         public Collect(MinionEntity minion) {
             this.minion = minion;
@@ -471,13 +587,28 @@ public final class MinionGoals {
 
         @Override
         public boolean canUse() {
-            if (!minion.hasJob("courier") && !minion.hasJob("farmer")) {
+            if (!minion.hasJob("courier") && !minion.hasJob("farmer") || minion.getRandom().nextInt(10) != 0 || full()) {
                 return false;
             }
+            if (minion.tickCount - forgotAt > 600) {
+                unreachable.clear();
+                forgotAt = minion.tickCount;
+            }
             List<ItemEntity> items = minion.level().getEntitiesOfClass(ItemEntity.class, new AABB(minion.home()).inflate(MinionEntity.RANGE),
-                    e -> e.isAlive() && !e.hasPickUpDelay() && room(e.getItem()));
+                    e -> e.isAlive() && !e.hasPickUpDelay() && !unreachable.contains(e.getId()) && room(e.getItem()));
             item = items.stream().min(Comparator.comparingDouble(minion::distanceToSqr)).orElse(null);
             return item != null;
+        }
+
+        /** Every slot taken and every stack full: nothing on the ground could go in, so none is looked at. */
+        private boolean full() {
+            for (int i = 0; i < minion.stats().slots(); i++) {
+                ItemStack in = minion.inventory.getItem(i);
+                if (in.isEmpty() || in.getCount() < in.getMaxStackSize()) {
+                    return false;
+                }
+            }
+            return true;
         }
 
         @Override
@@ -488,6 +619,7 @@ public final class MinionGoals {
         @Override
         public void start() {
             minion.working = true;
+            approach.reset(minion);
         }
 
         @Override
@@ -509,8 +641,9 @@ public final class MinionGoals {
                 }
                 minion.take(item, 1);
                 item = null;
-            } else if (minion.getNavigation().isDone() || minion.tickCount % 20 == 0) {
-                minion.getNavigation().moveTo(item, 1.0);
+            } else if (!approach.step(minion, item.blockPosition(), 1, 1.0)) {
+                unreachable.add(item.getId());
+                item = null;
             }
         }
     }
@@ -520,6 +653,8 @@ public final class MinionGoals {
         private final MinionEntity minion;
         @Nullable
         private BlockPos container;
+        private final Unreachable unreachable = new Unreachable();
+        private final Approach approach = new Approach();
 
         public Deposit(MinionEntity minion) {
             this.minion = minion;
@@ -531,8 +666,11 @@ public final class MinionGoals {
             BlockPos home = minion.home();
             BlockPos best = null;
             double bestDistance = Double.MAX_VALUE;
+            if (!loaded(minion, home.offset(-6, -2, -6), home.offset(6, 2, 6))) {
+                return null;
+            }
             for (BlockPos pos : BlockPos.betweenClosed(home.offset(-6, -2, -6), home.offset(6, 2, 6))) {
-                if (minion.level().getCapability(Capabilities.ItemHandler.BLOCK, pos, null) != null
+                if (!unreachable.contains(minion, pos) && minion.level().getCapability(Capabilities.ItemHandler.BLOCK, pos, null) != null
                         && !(minion.level().getBlockState(pos).getBlock() instanceof com.avicagan.bloodandbones.body.SurgeryTableBlock)
                         && !(minion.level().getBlockState(pos).getBlock() instanceof BloodTroughBlock)) {
                     double d = pos.distSqr(home);
@@ -568,6 +706,7 @@ public final class MinionGoals {
         @Override
         public void start() {
             minion.working = true;
+            approach.reset(minion);
         }
 
         @Override
@@ -593,8 +732,9 @@ public final class MinionGoals {
                     }
                 }
                 container = null;
-            } else if (minion.getNavigation().isDone() || minion.tickCount % 20 == 0) {
-                minion.getNavigation().moveTo(container.getX() + 0.5, container.getY(), container.getZ() + 0.5, 1.0);
+            } else if (!approach.step(minion, container, 1, 1.0)) {
+                unreachable.add(container);
+                container = null;
             }
         }
     }
@@ -604,6 +744,8 @@ public final class MinionGoals {
         private final MinionEntity minion;
         @Nullable
         private BlockPos crop;
+        private final Unreachable unreachable = new Unreachable();
+        private final Approach approach = new Approach();
 
         public Farm(MinionEntity minion) {
             this.minion = minion;
@@ -615,9 +757,12 @@ public final class MinionGoals {
             BlockPos home = minion.home();
             BlockPos best = null;
             double bestDistance = Double.MAX_VALUE;
+            if (!loaded(minion, home.offset(-8, -2, -8), home.offset(8, 2, 8))) {
+                return null;
+            }
             for (BlockPos pos : BlockPos.betweenClosed(home.offset(-8, -2, -8), home.offset(8, 2, 8))) {
                 BlockState state = minion.level().getBlockState(pos);
-                if (state.getBlock() instanceof CropBlock crop && crop.isMaxAge(state)) {
+                if (state.getBlock() instanceof CropBlock crop && crop.isMaxAge(state) && !unreachable.contains(minion, pos)) {
                     double d = minion.distanceToSqr(Vec3.atCenterOf(pos));
                     if (d < bestDistance) {
                         bestDistance = d;
@@ -651,6 +796,7 @@ public final class MinionGoals {
         @Override
         public void start() {
             minion.working = true;
+            approach.reset(minion);
         }
 
         @Override
@@ -687,8 +833,9 @@ public final class MinionGoals {
                     minion.swing(net.minecraft.world.InteractionHand.MAIN_HAND);
                 }
                 crop = null;
-            } else if (minion.getNavigation().isDone() || minion.tickCount % 20 == 0) {
-                minion.getNavigation().moveTo(crop.getX() + 0.5, crop.getY(), crop.getZ() + 0.5, 1.0);
+            } else if (!approach.step(minion, crop, 1, 1.0)) {
+                unreachable.add(crop);
+                crop = null;
             }
         }
     }

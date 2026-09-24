@@ -246,6 +246,55 @@ public final class MinionAssembly {
         return true;
     }
 
+    /**
+     * Its maker's Cleaver on a powered-down minion lying on a clear Assembly Frame table (docs/PARTS-AND-TRAITS.md
+     * section 6.2.6): it comes apart into a frame on that table again, every piece as it went in, for a Cleaver to take
+     * back or more pieces to go on; what it carried, its saddle and its module go back to its maker. It no longer
+     * counts toward its maker's cap.
+     *
+     * @return whether it came apart
+     */
+    public static boolean takeApart(ServerLevel level, MinionEntity minion, Player maker) {
+        Optional<MinionBuild> build = minion.build();
+        SurgeryTableBlockEntity table = tableUnder(level, minion);
+        if (build.isEmpty() || table == null) {
+            maker.displayClientMessage(Component.translatable("bloodandbones.minion.take_apart_where"), true);
+            return false;
+        }
+        table.setBuild(build.get());
+        for (int i = 0; i < minion.inventory.getContainerSize(); i++) {
+            ItemStack stack = minion.inventory.removeItemNoUpdate(i);
+            if (!stack.isEmpty()) {
+                maker.getInventory().placeItemBackInInventory(stack);
+            }
+        }
+        if (minion.isSaddled()) {
+            maker.getInventory().placeItemBackInInventory(new ItemStack(Items.SADDLE));
+        }
+        if (minion.module() != null) {
+            maker.getInventory().placeItemBackInInventory(new ItemStack(BBItems.module(minion.module())));
+        }
+        MinionCensus.forget(minion);
+        minion.discard();
+        level.playSound(null, table.getBlockPos(), com.avicagan.bloodandbones.registry.BBSounds.CARCASS_CUT.get(), SoundSource.BLOCKS, 1.0F, 0.8F);
+        return true;
+    }
+
+    /** A clear Assembly Frame table the minion lies on (in its work zone, as a carcass claimed from it must). */
+    @Nullable
+    private static SurgeryTableBlockEntity tableUnder(ServerLevel level, MinionEntity minion) {
+        for (BlockPos pos : BlockPos.betweenClosed(minion.blockPosition().offset(-1, -3, -1), minion.blockPosition().offset(1, 0, 1))) {
+            AABB zone = new AABB(pos.getX() - SPREAD, pos.getY() + 0.5, pos.getZ() - SPREAD, pos.getX() + 1.0 + SPREAD, pos.getY() + 1.0 + REACH,
+                    pos.getZ() + 1.0 + SPREAD);
+            if (level.getBlockEntity(pos) instanceof SurgeryTableBlockEntity table && table.build().isEmpty() && table.item().isEmpty()
+                    && com.avicagan.bloodandbones.body.SurgeryTableBlock.attachment(level, pos) == com.avicagan.bloodandbones.body.TableAttachment.ASSEMBLY
+                    && zone.contains(minion.position())) {
+                return table;
+            }
+        }
+        return null;
+    }
+
     /** Whether a piece is light enough to be carried. */
     static boolean light(PieceRef piece) {
         return RigManager.forEntity(piece.entity(), piece.baby()).flatMap(r -> r.bone(piece.bone()))

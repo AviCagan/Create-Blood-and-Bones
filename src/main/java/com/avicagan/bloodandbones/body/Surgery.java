@@ -23,9 +23,10 @@ import org.joml.Vector3d;
  * where one is missing; and an implant comes out with nothing needed. Nothing can go wrong.
  * <p>
  * The brief's ritual: cutting flesh off a player (taking it off, or swapping it for an implant) needs a
- * surgeon minion awake by the table, and a part it takes off leaves a ragged stump; fitting anything into a
- * ragged stump later takes a bucket of blood as well. Fitting, reattaching, swapping implants and modules
- * never need a surgeon, so a crude prosthetic can always be fitted: the safety floor is always in reach.
+ * surgeon minion awake by the table, and a part it takes off leaves a ragged stump; fitting anything but a
+ * crude prosthetic into a ragged stump later takes a bucket of blood as well. Fitting, reattaching, swapping
+ * implants and modules never need a surgeon, and a crude prosthetic never needs blood: the safety floor is
+ * always in reach.
  */
 public final class Surgery {
     public enum Action {
@@ -62,17 +63,25 @@ public final class Surgery {
     }
 
     /**
+     * Whether this costs a bucket of blood as well: fitting into a ragged stump (the limb back, or an implant), except a
+     * crude prosthetic, which always goes on for nothing, so no stump is ever left with no way back to baseline.
+     */
+    public static boolean costsBlood(Body body, Action action, BodyPart part, ItemStack tool) {
+        return (action == Action.FIT || action == Action.REATTACH) && body.ragged(part) && !(tool.getItem() instanceof ImplantItem implant && implant.crude());
+    }
+
+    /**
      * Why this cannot be done right now, or null if it can: cutting a player needs a surgeon at the table;
-     * fitting into a ragged stump needs a bucket of blood on whoever is operating. The same on both sides, for
-     * the screen.
+     * fitting into a ragged stump (a crude prosthetic excepted) needs a bucket of blood on whoever is operating.
+     * The same on both sides, for the screen.
      */
     @org.jetbrains.annotations.Nullable
     public static Component blocked(net.minecraft.world.level.Level level, net.minecraft.world.entity.LivingEntity patient,
-                                    @org.jetbrains.annotations.Nullable Player operator, BlockPos table, Body body, Action action, BodyPart part) {
+                                    @org.jetbrains.annotations.Nullable Player operator, BlockPos table, Body body, Action action, BodyPart part, ItemStack tool) {
         if (cuts(action) && patient instanceof Player && surgeonAt(level, table) == null) {
             return Component.translatable("bloodandbones.surgery.needs_surgeon");
         }
-        if ((action == Action.FIT || action == Action.REATTACH) && body.ragged(part) && (operator == null || !payBlood(operator, false))) {
+        if (costsBlood(body, action, part, tool) && (operator == null || !payBlood(operator, false))) {
             return Component.translatable("bloodandbones.surgery.needs_blood");
         }
         return null;
@@ -180,7 +189,7 @@ public final class Surgery {
         Action action = action(body, table.item(), part);
         BlockPos pos = table.getBlockPos();
         Vector3d at = new Vector3d(pos.getX() + 0.5, pos.getY() + 1.1, pos.getZ() + 0.5);
-        Component problem = action == Action.NONE ? null : blocked(level, patient, surgeon, pos, body, action, part);
+        Component problem = action == Action.NONE ? null : blocked(level, patient, surgeon, pos, body, action, part, table.item());
         if (problem != null) {
             if (surgeon != null) {
                 surgeon.displayClientMessage(problem, true);
@@ -193,7 +202,7 @@ public final class Surgery {
             cutter.getLookControl().setLookAt(patient);
             cutter.swing(net.minecraft.world.InteractionHand.MAIN_HAND);
         }
-        if ((action == Action.FIT || action == Action.REATTACH) && body.ragged(part) && surgeon != null) {
+        if (costsBlood(body, action, part, table.item()) && surgeon != null) {
             payBlood(surgeon, true);
         }
         switch (action) {

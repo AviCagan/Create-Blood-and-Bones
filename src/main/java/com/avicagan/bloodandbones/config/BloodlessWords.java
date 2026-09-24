@@ -6,7 +6,7 @@ import java.util.regex.Pattern;
 
 /**
  * The words bloodless mode shows in place of bloody ones, in this mod's names and descriptions: blood
- * becomes essence, bleeding draining, bloody stained. A translation can set its own text for any key under
+ * becomes essence, bleeding draining, bloody stained, a minion a construct, stitches rivets. A translation can set its own text for any key under
  * {@code bloodless.<key>} instead; this is only the fallback, and only knows English.
  */
 public final class BloodlessWords {
@@ -24,7 +24,13 @@ public final class BloodlessWords {
             swap("guts", "cords"),
             swap("gut", "cord"),
             swap("gory", "messy"),
-            swap("gore", "mess"));
+            swap("gore", "mess"),
+            // a minion is a construct, its seams rivets (docs/PARTS-AND-TRAITS.md section 7.10)
+            swap("minions", "constructs"),
+            swap("minion", "construct"),
+            swap("stitched", "riveted"),
+            swap("stitching", "riveting"),
+            swap("stitch", "rivet"));
 
     private BloodlessWords() {
     }
