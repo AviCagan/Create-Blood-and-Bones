@@ -1,0 +1,32 @@
+{
+  "signature": [
+    "parts.arm.pair",
+    "organs.bloodandbones:alchemical_gland"
+  ],
+  "organs": {
+    "torso": {
+      "add": [
+        "bloodandbones:alchemical_gland"
+      ]
+    }
+  },
+  "parts": {
+    "arm.pair": {
+      "minion": {
+        "traits": [
+          "bloodandbones:potion_thrower"
+        ]
+      }
+    }
+  },
+  "organ_traits": {
+    "bloodandbones:alchemical_gland": {
+      "minion": [
+        "bloodandbones:remedy"
+      ],
+      "armour": [
+        "bloodandbones:remedy"
+      ]
+    }
+  }
+}

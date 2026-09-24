@@ -1,9 +1,17 @@
 {
+  "signature": [
+    "parts.arm"
+  ],
   "parts": {
     "arm": {
       "minion": {
         "traits": [
           "bloodandbones:bowman"
+        ]
+      },
+      "armour": {
+        "shoulders": [
+          "bloodandbones:sharpshooter"
         ]
       }
     }

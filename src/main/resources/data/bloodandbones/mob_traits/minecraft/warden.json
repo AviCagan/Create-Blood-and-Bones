@@ -1,0 +1,50 @@
+{
+  "signature": [
+    "parts.head",
+    "organs.bloodandbones:sonic_core",
+    "parts.leg",
+    "hide"
+  ],
+  "organs": {
+    "torso": {
+      "add": [
+        "bloodandbones:sonic_core"
+      ]
+    }
+  },
+  "parts": {
+    "head": {
+      "minion": {
+        "traits": [
+          "bloodandbones:tremor_sense"
+        ]
+      },
+      "armour": [
+        "bloodandbones:tremor_sense"
+      ]
+    },
+    "leg": {
+      "minion": {
+        "traits": [
+          "bloodandbones:silent_steps"
+        ]
+      },
+      "armour": [
+        "bloodandbones:silent_steps"
+      ]
+    }
+  },
+  "hide": [
+    "bloodandbones:silent_steps"
+  ],
+  "organ_traits": {
+    "bloodandbones:sonic_core": {
+      "minion": [
+        "bloodandbones:sonic_boom"
+      ],
+      "armour": [
+        "bloodandbones:sonic_boom"
+      ]
+    }
+  }
+}

@@ -1,0 +1,14 @@
+{
+  "name": "trait.bloodandbones.creeper_kin",
+  "max_level": 1,
+  "effects": [
+    {
+      "trigger": "passive",
+      "effect": {
+        "type": "bloodandbones:kin",
+        "entities": "minecraft:creeper",
+        "provoked_seconds": 30
+      }
+    }
+  ]
+}

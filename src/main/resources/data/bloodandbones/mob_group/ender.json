@@ -11,7 +11,19 @@
           "mode": "blink_step",
           "after_ticks": 60
         }
+      },
+      "armour": {
+        "add": [
+          "bloodandbones:rift"
+        ]
       }
+    }
+  },
+  "full_set": {
+    "drawback": {
+      "add": [
+        "bloodandbones:water_hurts"
+      ]
     }
   }
 }

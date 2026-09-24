@@ -1,0 +1,22 @@
+{
+  "signature": [
+    "organs.bloodandbones:bamboo_gut"
+  ],
+  "organs": {
+    "torso": {
+      "add": [
+        "bloodandbones:bamboo_gut"
+      ]
+    }
+  },
+  "organ_traits": {
+    "bloodandbones:bamboo_gut": {
+      "minion": [
+        "bloodandbones:bamboo_gut"
+      ],
+      "armour": [
+        "bloodandbones:bamboo_gut"
+      ]
+    }
+  }
+}

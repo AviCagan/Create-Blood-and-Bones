@@ -1,0 +1,45 @@
+{
+  "signature": [
+    "parts.head",
+    "organs.bloodandbones:boar_heart",
+    "full_set"
+  ],
+  "organs": {
+    "torso": {
+      "add": [
+        "bloodandbones:boar_heart"
+      ]
+    }
+  },
+  "parts": {
+    "head": {
+      "minion": {
+        "bite": {
+          "style": "ram",
+          "damage": 2.0
+        },
+        "traits": [
+          "bloodandbones:flinger"
+        ]
+      },
+      "armour": [
+        "bloodandbones:flinger"
+      ]
+    }
+  },
+  "organ_traits": {
+    "bloodandbones:boar_heart": {
+      "minion": [
+        "bloodandbones:adrenaline"
+      ],
+      "armour": [
+        "bloodandbones:adrenaline"
+      ]
+    }
+  },
+  "full_set": {
+    "drawback": [
+      "bloodandbones:warped_dread"
+    ]
+  }
+}

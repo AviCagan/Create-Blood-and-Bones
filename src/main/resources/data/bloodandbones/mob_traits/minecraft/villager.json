@@ -1,4 +1,7 @@
 {
+  "signature": [
+    "parts.head"
+  ],
   "parts": {
     "head": {
       "minion": {

@@ -15,7 +15,10 @@
           "mode": "hop",
           "speed": 0.2,
           "gait": "hop"
-        }
+        },
+        "traits": [
+          "bloodandbones:bouncy"
+        ]
       },
       "armour": [
         "bloodandbones:fall_guard"
@@ -30,6 +33,9 @@
       "armour": {
         "leggings": [
           "bloodandbones:fall_guard"
+        ],
+        "boots": [
+          "bloodandbones:bouncy"
         ]
       }
     }
@@ -41,7 +47,8 @@
       {
         "trait": "bloodandbones:fall_guard",
         "level": 4
-      }
+      },
+      "bloodandbones:bouncy"
     ],
     "drawback": [
       "bloodandbones:sluggish"

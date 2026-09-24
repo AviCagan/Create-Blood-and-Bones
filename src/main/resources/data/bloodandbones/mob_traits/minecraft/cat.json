@@ -1,0 +1,23 @@
+{
+  "signature": [
+    "organs.bloodandbones:purr_box"
+  ],
+  "organs": {
+    "torso": {
+      "add": [
+        "bloodandbones:purr_box"
+      ]
+    }
+  },
+  "organ_traits": {
+    "bloodandbones:purr_box": {
+      "minion": [
+        "bloodandbones:morning_gift",
+        "bloodandbones:purr"
+      ],
+      "armour": [
+        "bloodandbones:hibernator"
+      ]
+    }
+  }
+}

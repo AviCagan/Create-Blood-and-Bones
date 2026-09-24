@@ -1,0 +1,22 @@
+{
+  "signature": [
+    "organs.bloodandbones:vex_wisp"
+  ],
+  "organs": {
+    "torso": {
+      "add": [
+        "bloodandbones:vex_wisp"
+      ]
+    }
+  },
+  "organ_traits": {
+    "bloodandbones:vex_wisp": {
+      "minion": [
+        "bloodandbones:dash"
+      ],
+      "armour": [
+        "bloodandbones:dash"
+      ]
+    }
+  }
+}

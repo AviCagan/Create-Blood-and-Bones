@@ -1,12 +1,69 @@
 {
   "signature": [
-    "parts.head"
+    "parts.head",
+    "organs.bloodandbones:ender_gland",
+    "full_set"
   ],
+  "organs": {
+    "torso": {
+      "add": [
+        "bloodandbones:ender_gland"
+      ]
+    }
+  },
   "parts": {
     "head": {
       "armour": [
         "bloodandbones:ender_mask"
+      ],
+      "minion": {
+        "traits": [
+          "bloodandbones:ender_calm"
+        ]
+      }
+    },
+    "torso": {
+      "minion": {
+        "traits": [
+          "bloodandbones:water_hurts"
+        ]
+      }
+    },
+    "arm": {
+      "armour": {
+        "shoulders": [
+          {
+            "trait": "bloodandbones:long_reach",
+            "level": 2
+          }
+        ]
+      }
+    },
+    "leg": {
+      "armour": [
+        "bloodandbones:sure_footed"
       ]
     }
+  },
+  "organ_traits": {
+    "bloodandbones:ender_gland": {
+      "minion": [
+        "bloodandbones:loyal"
+      ],
+      "armour": [
+        "bloodandbones:warp"
+      ]
+    }
+  },
+  "full_set": {
+    "replace": true,
+    "name": "set.bloodandbones.voidwalker",
+    "bonus": [
+      "bloodandbones:ender_mask",
+      "bloodandbones:blink"
+    ],
+    "drawback": [
+      "bloodandbones:water_hurts"
+    ]
   }
 }

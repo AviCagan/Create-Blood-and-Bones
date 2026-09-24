@@ -1,0 +1,32 @@
+{
+  "signature": [
+    "parts.torso",
+    "organs.bloodandbones:rumen"
+  ],
+  "organs": {
+    "torso": {
+      "add": [
+        "bloodandbones:rumen"
+      ]
+    }
+  },
+  "parts": {
+    "torso": {
+      "minion": {
+        "traits": [
+          "bloodandbones:milk_udder"
+        ]
+      }
+    }
+  },
+  "organ_traits": {
+    "bloodandbones:rumen": {
+      "minion": [
+        "bloodandbones:forager"
+      ],
+      "armour": [
+        "bloodandbones:cleanse"
+      ]
+    }
+  }
+}

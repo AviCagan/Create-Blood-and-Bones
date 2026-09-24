@@ -1,0 +1,14 @@
+{
+  "signature": [
+    "parts.head"
+  ],
+  "parts": {
+    "head": {
+      "minion": {
+        "traits": [
+          "bloodandbones:horde_call"
+        ]
+      }
+    }
+  }
+}

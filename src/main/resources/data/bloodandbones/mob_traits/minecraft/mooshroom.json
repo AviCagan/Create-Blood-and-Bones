@@ -1,0 +1,32 @@
+{
+  "signature": [
+    "parts.torso",
+    "organs.bloodandbones:mycelial_gut"
+  ],
+  "organs": {
+    "torso": {
+      "add": [
+        "bloodandbones:mycelial_gut"
+      ]
+    }
+  },
+  "parts": {
+    "torso": {
+      "minion": {
+        "traits": [
+          "bloodandbones:stew_udder"
+        ]
+      }
+    }
+  },
+  "organ_traits": {
+    "bloodandbones:mycelial_gut": {
+      "minion": [
+        "bloodandbones:mycelial_gut"
+      ],
+      "armour": [
+        "bloodandbones:mycelial_gut"
+      ]
+    }
+  }
+}

@@ -1,0 +1,25 @@
+{
+  "signature": [
+    "organs.bloodandbones:olfactory_bulb"
+  ],
+  "organs": {
+    "head": {
+      "add": [
+        "bloodandbones:olfactory_bulb"
+      ]
+    }
+  },
+  "organ_traits": {
+    "bloodandbones:olfactory_bulb": {
+      "minion": [
+        {
+          "trait": "bloodandbones:keen_eye",
+          "level": 2
+        }
+      ],
+      "armour": [
+        "bloodandbones:blood_scent"
+      ]
+    }
+  }
+}

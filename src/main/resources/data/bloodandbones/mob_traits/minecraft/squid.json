@@ -1,0 +1,12 @@
+{
+  "signature": [
+    "organs.bloodandbones:ink_sac"
+  ],
+  "organ_traits": {
+    "bloodandbones:ink_sac": {
+      "minion": [
+        "bloodandbones:ink_gland"
+      ]
+    }
+  }
+}

@@ -1,0 +1,41 @@
+{
+  "signature": [
+    "parts.leg",
+    "organs.bloodandbones:sticky_tongue"
+  ],
+  "organs": {
+    "head": {
+      "add": [
+        "bloodandbones:sticky_tongue"
+      ]
+    }
+  },
+  "parts": {
+    "leg": {
+      "minion": {
+        "traits": [
+          {
+            "trait": "bloodandbones:springy",
+            "level": 3
+          }
+        ]
+      },
+      "armour": [
+        {
+          "trait": "bloodandbones:springy",
+          "level": 3
+        }
+      ]
+    }
+  },
+  "organ_traits": {
+    "bloodandbones:sticky_tongue": {
+      "minion": [
+        "bloodandbones:tongue"
+      ],
+      "armour": [
+        "bloodandbones:tongue"
+      ]
+    }
+  }
+}

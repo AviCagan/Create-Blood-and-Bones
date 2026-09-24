@@ -1,6 +1,6 @@
 {
   "kind": "overlay",
-  "priority": 200,
+  "priority": 105,
   "members": [
     "#minecraft:zombies",
     "#bloodandbones:overlay/rotting"
@@ -9,12 +9,33 @@
     "durability_mult": 0.75,
     "enchantability_add": -4
   },
+  "organs": {
+    "torso": {
+      "add": [
+        "bloodandbones:rot_gut"
+      ]
+    }
+  },
   "parts": {
     "head": {
       "minion": {
         "traits": {
           "add": [
             "bloodandbones:hungering"
+          ]
+        }
+      },
+      "armour": {
+        "add": [
+          "bloodandbones:dead_face"
+        ]
+      }
+    },
+    "torso": {
+      "minion": {
+        "traits": {
+          "add": [
+            "bloodandbones:sun_cursed"
           ]
         }
       }
@@ -32,18 +53,34 @@
           "bloodandbones:iron_gut"
         ]
       }
+    },
+    "bloodandbones:rot_gut": {
+      "minion": {
+        "add": [
+          "bloodandbones:iron_gut",
+          "bloodandbones:hunger_proof"
+        ]
+      },
+      "armour": {
+        "add": [
+          "bloodandbones:iron_gut",
+          "bloodandbones:hunger_proof"
+        ]
+      }
     }
   },
   "full_set": {
+    "replace": true,
     "name": "set.bloodandbones.shambler",
-    "bonus": {
-      "add": [
-        {
-          "trait": "bloodandbones:brawler",
-          "level": 2
-        },
-        "bloodandbones:dead_face"
-      ]
-    }
+    "bonus": [
+      "bloodandbones:dead_face",
+      {
+        "trait": "bloodandbones:brawler",
+        "level": 2
+      }
+    ],
+    "drawback": [
+      "bloodandbones:sun_cursed"
+    ]
   }
 }

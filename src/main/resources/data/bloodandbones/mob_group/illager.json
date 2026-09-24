@@ -26,7 +26,10 @@
           "bloodandbones:sentry"
         ],
         "disposition": "brave"
-      }
+      },
+      "armour": [
+        "bloodandbones:raider_kin"
+      ]
     },
     "torso": {
       "armour": [
@@ -71,11 +74,22 @@
     "replace": true,
     "name": "set.bloodandbones.raid_captain",
     "bonus": [
-      "bloodandbones:brawler"
+      "bloodandbones:brawler",
+      "bloodandbones:raider_kin"
     ],
     "drawback": [
       "bloodandbones:villagers_flee",
       "bloodandbones:golems_hostile"
     ]
+  },
+  "organ_traits": {
+    "bloodandbones:raider_gland": {
+      "minion": [
+        "bloodandbones:raider_kin"
+      ],
+      "armour": [
+        "bloodandbones:raider_kin"
+      ]
+    }
   }
 }

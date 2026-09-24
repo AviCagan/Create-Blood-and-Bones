@@ -1,0 +1,52 @@
+{
+  "signature": [
+    "parts.head",
+    "parts.torso",
+    "organs.bloodandbones:heart"
+  ],
+  "parts": {
+    "head": {
+      "minion": {
+        "traits": [
+          "bloodandbones:relentless",
+          "bloodandbones:horde_call"
+        ]
+      }
+    },
+    "torso": {
+      "minion": {
+        "traits": [
+          "bloodandbones:hunger_proof"
+        ]
+      },
+      "armour": [
+        {
+          "trait": "bloodandbones:hardy",
+          "level": 2
+        }
+      ]
+    },
+    "arm": {
+      "armour": {
+        "shoulders": [
+          "bloodandbones:grabbing"
+        ]
+      }
+    },
+    "leg": {
+      "armour": [
+        "bloodandbones:fall_guard"
+      ]
+    }
+  },
+  "organ_traits": {
+    "bloodandbones:heart": {
+      "minion": [
+        "bloodandbones:undying"
+      ],
+      "armour": [
+        "bloodandbones:undying"
+      ]
+    }
+  }
+}

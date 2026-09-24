@@ -1,0 +1,58 @@
+{
+  "signature": [
+    "parts.torso",
+    "parts.head",
+    "organs.bloodandbones:blaze_core",
+    "full_set"
+  ],
+  "organs": {
+    "torso": {
+      "add": [
+        "bloodandbones:blaze_core"
+      ]
+    }
+  },
+  "parts": {
+    "torso": {
+      "minion": {
+        "traits": [
+          {
+            "trait": "bloodandbones:fireproof",
+            "level": 4
+          },
+          "bloodandbones:water_hurts",
+          "bloodandbones:searing"
+        ]
+      }
+    },
+    "head": {
+      "armour": [
+        "bloodandbones:ember_skin"
+      ]
+    }
+  },
+  "organ_traits": {
+    "bloodandbones:blaze_core": {
+      "minion": [
+        "bloodandbones:fireball"
+      ],
+      "armour": [
+        "bloodandbones:fireball",
+        "bloodandbones:quench"
+      ]
+    }
+  },
+  "full_set": {
+    "replace": true,
+    "name": "set.bloodandbones.inferno",
+    "bonus": [
+      {
+        "trait": "bloodandbones:fireproof",
+        "level": 4
+      }
+    ],
+    "drawback": [
+      "bloodandbones:water_hurts"
+    ]
+  }
+}

@@ -1,0 +1,47 @@
+{
+  "signature": [
+    "parts.tail",
+    "organs.bloodandbones:melon",
+    "hide"
+  ],
+  "organs": {
+    "head": {
+      "add": [
+        "bloodandbones:melon"
+      ]
+    }
+  },
+  "parts": {
+    "tail": {
+      "minion": {
+        "traits": [
+          "bloodandbones:dolphin_kick"
+        ]
+      },
+      "armour": {
+        "hips": [
+          "bloodandbones:dolphin_kick"
+        ]
+      }
+    }
+  },
+  "hide": [
+    "bloodandbones:slick"
+  ],
+  "organ_traits": {
+    "bloodandbones:melon": {
+      "minion": [
+        {
+          "trait": "bloodandbones:echo_sense",
+          "level": 2
+        }
+      ],
+      "armour": [
+        {
+          "trait": "bloodandbones:echo_sense",
+          "level": 2
+        }
+      ]
+    }
+  }
+}

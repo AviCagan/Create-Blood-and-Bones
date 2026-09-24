@@ -1,5 +1,8 @@
 {
   "name": "trait.bloodandbones.four_chambers",
+  "contexts": [
+    "armour"
+  ],
   "effects": [
     {
       "trigger": "passive",

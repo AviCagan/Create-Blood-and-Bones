@@ -1,0 +1,20 @@
+{
+  "name": "trait.bloodandbones.pouch",
+  "max_level": 2,
+  "contexts": [
+    "minion"
+  ],
+  "effects": [
+    {
+      "trigger": "passive",
+      "effect": {
+        "type": "bloodandbones:storage",
+        "slots": {
+          "type": "minecraft:linear",
+          "base": 9,
+          "per_level_above_first": 9
+        }
+      }
+    }
+  ]
+}

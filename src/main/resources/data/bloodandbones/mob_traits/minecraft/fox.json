@@ -1,0 +1,43 @@
+{
+  "signature": [
+    "parts.head",
+    "parts.leg",
+    "organs.bloodandbones:cheek_pouch"
+  ],
+  "organs": {
+    "head": {
+      "add": [
+        "bloodandbones:cheek_pouch"
+      ]
+    }
+  },
+  "parts": {
+    "head": {
+      "minion": {
+        "traits": [
+          "bloodandbones:thief"
+        ]
+      },
+      "armour": [
+        "bloodandbones:thief"
+      ]
+    },
+    "leg": {
+      "minion": {
+        "traits": [
+          "bloodandbones:leap"
+        ]
+      }
+    }
+  },
+  "organ_traits": {
+    "bloodandbones:cheek_pouch": {
+      "minion": [
+        "bloodandbones:pouch"
+      ],
+      "armour": [
+        "bloodandbones:item_magnet"
+      ]
+    }
+  }
+}

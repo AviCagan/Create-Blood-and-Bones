@@ -1,0 +1,18 @@
+{
+  "kind": "overlay",
+  "priority": 54,
+  "members": [
+    "#minecraft:powder_snow_walkable_mobs"
+  ],
+  "parts": {
+    "leg": {
+      "armour": {
+        "boots": {
+          "add": [
+            "bloodandbones:powder_walker"
+          ]
+        }
+      }
+    }
+  }
+}

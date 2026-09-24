@@ -1,0 +1,28 @@
+{
+  "name": "trait.bloodandbones.eight_eyes",
+  "max_level": 1,
+  "contexts": [
+    "armour"
+  ],
+  "effects": [
+    {
+      "trigger": "passive",
+      "requirements": {
+        "condition": "minecraft:location_check",
+        "predicate": {
+          "light": {
+            "light": {
+              "max": 7
+            }
+          }
+        }
+      },
+      "effect": {
+        "type": "bloodandbones:sense",
+        "kind": "reveal",
+        "range": 8,
+        "filter": "hostile"
+      }
+    }
+  ]
+}

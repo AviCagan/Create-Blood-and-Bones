@@ -27,8 +27,14 @@
         "bite": {
           "style": "bite",
           "damage": 1.5
-        }
-      }
+        },
+        "traits": [
+          "bloodandbones:bleeding"
+        ]
+      },
+      "armour": [
+        "bloodandbones:blood_scent"
+      ]
     },
     "torso": {
       "armour": [
@@ -49,6 +55,9 @@
       "armour": {
         "leggings": [
           "bloodandbones:swift"
+        ],
+        "boots": [
+          "bloodandbones:silent_steps"
         ]
       }
     }
@@ -68,5 +77,15 @@
     "drawback": [
       "bloodandbones:howl"
     ]
+  },
+  "organ_traits": {
+    "bloodandbones:pack_gland": {
+      "minion": [
+        "bloodandbones:pack_hunter"
+      ],
+      "armour": [
+        "bloodandbones:pack_hunter"
+      ]
+    }
   }
 }

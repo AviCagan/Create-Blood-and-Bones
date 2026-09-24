@@ -38,8 +38,8 @@ import java.util.regex.Pattern;
 @GameTestHolder(BloodAndBones.MOD_ID)
 @PrefixGameTestTemplate(false)
 public class BreadthTests {
-    /** Spec 3.5: mob, archetype, family (empty for none), overlays. */
-    private static final String[][] MOBS = {
+    /** Spec 3.5: mob, archetype, family (empty for none), overlays. The data lints go through the same 79. */
+    static final String[][] MOBS = {
             {"allay", "floater", "spirit", "bloodless_mob,fall"}, {"armadillo", "quadruped", "shellback", ""},
             {"axolotl", "quadruped", "amphibian", "aquatic,breath"}, {"bat", "flier", "skyborne", "fall"},
             {"bee", "arthropod", "skyborne", "arthropod,bloodless_mob,fall"}, {"blaze", "floater", "elemental", "nether,bloodless_mob,fall"},
@@ -80,11 +80,8 @@ public class BreadthTests {
 
     /** Overlays whose group id is not the spec's name: an archetype already has the id "arthropod". */
     private static final Map<String, String> OVERLAY_IDS = Map.of("arthropod", "arthropod_overlay");
-    /**
-     * Overlays not built yet. snow: its only trait (powder_walker) needs the powder_snow flag, and even an empty
-     * layer would change the rabbit's layers.
-     */
-    private static final Set<String> PENDING_OVERLAYS = Set.of("snow");
+    /** Overlays not built yet: none now (snow came with the powder_snow flag). */
+    private static final Set<String> PENDING_OVERLAYS = Set.of();
     /** Spec 2.2 rule 2: the rigs with no head of their own, whose body is its head too. */
     private static final Set<String> SELF_CONTAINED = Set.of("blaze", "breeze", "guardian", "elder_guardian", "squid", "glow_squid", "pufferfish",
             "tadpole", "bee", "slime", "magma_cube", "strider", "ghast");
@@ -118,7 +115,7 @@ public class BreadthTests {
     }
 
     /** The problems once each, cut short to fit the test's report (a book page holds 1024 characters). */
-    private static String shortList(List<String> problems) {
+    static String shortList(List<String> problems) {
         List<String> once = List.copyOf(new LinkedHashSet<>(problems));
         String text = once.size() + ": " + String.join("; ", once);
         return text.length() > 700 ? text.substring(0, 700) + "..." : text;

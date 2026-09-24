@@ -1,0 +1,75 @@
+{
+  "signature": [
+    "parts.torso",
+    "organs.bloodandbones:golem_core",
+    "full_set"
+  ],
+  "organs": {
+    "torso": {
+      "add": [
+        "bloodandbones:golem_core"
+      ]
+    }
+  },
+  "parts": {
+    "torso": {
+      "minion": {
+        "traits": [
+          "bloodandbones:heavy",
+          "bloodandbones:repair_with_iron"
+        ]
+      }
+    },
+    "leg": {
+      "minion": {
+        "traits": [
+          {
+            "trait": "bloodandbones:heavy",
+            "level": 2
+          }
+        ]
+      }
+    }
+  },
+  "organ_traits": {
+    "bloodandbones:golem_core": {
+      "minion": [
+        {
+          "trait": "bloodandbones:hardy",
+          "level": 3
+        },
+        {
+          "trait": "bloodandbones:steady",
+          "level": 3
+        }
+      ],
+      "armour": [
+        {
+          "trait": "bloodandbones:hardy",
+          "level": 2
+        },
+        "bloodandbones:iron_will"
+      ]
+    }
+  },
+  "full_set": {
+    "replace": true,
+    "name": "set.bloodandbones.colossus",
+    "bonus": [
+      {
+        "trait": "bloodandbones:juggernaut",
+        "level": 2
+      },
+      {
+        "trait": "bloodandbones:brawler",
+        "level": 3
+      }
+    ],
+    "drawback": [
+      {
+        "trait": "bloodandbones:heavy",
+        "level": 3
+      }
+    ]
+  }
+}

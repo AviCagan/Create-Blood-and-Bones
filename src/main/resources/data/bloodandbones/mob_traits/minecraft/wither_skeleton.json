@@ -1,0 +1,37 @@
+{
+  "signature": [
+    "parts.arm",
+    "organs.bloodandbones:wither_marrow"
+  ],
+  "organs": {
+    "torso": {
+      "add": [
+        "bloodandbones:wither_marrow"
+      ]
+    }
+  },
+  "parts": {
+    "arm": {
+      "minion": {
+        "traits": [
+          "bloodandbones:withering"
+        ]
+      },
+      "armour": {
+        "shoulders": [
+          "bloodandbones:withering"
+        ]
+      }
+    }
+  },
+  "organ_traits": {
+    "bloodandbones:wither_marrow": {
+      "minion": [
+        "bloodandbones:wither_proof"
+      ],
+      "armour": [
+        "bloodandbones:wither_proof"
+      ]
+    }
+  }
+}

@@ -15,6 +15,9 @@
     "bloodandbones:wither_core": {
       "armour": [
         "bloodandbones:withering"
+      ],
+      "minion": [
+        "bloodandbones:wither_aura"
       ]
     }
   },

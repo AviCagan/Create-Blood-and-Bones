@@ -93,6 +93,9 @@
         "trait": "bloodandbones:waterborn",
         "level": 3
       }
+    ],
+    "drawback": [
+      "bloodandbones:dry_out"
     ]
   }
 }

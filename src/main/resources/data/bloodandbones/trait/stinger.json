@@ -1,0 +1,24 @@
+{
+  "name": "trait.bloodandbones.stinger",
+  "max_level": 1,
+  "effects": [
+    {
+      "trigger": "attack",
+      "chance": 0.25,
+      "cooldown": 200,
+      "requirements": {
+        "condition": "minecraft:damage_source_properties",
+        "predicate": {
+          "is_direct": true
+        }
+      },
+      "effect": {
+        "type": "bloodandbones:mob_effect",
+        "effect": "minecraft:poison",
+        "amplifier": 1,
+        "duration": 60,
+        "target": "victim"
+      }
+    }
+  ]
+}

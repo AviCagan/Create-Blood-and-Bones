@@ -16,7 +16,10 @@
   "parts": {
     "torso": {
       "minion": {
-        "health_factor": 1.5
+        "health_factor": 1.5,
+        "traits": [
+          "bloodandbones:beast_of_burden"
+        ]
       },
       "armour": [
         "bloodandbones:barrel_chest"
@@ -91,6 +94,14 @@
       ],
       "armour": [
         "bloodandbones:big_heart"
+      ]
+    },
+    "bloodandbones:stomach": {
+      "minion": [
+        "bloodandbones:forager"
+      ],
+      "armour": [
+        "bloodandbones:four_chambers"
       ]
     }
   }

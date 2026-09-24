@@ -1,0 +1,25 @@
+{
+  "signature": [
+    "organs.bloodandbones:glow_sac"
+  ],
+  "organs": {
+    "torso": {
+      "add": [
+        "bloodandbones:glow_sac"
+      ]
+    }
+  },
+  "organ_traits": {
+    "bloodandbones:glow_sac": {
+      "minion": [
+        "bloodandbones:luminous",
+        "bloodandbones:glow_aura",
+        "bloodandbones:glow_gland"
+      ],
+      "armour": [
+        "bloodandbones:murk_sight",
+        "bloodandbones:luminous"
+      ]
+    }
+  }
+}

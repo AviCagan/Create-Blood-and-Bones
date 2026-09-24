@@ -1,0 +1,70 @@
+{
+  "signature": [
+    "parts.head",
+    "parts.leg",
+    "organs.bloodandbones:leap_gland",
+    "full_set"
+  ],
+  "organs": {
+    "torso": {
+      "add": [
+        "bloodandbones:leap_gland"
+      ]
+    }
+  },
+  "parts": {
+    "head": {
+      "minion": {
+        "bite": {
+          "style": "ram",
+          "damage": 1.5,
+          "knockback": 1.0
+        }
+      },
+      "armour": [
+        "bloodandbones:charge"
+      ]
+    },
+    "leg": {
+      "minion": {
+        "traits": [
+          {
+            "trait": "bloodandbones:sure_footed",
+            "level": 2
+          },
+          "bloodandbones:fall_guard"
+        ]
+      },
+      "armour": [
+        {
+          "trait": "bloodandbones:sure_footed",
+          "level": 2
+        },
+        "bloodandbones:fall_guard"
+      ]
+    }
+  },
+  "organ_traits": {
+    "bloodandbones:leap_gland": {
+      "minion": [
+        "bloodandbones:leap"
+      ],
+      "armour": [
+        "bloodandbones:leap"
+      ]
+    }
+  },
+  "full_set": {
+    "replace": true,
+    "name": "set.bloodandbones.mountaineer",
+    "bonus": [
+      {
+        "trait": "bloodandbones:fall_guard",
+        "level": 4
+      }
+    ],
+    "drawback": [
+      "bloodandbones:screamer"
+    ]
+  }
+}

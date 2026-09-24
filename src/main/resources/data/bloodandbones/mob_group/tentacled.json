@@ -67,6 +67,14 @@
       "armour": [
         "bloodandbones:hardy"
       ]
+    },
+    "bloodandbones:stomach": {
+      "minion": [
+        "bloodandbones:forager"
+      ],
+      "armour": [
+        "bloodandbones:omnivore"
+      ]
     }
   }
 }

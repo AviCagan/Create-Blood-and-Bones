@@ -1,0 +1,22 @@
+{
+  "signature": [
+    "organs.bloodandbones:wind_core"
+  ],
+  "organs": {
+    "torso": {
+      "add": [
+        "bloodandbones:wind_core"
+      ]
+    }
+  },
+  "organ_traits": {
+    "bloodandbones:wind_core": {
+      "minion": [
+        "bloodandbones:wind_shot"
+      ],
+      "armour": [
+        "bloodandbones:wind_burst"
+      ]
+    }
+  }
+}

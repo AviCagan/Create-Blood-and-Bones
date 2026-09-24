@@ -12,6 +12,7 @@
     },
     {
       "trigger": "passive",
+      "context": "armour",
       "effect": {
         "type": "bloodandbones:diet",
         "effect": "safe",

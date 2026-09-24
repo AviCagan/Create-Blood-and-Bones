@@ -1,0 +1,15 @@
+{
+  "signature": [
+    "parts.head"
+  ],
+  "parts": {
+    "head": {
+      "minion": {
+        "bite": {
+          "style": "ram",
+          "damage": 2.0
+        }
+      }
+    }
+  }
+}

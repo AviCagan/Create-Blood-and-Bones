@@ -1,0 +1,30 @@
+{
+  "signature": [
+    "parts.leg",
+    "organs.bloodandbones:drowned_lungs"
+  ],
+  "organs": {
+    "torso": {
+      "add": [
+        "bloodandbones:drowned_lungs"
+      ]
+    }
+  },
+  "parts": {
+    "leg": {
+      "armour": [
+        "bloodandbones:slick"
+      ]
+    }
+  },
+  "organ_traits": {
+    "bloodandbones:drowned_lungs": {
+      "minion": [
+        "bloodandbones:gills"
+      ],
+      "armour": [
+        "bloodandbones:gills"
+      ]
+    }
+  }
+}

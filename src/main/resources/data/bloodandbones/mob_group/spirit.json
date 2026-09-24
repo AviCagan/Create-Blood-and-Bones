@@ -29,7 +29,10 @@
           "bloodandbones:scavenger",
           "bloodandbones:bodyguard"
         ]
-      }
+      },
+      "armour": [
+        "bloodandbones:spectral_sight"
+      ]
     },
     "leg": {
       "armour": {

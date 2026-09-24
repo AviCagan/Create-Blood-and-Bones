@@ -1,0 +1,22 @@
+{
+  "signature": [
+    "organs.bloodandbones:traders_draught"
+  ],
+  "organs": {
+    "torso": {
+      "add": [
+        "bloodandbones:traders_draught"
+      ]
+    }
+  },
+  "organ_traits": {
+    "bloodandbones:traders_draught": {
+      "minion": [
+        "bloodandbones:traders_draught"
+      ],
+      "armour": [
+        "bloodandbones:traders_draught"
+      ]
+    }
+  }
+}

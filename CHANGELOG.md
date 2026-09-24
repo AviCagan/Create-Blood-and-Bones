@@ -248,6 +248,15 @@ Everything below is in development builds only; the art is placeholder (see the 
   mushrooms food, fill you more, poison you on cookies, cheat death once in a while (a minion collapses instead), and
   burn you in the sun, hurt you in water or heat, or slow you once you have been dry too long. A new Blood Upkeep
   attribute scales what implants and minions drink, and the Lean trait lowers it.
+- Every mob's own abilities: the traits are now wired into all 79 mobs, their families and their overlays. A cow's
+  torso gives milk and its rumen cleanses, a blaze's core throws fireballs and puts out the fire on you twice as fast, a
+  spider's spinneret shoots webs and its legs climb walls, an enderman's gland warps you, a warden's core booms, a
+  ravager roars, a zombie's heart cheats death and its torso burns in the sun... Every mob has at least one special
+  organ (the undead's Rot Gut, the horse's Spleen, the goat's Leap Gland among the new ones), each with a machine-part
+  name in bloodless mode. New full sets: Inferno, Walking Bomb, Voidwalker, Mountaineer, Desert Shambler and Colossus;
+  the zombie's Shambler and the skeleton's Ossuary are now whole sets of their own, with the undead's inverted healing.
+  Thirteen new traits. Traits that only ever worked for players (luck, attack speed, reach, sneaking, mining, gliding,
+  powder snow, quick draw, some diets) are no longer given to minions.
 
 ### Presentation
 
@@ -280,4 +289,7 @@ Everything below is in development builds only; the art is placeholder (see the 
 - Minions: only the cow, rabbit, zombie-shaped and villager heads have their own minion data so far;
   other mobs' pieces work from their body shape's defaults. Of the jobs, companion, courier, farmer,
   bodyguard, guard and surgeon are built; the herder and the rest are still to come.
+- Special organs (glands, sacs, cores) are in every mob's data but have no item yet, so they cannot be cut out and
+  fitted in survival; the heart, lungs, stomach and eyes can. What each mob's signature still waits for (jobs, movement
+  modes, mounts, variants, held weapons) is logged by the signature lint game test.
 - All art is placeholder (see the README).

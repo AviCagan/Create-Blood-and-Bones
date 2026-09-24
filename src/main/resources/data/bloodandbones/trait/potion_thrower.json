@@ -1,0 +1,19 @@
+{
+  "name": "trait.bloodandbones.potion_thrower",
+  "max_level": 1,
+  "contexts": [
+    "minion"
+  ],
+  "effects": [
+    {
+      "cooldown": 60,
+      "cost_mb": 5,
+      "range": 8,
+      "effect": {
+        "type": "bloodandbones:projectile",
+        "kind": "splash_potion",
+        "potion": "minecraft:poison"
+      }
+    }
+  ]
+}

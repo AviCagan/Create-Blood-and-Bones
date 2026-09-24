@@ -1,0 +1,41 @@
+{
+  "signature": [
+    "parts.arm",
+    "parts.leg",
+    "organs.bloodandbones:frost_marrow"
+  ],
+  "organs": {
+    "torso": {
+      "add": [
+        "bloodandbones:frost_marrow"
+      ]
+    }
+  },
+  "parts": {
+    "arm": {
+      "minion": {
+        "traits": [
+          "bloodandbones:bowman"
+        ]
+      }
+    },
+    "leg": {
+      "armour": {
+        "boots": [
+          "bloodandbones:powder_walker",
+          "bloodandbones:frost_guard"
+        ]
+      }
+    }
+  },
+  "organ_traits": {
+    "bloodandbones:frost_marrow": {
+      "minion": [
+        "bloodandbones:chilling"
+      ],
+      "armour": [
+        "bloodandbones:chilling"
+      ]
+    }
+  }
+}

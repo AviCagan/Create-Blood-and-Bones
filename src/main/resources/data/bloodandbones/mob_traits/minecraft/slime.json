@@ -1,0 +1,22 @@
+{
+  "signature": [
+    "organs.bloodandbones:slime_core"
+  ],
+  "organs": {
+    "torso": {
+      "add": [
+        "bloodandbones:slime_core"
+      ]
+    }
+  },
+  "organ_traits": {
+    "bloodandbones:slime_core": {
+      "minion": [
+        "bloodandbones:sticky"
+      ],
+      "armour": [
+        "bloodandbones:sticky"
+      ]
+    }
+  }
+}

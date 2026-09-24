@@ -1,0 +1,22 @@
+{
+  "signature": [
+    "organs.bloodandbones:elder_eye"
+  ],
+  "organs": {
+    "head": {
+      "add": [
+        "bloodandbones:elder_eye"
+      ]
+    }
+  },
+  "organ_traits": {
+    "bloodandbones:elder_eye": {
+      "minion": [
+        "bloodandbones:fatigue_aura"
+      ],
+      "armour": [
+        "bloodandbones:fatigue_aura"
+      ]
+    }
+  }
+}

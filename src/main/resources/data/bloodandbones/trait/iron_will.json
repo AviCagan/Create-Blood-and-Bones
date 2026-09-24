@@ -1,0 +1,18 @@
+{
+  "name": "trait.bloodandbones.iron_will",
+  "max_level": 1,
+  "effects": [
+    {
+      "trigger": "passive",
+      "requirements": {
+        "condition": "bloodandbones:health_below",
+        "fraction": 0.5
+      },
+      "effect": {
+        "type": "bloodandbones:attribute",
+        "attribute": "minecraft:generic.armor",
+        "amount": 4
+      }
+    }
+  ]
+}

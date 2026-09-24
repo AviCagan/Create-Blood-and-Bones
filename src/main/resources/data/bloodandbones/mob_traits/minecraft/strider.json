@@ -1,12 +1,43 @@
 {
   "signature": [
-    "organs.bloodandbones:lava_bladder"
+    "organs.bloodandbones:lava_bladder",
+    "parts.leg"
   ],
   "scrap_material": "bloodandbones:ember",
   "organs": {
     "torso": {
       "add": [
         "bloodandbones:lava_bladder"
+      ]
+    }
+  },
+  "parts": {
+    "leg": {
+      "minion": {
+        "traits": [
+          "bloodandbones:lava_walk"
+        ]
+      },
+      "armour": {
+        "boots": [
+          "bloodandbones:lava_wader"
+        ]
+      }
+    }
+  },
+  "organ_traits": {
+    "bloodandbones:lava_bladder": {
+      "minion": [
+        {
+          "trait": "bloodandbones:fireproof",
+          "level": 2
+        }
+      ],
+      "armour": [
+        {
+          "trait": "bloodandbones:fireproof",
+          "level": 2
+        }
       ]
     }
   }

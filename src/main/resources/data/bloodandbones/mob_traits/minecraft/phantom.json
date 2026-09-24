@@ -1,0 +1,37 @@
+{
+  "signature": [
+    "parts.arm.wing",
+    "hide",
+    "organs.bloodandbones:night_stalker_gland"
+  ],
+  "organs": {
+    "torso": {
+      "add": [
+        "bloodandbones:night_stalker_gland"
+      ]
+    }
+  },
+  "parts": {
+    "arm.wing": {
+      "armour": {
+        "shoulders": [
+          "bloodandbones:glider"
+        ]
+      }
+    }
+  },
+  "hide": [
+    "bloodandbones:featherfall"
+  ],
+  "organ_traits": {
+    "bloodandbones:night_stalker_gland": {
+      "minion": [
+        "bloodandbones:leap"
+      ],
+      "armour": [
+        "bloodandbones:dark_sight",
+        "bloodandbones:swift"
+      ]
+    }
+  }
+}

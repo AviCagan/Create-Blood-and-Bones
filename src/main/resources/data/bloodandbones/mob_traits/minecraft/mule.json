@@ -1,0 +1,20 @@
+{
+  "signature": [
+    "parts.torso",
+    "parts.leg"
+  ],
+  "parts": {
+    "torso": {
+      "minion": {
+        "traits": [
+          "bloodandbones:saddlebags"
+        ]
+      }
+    },
+    "leg": {
+      "armour": [
+        "bloodandbones:stubborn"
+      ]
+    }
+  }
+}

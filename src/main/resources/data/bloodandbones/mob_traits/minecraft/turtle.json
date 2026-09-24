@@ -1,0 +1,41 @@
+{
+  "signature": [
+    "parts.torso",
+    "organs.bloodandbones:salt_gland"
+  ],
+  "organs": {
+    "torso": {
+      "add": [
+        "bloodandbones:salt_gland"
+      ]
+    }
+  },
+  "parts": {
+    "torso": {
+      "minion": {
+        "traits": [
+          {
+            "trait": "bloodandbones:thick_hide",
+            "level": 3
+          }
+        ]
+      },
+      "armour": [
+        {
+          "trait": "bloodandbones:shell_guard",
+          "level": 2
+        }
+      ]
+    }
+  },
+  "organ_traits": {
+    "bloodandbones:salt_gland": {
+      "minion": [
+        "bloodandbones:waterborn"
+      ],
+      "armour": [
+        "bloodandbones:waterborn"
+      ]
+    }
+  }
+}

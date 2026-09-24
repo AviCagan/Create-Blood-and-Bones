@@ -77,6 +77,10 @@
         {
           "trait": "bloodandbones:frost_guard",
           "level": 2
+        },
+        {
+          "trait": "bloodandbones:fat_reserve",
+          "level": 2
         }
       ],
       "armour": [

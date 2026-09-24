@@ -1,6 +1,6 @@
 {
   "kind": "overlay",
-  "priority": 210,
+  "priority": 106,
   "members": [
     "#minecraft:skeletons",
     "#bloodandbones:overlay/skeletal"
@@ -25,21 +25,39 @@
       "minion": {
         "traits": {
           "add": [
-            "bloodandbones:hollow_frame"
+            "bloodandbones:hollow_frame",
+            "bloodandbones:leaky"
           ]
         }
       }
     }
   },
   "full_set": {
+    "replace": true,
     "name": "set.bloodandbones.ossuary",
-    "bonus": {
-      "add": [
-        {
-          "trait": "bloodandbones:sharpshooter",
-          "level": 2
-        }
-      ]
+    "bonus": [
+      "bloodandbones:skeleton_kin",
+      {
+        "trait": "bloodandbones:sharpshooter",
+        "level": 2
+      }
+    ],
+    "drawback": [
+      "bloodandbones:sun_cursed"
+    ]
+  },
+  "organ_traits": {
+    "bloodandbones:marrow": {
+      "minion": {
+        "add": [
+          "bloodandbones:marrow"
+        ]
+      },
+      "armour": {
+        "add": [
+          "bloodandbones:lean"
+        ]
+      }
     }
   }
 }

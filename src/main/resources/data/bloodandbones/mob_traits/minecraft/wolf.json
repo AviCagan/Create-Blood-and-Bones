@@ -1,0 +1,25 @@
+{
+  "signature": [
+    "parts.head",
+    "parts.tail"
+  ],
+  "parts": {
+    "head": {
+      "minion": {
+        "traits": [
+          "bloodandbones:pack_hunter"
+        ]
+      },
+      "armour": [
+        "bloodandbones:pack_hunter"
+      ]
+    },
+    "tail": {
+      "armour": {
+        "hips": [
+          "bloodandbones:steady"
+        ]
+      }
+    }
+  }
+}

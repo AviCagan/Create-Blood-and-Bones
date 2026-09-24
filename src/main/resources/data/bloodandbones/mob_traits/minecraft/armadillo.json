@@ -1,0 +1,39 @@
+{
+  "signature": [
+    "parts.torso",
+    "hide",
+    "organs.bloodandbones:scute_gland"
+  ],
+  "organs": {
+    "torso": {
+      "add": [
+        "bloodandbones:scute_gland"
+      ]
+    }
+  },
+  "parts": {
+    "torso": {
+      "minion": {
+        "traits": [
+          "bloodandbones:roll_up"
+        ]
+      },
+      "armour": [
+        "bloodandbones:roll_up"
+      ]
+    }
+  },
+  "hide": [
+    "bloodandbones:tough"
+  ],
+  "organ_traits": {
+    "bloodandbones:scute_gland": {
+      "minion": [
+        "bloodandbones:scute_shed"
+      ],
+      "armour": [
+        "bloodandbones:thick_hide"
+      ]
+    }
+  }
+}

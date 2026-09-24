@@ -1,0 +1,22 @@
+{
+  "signature": [
+    "organs.bloodandbones:mirror_gland"
+  ],
+  "organs": {
+    "torso": {
+      "add": [
+        "bloodandbones:mirror_gland"
+      ]
+    }
+  },
+  "organ_traits": {
+    "bloodandbones:mirror_gland": {
+      "minion": [
+        "bloodandbones:mirror"
+      ],
+      "armour": [
+        "bloodandbones:mirror"
+      ]
+    }
+  }
+}

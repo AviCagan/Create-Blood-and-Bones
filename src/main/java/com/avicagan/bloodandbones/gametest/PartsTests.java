@@ -89,18 +89,18 @@ public class PartsTests {
         helper.succeed();
     }
 
-    /** A cow resolves as quadruped then grazer, a rabbit as quadruped, small prey and its own file on top. */
+    /** A cow resolves as quadruped, grazer and its own file; a rabbit as quadruped, small prey, the snow overlay and its own file. */
     @GameTest(template = "empty", timeoutTicks = 20)
     public static void cowAndRabbitResolve(GameTestHelper helper) {
         ResolvedMob cow = PartsData.SERVER.resolve(COW, false);
         ResolvedMob rabbit = PartsData.SERVER.resolve(RABBIT, false);
-        if (!cow.layers().equals(List.of(bb("quadruped"), bb("grazer"))) || !cow.material().equals(bb("hide_plate"))
+        if (!cow.layers().equals(List.of(bb("quadruped"), bb("grazer"), COW)) || !cow.material().equals(bb("hide_plate"))
                 || level(cow.armourTraits("leg", "boots"), "hooves") != 1 || level(cow.armourTraits("leg", "boots"), "swift") != 1
                 || level(cow.armourTraits("leg", "leggings"), "hooves") != 0) {
             helper.fail("Cow resolved wrong: " + cow.layers() + " " + cow.material() + " " + cow.armourTraits("leg", "boots"));
             return;
         }
-        if (!rabbit.layers().equals(List.of(bb("quadruped"), bb("small_prey"), RABBIT)) || !rabbit.material().equals(bb("sinew"))
+        if (!rabbit.layers().equals(List.of(bb("quadruped"), bb("small_prey"), bb("snow"), RABBIT)) || !rabbit.material().equals(bb("sinew"))
                 || level(rabbit.armourTraits("leg", "leggings"), "springy") != 2 || level(rabbit.armourTraits("leg", "boots"), "fall_guard") != 2
                 || rabbit.fullSet().isEmpty() || !rabbit.fullSet().get().name().equals("set.bloodandbones.warren")
                 || level(rabbit.fullSet().get().bonus(), "springy") != 4) {

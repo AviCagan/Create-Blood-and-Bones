@@ -78,6 +78,9 @@
     "bonus": [
       "bloodandbones:gills",
       "bloodandbones:regrowth"
+    ],
+    "drawback": [
+      "bloodandbones:dry_out"
     ]
   }
 }

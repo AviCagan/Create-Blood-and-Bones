@@ -39,7 +39,10 @@
           "mode": "walk",
           "speed": 0.25,
           "gait": "trot"
-        }
+        },
+        "traits": [
+          "bloodandbones:charge"
+        ]
       },
       "armour": {
         "leggings": [
@@ -60,5 +63,15 @@
         "level": 2
       }
     ]
+  },
+  "hide": [
+    "bloodandbones:barbed"
+  ],
+  "organ_traits": {
+    "bloodandbones:stomach": {
+      "armour": [
+        "bloodandbones:omnivore"
+      ]
+    }
   }
 }

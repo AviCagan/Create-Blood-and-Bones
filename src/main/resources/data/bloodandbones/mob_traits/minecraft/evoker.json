@@ -1,0 +1,37 @@
+{
+  "signature": [
+    "parts.arm",
+    "organs.bloodandbones:totem_gland"
+  ],
+  "organs": {
+    "torso": {
+      "add": [
+        "bloodandbones:totem_gland"
+      ]
+    }
+  },
+  "parts": {
+    "arm": {
+      "minion": {
+        "traits": [
+          "bloodandbones:fangs"
+        ]
+      },
+      "armour": {
+        "shoulders": [
+          "bloodandbones:fangs"
+        ]
+      }
+    }
+  },
+  "organ_traits": {
+    "bloodandbones:totem_gland": {
+      "minion": [
+        "bloodandbones:totem"
+      ],
+      "armour": [
+        "bloodandbones:totem"
+      ]
+    }
+  }
+}

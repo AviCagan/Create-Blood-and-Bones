@@ -1,0 +1,28 @@
+{
+  "signature": [
+    "organs.bloodandbones:rage_gland"
+  ],
+  "organs": {
+    "torso": {
+      "add": [
+        "bloodandbones:rage_gland"
+      ]
+    }
+  },
+  "organ_traits": {
+    "bloodandbones:rage_gland": {
+      "minion": [
+        {
+          "trait": "bloodandbones:adrenaline",
+          "level": 2
+        }
+      ],
+      "armour": [
+        {
+          "trait": "bloodandbones:adrenaline",
+          "level": 2
+        }
+      ]
+    }
+  }
+}

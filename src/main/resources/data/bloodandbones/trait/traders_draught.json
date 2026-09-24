@@ -1,0 +1,24 @@
+{
+  "name": "trait.bloodandbones.traders_draught",
+  "max_level": 1,
+  "effects": [
+    {
+      "trigger": "targeted",
+      "cooldown": 6000,
+      "requirements": {
+        "condition": "minecraft:time_check",
+        "value": {
+          "min": 13000,
+          "max": 23000
+        },
+        "period": 24000
+      },
+      "effect": {
+        "type": "bloodandbones:mob_effect",
+        "effect": "minecraft:invisibility",
+        "duration": 400,
+        "target": "self"
+      }
+    }
+  ]
+}

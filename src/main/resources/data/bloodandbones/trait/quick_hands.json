@@ -1,6 +1,9 @@
 {
   "name": "trait.bloodandbones.quick_hands",
   "max_level": 2,
+  "contexts": [
+    "armour"
+  ],
   "effects": [
     {
       "effect": {

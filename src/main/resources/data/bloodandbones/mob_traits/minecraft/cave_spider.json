@@ -1,0 +1,25 @@
+{
+  "signature": [
+    "organs.bloodandbones:venom_sac"
+  ],
+  "organs": {
+    "torso": {
+      "add": [
+        "bloodandbones:venom_sac"
+      ]
+    }
+  },
+  "organ_traits": {
+    "bloodandbones:venom_sac": {
+      "minion": [
+        {
+          "trait": "bloodandbones:venomous",
+          "level": 2
+        }
+      ],
+      "armour": [
+        "bloodandbones:venomous"
+      ]
+    }
+  }
+}

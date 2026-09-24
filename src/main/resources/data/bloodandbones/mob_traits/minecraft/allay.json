@@ -1,0 +1,25 @@
+{
+  "signature": [
+    "organs.bloodandbones:harmonic_gland"
+  ],
+  "organs": {
+    "torso": {
+      "add": [
+        "bloodandbones:harmonic_gland"
+      ]
+    }
+  },
+  "organ_traits": {
+    "bloodandbones:harmonic_gland": {
+      "minion": [
+        {
+          "trait": "bloodandbones:item_magnet",
+          "level": 2
+        }
+      ],
+      "armour": [
+        "bloodandbones:item_magnet"
+      ]
+    }
+  }
+}

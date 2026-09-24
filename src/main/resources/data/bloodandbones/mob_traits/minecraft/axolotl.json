@@ -1,0 +1,17 @@
+{
+  "signature": [
+    "parts.torso"
+  ],
+  "parts": {
+    "torso": {
+      "minion": {
+        "traits": [
+          "bloodandbones:play_dead"
+        ]
+      },
+      "armour": [
+        "bloodandbones:play_dead"
+      ]
+    }
+  }
+}

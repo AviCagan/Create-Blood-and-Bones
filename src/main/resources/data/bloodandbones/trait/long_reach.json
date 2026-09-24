@@ -1,6 +1,9 @@
 {
   "name": "trait.bloodandbones.long_reach",
   "max_level": 2,
+  "contexts": [
+    "armour"
+  ],
   "effects": [
     {
       "effect": {

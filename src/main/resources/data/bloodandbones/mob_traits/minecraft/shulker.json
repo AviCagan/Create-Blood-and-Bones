@@ -1,8 +1,45 @@
 {
+  "signature": [
+    "parts.arm",
+    "hide",
+    "organs.bloodandbones:levitation_gland"
+  ],
   "bone_slots": {
     "lid": {
       "slot": "arm",
       "form": "shell"
+    }
+  },
+  "organs": {
+    "torso": {
+      "add": [
+        "bloodandbones:levitation_gland"
+      ]
+    }
+  },
+  "parts": {
+    "arm": {
+      "armour": {
+        "shoulders": [
+          "bloodandbones:deflector"
+        ]
+      }
+    }
+  },
+  "hide": [
+    {
+      "trait": "bloodandbones:shell_guard",
+      "level": 2
+    }
+  ],
+  "organ_traits": {
+    "bloodandbones:levitation_gland": {
+      "minion": [
+        "bloodandbones:shulker_bolt"
+      ],
+      "armour": [
+        "bloodandbones:shulker_bolt"
+      ]
     }
   }
 }

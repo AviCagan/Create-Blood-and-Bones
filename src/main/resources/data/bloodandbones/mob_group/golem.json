@@ -36,6 +36,11 @@
           "style": "fling"
         },
         "grip": "hand"
+      },
+      "armour": {
+        "shoulders": [
+          "bloodandbones:flinger"
+        ]
       }
     },
     "leg": {

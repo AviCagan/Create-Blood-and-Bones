@@ -1,0 +1,33 @@
+{
+  "signature": [
+    "parts.arm",
+    "organs.bloodandbones:spore_marrow"
+  ],
+  "organs": {
+    "torso": {
+      "add": [
+        "bloodandbones:spore_marrow"
+      ]
+    }
+  },
+  "parts": {
+    "arm": {
+      "minion": {
+        "traits": [
+          "bloodandbones:bowman"
+        ]
+      }
+    }
+  },
+  "organ_traits": {
+    "bloodandbones:spore_marrow": {
+      "minion": [
+        "bloodandbones:toxin_puff"
+      ],
+      "armour": [
+        "bloodandbones:venom_proof",
+        "bloodandbones:stinger"
+      ]
+    }
+  }
+}

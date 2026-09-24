@@ -50,7 +50,9 @@
         },
         "grip": "hand",
         "hands": 2,
-        "storage": 9
+        "traits": [
+          "bloodandbones:pouch"
+        ]
       }
     },
     "leg": {
@@ -75,6 +77,9 @@
     "bloodandbones:village_heart": {
       "armour": [
         "bloodandbones:hero"
+      ],
+      "minion": [
+        "bloodandbones:beloved"
       ]
     }
   },
@@ -98,5 +103,8 @@
       },
       "bloodandbones:zombie_bait"
     ]
-  }
+  },
+  "hide": [
+    "bloodandbones:golem_trust"
+  ]
 }

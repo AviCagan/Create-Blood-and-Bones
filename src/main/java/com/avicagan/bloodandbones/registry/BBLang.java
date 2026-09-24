@@ -415,6 +415,38 @@ public class BBLang {
             BloodAndBones.REGISTRATE.addRawLang("organ.bloodandbones." + organ[0], organ[1]);
             bloodless("organ.bloodandbones." + organ[0], organ[2]);
         }
+        // the special organs the mob data names, every mob at least one (docs/PARTS-AND-TRAITS.md section 8); bloodless
+        // mode calls each by the part it would be in a machine (section 7.10). The powder sac is Motion's.
+        String[][] specialOrgans = {
+                {"core", "Core", "Core"}, {"alchemical_gland", "Alchemical Gland", "Alchemical Core"}, {"bacon_fat", "Bacon Fat", "Fuel Cell"},
+                {"bamboo_gut", "Bamboo Gut", "Bamboo Hopper"}, {"blaze_core", "Blaze Core", "Blaze Core"}, {"boar_heart", "Boar Heart", "Boar Pump"},
+                {"brown_fat", "Brown Fat", "Insulation Cell"}, {"burrow_gland", "Burrow Gland", "Burrow Core"},
+                {"cheek_pouch", "Cheek Pouch", "Storage Pouch"}, {"drowned_lungs", "Drowned Lungs", "Drowned Bellows"},
+                {"echo_ear", "Echo Ear", "Echo Receiver"}, {"egg_gland", "Egg Gland", "Egg Dispenser"}, {"elder_eye", "Elder Eye", "Elder Lens"},
+                {"ender_gland", "Ender Gland", "Ender Core"}, {"frost_core", "Frost Core", "Frost Core"}, {"frost_marrow", "Frost Marrow", "Rime Core"},
+                {"gizzard", "Gizzard", "Grinder"}, {"glow_sac", "Glow Sac", "Glow Cell"}, {"gold_gizzard", "Gold Gizzard", "Gold Sorter"},
+                {"golem_core", "Golem Core", "Golem Core"}, {"harmonic_gland", "Harmonic Gland", "Harmonic Core"},
+                {"honey_stomach", "Honey Stomach", "Honey Hopper"}, {"hump_fat", "Hump Fat", "Reserve Tank"}, {"ink_sac", "Ink Sac", "Ink Reservoir"},
+                {"lanolin_gland", "Lanolin Gland", "Oil Core"}, {"lava_bladder", "Lava Bladder", "Lava Tank"}, {"leap_gland", "Leap Gland", "Spring Core"},
+                {"levitation_gland", "Levitation Gland", "Levitation Core"}, {"magma_core", "Magma Core", "Magma Core"}, {"marrow", "Marrow", "Lean Core"},
+                {"melon", "Melon", "Sonar Lens"}, {"mirror_gland", "Mirror Gland", "Mirror Core"}, {"mycelial_gut", "Mycelial Gut", "Mycelial Hopper"},
+                {"night_stalker_gland", "Night Stalker Gland", "Night Stalker Core"}, {"nine_lives", "Nine Lives", "Spare Life Core"},
+                {"olfactory_bulb", "Olfactory Bulb", "Scent Filter"}, {"pack_gland", "Pack Gland", "Pack Core"}, {"pack_sinew", "Pack Sinew", "Pack Strut"},
+                {"prism_eye", "Prism Eye", "Prism Lens"}, {"purr_box", "Purr Box", "Purr Box"}, {"rabbit_foot", "Rabbit's Foot", "Lucky Charm"},
+                {"racing_heart", "Racing Heart", "Racing Pump"}, {"rage_gland", "Rage Gland", "Overdrive Core"}, {"raider_gland", "Raider Gland", "Raider Core"},
+                {"regrowth_gland", "Regrowth Gland", "Regrowth Core"}, {"rift_mite", "Rift Mite", "Rift Core"}, {"rot_gut", "Rot Gut", "Iron Hopper"},
+                {"rumen", "Rumen", "Fermenter"}, {"salt_gland", "Salt Gland", "Salt Filter"}, {"scute_gland", "Scute Gland", "Scute Press"},
+                {"shell_gland", "Shell Gland", "Shell Core"}, {"slime_core", "Slime Core", "Slime Core"}, {"sonic_core", "Sonic Core", "Sonic Core"},
+                {"spinneret", "Spinneret", "Thread Spinner"}, {"spit_gland", "Spit Gland", "Spit Nozzle"}, {"spleen", "Spleen", "Reserve Cell"},
+                {"spore_marrow", "Spore Marrow", "Spore Core"}, {"sticky_tongue", "Sticky Tongue", "Grapple Line"}, {"stinger", "Stinger", "Needle"},
+                {"swim_bladder", "Swim Bladder", "Buoyancy Tank"}, {"tear_gland", "Tear Gland", "Tear Core"}, {"totem_gland", "Totem Gland", "Totem Core"},
+                {"toxin_sac", "Toxin Sac", "Toxin Cell"}, {"traders_draught", "Trader's Draught", "Draught Flask"}, {"venom_sac", "Venom Sac", "Venom Cell"},
+                {"vex_wisp", "Vex Wisp", "Vex Wisp"}, {"village_heart", "Village Heart", "Village Pump"}, {"war_heart", "War Heart", "War Pump"},
+                {"wind_core", "Wind Core", "Wind Core"}, {"wither_core", "Wither Core", "Wither Core"}, {"wither_marrow", "Wither Marrow", "Blight Core"}};
+        for (String[] organ : specialOrgans) {
+            BloodAndBones.REGISTRATE.addRawLang("organ.bloodandbones." + organ[0], organ[1]);
+            bloodless("organ.bloodandbones." + organ[0], organ[2]);
+        }
         BloodAndBones.REGISTRATE.addRawLang("bloodandbones.carcass_armour.tier", "Tier %s: %s");
         BloodAndBones.REGISTRATE.addRawLang("bloodandbones.carcass_armour.strapped", "Strapped on: %s");
         BloodAndBones.REGISTRATE.addRawLang("item.bloodandbones.raw_hide.of", "Raw %s Hide");
@@ -430,7 +462,9 @@ public class BBLang {
                 {"fortress", "Fortress"}, {"juggernaut", "Juggernaut"}, {"amphibious", "Amphibious"}, {"elder", "Elder"}, {"raid_captain", "Raid Captain"},
                 {"bartered", "Bartered"}, {"brood", "Brood"}, {"infestation", "Infestation"}, {"featherweight", "Featherweight"},
                 {"night_wing", "Night Wing"}, {"ethereal", "Ethereal"}, {"gills", "Gills"}, {"deep_one", "Deep One"}, {"kraken", "Kraken"},
-                {"gelatinous", "Gelatinous"}, {"decay_lord", "Decay Lord"}, {"shambler", "Shambler"}, {"ossuary", "Ossuary"}};
+                {"gelatinous", "Gelatinous"}, {"decay_lord", "Decay Lord"}, {"shambler", "Shambler"}, {"ossuary", "Ossuary"},
+                {"inferno", "Inferno"}, {"walking_bomb", "Walking Bomb"}, {"voidwalker", "Voidwalker"}, {"mountaineer", "Mountaineer"},
+                {"desert_shambler", "Desert Shambler"}, {"colossus", "Colossus"}};
         for (String[] set : sets) {
             BloodAndBones.REGISTRATE.addRawLang("set.bloodandbones." + set[0], set[1]);
         }
@@ -465,6 +499,25 @@ public class BBLang {
         }
         // softening "gut" would make it "Iron Cord"
         BloodAndBones.REGISTRATE.addRawLang("bloodless.trait.bloodandbones.iron_gut", "Iron Stomach");
+        // traits the mob signatures needed beyond the four groups' (docs/PARTS-AND-TRAITS.md section 8), each made of their types
+        trait("fat_reserve", "Fat Reserve", "A minion holds a quarter more blood a level.");
+        bloodless("trait.bloodandbones.fat_reserve", "Reserve Tank");
+        trait("quench", "Quench", "Once alight, you burn for half as long (a quarter as long at II).");
+        trait("stinger", "Stinger", "A quarter of your blows sting: Poison II for 3 seconds, at most once every 10 seconds.");
+        trait("wind_shot", "Wind Shot", "A minion keeps its distance and fires wind charges at its target, one every 2 seconds, for 2 mB of blood each.");
+        trait("creeper_kin", "Creeper Kin", "Creepers take you for one of their own and leave you be. One you hurt fights back for 30 seconds.");
+        trait("iron_will", "Iron Will", "Below half health, 4 more armour.");
+        trait("pouch", "Pouch", "A minion carries 9 more stacks a level.");
+        trait("lanolin", "Lanolin", "The piece oils itself, mending a point of wear every 30 seconds.");
+        trait("eight_eyes", "Eight Eyes", "In the dark, hostile mobs within 8 blocks show through walls.");
+        trait("traders_draught", "Trader's Draught", "At night, when a mob sets its sights on you, you drink yourself invisible for 20 seconds. "
+                + "Once every 5 minutes.");
+        trait("potion_thrower", "Potion Thrower", "A minion keeps its distance and throws the splash potions it carries at its target, "
+                + "or a poison of its own brewing for 5 mB of blood, every 3 seconds.");
+        trait("remedy", "Remedy", "Hurt below half health, you drink a remedy: Regeneration for 5 seconds, and Fire Resistance too if you "
+                + "are burning. Once every 30 seconds.");
+        trait("totem", "Totem", "A killing blow leaves you on 1 health instead, as a Totem of Undying does, for 500 mB of blood; then not "
+                + "again for 20 minutes. A minion collapses rather than dying.");
         // the four groups of trait effects add their own (docs/ARCHITECTURE-PROPOSAL.md section 15.8)
         com.avicagan.bloodandbones.parts.effect.MotionEffects.lang();
         com.avicagan.bloodandbones.parts.effect.RangedEffects.lang();

@@ -1,7 +1,15 @@
 {
   "signature": [
-    "parts.leg.hind"
+    "parts.leg.hind",
+    "organs.bloodandbones:rabbit_foot"
   ],
+  "organs": {
+    "leg.hind": {
+      "add": [
+        "bloodandbones:rabbit_foot"
+      ]
+    }
+  },
   "parts": {
     "leg.hind": {
       "minion": {
@@ -48,5 +56,19 @@
       },
       "bloodandbones:prey"
     ]
+  },
+  "organ_traits": {
+    "bloodandbones:rabbit_foot": {
+      "minion": [
+        "bloodandbones:evasive"
+      ],
+      "armour": [
+        {
+          "trait": "bloodandbones:lucky",
+          "level": 2
+        },
+        "bloodandbones:leap"
+      ]
+    }
   }
 }

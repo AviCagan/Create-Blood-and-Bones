@@ -25,7 +25,13 @@
           "gait": "undulate",
           "land_speed": 0.05
         }
-      }
+      },
+      "armour": [
+        {
+          "trait": "bloodandbones:barbed",
+          "level": 2
+        }
+      ]
     },
     "head": {
       "minion": {
@@ -66,5 +72,15 @@
     "drawback": [
       "bloodandbones:beached"
     ]
+  },
+  "organ_traits": {
+    "bloodandbones:prism_eye": {
+      "minion": [
+        "bloodandbones:guardian_beam"
+      ],
+      "armour": [
+        "bloodandbones:guardian_beam"
+      ]
+    }
   }
 }

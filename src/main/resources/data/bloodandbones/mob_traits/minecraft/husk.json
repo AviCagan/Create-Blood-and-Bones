@@ -1,0 +1,42 @@
+{
+  "signature": [
+    "parts.arm",
+    "parts.torso",
+    "full_set"
+  ],
+  "parts": {
+    "arm": {
+      "minion": {
+        "traits": [
+          "bloodandbones:hungering"
+        ]
+      },
+      "armour": {
+        "shoulders": [
+          "bloodandbones:hungering"
+        ]
+      }
+    },
+    "torso": {
+      "minion": {
+        "traits": {
+          "remove": [
+            "bloodandbones:sun_cursed"
+          ]
+        }
+      }
+    }
+  },
+  "full_set": {
+    "replace": true,
+    "name": "set.bloodandbones.desert_shambler",
+    "bonus": [
+      "bloodandbones:dead_face",
+      "bloodandbones:fireproof"
+    ],
+    "drawback": [
+      "bloodandbones:thirst",
+      "bloodandbones:inverted_healing"
+    ]
+  }
+}

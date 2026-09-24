@@ -1553,7 +1553,7 @@ iron, blood diamonds and soul blood netherite".
   recipe): a piece and one kind of thing. Hides: one for a helmet or boots, two for leggings, three for a chestplate,
   all of one mob but of any items its hide comes as (two leather and a raw cow hide); they add the mob's `hide` traits.
   An organ: eyes in a helmet, a heart or lungs in a chestplate, a stomach in a chestplate or leggings; it adds the mob's
-  `organ_traits` for that organ (the data has none yet, so an organ fits and adds nothing until the per-mob data comes).
+  `organ_traits` for that organ (every mob's data names its organs' traits since 15.9).
   The next tier's item. A hide or organ replaces the one before, which comes back through `getRemainingItems` into the
   slot the piece lay in, stamped and named as it was (hides of a second item go where new hides lay). The piece keeps
   its wear, enchantments and strapped tank, and its durability is baked again. `CarcassArmour` has `hide` {mob or none,
@@ -2054,5 +2054,84 @@ so `UpkeepClient` is still empty):
   `friendlyShotPassesFriendsDeflector`, `minionBlockDamageCoversShotsAndWebs`, `honeyStomachGrowsCrops`,
   `leanLowersUpkeep`.
 - **Still waiting**: rideable and the hump's second seat (the mount type, slice 6); keen_butcher (the `butchery_yield`
-  attribute of spec 5.7); held weapons and a minion's own strikes reading attack damage (strike, slice 6); and the
-  per-mob wiring of the signatures (spec 8.2) beyond the enderman, creeper, skeleton, chicken and zombie set.
+  attribute of spec 5.7); held weapons and a minion's own strikes reading attack damage (strike, slice 6). The per-mob
+  wiring of the signatures (spec 8.2) is 15.9.
+
+### 15.9 Every mob wired (verified in tests)
+
+The effect engine's traits are placed in the mob data as spec 3.3 (families), 3.4 (overlays), 8.1 (the detailed samples)
+and 8.2 (the 79 signatures) give them: minion traits in a part's `"minion": {"traits"}`, armour traits in its `"armour"`
+lists (per piece where the spec names one), hide traits in `"hide"`, an organ's in `"organ_traits"` (with the organ named
+in the `"organs"` list of the part it comes from, for when organs are cut out by those lists), and sets in `"full_set"`.
+Group defaults first (brief rule 2): a facet shared by a family or an overlay lives there, and a mob's own file holds only
+its signature. 59 new mob files (69 in all), each listing its signature facets.
+
+- **Groups.** Families: the grazer torso is a beast of burden and its stomach four-chambered; equine tails swat flies;
+  swine charge and their hide is barbed; canid bites bleed, their helmets smell blood and their boots are silent, the
+  Pack Gland hunts in packs; felines step silently, their chest dodges, Nine Lives is undying; the bear's Brown Fat holds
+  more blood; behemoths trample; villagers' hide is trusted by golems, their heart beloved, their pair of arms carries
+  nine more stacks; illagers' helmets and Raider Gland are raider kin (Raid Captain too); piglins' helmets, hide and set
+  are piglin kin; golem shoulders fling; arachnid legs climb walls (one piece clings, two climb) and the Spinneret shoots
+  webs on a minion and webs on hit in armour; vermin boots are silent; the fowl Gizzard eats seeds; spirit helmets see
+  the invisible; guardian chests are barbed and the Prism Eye fires the beam; slimes bounce; marine, amphibian and
+  cephalopod sets dry out. Archetypes gained the stomach's defaults (spec 4.5: a minion forages, armour is an omnivore).
+  Overlays: rotting torsos burn in the sun, rotting helmets are dead faces, the Rot Gut; skeletal torsos leak blood and
+  the Marrow (armour: lean); undead sets add inverted healing, frozen sets heat and frozen torsos and hides are
+  insulated; ender chests blink away when hurt (rift) and ender sets hurt in water; the breeze's deflect overlay reflects
+  arrows (torso and chest); raiders' minions are raider kin; and the snow overlay (`#minecraft:powder_snow_walkable_mobs`)
+  gives boots the powder walker, now that the flag exists.
+- **Every mob has a special organ** (the brief: "every mob has at least one"; spec 5.8's lint): an organ other than the
+  heart, lungs, stomach, eyes and core, with an ability. Where the spec names none, the design's own words or the mob's
+  vanilla habits chose it: the Rot Gut of every rotting mob (spec 7.10 names it; iron gut and hunger-proof), the equine
+  Spleen (a horse's spleen dumps its stored blood when it runs: second wind), the fowl Gizzard (spec 3.3's "Stomach:
+  Gizzard"), the goat's Leap Gland (a goat's long jump) and the sniffer's Olfactory Bulb (blood scent, until senses can
+  outline blocks). Every special organ has a name and a bloodless one that is a machine part (spec 7.10: Rumen is a
+  Fermenter, the Rot Gut an Iron Hopper, the Spleen a Reserve Cell), in `BBLang`. The organs have no item yet (the gland
+  item and harvesting by these lists are slice 3's), so in play only a piece or build given one directly has it.
+- **Sets.** The rotting and skeletal overlays' sets (Shambler, Ossuary) are now whole sets, replacing the archetype's and
+  family's (spec 7.7: an overlay's set beats them). To let the tag overlays after them still add their drawbacks
+  (undead's inverted healing, frozen's heat), rotting and skeletal apply first among overlays: priority 105 and 106 (the
+  spec's 200 and 210 put them after undead, which a replace would have undone). Mob sets: Inferno (blaze), Walking Bomb
+  (creeper), Voidwalker (enderman), Mountaineer (goat), Desert Shambler (husk), Colossus (iron golem); the hoglin's set
+  adds warped dread, the parrot's cookie poison.
+- **Contexts made honest.** The lint (below) found traits whose effects did nothing on one kind of host, and they now
+  say so: luck, attack speed and the player-only attributes (appraiser, lucky, pecking_order, quick_hands, burrower,
+  deep_digger, long_reach, stealthy) and the diets a minion cannot forage (four_chambers, omnivore, cud_chewer,
+  cookie_poison) are armour only, as are glider, powder_walker, quick_draw and blood_scent (a reveal outline is drawn for
+  a player alone); iron gut's and mycelial gut's eating, insulated's powder snow and piglin kin's gold check are armour
+  entries. So the Gold Gizzard and Burrow Gland give minions nothing (their minion halves wait for jobs), and the rabbit's
+  foot gives a minion evasion only.
+- **New traits** (13, each of built effect types, with words and bloodless wording): fat_reserve (a quarter more blood a
+  level: bacon fat, brown fat, hump fat), quench (burning time halved: the Blaze Core), stinger (a quarter of blows,
+  Poison II: bee, bogged), wind_shot (a minion's wind charges: the Wind Core), creeper_kin (Walking Bomb), iron_will (+4
+  armour below half health: the Golem Core), pouch (+9 slots: villager arms, the fox's Cheek Pouch), lanolin (the piece
+  mends a point every 30 s: the Lanolin Gland), eight_eyes (hostiles outlined within 8 in the dark: the spider's helmet),
+  traders_draught (invisible when targeted at night), potion_thrower (the witch's arms), remedy (the witch's Alchemical
+  Gland) and totem (the evoker's Totem Gland: 500 mB, 20 minutes).
+- **Stand-ins and caps**, where a built trait is near but not exact: levels past a trait's most are capped (the iron
+  golem's Hardy V is III, the turtle's Thick Hide IV is III); Nine Lives uses undying's 5-minute cooldown, not 20; the
+  amphibian set dries out at 60 s, not 120; leap for the fox's and phantom's pounce; flinger for the hoglin's 15% toss;
+  echo sense for the dolphin's Melon; fatigue aura for the Elder Eye's armour side; featherfall for the ghast's boots;
+  searing for the magma core's minion; blood scent for the sniffer; plain innate arrows for the stray's and bogged's
+  tipped ones. A few built minion fields came with them: ram bites for goat, hoglin and zoglin heads (spec 6.4's horned
+  heads), rideable camel legs.
+- **Lints** (`DataLintTests.dataLints`, spec 5.8): every trait's cooldowns are 0 or at least 20 and its tick intervals at
+  least 20, no trait uses damage_item, and no effect is in a context where it does nothing (an attribute the host type
+  lacks, a flag it never reads, a diet a minion cannot forage, storage or capacity on armour, a passive shot or a reveal
+  where only the other kind fires or sees it); every trait a group or mob file names is loaded, meant for the list's kind
+  of host, within its most level, and named, with bloodless words free of blood; every vanilla mob's resolved levels are
+  within the most, it has a special organ with an ability, named, and named as a machine part in bloodless mode, and its
+  set is named. `DataLintTests.signatureLint`: each mob file's `"signature"` names only what the file has, every mob signs
+  its own file or its family's (horse, guardian) or has a note of what it waits for, and the notes are logged every run
+  as the report of what is missing (jobs, movement modes, mounts, variant and name captures, held weapons, multi-head
+  mouths; and of the groups, Centaur's mount jump, Glutton, Alpha's wolves, Nine Lives' cooldowns, crusher boots,
+  Infestation's arthropod kin, Ethereal's passing projectiles, turtle and shulker scutes, rideable and keen_butcher).
+- **Tests** (`SignatureTests`): `blazeCoreChestIgnoresFire` (slice 4: burns out in half the time, fire hurts a quarter
+  less, the core's three fireballs for 50 mB), `fullZombieSetKinAndSunCursed` (slice 4: the Shambler whole, zombies leave
+  the wearer be, and it burns by day under the sky), `reductionFlooredAt20Percent` (slice 4: one piece or two let a fifth
+  through, a full set's bonus may make an immunity), `signatureTraitsReachTheirHosts` (a zombie torso burns and a husk's
+  does not; bacon fat and brown fat hold more blood; villager arms carry nine more; a cow's rumen and a rabbit's foot in
+  armour). The cow now has its own file and the rabbit the snow overlay, which `cowAndRabbitResolve` and `allMobsResolve`
+  expect.
+- **Section 9 tests still not possible**: `skeletonGivesMarrow` (harvesting organs by these lists), `phantomWingsLiftCow`
+  and `chickenWingsDoNot` (flight from wing lift), `moddedZombieByTagIsRotting` (a modded entity type to tag).

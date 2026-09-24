@@ -1,0 +1,49 @@
+{
+  "signature": [
+    "parts.head",
+    "organs.bloodandbones:war_heart"
+  ],
+  "organs": {
+    "torso": {
+      "add": [
+        "bloodandbones:war_heart"
+      ]
+    }
+  },
+  "parts": {
+    "head": {
+      "minion": {
+        "traits": [
+          "bloodandbones:roar"
+        ]
+      },
+      "armour": [
+        "bloodandbones:roar"
+      ]
+    }
+  },
+  "organ_traits": {
+    "bloodandbones:war_heart": {
+      "minion": [
+        {
+          "trait": "bloodandbones:steady",
+          "level": 3
+        },
+        {
+          "trait": "bloodandbones:hardy",
+          "level": 2
+        }
+      ],
+      "armour": [
+        {
+          "trait": "bloodandbones:steady",
+          "level": 3
+        },
+        {
+          "trait": "bloodandbones:hardy",
+          "level": 2
+        }
+      ]
+    }
+  }
+}

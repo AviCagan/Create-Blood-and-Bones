@@ -1,5 +1,8 @@
 {
   "name": "trait.bloodandbones.omnivore",
+  "contexts": [
+    "armour"
+  ],
   "effects": [
     {
       "trigger": "passive",

@@ -105,6 +105,14 @@
       "armour": [
         "bloodandbones:dark_sight"
       ]
+    },
+    "bloodandbones:stomach": {
+      "minion": [
+        "bloodandbones:forager"
+      ],
+      "armour": [
+        "bloodandbones:omnivore"
+      ]
     }
   }
 }

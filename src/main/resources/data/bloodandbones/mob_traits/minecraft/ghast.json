@@ -1,0 +1,32 @@
+{
+  "signature": [
+    "organs.bloodandbones:tear_gland",
+    "parts.leg"
+  ],
+  "organs": {
+    "torso": {
+      "add": [
+        "bloodandbones:tear_gland"
+      ]
+    }
+  },
+  "parts": {
+    "leg": {
+      "armour": {
+        "boots": [
+          "bloodandbones:featherfall"
+        ]
+      }
+    }
+  },
+  "organ_traits": {
+    "bloodandbones:tear_gland": {
+      "minion": [
+        "bloodandbones:great_fireball"
+      ],
+      "armour": [
+        "bloodandbones:great_fireball"
+      ]
+    }
+  }
+}

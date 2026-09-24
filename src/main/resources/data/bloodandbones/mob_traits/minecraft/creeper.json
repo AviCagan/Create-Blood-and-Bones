@@ -1,6 +1,9 @@
 {
   "signature": [
-    "organs.bloodandbones:powder_sac"
+    "organs.bloodandbones:powder_sac",
+    "parts.head",
+    "parts.torso",
+    "full_set"
   ],
   "organs": {
     "torso": {
@@ -18,5 +21,62 @@
         "bloodandbones:blast"
       ]
     }
+  },
+  "parts": {
+    "head": {
+      "minion": {
+        "traits": [
+          "bloodandbones:silent_steps"
+        ]
+      },
+      "armour": [
+        "bloodandbones:hiss"
+      ]
+    },
+    "torso": {
+      "minion": {
+        "traits": [
+          {
+            "trait": "bloodandbones:blast_padding",
+            "level": 4
+          }
+        ]
+      },
+      "armour": [
+        {
+          "trait": "bloodandbones:blast_padding",
+          "level": 2
+        }
+      ]
+    },
+    "leg": {
+      "minion": {
+        "traits": [
+          "bloodandbones:silent_steps"
+        ]
+      },
+      "armour": {
+        "leggings": [
+          "bloodandbones:stealthy"
+        ],
+        "boots": [
+          "bloodandbones:silent_steps"
+        ]
+      }
+    }
+  },
+  "full_set": {
+    "replace": true,
+    "name": "set.bloodandbones.walking_bomb",
+    "bonus": [
+      {
+        "trait": "bloodandbones:blast_padding",
+        "level": 4
+      },
+      "bloodandbones:creeper_kin"
+    ],
+    "drawback": [
+      "bloodandbones:cat_terror"
+    ]
   }
 }

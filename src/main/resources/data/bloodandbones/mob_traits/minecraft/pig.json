@@ -1,0 +1,23 @@
+{
+  "signature": [
+    "organs.bloodandbones:bacon_fat"
+  ],
+  "organs": {
+    "torso": {
+      "add": [
+        "bloodandbones:bacon_fat"
+      ]
+    }
+  },
+  "organ_traits": {
+    "bloodandbones:bacon_fat": {
+      "minion": [
+        "bloodandbones:fat_reserve"
+      ],
+      "armour": [
+        "bloodandbones:hardy",
+        "bloodandbones:frost_guard"
+      ]
+    }
+  }
+}

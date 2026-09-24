@@ -1,0 +1,41 @@
+{
+  "signature": [
+    "parts.head",
+    "organs.bloodandbones:echo_ear"
+  ],
+  "organs": {
+    "head": {
+      "add": [
+        "bloodandbones:echo_ear"
+      ]
+    }
+  },
+  "parts": {
+    "head": {
+      "minion": {
+        "traits": [
+          "bloodandbones:echo_sense"
+        ]
+      },
+      "armour": [
+        "bloodandbones:echo_sense"
+      ]
+    }
+  },
+  "organ_traits": {
+    "bloodandbones:echo_ear": {
+      "minion": [
+        {
+          "trait": "bloodandbones:echo_sense",
+          "level": 2
+        }
+      ],
+      "armour": [
+        {
+          "trait": "bloodandbones:echo_sense",
+          "level": 2
+        }
+      ]
+    }
+  }
+}

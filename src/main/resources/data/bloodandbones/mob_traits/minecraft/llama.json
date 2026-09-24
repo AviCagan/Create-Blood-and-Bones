@@ -1,0 +1,26 @@
+{
+  "signature": [
+    "organs.bloodandbones:spit_gland",
+    "hide"
+  ],
+  "organs": {
+    "torso": {
+      "add": [
+        "bloodandbones:spit_gland"
+      ]
+    }
+  },
+  "hide": [
+    "bloodandbones:frost_guard"
+  ],
+  "organ_traits": {
+    "bloodandbones:spit_gland": {
+      "minion": [
+        "bloodandbones:spit"
+      ],
+      "armour": [
+        "bloodandbones:spit"
+      ]
+    }
+  }
+}

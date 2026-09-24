@@ -1,0 +1,48 @@
+{
+  "name": "trait.bloodandbones.remedy",
+  "max_level": 1,
+  "effects": [
+    {
+      "trigger": "hurt",
+      "cooldown": 600,
+      "requirements": {
+        "condition": "bloodandbones:health_below",
+        "fraction": 0.5
+      },
+      "effect": {
+        "type": "bloodandbones:mob_effect",
+        "effect": "minecraft:regeneration",
+        "duration": 100,
+        "target": "self"
+      }
+    },
+    {
+      "trigger": "hurt",
+      "cooldown": 600,
+      "requirements": {
+        "condition": "minecraft:all_of",
+        "terms": [
+          {
+            "condition": "bloodandbones:health_below",
+            "fraction": 0.5
+          },
+          {
+            "condition": "minecraft:entity_properties",
+            "entity": "this",
+            "predicate": {
+              "flags": {
+                "is_on_fire": true
+              }
+            }
+          }
+        ]
+      },
+      "effect": {
+        "type": "bloodandbones:mob_effect",
+        "effect": "minecraft:fire_resistance",
+        "duration": 100,
+        "target": "self"
+      }
+    }
+  ]
+}

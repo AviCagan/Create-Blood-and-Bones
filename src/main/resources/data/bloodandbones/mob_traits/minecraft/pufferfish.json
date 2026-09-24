@@ -1,0 +1,22 @@
+{
+  "signature": [
+    "organs.bloodandbones:toxin_sac"
+  ],
+  "organs": {
+    "torso": {
+      "add": [
+        "bloodandbones:toxin_sac"
+      ]
+    }
+  },
+  "organ_traits": {
+    "bloodandbones:toxin_sac": {
+      "minion": [
+        "bloodandbones:toxin_puff"
+      ],
+      "armour": [
+        "bloodandbones:toxic_skin"
+      ]
+    }
+  }
+}

@@ -1,0 +1,18 @@
+{
+  "name": "trait.bloodandbones.lanolin",
+  "max_level": 1,
+  "contexts": [
+    "armour"
+  ],
+  "effects": [
+    {
+      "trigger": "tick",
+      "interval": 600,
+      "effect": {
+        "type": "bloodandbones:mend",
+        "mode": "self",
+        "amount": 1
+      }
+    }
+  ]
+}

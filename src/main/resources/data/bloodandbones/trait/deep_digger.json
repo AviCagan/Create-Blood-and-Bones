@@ -1,6 +1,9 @@
 {
   "name": "trait.bloodandbones.deep_digger",
   "max_level": 2,
+  "contexts": [
+    "armour"
+  ],
   "effects": [
     {
       "effect": {

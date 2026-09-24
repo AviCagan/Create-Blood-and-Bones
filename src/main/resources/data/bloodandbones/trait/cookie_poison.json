@@ -1,5 +1,8 @@
 {
   "name": "trait.bloodandbones.cookie_poison",
+  "contexts": [
+    "armour"
+  ],
   "effects": [
     {
       "trigger": "passive",

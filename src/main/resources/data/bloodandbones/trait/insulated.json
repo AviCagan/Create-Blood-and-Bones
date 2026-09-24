@@ -13,6 +13,7 @@
     },
     {
       "trigger": "passive",
+      "context": "armour",
       "effect": {
         "type": "bloodandbones:flag",
         "flag": "powder_snow"

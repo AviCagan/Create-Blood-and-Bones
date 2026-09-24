@@ -3,5 +3,27 @@
   "priority": 52,
   "members": [
     "#minecraft:deflects_projectiles"
-  ]
+  ],
+  "parts": {
+    "torso": {
+      "minion": {
+        "traits": {
+          "add": [
+            {
+              "trait": "bloodandbones:deflector",
+              "level": 2
+            }
+          ]
+        }
+      },
+      "armour": {
+        "add": [
+          {
+            "trait": "bloodandbones:deflector",
+            "level": 2
+          }
+        ]
+      }
+    }
+  }
 }

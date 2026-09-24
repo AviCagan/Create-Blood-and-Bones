@@ -1,0 +1,22 @@
+{
+  "signature": [
+    "organs.bloodandbones:rift_mite"
+  ],
+  "organs": {
+    "torso": {
+      "add": [
+        "bloodandbones:rift_mite"
+      ]
+    }
+  },
+  "organ_traits": {
+    "bloodandbones:rift_mite": {
+      "minion": [
+        "bloodandbones:rift"
+      ],
+      "armour": [
+        "bloodandbones:rift"
+      ]
+    }
+  }
+}

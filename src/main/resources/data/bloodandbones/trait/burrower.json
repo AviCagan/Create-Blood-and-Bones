@@ -1,6 +1,9 @@
 {
   "name": "trait.bloodandbones.burrower",
   "max_level": 3,
+  "contexts": [
+    "armour"
+  ],
   "effects": [
     {
       "effect": {

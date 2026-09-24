@@ -4,5 +4,28 @@
   "members": [
     "#minecraft:freeze_immune_entity_types",
     "#bloodandbones:overlay/frozen"
-  ]
+  ],
+  "parts": {
+    "torso": {
+      "minion": {
+        "traits": {
+          "add": [
+            "bloodandbones:insulated"
+          ]
+        }
+      }
+    }
+  },
+  "hide": {
+    "add": [
+      "bloodandbones:insulated"
+    ]
+  },
+  "full_set": {
+    "drawback": {
+      "add": [
+        "bloodandbones:heat_hurts"
+      ]
+    }
+  }
 }

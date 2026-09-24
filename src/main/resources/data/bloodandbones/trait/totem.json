@@ -1,0 +1,15 @@
+{
+  "name": "trait.bloodandbones.totem",
+  "max_level": 1,
+  "effects": [
+    {
+      "trigger": "passive",
+      "cooldown": 24000,
+      "effect": {
+        "type": "bloodandbones:lethal_save",
+        "chance": 1.0,
+        "cost_mb": 500
+      }
+    }
+  ]
+}

@@ -1,0 +1,26 @@
+{
+  "signature": [
+    "hide",
+    "parts.leg",
+    "parts.head"
+  ],
+  "parts": {
+    "head": {
+      "minion": {
+        "traits": [
+          "bloodandbones:mauler"
+        ]
+      }
+    },
+    "leg": {
+      "armour": {
+        "boots": [
+          "bloodandbones:powder_walker"
+        ]
+      }
+    }
+  },
+  "hide": [
+    "bloodandbones:insulated"
+  ]
+}

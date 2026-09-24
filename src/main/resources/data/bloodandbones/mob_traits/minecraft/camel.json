@@ -1,0 +1,49 @@
+{
+  "signature": [
+    "parts.torso",
+    "parts.leg",
+    "organs.bloodandbones:hump_fat"
+  ],
+  "organs": {
+    "torso": {
+      "add": [
+        "bloodandbones:hump_fat"
+      ]
+    }
+  },
+  "parts": {
+    "torso": {
+      "minion": {
+        "traits": [
+          "bloodandbones:hump"
+        ]
+      }
+    },
+    "leg": {
+      "minion": {
+        "movement": {
+          "mode": "walk",
+          "speed": 0.2,
+          "gait": "amble",
+          "rideable": true
+        },
+        "traits": [
+          "bloodandbones:dash"
+        ]
+      }
+    }
+  },
+  "organ_traits": {
+    "bloodandbones:hump_fat": {
+      "minion": [
+        {
+          "trait": "bloodandbones:fat_reserve",
+          "level": 2
+        }
+      ],
+      "armour": [
+        "bloodandbones:four_chambers"
+      ]
+    }
+  }
+}

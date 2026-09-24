@@ -1,0 +1,21 @@
+{
+  "signature": [
+    "parts.leg"
+  ],
+  "parts": {
+    "leg": {
+      "minion": {
+        "traits": [
+          {
+            "trait": "bloodandbones:swift",
+            "level": 3
+          }
+        ]
+      },
+      "armour": [
+        "bloodandbones:swift",
+        "bloodandbones:galloper"
+      ]
+    }
+  }
+}

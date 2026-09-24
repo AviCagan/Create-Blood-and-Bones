@@ -8,6 +8,13 @@
   ],
   "scrap_material": "bloodandbones:feather",
   "colour": "#e8e1d1",
+  "organs": {
+    "torso": {
+      "add": [
+        "bloodandbones:gizzard"
+      ]
+    }
+  },
   "parts": {
     "head": {
       "minion": {
@@ -85,5 +92,15 @@
       },
       "bloodandbones:prey"
     ]
+  },
+  "organ_traits": {
+    "bloodandbones:gizzard": {
+      "minion": [
+        "bloodandbones:seed_eater"
+      ],
+      "armour": [
+        "bloodandbones:seed_eater"
+      ]
+    }
   }
 }

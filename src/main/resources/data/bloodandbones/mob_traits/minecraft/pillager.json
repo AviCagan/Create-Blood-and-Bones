@@ -1,4 +1,8 @@
 {
+  "signature": [
+    "parts.head",
+    "parts.arm"
+  ],
   "parts": {
     "head": {
       "minion": {
@@ -12,6 +16,13 @@
           "style": "punch",
           "damage": 1.0
         }
+      }
+    },
+    "arm": {
+      "armour": {
+        "shoulders": [
+          "bloodandbones:quick_draw"
+        ]
       }
     }
   }

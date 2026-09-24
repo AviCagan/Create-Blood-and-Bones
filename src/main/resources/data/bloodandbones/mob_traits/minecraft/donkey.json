@@ -1,0 +1,30 @@
+{
+  "signature": [
+    "parts.torso",
+    "organs.bloodandbones:pack_sinew"
+  ],
+  "organs": {
+    "torso": {
+      "add": [
+        "bloodandbones:pack_sinew"
+      ]
+    }
+  },
+  "parts": {
+    "torso": {
+      "minion": {
+        "traits": [
+          "bloodandbones:saddlebags"
+        ]
+      }
+    }
+  },
+  "organ_traits": {
+    "bloodandbones:pack_sinew": {
+      "armour": [
+        "bloodandbones:hauler",
+        "bloodandbones:steady"
+      ]
+    }
+  }
+}

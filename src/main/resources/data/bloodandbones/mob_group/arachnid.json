@@ -46,7 +46,18 @@
           "mode": "climb",
           "speed": 0.3,
           "gait": "skitter"
-        }
+        },
+        "traits": [
+          "bloodandbones:wall_climber"
+        ]
+      },
+      "armour": {
+        "leggings": [
+          "bloodandbones:wall_climber"
+        ],
+        "boots": [
+          "bloodandbones:wall_climber"
+        ]
       }
     }
   },
@@ -58,6 +69,10 @@
       {
         "trait": "bloodandbones:fall_guard",
         "level": 4
+      },
+      {
+        "trait": "bloodandbones:wall_climber",
+        "level": 2
       }
     ],
     "drawback": [
@@ -66,5 +81,15 @@
         "level": 2
       }
     ]
+  },
+  "organ_traits": {
+    "bloodandbones:spinneret": {
+      "minion": [
+        "bloodandbones:web_shot"
+      ],
+      "armour": [
+        "bloodandbones:webbing"
+      ]
+    }
   }
 }

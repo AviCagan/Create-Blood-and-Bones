@@ -1,6 +1,9 @@
 {
   "name": "trait.bloodandbones.glider",
   "max_level": 1,
+  "contexts": [
+    "armour"
+  ],
   "effects": [
     {
       "trigger": "passive",

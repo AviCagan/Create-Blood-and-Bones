@@ -1,0 +1,32 @@
+{
+  "signature": [
+    "organs.bloodandbones:stinger",
+    "organs.bloodandbones:honey_stomach"
+  ],
+  "organs": {
+    "torso": {
+      "add": [
+        "bloodandbones:stinger",
+        "bloodandbones:honey_stomach"
+      ]
+    }
+  },
+  "organ_traits": {
+    "bloodandbones:stinger": {
+      "minion": [
+        "bloodandbones:stinger"
+      ],
+      "armour": [
+        "bloodandbones:stinger"
+      ]
+    },
+    "bloodandbones:honey_stomach": {
+      "minion": [
+        "bloodandbones:honey_stomach"
+      ],
+      "armour": [
+        "bloodandbones:honey"
+      ]
+    }
+  }
+}

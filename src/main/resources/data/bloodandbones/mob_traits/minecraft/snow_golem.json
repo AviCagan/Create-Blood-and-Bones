@@ -1,0 +1,48 @@
+{
+  "signature": [
+    "parts.head",
+    "parts.torso",
+    "parts.leg",
+    "organs.bloodandbones:frost_core"
+  ],
+  "organs": {
+    "torso": {
+      "add": [
+        "bloodandbones:frost_core"
+      ]
+    }
+  },
+  "parts": {
+    "head": {
+      "minion": {
+        "traits": [
+          "bloodandbones:snowball_volley"
+        ]
+      }
+    },
+    "torso": {
+      "minion": {
+        "traits": [
+          "bloodandbones:heat_hurts"
+        ]
+      }
+    },
+    "leg": {
+      "armour": {
+        "boots": [
+          "bloodandbones:frost_path"
+        ]
+      }
+    }
+  },
+  "organ_traits": {
+    "bloodandbones:frost_core": {
+      "minion": [
+        "bloodandbones:chilling"
+      ],
+      "armour": [
+        "bloodandbones:chilling"
+      ]
+    }
+  }
+}

@@ -73,6 +73,9 @@
         "level": 3
       },
       "bloodandbones:murk_sight"
+    ],
+    "drawback": [
+      "bloodandbones:dry_out"
     ]
   }
 }

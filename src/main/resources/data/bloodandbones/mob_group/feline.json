@@ -42,7 +42,8 @@
           {
             "trait": "bloodandbones:fall_guard",
             "level": 2
-          }
+          },
+          "bloodandbones:silent_steps"
         ]
       },
       "armour": {
@@ -53,6 +54,11 @@
           "bloodandbones:land_on_feet"
         ]
       }
+    },
+    "torso": {
+      "armour": [
+        "bloodandbones:evasive"
+      ]
     }
   },
   "hide": [
@@ -70,5 +76,15 @@
     "drawback": [
       "bloodandbones:aquaphobe"
     ]
+  },
+  "organ_traits": {
+    "bloodandbones:nine_lives": {
+      "minion": [
+        "bloodandbones:undying"
+      ],
+      "armour": [
+        "bloodandbones:undying"
+      ]
+    }
   }
 }

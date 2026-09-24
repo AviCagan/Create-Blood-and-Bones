@@ -48,18 +48,15 @@
       "armour": {
         "leggings": [
           "bloodandbones:stealthy"
+        ],
+        "boots": [
+          "bloodandbones:silent_steps"
         ]
       }
     }
   },
   "organ_traits": {
     "bloodandbones:burrow_gland": {
-      "minion": [
-        {
-          "trait": "bloodandbones:burrower",
-          "level": 2
-        }
-      ],
       "armour": [
         {
           "trait": "bloodandbones:burrower",

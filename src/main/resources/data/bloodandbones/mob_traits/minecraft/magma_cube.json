@@ -1,0 +1,35 @@
+{
+  "signature": [
+    "organs.bloodandbones:magma_core",
+    "parts.torso"
+  ],
+  "organs": {
+    "torso": {
+      "add": [
+        "bloodandbones:magma_core"
+      ]
+    }
+  },
+  "parts": {
+    "torso": {
+      "minion": {
+        "traits": [
+          {
+            "trait": "bloodandbones:fireproof",
+            "level": 4
+          }
+        ]
+      }
+    }
+  },
+  "organ_traits": {
+    "bloodandbones:magma_core": {
+      "minion": [
+        "bloodandbones:searing"
+      ],
+      "armour": [
+        "bloodandbones:fireproof"
+      ]
+    }
+  }
+}

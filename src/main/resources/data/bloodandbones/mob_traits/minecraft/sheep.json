@@ -1,0 +1,43 @@
+{
+  "signature": [
+    "parts.torso",
+    "hide",
+    "organs.bloodandbones:lanolin_gland"
+  ],
+  "organs": {
+    "torso": {
+      "add": [
+        "bloodandbones:lanolin_gland"
+      ]
+    }
+  },
+  "parts": {
+    "torso": {
+      "minion": {
+        "traits": [
+          "bloodandbones:wool_regrowth"
+        ]
+      }
+    }
+  },
+  "hide": [
+    {
+      "trait": "bloodandbones:frost_guard",
+      "level": 2
+    },
+    "bloodandbones:fall_guard"
+  ],
+  "organ_traits": {
+    "bloodandbones:lanolin_gland": {
+      "minion": [
+        {
+          "trait": "bloodandbones:wool_regrowth",
+          "level": 2
+        }
+      ],
+      "armour": [
+        "bloodandbones:lanolin"
+      ]
+    }
+  }
+}

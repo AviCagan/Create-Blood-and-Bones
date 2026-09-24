@@ -7,7 +7,12 @@
   "parts": {
     "torso": {
       "minion": {
-        "ignored_by_raids": true
+        "ignored_by_raids": true,
+        "traits": {
+          "add": [
+            "bloodandbones:raider_kin"
+          ]
+        }
       }
     }
   }

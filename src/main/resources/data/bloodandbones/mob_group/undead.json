@@ -15,5 +15,12 @@
         }
       }
     }
+  },
+  "full_set": {
+    "drawback": {
+      "add": [
+        "bloodandbones:inverted_healing"
+      ]
+    }
   }
 }

@@ -4,6 +4,7 @@
   "effects": [
     {
       "trigger": "passive",
+      "context": "armour",
       "effect": {
         "type": "bloodandbones:flag",
         "flag": "piglin_neutral"
