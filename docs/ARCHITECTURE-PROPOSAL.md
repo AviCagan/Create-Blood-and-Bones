@@ -11,6 +11,10 @@ it on what Create, Sable and the other addons actually provide.
 
 ---
 
+> **Working rule (from the user):** reread `docs/DESIGN-BRIEF.md` before starting any new piece of
+> work. Where a later decision recorded here differs from the brief, the later decision stands; anything
+> the brief says that no decision has changed is binding.
+
 ## 0. Summary of what was verified
 
 | Area | Result |

@@ -7,7 +7,8 @@ provided by [Sable](https://github.com/ryanhcode/sable).
 
 - Mod id: `bloodandbones`
 - Target: Minecraft 1.21.1, NeoForge 21.1.x, Create 6.0.x, Sable 2.0.x, Java 21
-- Design: see `docs/ARCHITECTURE-PROPOSAL.md`
+- Design: the brief is `docs/DESIGN-BRIEF.md`; decisions and implementation notes are in
+  `docs/ARCHITECTURE-PROPOSAL.md`
 
 ## What it does
 
