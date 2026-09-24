@@ -135,10 +135,12 @@ public class BBLang {
                 "Necrosis", "Every stretch you _run_ rots it a little. Blood in your backtank clears the rot as you go; fully rotted, it gives no bonus.");
         item("hydraulic_arm",
                 "A _cybernetic_ arm of brass and blood steel. Runs on _soul blood_ from a worn Fluid Backtank.",
-                "While It Has Soul Blood", "Blocks break _80%_ faster, it hits _much_ harder, and it reaches a block further. Dry, it stops.");
+                "While It Has Soul Blood", "Blocks break _80%_ faster, it hits _much_ harder, and it reaches a block further. Dry, it stops.",
+                "Brass Chassis", "Takes _2 arm modules_, fitted at a Surgery Table with no cutting: lay the module on the table.");
         item("piston_leg",
                 "A _cybernetic_ leg on a piston. Runs on _soul blood_ from a worn Fluid Backtank.",
-                "While It Has Soul Blood", "Walks faster, jumps _far_ higher and lands soft. Dry, it stops.");
+                "While It Has Soul Blood", "Walks faster, jumps _far_ higher and lands soft. Dry, it stops.",
+                "Brass Chassis", "Takes _2 leg modules_, fitted at a Surgery Table with no cutting: lay the module on the table.");
         item("vent_arm",
                 "A _cybernetic_ arm that ends in a nozzle. Runs on _whatever is in the tank_, and sprays it.",
                 "When Use Is Held with an Empty Hand", "Sprays the tank ahead of you: _lava_ or fuel burns, _water_ puts fires out, _liquid experience_ gives experience, _milk_ clears effects, anything else spills.");
@@ -147,7 +149,8 @@ public class BBLang {
                 "Crouching Next to a Backtank Port", "Plugs your worn tank into the _pipes_: pump into the port to fill it, out of it to empty it.");
         item("optic_eye",
                 "A _cybernetic_ eye with a red lens. Runs on _soul blood_.",
-                "While It Has Soul Blood", "You see in the _dark_. Dry, it sees nothing.");
+                "While It Has Soul Blood", "You see in the _dark_. Dry, it sees nothing.",
+                "Brass Chassis", "Takes _1 eye module_, fitted at a Surgery Table with no cutting: lay the module on the table.");
         item("pump_heart",
                 "A _cybernetic_ heart, a brass pump. Runs on _soul blood_.",
                 "While It Has Soul Blood", "It keeps _healing_ you. Dry, it barely beats: you are _weak and slow_ until it has soul blood again.");
@@ -221,6 +224,51 @@ public class BBLang {
         BloodAndBones.REGISTRATE.addRawLang("bloodandbones.surgery.action.reattach", "Put the limb back on");
         BloodAndBones.REGISTRATE.addRawLang("bloodandbones.surgery.action.unclip", "Unclip it");
         BloodAndBones.REGISTRATE.addRawLang("bloodandbones.surgery.done", "Done");
+        BloodAndBones.REGISTRATE.addRawLang("bloodandbones.surgery.action.fit_module", "Fit the module");
+        BloodAndBones.REGISTRATE.addRawLang("bloodandbones.surgery.action.take_module", "Take a module out");
+
+        // ---- cybernetic modules and the throttle
+        item("grappling_spool",
+                "An _arm module_: a barbed hook on a reel of cable.",
+                "Throttle: Hold, Then Let Go", "Fires the hook where you look, further the longer you spooled. A _light_ thing is reeled in to you; anything _heavy_ (a wall, a big mob, a heavy carcass) reels _you_ in to it. Choose what you hook: a wall at speed hurts.");
+        item("rotational_coupler",
+                "An _arm module_: a telescoping shaft in the forearm.",
+                "Throttle: Hold", "Look at the end of a machine's shaft and the shaft reaches out and _drives_ it: 16 RPM on a tap, up to 256 RPM at full spool, with stress capacity to match. Let go and it pulls back.");
+        item("piston_ram",
+                "An _arm module_: a piston behind the knuckles.",
+                "Throttle: Hold, Then Let Go", "Strikes what you look at with _knockback_ that grows with the spool. Looking down at the ground, it _launches_ you instead. Pair it with a _Gyroscopic Stabilizer_ for the landing.");
+        item("magnet_coil",
+                "An _arm module_: a coil of copper round the forearm.",
+                "Always", "Loose items and experience _drift_ to you from a few blocks.",
+                "Throttle: Hold", "Pulls from further the longer it is held. Near the top it takes hold of _carcasses_ too.");
+        item("analytical_lens",
+                "An _eye module_: a ground lens with a brass iris.",
+                "Always", "Counts as Create's _goggles_. Looking at a machine _through walls_, you read its speed, its network's stress and what goggles would tell you. Costs a little soul blood, all the time.");
+        item("gyroscopic_stabilizer",
+                "A _leg module_: a spinning gyroscope in the shin.",
+                "Always", "Takes _no fall damage_, paying soul blood for every block fallen past the safe distance. What the tank cannot pay for, you take: check your gauge before you step off.");
+        item("barometric_vent",
+                "A _leg module_: a pressure vent in the heel.",
+                "Throttle: Hold, Then Let Go", "A puff of lift, then a slow _hover_ down: a second on a tap, a few seconds at full spool. Crouch to drop.");
+        BloodAndBones.REGISTRATE.addRawLang("bloodandbones.module.fits.arm", "Fits a brass arm");
+        BloodAndBones.REGISTRATE.addRawLang("bloodandbones.module.fits.leg", "Fits a brass leg");
+        BloodAndBones.REGISTRATE.addRawLang("bloodandbones.module.fits.eye", "Fits a brass eye");
+        BloodAndBones.REGISTRATE.addRawLang("bloodandbones.module.mode.fire", "Throttle: spool up, let go to fire");
+        BloodAndBones.REGISTRATE.addRawLang("bloodandbones.module.mode.hold", "Throttle: works while held");
+        BloodAndBones.REGISTRATE.addRawLang("bloodandbones.module.mode.passive", "Always on");
+        BloodAndBones.REGISTRATE.addRawLang("bloodandbones.implant.modules", "Modules: %s");
+        BloodAndBones.REGISTRATE.addRawLang("bloodandbones.implant.module_empty", "empty");
+        BloodAndBones.REGISTRATE.addRawLang("key.categories.bloodandbones", "Blood & Bones");
+        BloodAndBones.REGISTRATE.addRawLang("key.bloodandbones.throttle", "Cybernetic throttle (hold)");
+        BloodAndBones.REGISTRATE.addRawLang("key.bloodandbones.next_module", "Next cybernetic module");
+        BloodAndBones.REGISTRATE.addRawLang("bloodandbones.throttle.selected", "Throttle drives: %s");
+        BloodAndBones.REGISTRATE.addRawLang("bloodandbones.throttle.dry", "No soul blood in your backtank");
+        BloodAndBones.REGISTRATE.addRawLang("bloodandbones.lens.seen", "%s, %s blocks off");
+        BloodAndBones.REGISTRATE.addRawLang("bloodandbones.lens.speed", "Speed: %s RPM");
+        BloodAndBones.REGISTRATE.addRawLang("bloodandbones.lens.stress", "Network stress: %s of %s su");
+        BloodAndBones.REGISTRATE.addRawLang("bloodandbones.lens.overstressed", "Overstressed");
+        BloodAndBones.REGISTRATE.addRawLang("bloodandbones.set_bonus.flesh", "Flesh set: you heal from what you hit, and rot half as fast");
+        BloodAndBones.REGISTRATE.addRawLang("bloodandbones.set_bonus.brass", "Brass set: the throttle costs a quarter less, and you are hard to shove");
         BloodAndBones.REGISTRATE.addRawLang("bloodandbones.surgery.nothing", "Nothing on the table can do that");
         BloodAndBones.REGISTRATE.addRawLang("bloodandbones.surgery.occupied", "Someone is already on the table");
 

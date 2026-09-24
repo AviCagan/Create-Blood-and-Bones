@@ -22,6 +22,8 @@ public final class BBSounds {
     public static final DeferredHolder<SoundEvent, SoundEvent> CARCASS_CLATTER = sound("carcass.clatter", "Bones clatter");
     public static final DeferredHolder<SoundEvent, SoundEvent> CARCASS_CRUMBLE = sound("carcass.crumble", "Carcass falls apart");
     public static final DeferredHolder<SoundEvent, SoundEvent> MACHINE_BLADE = sound("machine.blade", "Blade falls");
+    public static final DeferredHolder<SoundEvent, SoundEvent> CYBERNETIC_SPOOL = sound("cybernetic.spool", "Cybernetic spools up");
+    public static final DeferredHolder<SoundEvent, SoundEvent> CYBERNETIC_CHOKE = sound("cybernetic.choke", "Cybernetic sputters");
 
     private BBSounds() {
     }

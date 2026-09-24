@@ -78,5 +78,23 @@
         "type": "event"
       }
     ]
+  },
+  "cybernetic.spool": {
+    "subtitle": "subtitles.bloodandbones.cybernetic.spool",
+    "sounds": [
+      {
+        "name": "minecraft:block.beacon.ambient",
+        "type": "event"
+      }
+    ]
+  },
+  "cybernetic.choke": {
+    "subtitle": "subtitles.bloodandbones.cybernetic.choke",
+    "sounds": [
+      {
+        "name": "minecraft:block.fire.extinguish",
+        "type": "event"
+      }
+    ]
   }
 }

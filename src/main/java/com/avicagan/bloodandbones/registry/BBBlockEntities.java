@@ -43,6 +43,13 @@ public class BBBlockEntities {
             .renderer(() -> com.avicagan.bloodandbones.cooking.SpitRoastRenderer::new)
             .register();
 
+    public static final BlockEntityEntry<com.avicagan.bloodandbones.cyber.CouplerBlockEntity> COUPLER = BloodAndBones.REGISTRATE
+            .blockEntity("coupler", com.avicagan.bloodandbones.cyber.CouplerBlockEntity::new)
+            .visual(() -> com.avicagan.bloodandbones.cyber.CouplerVisual::new, true)
+            .validBlocks(BBBlocks.COUPLER)
+            .renderer(() -> com.avicagan.bloodandbones.cyber.CouplerRenderer::new)
+            .register();
+
     public static final BlockEntityEntry<com.avicagan.bloodandbones.cooking.SpecimenJarBlockEntity> SPECIMEN_JAR = BloodAndBones.REGISTRATE
             .blockEntity("specimen_jar", com.avicagan.bloodandbones.cooking.SpecimenJarBlockEntity::new)
             .validBlocks(BBBlocks.SPECIMEN_JAR)

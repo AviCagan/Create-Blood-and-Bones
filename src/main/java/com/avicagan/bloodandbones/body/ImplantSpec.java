@@ -20,9 +20,10 @@ import org.jetbrains.annotations.Nullable;
  * @param ability  what else it does
  * @param texture  drawn in the part's place on the player, laid out like a skin; for an eye, the base of a
  *                 _left and a _right texture drawn on the face; null for an organ inside
+ * @param slots    how many modules it takes: a brass limb is a chassis for modules (see cyber.Module), anything else takes none
  */
 public record ImplantSpec(BodyPart.Kind kind, float walk, float jump, float work, float attack, float reach, float safeFall,
-                          @Nullable String fuel, int drain, Ability ability, @Nullable ResourceLocation texture) {
+                          @Nullable String fuel, int drain, Ability ability, @Nullable ResourceLocation texture, int slots) {
     public enum Ability {
         NONE,
         /** An arm that sprays what is in the tank. */
@@ -40,11 +41,16 @@ public record ImplantSpec(BodyPart.Kind kind, float walk, float jump, float work
     }
 
     public static ImplantSpec basic(BodyPart.Kind kind, float walk, float work, @Nullable ResourceLocation texture) {
-        return new ImplantSpec(kind, walk, walk, work, 0, 0, 0, null, 0, Ability.NONE, texture);
+        return new ImplantSpec(kind, walk, walk, work, 0, 0, 0, null, 0, Ability.NONE, texture, 0);
     }
 
     public static ImplantSpec powered(BodyPart.Kind kind, String fuel, int drain, float walk, float jump, float work, float attack,
                                       float reach, float safeFall, Ability ability, @Nullable ResourceLocation texture) {
-        return new ImplantSpec(kind, walk, jump, work, attack, reach, safeFall, fuel, drain, ability, texture);
+        return new ImplantSpec(kind, walk, jump, work, attack, reach, safeFall, fuel, drain, ability, texture, 0);
+    }
+
+    /** The same, as a brass chassis taking this many modules. */
+    public ImplantSpec withSlots(int slots) {
+        return new ImplantSpec(kind, walk, jump, work, attack, reach, safeFall, fuel, drain, ability, texture, slots);
     }
 }

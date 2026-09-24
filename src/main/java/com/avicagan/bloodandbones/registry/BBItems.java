@@ -124,21 +124,40 @@ public class BBItems {
     public static final ItemEntry<com.avicagan.bloodandbones.body.ImplantItem> SINEW_LEG = implant("sinew_leg", "Sinew Leg",
             powered(com.avicagan.bloodandbones.body.BodyPart.Kind.LEG, "blood", 1, 1.1F, 1.3F, 1.0F, 0.0F, 0.0F, 0.0F, com.avicagan.bloodandbones.body.ImplantSpec.Ability.NONE, "sinew_leg"));
     public static final ItemEntry<com.avicagan.bloodandbones.body.ImplantItem> HYDRAULIC_ARM = implant("hydraulic_arm", "Hydraulic Arm",
-            powered(com.avicagan.bloodandbones.body.BodyPart.Kind.ARM, "soul_blood", 2, 1.0F, 1.0F, 1.8F, 3.0F, 1.0F, 0.0F, com.avicagan.bloodandbones.body.ImplantSpec.Ability.NONE, "hydraulic_arm"));
+            powered(com.avicagan.bloodandbones.body.BodyPart.Kind.ARM, "soul_blood", 2, 1.0F, 1.0F, 1.8F, 3.0F, 1.0F, 0.0F, com.avicagan.bloodandbones.body.ImplantSpec.Ability.NONE, "hydraulic_arm").withSlots(2));
     public static final ItemEntry<com.avicagan.bloodandbones.body.ImplantItem> PISTON_LEG = implant("piston_leg", "Piston Leg",
-            powered(com.avicagan.bloodandbones.body.BodyPart.Kind.LEG, "soul_blood", 2, 1.2F, 1.6F, 1.0F, 0.0F, 0.0F, 6.0F, com.avicagan.bloodandbones.body.ImplantSpec.Ability.NONE, "piston_leg"));
+            powered(com.avicagan.bloodandbones.body.BodyPart.Kind.LEG, "soul_blood", 2, 1.2F, 1.6F, 1.0F, 0.0F, 0.0F, 6.0F, com.avicagan.bloodandbones.body.ImplantSpec.Ability.NONE, "piston_leg").withSlots(2));
     public static final ItemEntry<com.avicagan.bloodandbones.body.ImplantItem> VENT_ARM = implant("vent_arm", "Vent Arm",
             powered(com.avicagan.bloodandbones.body.BodyPart.Kind.ARM, "any", 0, 1.0F, 1.0F, 1.0F, 0.0F, 0.0F, 0.0F, com.avicagan.bloodandbones.body.ImplantSpec.Ability.VENT, "vent_arm"));
     public static final ItemEntry<com.avicagan.bloodandbones.body.ImplantItem> PORT_ARM = implant("port_arm", "Port Arm",
             powered(com.avicagan.bloodandbones.body.BodyPart.Kind.ARM, null, 0, 1.0F, 1.0F, 1.0F, 0.0F, 0.0F, 0.0F, com.avicagan.bloodandbones.body.ImplantSpec.Ability.PORT, "port_arm"));
     public static final ItemEntry<com.avicagan.bloodandbones.body.ImplantItem> OPTIC_EYE = implant("optic_eye", "Optic Eye",
-            powered(com.avicagan.bloodandbones.body.BodyPart.Kind.EYE, "soul_blood", 1, 1.0F, 1.0F, 1.0F, 0.0F, 0.0F, 0.0F, com.avicagan.bloodandbones.body.ImplantSpec.Ability.NIGHT_VISION, "optic_eye"));
+            powered(com.avicagan.bloodandbones.body.BodyPart.Kind.EYE, "soul_blood", 1, 1.0F, 1.0F, 1.0F, 0.0F, 0.0F, 0.0F, com.avicagan.bloodandbones.body.ImplantSpec.Ability.NIGHT_VISION, "optic_eye").withSlots(1));
     public static final ItemEntry<com.avicagan.bloodandbones.body.ImplantItem> PUMP_HEART = implant("pump_heart", "Pump Heart",
             powered(com.avicagan.bloodandbones.body.BodyPart.Kind.HEART, "soul_blood", 2, 1.0F, 1.0F, 1.0F, 0.0F, 0.0F, 0.0F, com.avicagan.bloodandbones.body.ImplantSpec.Ability.REGENERATION, null));
     public static final ItemEntry<com.avicagan.bloodandbones.body.ImplantItem> BELLOWS_LUNGS = implant("bellows_lungs", "Bellows Lungs",
             powered(com.avicagan.bloodandbones.body.BodyPart.Kind.LUNGS, "soul_blood", 1, 1.0F, 1.0F, 1.0F, 0.0F, 0.0F, 0.0F, com.avicagan.bloodandbones.body.ImplantSpec.Ability.WATER_BREATHING, null));
     public static final ItemEntry<com.avicagan.bloodandbones.body.ImplantItem> FURNACE_STOMACH = implant("furnace_stomach", "Furnace Stomach",
             powered(com.avicagan.bloodandbones.body.BodyPart.Kind.STOMACH, "blood", 1, 1.0F, 1.0F, 1.0F, 0.0F, 0.0F, 0.0F, com.avicagan.bloodandbones.body.ImplantSpec.Ability.IRON_GUT, null));
+
+    // ---- cybernetic modules, fitted into brass limbs' slots at the Surgery Table
+    public static final java.util.Map<com.avicagan.bloodandbones.cyber.Module, ItemEntry<com.avicagan.bloodandbones.cyber.ModuleItem>> MODULES = modules();
+
+    private static java.util.Map<com.avicagan.bloodandbones.cyber.Module, ItemEntry<com.avicagan.bloodandbones.cyber.ModuleItem>> modules() {
+        java.util.Map<com.avicagan.bloodandbones.cyber.Module, ItemEntry<com.avicagan.bloodandbones.cyber.ModuleItem>> out =
+                new java.util.EnumMap<>(com.avicagan.bloodandbones.cyber.Module.class);
+        for (com.avicagan.bloodandbones.cyber.Module module : com.avicagan.bloodandbones.cyber.Module.values()) {
+            String id = module.getSerializedName();
+            String name = java.util.Arrays.stream(id.split("_")).map(w -> Character.toUpperCase(w.charAt(0)) + w.substring(1))
+                    .collect(java.util.stream.Collectors.joining(" "));
+            out.put(module, BloodAndBones.REGISTRATE.item(id, p -> new com.avicagan.bloodandbones.cyber.ModuleItem(p, module)).lang(name).register());
+        }
+        return out;
+    }
+
+    public static com.avicagan.bloodandbones.cyber.ModuleItem module(com.avicagan.bloodandbones.cyber.Module module) {
+        return MODULES.get(module).get();
+    }
 
     // ---- parts of a body, taken out on the Surgery Table and put back as flesh
     public static final ItemEntry<com.avicagan.bloodandbones.body.SeveredLimbItem> SEVERED_ARM = part("severed_arm", "Severed Arm", "Arm", com.avicagan.bloodandbones.body.BodyPart.Kind.ARM);

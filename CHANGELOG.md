@@ -95,6 +95,21 @@ Everything below is in development builds only; the art is placeholder (see the 
   a Cleaver does it too, dropping them on the table.
 - Port Arm and Backtank Port: crouch next to a port with a Port Arm and your tank is the port to the
   pipes, so a pump fills or empties it.
+- Cybernetic modules and the throttle, from the brief. The Hydraulic Arm and Piston Leg take two modules
+  each and the Optic Eye one, fitted at the Surgery Table with no cutting (lay the module on the table;
+  a Wrench on the table takes one out). Hold the throttle key (R) to spool the chosen module up, and
+  let go to fire it; V picks the next module. Holding costs soul blood steeply: next to nothing on a
+  tap, 150 mB a second at full, and a dry tank sputters. A gauge by the crosshair, a whine that climbs
+  in pitch, and the brass limb glowing along its seams show how far it is spooled.
+- The seven modules: Grappling Spool (reels light things in, and you in to heavy ones; a wall at speed
+  hurts), Rotational Coupler (look at a shaft's end and a rod reaches out of your arm and drives it, 16
+  to 256 RPM), Piston Ram (a knockback strike, or a blow to the ground that launches you), Magnet Coil
+  (items drift to you; held, from further, and carcasses too near the top), Analytical Lens (counts as
+  Create's goggles and reads machines through walls), Gyroscopic Stabilizer (no fall damage, paid in
+  soul blood by the block) and Barometric Vent (a puff up and a slow hover).
+- Set bonuses: four or more flesh grafts heal you from what you hit and rot half as fast; four or more
+  brass modules make the throttle a quarter cheaper and you hard to shove. Both kinds in one body get
+  neither, and nothing worse.
 
 ### The Fluid Backtank
 

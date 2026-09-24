@@ -161,6 +161,19 @@ public final class BBClientSetup {
     }
 
     @SubscribeEvent
+    public static void onKeys(net.neoforged.neoforge.client.event.RegisterKeyMappingsEvent event) {
+        event.register(CyberClient.THROTTLE);
+        event.register(CyberClient.NEXT_MODULE);
+    }
+
+    /** The throttle's gauge by the crosshair, and what the Analytical Lens sees through walls. */
+    @SubscribeEvent
+    public static void onGuiLayers(net.neoforged.neoforge.client.event.RegisterGuiLayersEvent event) {
+        event.registerAbove(net.neoforged.neoforge.client.gui.VanillaGuiLayers.CROSSHAIR, BloodAndBones.asResource("throttle_gauge"), CyberClient::renderGauge);
+        event.registerAbove(net.neoforged.neoforge.client.gui.VanillaGuiLayers.CROSSHAIR, BloodAndBones.asResource("analytical_lens"), CyberClient::renderLens);
+    }
+
+    @SubscribeEvent
     public static void onParticles(RegisterParticleProvidersEvent event) {
         event.registerSpriteSet(BBParticles.BLOOD_DROP.get(), BloodDropParticle.Provider::new);
         event.registerSpriteSet(BBParticles.SOUL_BLOOD_DROP.get(), BloodDropParticle.Provider::new);

@@ -172,6 +172,16 @@ public class BBBlocks {
             .register();
 
     /** A string of guts hung like a chain. Squelches. */
+    /** The end of a Rotational Coupler's shaft in front of a machine: hidden, placed and taken away by the module. */
+    public static final BlockEntry<com.avicagan.bloodandbones.cyber.CouplerBlock> COUPLER = BloodAndBones.REGISTRATE
+            .block("coupler", com.avicagan.bloodandbones.cyber.CouplerBlock::new)
+            .properties(p -> p.mapColor(MapColor.NONE).noCollission().noOcclusion().noLootTable().strength(-1.0F, 3600000.0F)
+                    .pushReaction(net.minecraft.world.level.material.PushReaction.DESTROY).replaceable())
+            .blockstate((c, p) -> p.getVariantBuilder(c.get()).forAllStates(state -> net.neoforged.neoforge.client.model.generators.ConfiguredModel.builder()
+                    .modelFile(p.models().getExistingFile(p.mcLoc("block/air"))).build()))
+            .lang("Rotational Coupler")
+            .register();
+
     public static final BlockEntry<net.minecraft.world.level.block.ChainBlock> GUT_CHAIN = BloodAndBones.REGISTRATE
             .block("gut_chain", net.minecraft.world.level.block.ChainBlock::new)
             .properties(p -> p.mapColor(MapColor.COLOR_PINK).forceSolidOn().strength(0.5F).noOcclusion()

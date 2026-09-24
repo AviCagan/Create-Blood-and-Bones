@@ -27,5 +27,8 @@ public final class BBMovementChecks {
         });
         BlockMovementChecks.registerBrittleCheck(state -> state.getBlock() instanceof ShackleHookBlock || state.getBlock() instanceof ButcherHookBlock
                 ? CheckResult.SUCCESS : CheckResult.PASS);
+        // a Rotational Coupler's shaft end belongs to the arm driving it, not the machine: it stays behind (and goes)
+        BlockMovementChecks.registerMovementNecessaryCheck((state, level, pos) -> state.getBlock() instanceof com.avicagan.bloodandbones.cyber.CouplerBlock
+                ? CheckResult.FAIL : CheckResult.PASS);
     }
 }

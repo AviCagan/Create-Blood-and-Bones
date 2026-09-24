@@ -1099,10 +1099,13 @@ contradicted it. Fixed:
 - "A heart can't be removed while empty; replacement is simultaneous": a blade does nothing to a heart,
   an implant or heart swaps in (`REPLACE`), and a heart implant only swaps out (`SWAP`, now for every
   part: an implant on the table that fits swaps for the fitted one).
-- Still to align with the brief (not done): amputation needing a surgeon minion, the outside camera view
+- Still to align with the brief then: amputation needing a surgeon minion, the outside camera view
   and the ragged stump; the table's two attachments; use-based necrosis on organic prosthetics; the
   cybernetic throttle system and modules (Grappling Spool, Rotational Coupler, Piston Ram, Magnet Coil,
-  Analytical Lens, Gyroscopic Stabilizer, Barometric Vent); the graft and module set bonuses.
+  Analytical Lens, Gyroscopic Stabilizer, Barometric Vent); the graft and module set bonuses. Since done:
+  the outside view and the attachments (14.8), necrosis (14.9), the throttle and modules (14.10), the set
+  bonuses (14.11). Still open: the surgeon minion and the ragged stump (they wait for minions built from
+  carcass parts).
 
 ### 14.8 The table's attachments and the outside view (brief § Machines, § Self-augmentation)
 
@@ -1127,3 +1130,71 @@ contradicted it. Fixed:
 - Drawn: the implant's texture tinted by the carcass rot colour. Tooltip shows the percentage.
 - `fleshArmRotsFromUse`.
 
+
+### 14.10 Cybernetics: the throttle and the modules (brief § Cybernetics)
+
+The brief says to build the throttle once, as shared infrastructure, and then the modules on it. As built:
+
+- **Brass limbs are chassis.** The Hydraulic Arm, Piston Leg and Optic Eye (the soul-blood cybernetics) take
+  modules: 2, 2 and 1 (`ImplantSpec.slots`). A module is an item (`ModuleItem`); the ones in a limb are a
+  `modules` component on the fitted implant, so they stay with the limb when it is unclipped and moved.
+- **Fitting.** At a Surgery Table with the Surgical Rig, no amputation: lay a module on the table and the
+  limb's row offers *Fit the module* (into a free slot, or in place of the first when full, which comes
+  back); lay Create's Wrench on the table and it offers *Take a module out* (the last one). A module only
+  goes in the limb it is made for. `modulesFitAtTheTable`.
+- **The throttle** (`cyber/Throttle`). Two keys: hold *Cybernetic throttle* (R) to spool the chosen module,
+  tap *Next cybernetic module* (V) to choose. The spool climbs from 0 to full over 2 seconds. While held, soul
+  blood drains at 150 mB a second times the cube of the spool: 19 mB/s at half, 150 at full, so full
+  throttle is for a few seconds, never a way of life. Letting go fires a firing module at the spool reached
+  (plus a 5 mB tap); a held module works every tick at its spool. A tank with no soul blood chokes it: a
+  sputter, the message "No soul blood in your backtank", nothing fires. The server keeps the state; the
+  client sends only key down (for which limb and slot) and key up. `throttleSpoolsAndDrainsSteeply`,
+  `throttleChokesDry`.
+- **Seen and heard.** A gauge by the crosshair: the module's icon, a half-dial whose needle climbs with the
+  spool from soul-cyan to red, the percentage, and a bar of soul blood left. A whine (the beacon hum) whose
+  pitch climbs from 0.5 to 2.0 with the spool, heard by everyone near. The brass limb glows along its seams
+  (`*_glow.png`, drawn additively, tinted by the same colour), and near the top it smokes, then throws soul
+  fire. Everyone tracking the player is told when spooling starts and stops (and at what game time), and works
+  the spool out themselves.
+- **The modules** (`cyber/ModuleActions`), each with a cheap baseline and a ramp:
+  - *Grappling Spool* (arm, fire): the hook flies along your look, 12 blocks on a tap, 32 at full. A mob no
+    bulkier than one and a half players, or a carcass whose rig weighs at most 1.5, is reeled in to you (a
+    carcass that arrives is handed to the Meat Hook's own drag tether, as the brief asks); anything heavier,
+    a block included, reels *you* in to it at 0.9 to 2.1 blocks a tick. Hitting a wall at more than 0.8 hurts
+    as flying into one does. The cable is drawn from your hand, flying out at 3 blocks a tick.
+    `grapplingSpoolReels`.
+  - *Rotational Coupler* (arm, hold): look at the end of any Create block's shaft within 3.5 blocks and a
+    hidden generator (`CouplerBlock`, no collision, no drop) appears in front of that face, turning it at 16
+    RPM on a tap and up to 256 at full (stress capacity 16 su per RPM, so 256 su to 4096 su). A brass rod is
+    drawn from it to your hand, turning with it and sliding out over its first 6 ticks. Let go, look away or
+    run dry and it goes; one left by a reload removes itself. Contraptions leave it behind.
+    `couplerDrivesAShaft`.
+  - *Piston Ram* (arm, fire): what you look at in reach takes 2 to 8 damage and 1.5 to 5 knockback; looking
+    30 degrees or more below level at the ground within reach, it launches you (0.6 to 1.8 blocks a tick
+    up, a little forward). With no Gyroscopic Stabilizer the landing is yours to pay for.
+    `pistonRamLaunchesAndStrikes`.
+  - *Magnet Coil* (arm, hold): always, loose items (not ones just dropped) and experience within 3 blocks
+    drift to you (1 mB/s upkeep); held, from 3 to 16 blocks, and from three quarters spool up, carcasses in
+    reach are drawn in too (a resting one unfolds first). `magnetCoilDrawsItems`.
+  - *Analytical Lens* (eye, always on, 1 mB/s): counts as Create's goggles (`GogglesItem.addIsWearingPredicate`);
+    looking at a machine through walls (up to 24 blocks), a box left of the crosshair shows its name and
+    distance, its speed, its network's stress against capacity (read through a mixin accessor, since Create
+    keeps them protected), overstress, and what goggles would say. `analyticalLensIsGoggles`.
+  - *Gyroscopic Stabilizer* (leg, always on): every block fallen past the safe distance costs 10 mB; paid
+    in full, no damage; paid in part, that part of the damage. `stabilizerPaysForTheFall`.
+  - *Barometric Vent* (leg, fire): a puff of lift, then a hover that lets you sink at 0.04 blocks a tick and
+    keeps no fall, for 1 second on a tap and 3.5 at full (kept under the 4 seconds a server lets anyone float
+    before kicking them; sinking just faster than the server counts as floating anyway). Crouch to drop.
+    `barometricVentHovers`.
+  - No redstone-link module, as the brief rejects it.
+- **Moving the player.** The player's client moves them, so a hover or a reel is sent to it and done there
+  each tick (`ModuleActions.move`, shared with the server, which clears the fall distance and checks for
+  walls); a launch is a motion packet.
+
+### 14.11 Set bonuses (brief § Cybernetics)
+
+- `cyber/SetBonus`: four or more flesh grafts (organic prosthetics, the ones on blood) with no cybernetic in
+  the body make the **flesh set**: 15% of melee damage dealt comes back as health, and necrosis builds half
+  as fast. Four or more brass modules with no flesh graft make the **brass set**: the throttle and the
+  stabilizer cost a quarter less, and knockback resistance +0.25. Both kinds in one body: neither, and no
+  penalty. Crude prosthetics count for neither. `setBonusesNeedFourAndNoMixing`.

@@ -49,6 +49,13 @@ public class BloodAndBones {
         NeoForge.EVENT_BUS.register(com.avicagan.bloodandbones.carcass.trolley.TrolleyEvents.class);
         NeoForge.EVENT_BUS.register(com.avicagan.bloodandbones.body.BodyEffects.class);
         NeoForge.EVENT_BUS.register(com.avicagan.bloodandbones.body.Necrosis.class);
+        NeoForge.EVENT_BUS.register(com.avicagan.bloodandbones.cyber.Throttle.class);
+        NeoForge.EVENT_BUS.register(com.avicagan.bloodandbones.cyber.ModuleActions.class);
+        NeoForge.EVENT_BUS.register(com.avicagan.bloodandbones.cyber.SetBonus.class);
+        NeoForge.EVENT_BUS.addListener((net.neoforged.neoforge.event.server.ServerStoppedEvent event) -> com.avicagan.bloodandbones.cyber.Coupler.clear());
+        // an Analytical Lens reads machines as Create's goggles do
+        com.simibubi.create.content.equipment.goggles.GogglesItem.addIsWearingPredicate(player ->
+                com.avicagan.bloodandbones.cyber.Modules.has(player, com.avicagan.bloodandbones.cyber.Module.ANALYTICAL_LENS));
         if (net.neoforged.fml.loading.FMLEnvironment.dist.isClient()) {
             // the rig exporter reads client-only model classes; a dedicated server must never link it
             modEventBus.addListener(BBDatagen::gatherData);

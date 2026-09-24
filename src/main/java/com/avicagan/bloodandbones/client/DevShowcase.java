@@ -259,7 +259,10 @@ public final class DevShowcase {
                         // blood), a red lens for one eye and an empty socket for the other
                         body.fit(com.avicagan.bloodandbones.body.BodyPart.LEFT_LEG, new ItemStack(BBItems.PISTON_LEG.get()));
                         body.fit(com.avicagan.bloodandbones.body.BodyPart.RIGHT_LEG, new ItemStack(BBItems.SINEW_LEG.get()));
-                        body.fit(com.avicagan.bloodandbones.body.BodyPart.RIGHT_ARM, new ItemStack(BBItems.HYDRAULIC_ARM.get()));
+                        ItemStack brass = new ItemStack(BBItems.HYDRAULIC_ARM.get());
+                        com.avicagan.bloodandbones.cyber.Modules.set(brass, java.util.List.of(com.avicagan.bloodandbones.cyber.Module.PISTON_RAM,
+                                com.avicagan.bloodandbones.cyber.Module.ROTATIONAL_COUPLER));
+                        body.fit(com.avicagan.bloodandbones.body.BodyPart.RIGHT_ARM, brass);
                         body.fit(com.avicagan.bloodandbones.body.BodyPart.LEFT_ARM, new ItemStack(BBItems.VENT_ARM.get()));
                         body.fit(com.avicagan.bloodandbones.body.BodyPart.RIGHT_EYE, new ItemStack(BBItems.OPTIC_EYE.get()));
                         body.lose(com.avicagan.bloodandbones.body.BodyPart.LEFT_EYE);
@@ -297,9 +300,14 @@ public final class DevShowcase {
                                     .setValue(com.avicagan.bloodandbones.backtank.FluidBacktankBlock.TIER, tier));
                         }
                     });
+                } else if (t == 20) {
+                    // the throttle spooling the brass arm, so it glows in the front shot
+                    server.execute(() -> com.avicagan.bloodandbones.cyber.Throttle.press(server.getPlayerList().getPlayers().get(0),
+                            com.avicagan.bloodandbones.body.BodyPart.RIGHT_ARM, 0));
                 } else if (t == 40) {
                     Screenshot.grab(mc.gameDirectory, PREFIX + "body_0.png", mc.getMainRenderTarget(), message -> {
                     });
+                    server.execute(() -> com.avicagan.bloodandbones.cyber.Throttle.release(server.getPlayerList().getPlayers().get(0), false));
                     mc.options.setCameraType(net.minecraft.client.CameraType.THIRD_PERSON_BACK);
                     server.execute(() -> {
                         ServerPlayer player = server.getPlayerList().getPlayers().get(0);
@@ -313,13 +321,39 @@ public final class DevShowcase {
                     server.execute(() -> {
                         ServerPlayer player = server.getPlayerList().getPlayers().get(0);
                         player.setItemInHand(InteractionHand.MAIN_HAND, ItemStack.EMPTY);
-                        player.teleportTo(player.serverLevel(), player.getX(), player.getY(), player.getZ(), 180.0F, 20.0F);
+                        // a shaft end just ahead at eye level, for the Rotational Coupler to reach into
+                        // east, so the camera behind (west) is clear of the minions (south)
+                        for (int d = 2; d <= 4; d++) {
+                            player.serverLevel().setBlockAndUpdate(player.blockPosition().east(d).above(), com.simibubi.create.AllBlocks.SHAFT.getDefaultState()
+                                    .setValue(net.minecraft.world.level.block.state.properties.BlockStateProperties.AXIS, net.minecraft.core.Direction.Axis.X));
+                        }
+                        player.teleportTo(player.serverLevel(), player.getBlockX() + 0.5, player.getY(), player.getBlockZ() + 0.5, -90.0F, 5.0F);
                     });
+                } else if (t == 65) {
+                    server.execute(() -> com.avicagan.bloodandbones.cyber.Throttle.press(server.getPlayerList().getPlayers().get(0),
+                            com.avicagan.bloodandbones.body.BodyPart.RIGHT_ARM, 1));
                 } else if (t == 90) {
                     Screenshot.grab(mc.gameDirectory, PREFIX + "body_1.png", mc.getMainRenderTarget(), message -> {
                     });
+                    // and from behind: the coupler's rod from the arm into the shaft
+                    mc.options.setCameraType(net.minecraft.client.CameraType.THIRD_PERSON_BACK);
+                    mc.options.hideGui = true;
+                } else if (t == 100) {
+                    Screenshot.grab(mc.gameDirectory, PREFIX + "body_4.png", mc.getMainRenderTarget(), message -> {
+                    });
+                    mc.options.setCameraType(net.minecraft.client.CameraType.FIRST_PERSON);
+                    mc.options.hideGui = false;
+                    BlockPos feet = mc.player.blockPosition();
+                    BloodAndBones.LOGGER.info("[showcase] throttle: {} at {}; ahead {} | {}",
+                            com.avicagan.bloodandbones.cyber.Throttle.spooling(server.getPlayerList().getPlayers().get(0)),
+                            com.avicagan.bloodandbones.cyber.Throttle.level(server.getPlayerList().getPlayers().get(0)),
+                            mc.level.getBlockState(feet.east(1).above()), mc.level.getBlockState(feet.east(2).above()));
                     server.execute(() -> {
                         ServerPlayer player = server.getPlayerList().getPlayers().get(0);
+                        com.avicagan.bloodandbones.cyber.Throttle.release(player, false);
+                        for (int d = 2; d <= 4; d++) {
+                            player.serverLevel().removeBlock(player.blockPosition().east(d).above(), false);
+                        }
                         BlockPos at = player.blockPosition().east(2);
                         player.serverLevel().setBlockAndUpdate(at, BBBlocks.SURGERY_TABLE.getDefaultState()
                                 .setValue(com.avicagan.bloodandbones.body.SurgeryTableBlock.ATTACHMENT, com.avicagan.bloodandbones.body.TableAttachment.SURGICAL));
@@ -330,7 +364,7 @@ public final class DevShowcase {
                             net.neoforged.neoforge.network.PacketDistributor.sendToPlayer(player, new com.avicagan.bloodandbones.body.Surgery.OpenPayload(at, player.getId()));
                         }
                     });
-                } else if (t == 130) {
+                } else if (t == 140) {
                     Screenshot.grab(mc.gameDirectory, PREFIX + "body_2.png", mc.getMainRenderTarget(), message -> {
                     });
                     BloodAndBones.LOGGER.info("[showcase] took body shots; screen {}", mc.screen == null ? "none" : mc.screen.getClass().getSimpleName());

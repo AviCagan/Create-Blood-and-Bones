@@ -24,7 +24,7 @@ import org.joml.Vector3d;
  */
 public final class Surgery {
     public enum Action {
-        NONE, TAKE_OFF, REPLACE, SWAP, FIT, REATTACH, UNCLIP;
+        NONE, TAKE_OFF, REPLACE, SWAP, FIT, REATTACH, UNCLIP, FIT_MODULE, TAKE_MODULE;
 
         public String translationKey() {
             return "bloodandbones.surgery.action." + name().toLowerCase(java.util.Locale.ROOT);
@@ -38,16 +38,32 @@ public final class Surgery {
         return stack.getItem() instanceof CleaverItem;
     }
 
-    /** What the table takes to lie on it: a blade, an implant, a part, or a carcass piece to take organs from. */
+    /** Create's Wrench: on the table, it takes modules out of a brass limb. */
+    public static boolean isWrench(ItemStack stack) {
+        return stack.is(com.simibubi.create.AllItems.WRENCH.get());
+    }
+
+    /**
+     * What the table takes to lie on it: a blade, an implant, a part, a carcass piece to take organs from, a
+     * cybernetic module, or a wrench.
+     */
     public static boolean accepts(ItemStack stack) {
         return isBlade(stack) || stack.getItem() instanceof ImplantItem || stack.getItem() instanceof SeveredLimbItem
-                || stack.is(com.avicagan.bloodandbones.registry.BBItems.CARCASS_PIECE.get());
+                || stack.is(com.avicagan.bloodandbones.registry.BBItems.CARCASS_PIECE.get())
+                || stack.getItem() instanceof com.avicagan.bloodandbones.cyber.ModuleItem || isWrench(stack);
     }
 
     /** What would be done to this part, with this on the table. The same on both sides, for the screen. */
     public static Action action(Body body, ItemStack tool, BodyPart part) {
         boolean fits = tool.getItem() instanceof ImplantItem implant && implant.fits(part)
                 || tool.getItem() instanceof SeveredLimbItem limb && limb.fits(part);
+        // modules go into and come out of a brass limb where it is, no amputation needed
+        if (body.state(part) == Body.State.IMPLANT && tool.getItem() instanceof com.avicagan.bloodandbones.cyber.ModuleItem module) {
+            return com.avicagan.bloodandbones.cyber.Modules.fits(body.implant(part), module.module()) ? Action.FIT_MODULE : Action.NONE;
+        }
+        if (body.state(part) == Body.State.IMPLANT && isWrench(tool)) {
+            return com.avicagan.bloodandbones.cyber.Modules.of(body.implant(part)).isEmpty() ? Action.NONE : Action.TAKE_MODULE;
+        }
         return switch (body.state(part)) {
             // an implant is swapped for what fits on the table, or unclipped; a heart is never left empty
             case IMPLANT -> fits ? Action.SWAP : part == BodyPart.HEART ? Action.NONE : Action.UNCLIP;
@@ -110,6 +126,26 @@ public final class Surgery {
             case UNCLIP -> {
                 give(surgeon, body.unclip(part), pos, level);
                 level.playSound(null, pos, SoundEvents.ARMOR_EQUIP_CHAIN.value(), SoundSource.PLAYERS, 1.0F, 1.2F);
+            }
+            case FIT_MODULE -> {
+                // into a free slot, or in place of the first one when all are taken (that one comes back)
+                ItemStack chassis = body.implant(part);
+                java.util.List<com.avicagan.bloodandbones.cyber.Module> modules = new java.util.ArrayList<>(com.avicagan.bloodandbones.cyber.Modules.of(chassis));
+                com.avicagan.bloodandbones.cyber.Module module = ((com.avicagan.bloodandbones.cyber.ModuleItem) table.take().getItem()).module();
+                if (modules.size() < com.avicagan.bloodandbones.cyber.Modules.slots(chassis)) {
+                    modules.add(module);
+                } else {
+                    give(surgeon, new ItemStack(com.avicagan.bloodandbones.registry.BBItems.module(modules.set(0, module))), pos, level);
+                }
+                com.avicagan.bloodandbones.cyber.Modules.set(chassis, modules);
+                level.playSound(null, pos, SoundEvents.CHAIN_PLACE, SoundSource.PLAYERS, 1.0F, 1.3F);
+            }
+            case TAKE_MODULE -> {
+                ItemStack chassis = body.implant(part);
+                java.util.List<com.avicagan.bloodandbones.cyber.Module> modules = new java.util.ArrayList<>(com.avicagan.bloodandbones.cyber.Modules.of(chassis));
+                give(surgeon, new ItemStack(com.avicagan.bloodandbones.registry.BBItems.module(modules.remove(modules.size() - 1))), pos, level);
+                com.avicagan.bloodandbones.cyber.Modules.set(chassis, modules);
+                level.playSound(null, pos, SoundEvents.CHAIN_BREAK, SoundSource.PLAYERS, 1.0F, 1.3F);
             }
         }
         patient.setData(BBAttachments.BODY, body);

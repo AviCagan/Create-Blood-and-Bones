@@ -54,6 +54,10 @@ public final class Necrosis {
         if (!(implant.getItem() instanceof ImplantItem item) || !item.organic()) {
             return;
         }
+        // the flesh set bonus: a body given over to flesh rots half as fast
+        if (com.avicagan.bloodandbones.cyber.SetBonus.flesh(body) && wearer.getRandom().nextFloat() >= com.avicagan.bloodandbones.cyber.SetBonus.FLESH_NECROSIS) {
+            return;
+        }
         int before = of(implant);
         int after = Math.min(MAX, before + amount);
         if (after != before) {

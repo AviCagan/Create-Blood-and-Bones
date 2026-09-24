@@ -1,0 +1,26 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "category": "equipment",
+  "pattern": [
+    " G ",
+    "PMP",
+    " E "
+  ],
+  "key": {
+    "G": {
+      "item": "create:goggles"
+    },
+    "P": {
+      "tag": "c:plates/brass"
+    },
+    "M": {
+      "item": "create:precision_mechanism"
+    },
+    "E": {
+      "item": "create:electron_tube"
+    }
+  },
+  "result": {
+    "id": "bloodandbones:analytical_lens"
+  }
+}

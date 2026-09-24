@@ -32,6 +32,16 @@ public class BBNetwork {
                 }));
         registrar.playToServer(com.avicagan.bloodandbones.body.Vent.Payload.TYPE, com.avicagan.bloodandbones.body.Vent.Payload.STREAM_CODEC,
                 (payload, context) -> context.enqueueWork(() -> com.avicagan.bloodandbones.body.Vent.spray(context.player())));
+        registrar.playToServer(com.avicagan.bloodandbones.cyber.Throttle.KeyPayload.TYPE, com.avicagan.bloodandbones.cyber.Throttle.KeyPayload.STREAM_CODEC,
+                (payload, context) -> context.enqueueWork(() -> {
+                    if (context.player() instanceof net.minecraft.server.level.ServerPlayer player) {
+                        com.avicagan.bloodandbones.cyber.Throttle.handle(player, payload);
+                    }
+                }));
+        registrar.playToClient(com.avicagan.bloodandbones.cyber.Throttle.SyncPayload.TYPE, com.avicagan.bloodandbones.cyber.Throttle.SyncPayload.STREAM_CODEC,
+                (payload, context) -> context.enqueueWork(() -> com.avicagan.bloodandbones.client.CyberClient.receive(payload)));
+        registrar.playToClient(com.avicagan.bloodandbones.cyber.ModuleActions.MotionPayload.TYPE, com.avicagan.bloodandbones.cyber.ModuleActions.MotionPayload.STREAM_CODEC,
+                (payload, context) -> context.enqueueWork(() -> com.avicagan.bloodandbones.client.CyberClient.receive(payload)));
         registrar.playToClient(ButcherySyncPayload.TYPE, ButcherySyncPayload.STREAM_CODEC,
                 (payload, context) -> context.enqueueWork(() -> com.avicagan.bloodandbones.carcass.butchery.ButcheryManager.receiveClientTables(payload.tables())));
     }

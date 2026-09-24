@@ -1,0 +1,23 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "category": "equipment",
+  "pattern": [
+    "CRC",
+    "CMC",
+    "CRC"
+  ],
+  "key": {
+    "C": {
+      "tag": "c:plates/copper"
+    },
+    "R": {
+      "item": "minecraft:redstone"
+    },
+    "M": {
+      "item": "create:precision_mechanism"
+    }
+  },
+  "result": {
+    "id": "bloodandbones:magnet_coil"
+  }
+}

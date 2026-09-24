@@ -5,7 +5,8 @@
   "compatibilityLevel": "JAVA_21",
   "refmap": "bloodandbones.refmap.json",
   "mixins": [
-    "GameTestServerMixin"
+    "GameTestServerMixin",
+    "KineticBlockEntityAccessor"
   ],
   "injectors": {
     "defaultRequire": 1

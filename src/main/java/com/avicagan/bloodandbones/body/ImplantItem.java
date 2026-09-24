@@ -104,6 +104,17 @@ public class ImplantItem extends Item {
             tooltip.add(Component.translatable("bloodandbones.implant.runs_on", new FluidStack(fuel, 1).getHoverName(), spec.drain())
                     .withStyle(ChatFormatting.GRAY));
         }
+        int slots = spec.slots();
+        if (slots > 0) {
+            java.util.List<com.avicagan.bloodandbones.cyber.Module> modules = com.avicagan.bloodandbones.cyber.Modules.of(stack);
+            java.util.List<Component> names = new java.util.ArrayList<>();
+            for (int i = 0; i < slots; i++) {
+                names.add(i < modules.size() ? Component.translatable(modules.get(i).translationKey())
+                        : Component.translatable("bloodandbones.implant.module_empty"));
+            }
+            tooltip.add(Component.translatable("bloodandbones.implant.modules", net.minecraft.network.chat.ComponentUtils.formatList(names, Component.literal(", ")))
+                    .withStyle(ChatFormatting.GOLD));
+        }
         int necrosis = Necrosis.of(stack);
         if (organic() && necrosis > 0) {
             tooltip.add(Component.translatable("bloodandbones.implant.necrosis", necrosis * 100 / Necrosis.MAX)

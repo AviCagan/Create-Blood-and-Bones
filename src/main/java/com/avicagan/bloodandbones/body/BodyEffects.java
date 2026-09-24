@@ -134,7 +134,13 @@ public final class BodyEffects {
         }
         apply(player.getAttribute(Attributes.BLOCK_INTERACTION_RANGE), ARMS, reach, AttributeModifier.Operation.ADD_VALUE);
         apply(player.getAttribute(Attributes.ENTITY_INTERACTION_RANGE), ARMS, reach, AttributeModifier.Operation.ADD_VALUE);
+        // the brass set bonus: a body given over to the machine is hard to shove
+        apply(player.getAttribute(Attributes.KNOCKBACK_RESISTANCE), BRASS,
+                com.avicagan.bloodandbones.cyber.SetBonus.brass(body) ? com.avicagan.bloodandbones.cyber.SetBonus.BRASS_KNOCKBACK_RESISTANCE : 0.0F,
+                AttributeModifier.Operation.ADD_VALUE);
     }
+
+    private static final ResourceLocation BRASS = BloodAndBones.asResource("brass_set");
 
     private static void apply(AttributeInstance attribute, ResourceLocation id, float amount, AttributeModifier.Operation operation) {
         if (attribute == null) {
@@ -215,6 +221,9 @@ public final class BodyEffects {
             ImplantSpec spec = working(body, part, player);
             if (spec != null && spec.fuel() != null) {
                 total += spec.drain();
+                for (com.avicagan.bloodandbones.cyber.Module module : com.avicagan.bloodandbones.cyber.Modules.of(body.implant(part))) {
+                    total += module.upkeep();
+                }
             }
         }
         if (total > 0) {

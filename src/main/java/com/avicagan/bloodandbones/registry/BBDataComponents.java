@@ -32,6 +32,11 @@ public final class BBDataComponents {
     public static final DeferredHolder<DataComponentType<?>, DataComponentType<Integer>> NECROSIS = COMPONENTS.registerComponentType("necrosis",
             builder -> builder.persistent(com.mojang.serialization.Codec.INT).networkSynchronized(ByteBufCodecs.VAR_INT));
 
+    /** The modules in a brass limb's slots, in slot order. */
+    public static final DeferredHolder<DataComponentType<?>, DataComponentType<java.util.List<com.avicagan.bloodandbones.cyber.Module>>> MODULES = COMPONENTS.registerComponentType("modules",
+            builder -> builder.persistent(com.avicagan.bloodandbones.cyber.Module.CODEC.listOf())
+                    .networkSynchronized(com.avicagan.bloodandbones.cyber.Module.STREAM_CODEC.apply(ByteBufCodecs.list())));
+
     private BBDataComponents() {
     }
 }

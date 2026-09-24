@@ -118,6 +118,11 @@ public final class BodyRendering {
                     arm.visible = true;
                     arm.render(event.getPoseStack(), event.getMultiBufferSource().getBuffer(RenderType.entityCutoutNoCull(implant.texture())),
                             event.getPackedLight(), OverlayTexture.NO_OVERLAY);
+                    float spool = implant.spec().slots() > 0 ? CyberClient.level(player, part) : 0.0F;
+                    if (spool > 0.0F) {
+                        arm.render(event.getPoseStack(), event.getMultiBufferSource().getBuffer(RenderType.eyes(glow(implant.texture()))),
+                                net.minecraft.client.renderer.LightTexture.FULL_BRIGHT, OverlayTexture.NO_OVERLAY, glowColor(spool));
+                    }
                     arm.visible = visible;
                 }
             }
@@ -198,6 +203,19 @@ public final class BodyRendering {
         }
     }
 
+    /** The seams' glow at this spool: the gauge's colour, brighter as it climbs. */
+    static int glowColor(float spool) {
+        int shade = (int) (255 * (0.55F + 0.45F * spool));
+        int color = CyberClient.heat(spool);
+        int r = (color >> 16 & 0xFF) * shade / 255, g = (color >> 8 & 0xFF) * shade / 255, b = (color & 0xFF) * shade / 255;
+        return 0xFF000000 | r << 16 | g << 8 | b;
+    }
+
+    /** A brass limb's glow sheet: its texture's name with _glow. */
+    static net.minecraft.resources.ResourceLocation glow(net.minecraft.resources.ResourceLocation texture) {
+        return texture.withPath(p -> p.substring(0, p.length() - ".png".length()) + "_glow.png");
+    }
+
     /** Implants drawn where the parts they replace were, posed like them. */
     public static class ImplantLayer<T extends net.minecraft.world.entity.LivingEntity, M extends PlayerModel<T>> extends RenderLayer<T, M> {
         public ImplantLayer(RenderLayerParent<T, M> parent) {
@@ -222,6 +240,12 @@ public final class BodyRendering {
                     float rot = implant.organic() ? com.avicagan.bloodandbones.body.Necrosis.of(body.implant(part)) / (float) com.avicagan.bloodandbones.body.Necrosis.MAX : 0.0F;
                     model.render(poseStack, buffers.getBuffer(RenderType.entityCutoutNoCull(implant.texture())), packedLight,
                             net.minecraft.client.renderer.entity.LivingEntityRenderer.getOverlayCoords(player, 0.0F), CarcassModels.rotColor(1.0F - rot));
+                    // a brass limb being spooled glows along its seams, brighter as the throttle climbs
+                    float spool = implant.spec().slots() > 0 ? CyberClient.level(player, part) : 0.0F;
+                    if (spool > 0.0F) {
+                        model.render(poseStack, buffers.getBuffer(RenderType.eyes(glow(implant.texture()))), net.minecraft.client.renderer.LightTexture.FULL_BRIGHT,
+                                OverlayTexture.NO_OVERLAY, glowColor(spool));
+                    }
                     model.visible = visible;
                 }
             }
