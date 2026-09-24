@@ -1,0 +1,97 @@
+{
+  "kind": "archetype",
+  "priority": 0,
+  "members": [
+    "minecraft:spider",
+    "minecraft:cave_spider",
+    "minecraft:bee",
+    "minecraft:silverfish",
+    "minecraft:endermite"
+  ],
+  "scrap_material": "bloodandbones:gristle",
+  "organs": {
+    "torso": [
+      "bloodandbones:heart",
+      "bloodandbones:stomach"
+    ],
+    "head": [
+      "bloodandbones:eye",
+      "bloodandbones:eye"
+    ]
+  },
+  "parts": {
+    "torso": {
+      "minion": {
+        "health_factor": 1.0,
+        "self_move": {
+          "mode": "slither",
+          "speed": 0.2,
+          "gait": "undulate"
+        }
+      },
+      "armour": [
+        "bloodandbones:shell_guard"
+      ]
+    },
+    "head": {
+      "minion": {
+        "jobs": [
+          "bloodandbones:hunter",
+          "bloodandbones:guard",
+          "bloodandbones:companion"
+        ],
+        "disposition": "nocturnal",
+        "bite": {
+          "style": "bite"
+        }
+      },
+      "armour": [
+        "bloodandbones:dark_sight"
+      ]
+    },
+    "leg": {
+      "minion": {
+        "movement": {
+          "mode": "climb",
+          "gait": "skitter"
+        }
+      },
+      "armour": {
+        "leggings": [
+          "bloodandbones:stealthy"
+        ],
+        "boots": [
+          "bloodandbones:sure_footed"
+        ]
+      }
+    },
+    "tail": {
+      "minion": {
+        "traits": [
+          "bloodandbones:steady"
+        ]
+      },
+      "armour": [
+        "bloodandbones:sturdy"
+      ]
+    }
+  },
+  "organ_traits": {
+    "bloodandbones:heart": {
+      "minion": [
+        "bloodandbones:hardy"
+      ],
+      "armour": [
+        "bloodandbones:hardy"
+      ]
+    },
+    "bloodandbones:eye": {
+      "minion": [
+        "bloodandbones:keen_eye"
+      ],
+      "armour": [
+        "bloodandbones:dark_sight"
+      ]
+    }
+  }
+}

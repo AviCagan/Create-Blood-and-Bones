@@ -1,0 +1,101 @@
+{
+  "kind": "family",
+  "priority": 100,
+  "members": [
+    "minecraft:polar_bear",
+    "minecraft:panda",
+    "#bloodandbones:family/bear"
+  ],
+  "scrap_material": "bloodandbones:bear_hide",
+  "colour": "#dcd6c8",
+  "organs": {
+    "torso": {
+      "add": [
+        "bloodandbones:brown_fat"
+      ]
+    }
+  },
+  "parts": {
+    "torso": {
+      "minion": {
+        "health_factor": 0.8
+      },
+      "armour": [
+        {
+          "trait": "bloodandbones:thick_hide",
+          "level": 2
+        }
+      ]
+    },
+    "head": {
+      "minion": {
+        "jobs": [
+          "bloodandbones:guard",
+          "bloodandbones:bodyguard"
+        ],
+        "disposition": "territorial",
+        "bite": {
+          "style": "claw",
+          "damage": 2.0
+        }
+      },
+      "armour": [
+        "bloodandbones:territorial"
+      ]
+    },
+    "leg": {
+      "minion": {
+        "movement": {
+          "mode": "walk",
+          "speed": 0.25,
+          "gait": "lumber"
+        },
+        "traits": [
+          "bloodandbones:waterborn"
+        ]
+      },
+      "armour": {
+        "leggings": [
+          "bloodandbones:steady"
+        ],
+        "boots": [
+          "bloodandbones:waterborn"
+        ]
+      }
+    }
+  },
+  "hide": [
+    {
+      "trait": "bloodandbones:frost_guard",
+      "level": 2
+    }
+  ],
+  "organ_traits": {
+    "bloodandbones:brown_fat": {
+      "minion": [
+        "bloodandbones:hardy",
+        {
+          "trait": "bloodandbones:frost_guard",
+          "level": 2
+        }
+      ],
+      "armour": [
+        "bloodandbones:hardy",
+        {
+          "trait": "bloodandbones:frost_guard",
+          "level": 2
+        }
+      ]
+    }
+  },
+  "full_set": {
+    "replace": true,
+    "name": "set.bloodandbones.hibernator",
+    "bonus": [
+      "bloodandbones:hibernator"
+    ],
+    "drawback": [
+      "bloodandbones:drowsy"
+    ]
+  }
+}

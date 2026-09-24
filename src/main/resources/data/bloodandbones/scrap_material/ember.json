@@ -1,0 +1,21 @@
+{
+  "look": "ember",
+  "armour": {
+    "helmet": 1,
+    "chestplate": 4,
+    "leggings": 3,
+    "boots": 1
+  },
+  "toughness": 1.0,
+  "knockback_resistance": 0.0,
+  "durability": 12,
+  "enchantability": 16,
+  "density": 20,
+  "quirk": [
+    {
+      "attribute": "minecraft:generic.burning_time",
+      "amount": -0.15,
+      "operation": "add_multiplied_base"
+    }
+  ]
+}

@@ -1,0 +1,29 @@
+{
+  "name": "trait.bloodandbones.sharpshooter",
+  "max_level": 3,
+  "effects": [
+    {
+      "trigger": "attack",
+      "requirements": {
+        "condition": "minecraft:damage_source_properties",
+        "predicate": {
+          "tags": [
+            {
+              "id": "minecraft:is_projectile",
+              "expected": true
+            }
+          ]
+        }
+      },
+      "effect": {
+        "type": "bloodandbones:damage",
+        "direction": "out",
+        "multiplier": {
+          "type": "minecraft:linear",
+          "base": 1.15,
+          "per_level_above_first": 0.15
+        }
+      }
+    }
+  ]
+}

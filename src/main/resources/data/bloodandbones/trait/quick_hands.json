@@ -1,0 +1,30 @@
+{
+  "name": "trait.bloodandbones.quick_hands",
+  "max_level": 2,
+  "effects": [
+    {
+      "effect": {
+        "type": "bloodandbones:attribute",
+        "attribute": "minecraft:generic.attack_speed",
+        "amount": {
+          "type": "minecraft:linear",
+          "base": 0.1,
+          "per_level_above_first": 0.1
+        },
+        "operation": "add_multiplied_base"
+      }
+    },
+    {
+      "effect": {
+        "type": "bloodandbones:attribute",
+        "attribute": "minecraft:player.block_break_speed",
+        "amount": {
+          "type": "minecraft:linear",
+          "base": 0.1,
+          "per_level_above_first": 0.1
+        },
+        "operation": "add_multiplied_base"
+      }
+    }
+  ]
+}

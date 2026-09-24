@@ -1,0 +1,21 @@
+{
+  "name": "trait.bloodandbones.shell_guard",
+  "max_level": 3,
+  "effects": [
+    {
+      "trigger": "hurt",
+      "effect": {
+        "type": "bloodandbones:damage",
+        "direction": "in",
+        "multiplier": {
+          "type": "minecraft:linear",
+          "base": 0.85,
+          "per_level_above_first": -0.15
+        },
+        "damage_tags": [
+          "minecraft:is_projectile"
+        ]
+      }
+    }
+  ]
+}

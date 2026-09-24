@@ -1,0 +1,50 @@
+{
+  "kind": "family",
+  "priority": 100,
+  "members": [
+    "minecraft:slime",
+    "minecraft:magma_cube",
+    "#bloodandbones:family/slime"
+  ],
+  "scrap_material": "bloodandbones:gel",
+  "colour": "#74b85a",
+  "parts": {
+    "torso": {
+      "minion": {
+        "self_move": {
+          "mode": "hop",
+          "speed": 0.2,
+          "gait": "hop"
+        }
+      },
+      "armour": [
+        "bloodandbones:fall_guard"
+      ]
+    },
+    "head": {
+      "armour": [
+        "bloodandbones:fall_guard"
+      ]
+    },
+    "leg": {
+      "armour": {
+        "leggings": [
+          "bloodandbones:fall_guard"
+        ]
+      }
+    }
+  },
+  "full_set": {
+    "replace": true,
+    "name": "set.bloodandbones.gelatinous",
+    "bonus": [
+      {
+        "trait": "bloodandbones:fall_guard",
+        "level": 4
+      }
+    ],
+    "drawback": [
+      "bloodandbones:sluggish"
+    ]
+  }
+}

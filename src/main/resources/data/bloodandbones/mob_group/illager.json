@@ -1,0 +1,81 @@
+{
+  "kind": "family",
+  "priority": 100,
+  "members": [
+    "minecraft:pillager",
+    "minecraft:vindicator",
+    "minecraft:evoker",
+    "minecraft:illusioner",
+    "#bloodandbones:family/illager"
+  ],
+  "scrap_material": "bloodandbones:skin",
+  "colour": "#7d8a8c",
+  "organs": {
+    "torso": {
+      "add": [
+        "bloodandbones:raider_gland"
+      ]
+    }
+  },
+  "parts": {
+    "head": {
+      "minion": {
+        "jobs": [
+          "bloodandbones:surgeon",
+          "bloodandbones:guard",
+          "bloodandbones:sentry"
+        ],
+        "disposition": "brave"
+      }
+    },
+    "torso": {
+      "armour": [
+        "bloodandbones:brawler"
+      ]
+    },
+    "arm": {
+      "minion": {
+        "strike": {
+          "style": "punch"
+        },
+        "grip": "hand"
+      },
+      "armour": {
+        "shoulders": [
+          "bloodandbones:quick_hands"
+        ]
+      }
+    },
+    "leg": {
+      "minion": {
+        "movement": {
+          "mode": "walk",
+          "speed": 0.26,
+          "gait": "stride"
+        }
+      },
+      "armour": {
+        "leggings": [
+          "bloodandbones:swift"
+        ],
+        "boots": [
+          "bloodandbones:stealthy"
+        ]
+      }
+    }
+  },
+  "hide": [
+    "bloodandbones:magic_ward"
+  ],
+  "full_set": {
+    "replace": true,
+    "name": "set.bloodandbones.raid_captain",
+    "bonus": [
+      "bloodandbones:brawler"
+    ],
+    "drawback": [
+      "bloodandbones:villagers_flee",
+      "bloodandbones:golems_hostile"
+    ]
+  }
+}

@@ -1,0 +1,10 @@
+{
+  "kind": "family",
+  "priority": 100,
+  "members": [
+    "minecraft:creeper",
+    "#bloodandbones:family/volatile"
+  ],
+  "scrap_material": "bloodandbones:gristle",
+  "colour": "#58a043"
+}

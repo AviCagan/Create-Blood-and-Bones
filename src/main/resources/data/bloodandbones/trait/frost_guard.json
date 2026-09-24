@@ -1,0 +1,21 @@
+{
+  "name": "trait.bloodandbones.frost_guard",
+  "max_level": 4,
+  "effects": [
+    {
+      "trigger": "hurt",
+      "effect": {
+        "type": "bloodandbones:damage",
+        "direction": "in",
+        "multiplier": {
+          "type": "minecraft:linear",
+          "base": 0.75,
+          "per_level_above_first": -0.25
+        },
+        "damage_tags": [
+          "minecraft:is_freezing"
+        ]
+      }
+    }
+  ]
+}

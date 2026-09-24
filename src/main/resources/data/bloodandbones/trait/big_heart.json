@@ -1,0 +1,17 @@
+{
+  "name": "trait.bloodandbones.big_heart",
+  "max_level": 2,
+  "effects": [
+    {
+      "effect": {
+        "type": "bloodandbones:attribute",
+        "attribute": "minecraft:generic.max_health",
+        "amount": {
+          "type": "minecraft:linear",
+          "base": 2,
+          "per_level_above_first": 2
+        }
+      }
+    }
+  ]
+}

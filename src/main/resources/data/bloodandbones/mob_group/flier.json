@@ -1,0 +1,108 @@
+{
+  "kind": "archetype",
+  "priority": 0,
+  "members": [
+    "minecraft:bat",
+    "minecraft:phantom"
+  ],
+  "scrap_material": "bloodandbones:gristle",
+  "organs": {
+    "torso": [
+      "bloodandbones:heart",
+      "bloodandbones:lungs",
+      "bloodandbones:stomach"
+    ],
+    "head": [
+      "bloodandbones:eye",
+      "bloodandbones:eye"
+    ]
+  },
+  "parts": {
+    "torso": {
+      "minion": {
+        "health_factor": 1.0,
+        "self_move": {
+          "mode": "fly",
+          "speed": 0.2
+        }
+      },
+      "armour": [
+        "bloodandbones:light_boned"
+      ]
+    },
+    "head": {
+      "minion": {
+        "jobs": [
+          "bloodandbones:sentry",
+          "bloodandbones:scavenger",
+          "bloodandbones:companion"
+        ],
+        "disposition": "nocturnal",
+        "bite": {
+          "style": "bite"
+        }
+      },
+      "armour": [
+        "bloodandbones:dark_sight"
+      ]
+    },
+    "arm": {
+      "minion": {
+        "strike": {
+          "style": "flap"
+        },
+        "grip": "wing",
+        "lift": 0.4
+      },
+      "armour": [
+        "bloodandbones:featherfall"
+      ]
+    },
+    "leg": {
+      "armour": {
+        "leggings": [
+          "bloodandbones:light_boned"
+        ],
+        "boots": [
+          "bloodandbones:fall_guard"
+        ]
+      }
+    },
+    "tail": {
+      "minion": {
+        "traits": [
+          "bloodandbones:steady"
+        ]
+      },
+      "armour": [
+        "bloodandbones:swift"
+      ]
+    }
+  },
+  "organ_traits": {
+    "bloodandbones:heart": {
+      "minion": [
+        "bloodandbones:hardy"
+      ],
+      "armour": [
+        "bloodandbones:hardy"
+      ]
+    },
+    "bloodandbones:lungs": {
+      "minion": [
+        "bloodandbones:long_winded"
+      ],
+      "armour": [
+        "bloodandbones:long_winded"
+      ]
+    },
+    "bloodandbones:eye": {
+      "minion": [
+        "bloodandbones:keen_eye"
+      ],
+      "armour": [
+        "bloodandbones:dark_sight"
+      ]
+    }
+  }
+}

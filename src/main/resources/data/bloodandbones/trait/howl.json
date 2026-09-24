@@ -1,0 +1,23 @@
+{
+  "name": "trait.bloodandbones.howl",
+  "max_level": 1,
+  "effects": [
+    {
+      "trigger": "passive",
+      "effect": {
+        "type": "bloodandbones:reaction",
+        "entities": "bloodandbones:flees_howl",
+        "mode": "flee",
+        "radius": 12
+      }
+    },
+    {
+      "trigger": "passive",
+      "effect": {
+        "type": "bloodandbones:reaction",
+        "entities": "minecraft:skeletons",
+        "mode": "hunt"
+      }
+    }
+  ]
+}

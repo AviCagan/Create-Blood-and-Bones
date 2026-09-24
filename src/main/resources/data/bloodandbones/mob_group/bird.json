@@ -1,0 +1,115 @@
+{
+  "kind": "archetype",
+  "priority": 0,
+  "members": [
+    "minecraft:chicken",
+    "minecraft:parrot"
+  ],
+  "scrap_material": "bloodandbones:gristle",
+  "organs": {
+    "torso": [
+      "bloodandbones:heart",
+      "bloodandbones:lungs",
+      "bloodandbones:stomach"
+    ],
+    "head": [
+      "bloodandbones:eye",
+      "bloodandbones:eye"
+    ]
+  },
+  "parts": {
+    "torso": {
+      "minion": {
+        "health_factor": 1.0,
+        "self_move": {
+          "mode": "hop",
+          "speed": 0.15,
+          "gait": "hop"
+        }
+      },
+      "armour": [
+        "bloodandbones:light_boned"
+      ]
+    },
+    "head": {
+      "minion": {
+        "jobs": [
+          "bloodandbones:scavenger",
+          "bloodandbones:companion",
+          "bloodandbones:courier"
+        ],
+        "disposition": "skittish",
+        "bite": {
+          "style": "bite"
+        }
+      },
+      "armour": [
+        "bloodandbones:alert"
+      ]
+    },
+    "arm": {
+      "minion": {
+        "strike": {
+          "style": "flap"
+        },
+        "grip": "wing",
+        "lift": 0.02
+      },
+      "armour": [
+        "bloodandbones:featherfall"
+      ]
+    },
+    "leg": {
+      "minion": {
+        "movement": {
+          "mode": "hop",
+          "gait": "strut"
+        }
+      },
+      "armour": {
+        "leggings": [
+          "bloodandbones:swift"
+        ],
+        "boots": [
+          "bloodandbones:fall_guard"
+        ]
+      }
+    },
+    "tail": {
+      "minion": {
+        "traits": [
+          "bloodandbones:steady"
+        ]
+      },
+      "armour": [
+        "bloodandbones:featherfall"
+      ]
+    }
+  },
+  "organ_traits": {
+    "bloodandbones:heart": {
+      "minion": [
+        "bloodandbones:hardy"
+      ],
+      "armour": [
+        "bloodandbones:hardy"
+      ]
+    },
+    "bloodandbones:lungs": {
+      "minion": [
+        "bloodandbones:long_winded"
+      ],
+      "armour": [
+        "bloodandbones:long_winded"
+      ]
+    },
+    "bloodandbones:eye": {
+      "minion": [
+        "bloodandbones:keen_eye"
+      ],
+      "armour": [
+        "bloodandbones:dark_sight"
+      ]
+    }
+  }
+}

@@ -1,0 +1,21 @@
+{
+  "look": "feather",
+  "armour": {
+    "helmet": 1,
+    "chestplate": 2,
+    "leggings": 2,
+    "boots": 1
+  },
+  "toughness": 0.0,
+  "knockback_resistance": 0.0,
+  "durability": 8,
+  "enchantability": 20,
+  "density": 12,
+  "quirk": [
+    {
+      "attribute": "minecraft:generic.gravity",
+      "amount": -0.03,
+      "operation": "add_multiplied_base"
+    }
+  ]
+}

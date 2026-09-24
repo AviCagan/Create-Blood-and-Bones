@@ -1,0 +1,49 @@
+{
+  "name": "trait.bloodandbones.turtle_up",
+  "max_level": 1,
+  "effects": [
+    {
+      "trigger": "hurt",
+      "requirements": {
+        "condition": "minecraft:entity_properties",
+        "entity": "this",
+        "predicate": {
+          "flags": {
+            "is_sneaking": true
+          }
+        }
+      },
+      "effect": {
+        "type": "bloodandbones:damage",
+        "direction": "in",
+        "multiplier": {
+          "type": "minecraft:linear",
+          "base": 0.6,
+          "per_level_above_first": 0.0
+        }
+      }
+    },
+    {
+      "trigger": "passive",
+      "requirements": {
+        "condition": "minecraft:entity_properties",
+        "entity": "this",
+        "predicate": {
+          "flags": {
+            "is_sneaking": true
+          }
+        }
+      },
+      "effect": {
+        "type": "bloodandbones:attribute",
+        "attribute": "minecraft:generic.movement_speed",
+        "amount": {
+          "type": "minecraft:linear",
+          "base": -0.6,
+          "per_level_above_first": 0.0
+        },
+        "operation": "add_multiplied_total"
+      }
+    }
+  ]
+}

@@ -1,0 +1,74 @@
+{
+  "kind": "family",
+  "priority": 100,
+  "members": [
+    "minecraft:cat",
+    "minecraft:ocelot",
+    "#bloodandbones:family/feline"
+  ],
+  "scrap_material": "bloodandbones:sinew",
+  "colour": "#c8a35a",
+  "organs": {
+    "torso": {
+      "add": [
+        "bloodandbones:nine_lives"
+      ]
+    }
+  },
+  "parts": {
+    "head": {
+      "minion": {
+        "jobs": [
+          "bloodandbones:hunter",
+          "bloodandbones:companion"
+        ],
+        "disposition": "nocturnal",
+        "bite": {
+          "style": "claw"
+        }
+      },
+      "armour": [
+        "bloodandbones:cat_ward"
+      ]
+    },
+    "leg": {
+      "minion": {
+        "movement": {
+          "mode": "walk",
+          "speed": 0.3,
+          "gait": "prowl"
+        },
+        "traits": [
+          {
+            "trait": "bloodandbones:fall_guard",
+            "level": 2
+          }
+        ]
+      },
+      "armour": {
+        "leggings": [
+          "bloodandbones:stealthy"
+        ],
+        "boots": [
+          "bloodandbones:land_on_feet"
+        ]
+      }
+    }
+  },
+  "hide": [
+    "bloodandbones:stealthy"
+  ],
+  "full_set": {
+    "replace": true,
+    "name": "set.bloodandbones.nine_lives",
+    "bonus": [
+      {
+        "trait": "bloodandbones:fall_guard",
+        "level": 4
+      }
+    ],
+    "drawback": [
+      "bloodandbones:aquaphobe"
+    ]
+  }
+}

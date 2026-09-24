@@ -173,6 +173,13 @@ Everything below is in development builds only; the art is placeholder (see the 
   (no cap by default).
 - A minion from an older build falls apart, dropping what it carried.
 
+### Parts and traits
+
+- Every one of the 79 rigged mobs now has parts that do their own thing, from 11 body shapes, 27 families
+  and 16 overlays keyed off tags (so a modded undead or aquatic mob joins in by the tags its author already
+  set). About 100 traits, and 15 armour materials each with its own look (chitin, bone, ember, sculk, golem
+  plate, scale, feather...), bloodless versions included.
+
 ### Presentation
 
 - Bloodless mode (a client setting, or the `bloodandbonesBloodless` game rule for everyone): no

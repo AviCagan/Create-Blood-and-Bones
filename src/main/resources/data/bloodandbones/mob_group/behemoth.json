@@ -1,0 +1,85 @@
+{
+  "kind": "family",
+  "priority": 100,
+  "members": [
+    "minecraft:ravager",
+    "minecraft:sniffer",
+    "#bloodandbones:family/behemoth"
+  ],
+  "scrap_material": "bloodandbones:bear_hide",
+  "colour": "#5e5a55",
+  "parts": {
+    "torso": {
+      "minion": {
+        "health_factor": 0.5,
+        "saddle": true,
+        "seats": 2
+      },
+      "armour": [
+        {
+          "trait": "bloodandbones:thick_hide",
+          "level": 2
+        },
+        {
+          "trait": "bloodandbones:hauler",
+          "level": 2
+        }
+      ]
+    },
+    "head": {
+      "minion": {
+        "jobs": [
+          "bloodandbones:guard",
+          "bloodandbones:hauler"
+        ],
+        "bite": {
+          "style": "ram",
+          "damage": 3.0
+        }
+      },
+      "armour": [
+        "bloodandbones:steady"
+      ]
+    },
+    "leg": {
+      "minion": {
+        "movement": {
+          "mode": "walk",
+          "speed": 0.25,
+          "gait": "stomp"
+        },
+        "traits": [
+          {
+            "trait": "bloodandbones:steady",
+            "level": 2
+          }
+        ]
+      },
+      "armour": {
+        "leggings": [
+          "bloodandbones:heavy"
+        ]
+      }
+    }
+  },
+  "hide": [
+    "bloodandbones:hauler"
+  ],
+  "full_set": {
+    "replace": true,
+    "name": "set.bloodandbones.juggernaut",
+    "bonus": [
+      "bloodandbones:juggernaut",
+      {
+        "trait": "bloodandbones:brawler",
+        "level": 2
+      }
+    ],
+    "drawback": [
+      {
+        "trait": "bloodandbones:heavy",
+        "level": 3
+      }
+    ]
+  }
+}

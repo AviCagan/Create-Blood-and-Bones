@@ -1,0 +1,21 @@
+{
+  "look": "golem_plate",
+  "armour": {
+    "helmet": 2,
+    "chestplate": 5,
+    "leggings": 4,
+    "boots": 2
+  },
+  "toughness": 1.0,
+  "knockback_resistance": 0.05,
+  "durability": 20,
+  "enchantability": 5,
+  "density": 36,
+  "quirk": [
+    {
+      "attribute": "minecraft:generic.movement_speed",
+      "amount": -0.03,
+      "operation": "add_multiplied_base"
+    }
+  ]
+}

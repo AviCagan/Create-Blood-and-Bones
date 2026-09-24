@@ -1,0 +1,16 @@
+{
+  "name": "trait.bloodandbones.territorial",
+  "max_level": 1,
+  "effects": [
+    {
+      "trigger": "targeted",
+      "cooldown": 400,
+      "effect": {
+        "type": "bloodandbones:mob_effect",
+        "effect": "minecraft:strength",
+        "duration": 100,
+        "target": "self"
+      }
+    }
+  ]
+}

@@ -1,0 +1,48 @@
+{
+  "kind": "overlay",
+  "priority": 200,
+  "members": [
+    "#minecraft:zombies",
+    "#bloodandbones:overlay/rotting"
+  ],
+  "scrap_material_patch": {
+    "durability_mult": 0.75,
+    "enchantability_add": -4
+  },
+  "parts": {
+    "head": {
+      "minion": {
+        "traits": {
+          "add": [
+            "bloodandbones:hungering"
+          ]
+        }
+      }
+    }
+  },
+  "organ_traits": {
+    "bloodandbones:stomach": {
+      "minion": {
+        "add": [
+          "bloodandbones:iron_gut"
+        ]
+      },
+      "armour": {
+        "add": [
+          "bloodandbones:iron_gut"
+        ]
+      }
+    }
+  },
+  "full_set": {
+    "name": "set.bloodandbones.shambler",
+    "bonus": {
+      "add": [
+        {
+          "trait": "bloodandbones:brawler",
+          "level": 2
+        }
+      ]
+    }
+  }
+}

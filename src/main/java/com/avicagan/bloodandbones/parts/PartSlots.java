@@ -5,17 +5,20 @@ import com.avicagan.bloodandbones.carcass.rig.Rig;
 import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
 import net.minecraft.resources.ResourceLocation;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
+import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 /**
  * Which slot a bone of a rig is (docs/PARTS-AND-TRAITS.md section 2.2), by rules that are data
  * (`data/<ns>/bone_slot_rules/*.json`), matched on the last word of the bone's path: first a mob file's own
- * line for that bone, then the rig's root is the torso, then the name rules, first match wins. A bone no rule
- * names is decoration drawn with its parent. The side comes from left_ or right_.
+ * line for that bone, then the rig's root is the torso, then a numbered segment by its place in the chain, then
+ * the name rules, first match wins. A bone no rule names is decoration drawn with its parent. The side comes
+ * from left_ or right_.
  */
 public final class PartSlots {
     /** One naming rule: a pattern over the bone's own name, the slot it gives, maybe a form. */
@@ -41,6 +44,8 @@ public final class PartSlots {
             new Rule(Pattern.compile("(^|_)(tail\\d*|fluke)(_|$)|^body_back$"), PartSlot.TAIL, "", false)),
             List.of(new SubRule(Pattern.compile("(middle|mid)_"), "mid"), new SubRule(Pattern.compile("front"), "front"),
                     new SubRule(Pattern.compile("(hind|haunch|back)"), "hind")));
+
+    private static final Pattern SEGMENT = Pattern.compile("^segment(\\d+)$");
 
     private PartSlots() {
     }
@@ -76,6 +81,10 @@ public final class PartSlots {
         if (rig.root().name().equals(bone)) {
             return SlotInfo.of(PartSlot.TORSO);
         }
+        SlotInfo segment = segment(rig, name);
+        if (segment != null) {
+            return segment;
+        }
         Rules rules = store.slotRules();
         for (Rule rule : rules.rules()) {
             if (rule.match().matcher(name).find()) {
@@ -101,6 +110,34 @@ public final class PartSlots {
             return up.slot() == PartSlot.TORSO ? SlotInfo.of(PartSlot.EXTRA) : up;
         }
         return SlotInfo.of(PartSlot.EXTRA);
+    }
+
+    /**
+     * A segment of a segmented body (a silverfish's "segment3") by its place in the chain: the segments before the
+     * root are the head end, the frontmost of them the head and the others its neck; those after the root are the
+     * tail. Null if the bone or the root is not a numbered segment.
+     */
+    @Nullable
+    private static SlotInfo segment(Rig rig, String name) {
+        Matcher own = SEGMENT.matcher(name);
+        String rootName = rig.root().name();
+        Matcher root = SEGMENT.matcher(rootName.substring(rootName.lastIndexOf('/') + 1).toLowerCase(java.util.Locale.ROOT));
+        if (!own.matches() || !root.matches()) {
+            return null;
+        }
+        int index = Integer.parseInt(own.group(1));
+        int rootIndex = Integer.parseInt(root.group(1));
+        if (index > rootIndex) {
+            return SlotInfo.of(PartSlot.TAIL);
+        }
+        int front = index;
+        for (Bone other : rig.bones()) {
+            Matcher m = SEGMENT.matcher(other.name().substring(other.name().lastIndexOf('/') + 1).toLowerCase(java.util.Locale.ROOT));
+            if (m.matches()) {
+                front = Math.min(front, Integer.parseInt(m.group(1)));
+            }
+        }
+        return SlotInfo.of(index == front ? PartSlot.HEAD : PartSlot.NECK);
     }
 
     /** Whether the rig has no head of its own anywhere: its body is its head too (a blaze, a slime). */

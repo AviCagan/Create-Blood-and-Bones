@@ -1,0 +1,17 @@
+{
+  "name": "trait.bloodandbones.land_on_feet",
+  "max_level": 1,
+  "effects": [
+    {
+      "effect": {
+        "type": "bloodandbones:attribute",
+        "attribute": "minecraft:generic.safe_fall_distance",
+        "amount": {
+          "type": "minecraft:linear",
+          "base": 3,
+          "per_level_above_first": 3
+        }
+      }
+    }
+  ]
+}

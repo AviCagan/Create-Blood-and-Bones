@@ -1,0 +1,50 @@
+{
+  "name": "trait.bloodandbones.regrowth",
+  "max_level": 1,
+  "effects": [
+    {
+      "trigger": "tick",
+      "interval": 60,
+      "requirements": {
+        "condition": "minecraft:any_of",
+        "terms": [
+          {
+            "condition": "minecraft:entity_properties",
+            "entity": "this",
+            "predicate": {
+              "location": {
+                "fluid": {
+                  "fluids": [
+                    "minecraft:water",
+                    "minecraft:flowing_water"
+                  ]
+                }
+              }
+            }
+          },
+          {
+            "condition": "minecraft:all_of",
+            "terms": [
+              {
+                "condition": "minecraft:weather_check",
+                "raining": true
+              },
+              {
+                "condition": "minecraft:location_check",
+                "predicate": {
+                  "can_see_sky": true
+                }
+              }
+            ]
+          }
+        ]
+      },
+      "effect": {
+        "type": "bloodandbones:mob_effect",
+        "effect": "minecraft:regeneration",
+        "duration": 50,
+        "target": "self"
+      }
+    }
+  ]
+}

@@ -1,0 +1,72 @@
+{
+  "kind": "archetype",
+  "priority": 0,
+  "members": [
+    "minecraft:squid",
+    "minecraft:glow_squid",
+    "minecraft:ghast"
+  ],
+  "scrap_material": "bloodandbones:gristle",
+  "organs": {
+    "torso": [
+      "bloodandbones:heart",
+      "bloodandbones:stomach"
+    ]
+  },
+  "parts": {
+    "torso": {
+      "minion": {
+        "health_factor": 1.0,
+        "self_move": {
+          "mode": "swim",
+          "speed": 0.3,
+          "gait": "undulate"
+        }
+      },
+      "armour": [
+        "bloodandbones:waterborn"
+      ]
+    },
+    "head": {
+      "minion": {
+        "jobs": [
+          "bloodandbones:courier",
+          "bloodandbones:companion"
+        ],
+        "disposition": "skittish",
+        "bite": {
+          "style": "bite"
+        }
+      },
+      "armour": [
+        "bloodandbones:murk_sight"
+      ]
+    },
+    "leg": {
+      "minion": {
+        "movement": {
+          "mode": "amphibious",
+          "gait": "undulate"
+        }
+      },
+      "armour": {
+        "leggings": [
+          "bloodandbones:slick"
+        ],
+        "boots": [
+          "bloodandbones:waterborn"
+        ]
+      }
+    }
+  },
+  "organ_traits": {
+    "bloodandbones:heart": {
+      "minion": [
+        "bloodandbones:hardy"
+      ],
+      "armour": [
+        "bloodandbones:hardy"
+      ]
+    }
+  }
+}

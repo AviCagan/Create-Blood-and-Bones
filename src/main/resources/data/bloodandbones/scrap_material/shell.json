@@ -1,0 +1,21 @@
+{
+  "look": "shell",
+  "armour": {
+    "helmet": 2,
+    "chestplate": 6,
+    "leggings": 4,
+    "boots": 2
+  },
+  "toughness": 1.0,
+  "knockback_resistance": 0.05,
+  "durability": 18,
+  "enchantability": 9,
+  "density": 32,
+  "quirk": [
+    {
+      "attribute": "minecraft:generic.movement_speed",
+      "amount": -0.04,
+      "operation": "add_multiplied_base"
+    }
+  ]
+}

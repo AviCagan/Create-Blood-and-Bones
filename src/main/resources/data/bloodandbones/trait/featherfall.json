@@ -1,0 +1,30 @@
+{
+  "name": "trait.bloodandbones.featherfall",
+  "max_level": 1,
+  "effects": [
+    {
+      "trigger": "passive",
+      "requirements": {
+        "condition": "minecraft:entity_properties",
+        "entity": "this",
+        "predicate": {
+          "movement": {
+            "fall_distance": {
+              "min": 3
+            }
+          },
+          "flags": {
+            "is_sneaking": false
+          }
+        }
+      },
+      "effect": {
+        "type": "bloodandbones:mob_effect",
+        "effect": "minecraft:slow_falling",
+        "amplifier": 0,
+        "duration": 100,
+        "target": "self"
+      }
+    }
+  ]
+}

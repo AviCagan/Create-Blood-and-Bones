@@ -1,0 +1,15 @@
+{
+  "name": "trait.bloodandbones.hunger_proof",
+  "max_level": 1,
+  "effects": [
+    {
+      "trigger": "passive",
+      "effect": {
+        "type": "bloodandbones:immunity",
+        "mob_effects": [
+          "minecraft:hunger"
+        ]
+      }
+    }
+  ]
+}

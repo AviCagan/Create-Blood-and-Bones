@@ -1,0 +1,21 @@
+{
+  "look": "bear_hide",
+  "armour": {
+    "helmet": 2,
+    "chestplate": 5,
+    "leggings": 4,
+    "boots": 2
+  },
+  "toughness": 0.5,
+  "knockback_resistance": 0.0,
+  "durability": 16,
+  "enchantability": 9,
+  "density": 26,
+  "quirk": [
+    {
+      "attribute": "minecraft:generic.movement_speed",
+      "amount": -0.02,
+      "operation": "add_multiplied_base"
+    }
+  ]
+}

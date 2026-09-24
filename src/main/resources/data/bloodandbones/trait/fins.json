@@ -1,0 +1,17 @@
+{
+  "name": "trait.bloodandbones.fins",
+  "max_level": 2,
+  "effects": [
+    {
+      "effect": {
+        "type": "bloodandbones:attribute",
+        "attribute": "neoforge:swim_speed",
+        "amount": {
+          "type": "minecraft:linear",
+          "base": 0.15,
+          "per_level_above_first": 0.15
+        }
+      }
+    }
+  ]
+}

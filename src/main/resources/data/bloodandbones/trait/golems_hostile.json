@@ -1,0 +1,14 @@
+{
+  "name": "trait.bloodandbones.golems_hostile",
+  "max_level": 1,
+  "effects": [
+    {
+      "trigger": "passive",
+      "effect": {
+        "type": "bloodandbones:reaction",
+        "entities": "bloodandbones:hunts_golems_hostile",
+        "mode": "hunt"
+      }
+    }
+  ]
+}
