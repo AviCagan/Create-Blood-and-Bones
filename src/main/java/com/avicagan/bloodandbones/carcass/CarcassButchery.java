@@ -258,8 +258,8 @@ public final class CarcassButchery {
                 int stackSize = Math.min(n, item.get().getDefaultMaxStackSize());
                 n -= stackSize;
                 net.minecraft.world.item.ItemStack stack = new net.minecraft.world.item.ItemStack(item.get(), stackSize);
-                if (yield.kind().equals("hide") && stack.is(com.avicagan.bloodandbones.registry.BBItems.RAW_HIDE.get())) {
-                    // a raw hide remembers whose it was, for fitting over carcass armour
+                if (yield.kind().equals("hide")) {
+                    // a hide remembers whose it was, for fitting over carcass armour, where the item alone would not say
                     com.avicagan.bloodandbones.parts.Hides.stamp(stack, carcass.entity);
                 }
                 java.util.function.Consumer<net.minecraft.world.item.ItemStack> sink = SINK.get();

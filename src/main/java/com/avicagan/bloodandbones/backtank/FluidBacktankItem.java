@@ -95,9 +95,16 @@ public class FluidBacktankItem extends ArmorItem {
     /** The chestplate with its backtank taken off (and the fluid with it). */
     public static ItemStack withoutTank(ItemStack chestplate) {
         ItemStack out = chestplate.copyWithCount(1);
-        out.remove(BBDataComponents.STRAPPED_TANK);
-        out.remove(BBDataComponents.FLUID);
+        takeOff(out);
         return out;
+    }
+
+    /** Take the backtank off this chestplate where it is: the tank with its fluid, or empty if none was strapped on. */
+    public static ItemStack takeOff(ItemStack chestplate) {
+        ItemStack tank = unstrapped(chestplate);
+        chestplate.remove(BBDataComponents.STRAPPED_TANK);
+        chestplate.remove(BBDataComponents.FLUID);
+        return tank;
     }
 
     /** The tooltip line for what a tank holds. */

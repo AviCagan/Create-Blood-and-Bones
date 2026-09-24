@@ -20,13 +20,13 @@ import java.util.Optional;
 public record CarcassArmour(String piece, ResourceLocation body, boolean baby, Optional<ResourceLocation> shoulders,
                             Optional<ResourceLocation> hips, Optional<Hide> hide, Optional<Organ> organ, int tier) {
     /**
-     * A hide fitted over the piece: the mob it came from (none for a plain raw hide) and which item it was,
-     * to give it back when another replaces it.
+     * The hides fitted over the piece: the mob they came from (none for plain raw hides) and which item each was
+     * (two leather and a raw cow hide are all a cow's), to give them back as they went in when others replace them.
      */
-    public record Hide(Optional<ResourceLocation> entity, Item item) {
+    public record Hide(Optional<ResourceLocation> entity, List<Item> items) {
         public static final Codec<Hide> CODEC = RecordCodecBuilder.create(i -> i.group(
                 ResourceLocation.CODEC.optionalFieldOf("entity").forGetter(Hide::entity),
-                BuiltInRegistries.ITEM.byNameCodec().fieldOf("item").forGetter(Hide::item)
+                BuiltInRegistries.ITEM.byNameCodec().listOf().fieldOf("items").forGetter(Hide::items)
         ).apply(i, Hide::new));
     }
 

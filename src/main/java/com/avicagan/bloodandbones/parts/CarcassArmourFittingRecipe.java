@@ -6,6 +6,7 @@ import com.avicagan.bloodandbones.registry.BBRecipes;
 import net.minecraft.core.HolderLookup;
 import net.minecraft.core.NonNullList;
 import net.minecraft.core.registries.BuiltInRegistries;
+import net.minecraft.world.item.Item;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.crafting.CraftingBookCategory;
 import net.minecraft.world.item.crafting.CraftingInput;
@@ -25,8 +26,8 @@ import java.util.Set;
  * anywhere in the grid.
  * <ul>
  *     <li>Hides of one mob, as many as the piece needs (one for a helmet or boots, two leggings, three a
- *     chestplate): its covering, with that mob's hide traits. They take the place of any hide it had, which
- *     comes back.</li>
+ *     chestplate), of any items that mob's hide comes as (two leather and a raw cow hide): its covering, with
+ *     that mob's hide traits. They take the place of any hides it had, which come back as they went in.</li>
  *     <li>An organ cut out of a mob, into the piece that takes it: eyes a helmet, a heart or lungs a
  *     chestplate, a stomach a chestplate or leggings. It takes the place of any organ it had, which comes back.</li>
  *     <li>The next tier's ingot or gem: blood steel, then blood diamond, then soul netherite.</li>
@@ -48,7 +49,7 @@ public class CarcassArmourFittingRecipe extends CustomRecipe {
     }
 
     /** What fitting makes: the piece as it comes out, where the piece lay, and what comes back out of it. */
-    public record Fit(ItemStack result, int pieceSlot, ItemStack giveBack) {
+    public record Fit(ItemStack result, int pieceSlot, List<ItemStack> giveBack) {
     }
 
     @Override
@@ -68,8 +69,15 @@ public class CarcassArmourFittingRecipe extends CustomRecipe {
         NonNullList<ItemStack> out = super.getRemainingItems(input);
         Fit fit = fit(input, CarcassArmourItem.store());
         if (fit != null && !fit.giveBack().isEmpty()) {
-            // the piece is used up, so what came out of it goes back where it lay
-            out.set(fit.pieceSlot(), fit.giveBack());
+            // the piece is used up, so what came out of it goes back where it lay; hides of a second kind go where new ones lay
+            List<ItemStack> back = fit.giveBack();
+            out.set(fit.pieceSlot(), back.get(0));
+            int next = 1;
+            for (int i = 0; i < input.size() && next < back.size(); i++) {
+                if (i != fit.pieceSlot() && !input.getItem(i).isEmpty() && out.get(i).isEmpty()) {
+                    out.set(i, back.get(next++));
+                }
+            }
         }
         return out;
     }
@@ -102,17 +110,20 @@ public class CarcassArmourFittingRecipe extends CustomRecipe {
 
         CarcassArmour.Hide hide = Hides.of(first);
         if (hide != null) {
-            // all the same hide, from one mob, as many as the piece needs
+            // hides from one mob, as many as the piece needs, each item remembered
+            List<Item> items = new ArrayList<>();
             for (ItemStack other : modifiers) {
-                if (!ItemStack.isSameItemSameComponents(first, other)) {
+                CarcassArmour.Hide each = Hides.of(other);
+                if (each == null || !each.entity().equals(hide.entity())) {
                     return null;
                 }
+                items.add(other.getItem());
             }
             if (modifiers.size() != armour.hidesNeeded()) {
                 return null;
             }
-            ItemStack giveBack = armour.hide().map(old -> Hides.giveBack(old, armour.hidesNeeded())).orElse(ItemStack.EMPTY);
-            return new Fit(remake(piece, armour.withHide(Optional.of(hide)), store), pieceSlot, giveBack);
+            List<ItemStack> giveBack = armour.hide().map(Hides::giveBack).orElse(List.of());
+            return new Fit(remake(piece, armour.withHide(Optional.of(new CarcassArmour.Hide(hide.entity(), List.copyOf(items)))), store), pieceSlot, giveBack);
         }
         if (modifiers.size() != 1) {
             return null;
@@ -122,12 +133,12 @@ public class CarcassArmourFittingRecipe extends CustomRecipe {
             if (!ORGAN_PIECES.getOrDefault(((SeveredLimbItem) first.getItem()).kind(), Set.of()).contains(armour.piece())) {
                 return null;
             }
-            ItemStack giveBack = armour.organ().map(CarcassArmourFittingRecipe::organItem).orElse(ItemStack.EMPTY);
+            List<ItemStack> giveBack = armour.organ().map(CarcassArmourFittingRecipe::organItem).filter(back -> !back.isEmpty()).map(List::of).orElse(List.of());
             return new Fit(remake(piece, armour.withOrgan(Optional.of(organ)), store), pieceSlot, giveBack);
         }
         ArmourTier tier = store.tierFor(first.getItem());
         if (tier != null && tier.order() == armour.tier() + 1) {
-            return new Fit(remake(piece, armour.withTier(tier.order()), store), pieceSlot, ItemStack.EMPTY);
+            return new Fit(remake(piece, armour.withTier(tier.order()), store), pieceSlot, List.of());
         }
         return null;
     }

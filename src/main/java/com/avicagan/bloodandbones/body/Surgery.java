@@ -267,10 +267,15 @@ public final class Surgery {
         }
     }
 
-    /** The part of flesh comes out, bloodily, into the surgeon's hands. */
+    /**
+     * The part of flesh comes out, bloodily, into the surgeon's hands. A player's is named for them; a mob's is
+     * named for its kind and stamped with it, as one cut out of its carcass is, so its organs fit carcass armour.
+     */
     private static void cutOut(ServerLevel level, net.minecraft.world.entity.LivingEntity patient, @org.jetbrains.annotations.Nullable Player surgeon,
                                BodyPart part, BlockPos pos, Vector3d at) {
-        give(surgeon, com.avicagan.bloodandbones.registry.BBItems.partItem(part.kind()).of(patient), pos, level);
+        SeveredLimbItem item = com.avicagan.bloodandbones.registry.BBItems.partItem(part.kind());
+        give(surgeon, patient instanceof Player ? item.of(patient)
+                : item.of(net.minecraft.core.registries.BuiltInRegistries.ENTITY_TYPE.getKey(patient.getType()), patient.isBaby()), pos, level);
         com.avicagan.bloodandbones.carcass.Blood.burst(level, at, 12);
         com.avicagan.bloodandbones.carcass.Blood.stain(level, at, 3);
         level.playSound(null, pos, com.avicagan.bloodandbones.registry.BBSounds.CARCASS_CUT.get(), SoundSource.PLAYERS, 1.0F, 0.9F);

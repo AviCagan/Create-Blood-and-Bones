@@ -14,12 +14,17 @@ import net.minecraft.world.item.ItemStack;
 import net.neoforged.neoforge.registries.datamaps.DataMapType;
 import org.jetbrains.annotations.Nullable;
 
+import java.util.ArrayList;
+import java.util.LinkedHashMap;
+import java.util.List;
+import java.util.Map;
 import java.util.Optional;
 
 /**
  * Hides, for fitting over carcass armour (docs/PARTS-AND-TRAITS.md section 7.1). A raw hide skinned off a
  * carcass is stamped with its mob; hides that mobs drop normally have no stamp, so a data map
- * (data_maps/item/hide_sources.json) says whose they are: leather a cow's, rabbit hide a rabbit's. A raw hide
+ * (data_maps/item/hide_sources.json) says whose they are: leather a cow's, rabbit hide a rabbit's. A hide skinned
+ * off a mob the data map does not name for it (a parrot's feathers are not a chicken's) is stamped too. A raw hide
  * with no stamp (from before hides were stamped) is a plain covering, from no mob.
  */
 public final class Hides {
@@ -44,28 +49,41 @@ public final class Hides {
         }
         Source source = stack.get(BBDataComponents.SOURCE.get());
         if (source != null && source.part().equals("hide")) {
-            return new CarcassArmour.Hide(Optional.of(source.entity()), stack.getItem());
+            return new CarcassArmour.Hide(Optional.of(source.entity()), List.of(stack.getItem()));
         }
         HideSource mapped = stack.getItemHolder().getData(SOURCES);
         if (mapped != null) {
-            return new CarcassArmour.Hide(Optional.of(mapped.entity()), stack.getItem());
+            return new CarcassArmour.Hide(Optional.of(mapped.entity()), List.of(stack.getItem()));
         }
-        return stack.is(BBItems.RAW_HIDE.get()) ? new CarcassArmour.Hide(Optional.empty(), stack.getItem()) : null;
+        return stack.is(BBItems.RAW_HIDE.get()) ? new CarcassArmour.Hide(Optional.empty(), List.of(stack.getItem())) : null;
     }
 
-    /** A raw hide skinned off this mob, named for it ("Raw Cow Hide"). */
+    /**
+     * A hide skinned off this mob, stamped with it where the item alone would not say so: a raw hide, named for the
+     * mob too ("Raw Cow Hide"), and a hide the data map gives to another mob (a parrot's feathers). The rest (a
+     * rabbit's rabbit hide) stay unstamped, to stack with the same items mobs drop.
+     */
     public static ItemStack stamp(ItemStack stack, ResourceLocation entity) {
-        stack.set(BBDataComponents.SOURCE.get(), new Source(entity, "hide", false));
-        stack.set(DataComponents.ITEM_NAME, Component.translatable("item.bloodandbones.raw_hide.of", ScrapsItem.mobName(entity)));
+        if (stack.is(BBItems.RAW_HIDE.get())) {
+            stack.set(BBDataComponents.SOURCE.get(), new Source(entity, "hide", false));
+            stack.set(DataComponents.ITEM_NAME, Component.translatable("item.bloodandbones.raw_hide.of", ScrapsItem.mobName(entity)));
+            return stack;
+        }
+        HideSource mapped = stack.getItemHolder().getData(SOURCES);
+        if (mapped != null && !mapped.entity().equals(entity)) {
+            stack.set(BBDataComponents.SOURCE.get(), new Source(entity, "hide", false));
+        }
         return stack;
     }
 
-    /** The hides a piece had fitted, as they went in: stamped again if they were stamped raw hides. */
-    public static ItemStack giveBack(CarcassArmour.Hide hide, int count) {
-        ItemStack stack = new ItemStack(hide.item(), count);
-        if (hide.entity().isPresent() && stack.is(BBItems.RAW_HIDE.get())) {
-            stamp(stack, hide.entity().get());
+    /** The hides a piece had fitted, as they went in: a stack of each item, stamped again as they were. */
+    public static List<ItemStack> giveBack(CarcassArmour.Hide hide) {
+        Map<Item, Integer> counts = new LinkedHashMap<>();
+        for (Item item : hide.items()) {
+            counts.merge(item, 1, Integer::sum);
         }
-        return stack;
+        List<ItemStack> out = new ArrayList<>();
+        counts.forEach((item, count) -> out.add(hide.entity().map(entity -> stamp(new ItemStack(item, count), entity)).orElse(new ItemStack(item, count))));
+        return out;
     }
 }

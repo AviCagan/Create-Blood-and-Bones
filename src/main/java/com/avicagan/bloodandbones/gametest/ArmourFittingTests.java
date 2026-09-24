@@ -8,6 +8,7 @@ import com.avicagan.bloodandbones.body.BodyEffects;
 import com.avicagan.bloodandbones.body.BodyPart;
 import com.avicagan.bloodandbones.body.SeveredLimbItem;
 import com.avicagan.bloodandbones.body.Surgery;
+import com.avicagan.bloodandbones.body.SurgeryTableBlock;
 import com.avicagan.bloodandbones.body.SurgeryTableBlockEntity;
 import com.avicagan.bloodandbones.carcass.CarcassButchery;
 import com.avicagan.bloodandbones.carcass.CarcassSavedData;
@@ -15,6 +16,7 @@ import com.avicagan.bloodandbones.item.CarcassPieceItem;
 import com.avicagan.bloodandbones.parts.ActiveTraits;
 import com.avicagan.bloodandbones.parts.CarcassArmour;
 import com.avicagan.bloodandbones.parts.CarcassArmourItem;
+import com.avicagan.bloodandbones.parts.Hides;
 import com.avicagan.bloodandbones.parts.PartsData;
 import com.avicagan.bloodandbones.parts.ScrapsItem;
 import com.avicagan.bloodandbones.parts.Source;
@@ -34,16 +36,24 @@ import net.minecraft.gametest.framework.GameTest;
 import net.minecraft.gametest.framework.GameTestHelper;
 import net.minecraft.network.chat.Component;
 import net.minecraft.resources.ResourceLocation;
+import net.minecraft.world.entity.EntityType;
 import net.minecraft.world.entity.EquipmentSlot;
 import net.minecraft.world.entity.ai.attributes.Attribute;
 import net.minecraft.world.entity.ai.attributes.Attributes;
+import net.minecraft.world.entity.animal.Cow;
+import net.minecraft.world.entity.item.ItemEntity;
 import net.minecraft.world.entity.player.Player;
+import net.minecraft.world.inventory.AnvilMenu;
+import net.minecraft.world.inventory.GrindstoneMenu;
 import net.minecraft.world.item.Item;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.Items;
 import net.minecraft.world.item.crafting.CraftingInput;
 import net.minecraft.world.item.crafting.RecipeType;
 import net.minecraft.world.level.GameType;
+import net.minecraft.world.phys.AABB;
+import net.minecraft.world.phys.Vec3;
+import net.neoforged.neoforge.capabilities.Capabilities;
 import net.neoforged.neoforge.fluids.FluidStack;
 import net.neoforged.neoforge.gametest.GameTestHolder;
 import net.neoforged.neoforge.gametest.PrefixGameTestTemplate;
@@ -66,6 +76,7 @@ public class ArmourFittingTests {
     private static final ResourceLocation CHICKEN = ResourceLocation.withDefaultNamespace("chicken");
     private static final ResourceLocation ZOMBIE = ResourceLocation.withDefaultNamespace("zombie");
     private static final ResourceLocation PIG = ResourceLocation.withDefaultNamespace("pig");
+    private static final ResourceLocation PARROT = ResourceLocation.withDefaultNamespace("parrot");
 
     private static ResourceLocation bb(String id) {
         return BloodAndBones.asResource(id);
@@ -150,6 +161,18 @@ public class ArmourFittingTests {
             }
         });
         return sum[0];
+    }
+
+    /** What skinning this mob's carcass gives. */
+    private static List<ItemStack> skin(GameTestHelper helper, ResourceLocation mob) {
+        List<ItemStack> skinned = new ArrayList<>();
+        CarcassSavedData.Carcass carcass = new CarcassSavedData.Carcass(java.util.UUID.randomUUID(), mob, "body");
+        CarcassButchery.capturing(skinned::add, () -> {
+            CarcassButchery.dropYields(helper.getLevel(), carcass, com.avicagan.bloodandbones.carcass.butchery.ButcheryManager.forEntity(mob).orElseThrow().hide(),
+                    1.0F, new org.joml.Vector3d());
+            return true;
+        });
+        return skinned;
     }
 
     /** An iron backtank holding this much blood. */
@@ -245,7 +268,7 @@ public class ArmourFittingTests {
         Crafted leather = craft(helper, cow.result(), new ItemStack(Items.LEATHER));
         Source back = leather == null ? null : leather.leftOver().get(BBDataComponents.SOURCE.get());
         if (leather == null || !leather.leftOver().is(BBItems.RAW_HIDE.get()) || back == null || !back.entity().equals(COW)
-                || !armour(leather.result()).hide().get().item().equals(Items.LEATHER)) {
+                || !armour(leather.result()).hide().get().items().equals(List.of(Items.LEATHER))) {
             helper.fail("Leather (a cow's) should replace the cow's raw hide, which comes back stamped as it was");
             return;
         }
@@ -258,6 +281,66 @@ public class ArmourFittingTests {
                 || craft(helper, piece(BBItems.CARCASS_LEGGINGS.get(), "leggings", COW), new ItemStack(Items.RABBIT_HIDE), new ItemStack(Items.LEATHER)) != null
                 || craft(helper, piece(BBItems.CARCASS_LEGGINGS.get(), "leggings", COW), new ItemStack(Items.LEATHER), new ItemStack(Items.LEATHER)) == null) {
             helper.fail("Boots take one hide, leggings two of one mob");
+            return;
+        }
+        helper.succeed();
+    }
+
+    /**
+     * Hides of one mob may be different items: two leather and a cow's raw hide cover a cow chestplate, and when rabbit
+     * hides replace them all three come back as they went in. A renamed leather is still a cow's; a rabbit hide among
+     * cow hides fits nothing.
+     */
+    @GameTest(template = "empty", timeoutTicks = 20)
+    public static void hidesOfOneMobMayMix(GameTestHelper helper) {
+        ItemStack chest = piece(BBItems.CARCASS_CHESTPLATE.get(), "chestplate", COW);
+        ItemStack rawCow = Hides.stamp(new ItemStack(BBItems.RAW_HIDE.get()), COW);
+        Crafted mixed = craft(helper, chest, new ItemStack(Items.LEATHER), rawCow, new ItemStack(Items.LEATHER));
+        if (mixed == null || !armour(mixed.result()).hide().get().entity().equals(Optional.of(COW)) || !armour(mixed.result()).pure(COW)) {
+            helper.fail("Two leather and a raw cow hide are all a cow's: they should cover a cow chestplate");
+            return;
+        }
+        Crafted swapped = craft(helper, mixed.result(), new ItemStack(Items.RABBIT_HIDE), new ItemStack(Items.RABBIT_HIDE), new ItemStack(Items.RABBIT_HIDE));
+        List<ItemStack> back = swapped == null ? List.of() : swapped.left().stream().filter(stack -> !stack.isEmpty()).toList();
+        if (swapped == null || back.size() != 2 || back.stream().noneMatch(stack -> stack.is(Items.LEATHER) && stack.getCount() == 2)
+                || back.stream().noneMatch(stack -> stack.getCount() == 1 && ItemStack.isSameItemSameComponents(stack, rawCow))) {
+            helper.fail("Rabbit hides replacing them should give back the two leather and the raw cow hide as they went in: " + back);
+            return;
+        }
+        ItemStack named = new ItemStack(Items.LEATHER);
+        named.set(DataComponents.CUSTOM_NAME, Component.literal("Old Boot"));
+        if (craft(helper, piece(BBItems.CARCASS_LEGGINGS.get(), "leggings", COW), new ItemStack(Items.LEATHER), named) == null
+                || craft(helper, chest, new ItemStack(Items.LEATHER), rawCow, new ItemStack(Items.RABBIT_HIDE)) != null) {
+            helper.fail("A renamed leather is still a cow's hide; a rabbit hide among cow hides should fit nothing");
+            return;
+        }
+        helper.succeed();
+    }
+
+    /**
+     * Skinning a parrot gives feathers stamped as the parrot's (the data map says feathers are a chicken's); they cover
+     * parrot boots with the parrot's own hide, keeping them all parrot, and come back as the parrot's. A chicken's
+     * feathers need no stamp, so they still stack with any other feathers.
+     */
+    @GameTest(template = "empty", timeoutTicks = 20)
+    public static void skinnedParrotFeathersAreTheParrots(GameTestHelper helper) {
+        ItemStack parrot = skin(helper, PARROT).stream().filter(stack -> stack.is(Items.FEATHER)).findFirst().orElse(ItemStack.EMPTY);
+        ItemStack chicken = skin(helper, CHICKEN).stream().filter(stack -> stack.is(Items.FEATHER)).findFirst().orElse(ItemStack.EMPTY);
+        Source stamp = parrot.get(BBDataComponents.SOURCE.get());
+        if (stamp == null || !stamp.entity().equals(PARROT) || chicken.isEmpty() || chicken.has(BBDataComponents.SOURCE.get())) {
+            helper.fail("A parrot's feathers should be stamped as the parrot's, a chicken's left plain: " + parrot.getComponents() + " " + chicken.getComponents());
+            return;
+        }
+        parrot.setCount(1);
+        Crafted fitted = craft(helper, piece(BBItems.CARCASS_BOOTS.get(), "boots", PARROT), parrot);
+        if (fitted == null || !armour(fitted.result()).hide().get().entity().equals(Optional.of(PARROT)) || !armour(fitted.result()).pure(PARROT)) {
+            helper.fail("A parrot's feathers should cover parrot boots with the parrot's hide, keeping them all parrot");
+            return;
+        }
+        Crafted swapped = craft(helper, fitted.result(), new ItemStack(Items.FEATHER));
+        if (swapped == null || !ItemStack.isSameItemSameComponents(swapped.leftOver(), parrot)
+                || !armour(swapped.result()).hide().get().entity().equals(Optional.of(CHICKEN))) {
+            helper.fail("Plain feathers (a chicken's) should replace the parrot's, which come back stamped as the parrot's");
             return;
         }
         helper.succeed();
@@ -313,6 +396,34 @@ public class ArmourFittingTests {
         Crafted pig = craft(helper, chest, BBItems.HEART.get().of(PIG, false));
         if (pig == null || armour(pig.result()).pure(COW)) {
             helper.fail("A pig's heart in a cow chestplate should stop it counting as all cow");
+            return;
+        }
+        helper.succeed();
+    }
+
+    /** A live cow on the Surgery Table gives up its lungs stamped as the cow's, as a carcass's are, and they fit a cow chestplate. */
+    @GameTest(template = "empty", timeoutTicks = 20)
+    public static void organFromALiveMobFits(GameTestHelper helper) {
+        helper.setBlock(new BlockPos(3, 2, 3), BBBlocks.SURGERY_TABLE.getDefaultState());
+        SurgeryTableBlockEntity table = (SurgeryTableBlockEntity) helper.getLevel().getBlockEntity(helper.absolutePos(new BlockPos(3, 2, 3)));
+        table.put(new ItemStack(BBItems.CLEAVER.get()));
+        Cow cow = helper.spawn(EntityType.COW, new BlockPos(6, 2, 6));
+        cow.setNoAi(true);
+        Player surgeon = helper.makeMockPlayer(GameType.SURVIVAL);
+        SurgeryTableBlock.lieDown(helper.getLevel(), table.getBlockPos(), cow);
+        if (Surgery.operate(helper.getLevel(), cow, surgeon, table, BodyPart.LUNGS) != Surgery.Action.TAKE_OFF) {
+            helper.fail("A Cleaver should take a live cow's lungs out");
+            return;
+        }
+        ItemStack lungs = surgeon.getInventory().items.stream().filter(s -> s.is(BBItems.LUNGS.get())).findFirst().orElse(ItemStack.EMPTY);
+        Source source = SeveredLimbItem.source(lungs);
+        if (source == null || !source.entity().equals(COW) || !source.part().equals("torso") || !lungs.getHoverName().getString().contains("Cow")) {
+            helper.fail("Lungs taken out of a live cow should be named and stamped as the cow's: " + lungs.getComponents());
+            return;
+        }
+        Crafted fitted = craft(helper, piece(BBItems.CARCASS_CHESTPLATE.get(), "chestplate", COW), lungs);
+        if (fitted == null || !armour(fitted.result()).organ().equals(Optional.of(new CarcassArmour.Organ(bb("lungs"), COW, false)))) {
+            helper.fail("A live cow's lungs should fit a cow chestplate");
             return;
         }
         helper.succeed();
@@ -396,7 +507,7 @@ public class ArmourFittingTests {
     /**
      * A carcass chestplate crafted with an iron backtank of blood carries its tier and blood. A Spout fills it (it
      * takes 3000 mB more, to the tank's 4000) and an Item Drain empties it a bucket at a time; the chestplate with
-     * no tank is no container at all. Strapped, its armour is the better of the two: the iron tank's 6 over hide
+     * no tank has no fluid handler at all. Strapped, its armour is the better of the two: the iron tank's 6 over hide
      * plate's 4. Mechanical Crafters strap tanks on too.
      */
     @GameTest(template = "empty", timeoutTicks = 20)
@@ -409,8 +520,9 @@ public class ArmourFittingTests {
             helper.fail("Strapping an iron backtank of 1000 mB of blood should put its tier and blood on the chestplate: " + strapped.getComponents());
             return;
         }
-        if (FillingBySpout.canItemBeFilled(level, chest) || GenericItemEmptying.canItemBeEmptied(level, chest)) {
-            helper.fail("A chestplate with no tank should be nothing to a Spout or an Item Drain");
+        if (FillingBySpout.canItemBeFilled(level, chest) || GenericItemEmptying.canItemBeEmptied(level, chest)
+                || chest.getCapability(Capabilities.FluidHandler.ITEM) != null || strapped.getCapability(Capabilities.FluidHandler.ITEM) == null) {
+            helper.fail("A chestplate with no tank should have no fluid handler at all, and be nothing to a Spout or an Item Drain; strapped, it should have one");
             return;
         }
         FluidStack spout = new FluidStack(BBFluids.blood(), 5000);
@@ -498,6 +610,99 @@ public class ArmourFittingTests {
         helper.succeed();
     }
 
+    /** A strapped chestplate worn down breaks, but its tank never breaks with it: it comes off into the wearer's inventory, blood and all. */
+    @GameTest(template = "empty", timeoutTicks = 20)
+    public static void brokenChestplateGivesTankBack(GameTestHelper helper) {
+        Player player = helper.makeMockPlayer(GameType.SURVIVAL);
+        ItemStack chest = strapped(helper, 1000);
+        chest.setDamageValue(chest.getMaxDamage() - 1);
+        player.setItemSlot(EquipmentSlot.CHEST, chest);
+        player.getItemBySlot(EquipmentSlot.CHEST).hurtAndBreak(4, player, EquipmentSlot.CHEST);
+        ItemStack tank = player.getInventory().items.stream().filter(s -> s.is(BBItems.backtank(BacktankTier.IRON))).findFirst().orElse(ItemStack.EMPTY);
+        if (!player.getItemBySlot(EquipmentSlot.CHEST).isEmpty() || FluidBacktankItem.fluid(tank).getAmount() != 1000) {
+            helper.fail("The chestplate should break and its iron tank come back with its 1000 mB of blood: " + tank);
+            return;
+        }
+        helper.succeed();
+    }
+
+    /**
+     * A strapped chestplate burnt up in lava as an item lets its tank fall free: a soul netherite tank, which does not
+     * burn, is left with its fluid though the tier 0 chestplate burns.
+     */
+    @GameTest(template = "empty", timeoutTicks = 20)
+    public static void burntChestplateLetsTankFree(GameTestHelper helper) {
+        var level = helper.getLevel();
+        ItemStack soul = new ItemStack(BBItems.backtank(BacktankTier.SOUL_NETHERITE));
+        FluidBacktankItem.setFluid(soul, new FluidStack(BBFluids.soulBlood(), 5000));
+        Crafted crafted = craft(helper, piece(BBItems.CARCASS_CHESTPLATE.get(), "chestplate", COW), soul);
+        if (crafted == null || crafted.result().has(DataComponents.FIRE_RESISTANT)) {
+            helper.fail("A soul netherite tank should strap onto a tier 0 chestplate, which still burns");
+            return;
+        }
+        Vec3 at = helper.absoluteVec(new Vec3(2.5, 2.0, 2.5));
+        ItemEntity dropped = new ItemEntity(level, at.x, at.y, at.z, crafted.result());
+        level.addFreshEntity(dropped);
+        dropped.hurt(level.damageSources().lava(), 100.0F);
+        ItemStack tank = level.getEntitiesOfClass(ItemEntity.class, new AABB(at, at).inflate(2.0)).stream().map(ItemEntity::getItem)
+                .filter(s -> s.is(BBItems.backtank(BacktankTier.SOUL_NETHERITE))).findFirst().orElse(ItemStack.EMPTY);
+        if (!dropped.isRemoved() || FluidBacktankItem.fluid(tank).getAmount() != 5000 || tank.canBeHurtBy(level.damageSources().lava())) {
+            helper.fail("The chestplate should burn and leave its soul netherite tank, with its 5000 mB, to float in the lava: " + tank);
+            return;
+        }
+        helper.succeed();
+    }
+
+    /**
+     * Two pieces never combine as vanilla combines worn tools: two strapped chestplates in a crafting grid make nothing
+     * (vanilla would make a blank chestplate and lose both tanks), and a grindstone will not merge tier 0 and tier 3 boots.
+     */
+    @GameTest(template = "empty", timeoutTicks = 20)
+    public static void twoPiecesNeverCombine(GameTestHelper helper) {
+        ItemStack first = strapped(helper, 1000);
+        ItemStack second = strapped(helper, 2000);
+        first.setDamageValue(50);
+        second.setDamageValue(60);
+        if (craft(helper, first, second) != null) {
+            helper.fail("Two strapped chestplates in a crafting grid should make nothing");
+            return;
+        }
+        ItemStack plain = piece(BBItems.CARCASS_BOOTS.get(), "boots", COW);
+        ItemStack tiered = CarcassArmourItem.make(new ItemStack(BBItems.CARCASS_BOOTS.get()), CarcassArmour.of("boots", COW, false).withTier(3), PartsData.SERVER);
+        plain.setDamageValue(100);
+        tiered.setDamageValue(10);
+        GrindstoneMenu grindstone = new GrindstoneMenu(0, helper.makeMockPlayer(GameType.SURVIVAL).getInventory());
+        grindstone.getSlot(0).set(plain);
+        grindstone.getSlot(1).set(tiered);
+        if (!grindstone.getSlot(2).getItem().isEmpty()) {
+            helper.fail("A grindstone should not merge two pieces: " + grindstone.getSlot(2).getItem().getComponents());
+            return;
+        }
+        helper.succeed();
+    }
+
+    /** Only scraps of the piece's own mob mend it on an anvil: not a raw hide or a heart stamped as that mob's. */
+    @GameTest(template = "empty", timeoutTicks = 20)
+    public static void onlyScrapsMendOnAnvil(GameTestHelper helper) {
+        Player player = helper.makeMockPlayer(GameType.SURVIVAL);
+        ItemStack boots = piece(BBItems.CARCASS_BOOTS.get(), "boots", COW);
+        boots.setDamageValue(100);
+        Map<String, ItemStack> tries = Map.of("cow leg scraps", scraps(COW, "leg"), "a raw cow hide", Hides.stamp(new ItemStack(BBItems.RAW_HIDE.get()), COW),
+                "a cow's heart", BBItems.HEART.get().of(COW, false));
+        for (Map.Entry<String, ItemStack> e : tries.entrySet()) {
+            AnvilMenu anvil = new AnvilMenu(0, player.getInventory());
+            anvil.getSlot(0).set(boots.copy());
+            anvil.getSlot(1).set(e.getValue().copy());
+            ItemStack out = anvil.getSlot(2).getItem();
+            boolean mends = e.getValue().is(BBItems.SCRAPS.get());
+            if (mends != (!out.isEmpty() && out.getDamageValue() < 100 && armour(out) != null)) {
+                helper.fail("Cow boots on an anvil with " + e.getKey() + (mends ? " should be mended" : " should not be") + ": " + out.getComponents());
+                return;
+            }
+        }
+        helper.succeed();
+    }
+
     /**
      * A full cow set is the Herd Beast (Hauler III); a rabbit hide on the boots breaks it, with no penalty. A
      * cow's own hide, or a plain one, keeps it.
@@ -558,18 +763,38 @@ public class ArmourFittingTests {
         helper.succeed();
     }
 
-    /** The new words have their bloodless wording: a covering, a core and its parts. */
+    /**
+     * The new words have their bloodless wording (docs/PARTS-AND-TRAITS.md section 7.10): plated armour of salvage, a
+     * covering, a core and its parts, the organs themselves by the same names; none of it says carcass, scraps, hide,
+     * organ, heart, lungs, stomach, eye or blood.
+     */
     @GameTest(template = "empty", timeoutTicks = 20)
     public static void fittingWordsHaveBloodlessWording(GameTestHelper helper) {
+        java.util.regex.Pattern bloody = java.util.regex.Pattern.compile("(?i)(?<![a-z])(carcass|scraps?|hides?|organs?|hearts?|lungs|stomachs?|eyes?|blood)(?![a-z])");
         try (var in = BloodAndBones.class.getResourceAsStream("/assets/bloodandbones/lang/en_us.json")) {
             var json = com.google.gson.JsonParser.parseReader(new java.io.InputStreamReader(in)).getAsJsonObject();
             for (String key : new String[]{"bloodandbones.carcass_armour.hide_plain", "bloodandbones.carcass_armour.organ", "organ.bloodandbones.heart",
                     "organ.bloodandbones.lungs", "organ.bloodandbones.stomach", "organ.bloodandbones.eye",
-                    "item.bloodandbones.carcass_chestplate.tooltip.condition2", "item.bloodandbones.carcass_chestplate.tooltip.condition3"}) {
+                    "item.bloodandbones.carcass_chestplate.tooltip.summary", "item.bloodandbones.carcass_chestplate.tooltip.condition2",
+                    "item.bloodandbones.carcass_chestplate.tooltip.behaviour2", "item.bloodandbones.carcass_chestplate.tooltip.condition3",
+                    "item.bloodandbones.carcass_chestplate.tooltip.behaviour3", "item.bloodandbones.carcass_chestplate.tooltip.behaviour4",
+                    "item.bloodandbones.carcass_helmet.tooltip.behaviour3", "item.bloodandbones.carcass_boots.tooltip.behaviour3",
+                    "item.bloodandbones.scraps.tooltip.behaviour1", "bloodandbones.jei.carcass_armour.1", "bloodandbones.jei.carcass_armour.2",
+                    "bloodandbones.jei.carcass_armour.3", "bloodandbones.jei.backtank.3", "item.bloodandbones.raw_hide.of",
+                    "item.bloodandbones.heart.of", "item.bloodandbones.lungs.of", "item.bloodandbones.stomach.of", "item.bloodandbones.eye.of",
+                    "item.bloodandbones.heart.tooltip.summary", "bloodandbones.body.heart", "bloodandbones.body.left_eye"}) {
                 if (!json.has(key) || !json.has("bloodless." + key)) {
                     helper.fail("No bloodless wording for " + key);
                     return;
                 }
+                if (bloody.matcher(json.get("bloodless." + key).getAsString()).find()) {
+                    helper.fail("The bloodless wording for " + key + " still says " + json.get("bloodless." + key).getAsString());
+                    return;
+                }
+            }
+            if (!json.get("bloodless.item.bloodandbones.heart.of").getAsString().equals("%s's Pump")) {
+                helper.fail("Bloodless mode should call a cow's heart the Cow's Pump, as the armour's core line does");
+                return;
             }
             if (!json.get("bloodless.organ.bloodandbones.heart").getAsString().equals("Pump")
                     || !json.get("bloodless.item.bloodandbones.carcass_chestplate.tooltip.condition3").getAsString().equals("Installing a Core")) {
