@@ -372,12 +372,12 @@ public final class DevShowcase {
                         var rabbit = net.minecraft.resources.ResourceLocation.withDefaultNamespace("rabbit");
                         var store = com.avicagan.bloodandbones.parts.PartsData.SERVER;
                         player.setItemSlot(net.minecraft.world.entity.EquipmentSlot.HEAD, com.avicagan.bloodandbones.parts.CarcassArmourItem.make(new ItemStack(BBItems.CARCASS_HELMET.get()),
-                                new com.avicagan.bloodandbones.parts.CarcassArmour("helmet", cow, false, java.util.Optional.empty(), java.util.Optional.empty(), java.util.Optional.empty(), 0), store));
+                                com.avicagan.bloodandbones.parts.CarcassArmour.of("helmet", cow, false), store));
                         player.setItemSlot(net.minecraft.world.entity.EquipmentSlot.CHEST, ItemStack.EMPTY);
                         player.setItemSlot(net.minecraft.world.entity.EquipmentSlot.LEGS, com.avicagan.bloodandbones.parts.CarcassArmourItem.make(new ItemStack(BBItems.CARCASS_LEGGINGS.get()),
-                                new com.avicagan.bloodandbones.parts.CarcassArmour("leggings", rabbit, false, java.util.Optional.empty(), java.util.Optional.empty(), java.util.Optional.empty(), 0), store));
+                                com.avicagan.bloodandbones.parts.CarcassArmour.of("leggings", rabbit, false), store));
                         player.setItemSlot(net.minecraft.world.entity.EquipmentSlot.FEET, com.avicagan.bloodandbones.parts.CarcassArmourItem.make(new ItemStack(BBItems.CARCASS_BOOTS.get()),
-                                new com.avicagan.bloodandbones.parts.CarcassArmour("boots", cow, false, java.util.Optional.empty(), java.util.Optional.empty(), java.util.Optional.empty(), 0), store));
+                                com.avicagan.bloodandbones.parts.CarcassArmour.of("boots", cow, false), store));
                         String[] parts = {"head", "torso", "arm", "leg", "tail"};
                         for (int i = 0; i < parts.length; i++) {
                             player.getInventory().setItem(i, com.avicagan.bloodandbones.parts.ScrapsItem.of(new com.avicagan.bloodandbones.parts.Source(i % 2 == 0 ? cow : rabbit, parts[i], false), 3 + i));

@@ -1,0 +1,25 @@
+{
+  "values": {
+    "minecraft:leather": {
+      "entity": "minecraft:cow"
+    },
+    "minecraft:rabbit_hide": {
+      "entity": "minecraft:rabbit"
+    },
+    "minecraft:feather": {
+      "entity": "minecraft:chicken"
+    },
+    "minecraft:armadillo_scute": {
+      "entity": "minecraft:armadillo"
+    },
+    "minecraft:turtle_scute": {
+      "entity": "minecraft:turtle"
+    },
+    "minecraft:phantom_membrane": {
+      "entity": "minecraft:phantom"
+    },
+    "minecraft:shulker_shell": {
+      "entity": "minecraft:shulker"
+    }
+  }
+}

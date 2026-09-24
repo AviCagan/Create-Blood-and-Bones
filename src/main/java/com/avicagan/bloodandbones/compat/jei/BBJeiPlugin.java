@@ -124,7 +124,14 @@ public class BBJeiPlugin implements IModPlugin {
                 Component.translatable("bloodandbones.jei.minions.1"), Component.translatable("bloodandbones.jei.minions.2"));
         registration.addIngredientInfo(BBItems.BACKTANKS.values().stream().map(e -> new net.minecraft.world.item.ItemStack(e.get())).toList(),
                 mezz.jei.api.constants.VanillaTypes.ITEM_STACK,
-                Component.translatable("bloodandbones.jei.backtank.1"), Component.translatable("bloodandbones.jei.backtank.2"));
+                Component.translatable("bloodandbones.jei.backtank.1"), Component.translatable("bloodandbones.jei.backtank.2"),
+                Component.translatable("bloodandbones.jei.backtank.3"));
+        // fitting and strapping are special recipes, which JEI does not list, so they are told here
+        registration.addIngredientInfo(java.util.stream.Stream.of(BBItems.CARCASS_HELMET, BBItems.CARCASS_CHESTPLATE, BBItems.CARCASS_LEGGINGS, BBItems.CARCASS_BOOTS)
+                        .map(e -> new net.minecraft.world.item.ItemStack(e.get())).toList(),
+                mezz.jei.api.constants.VanillaTypes.ITEM_STACK,
+                Component.translatable("bloodandbones.jei.carcass_armour.1"), Component.translatable("bloodandbones.jei.carcass_armour.2"),
+                Component.translatable("bloodandbones.jei.carcass_armour.3"));
         registration.addIngredientInfo(BBBlocks.SHACKLE_HOOK.get(),
                 Component.translatable("bloodandbones.jei.shackle_hook.1"),
                 Component.translatable("bloodandbones.jei.shackle_hook.2"));

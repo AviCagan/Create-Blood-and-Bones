@@ -38,7 +38,7 @@ import java.util.concurrent.ConcurrentHashMap;
 
 /**
  * The parts-and-traits data (docs/PARTS-AND-TRAITS.md section 4): mob groups (archetypes, families, overlays),
- * per-mob files, traits, scrap materials and the bone slot rules. Loaded on the server from data packs and
+ * per-mob files, traits, scrap materials, armour tiers and the bone slot rules. Loaded on the server from data packs and
  * sent to clients as the files were written, so both sides resolve a mob the same way.
  */
 public final class PartsData {
@@ -47,7 +47,8 @@ public final class PartsData {
 
     /** The file kinds, each a folder under data/&lt;ns&gt;/. */
     public enum Kind {
-        MOB_GROUP("mob_group"), MOB_TRAITS("mob_traits"), TRAIT("trait"), SCRAP_MATERIAL("scrap_material"), BONE_SLOT_RULES("bone_slot_rules");
+        MOB_GROUP("mob_group"), MOB_TRAITS("mob_traits"), TRAIT("trait"), SCRAP_MATERIAL("scrap_material"), BONE_SLOT_RULES("bone_slot_rules"),
+        ARMOUR_TIER("armour_tier");
 
         public final String folder;
 
@@ -63,6 +64,7 @@ public final class PartsData {
         private volatile Map<ResourceLocation, MobGroup> mobFiles = Map.of();
         private volatile Map<ResourceLocation, Trait> traits = Map.of();
         private volatile Map<ResourceLocation, ScrapMaterial> materials = Map.of();
+        private volatile Map<Integer, ArmourTier> tiers = Map.of();
         private volatile PartSlots.Rules slotRules = PartSlots.DEFAULT;
         private final Map<String, ResolvedMob> resolved = new ConcurrentHashMap<>();
         private volatile int generation;
@@ -100,6 +102,14 @@ public final class PartsData {
                     Map<ResourceLocation, ScrapMaterial> out = new LinkedHashMap<>();
                     files.forEach((id, text) -> parse(id, text, json -> out.put(id, MobGroup.decode(ScrapMaterial.CODEC, json, ops, "scrap material " + id))));
                     materials = Map.copyOf(out);
+                }
+                case ARMOUR_TIER -> {
+                    Map<Integer, ArmourTier> out = new LinkedHashMap<>();
+                    files.forEach((id, text) -> parse(id, text, json -> {
+                        ArmourTier tier = MobGroup.decode(ArmourTier.CODEC, json, ops, "armour tier " + id);
+                        out.put(tier.order(), tier);
+                    }));
+                    tiers = Map.copyOf(out);
                 }
                 case BONE_SLOT_RULES -> {
                     List<PartSlots.Rule> rules = new ArrayList<>();
@@ -153,6 +163,23 @@ public final class PartsData {
 
         public Map<ResourceLocation, ScrapMaterial> materials() {
             return materials;
+        }
+
+        /** The armour tier of this order (1 is the first), or null for none (0) or one not loaded. */
+        @Nullable
+        public ArmourTier tier(int order) {
+            return tiers.get(order);
+        }
+
+        /** The armour tier this item fits, or null if it fits none. */
+        @Nullable
+        public ArmourTier tierFor(net.minecraft.world.item.Item item) {
+            for (ArmourTier tier : tiers.values()) {
+                if (tier.item() == item) {
+                    return tier;
+                }
+            }
+            return null;
         }
 
         public PartSlots.Rules slotRules() {

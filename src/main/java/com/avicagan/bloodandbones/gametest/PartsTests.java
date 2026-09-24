@@ -221,7 +221,7 @@ public class PartsTests {
     }
 
     private static ItemStack piece(net.minecraft.world.item.Item item, String piece, ResourceLocation mob) {
-        return CarcassArmourItem.make(new ItemStack(item), new CarcassArmour(piece, mob, false, Optional.empty(), Optional.empty(), Optional.empty(), 0), PartsData.SERVER);
+        return CarcassArmourItem.make(new ItemStack(item), CarcassArmour.of(piece, mob, false), PartsData.SERVER);
     }
 
     /** Four pieces of one mob are a full set, bonus and drawback together; one piece of another mob, none. */

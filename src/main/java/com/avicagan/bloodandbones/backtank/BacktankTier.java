@@ -15,6 +15,10 @@ public enum BacktankTier implements StringRepresentable {
     BLOOD_DIAMOND("blood_diamond", 16, 8, 2.5F, 0.05F),
     SOUL_NETHERITE("soul_netherite", 32, 8, 3.0F, 0.1F);
 
+    public static final com.mojang.serialization.Codec<BacktankTier> CODEC = StringRepresentable.fromEnum(BacktankTier::values);
+    public static final net.minecraft.network.codec.StreamCodec<net.minecraft.network.FriendlyByteBuf, BacktankTier> STREAM_CODEC =
+            net.neoforged.neoforge.network.codec.NeoForgeStreamCodecs.enumCodec(BacktankTier.class);
+
     private final String name;
     private final int buckets;
     private final int defense;

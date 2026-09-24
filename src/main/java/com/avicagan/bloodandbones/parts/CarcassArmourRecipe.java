@@ -140,7 +140,7 @@ public class CarcassArmourRecipe extends ShapedRecipe {
             }
             hipMob = hips.get(0).part().equals("tail") ? Optional.of(mob) : Optional.empty();
         }
-        return new CarcassArmour(piece, body, baby, shoulderMob, hipMob, Optional.empty(), 0);
+        return new CarcassArmour(piece, body, baby, shoulderMob, hipMob, Optional.empty(), Optional.empty(), 0);
     }
 
     /** Whether this mob's rig has no bone of the slot that makes this part. */

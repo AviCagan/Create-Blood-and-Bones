@@ -19,8 +19,9 @@ import java.util.List;
 
 /**
  * A piece of carcass armour. Its material has no numbers of its own: armour, toughness, knockback
- * resistance and the material's quirk come from the scraps' data when it is worn ({@link TraitEvents}), its
- * durability is set when it is made, and its traits live in {@link ActiveTraits}.
+ * resistance and the material's quirk come from the scraps' data and its tier when it is worn
+ * ({@link TraitEvents}), its durability is set when it is made or upgraded, and its traits live in
+ * {@link ActiveTraits}. A chestplate can carry a Fluid Backtank strapped to its back.
  */
 public class CarcassArmourItem extends ArmorItem {
     private final String piece;
@@ -54,10 +55,20 @@ public class CarcassArmourItem extends ArmorItem {
         return store.material(store.resolve(armour.body(), armour.baby()).material());
     }
 
-    /** Stamp a new piece: what it is made of, and its durability from the material. */
+    /**
+     * Stamp a piece with what it is made of, and bake what cannot be looked up live: its durability, from the
+     * material times its tier's multiplier, and fire resistance from a tier that gives it.
+     */
     public static ItemStack make(ItemStack stack, CarcassArmour armour, PartsData.Store store) {
         stack.set(BBDataComponents.CARCASS_ARMOUR.get(), armour);
-        stack.set(DataComponents.MAX_DAMAGE, Math.max(1, material(armour, store).durability() * ScrapMaterial.slotDurability(armour.piece())));
+        ArmourTier tier = store.tier(armour.tier());
+        float mult = tier == null ? 1.0F : tier.durabilityMult();
+        stack.set(DataComponents.MAX_DAMAGE, Math.max(1, Math.round(material(armour, store).durability() * ScrapMaterial.slotDurability(armour.piece()) * mult)));
+        if (tier != null && tier.fireResistant()) {
+            stack.set(DataComponents.FIRE_RESISTANT, net.minecraft.util.Unit.INSTANCE);
+        } else {
+            stack.remove(DataComponents.FIRE_RESISTANT);
+        }
         return stack;
     }
 
@@ -106,7 +117,21 @@ public class CarcassArmourItem extends ArmorItem {
         tooltip.add(Component.translatable("bloodandbones.carcass_armour.body", ScrapsItem.mobName(armour.body())).withStyle(ChatFormatting.GRAY));
         armour.shoulders().ifPresent(m -> tooltip.add(Component.translatable("bloodandbones.carcass_armour.shoulders", ScrapsItem.mobName(m)).withStyle(ChatFormatting.GRAY)));
         armour.hips().ifPresent(m -> tooltip.add(Component.translatable("bloodandbones.carcass_armour.hips", ScrapsItem.mobName(m)).withStyle(ChatFormatting.GRAY)));
-        armour.hide().ifPresent(m -> tooltip.add(Component.translatable("bloodandbones.carcass_armour.hide", ScrapsItem.mobName(m)).withStyle(ChatFormatting.GRAY)));
+        armour.hide().ifPresent(hide -> tooltip.add((hide.entity().isPresent()
+                ? Component.translatable("bloodandbones.carcass_armour.hide", ScrapsItem.mobName(hide.entity().get()))
+                : Component.translatable("bloodandbones.carcass_armour.hide_plain")).withStyle(ChatFormatting.GRAY)));
+        armour.organ().ifPresent(organ -> tooltip.add(Component.translatable("bloodandbones.carcass_armour.organ", ScrapsItem.mobName(organ.entity()),
+                Component.translatable("organ." + organ.organ().getNamespace() + "." + organ.organ().getPath())).withStyle(ChatFormatting.GRAY)));
+        ArmourTier tier = store.tier(armour.tier());
+        if (tier != null) {
+            tooltip.add(Component.translatable("bloodandbones.carcass_armour.tier", armour.tier(), tier.item().getDescription()).withStyle(ChatFormatting.GOLD));
+        }
+        com.avicagan.bloodandbones.backtank.BacktankTier tank = stack.get(BBDataComponents.STRAPPED_TANK.get());
+        if (tank != null) {
+            tooltip.add(Component.translatable("bloodandbones.carcass_armour.strapped",
+                    com.avicagan.bloodandbones.registry.BBItems.backtank(tank).getDescription()).withStyle(ChatFormatting.GRAY));
+            com.avicagan.bloodandbones.backtank.FluidBacktankItem.describeFluid(stack, tooltip);
+        }
         for (TraitList.Resolved trait : armour.traits(store)) {
             tooltip.add(Traits.describe(store, trait).withStyle(ChatFormatting.DARK_AQUA));
         }

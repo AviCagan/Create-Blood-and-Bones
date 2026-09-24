@@ -1,0 +1,14 @@
+{
+  "order": 1,
+  "item": "bloodandbones:blood_steel_ingot",
+  "bonus": {
+    "helmet": 1,
+    "chestplate": 2,
+    "leggings": 2,
+    "boots": 1
+  },
+  "toughness": 0.5,
+  "knockback_resistance": 0.0,
+  "durability_mult": 1.5,
+  "fire_resistant": false
+}

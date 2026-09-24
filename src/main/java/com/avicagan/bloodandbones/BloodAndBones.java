@@ -77,7 +77,10 @@ public class BloodAndBones {
         com.avicagan.bloodandbones.parts.TraitEffects.register(modEventBus);
         com.avicagan.bloodandbones.registry.BBAttributes.register(modEventBus);
         com.avicagan.bloodandbones.minion.MinionSerializers.register(modEventBus);
-        modEventBus.addListener((net.neoforged.neoforge.registries.datamaps.RegisterDataMapTypesEvent event) -> event.register(com.avicagan.bloodandbones.body.Vent.EFFECTS));
+        modEventBus.addListener((net.neoforged.neoforge.registries.datamaps.RegisterDataMapTypesEvent event) -> {
+            event.register(com.avicagan.bloodandbones.body.Vent.EFFECTS);
+            event.register(com.avicagan.bloodandbones.parts.Hides.SOURCES);
+        });
 
         LOGGER.info("Create: Blood & Bones loaded");
     }

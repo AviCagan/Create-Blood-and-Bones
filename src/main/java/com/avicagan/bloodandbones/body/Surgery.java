@@ -307,7 +307,8 @@ public final class Surgery {
 
     /**
      * A Cleaver on a carcass piece lying on the table takes out its organs, one a cut: a body's heart, lungs
-     * and stomach, a head's eyes, each named for the animal. A mob with no blood has none.
+     * and stomach, a head's eyes, each named for the animal and stamped with it (for carcass armour). A mob
+     * with no blood has none.
      *
      * @return whether an organ came out
      */
@@ -342,7 +343,7 @@ public final class Surgery {
         BlockPos pos = table.getBlockPos();
         // a Deployer's stand-in would hold it and stall: it drops on the table, as the Butcher's Table's cuts do
         give(surgeon instanceof net.neoforged.neoforge.common.util.FakePlayer ? null : surgeon,
-                com.avicagan.bloodandbones.registry.BBItems.partItem(organs.get(taken)).of(type.get().getDescription()), pos, level);
+                com.avicagan.bloodandbones.registry.BBItems.partItem(organs.get(taken)).of(piece.entity(), piece.baby()), pos, level);
         com.avicagan.bloodandbones.carcass.Blood.bloody(blade, level);
         Vector3d at = new Vector3d(pos.getX() + 0.5, pos.getY() + 1.1, pos.getZ() + 0.5);
         com.avicagan.bloodandbones.carcass.Blood.burst(level, at, 8, com.avicagan.bloodandbones.carcass.Blood.soul(piece.entity()));

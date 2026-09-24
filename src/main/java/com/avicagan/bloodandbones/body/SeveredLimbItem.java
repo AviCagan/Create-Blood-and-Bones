@@ -35,4 +35,21 @@ public class SeveredLimbItem extends Item {
         stack.set(net.minecraft.core.component.DataComponents.ITEM_NAME, Component.translatable(getDescriptionId() + ".of", owner));
         return stack;
     }
+
+    /**
+     * An organ cut out of a carcass: named for the kind of animal, and stamped with where it came from (its mob,
+     * the part it was in, a baby or not), so carcass armour can take its traits.
+     */
+    public ItemStack of(net.minecraft.resources.ResourceLocation entity, boolean baby) {
+        ItemStack stack = of(com.avicagan.bloodandbones.parts.ScrapsItem.mobName(entity));
+        stack.set(com.avicagan.bloodandbones.registry.BBDataComponents.SOURCE.get(),
+                new com.avicagan.bloodandbones.parts.Source(entity, kind == BodyPart.Kind.EYE ? "head" : "torso", baby));
+        return stack;
+    }
+
+    /** The mob an organ was cut out of, or null for one with no stamp (a player's own). */
+    @org.jetbrains.annotations.Nullable
+    public static com.avicagan.bloodandbones.parts.Source source(ItemStack stack) {
+        return stack.getItem() instanceof SeveredLimbItem ? stack.get(com.avicagan.bloodandbones.registry.BBDataComponents.SOURCE.get()) : null;
+    }
 }

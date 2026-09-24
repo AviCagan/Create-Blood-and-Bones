@@ -131,7 +131,13 @@ public class BBBlockEntities {
         for (var entry : BBItems.BACKTANKS.values()) {
             event.registerItem(net.neoforged.neoforge.capabilities.Capabilities.FluidHandler.ITEM,
                     (stack, context) -> new net.neoforged.neoforge.fluids.capability.templates.FluidHandlerItemStack(BBDataComponents.FLUID, stack,
-                            ((com.avicagan.bloodandbones.backtank.FluidBacktankItem) stack.getItem()).tier().capacity()), entry.get());
+                            com.avicagan.bloodandbones.backtank.FluidBacktankItem.capacity(stack)), entry.get());
         }
+        // a carcass chestplate with a backtank strapped on is that tank to Spouts, Item Drains and ports; without one it holds nothing
+        event.registerItem(net.neoforged.neoforge.capabilities.Capabilities.FluidHandler.ITEM,
+                (stack, context) -> stack.has(BBDataComponents.STRAPPED_TANK)
+                        ? new net.neoforged.neoforge.fluids.capability.templates.FluidHandlerItemStack(BBDataComponents.FLUID, stack,
+                        com.avicagan.bloodandbones.backtank.FluidBacktankItem.capacity(stack)) : null,
+                BBItems.CARCASS_CHESTPLATE.get());
     }
 }
