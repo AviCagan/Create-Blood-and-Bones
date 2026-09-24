@@ -1,6 +1,11 @@
 package com.avicagan.bloodandbones.parts;
 
 import com.avicagan.bloodandbones.BloodAndBones;
+import com.avicagan.bloodandbones.config.BBServerConfig;
+import com.avicagan.bloodandbones.parts.effect.MotionEffects;
+import com.avicagan.bloodandbones.parts.effect.RangedEffects;
+import com.avicagan.bloodandbones.parts.effect.SocialEffects;
+import com.avicagan.bloodandbones.parts.effect.UpkeepEffects;
 import com.mojang.serialization.Codec;
 import com.mojang.serialization.MapCodec;
 import com.mojang.serialization.codecs.RecordCodecBuilder;
@@ -8,10 +13,14 @@ import net.minecraft.core.Holder;
 import net.minecraft.core.Registry;
 import net.minecraft.core.registries.Registries;
 import net.minecraft.resources.ResourceKey;
+import net.minecraft.resources.ResourceLocation;
 import net.minecraft.tags.TagKey;
 import net.minecraft.world.damagesource.DamageType;
 import net.minecraft.world.effect.MobEffect;
+import net.minecraft.world.effect.MobEffectInstance;
+import net.minecraft.world.effect.MobEffects;
 import net.minecraft.world.entity.EntityType;
+import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.entity.ai.attributes.Attribute;
 import net.minecraft.world.entity.ai.attributes.AttributeModifier;
 import net.minecraft.world.item.enchantment.LevelBasedValue;
@@ -19,13 +28,17 @@ import net.neoforged.bus.api.IEventBus;
 import net.neoforged.neoforge.registries.DeferredRegister;
 import net.neoforged.neoforge.registries.NewRegistryEvent;
 import net.neoforged.neoforge.registries.RegistryBuilder;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.List;
 
 /**
  * The effect types traits are made of (docs/PARTS-AND-TRAITS.md section 5.4), in their own registry so
- * other mods can add more in code; data packs only compose them. What each does at run time is in
- * {@link ActiveTraits} and {@link TraitEvents}.
+ * other mods can add more in code; data packs only compose them. A type does its own work in its record
+ * ({@link TraitEffect.Effect#run}, {@link TraitEffect.Effect#keepUp}); the six first ones that change things
+ * continuously (attributes, damage, immunity, diet, reactions) are read in {@link ActiveTraits} and
+ * {@link TraitEvents}. New types live in {@code parts/effect}, one record a file, registered by their group
+ * (docs/ARCHITECTURE-PROPOSAL.md section 15.8).
  */
 public final class TraitEffects {
     public static final ResourceKey<Registry<MapCodec<? extends TraitEffect.Effect>>> KEY =
@@ -65,6 +78,31 @@ public final class TraitEffects {
         @Override
         public MapCodec<? extends TraitEffect.Effect> codec() {
             return CODEC;
+        }
+
+        @Override
+        public void run(TraitContext ctx) {
+            LivingEntity host = ctx.host();
+            MobEffectInstance instance = new MobEffectInstance(effect, duration, ctx.levelled(amplifier));
+            switch (target) {
+                case "self" -> host.addEffect(instance);
+                case "attacker", "victim", "target" -> {
+                    if (ctx.other() != null && ctx.other() != host) {
+                        ctx.other().addEffect(instance, host);
+                    }
+                }
+                case "area" -> host.level().getEntitiesOfClass(LivingEntity.class, host.getBoundingBox().inflate(radius), e -> e != host && e.isAlive())
+                        .forEach(e -> e.addEffect(new MobEffectInstance(instance), host));
+                default -> {
+                }
+            }
+        }
+
+        /** Kept up quietly on the host; night vision past the point where it starts to flicker. */
+        @Override
+        public void keepUp(TraitContext ctx) {
+            int ticks = effect.is(MobEffects.NIGHT_VISION) ? 220 : Math.max(40, duration);
+            ctx.host().addEffect(new MobEffectInstance(effect, ticks, ctx.levelled(amplifier), true, false, true));
         }
     }
 
@@ -136,9 +174,47 @@ public final class TraitEffects {
         TYPES.register("immunity", () -> ImmunityEffect.CODEC);
         TYPES.register("diet", () -> DietEffect.CODEC);
         TYPES.register("reaction", () -> ReactionEffect.CODEC);
+        // the four groups' own types, each in its own registrar
+        MotionEffects.types(TYPES);
+        RangedEffects.types(TYPES);
+        SocialEffects.types(TYPES);
+        UpkeepEffects.types(TYPES);
     }
 
     private TraitEffects() {
+    }
+
+    /** The registered id of an effect's type ("bloodandbones:mob_effect"), or null for one not registered. */
+    @Nullable
+    public static ResourceLocation typeId(TraitEffect.Effect effect) {
+        return REGISTRY.getKey(effect.codec());
+    }
+
+    /** Whether the server lets this effect's type work (config {@code disabled_effect_types}). */
+    public static boolean enabled(TraitEffect.Effect effect) {
+        java.util.Set<ResourceLocation> off = BBServerConfig.disabledEffectTypes();
+        return off.isEmpty() || !off.contains(typeId(effect));
+    }
+
+    /** Whether a type does anything in {@link TraitEffect.Effect#keepUp}, so a passive entry of it is worth checking every half second. */
+    private static final ClassValue<Boolean> KEEPS_UP = new ClassValue<>() {
+        @Override
+        protected Boolean computeValue(Class<?> type) {
+            try {
+                return type.getMethod("keepUp", TraitContext.class).getDeclaringClass() != TraitEffect.Effect.class;
+            } catch (NoSuchMethodException e) {
+                return false;
+            }
+        }
+    };
+
+    public static boolean keepsUp(TraitEffect.Effect effect) {
+        return KEEPS_UP.get(effect.getClass());
+    }
+
+    /** The server's trait strength (config {@code trait_strength}): trait amounts are multiplied by it. */
+    public static float strength() {
+        return BBServerConfig.traitStrength();
     }
 
     public static void register(IEventBus modBus) {

@@ -304,9 +304,10 @@ public class BrassMinionTests {
                 helper.fail("A flesh cow should keep the cow's thick hide: " + com.avicagan.bloodandbones.parts.ActiveTraits.of(flesh).entries());
                 return;
             }
-            if (!com.avicagan.bloodandbones.parts.ActiveTraits.of(brass).isEmpty()
+            // its parts' own minion traits still work (a cow's sure-footed legs); only the hide's are gone
+            if (com.avicagan.bloodandbones.parts.ActiveTraits.of(brass).level(thickHide) != 0 || !brass.hides().isEmpty()
                     || brass.getAttributeValue(net.minecraft.world.entity.ai.attributes.Attributes.ARMOR) != 0.0) {
-                helper.fail("Brass keeps no hide traits");
+                helper.fail("Brass keeps no hide traits: " + com.avicagan.bloodandbones.parts.ActiveTraits.of(brass).entries());
                 return;
             }
             if (!many.hides().equals(List.of(ResourceLocation.withDefaultNamespace("cow"), ResourceLocation.withDefaultNamespace("pig"),

@@ -1599,9 +1599,9 @@ iron, blood diamonds and soul blood netherite".
 - Traits are rebuilt on an equipment change only when what the piece is made of changes, not when it wears or its
   strapped tank drains.
 - **Simplifications and what waits:**
-  - Of slice 4's list, the Organ Ability key, cooldowns and blood cost, the new triggers and effect types, and their
-    tests (`blazeCoreChestIgnoresFire`, `endermanHelmetIsEnderMask`, `creeperSacBlastSparesWearer`,
-    `fullZombieSetKinAndSunCursed`, `reductionFlooredAt20Percent`) are not built.
+  - Of slice 4's list, the new effect types and their tests (`blazeCoreChestIgnoresFire`, `endermanHelmetIsEnderMask`,
+    `creeperSacBlastSparesWearer`, `fullZombieSetKinAndSunCursed`, `reductionFlooredAt20Percent`) are not built; the
+    Organ Ability key, cooldowns and blood cost, and the new triggers are (15.8).
   - Which piece takes which organ is in code (`ORGAN_PIECES`) until organ files with `armour_pieces` exist; the
     gland item, `organ_sources` (rabbit's foot, ink sacs, spider eye) and `Surgery.harvest` reading organ lists by slot
     are slice 3.
@@ -1610,7 +1610,147 @@ iron, blood diamonds and soul blood netherite".
   - A strapped tank keeps its tier and fluid only; a name or enchantments on it are lost.
   - Not drawn yet: a hide's tinted layer, a tier's trim, an organ's pip. The Deployer route waits for slice 10.
 
-### 15.8 Review of the minion work (fixed)
+### 15.8 The effect engine (verified in tests; the groundwork the effect types are built on)
+
+The design's 30 effect types (spec 5.4) are split among four groups built side by side, each in its own branch. This
+section is their contract: what the shared code does for every effect, and where each group puts its own work so that
+no two groups edit the same file.
+
+**What the shared code does**
+
+- **Effects run themselves.** `TraitEffect.Effect` (the record a type is) has `run(TraitContext)`, called when a
+  triggered entry comes up (tick, hurt, attack, fall, kill, targeted, activate), and `keepUp(TraitContext)`, called every
+  half second while a passive entry's condition holds. `TraitEvents` only finds which entries are due (trigger, context,
+  chance, cooldown, `requirements`) and calls them; the six first types keep their special paths (attribute modifiers
+  in `ActiveTraits`, damage in `onIncomingDamage` and `onFall`, immunity, graze, reactions), and `mob_effect` now does
+  its work in its record. Types that change something continuously (a flag, a visibility, a deflection) are read where
+  it happens, through `ActiveTraits.of(host).find(SomeEffect.class)` (or `peek` on a hot path), each `Found` carrying
+  the entry, the effect's index in its trait, the entry's data (`facet`) and the effect.
+- **`TraitContext`** (host, traits, entry, index, facet, trigger, other, source, amount): `level()` is the ServerLevel,
+  `traitLevel()` the trait's level, `context()` "armour" or "minion", `other` the attacker (hurt), victim (attack,
+  kill), the mob taking aim (targeted), a minion's target (activate) or the killer (a lethal save), `source` the damage,
+  `amount` the damage, the victim's most health (kill) or the distance fallen (fall). `scaled(LevelBasedValue)` is an
+  amount times the server's `trait_strength`; `levelled(LevelBasedValue)` a count left alone (amplifiers, durations,
+  radii); `pay(mb)` takes blood (below).
+- **Who gets traits** (spec 5.9): players from their carcass armour, context "armour"; minions from their build,
+  context "minion" (`ActiveTraits.contextOf`); nobody else (a zombie in carcass armour gets its armour points only). A
+  trait whose `contexts` leave the host's out is never built in; an effect whose `context` names the other one never
+  runs (`ActiveTraits.applies`, which also skips types the server switched off).
+- **Minions get their parts' traits** (spec 6.4). `MinionData.traits(store, build)` (pure) lists, one list per source,
+  the torso's and every fitted piece's "traits" from the "minion" object of its slot key, layered as armour's are (the
+  general key's layers first, "leg", then the specific one's, "leg.hind"; a plain list adds, `{"add", "remove",
+  "replace"}` edits; a torso extension counts as "torso", a neck as "head"), and the organ's `organ_traits` "minion"
+  list. `ActiveTraits` stacks them as it does armour (max, unless the trait sums). The build now has one organ slot
+  (`MinionBuild.organ`, an organ cut out of a mob, fitted by using it on the Assembly Frame; a Cleaver takes it out first;
+  it drops with the rest). Traits are rebuilt when the build changes (`setBuild`, or noticed by `ActiveTraits.of`) or data
+  reloads; their attribute effects go on as transient modifiers; `MinionStats` stays pure. The minion runs the trait tick
+  from its own `tick`, every 10 ticks staggered by id as players are; powered down it keeps its passives but runs no tick
+  effects. `minionGetsLegTraits` (a cow on its own legs is sure-footed and steps higher), `minionContextOnly`.
+- **The activate trigger** (`parts/Activation`). The Organ Ability key (`client/OrganAbilityClient`, G, rebindable,
+  in the Blood & Bones key category; "Core Ability" in bloodless mode) sends `OrganActivatePayload`; the server fires
+  the next ready activate effect after the last one tried, piece by piece (helmet, chestplate, leggings, boots, a full
+  set's last), so repeated presses cycle. Each effect has its own `cooldown`, shown with `ItemCooldowns` on the piece it
+  came from (`ActiveTraits.Entry.slot`, the piece giving the trait its level), and may cost blood: `cost_mb` on the
+  effect (default 0), drawn from the worn backtank or strapped chestplate, which must hold `c:blood` (a creative
+  player pays nothing). Too little refuses it with a word on the action bar ("Not enough blood in your tank"), and the
+  next press moves on. A minion's `MinionGoals.UseOrgan` (no move or look flags, so it fires while closing in) fires one
+  when its target is within the effect's `range` (default 8) and its condition holds, paying from its own blood or
+  canister (`MinionEntity.usePower`, never its last drop, so an ability never powers it down); a mindless minion never
+  has a target. `activateCyclesPieces`, `activateCostsBlood`, `minionFiresOrganAtTarget`.
+- **Our four conditions** (`parts/TraitConditions`, registered loot condition types, so they mix with vanilla's
+  `inverted`, `all_of` and `any_of`): `bloodandbones:health_below` {fraction}; `bloodandbones:power_below` {fraction}, a
+  minion's blood or canister, or the worn tank (none counts as empty); `bloodandbones:near` {entities or blocks, each an
+  id or a "#tag", radius (8), count (1)}, blocks looked for at most 8 out; `bloodandbones:dry_for` {seconds, at_most
+  (false)}, from `ActiveTraits.drySeconds`, the time since the host was last in water, rain or a bubble column, noted by
+  the trait tick. Tags are named as `TagKey`s, so they parse before tags load. `healthBelowCondition`, `dryForCondition`.
+- **The other triggers.** `fall` (`LivingFallEvent`: fall effects run with the distance; a fall-trigger damage effect
+  scales that fall's damage, reductions floored as everywhere) and `kill` (`LivingDeathEvent` at low priority, once the
+  death stands, run on the killer) are wired as hurt and attack are.
+- **Lethal saves.** An effect record that also implements `TraitEffect.DeathSaver` is asked on every lethal blow
+  (`TraitEvents.onDeath`, high priority), whatever its trigger, if it is off cooldown, its chance comes up and its
+  condition holds; `save(ctx)` returns true only once it has put the host's health above 0, and the death is called off
+  (its cooldown starts then). A minion collapses before this is asked, which is its own lethal save.
+- **Server config** (`[traits]`): `trait_strength` (1.0) multiplies trait amounts (attribute modifiers, the change a
+  damage multiplier makes, and whatever an effect reads through `scaled`); `disabled_effect_types` (ids) makes those
+  types do nothing, the traits keeping their other effects. A change reloads everyone's traits. `disabledEffectTypeSkipped`.
+- **Tests** can make traits and mob data of their own (`gametest/TestTraits`): `trait(helper, path, json)` gives
+  "bloodandbones:test/&lt;path&gt;", `mob(helper, path, json)` a made-up mob "bloodandbones:test_mob/&lt;path&gt;" (it
+  resolves on the biped archetype, so its lists say `{"replace": true, "add": [...]}`), `piece(piece, mob)` a piece of it,
+  `condition(helper, json)` a loot condition. They sit on top of the loaded data for the rest of the run
+  (`PartsData.Store.addTestTrait`, `addTestMobFile`): lookups see them, the lists, the sync to clients and the data lints
+  do not. A minion takes a made-up mob's organ (its `organ_traits`), which needs no rig.
+
+**Adding an effect type** is one record in `parts/effect/`, registered in its group's `types`:
+
+```java
+/** A shove: the host's target (or whoever hurt it) thrown back and up. */
+public record ShoveEffect(LevelBasedValue strength, float up) implements TraitEffect.Effect {
+    public static final MapCodec<ShoveEffect> CODEC = RecordCodecBuilder.mapCodec(i -> i.group(
+            LevelBasedValue.CODEC.fieldOf("strength").forGetter(ShoveEffect::strength),
+            Codec.FLOAT.optionalFieldOf("up", 0.3F).forGetter(ShoveEffect::up)
+    ).apply(i, ShoveEffect::new));
+
+    @Override
+    public MapCodec<? extends TraitEffect.Effect> codec() {
+        return CODEC;
+    }
+
+    @Override
+    public void run(TraitContext ctx) {
+        if (ctx.other() != null) {
+            Vec3 away = ctx.other().position().subtract(ctx.host().position()).normalize().scale(ctx.scaled(strength));
+            ctx.other().push(away.x, up, away.z);
+            ctx.other().hurtMarked = true;
+        }
+    }
+}
+// in MotionEffects.types(types):
+types.register("shove", () -> ShoveEffect.CODEC);
+```
+
+and data then says `{"trigger": "hurt", "filter": "melee", "cooldown": 40, "effect": {"type": "bloodandbones:shove",
+"strength": {"type": "minecraft:linear", "base": 0.6, "per_level_above_first": 0.2}}}`.
+
+**The four groups and their files.** Each group owns one registrar in `parts/effect/` and one client class in
+`client/effect/`, and puts its new records and classes in those packages (or its own files elsewhere). Each registrar
+has, each empty until the group fills it:
+
+| Hook | Called from | For |
+|---|---|---|
+| `types(DeferredRegister<MapCodec<? extends TraitEffect.Effect>>)` | `TraitEffects`' static block | its effect types |
+| `registerContent(IEventBus modBus)` | the mod's constructor | its own DeferredRegisters (blocks, items, mob effects, entity types, sounds, loot condition or enchantment entity effect types) or Registrate entries in its own class |
+| `lang()` | `BBLang.register`, after the trait names | `BBLang.trait(id, name, description)`, `BBLang.bloodless(key, text)`, `BBLang.raw(key, text)` |
+| `payloads(PayloadRegistrar)` | `BBNetwork.register` | its payloads; a client-bound handler calls its client class inside the lambda |
+| `minionGoals(MinionEntity, GoalSelector goals, GoalSelector targets)` | `MinionEntity.registerGoals` | goals it gives every minion |
+| `@SubscribeEvent` static methods | the class is registered on `NeoForge.EVENT_BUS` beside `TraitEvents` | its game events (each has `onServerStopped` so the bus accepts it) |
+| `client/effect/<Group>Client.init(IEventBus modBus)` | `BBClientSetup.initEffects`, from the constructor's client branch only | renderers, layers, particles, keys, client payload handlers |
+
+| Group | Owns | Hooks the shared code already calls (neutral until filled in) |
+|---|---|---|
+| Motion (`MotionEffects`, `MotionClient`) | flag (all 11 flags of spec 5.6), impulse, teleport, deflect, detonate, visibility | `flag(host, name)` (read by `CarcassArmourItem.isEnderMask`, `makesPiglinsNeutral`, `canWalkOnPowderedSnow`), `canGlide` and `glideTick` (the chestplate's elytra hooks), `climbing`, `standsOn(minion, fluid)` and `silent` (`MinionEntity.onClimbable`, `canStandOnFluid`, `dampensVibrations`) |
+| Ranged (`RangedEffects`, `RangedClient`) | the vanilla adapter and our 7 actions (spec 5.5), the Bleeding mob effect ("Leaking" in bloodless mode, grey sparks instead of drips), the temporary_web and cooled_crust blocks, projectile, hitscan with its beam | minion ranged attacks go through `UseOrgan` (an activate effect with a `range`) or its own `minionGoals` |
+| Social (`SocialEffects`, `SocialClient`) | kin, sense, aura, pack, glow, and anything added to reaction | reaction's goals are handed out in `TraitEvents.onJoin`, which Social owns |
+| Upkeep (`UpkeepEffects`, `UpkeepClient`) | regen, mend, produce, storage, power, the rest of diet, lethal_save (a `DeathSaver`) | `drainMultiplier(minion)` (`MinionEntity.drain`), `extraSlots(minion)` (`MinionEntity.slots`), `interact(minion, player, hand)` (first thing in `MinionEntity.mobInteract`), `repairsWith(piece, repair)` (`CarcassArmourItem.isValidRepairItem`); graze in `TraitEvents.onUseBlock`, which Upkeep owns |
+
+**Shared files a group should still stay out of**: `TraitEvents`, `ActiveTraits`, `Activation`, `TraitEffect`,
+`TraitContext` and `TraitConditions` (ask for a change instead of making it, or add a hook to your own registrar);
+`MinionEntity` and `CarcassArmourItem` beyond the methods the table gives you. Traits are data files (one per trait,
+new files, so no clashes); a trait may be added to a mob group's lists, which is where two groups can meet: add to
+different lines. Two things are shared whatever is done:
+
+- `src/generated/resources/assets/bloodandbones/lang/en_us.json` (and `en_ud.json`) are written by `runData` from
+  every group's `lang()`: when branches merge, take either side and run `runData` again rather than merging by hand.
+- `assets/bloodandbones/sounds.json` is one hand-written file: play vanilla sounds pitched and layered (the owner's
+  choice) rather than adding sound events.
+
+Rules every effect keeps: player-facing words read right in bloodless mode (`BloodlessWords` softens blood words; add
+a `bloodless.` key where it needs more, as the Organ Ability's "Core Ability"); gory visuals have a clean version
+through the existing bloodless checks, not another logic path; new blocks are ordinary blocks that move on
+contraptions; an effect on a minion never destroys it (power it down instead: `MinionEntity.powerDown`); effects run on
+the server (`ctx.level()` is a ServerLevel), and movement a client predicts reads the same traits there through
+`ActiveTraits.of`, which notices a change of armour on either side.
+
+### 15.9 Review of the minion work (fixed)
 
 - A minion could turn on its maker (a sweep of the sword made it the last attacker, and the hurt-by goal now runs
   for every job); `MinionEntity.canAttack` leaves out its maker and its maker's other minions. A pacifist (no arm

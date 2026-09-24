@@ -131,12 +131,47 @@ public class CarcassArmourItem extends ArmorItem {
         }
     }
 
-    /** Scraps of the piece's own mob mend it on an anvil (not a raw hide or an organ stamped with that mob). */
+    /**
+     * Scraps of the piece's own mob mend it on an anvil (not a raw hide or an organ stamped with that mob), and
+     * whatever its traits add (mend).
+     */
     @Override
     public boolean isValidRepairItem(ItemStack armour, ItemStack repair) {
         CarcassArmour a = armour(armour);
         Source source = ScrapsItem.source(repair);
-        return a != null && source != null && source.entity().equals(a.body());
+        return a != null && source != null && source.entity().equals(a.body())
+                || a != null && com.avicagan.bloodandbones.parts.effect.UpkeepEffects.repairsWith(armour, repair);
+    }
+
+    // ---- flags that ride on the item (docs/PARTS-AND-TRAITS.md section 5.6), from the wearer's traits
+
+    /** An enderman's helmet: they do not mind being looked at (ender_mask). */
+    @Override
+    public boolean isEnderMask(ItemStack stack, Player player, net.minecraft.world.entity.monster.EnderMan enderman) {
+        return com.avicagan.bloodandbones.parts.effect.MotionEffects.flag(player, "ender_mask") > 0;
+    }
+
+    /** Piglins take its wearer for one of theirs (piglin_neutral). */
+    @Override
+    public boolean makesPiglinsNeutral(ItemStack stack, LivingEntity wearer) {
+        return com.avicagan.bloodandbones.parts.effect.MotionEffects.flag(wearer, "piglin_neutral") > 0;
+    }
+
+    /** Boots that walk on powder snow (powder_snow). */
+    @Override
+    public boolean canWalkOnPowderedSnow(ItemStack stack, LivingEntity wearer) {
+        return com.avicagan.bloodandbones.parts.effect.MotionEffects.flag(wearer, "powder_snow") > 0;
+    }
+
+    /** A chestplate that glides as an elytra does (glide); asked on both sides. */
+    @Override
+    public boolean canElytraFly(ItemStack stack, LivingEntity entity) {
+        return com.avicagan.bloodandbones.parts.effect.MotionEffects.canGlide(stack, entity);
+    }
+
+    @Override
+    public boolean elytraFlightTick(ItemStack stack, LivingEntity entity, int flightTicks) {
+        return com.avicagan.bloodandbones.parts.effect.MotionEffects.glideTick(stack, entity, flightTicks);
     }
 
     @Override
@@ -174,8 +209,20 @@ public class CarcassArmourItem extends ArmorItem {
                     com.avicagan.bloodandbones.registry.BBItems.backtank(tank).getDescription()).withStyle(ChatFormatting.GRAY));
             com.avicagan.bloodandbones.backtank.FluidBacktankItem.describeFluid(stack, tooltip);
         }
+        boolean described = false;
         for (TraitList.Resolved trait : armour.traits(store)) {
             tooltip.add(Traits.describe(store, trait).withStyle(ChatFormatting.DARK_AQUA));
+            // what it does, while Ctrl is held, for the traits that say
+            String description = Traits.descriptionKey(store, trait);
+            if (description != null) {
+                described = true;
+                if (flag.hasControlDown()) {
+                    tooltip.add(Component.literal("  ").append(Component.translatable(description)).withStyle(ChatFormatting.GRAY));
+                }
+            }
+        }
+        if (described && !flag.hasControlDown()) {
+            tooltip.add(Component.translatable("bloodandbones.carcass_armour.hold_ctrl").withStyle(ChatFormatting.DARK_GRAY));
         }
         store.resolve(armour.body(), armour.baby()).fullSet().ifPresent(set -> tooltip.add(Component.translatable("bloodandbones.carcass_armour.full_set",
                 Component.translatable(set.name())).withStyle(ChatFormatting.DARK_PURPLE)));

@@ -15,6 +15,17 @@ public final class BBClientSetup {
     private BBClientSetup() {
     }
 
+    /**
+     * The client side of the four groups of trait effects (docs/ARCHITECTURE-PROPOSAL.md section 15.8), each with its
+     * own renderers, layers, keys and payload handlers. Called from the mod's constructor, on a client only.
+     */
+    public static void initEffects(net.neoforged.bus.api.IEventBus modBus) {
+        com.avicagan.bloodandbones.client.effect.MotionClient.init(modBus);
+        com.avicagan.bloodandbones.client.effect.RangedClient.init(modBus);
+        com.avicagan.bloodandbones.client.effect.SocialClient.init(modBus);
+        com.avicagan.bloodandbones.client.effect.UpkeepClient.init(modBus);
+    }
+
     /** Mods → Blood & Bones → Config: NeoForge's own settings screen for the client and server settings. */
     public static void registerConfigScreen(net.neoforged.fml.ModContainer container) {
         container.registerExtensionPoint(net.neoforged.neoforge.client.gui.IConfigScreenFactory.class,
@@ -206,6 +217,7 @@ public final class BBClientSetup {
     public static void onKeys(net.neoforged.neoforge.client.event.RegisterKeyMappingsEvent event) {
         event.register(CyberClient.THROTTLE);
         event.register(CyberClient.NEXT_MODULE);
+        event.register(OrganAbilityClient.ORGAN_ABILITY);
     }
 
     /** The throttle's gauge by the crosshair, and what the Analytical Lens sees through walls. */

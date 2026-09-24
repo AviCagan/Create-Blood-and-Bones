@@ -46,5 +46,16 @@ public class BBNetwork {
                 (payload, context) -> context.enqueueWork(() -> com.avicagan.bloodandbones.parts.PartsData.receive(payload, context.player().registryAccess())));
         registrar.playToClient(ButcherySyncPayload.TYPE, ButcherySyncPayload.STREAM_CODEC,
                 (payload, context) -> context.enqueueWork(() -> com.avicagan.bloodandbones.carcass.butchery.ButcheryManager.receiveClientTables(payload.tables())));
+        registrar.playToServer(OrganActivatePayload.TYPE, OrganActivatePayload.STREAM_CODEC,
+                (payload, context) -> context.enqueueWork(() -> {
+                    if (context.player() instanceof net.minecraft.server.level.ServerPlayer player) {
+                        OrganActivatePayload.handle(player);
+                    }
+                }));
+        // the four groups of trait effects register their own
+        com.avicagan.bloodandbones.parts.effect.MotionEffects.payloads(registrar);
+        com.avicagan.bloodandbones.parts.effect.RangedEffects.payloads(registrar);
+        com.avicagan.bloodandbones.parts.effect.SocialEffects.payloads(registrar);
+        com.avicagan.bloodandbones.parts.effect.UpkeepEffects.payloads(registrar);
     }
 }

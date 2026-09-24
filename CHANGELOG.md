@@ -221,6 +221,19 @@ Everything below is in development builds only; the art is placeholder (see the 
   and 16 overlays keyed off tags (so a modded undead or aquatic mob joins in by the tags its author already
   set). About 100 traits, and 15 armour materials each with its own look (chitin, bone, ember, sculk, golem
   plate, scale, feather...), bloodless versions included.
+- Minions now have their parts' traits: a cow on its own legs is sure-footed and steps up blocks, a zombie torso
+  shrugs off poison, a fish's tail swims faster. An organ cut out of a mob can be stitched into a minion on the
+  Assembly Frame (a Cleaver takes it out again) for that organ's special.
+- The Organ Ability key (G by default, "Core Ability" in bloodless mode) fires the active abilities of the carcass
+  armour you wear, one piece after the next (helmet, chestplate, leggings, boots) with each press. Each has its own
+  cooldown, shown on the piece, and some cost blood from your backtank or the tank strapped to your chestplate. A
+  minion fires its organ's ability at what it fights, paying from its own blood. (The abilities themselves come
+  with the next traits.)
+- Traits work only where they belong: armour traits on players, minion traits on minions; a mob that picks up
+  carcass armour gets its armour points only. Traits can now depend on your health, your blood, what is near you
+  and how long you have been dry, and can act when you land or make a kill.
+- Server settings for traits: their strength, and effect types to switch off.
+- Hold Ctrl over a carcass piece to read what its traits do, for traits that say.
 
 ### Presentation
 
@@ -252,7 +265,7 @@ Everything below is in development builds only; the art is placeholder (see the 
   armour over a missing limb, still show in third person. Nothing is drawn on mobs that have been
   operated on.
 - Minions: only the cow, rabbit, zombie-shaped and villager heads have their own minion data so far;
-  other mobs' pieces work from their body shape's defaults. Organs in minions (and with them flesh's
-  produce and forage) and the herder job are still to come.
+  other mobs' pieces work from their body shape's defaults. Of the jobs, companion, courier, farmer,
+  bodyguard, guard and surgeon are built; the herder and the rest are still to come.
 - A half-built minion frame from a development build before the rebuild loses what had been fitted to it.
 - All art is placeholder (see the README).

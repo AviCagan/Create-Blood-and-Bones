@@ -161,6 +161,15 @@ public class SurgeryTableBlock extends Block implements IBE<SurgeryTableBlockEnt
             return com.avicagan.bloodandbones.minion.MinionAssembly.takeBack(server, table, player) ? ItemInteractionResult.CONSUME
                     : ItemInteractionResult.PASS_TO_DEFAULT_BLOCK_INTERACTION;
         }
+        if (table.build().isPresent() && com.avicagan.bloodandbones.parts.CarcassArmourFittingRecipe.organ(stack) != null) {
+            // an organ cut out of a mob goes inside: the minion's one special
+            Component name = stack.getHoverName();
+            if (com.avicagan.bloodandbones.minion.MinionAssembly.fitOrgan(server, table, stack, player)) {
+                stack.consume(1, player);
+                player.displayClientMessage(Component.translatable("bloodandbones.minion.organ_fitted", name), true);
+            }
+            return ItemInteractionResult.CONSUME;
+        }
         if (!stack.is(com.avicagan.bloodandbones.registry.BBItems.CARCASS_PIECE.get())) {
             return ItemInteractionResult.PASS_TO_DEFAULT_BLOCK_INTERACTION;
         }
@@ -279,6 +288,8 @@ public class SurgeryTableBlock extends Block implements IBE<SurgeryTableBlockEnt
                 for (var fitted : build.parts()) {
                     Block.popResource(level, pos, com.avicagan.bloodandbones.minion.MinionAssembly.pieceItem(fitted.piece(), 1.0F));
                 }
+                build.organ().map(com.avicagan.bloodandbones.parts.CarcassArmourFittingRecipe::organItem).filter(organ -> !organ.isEmpty())
+                        .ifPresent(organ -> Block.popResource(level, pos, organ));
             });
         }
         if (!state.is(newState.getBlock()) && itemOf(state.getValue(ATTACHMENT)) != null) {

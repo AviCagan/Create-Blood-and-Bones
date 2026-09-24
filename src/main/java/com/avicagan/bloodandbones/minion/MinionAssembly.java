@@ -7,6 +7,8 @@ import com.avicagan.bloodandbones.carcass.CarcassSavedData;
 import com.avicagan.bloodandbones.carcass.rig.Rig;
 import com.avicagan.bloodandbones.carcass.rig.RigManager;
 import com.avicagan.bloodandbones.item.CarcassPieceItem;
+import com.avicagan.bloodandbones.parts.CarcassArmour;
+import com.avicagan.bloodandbones.parts.CarcassArmourFittingRecipe;
 import com.avicagan.bloodandbones.parts.PartSlot;
 import com.avicagan.bloodandbones.parts.PartSlots;
 import com.avicagan.bloodandbones.parts.PartsData;
@@ -39,7 +41,8 @@ import java.util.UUID;
  * Building a minion on a Surgery Table with the Assembly Frame (docs/PARTS-AND-TRAITS.md section 6.2). The frame is
  * a torso: a carried one laid on the table, or a carcass lying over it claimed with an empty hand (a heavy body
  * can never be carried), whatever is still jointed to it coming along as parts already fitted. Pieces go into
- * the free socket they suit; a Cleaver takes back the last; a bucket of blood wakes it.
+ * the free socket they suit, an organ inside; a Cleaver takes back the organ, then the last piece; a bucket of blood
+ * wakes it.
  */
 public final class MinionAssembly {
     /** How far past the table's edges, and how high above it, a carcass counts as lying on it (the machines' rule). */
@@ -197,6 +200,28 @@ public final class MinionAssembly {
         return null;
     }
 
+    /**
+     * Put an organ cut out of a mob into the frame, its one special (its "minion" organ traits). One already in
+     * comes back out to the player. Flesh or brass alike: the organ goes inside.
+     *
+     * @return whether it went in (false: no frame, or not an organ of any mob)
+     */
+    public static boolean fitOrgan(ServerLevel level, SurgeryTableBlockEntity table, ItemStack held, Player player) {
+        Optional<MinionBuild> maybe = table.build();
+        CarcassArmour.Organ organ = CarcassArmourFittingRecipe.organ(held);
+        if (maybe.isEmpty() || organ == null) {
+            return false;
+        }
+        maybe.get().organ().map(CarcassArmourFittingRecipe::organItem).filter(back -> !back.isEmpty())
+                .ifPresent(back -> player.getInventory().placeItemBackInInventory(back));
+        table.setBuild(maybe.get().withOrgan(Optional.of(organ)));
+        level.playSound(null, table.getBlockPos(), SoundEvents.SLIME_BLOCK_PLACE, SoundSource.BLOCKS, 1.0F, 0.6F);
+        level.playSound(null, table.getBlockPos(), SoundEvents.HONEY_BLOCK_SLIDE, SoundSource.BLOCKS, 0.8F, 0.5F);
+        com.avicagan.bloodandbones.carcass.Blood.burst(level, new Vector3d(table.getBlockPos().getX() + 0.5, table.getBlockPos().getY() + 1.1,
+                table.getBlockPos().getZ() + 0.5), 6, false);
+        return true;
+    }
+
     /** The free socket for a piece of this slot: legs take the lowest, arms the highest, heads the head's. */
     @Nullable
     static MinionBody.Socket freeSocket(PartsData.Store store, MinionBuild build, PartSlot slot) {
@@ -225,7 +250,11 @@ public final class MinionAssembly {
         }
         MinionBuild build = maybe.get();
         ItemStack out;
-        if (!build.parts().isEmpty()) {
+        if (build.organ().isPresent()) {
+            // the organ, inside it all, comes out first
+            out = CarcassArmourFittingRecipe.organItem(build.organ().get());
+            table.setBuild(build.withOrgan(Optional.empty()));
+        } else if (!build.parts().isEmpty()) {
             out = pieceItem(build.parts().get(build.parts().size() - 1).piece(), 1.0F);
             table.setBuild(build.withoutLast());
         } else {
