@@ -18,9 +18,9 @@ import org.jetbrains.annotations.Nullable;
 import java.util.List;
 
 /**
- * The Backtank Port: to pipes on its nozzle side it is the backtank of whoever stands next to it with a
- * working Port Arm, so a Create pump pumping into it fills their tank and one pumping out of it empties
- * it. With nobody there it is shut.
+ * The Backtank Port: to pipes on its nozzle side it is the backtank of whoever crouches next to it with a
+ * Port Arm (crouching is plugging in: nobody is filled or emptied without meaning to be), so a Create pump
+ * pumping into it fills their tank and one pumping out of it empties it. With nobody there it is shut.
  */
 public class BacktankPortBlockEntity extends SmartBlockEntity {
     private final IFluidHandler handler = new Proxy();
@@ -39,7 +39,8 @@ public class BacktankPortBlockEntity extends SmartBlockEntity {
 
     /** Whether this player can plug into a port: a working Port Arm, and a backtank on. */
     public static boolean canUse(Player player) {
-        return BodyEffects.body(player).has(ImplantSpec.Ability.PORT, player) && !FluidBacktankItem.wornBy(player).isEmpty();
+        return !player.isSpectator() && player.isAlive() && BodyEffects.body(player).has(ImplantSpec.Ability.PORT, player)
+                && !FluidBacktankItem.wornBy(player).isEmpty();
     }
 
     /** The worn tank of a player who can use a port, as a fluid handler; null if they cannot. */
@@ -52,17 +53,27 @@ public class BacktankPortBlockEntity extends SmartBlockEntity {
         return tank.getCapability(Capabilities.FluidHandler.ITEM);
     }
 
+    private long lookedAt = Long.MIN_VALUE;
+    @Nullable
+    private Player plugged;
+
+    /** Who is plugged in: looked for once a tick, since Create asks the handler many times a tick. */
     private IFluidHandler target() {
         if (level == null) {
             return EmptyFluidHandler.INSTANCE;
         }
-        for (Player player : level.getEntitiesOfClass(Player.class, new AABB(worldPosition).inflate(1.0))) {
-            IFluidHandler tank = tankOf(player);
-            if (tank != null) {
-                return tank;
+        if (level.getGameTime() != lookedAt) {
+            lookedAt = level.getGameTime();
+            plugged = null;
+            for (Player player : level.getEntitiesOfClass(Player.class, new AABB(worldPosition).inflate(1.0))) {
+                if (player.isCrouching() && canUse(player)) {
+                    plugged = player;
+                    break;
+                }
             }
         }
-        return EmptyFluidHandler.INSTANCE;
+        IFluidHandler tank = plugged == null ? null : tankOf(plugged);
+        return tank == null ? EmptyFluidHandler.INSTANCE : tank;
     }
 
     private class Proxy implements IFluidHandler {

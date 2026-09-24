@@ -129,7 +129,7 @@ public class BBLang {
                 "When Use Is Held with an Empty Hand", "Sprays the tank ahead of you: _lava_ or fuel burns, _water_ puts fires out, _liquid experience_ gives experience, _milk_ clears effects, anything else spills.");
         item("port_arm",
                 "A _cybernetic_ arm with a pipe coupling for a hand. Needs nothing to run.",
-                "Next to a Backtank Port", "Plugs your worn tank into the _pipes_: pump into the port to fill it, out of it to empty it.");
+                "Crouching Next to a Backtank Port", "Plugs your worn tank into the _pipes_: pump into the port to fill it, out of it to empty it.");
         item("optic_eye",
                 "A _cybernetic_ eye with a red lens. Runs on _soul blood_.",
                 "While It Has Soul Blood", "You see in the _dark_. Dry, it sees nothing.");
@@ -141,7 +141,7 @@ public class BBLang {
                 "While They Have Soul Blood", "You breathe _underwater_. Dry, you are too winded to sprint.");
         item("furnace_stomach",
                 "An _organic_ stomach with a fire in it. Runs on _blood_.",
-                "While It Has Blood", "Nothing you eat makes you _sick_: no hunger, no poison. Dry, you cannot eat.");
+                "While It Has Blood", "Nothing you eat makes you _sick_: no hunger, no poison. Dry, you cannot eat (but you do not starve).");
         item("eye",
                 "Somebody's _eye_.",
                 "On a Surgery Table", "Goes back in where an eye is _missing_. With no working eye you are _blind_.");
@@ -153,10 +153,10 @@ public class BBLang {
                 "On a Surgery Table", "Go back in where lungs are _missing_. Without working lungs you cannot sprint.");
         item("stomach",
                 "Somebody's _stomach_.",
-                "On a Surgery Table", "Goes back in where a stomach is _missing_. Without a working stomach you cannot eat.");
+                "On a Surgery Table", "Goes back in where a stomach is _missing_. Without a working stomach you cannot eat, though you never starve.");
         block("backtank_port",
                 "A _port_ for a worn Fluid Backtank, like a pump with a direction. Pipes connect to its _nozzle_.",
-                "With a Port Arm", "Stand next to it with a working _Port Arm_ and a backtank on: to the pipes, the port _is_ your tank. Pump into it to fill, out of it to empty.");
+                "With a Port Arm", "_Crouch_ next to it with a _Port Arm_ and a backtank on to plug in: to the pipes, the port _is_ your tank. Pump into it to fill, out of it to empty.");
         BloodAndBones.REGISTRATE.addRawLang("bloodandbones.implant.runs_on", "Runs on %s: %s mB a second");
         BloodAndBones.REGISTRATE.addRawLang("bloodandbones.implant.runs_on_any", "Runs on whatever is in the tank, a shot at a time");
         BloodAndBones.REGISTRATE.addRawLang("bloodandbones.body.left_eye", "Left eye");

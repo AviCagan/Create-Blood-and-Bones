@@ -44,6 +44,8 @@ public final class Vent {
     /** How far the spray reaches, and how wide its cone is (cosine of the half angle). */
     public static final double RANGE = 8.0;
     private static final double CONE = Math.cos(Math.toRadians(20.0));
+    /** Millibuckets of liquid experience to a point, NeoForge's common rate. */
+    public static final int XP_MB = 20;
     /** Game ticks between shots. */
     private static final int GAP = 3;
     private static final Map<Player, Long> LAST = new WeakHashMap<>();
@@ -78,7 +80,7 @@ public final class Vent {
     public static boolean ready(Player player) {
         Body body = BodyEffects.body(player);
         BodyPart arm = BodyEffects.armFor(player, InteractionHand.MAIN_HAND);
-        return player.getMainHandItem().isEmpty() && body.works(arm, player) && body.state(arm) == Body.State.IMPLANT
+        return !player.isSpectator() && player.isAlive() && player.getMainHandItem().isEmpty() && body.works(arm, player) && body.state(arm) == Body.State.IMPLANT
                 && ((ImplantItem) body.implant(arm).getItem()).spec().ability() == ImplantSpec.Ability.VENT;
     }
 
@@ -108,8 +110,11 @@ public final class Vent {
         LAST.put(player, level.getGameTime());
         Vec3 eye = player.getEyePosition();
         Vec3 look = player.getLookAngle();
+        // other players only where the server allows fighting; never spectators
+        boolean pvp = level.getServer().isPvpAllowed();
         List<LivingEntity> hit = level.getEntitiesOfClass(LivingEntity.class, player.getBoundingBox().expandTowards(look.scale(RANGE)).inflate(1.5),
-                e -> e != player && e.isAlive() && inCone(eye, look, e.getBoundingBox().getCenter()));
+                e -> e != player && e.isAlive() && !e.isSpectator() && (pvp || !(e instanceof Player))
+                        && inCone(eye, look, e.getBoundingBox().getCenter()));
         Effect effect = effectOf(kind);
         switch (effect) {
             case FIRE -> {
@@ -121,7 +126,7 @@ public final class Vent {
                 hit.forEach(LivingEntity::clearFire);
                 for (double d = 1.0; d <= RANGE; d += 0.5) {
                     BlockPos at = BlockPos.containing(eye.add(look.scale(d)));
-                    if (level.getBlockState(at).getBlock() instanceof BaseFireBlock) {
+                    if (level.getBlockState(at).getBlock() instanceof BaseFireBlock && level.mayInteract(player, at)) {
                         level.removeBlock(at, false);
                     }
                 }
@@ -129,9 +134,12 @@ public final class Vent {
                 level.playSound(null, player.blockPosition(), SoundEvents.GENERIC_SPLASH, SoundSource.PLAYERS, 0.6F, 1.4F);
             }
             case EXPERIENCE -> {
-                // Enchantment Industry counts a millibucket of liquid experience as a point
+                // the common rate for liquid experience (NeoForge's c:experience tag): 20 mB a point
                 Vec3 at = eye.add(look.scale(2.0));
-                ExperienceOrb.award(level, at, taken);
+                int points = taken / XP_MB + (level.random.nextInt(XP_MB) < taken % XP_MB ? 1 : 0);
+                if (points > 0) {
+                    ExperienceOrb.award(level, at, points);
+                }
                 particles(level, eye, look, ParticleTypes.HAPPY_VILLAGER);
             }
             case CLEANSE -> {

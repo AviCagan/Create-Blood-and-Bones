@@ -60,6 +60,11 @@ public final class BodyRendering {
 
     @SubscribeEvent
     public static void onRenderPlayer(RenderPlayerEvent.Pre event) {
+        // anything left from a frame whose Post never came (another mod cancelled the render) is shown again
+        for (ModelPart part : HIDDEN) {
+            part.visible = true;
+        }
+        HIDDEN.clear();
         Body body = BodyEffects.body(event.getEntity());
         if (body.whole()) {
             return;

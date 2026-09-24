@@ -59,7 +59,7 @@ public class SurgeryTableBlock extends Block implements IBE<SurgeryTableBlockEnt
             return ItemInteractionResult.PASS_TO_DEFAULT_BLOCK_INTERACTION;
         }
         if (!level.isClientSide && table.put(stack)) {
-            stack.shrink(1);
+            stack.consume(1, player);
         }
         return ItemInteractionResult.sidedSuccess(level.isClientSide);
     }

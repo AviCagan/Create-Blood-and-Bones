@@ -168,6 +168,43 @@ public class ImplantTests {
         });
     }
 
+    /** No stomach: nothing can be eaten, but hunger never gets to starving. */
+    @GameTest(template = "empty", timeoutTicks = 20)
+    public static void noStomachNeverStarves(GameTestHelper helper) {
+        Player player = helper.makeMockPlayer(GameType.SURVIVAL);
+        BodyEffects.body(player).lose(BodyPart.STOMACH);
+        player.getFoodData().setFoodLevel(0);
+        BodyEffects.second(player);
+        if (player.getFoodData().getFoodLevel() < 1) {
+            helper.fail("Without a stomach hunger should stop short of starving");
+            return;
+        }
+        helper.succeed();
+    }
+
+    /** With no arms at all, anything can still be pushed onto the Surgery Table, so nobody is stuck. */
+    @GameTest(template = "empty", timeoutTicks = 20)
+    public static void armlessCanStillUseTheTable(GameTestHelper helper) {
+        helper.setBlock(new BlockPos(3, 2, 3), BBBlocks.SURGERY_TABLE.getDefaultState());
+        BlockPos at = helper.absolutePos(new BlockPos(3, 2, 3));
+        Player player = helper.makeMockPlayer(GameType.SURVIVAL);
+        BodyEffects.body(player).lose(BodyPart.LEFT_ARM);
+        BodyEffects.body(player).lose(BodyPart.RIGHT_ARM);
+        player.setItemInHand(net.minecraft.world.InteractionHand.MAIN_HAND, new ItemStack(BBItems.HOOK_HAND.get()));
+        var onTable = new net.neoforged.neoforge.event.entity.player.PlayerInteractEvent.RightClickBlock(player, net.minecraft.world.InteractionHand.MAIN_HAND, at,
+                new net.minecraft.world.phys.BlockHitResult(net.minecraft.world.phys.Vec3.atCenterOf(at), net.minecraft.core.Direction.UP, at, false));
+        BodyEffects.onUseOnBlock(onTable);
+        BlockPos floor = at.east(2).below();
+        var elsewhere = new net.neoforged.neoforge.event.entity.player.PlayerInteractEvent.RightClickBlock(player, net.minecraft.world.InteractionHand.MAIN_HAND, floor,
+                new net.minecraft.world.phys.BlockHitResult(net.minecraft.world.phys.Vec3.atCenterOf(floor), net.minecraft.core.Direction.UP, floor, false));
+        BodyEffects.onUseOnBlock(elsewhere);
+        if (onTable.isCanceled() || !elsewhere.isCanceled()) {
+            helper.fail("An armless player should still reach the table, and nothing else");
+            return;
+        }
+        helper.succeed();
+    }
+
     /** The port is a worn tank to pipes, only for someone with a Port Arm (which needs nothing to run, so an empty tank fills). */
     @GameTest(template = "empty", timeoutTicks = 20)
     public static void portArmOpensTheTank(GameTestHelper helper) {

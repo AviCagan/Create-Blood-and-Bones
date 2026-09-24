@@ -1034,3 +1034,21 @@ later. The head and torso cannot be taken.
   and arm (60% walking, half damage, the leg named for it); a cow's body and head organs and none from a
   skeleton; a Deployer taking all three organs.
 
+### 14.5 Review of slices 11a-11c (fixed)
+
+- A missing or dry stomach cancelled eating and so starved players to death on Hard; hunger now stops at
+  1 while the stomach does not work.
+- The Vent Arm counted liquid experience at a point a millibucket; NeoForge's `c:experience` rate is 20 mB
+  a point, and the higher rate made an experience loop with any collector. Now 20 mB a point.
+- A lone player could take both arms off and then push nothing onto the table; the hand check now skips
+  the Surgery Table, so a stump can always reach it.
+- The Vent now spares players where PvP is off, never touches spectators, needs `mayInteract` to put out
+  fires, and cannot be used by a spectator or the dead.
+- The Backtank Port plugged in anyone with a Port Arm who stood by it; now only a player crouching next to
+  it, and the search runs once a tick, not on every handler call.
+- Attribute modifiers were rebuilt every ten ticks, which marks the attribute dirty and sends it to every
+  watcher; now only a changed modifier is replaced. The render's hidden-parts list is cleared at each
+  frame's start in case another mod cancels the render before `Post`. The table no longer uses up items
+  in creative; night vision now lasts about ten seconds past a stopped Optic Eye.
+- Known: in third person a held item and armour are still drawn on a missing limb.
+

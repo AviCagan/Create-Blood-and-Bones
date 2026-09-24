@@ -124,9 +124,13 @@ public final class BodyEffects {
         if (attribute == null) {
             return;
         }
+        AttributeModifier current = attribute.getModifier(id);
         if (Math.abs(amount) < 1.0E-4F) {
-            attribute.removeModifier(id);
-        } else {
+            if (current != null) {
+                attribute.removeModifier(id);
+            }
+        } else if (current == null || current.amount() != amount || current.operation() != operation) {
+            // an unchanged modifier left alone, or the attribute would be sent to every watcher twice a second
             attribute.addOrUpdateTransientModifier(new AttributeModifier(id, amount, operation));
         }
     }
@@ -139,7 +143,8 @@ public final class BodyEffects {
     /**
      * Once a second, on the server: powered implants take their fuel from the worn tank, and the organs do
      * what they do. A heart that is gone or dead leaves you weak and slow (it does not kill); lungs, winded
-     * (no sprinting); no working eye, blind; no working stomach, you cannot eat.
+     * (no sprinting); no working eye, blind; no working stomach, you cannot eat, but hunger stops short of
+     * starving you.
      */
     public static void second(LivingEntity player) {
         Body body = body(player);
@@ -155,13 +160,18 @@ public final class BodyEffects {
             effect(player, net.minecraft.world.effect.MobEffects.MOVEMENT_SLOWDOWN, 1, 60);
         }
         if (body.has(ImplantSpec.Ability.NIGHT_VISION, player)) {
-            effect(player, net.minecraft.world.effect.MobEffects.NIGHT_VISION, 0, 260);
+            // just past the point where night vision starts to flicker, so it goes soon after the eye stops
+            effect(player, net.minecraft.world.effect.MobEffects.NIGHT_VISION, 0, 205);
         }
         if (body.has(ImplantSpec.Ability.REGENERATION, player)) {
             effect(player, net.minecraft.world.effect.MobEffects.REGENERATION, 0, 60);
         }
         if (body.has(ImplantSpec.Ability.WATER_BREATHING, player)) {
             effect(player, net.minecraft.world.effect.MobEffects.WATER_BREATHING, 0, 60);
+        }
+        if (!body.works(BodyPart.STOMACH, player) && player instanceof Player p && p.getFoodData().getFoodLevel() < 1) {
+            // it cannot eat, but it does not starve either: missing organs never kill
+            p.getFoodData().setFoodLevel(1);
         }
         if (body.has(ImplantSpec.Ability.IRON_GUT, player)) {
             player.removeEffect(net.minecraft.world.effect.MobEffects.HUNGER);
@@ -258,6 +268,10 @@ public final class BodyEffects {
 
     @SubscribeEvent
     public static void onUseOnBlock(PlayerInteractEvent.RightClickBlock event) {
+        // a stump can still push something onto the Surgery Table, so nobody is ever stuck without arms
+        if (event.getLevel().getBlockState(event.getPos()).getBlock() instanceof SurgeryTableBlock) {
+            return;
+        }
         if (!event.getItemStack().isEmpty() && !handWorks(event.getEntity(), event.getHand())) {
             event.setCanceled(true);
             event.setCancellationResult(InteractionResult.FAIL);

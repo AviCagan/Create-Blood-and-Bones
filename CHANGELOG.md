@@ -83,8 +83,8 @@ Everything below is in development builds only; the art is placeholder (see the 
   slower, one missing an arm hits softer. A carcass piece on the table gives up its organs to a Cleaver,
   one a cut (a body's heart, lungs and stomach, a head's eyes, named for the animal); a Deployer holding
   a Cleaver does it too, dropping them on the table.
-- Port Arm and Backtank Port: next to a port with a Port Arm, your tank is the port to the pipes, so a
-  pump fills or empties it.
+- Port Arm and Backtank Port: crouch next to a port with a Port Arm and your tank is the port to the
+  pipes, so a pump fills or empties it.
 
 ### The Fluid Backtank
 
@@ -120,6 +120,7 @@ Everything below is in development builds only; the art is placeholder (see the 
   at the one tick they looked). They now judge the middle value over the last second; the whole
   suite has passed every run made with that check (at least eleven), which is encouraging but not
   proof.
-- A patient on the Surgery Table is drawn sitting, not lying. An item held in a missing hand still
-  shows in third person.
+- A patient on the Surgery Table is drawn sitting, not lying. An item held in a missing hand, and
+  armour over a missing limb, still show in third person. Nothing is drawn on mobs that have been
+  operated on.
 - All art is placeholder (see the README).
