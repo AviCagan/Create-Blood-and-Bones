@@ -1,0 +1,20 @@
+{
+  "name": "trait.bloodandbones.purr",
+  "max_level": 1,
+  "effects": [
+    {
+      "trigger": "passive",
+      "effect": {
+        "type": "bloodandbones:aura",
+        "action": "mob_effect",
+        "effect": "minecraft:regeneration",
+        "duration": 100,
+        "radius": 4,
+        "interval": 200,
+        "filter": "allies",
+        "sound": "minecraft:entity.cat.purr",
+        "pitch": 0.9
+      }
+    }
+  ]
+}

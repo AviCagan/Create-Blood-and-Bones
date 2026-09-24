@@ -1,0 +1,21 @@
+{
+  "name": "trait.bloodandbones.fatigue_aura",
+  "max_level": 1,
+  "effects": [
+    {
+      "trigger": "passive",
+      "effect": {
+        "type": "bloodandbones:aura",
+        "action": "mob_effect",
+        "effect": "minecraft:mining_fatigue",
+        "amplifier": 1,
+        "duration": 1200,
+        "radius": 16,
+        "interval": 1200,
+        "filter": "hostile",
+        "sound": "minecraft:entity.elder_guardian.curse",
+        "pitch": 1.2
+      }
+    }
+  ]
+}

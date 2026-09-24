@@ -1,0 +1,26 @@
+{
+  "name": "trait.bloodandbones.roar",
+  "max_level": 1,
+  "effects": [
+    {
+      "trigger": "activate",
+      "cooldown": 400,
+      "range": 4,
+      "effect": {
+        "type": "bloodandbones:aura",
+        "action": "push",
+        "radius": 4,
+        "strength": 1.2,
+        "effect": "minecraft:slowness",
+        "amplifier": 1,
+        "duration": 60,
+        "filter": "others",
+        "sound": "minecraft:entity.ravager.roar",
+        "pitch": 1.1,
+        "particle": {
+          "type": "minecraft:spit"
+        }
+      }
+    }
+  ]
+}

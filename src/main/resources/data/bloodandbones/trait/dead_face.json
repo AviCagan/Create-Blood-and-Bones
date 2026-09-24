@@ -1,0 +1,14 @@
+{
+  "name": "trait.bloodandbones.dead_face",
+  "max_level": 1,
+  "effects": [
+    {
+      "trigger": "passive",
+      "effect": {
+        "type": "bloodandbones:kin",
+        "entities": "#minecraft:zombies",
+        "provoked_seconds": 30
+      }
+    }
+  ]
+}

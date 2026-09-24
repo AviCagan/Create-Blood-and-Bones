@@ -1,0 +1,20 @@
+{
+  "name": "trait.bloodandbones.horde_call",
+  "max_level": 1,
+  "effects": [
+    {
+      "trigger": "hurt",
+      "effect": {
+        "type": "bloodandbones:aura",
+        "action": "rally",
+        "radius": 16,
+        "filter": [
+          "allies",
+          "#minecraft:zombies"
+        ],
+        "sound": "minecraft:entity.zombified_piglin.angry",
+        "pitch": 0.8
+      }
+    }
+  ]
+}

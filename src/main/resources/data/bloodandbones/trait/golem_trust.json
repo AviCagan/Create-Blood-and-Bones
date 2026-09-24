@@ -1,0 +1,14 @@
+{
+  "name": "trait.bloodandbones.golem_trust",
+  "max_level": 1,
+  "effects": [
+    {
+      "trigger": "passive",
+      "effect": {
+        "type": "bloodandbones:reaction",
+        "entities": "bloodandbones:friendly_golem_trust",
+        "mode": "friendly"
+      }
+    }
+  ]
+}

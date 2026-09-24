@@ -1,0 +1,22 @@
+{
+  "name": "trait.bloodandbones.toxin_puff",
+  "max_level": 1,
+  "effects": [
+    {
+      "trigger": "passive",
+      "effect": {
+        "type": "bloodandbones:aura",
+        "action": "mob_effect",
+        "effect": "minecraft:poison",
+        "duration": 60,
+        "radius": 2,
+        "interval": 20,
+        "filter": "others",
+        "sound": "minecraft:entity.puffer_fish.sting",
+        "particle": {
+          "type": "minecraft:item_slime"
+        }
+      }
+    }
+  ]
+}

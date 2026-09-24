@@ -11,6 +11,14 @@
         "duration": 60,
         "target": "self"
       }
+    },
+    {
+      "trigger": "targeted",
+      "effect": {
+        "type": "bloodandbones:sense",
+        "kind": "alert",
+        "range": 16
+      }
     }
   ]
 }

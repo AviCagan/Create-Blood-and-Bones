@@ -1,0 +1,14 @@
+{
+  "name": "trait.bloodandbones.spectral_sight",
+  "max_level": 1,
+  "effects": [
+    {
+      "trigger": "passive",
+      "effect": {
+        "type": "bloodandbones:sense",
+        "kind": "see_invisible",
+        "range": 16
+      }
+    }
+  ]
+}

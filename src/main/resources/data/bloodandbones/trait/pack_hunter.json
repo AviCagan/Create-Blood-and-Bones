@@ -1,0 +1,19 @@
+{
+  "name": "trait.bloodandbones.pack_hunter",
+  "max_level": 1,
+  "effects": [
+    {
+      "trigger": "passive",
+      "effect": {
+        "type": "bloodandbones:pack",
+        "per_ally": 0.15,
+        "allies": [
+          "allies",
+          "family:canid"
+        ],
+        "radius": 8,
+        "cap": 3
+      }
+    }
+  ]
+}
