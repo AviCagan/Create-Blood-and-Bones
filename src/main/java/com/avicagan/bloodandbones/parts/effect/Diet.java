@@ -11,6 +11,7 @@ import net.minecraft.core.registries.Registries;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.sounds.SoundEvents;
+import net.minecraft.tags.BlockTags;
 import net.minecraft.tags.TagKey;
 import net.minecraft.world.InteractionHand;
 import net.minecraft.world.effect.MobEffect;
@@ -216,7 +217,8 @@ public final class Diet {
         for (TraitEffects.DietEffect diet : diets) {
             BlockState at = level.getBlockState(feet);
             BlockState below = level.getBlockState(under);
-            if (!at.isAir() && at.getCollisionShape(level, feet).isEmpty() && matches(diet.foods(), at)) {
+            // never a crop: a food named as an item (wheat) is also the crop's block, and a farm is not grazing
+            if (!at.isAir() && !at.is(BlockTags.CROPS) && at.getCollisionShape(level, feet).isEmpty() && matches(diet.foods(), at)) {
                 level.destroyBlock(feet, false, minion);
                 gulp(level, minion, new ItemStack(at.getBlock()), Math.min(diet.forageMb(), half - minion.power()));
                 return true;
