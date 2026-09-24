@@ -232,7 +232,7 @@ public class BBLang {
         for (String[] job : new String[][]{{"companion", "Companion"}, {"courier", "Courier"}, {"farmer", "Farmer"}, {"bodyguard", "Bodyguard"},
                 {"guard", "Guard"}, {"herder", "Herder"}, {"surgeon", "Surgeon"}, {"sentry", "Sentry"}, {"scavenger", "Scavenger"},
                 {"fisher", "Fisher"}, {"hunter", "Hunter"}, {"hauler", "Hauler"}, {"butcher", "Butcher"}, {"medic", "Medic"},
-                {"barterer", "Barterer"}, {"digger", "Digger"}}) {
+                {"barterer", "Barterer"}, {"digger", "Digger"}, {"sapper", "Sapper"}}) {
             BloodAndBones.REGISTRATE.addRawLang("bloodandbones.minion.job." + job[0], job[1]);
         }
         // a construct takes things apart rather than butchering them (brief rule 4)
@@ -548,6 +548,9 @@ public class BBLang {
         trait("still_mend", "Still Mend", "A minion standing still knits back 1 health every 4 seconds, for 5 mB of blood (brass never heals itself).");
         trait("dark_mend", "Dark Mend", "A minion in the dark knits back 1 health every 10 seconds, for 5 mB of blood (brass never heals itself).");
         trait("curable", "Curable", "Weakness never takes hold of you, and a golden apple gives you Absorption II.");
+        // the minion leftovers (docs/ARCHITECTURE-PROPOSAL.md section 15.17)
+        trait("sneeze", "Sneeze", "A minion with a weak panda's head sneezes every two minutes or so, for 5 mB of blood, and what comes out (slime, mostly) goes in with what it carries.");
+        trait("lava_soak", "Lava Soak", "In lava, fire and lava hurt you half as much.");
         // the four groups of trait effects add their own (docs/ARCHITECTURE-PROPOSAL.md section 15.8)
         com.avicagan.bloodandbones.parts.effect.MotionEffects.lang();
         com.avicagan.bloodandbones.parts.effect.RangedEffects.lang();

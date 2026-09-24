@@ -46,6 +46,7 @@ public final class MinionGoals {
      * home. Never its maker (MinionEntity#canAttack), and a pacifist (no arm that hits) takes no target at all.
      */
     static void targets(MinionEntity minion, GoalSelector targets) {
+        berserk(minion, targets);
         targets.addGoal(1, new HurtByTargetGoal(minion) {
             @Override
             public boolean canUse() {
@@ -56,12 +57,40 @@ public final class MinionGoals {
         targets.addGoal(3, new NearestAttackableTargetGoal<>(minion, Mob.class, 10, true, false,
                 target -> target instanceof Enemy && !(target instanceof MinionEntity) && target.distanceToSqr(Vec3.atCenterOf(minion.home())) < 256.0
                         && minion.filter().allows(minion.level(), target)) {
+            /** A guard's, and a sapper's: what it walks up to and blows up beside. */
             @Override
             public boolean canUse() {
-                return minion.hasJob("guard") && minion.stats().fights() && super.canUse();
+                return (minion.hasJob("guard") || minion.hasJob("sapper")) && minion.stats().fights() && super.canUse();
             }
 
             /** No further than its head notices things (a blind head: 4 blocks); asked first while it is being made. */
+            @Override
+            protected double getFollowDistance() {
+                return minion.build().isEmpty() ? super.getFollowDistance() : Math.min(super.getFollowDistance(), minion.stats().sight());
+            }
+        });
+    }
+
+    /** A number from its head's minion data, for the very head it has (its variants first); the fallback with no head. */
+    static float headScalar(MinionEntity minion, String field, float fallback) {
+        MinionBuild build = minion.build().orElse(null);
+        com.avicagan.bloodandbones.parts.PartsData.Store store = com.avicagan.bloodandbones.parts.PartsData.of(minion.level());
+        PieceRef head = build == null ? null : MinionStats.head(store, build);
+        return head == null ? fallback : MinionData.scalar(store.resolve(head.entity(), head.baby()), head.traits(), "head", field, fallback);
+    }
+
+    /**
+     * A berserk head (docs/PARTS-AND-TRAITS.md section 8.2: the zoglin, the killer bunny, a vindicator named Johnny) goes
+     * for any creature it can see nearby but its own side (MinionEntity#canAttack); players only when they hurt it.
+     */
+    static void berserk(MinionEntity minion, GoalSelector targets) {
+        targets.addGoal(3, new NearestAttackableTargetGoal<>(minion, Mob.class, 10, true, false,
+                target -> !(target instanceof MinionEntity other && other.makerId() != null && other.makerId().equals(minion.makerId()))) {
+            @Override
+            public boolean canUse() {
+                return !minion.build().isEmpty() && minion.stats().berserk() && !minion.stats().mindless() && minion.stats().fights() && super.canUse();
+            }
+
             @Override
             protected double getFollowDistance() {
                 return minion.build().isEmpty() ? super.getFollowDistance() : Math.min(super.getFollowDistance(), minion.stats().sight());
@@ -191,9 +220,9 @@ public final class MinionGoals {
 
         @Override
         public boolean canUse() {
-            // a pacifist (a villager's pair of arms and no bite of its own worth using) never attacks, and a sentry
-            // shoots from where it stands rather than closing in
-            return !minion.stats().mindless() && minion.stats().fights() && !minion.hasJob("sentry") && super.canUse();
+            // a pacifist (a villager's pair of arms and no bite of its own worth using) never attacks, a sentry shoots
+            // from where it stands rather than closing in, and a sapper walks up and blows itself up instead
+            return !minion.stats().mindless() && minion.stats().fights() && !minion.hasJob("sentry") && !minion.hasJob("sapper") && super.canUse();
         }
     }
 
@@ -495,6 +524,8 @@ public final class MinionGoals {
         /** Its table out of its reach (a door shut): it tries again after this. */
         private int restUntil;
         private final Approach approach = new Approach();
+        /** Ticks between the hearts it heals: five seconds, longer for a shaky surgeon (a zombie villager's head). */
+        private int every = 100;
 
         public AttendTable(MinionEntity minion) {
             this.minion = minion;
@@ -519,6 +550,8 @@ public final class MinionGoals {
         @Override
         public void start() {
             approach.reset(minion);
+            // its head's pace ("pace", 1 by default): a shaky surgeon's hands are slow
+            every = Math.max(20, Math.round(100.0F / Math.max(0.1F, headScalar(minion, "pace", 1.0F))));
         }
 
         @Nullable
@@ -569,8 +602,8 @@ public final class MinionGoals {
             net.minecraft.world.entity.LivingEntity patient = com.avicagan.bloodandbones.body.Surgery.patientAt(minion.level(), table);
             if (patient != null) {
                 minion.getLookControl().setLookAt(patient);
-                // it tends them: a heart every five seconds while they lie there hurt
-                if (minion.tickCount % 100 == 0 && patient.getHealth() < patient.getMaxHealth()) {
+                // it tends them: a heart every five seconds (a shaky surgeon slower) while they lie there hurt
+                if (minion.tickCount % every == 0 && patient.getHealth() < patient.getMaxHealth()) {
                     patient.heal(1.0F);
                     minion.swing(net.minecraft.world.InteractionHand.MAIN_HAND);
                 }

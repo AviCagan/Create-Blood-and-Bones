@@ -1,6 +1,7 @@
 {
   "signature": [
-    "organs.bloodandbones:curable_heart"
+    "organs.bloodandbones:curable_heart",
+    "parts.head"
   ],
   "organs": {
     "torso": {
@@ -17,6 +18,13 @@
       "armour": [
         "bloodandbones:curable"
       ]
+    }
+  },
+  "parts": {
+    "head": {
+      "minion": {
+        "pace": 0.5
+      }
     }
   }
 }

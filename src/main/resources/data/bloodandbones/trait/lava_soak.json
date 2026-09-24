@@ -1,0 +1,28 @@
+{
+  "name": "trait.bloodandbones.lava_soak",
+  "max_level": 1,
+  "effects": [
+    {
+      "trigger": "hurt",
+      "requirements": {
+        "condition": "minecraft:location_check",
+        "predicate": {
+          "fluid": {
+            "fluids": [
+              "minecraft:lava",
+              "minecraft:flowing_lava"
+            ]
+          }
+        }
+      },
+      "effect": {
+        "type": "bloodandbones:damage",
+        "direction": "in",
+        "multiplier": 0.5,
+        "damage_tags": [
+          "minecraft:is_fire"
+        ]
+      }
+    }
+  ]
+}

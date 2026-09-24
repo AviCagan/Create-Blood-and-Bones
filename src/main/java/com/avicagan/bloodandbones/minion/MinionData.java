@@ -88,25 +88,7 @@ public final class MinionData {
     }
 
     private static boolean matches(@org.jetbrains.annotations.Nullable JsonObject when, Map<String, String> traits) {
-        if (when == null || !when.has("trait")) {
-            return false;
-        }
-        String value = traits.get(when.get("trait").getAsString());
-        if (value == null) {
-            return false;
-        }
-        if (when.has("equals")) {
-            return value.equals(when.get("equals").getAsString());
-        }
-        if (when.has("in") && when.get("in").isJsonArray()) {
-            for (JsonElement e : when.getAsJsonArray("in")) {
-                if (value.equals(e.getAsString())) {
-                    return true;
-                }
-            }
-            return false;
-        }
-        return true;
+        return ResolvedMob.Variant.matches(when, traits);
     }
 
     public static float number(ResolvedMob mob, String key, String field, String inner, float fallback) {
@@ -154,6 +136,14 @@ public final class MinionData {
      * specific one's ("leg.hind"), each adding to or editing what the ones before gave.
      */
     public static List<TraitList.Resolved> traits(ResolvedMob mob, String key) {
+        return traits(mob, Map.of(), key);
+    }
+
+    /**
+     * The same for one particular piece: after each layer's own list, the "traits" of each of that layer's variants the
+     * piece's captured traits match, in order (a warm frog's legs are fireproof, a cold one's frost-guarded).
+     */
+    public static List<TraitList.Resolved> traits(ResolvedMob mob, Map<String, String> captured, String key) {
         List<String> keys = new ArrayList<>();
         int dot = key.indexOf('.');
         if (dot > 0) {
@@ -163,10 +153,16 @@ public final class MinionData {
         List<TraitList.Resolved> out = List.of();
         for (String k : keys) {
             for (JsonElement layer : mob.minion().getOrDefault(k, List.of())) {
-                if (layer.isJsonObject() && layer.getAsJsonObject().has("traits")) {
-                    TraitList list = TraitList.CODEC.parse(JsonOps.INSTANCE, layer.getAsJsonObject().get("traits")).result().orElse(null);
-                    if (list != null) {
-                        out = list.applyTo(out, mob.entity());
+                if (!layer.isJsonObject()) {
+                    continue;
+                }
+                JsonObject o = layer.getAsJsonObject();
+                out = applyTraits(o, out, mob);
+                if (!captured.isEmpty() && o.has("variants") && o.get("variants").isJsonArray()) {
+                    for (JsonElement variant : o.getAsJsonArray("variants")) {
+                        if (variant.isJsonObject() && matches(variant.getAsJsonObject().getAsJsonObject("if"), captured)) {
+                            out = applyTraits(variant.getAsJsonObject(), out, mob);
+                        }
                     }
                 }
             }
@@ -174,10 +170,20 @@ public final class MinionData {
         return out;
     }
 
+    /** An object's "traits" list applied to what came before (nothing if it has none, or it will not read). */
+    private static List<TraitList.Resolved> applyTraits(JsonObject o, List<TraitList.Resolved> before, ResolvedMob mob) {
+        if (!o.has("traits")) {
+            return before;
+        }
+        TraitList list = TraitList.CODEC.parse(JsonOps.INSTANCE, o.get("traits")).result().orElse(null);
+        return list == null ? before : list.applyTo(before, mob.entity());
+    }
+
     /**
      * Every source of a build's minion traits, one list each (docs/PARTS-AND-TRAITS.md section 6.4): the torso's, each
-     * fitted piece's for the slot it is (a rabbit's hind leg its "leg.hind" traits), and the organ's "minion" list. A
-     * piece whose mob has no rig gives nothing. Pure: data in, lists out.
+     * fitted piece's for the slot it is (a rabbit's hind leg its "leg.hind" traits), and the organ's "minion" list, each
+     * with what the variants its mob's captured traits match add. A piece whose mob has no rig gives nothing. Pure: data
+     * in, lists out.
      */
     public static List<List<TraitList.Resolved>> traits(PartsData.Store store, MinionBuild build) {
         List<List<TraitList.Resolved>> out = new ArrayList<>();
@@ -194,13 +200,14 @@ public final class MinionData {
                     case NECK -> "head";
                     default -> slot.key();
                 };
-                out.add(traits(store.resolve(piece.entity(), piece.baby()), key));
+                out.add(traits(store.resolve(piece.entity(), piece.baby()), piece.traits(), key));
             }
         }
         build.organ().ifPresent(organ -> {
-            ResolvedMob.Organ traits = store.resolve(organ.entity(), organ.baby()).organs().get(organ.organ());
-            if (traits != null) {
-                out.add(traits.minion());
+            ResolvedMob mob = store.resolve(organ.entity(), organ.baby());
+            if (mob.organs().containsKey(organ.organ())) {
+                // with what its variants add for the mob it came out of (a charged creeper's sac)
+                out.add(mob.organMinion(organ.organ(), organ.traits()));
             }
         });
         return out;

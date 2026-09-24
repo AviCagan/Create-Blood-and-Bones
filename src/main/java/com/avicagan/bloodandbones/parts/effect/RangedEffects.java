@@ -102,7 +102,7 @@ public final class RangedEffects {
         BBLang.bloodless("trait.bloodandbones.mauler.desc", "Your blows tear: 1 more damage, and the breach leaks for 3 seconds.");
         BBLang.trait("flinger", "Flinger", "Your blows fling what you hit up into the air, higher each level.");
         BBLang.trait("displacer", "Displacer", "Now and then a blow blinks what you hit off somewhere within 8 blocks.");
-        BBLang.trait("thief", "Thief", "Now and then a blow snatches what a mob holds (never a player's).");
+        BBLang.trait("thief", "Thief", "Now and then a blow snatches what a mob holds (never a player's); a minion's bite snatches it every time.");
         BBLang.trait("searing", "Searing", "Your blows set what you hit alight, 2 seconds a level.");
         // when hurt
         BBLang.trait("barbed", "Barbed", "Whatever hits you up close takes 1 damage a level from your spikes.");

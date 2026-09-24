@@ -1,0 +1,19 @@
+{
+  "parts": {
+    "head": {
+      "minion": {
+        "jobs": [
+          "bloodandbones:fisher",
+          "bloodandbones:courier",
+          "bloodandbones:companion"
+        ],
+        "no_tool": [
+          "bloodandbones:fisher"
+        ]
+      }
+    }
+  },
+  "signature": [
+    "parts.head"
+  ]
+}

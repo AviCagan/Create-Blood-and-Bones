@@ -3,7 +3,8 @@
     "organs.bloodandbones:powder_sac",
     "parts.head",
     "parts.torso",
-    "full_set"
+    "full_set",
+    "variants"
   ],
   "organs": {
     "torso": {
@@ -78,5 +79,29 @@
     "drawback": [
       "bloodandbones:cat_terror"
     ]
-  }
+  },
+  "variants": [
+    {
+      "if": {
+        "trait": "charged",
+        "equals": "true"
+      },
+      "organ_traits": {
+        "bloodandbones:powder_sac": {
+          "minion": [
+            {
+              "trait": "bloodandbones:self_destruct",
+              "level": 2
+            }
+          ],
+          "armour": [
+            {
+              "trait": "bloodandbones:blast",
+              "level": 2
+            }
+          ]
+        }
+      }
+    }
+  ]
 }

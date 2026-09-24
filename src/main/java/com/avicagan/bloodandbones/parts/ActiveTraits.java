@@ -285,8 +285,9 @@ public final class ActiveTraits {
                     add(store, levels, t);
                 }
             }
-            for (ResourceLocation hide : minion.hides()) {
-                for (TraitList.Resolved t : store.resolve(hide, false).hide()) {
+            for (com.avicagan.bloodandbones.minion.PieceRef hide : minion.hidePieces()) {
+                // with what its variants add (a snow fox's hide is insulated)
+                for (TraitList.Resolved t : store.resolve(hide.entity(), false).hide(hide.traits())) {
                     add(store, levels, t);
                 }
             }

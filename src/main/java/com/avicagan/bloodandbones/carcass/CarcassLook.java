@@ -47,12 +47,32 @@ public record CarcassLook(ResourceLocation texture, List<Coat> passes) {
     }
 
     /**
-     * Facts about the living mob that butchery yields and minion data can name: {wool} for an unsheared sheep's
-     * colour, a villager's (or zombie villager's) {profession}, which sets the jobs its head offers
-     * ("farmer"; a modded one by its full id).
+     * Facts about the living mob that butchery yields and minion data can name (docs/PARTS-AND-TRAITS.md section 9,
+     * slice 3): {wool} for an unsheared sheep's colour, a villager's (or zombie villager's) {profession}, which sets the
+     * jobs its head offers ("farmer"; a modded one by its full id), the {variant} of any mob that has one (a snow fox, a
+     * warm frog, the killer bunny "evil"; a modded one by its full id), a panda's {gene} (the one it shows), a creeper's
+     * {charged}, and the {name} it was given (a vindicator named Johnny).
      */
     public static Map<String, String> traits(LivingEntity entity) {
         Map<String, String> traits = new HashMap<>();
+        if (entity instanceof net.minecraft.world.entity.VariantHolder<?> holder) {
+            String variant = variantName(holder.getVariant());
+            if (variant != null) {
+                traits.put("variant", variant);
+            }
+        }
+        if (entity instanceof net.minecraft.world.entity.animal.Panda panda) {
+            traits.put("gene", panda.getVariant().getSerializedName());
+        }
+        if (entity instanceof net.minecraft.world.entity.monster.Creeper creeper && creeper.isPowered()) {
+            traits.put("charged", "true");
+        }
+        if (entity.hasCustomName() && entity.getCustomName() != null) {
+            String name = net.minecraft.ChatFormatting.stripFormatting(entity.getCustomName().getString());
+            if (name != null && !name.isBlank()) {
+                traits.put("name", name);
+            }
+        }
         if (entity instanceof Sheep sheep && !sheep.isSheared()) {
             traits.put("wool", sheep.getColor().getName());
         }
@@ -64,6 +84,19 @@ public record CarcassLook(ResourceLocation texture, List<Coat> passes) {
             traits.put("profession", profession.getNamespace().equals("minecraft") ? profession.getPath() : profession.toString());
         }
         return traits;
+    }
+
+    /** A variant as data names it: its own name, or its registry id's path (a vanilla one) or whole id (a modded one). */
+    @org.jetbrains.annotations.Nullable
+    private static String variantName(Object variant) {
+        if (variant instanceof net.minecraft.util.StringRepresentable named) {
+            return named.getSerializedName();
+        }
+        if (variant instanceof net.minecraft.core.Holder<?> holder) {
+            return holder.unwrapKey().map(key -> key.location().getNamespace().equals("minecraft") ? key.location().getPath() : key.location().toString())
+                    .orElse(null);
+        }
+        return null;
     }
 
     public static CarcassLook of(LivingEntity entity, Rig rig) {

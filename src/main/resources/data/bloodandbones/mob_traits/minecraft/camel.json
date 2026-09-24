@@ -16,7 +16,8 @@
       "minion": {
         "traits": [
           "bloodandbones:hump"
-        ]
+        ],
+        "seats": 2
       }
     },
     "leg": {
