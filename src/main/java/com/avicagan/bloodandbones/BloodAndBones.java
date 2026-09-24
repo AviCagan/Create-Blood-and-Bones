@@ -52,6 +52,7 @@ public class BloodAndBones {
         NeoForge.EVENT_BUS.register(com.avicagan.bloodandbones.cyber.Throttle.class);
         NeoForge.EVENT_BUS.register(com.avicagan.bloodandbones.cyber.ModuleActions.class);
         NeoForge.EVENT_BUS.register(com.avicagan.bloodandbones.cyber.SetBonus.class);
+        NeoForge.EVENT_BUS.register(com.avicagan.bloodandbones.parts.TraitEvents.class);
         NeoForge.EVENT_BUS.addListener((net.neoforged.neoforge.event.server.ServerStoppedEvent event) -> com.avicagan.bloodandbones.cyber.Coupler.clear());
         // an Analytical Lens reads machines as Create's goggles do
         com.simibubi.create.content.equipment.goggles.GogglesItem.addIsWearingPredicate(player ->
@@ -71,6 +72,9 @@ public class BloodAndBones {
         com.avicagan.bloodandbones.registry.BBSounds.register(modEventBus);
         com.avicagan.bloodandbones.body.BBAttachments.register(modEventBus);
         com.avicagan.bloodandbones.backtank.BBArmorMaterials.register(modEventBus);
+        com.avicagan.bloodandbones.registry.BBRecipes.register(modEventBus);
+        com.avicagan.bloodandbones.parts.TraitEffects.register(modEventBus);
+        com.avicagan.bloodandbones.registry.BBAttributes.register(modEventBus);
         modEventBus.addListener((net.neoforged.neoforge.registries.datamaps.RegisterDataMapTypesEvent event) -> event.register(com.avicagan.bloodandbones.body.Vent.EFFECTS));
 
         LOGGER.info("Create: Blood & Bones loaded");

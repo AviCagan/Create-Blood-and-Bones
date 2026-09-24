@@ -192,6 +192,25 @@ public class MachineTests {
         });
     }
 
+    /** The Mangler grinds a cow into armour scraps too, each knowing its mob and its part. */
+    @GameTest(template = "empty", timeoutTicks = 2400)
+    public static void mangledCowGivesPartScraps(GameTestHelper helper) {
+        setUp(helper, BBBlocks.MANGLER, EntityType.COW);
+        helper.succeedWhen(() -> {
+            IItemHandler output = helper.getLevel().getCapability(Capabilities.ItemHandler.BLOCK, helper.absolutePos(MACHINE), null);
+            boolean leg = false;
+            boolean torso = false;
+            for (int slot = 0; slot < output.getSlots(); slot++) {
+                com.avicagan.bloodandbones.parts.Source source = com.avicagan.bloodandbones.parts.ScrapsItem.source(output.getStackInSlot(slot));
+                if (source != null && source.entity().equals(net.minecraft.resources.ResourceLocation.withDefaultNamespace("cow"))) {
+                    leg |= source.part().equals("leg");
+                    torso |= source.part().equals("torso") && output.getStackInSlot(slot).getCount() >= 10;
+                }
+            }
+            helper.assertTrue(leg && torso, "no cow leg scraps and a stack of torso scraps in the output yet");
+        });
+    }
+
     /** The Mangler tears a cow apart and grinds the body into meat. */
     @GameTest(template = "empty", timeoutTicks = 1600)
     public static void manglerGrindsACow(GameTestHelper helper) {

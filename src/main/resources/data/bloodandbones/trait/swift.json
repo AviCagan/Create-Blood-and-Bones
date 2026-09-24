@@ -1,0 +1,19 @@
+{
+  "name": "trait.bloodandbones.swift",
+  "max_level": 4,
+  "effects": [
+    {
+      "effect": {
+        "type": "bloodandbones:attribute",
+        "attribute": "minecraft:generic.movement_speed",
+        "amount": {
+          "type": "minecraft:linear",
+          "base": 0.05,
+          "per_level_above_first": 0.05
+        },
+        "operation": "add_multiplied_base"
+      }
+    }
+  ],
+  "stacking": "sum"
+}

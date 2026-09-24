@@ -111,6 +111,17 @@ Everything below is in development builds only; the art is placeholder (see the 
   brass modules make the throttle a quarter cheaper and you hard to shove. Both kinds in one body get
   neither, and nothing worse.
 
+### Carcass armour (parts and traits, first slice)
+
+- The Mangler now also grinds every piece into armour scraps that remember their mob and part ("Cow Leg
+  Scraps"): more from a bigger piece, half again from a skinned one, half from a rotten one.
+- Scraps of one mob make carcass armour: five head scraps a helmet, four leg scraps boots, seven leggings.
+  The mob's family sets the material (a cow's is hide, a rabbit's sinew), and the mob's parts give traits:
+  cow boots have Hooves (soul sand and honey no longer slow you), rabbit leggings Springy II (jump higher, fall
+  softer), rabbit boots Fall Guard II (half fall damage). Mix mobs freely; a full set of one mob adds its bonus
+  and its drawback (the Warren: Springy IV and Light-Boned III, but Frail II and wolves, foxes and cats hunt you).
+- A new attribute, Drag Strength, makes dragging carcasses easier (a full cow set gives 45%).
+
 ### The Fluid Backtank
 
 - Seven tiers worn in the chest slot, each with its own armour: copper (2 buckets), gold (3), iron

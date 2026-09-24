@@ -1,0 +1,14 @@
+{
+  "name": "trait.bloodandbones.cud_chewer",
+  "max_level": 1,
+  "effects": [
+    {
+      "trigger": "passive",
+      "effect": {
+        "type": "bloodandbones:diet",
+        "effect": "graze",
+        "hunger": 1
+      }
+    }
+  ]
+}

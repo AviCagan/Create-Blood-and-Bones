@@ -140,6 +140,21 @@ public class BBItems {
     public static final ItemEntry<com.avicagan.bloodandbones.body.ImplantItem> FURNACE_STOMACH = implant("furnace_stomach", "Furnace Stomach",
             powered(com.avicagan.bloodandbones.body.BodyPart.Kind.STOMACH, "blood", 1, 1.0F, 1.0F, 1.0F, 0.0F, 0.0F, 0.0F, com.avicagan.bloodandbones.body.ImplantSpec.Ability.IRON_GUT, null));
 
+    // ---- carcass armour: scraps from the Mangler, and the four pieces made of them (docs/PARTS-AND-TRAITS.md)
+    public static final ItemEntry<com.avicagan.bloodandbones.parts.ScrapsItem> SCRAPS = BloodAndBones.REGISTRATE
+            .item("scraps", com.avicagan.bloodandbones.parts.ScrapsItem::new)
+            .model(NonNullBiConsumer.noop())
+            .lang("Scraps")
+            .register();
+    public static final ItemEntry<com.avicagan.bloodandbones.parts.CarcassArmourItem> CARCASS_HELMET = carcassArmour("carcass_helmet", "Carcass Helmet", net.minecraft.world.item.ArmorItem.Type.HELMET);
+    public static final ItemEntry<com.avicagan.bloodandbones.parts.CarcassArmourItem> CARCASS_CHESTPLATE = carcassArmour("carcass_chestplate", "Carcass Chestplate", net.minecraft.world.item.ArmorItem.Type.CHESTPLATE);
+    public static final ItemEntry<com.avicagan.bloodandbones.parts.CarcassArmourItem> CARCASS_LEGGINGS = carcassArmour("carcass_leggings", "Carcass Leggings", net.minecraft.world.item.ArmorItem.Type.LEGGINGS);
+    public static final ItemEntry<com.avicagan.bloodandbones.parts.CarcassArmourItem> CARCASS_BOOTS = carcassArmour("carcass_boots", "Carcass Boots", net.minecraft.world.item.ArmorItem.Type.BOOTS);
+
+    private static ItemEntry<com.avicagan.bloodandbones.parts.CarcassArmourItem> carcassArmour(String id, String name, net.minecraft.world.item.ArmorItem.Type type) {
+        return BloodAndBones.REGISTRATE.item(id, p -> new com.avicagan.bloodandbones.parts.CarcassArmourItem(p, type)).model(NonNullBiConsumer.noop()).lang(name).register();
+    }
+
     // ---- cybernetic modules, fitted into brass limbs' slots at the Surgery Table
     public static final java.util.Map<com.avicagan.bloodandbones.cyber.Module, ItemEntry<com.avicagan.bloodandbones.cyber.ModuleItem>> MODULES = modules();
 

@@ -1,0 +1,69 @@
+{
+  "kind": "archetype",
+  "priority": 0,
+  "members": [
+    "minecraft:cow",
+    "minecraft:mooshroom",
+    "minecraft:pig",
+    "minecraft:sheep",
+    "minecraft:goat",
+    "minecraft:llama",
+    "minecraft:trader_llama",
+    "minecraft:camel",
+    "minecraft:horse",
+    "minecraft:donkey",
+    "minecraft:mule",
+    "minecraft:skeleton_horse",
+    "minecraft:zombie_horse",
+    "minecraft:hoglin",
+    "minecraft:zoglin",
+    "minecraft:polar_bear",
+    "minecraft:panda",
+    "minecraft:wolf",
+    "minecraft:fox",
+    "minecraft:cat",
+    "minecraft:ocelot",
+    "minecraft:rabbit",
+    "minecraft:armadillo",
+    "minecraft:turtle",
+    "minecraft:creeper",
+    "minecraft:ravager",
+    "minecraft:sniffer",
+    "minecraft:axolotl"
+  ],
+  "scrap_material": "bloodandbones:gristle",
+  "parts": {
+    "torso": {
+      "armour": [
+        "bloodandbones:hardy"
+      ]
+    },
+    "head": {
+      "armour": [
+        "bloodandbones:steady"
+      ]
+    },
+    "leg": {
+      "armour": [
+        "bloodandbones:swift"
+      ]
+    },
+    "tail": {
+      "armour": [
+        "bloodandbones:swift"
+      ]
+    }
+  },
+  "full_set": {
+    "name": "set.bloodandbones.beast",
+    "bonus": [
+      {
+        "trait": "bloodandbones:hardy",
+        "level": 2
+      }
+    ],
+    "drawback": [
+      "bloodandbones:sluggish"
+    ]
+  }
+}

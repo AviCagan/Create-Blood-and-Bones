@@ -1,0 +1,45 @@
+{
+  "signature": [
+    "parts.leg.hind"
+  ],
+  "parts": {
+    "leg.hind": {
+      "armour": {
+        "leggings": [
+          {
+            "trait": "bloodandbones:springy",
+            "level": 2
+          }
+        ],
+        "boots": [
+          {
+            "trait": "bloodandbones:fall_guard",
+            "level": 2
+          },
+          "bloodandbones:swift"
+        ]
+      }
+    }
+  },
+  "full_set": {
+    "replace": true,
+    "name": "set.bloodandbones.warren",
+    "bonus": [
+      {
+        "trait": "bloodandbones:springy",
+        "level": 4
+      },
+      {
+        "trait": "bloodandbones:light_boned",
+        "level": 3
+      }
+    ],
+    "drawback": [
+      {
+        "trait": "bloodandbones:frail",
+        "level": 2
+      },
+      "bloodandbones:prey"
+    ]
+  }
+}

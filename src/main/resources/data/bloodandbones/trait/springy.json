@@ -1,0 +1,28 @@
+{
+  "name": "trait.bloodandbones.springy",
+  "max_level": 4,
+  "effects": [
+    {
+      "effect": {
+        "type": "bloodandbones:attribute",
+        "attribute": "minecraft:generic.jump_strength",
+        "amount": {
+          "type": "minecraft:linear",
+          "base": 0.08,
+          "per_level_above_first": 0.08
+        }
+      }
+    },
+    {
+      "effect": {
+        "type": "bloodandbones:attribute",
+        "attribute": "minecraft:generic.safe_fall_distance",
+        "amount": {
+          "type": "minecraft:linear",
+          "base": 1,
+          "per_level_above_first": 1
+        }
+      }
+    }
+  ]
+}

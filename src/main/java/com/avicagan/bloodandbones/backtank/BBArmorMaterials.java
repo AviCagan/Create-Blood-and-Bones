@@ -34,6 +34,19 @@ public final class BBArmorMaterials {
         }
     }
 
+    /**
+     * Carcass armour's material: no defence of its own, since every number comes from the scraps' data
+     * (parts.CarcassArmourItem); the layer is only a default, each look has its own texture.
+     */
+    public static final Holder<ArmorMaterial> CARCASS = MATERIALS.register("carcass", () -> {
+        EnumMap<ArmorItem.Type, Integer> defense = new EnumMap<>(ArmorItem.Type.class);
+        for (ArmorItem.Type type : ArmorItem.Type.values()) {
+            defense.put(type, 0);
+        }
+        return new ArmorMaterial(defense, 10, SoundEvents.ARMOR_EQUIP_LEATHER, () -> Ingredient.EMPTY,
+                List.of(new ArmorMaterial.Layer(BloodAndBones.asResource("carcass_hide"))), 0.0F, 0.0F);
+    });
+
     private BBArmorMaterials() {
     }
 

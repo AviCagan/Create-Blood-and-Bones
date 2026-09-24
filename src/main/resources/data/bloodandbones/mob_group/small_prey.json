@@ -1,0 +1,35 @@
+{
+  "kind": "family",
+  "priority": 100,
+  "members": [
+    "minecraft:rabbit",
+    "#bloodandbones:family/small_prey"
+  ],
+  "scrap_material": "bloodandbones:sinew",
+  "colour": "#a08060",
+  "parts": {
+    "head": {
+      "armour": [
+        "bloodandbones:alert"
+      ]
+    },
+    "torso": {
+      "armour": [
+        "bloodandbones:light_boned"
+      ]
+    },
+    "leg": {
+      "armour": {
+        "leggings": [
+          "bloodandbones:springy"
+        ],
+        "boots": [
+          "bloodandbones:swift"
+        ]
+      }
+    }
+  },
+  "hide": [
+    "bloodandbones:swift"
+  ]
+}

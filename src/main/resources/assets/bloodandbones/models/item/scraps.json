@@ -1,0 +1,79 @@
+{
+  "parent": "minecraft:item/generated",
+  "textures": {
+    "layer0": "bloodandbones:item/scraps_torso",
+    "layer1": "bloodandbones:item/scraps_torso_gore"
+  },
+  "overrides": [
+    {
+      "predicate": {
+        "bloodandbones:part": 0.0,
+        "bloodandbones:bloodless": 0
+      },
+      "model": "bloodandbones:item/scraps_head"
+    },
+    {
+      "predicate": {
+        "bloodandbones:part": 0.0,
+        "bloodandbones:bloodless": 1
+      },
+      "model": "bloodandbones:item/scraps_head_clean"
+    },
+    {
+      "predicate": {
+        "bloodandbones:part": 0.25,
+        "bloodandbones:bloodless": 0
+      },
+      "model": "bloodandbones:item/scraps_torso"
+    },
+    {
+      "predicate": {
+        "bloodandbones:part": 0.25,
+        "bloodandbones:bloodless": 1
+      },
+      "model": "bloodandbones:item/scraps_torso_clean"
+    },
+    {
+      "predicate": {
+        "bloodandbones:part": 0.5,
+        "bloodandbones:bloodless": 0
+      },
+      "model": "bloodandbones:item/scraps_arm"
+    },
+    {
+      "predicate": {
+        "bloodandbones:part": 0.5,
+        "bloodandbones:bloodless": 1
+      },
+      "model": "bloodandbones:item/scraps_arm_clean"
+    },
+    {
+      "predicate": {
+        "bloodandbones:part": 0.75,
+        "bloodandbones:bloodless": 0
+      },
+      "model": "bloodandbones:item/scraps_leg"
+    },
+    {
+      "predicate": {
+        "bloodandbones:part": 0.75,
+        "bloodandbones:bloodless": 1
+      },
+      "model": "bloodandbones:item/scraps_leg_clean"
+    },
+    {
+      "predicate": {
+        "bloodandbones:part": 1.0,
+        "bloodandbones:bloodless": 0
+      },
+      "model": "bloodandbones:item/scraps_tail"
+    },
+    {
+      "predicate": {
+        "bloodandbones:part": 1.0,
+        "bloodandbones:bloodless": 1
+      },
+      "model": "bloodandbones:item/scraps_tail_clean"
+    }
+  ]
+}

@@ -1,0 +1,7 @@
+{
+  "parent": "minecraft:item/generated",
+  "textures": {
+    "layer0": "bloodandbones:item/carcass_boots",
+    "layer1": "bloodandbones:item/carcass_boots_clean"
+  }
+}

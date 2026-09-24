@@ -302,7 +302,7 @@ public class CarcassMachineBlockEntity extends KineticBlockEntity implements Cle
             }
         }
         String cutting = bone;
-        return capture(() -> CarcassButchery.cut(level, null, carcass, cutting, target.at()));
+        return CarcassButchery.mangling(this::store, () -> CarcassButchery.cut(level, null, carcass, cutting, target.at()));
     }
 
     /** One blade stroke through a limb's joint: it comes off at once. */

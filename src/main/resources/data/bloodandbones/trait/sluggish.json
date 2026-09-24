@@ -1,0 +1,18 @@
+{
+  "name": "trait.bloodandbones.sluggish",
+  "max_level": 3,
+  "effects": [
+    {
+      "effect": {
+        "type": "bloodandbones:attribute",
+        "attribute": "minecraft:generic.movement_speed",
+        "amount": {
+          "type": "minecraft:linear",
+          "base": -0.05,
+          "per_level_above_first": -0.05
+        },
+        "operation": "add_multiplied_base"
+      }
+    }
+  ]
+}

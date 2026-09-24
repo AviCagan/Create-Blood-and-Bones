@@ -441,7 +441,10 @@ public final class CarcassDrag {
             return;
         }
         speed.removeModifier(SLOWDOWN_ID);
-        speed.addTransientModifier(new AttributeModifier(SLOWDOWN_ID, -penalty, AttributeModifier.Operation.ADD_MULTIPLIED_TOTAL));
+        // a strong hauler (the drag strength traits give) feels less of it
+        AttributeInstance strength = player.getAttribute(com.avicagan.bloodandbones.registry.BBAttributes.DRAG_STRENGTH);
+        float eased = strength == null ? penalty : penalty * (1.0F - (float) Math.min(0.75, strength.getValue()));
+        speed.addTransientModifier(new AttributeModifier(SLOWDOWN_ID, -eased, AttributeModifier.Operation.ADD_MULTIPLIED_TOTAL));
     }
 
     private static void removeSlowdown(Player player) {

@@ -1,0 +1,12 @@
+{
+  "look": "gristle",
+  "armour": {
+    "helmet": 1,
+    "chestplate": 3,
+    "leggings": 2,
+    "boots": 1
+  },
+  "durability": 9,
+  "enchantability": 10,
+  "density": 24
+}

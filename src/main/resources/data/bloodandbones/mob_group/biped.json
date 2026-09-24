@@ -1,0 +1,60 @@
+{
+  "kind": "archetype",
+  "priority": 0,
+  "members": [
+    "minecraft:zombie",
+    "minecraft:husk",
+    "minecraft:drowned",
+    "minecraft:skeleton",
+    "minecraft:stray",
+    "minecraft:bogged",
+    "minecraft:wither_skeleton",
+    "minecraft:piglin",
+    "minecraft:piglin_brute",
+    "minecraft:zombified_piglin",
+    "minecraft:zombie_villager",
+    "minecraft:pillager",
+    "minecraft:vindicator",
+    "minecraft:evoker",
+    "minecraft:illusioner",
+    "minecraft:villager",
+    "minecraft:wandering_trader",
+    "minecraft:witch",
+    "minecraft:enderman",
+    "minecraft:iron_golem",
+    "minecraft:warden",
+    "minecraft:snow_golem",
+    "minecraft:frog",
+    "minecraft:strider"
+  ],
+  "scrap_material": "bloodandbones:gristle",
+  "parts": {
+    "torso": {
+      "armour": [
+        "bloodandbones:hardy"
+      ]
+    },
+    "head": {
+      "armour": [
+        "bloodandbones:steady"
+      ]
+    },
+    "leg": {
+      "armour": [
+        "bloodandbones:swift"
+      ]
+    }
+  },
+  "full_set": {
+    "name": "set.bloodandbones.beast",
+    "bonus": [
+      {
+        "trait": "bloodandbones:hardy",
+        "level": 2
+      }
+    ],
+    "drawback": [
+      "bloodandbones:sluggish"
+    ]
+  }
+}

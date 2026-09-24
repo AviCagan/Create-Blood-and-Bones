@@ -1,0 +1,17 @@
+{
+  "name": "trait.bloodandbones.thick_hide",
+  "max_level": 3,
+  "effects": [
+    {
+      "effect": {
+        "type": "bloodandbones:attribute",
+        "attribute": "minecraft:generic.armor",
+        "amount": {
+          "type": "minecraft:linear",
+          "base": 1,
+          "per_level_above_first": 1
+        }
+      }
+    }
+  ]
+}

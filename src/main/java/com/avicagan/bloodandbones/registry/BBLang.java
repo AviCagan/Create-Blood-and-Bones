@@ -267,6 +267,47 @@ public class BBLang {
         BloodAndBones.REGISTRATE.addRawLang("bloodandbones.lens.speed", "Speed: %s RPM");
         BloodAndBones.REGISTRATE.addRawLang("bloodandbones.lens.stress", "Network stress: %s of %s su");
         BloodAndBones.REGISTRATE.addRawLang("bloodandbones.lens.overstressed", "Overstressed");
+        // ---- parts and traits: scraps and carcass armour
+        item("scraps",
+                "What the _Mangler_ grinds a piece of carcass into, keeping which _mob_ and which _part_ it was.",
+                "In a Crafting Grid", "Scraps of one mob make _carcass armour_: head scraps a helmet, leg scraps leggings and boots. The mob decides the armour's material and its _traits_.");
+        for (String piece : new String[]{"helmet", "leggings", "boots", "chestplate"}) {
+            item("carcass_" + piece,
+                    "Armour of _scraps_ from the Mangler. Its _material_ comes from the family of the mob it was made of, its _traits_ from that mob's parts.",
+                    "When Worn", "Every mob's parts do something different: _mix_ them freely. A full set from _one_ mob adds that mob's bonus, and its drawback.");
+        }
+        BloodAndBones.REGISTRATE.addRawLang("item.bloodandbones.scraps.named", "%s %s Scraps");
+        BloodAndBones.REGISTRATE.addRawLang("bloodless.item.bloodandbones.scraps.named", "%s %s Salvage");
+        BloodAndBones.REGISTRATE.addRawLang("item.bloodandbones.carcass_armour.named", "%s %s %s");
+        BloodAndBones.REGISTRATE.addRawLang("bloodless.item.bloodandbones.carcass_armour.named", "%1$s Plated %3$s");
+        for (String part : new String[]{"head", "torso", "arm", "leg", "tail"}) {
+            BloodAndBones.REGISTRATE.addRawLang("bloodandbones.part." + part, Character.toUpperCase(part.charAt(0)) + part.substring(1));
+        }
+        for (String piece : new String[]{"helmet", "chestplate", "leggings", "boots"}) {
+            BloodAndBones.REGISTRATE.addRawLang("bloodandbones.piece." + piece, Character.toUpperCase(piece.charAt(0)) + piece.substring(1));
+        }
+        BloodAndBones.REGISTRATE.addRawLang("scrap_material.bloodandbones.hide_plate", "Hide");
+        BloodAndBones.REGISTRATE.addRawLang("scrap_material.bloodandbones.sinew", "Sinew");
+        BloodAndBones.REGISTRATE.addRawLang("scrap_material.bloodandbones.gristle", "Gristle");
+        BloodAndBones.REGISTRATE.addRawLang("bloodandbones.carcass_armour.body", "Made from: %s");
+        BloodAndBones.REGISTRATE.addRawLang("bloodandbones.carcass_armour.shoulders", "Shoulders: %s");
+        BloodAndBones.REGISTRATE.addRawLang("bloodandbones.carcass_armour.hips", "Hips: %s");
+        BloodAndBones.REGISTRATE.addRawLang("bloodandbones.carcass_armour.hide", "Hide: %s");
+        BloodAndBones.REGISTRATE.addRawLang("bloodless.bloodandbones.carcass_armour.hide", "Covering: %s");
+        BloodAndBones.REGISTRATE.addRawLang("bloodandbones.carcass_armour.full_set", "A full set of one mob: %s");
+        BloodAndBones.REGISTRATE.addRawLang("set.bloodandbones.beast", "Beast");
+        BloodAndBones.REGISTRATE.addRawLang("set.bloodandbones.herd_beast", "Herd Beast");
+        BloodAndBones.REGISTRATE.addRawLang("set.bloodandbones.warren", "Warren");
+        BloodAndBones.REGISTRATE.addRawLang("set.bloodandbones.pure", "Pure Set");
+        BloodAndBones.REGISTRATE.addRawLang("attribute.bloodandbones.drag_strength", "Drag Strength");
+        String[][] traits = {
+                {"hardy", "Hardy"}, {"frail", "Frail"}, {"swift", "Swift"}, {"sluggish", "Sluggish"}, {"steady", "Steady"}, {"sturdy", "Sturdy"},
+                {"barrel_chest", "Barrel Chest"}, {"hooves", "Hooves"}, {"thick_hide", "Thick Hide"}, {"hauler", "Hauler"}, {"meek", "Meek"},
+                {"springy", "Springy"}, {"light_boned", "Light-Boned"}, {"fall_guard", "Fall Guard"}, {"cud_chewer", "Cud Chewer"},
+                {"alert", "Alert"}, {"prey", "Prey"}};
+        for (String[] trait : traits) {
+            BloodAndBones.REGISTRATE.addRawLang("trait.bloodandbones." + trait[0], trait[1]);
+        }
         BloodAndBones.REGISTRATE.addRawLang("bloodandbones.set_bonus.flesh", "Flesh set: you heal from what you hit, and rot half as fast");
         BloodAndBones.REGISTRATE.addRawLang("bloodandbones.set_bonus.brass", "Brass set: the throttle costs a quarter less, and you are hard to shove");
         BloodAndBones.REGISTRATE.addRawLang("bloodandbones.surgery.nothing", "Nothing on the table can do that");

@@ -1,0 +1,17 @@
+{
+  "name": "trait.bloodandbones.steady",
+  "max_level": 3,
+  "effects": [
+    {
+      "effect": {
+        "type": "bloodandbones:attribute",
+        "attribute": "minecraft:generic.knockback_resistance",
+        "amount": {
+          "type": "minecraft:linear",
+          "base": 0.1,
+          "per_level_above_first": 0.1
+        }
+      }
+    }
+  ]
+}

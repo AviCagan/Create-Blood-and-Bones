@@ -1,0 +1,19 @@
+{
+  "look": "sinew",
+  "armour": {
+    "helmet": 1,
+    "chestplate": 3,
+    "leggings": 2,
+    "boots": 1
+  },
+  "durability": 10,
+  "enchantability": 15,
+  "density": 24,
+  "quirk": [
+    {
+      "attribute": "minecraft:generic.movement_speed",
+      "amount": 0.02,
+      "operation": "add_multiplied_base"
+    }
+  ]
+}

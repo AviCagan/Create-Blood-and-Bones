@@ -1,0 +1,17 @@
+{
+  "type": "bloodandbones:carcass_armour",
+  "category": "equipment",
+  "piece": "boots",
+  "pattern": [
+    "L L",
+    "L L"
+  ],
+  "key": {
+    "L": {
+      "item": "bloodandbones:scraps"
+    }
+  },
+  "result": {
+    "id": "bloodandbones:carcass_boots"
+  }
+}

@@ -37,6 +37,14 @@ public final class BBDataComponents {
             builder -> builder.persistent(com.avicagan.bloodandbones.cyber.Module.CODEC.listOf())
                     .networkSynchronized(com.avicagan.bloodandbones.cyber.Module.STREAM_CODEC.apply(ByteBufCodecs.list())));
 
+    /** Where an ingredient came from: the mob, the part, a baby or not (scraps, and later hides and organs). */
+    public static final DeferredHolder<DataComponentType<?>, DataComponentType<com.avicagan.bloodandbones.parts.Source>> SOURCE = COMPONENTS.registerComponentType("source",
+            builder -> builder.persistent(com.avicagan.bloodandbones.parts.Source.CODEC).networkSynchronized(com.avicagan.bloodandbones.parts.Source.STREAM_CODEC));
+
+    /** What a piece of carcass armour is made of. */
+    public static final DeferredHolder<DataComponentType<?>, DataComponentType<com.avicagan.bloodandbones.parts.CarcassArmour>> CARCASS_ARMOUR = COMPONENTS.registerComponentType("carcass_armour",
+            builder -> builder.persistent(com.avicagan.bloodandbones.parts.CarcassArmour.CODEC).networkSynchronized(com.avicagan.bloodandbones.parts.CarcassArmour.STREAM_CODEC));
+
     private BBDataComponents() {
     }
 }

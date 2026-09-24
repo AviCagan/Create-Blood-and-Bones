@@ -1,0 +1,17 @@
+{
+  "type": "bloodandbones:carcass_armour",
+  "category": "equipment",
+  "piece": "helmet",
+  "pattern": [
+    "HHH",
+    "H H"
+  ],
+  "key": {
+    "H": {
+      "item": "bloodandbones:scraps"
+    }
+  },
+  "result": {
+    "id": "bloodandbones:carcass_helmet"
+  }
+}

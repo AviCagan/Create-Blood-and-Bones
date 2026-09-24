@@ -1,0 +1,58 @@
+{
+  "rules": [
+    {
+      "match": "(^|_)(upper_body|lower_body|body\\d|ribcage|chest|thorax|abdomen)$",
+      "slot": "torso_ext",
+      "not_root": true
+    },
+    {
+      "match": "^neck$",
+      "slot": "neck"
+    },
+    {
+      "match": "(^|_)head(_|$)",
+      "slot": "head"
+    },
+    {
+      "match": "(^|_)wing(_|$)",
+      "slot": "arm",
+      "form": "wing"
+    },
+    {
+      "match": "^arms$",
+      "slot": "arm",
+      "form": "pair"
+    },
+    {
+      "match": "(^|_)arm$",
+      "slot": "arm"
+    },
+    {
+      "match": "(^|_)(leg|haunch)$",
+      "slot": "leg"
+    },
+    {
+      "match": "^tentacle\\d*$",
+      "slot": "leg",
+      "form": "tentacle"
+    },
+    {
+      "match": "(^|_)(tail\\d*|fluke)(_|$)|^body_back$",
+      "slot": "tail"
+    }
+  ],
+  "sub_slots": [
+    {
+      "match": "(middle|mid)_",
+      "sub": "mid"
+    },
+    {
+      "match": "front",
+      "sub": "front"
+    },
+    {
+      "match": "(hind|haunch|back)",
+      "sub": "hind"
+    }
+  ]
+}

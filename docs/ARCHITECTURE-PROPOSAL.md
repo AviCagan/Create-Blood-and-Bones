@@ -1227,3 +1227,39 @@ file, composed from about 30 effect types.
 12. A powered-down minion can be folded into a Dormant Minion item by its maker.
 13. Mobs that pick up carcass armour get its armour points only.
 14. The name is "carcass armour", apart from the "flesh grafts" of self-augmentation.
+
+### 15.2 Slice 1 as built: cow and rabbit armour, end to end (verified)
+
+- **Part slots** (`parts/PartSlots`): the rules are data (`bone_slot_rules/default.json`), matched on the last word of
+  a bone's path; the rig's root is the torso; a mob file can name a bone's slot; a bone no rule names goes with its
+  parent. Sub-slots (front, mid, hind) and forms (wing, pair, tentacle) come with the slot. `partSlotsFromNames`.
+- **Data** (`parts/PartsData`): five folders, loaded with the registries of the reload (so vanilla loot conditions
+  parse): `mob_group` (archetypes, families, overlays, one format), `mob_traits/<ns>/<mob>.json`, `trait`,
+  `scrap_material`, `bone_slot_rules`. The files go to clients as written (one payload a kind), and both sides resolve
+  a mob the same way: archetype (listed, or by leg count), family (highest priority listing it, by id or tag), the
+  overlays listing it in priority order, then its own file. Plain trait lists add (the same trait once, at its highest
+  level); `{"add", "remove", "replace"}` edits. Cached per mob until data or tags change. `cowAndRabbitResolve`.
+- **Traits** (`parts/Trait`, `TraitEffect`, `TraitEffects`): a named, levelled bundle of (trigger, condition, chance,
+  cooldown, effect); effect types live in their own registry (`bloodandbones:trait_effect_type`). Built so far:
+  attribute, mob_effect, damage, immunity, diet (graze), reaction (hunt, flee); triggers passive, tick, hurt, attack
+  (damage out), targeted. 17 traits for the cow and the rabbit.
+- **Scraps** (`parts/ScrapsItem`, `source` component): the Mangler's grind of each piece gives its volume in blocks
+  times its material's density, half again skinned, half rotten, at least one; they remember mob and part ("Cow Leg
+  Scraps"), tinted with the family colour, gore on top (none in bloodless mode, where they are "Salvage").
+  `scrapCountsByVolume`, `mangledCowGivesPartScraps` (a real cow ground on a real Mangler).
+- **Carcass armour** (`parts/CarcassArmourItem`, `CarcassArmourRecipe`): helmet (5 head scraps), leggings (4 leg +
+  3 hips: another mob's tail scraps or more legs), boots (4 legs); every body cell one mob and the right part, or
+  torso scraps where the mob has no such bone. A shaped recipe, so JEI and Mechanical Crafters handle it. Armour,
+  toughness, knockback resistance and the quirk come from the material through `ItemAttributeModifierEvent`;
+  durability is set when made. "Cow Hide Boots", "Rabbit Sinew Leggings" (bloodless: "Rabbit Plated Leggings").
+  Worn: its traits (`ActiveTraits`) go on as transient attribute modifiers, damage changes, and so on; a sum trait
+  (swift) adds over pieces, others count once; four pieces of one mob add its set's bonus and drawback. The
+  chestplate is registered but has no recipe until the backtank strap-on (slice 4). `craftCowBoots`,
+  `mixedHelmetRefused`, `rabbitLeggingsRaiseJump`, `sameTraitCountsOnce`, `fullSetOfOneMob`, `fallGuardSoftensFalls`,
+  `bloodlessNames`.
+- **Drag strength** (`bloodandbones:drag_strength`, a player attribute): takes its share off the carcass-drag
+  slowdown, so the Herd Beast set's Hauler III makes hauling 45% easier.
+- **Simplification noted:** scraps keep their slot but not which leg they were, so armour gets a mob's traits for
+  every sub-key of the slot ("leg" and "leg.hind" alike); minions, built from whole pieces, will tell them apart.
+- Seen in the headless client: a player in a cow hide hood and boots and rabbit sinew leggings; scraps and pieces
+  in the hotbar.

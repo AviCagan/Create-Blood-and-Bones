@@ -50,6 +50,9 @@ public class CarcassEvents {
     public static void onReload(AddReloadListenerEvent event) {
         event.addListener(RigManager.INSTANCE);
         event.addListener(com.avicagan.bloodandbones.carcass.butchery.ButcheryManager.INSTANCE);
+        for (com.avicagan.bloodandbones.parts.PartsData.Kind kind : com.avicagan.bloodandbones.parts.PartsData.Kind.values()) {
+            event.addListener(new com.avicagan.bloodandbones.parts.PartsData.Loader(kind, event.getRegistryAccess()));
+        }
     }
 
     /** Hand every joining or reloading player the rigs and butchery tables, the way vanilla hands out recipes and tags. */

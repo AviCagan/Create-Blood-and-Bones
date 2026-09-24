@@ -25,6 +25,15 @@ public final class BBClientSetup {
     public static void onClientSetup(FMLClientSetupEvent event) {
         net.createmod.ponder.foundation.PonderIndex.addPlugin(new com.avicagan.bloodandbones.client.ponder.BBPonderPlugin());
         event.enqueueWork(() -> {
+            // scraps show their part; scraps and carcass armour lose their gore in bloodless mode
+            ItemProperties.register(BBItems.SCRAPS.get(), BloodAndBones.asResource("part"), (stack, level, entity, seed) -> {
+                com.avicagan.bloodandbones.parts.Source source = com.avicagan.bloodandbones.parts.ScrapsItem.source(stack);
+                return source == null ? 0.25F : java.util.List.of("head", "torso", "arm", "leg", "tail").indexOf(source.part()) * 0.25F;
+            });
+            for (net.minecraft.world.item.Item item : java.util.List.of(BBItems.SCRAPS.get(), BBItems.CARCASS_HELMET.get(), BBItems.CARCASS_CHESTPLATE.get(),
+                    BBItems.CARCASS_LEGGINGS.get(), BBItems.CARCASS_BOOTS.get())) {
+                ItemProperties.register(item, BloodAndBones.asResource("bloodless"), (stack, level, entity, seed) -> com.avicagan.bloodandbones.config.BBClientConfig.bloodless() ? 1.0F : 0.0F);
+            }
             ItemProperties.register(BBItems.MEAT_HOOK.get(), BloodAndBones.asResource("dragging"),
                     // the hook is in the carcass, not in the hand, while its holder drags something
                     (stack, level, entity, seed) -> entity != null && ClientDragState.all().containsKey(entity.getUUID()) ? 1.0F : 0.0F);
@@ -158,6 +167,23 @@ public final class BBClientSetup {
                                                                                           @org.jetbrains.annotations.Nullable net.minecraft.client.renderer.RenderType renderType) {
             return com.avicagan.bloodandbones.config.BBClientConfig.bloodless() ? java.util.List.of() : super.getQuads(state, side, rand, data, renderType);
         }
+    }
+
+    /** Scraps and carcass armour are tinted with their family's colour (the gore layer on top is not). */
+    @SubscribeEvent
+    public static void onItemColors(net.neoforged.neoforge.client.event.RegisterColorHandlersEvent.Item event) {
+        event.register((stack, tint) -> {
+            if (tint != 0) {
+                return -1;
+            }
+            com.avicagan.bloodandbones.parts.Source source = com.avicagan.bloodandbones.parts.ScrapsItem.source(stack);
+            com.avicagan.bloodandbones.parts.CarcassArmour armour = com.avicagan.bloodandbones.parts.CarcassArmourItem.armour(stack);
+            net.minecraft.resources.ResourceLocation mob = source != null ? source.entity() : armour != null ? armour.body() : null;
+            if (mob == null) {
+                return 0xFF8A6A5A;
+            }
+            return 0xFF000000 | com.avicagan.bloodandbones.parts.PartsData.CLIENT.resolve(mob, false).colour();
+        }, BBItems.SCRAPS.get(), BBItems.CARCASS_HELMET.get(), BBItems.CARCASS_CHESTPLATE.get(), BBItems.CARCASS_LEGGINGS.get(), BBItems.CARCASS_BOOTS.get());
     }
 
     @SubscribeEvent

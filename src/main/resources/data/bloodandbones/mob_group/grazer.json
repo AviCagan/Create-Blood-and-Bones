@@ -1,0 +1,60 @@
+{
+  "kind": "family",
+  "priority": 100,
+  "members": [
+    "minecraft:cow",
+    "minecraft:mooshroom",
+    "minecraft:sheep",
+    "minecraft:goat",
+    "minecraft:llama",
+    "minecraft:trader_llama",
+    "minecraft:camel",
+    "#bloodandbones:family/grazer"
+  ],
+  "scrap_material": "bloodandbones:hide_plate",
+  "colour": "#6b4a2f",
+  "parts": {
+    "torso": {
+      "armour": [
+        "bloodandbones:barrel_chest"
+      ]
+    },
+    "head": {
+      "armour": [
+        "bloodandbones:cud_chewer"
+      ]
+    },
+    "leg": {
+      "armour": {
+        "leggings": [
+          "bloodandbones:sturdy"
+        ],
+        "boots": [
+          "bloodandbones:hooves"
+        ]
+      }
+    }
+  },
+  "hide": [
+    "bloodandbones:thick_hide"
+  ],
+  "full_set": {
+    "name": "set.bloodandbones.herd_beast",
+    "bonus": [
+      {
+        "trait": "bloodandbones:hauler",
+        "level": 3
+      },
+      {
+        "trait": "bloodandbones:hardy",
+        "level": 2
+      }
+    ],
+    "drawback": [
+      {
+        "trait": "bloodandbones:meek",
+        "level": 2
+      }
+    ]
+  }
+}

@@ -374,6 +374,46 @@ public final class DevShowcase {
                         player.stopRiding();
                         player.setData(com.avicagan.bloodandbones.body.BBAttachments.BODY, new com.avicagan.bloodandbones.body.Body());
                         com.avicagan.bloodandbones.body.BodyEffects.changed(player);
+                        // carcass armour: a cow's helmet and boots, a rabbit's leggings; scraps and the pieces in the hotbar
+                        var cow = net.minecraft.resources.ResourceLocation.withDefaultNamespace("cow");
+                        var rabbit = net.minecraft.resources.ResourceLocation.withDefaultNamespace("rabbit");
+                        var store = com.avicagan.bloodandbones.parts.PartsData.SERVER;
+                        player.setItemSlot(net.minecraft.world.entity.EquipmentSlot.HEAD, com.avicagan.bloodandbones.parts.CarcassArmourItem.make(new ItemStack(BBItems.CARCASS_HELMET.get()),
+                                new com.avicagan.bloodandbones.parts.CarcassArmour("helmet", cow, false, java.util.Optional.empty(), java.util.Optional.empty(), java.util.Optional.empty(), 0), store));
+                        player.setItemSlot(net.minecraft.world.entity.EquipmentSlot.CHEST, ItemStack.EMPTY);
+                        player.setItemSlot(net.minecraft.world.entity.EquipmentSlot.LEGS, com.avicagan.bloodandbones.parts.CarcassArmourItem.make(new ItemStack(BBItems.CARCASS_LEGGINGS.get()),
+                                new com.avicagan.bloodandbones.parts.CarcassArmour("leggings", rabbit, false, java.util.Optional.empty(), java.util.Optional.empty(), java.util.Optional.empty(), 0), store));
+                        player.setItemSlot(net.minecraft.world.entity.EquipmentSlot.FEET, com.avicagan.bloodandbones.parts.CarcassArmourItem.make(new ItemStack(BBItems.CARCASS_BOOTS.get()),
+                                new com.avicagan.bloodandbones.parts.CarcassArmour("boots", cow, false, java.util.Optional.empty(), java.util.Optional.empty(), java.util.Optional.empty(), 0), store));
+                        String[] parts = {"head", "torso", "arm", "leg", "tail"};
+                        for (int i = 0; i < parts.length; i++) {
+                            player.getInventory().setItem(i, com.avicagan.bloodandbones.parts.ScrapsItem.of(new com.avicagan.bloodandbones.parts.Source(i % 2 == 0 ? cow : rabbit, parts[i], false), 3 + i));
+                        }
+                        player.getInventory().setItem(5, player.getItemBySlot(net.minecraft.world.entity.EquipmentSlot.HEAD).copy());
+                        player.getInventory().setItem(6, player.getItemBySlot(net.minecraft.world.entity.EquipmentSlot.LEGS).copy());
+                        player.getInventory().setItem(7, player.getItemBySlot(net.minecraft.world.entity.EquipmentSlot.FEET).copy());
+                        player.getInventory().selected = 8;
+                        player.teleportTo(player.serverLevel(), player.getX(), player.getY(), player.getZ(), 180.0F, 10.0F);
+                    });
+                    mc.options.setCameraType(net.minecraft.client.CameraType.THIRD_PERSON_FRONT);
+                    mc.options.hideGui = true;
+                } else if (t == 165) {
+                    Screenshot.grab(mc.gameDirectory, PREFIX + "armour_0.png", mc.getMainRenderTarget(), message -> {
+                    });
+                    mc.options.setCameraType(net.minecraft.client.CameraType.FIRST_PERSON);
+                    mc.options.hideGui = false;
+                } else if (t == 175) {
+                    Screenshot.grab(mc.gameDirectory, PREFIX + "armour_1.png", mc.getMainRenderTarget(), message -> {
+                    });
+                    BloodAndBones.LOGGER.info("[showcase] armour: {} | {} | {}", mc.player.getInventory().getItem(0).getHoverName().getString(),
+                            mc.player.getInventory().getItem(6).getHoverName().getString(), mc.player.getAttributeValue(net.minecraft.world.entity.ai.attributes.Attributes.JUMP_STRENGTH));
+                    server.execute(() -> {
+                        ServerPlayer player = server.getPlayerList().getPlayers().get(0);
+                        for (var slot : new net.minecraft.world.entity.EquipmentSlot[]{net.minecraft.world.entity.EquipmentSlot.HEAD, net.minecraft.world.entity.EquipmentSlot.LEGS,
+                                net.minecraft.world.entity.EquipmentSlot.FEET}) {
+                            player.setItemSlot(slot, ItemStack.EMPTY);
+                        }
+                        player.getInventory().clearContent();
                     });
                     stage = 4;
                     ticks = 0;

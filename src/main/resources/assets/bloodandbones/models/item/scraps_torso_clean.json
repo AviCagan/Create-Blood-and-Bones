@@ -1,0 +1,7 @@
+{
+  "parent": "minecraft:item/generated",
+  "textures": {
+    "layer0": "bloodandbones:item/scraps_torso",
+    "layer1": "bloodandbones:item/scraps_torso_clean"
+  }
+}

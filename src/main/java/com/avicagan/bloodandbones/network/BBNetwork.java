@@ -42,6 +42,8 @@ public class BBNetwork {
                 (payload, context) -> context.enqueueWork(() -> com.avicagan.bloodandbones.client.CyberClient.receive(payload)));
         registrar.playToClient(com.avicagan.bloodandbones.cyber.ModuleActions.MotionPayload.TYPE, com.avicagan.bloodandbones.cyber.ModuleActions.MotionPayload.STREAM_CODEC,
                 (payload, context) -> context.enqueueWork(() -> com.avicagan.bloodandbones.client.CyberClient.receive(payload)));
+        registrar.playToClient(com.avicagan.bloodandbones.parts.PartsData.SyncPayload.TYPE, com.avicagan.bloodandbones.parts.PartsData.SyncPayload.STREAM_CODEC,
+                (payload, context) -> context.enqueueWork(() -> com.avicagan.bloodandbones.parts.PartsData.receive(payload, context.player().registryAccess())));
         registrar.playToClient(ButcherySyncPayload.TYPE, ButcherySyncPayload.STREAM_CODEC,
                 (payload, context) -> context.enqueueWork(() -> com.avicagan.bloodandbones.carcass.butchery.ButcheryManager.receiveClientTables(payload.tables())));
     }

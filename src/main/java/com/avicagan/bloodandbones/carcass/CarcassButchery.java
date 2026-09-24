@@ -96,6 +96,12 @@ public final class CarcassButchery {
         Vector3d where = new Vector3d(body.logicalPose().position());
         com.avicagan.bloodandbones.carcass.butchery.ButcheryManager.forEntity(carcass.entity)
                 .ifPresent(table -> dropYields(level, carcass, table.part(bone), 1.0F, where));
+        if (Boolean.TRUE.equals(MANGLING.get()) && SINK.get() != null) {
+            net.minecraft.world.item.ItemStack scraps = scraps(level, carcass, bone);
+            if (!scraps.isEmpty()) {
+                SINK.get().accept(scraps);
+            }
+        }
         carcass.cuts.remove(bone);
         CarcassSavedData data = CarcassSavedData.get(level);
         boolean wasRoot = bone.equals(carcass.rootBone);
@@ -284,6 +290,52 @@ public final class CarcassButchery {
                     return true;
                 }));
         return out;
+    }
+
+    /** Set while the Mangler grinds: pieces it butchers give armour scraps too. */
+    private static final ThreadLocal<Boolean> MANGLING = new ThreadLocal<>();
+
+    /** As {@link #capturing}, for the Mangler: each piece ground also gives its scraps. */
+    public static <T> T mangling(java.util.function.Consumer<net.minecraft.world.item.ItemStack> sink, java.util.function.Supplier<T> action) {
+        Boolean previous = MANGLING.get();
+        MANGLING.set(true);
+        try {
+            return capturing(sink, action);
+        } finally {
+            MANGLING.set(previous);
+        }
+    }
+
+    /**
+     * The armour scraps one piece grinds into (docs/PARTS-AND-TRAITS.md section 7.1): its volume in blocks
+     * times its material's density, half again if it was skinned (the hide is not in the way), half if it had
+     * rotted, at least one; they remember the mob and the part.
+     */
+    public static net.minecraft.world.item.ItemStack scraps(ServerLevel level, CarcassSavedData.Carcass carcass, String bone) {
+        var rig = com.avicagan.bloodandbones.carcass.rig.RigManager.forCarcass(carcass).orElse(null);
+        if (rig == null) {
+            return net.minecraft.world.item.ItemStack.EMPTY;
+        }
+        com.avicagan.bloodandbones.parts.PartsData.Store store = com.avicagan.bloodandbones.parts.PartsData.SERVER;
+        String part = com.avicagan.bloodandbones.parts.PartSlots.of(store, carcass.entity, rig, bone).slot().scrapPart();
+        float count = scrapCount(store, carcass.entity, carcass.baby, rig, bone, carcass.skinned, carcass.freshness);
+        int n = Math.max(1, (int) Math.floor(count) + (level.random.nextFloat() < count - Math.floor(count) ? 1 : 0));
+        return com.avicagan.bloodandbones.parts.ScrapsItem.of(new com.avicagan.bloodandbones.parts.Source(carcass.entity, part, carcass.baby), n);
+    }
+
+    /** How many scraps a bone is worth, before the fraction is rolled. */
+    public static float scrapCount(com.avicagan.bloodandbones.parts.PartsData.Store store, net.minecraft.resources.ResourceLocation entity, boolean baby,
+                                   com.avicagan.bloodandbones.carcass.rig.Rig rig, String bone, boolean skinned, float freshness) {
+        var box = rig.bone(bone).map(com.avicagan.bloodandbones.carcass.rig.Bone::boxSize).orElse(new org.joml.Vector3f());
+        float volume = box.x * box.y * box.z / 4096.0F;
+        float count = volume * store.material(store.resolve(entity, baby).material()).density();
+        if (skinned) {
+            count *= 1.5F;
+        }
+        if (freshness < 0.3F) {
+            count *= 0.5F;
+        }
+        return count;
     }
 
     /** Run a butchery action with every yield it makes handed to {@code sink} instead of dropped. */

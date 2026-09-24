@@ -1,0 +1,33 @@
+{
+  "name": "trait.bloodandbones.light_boned",
+  "max_level": 3,
+  "effects": [
+    {
+      "effect": {
+        "type": "bloodandbones:attribute",
+        "attribute": "minecraft:generic.gravity",
+        "amount": {
+          "type": "minecraft:linear",
+          "base": -0.08,
+          "per_level_above_first": -0.08
+        },
+        "operation": "add_multiplied_base"
+      }
+    },
+    {
+      "trigger": "hurt",
+      "effect": {
+        "type": "bloodandbones:damage",
+        "direction": "in",
+        "multiplier": {
+          "type": "minecraft:linear",
+          "base": 0.85,
+          "per_level_above_first": -0.15
+        },
+        "damage_tags": [
+          "minecraft:is_fall"
+        ]
+      }
+    }
+  ]
+}

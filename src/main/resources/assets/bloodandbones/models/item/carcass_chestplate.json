@@ -1,0 +1,15 @@
+{
+  "parent": "minecraft:item/generated",
+  "textures": {
+    "layer0": "bloodandbones:item/carcass_chestplate",
+    "layer1": "bloodandbones:item/carcass_chestplate_gore"
+  },
+  "overrides": [
+    {
+      "predicate": {
+        "bloodandbones:bloodless": 1
+      },
+      "model": "bloodandbones:item/carcass_chestplate_clean"
+    }
+  ]
+}

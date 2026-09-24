@@ -1,0 +1,17 @@
+{
+  "name": "trait.bloodandbones.hauler",
+  "max_level": 3,
+  "effects": [
+    {
+      "effect": {
+        "type": "bloodandbones:attribute",
+        "attribute": "bloodandbones:drag_strength",
+        "amount": {
+          "type": "minecraft:linear",
+          "base": 0.15,
+          "per_level_above_first": 0.15
+        }
+      }
+    }
+  ]
+}

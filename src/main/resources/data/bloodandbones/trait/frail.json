@@ -1,0 +1,17 @@
+{
+  "name": "trait.bloodandbones.frail",
+  "max_level": 3,
+  "effects": [
+    {
+      "effect": {
+        "type": "bloodandbones:attribute",
+        "attribute": "minecraft:generic.max_health",
+        "amount": {
+          "type": "minecraft:linear",
+          "base": -2,
+          "per_level_above_first": -2
+        }
+      }
+    }
+  ]
+}

@@ -1,0 +1,15 @@
+{
+  "name": "trait.bloodandbones.prey",
+  "max_level": 1,
+  "effects": [
+    {
+      "trigger": "passive",
+      "effect": {
+        "type": "bloodandbones:reaction",
+        "entities": "bloodandbones:hunts_prey",
+        "mode": "hunt",
+        "radius": 16
+      }
+    }
+  ]
+}
