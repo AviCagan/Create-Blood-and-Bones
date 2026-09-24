@@ -605,6 +605,9 @@ public class MinionTests {
     @GameTest(template = "empty", timeoutTicks = 80)
     public static void neverTurnsOnItsMaker(GameTestHelper helper) {
         Player maker = helper.makeMockPlayer(GameType.SURVIVAL);
+        // standing beside it, well within what it would chase
+        BlockPos by = helper.absolutePos(new BlockPos(5, 2, 3));
+        maker.moveTo(by.getX() + 0.5, by.getY(), by.getZ() + 0.5);
         MinionEntity minion = minionOf(helper, new BlockPos(3, 2, 3), wholeCow(), 500.0F, maker);
         MinionEntity other = minionOf(helper, new BlockPos(7, 2, 7), wholeCow(), 500.0F, maker);
         if (minion.canAttack(maker) || minion.canAttack(other)) {
