@@ -1,0 +1,22 @@
+{
+  "signature": [
+    "organs.bloodandbones:curable_heart"
+  ],
+  "organs": {
+    "torso": {
+      "add": [
+        "bloodandbones:curable_heart"
+      ]
+    }
+  },
+  "organ_traits": {
+    "bloodandbones:curable_heart": {
+      "minion": [
+        "bloodandbones:curable"
+      ],
+      "armour": [
+        "bloodandbones:curable"
+      ]
+    }
+  }
+}

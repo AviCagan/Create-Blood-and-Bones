@@ -304,20 +304,18 @@ public class DataLintTests {
             Map.entry("creeper", "the sapper job; a charged creeper's bigger blast (variant capture)"),
             Map.entry("dolphin", "the Melon sensing underwater only, to 32 blocks (Echo Sense II stands in)"),
             Map.entry("drowned", "a thrown held trident; walking the seabed (sink mode)"),
-            Map.entry("elder_guardian", "the Elder Eye's Mining Fatigue on melee attackers (its fatigue aura stands in)"),
             Map.entry("enderman", "carrying blocks; a minion arm's reach; Voidwalker's halved blink cooldowns"),
-            Map.entry("evoker", "the row of fangs and on-hit fangs; the Totem Gland costing a minion half its power"),
+            Map.entry("evoker", "the row of fangs; the Totem Gland costing a minion half its power"),
             Map.entry("fox", "the pounce (Leap stands in); the snow fox's insulated hide (variant capture)"),
             Map.entry("frog", "eating small slimes into froglights; warm and cold legs (variant capture)"),
             Map.entry("ghast", "float mode for its tentacles; slow falling only while sneaking (Featherfall stands in)"),
-            Map.entry("hoglin", "the toss at 15% (Flinger always throws)"),
             Map.entry("illusioner", "held bows and blindness arrows"),
-            Map.entry("iron_golem", "sink mode; mending while standing still; crusher boots; Hardy V (capped at III)"),
+            Map.entry("iron_golem", "sink mode; crusher boots; Hardy V (capped at III)"),
             Map.entry("llama", "the caravan job"),
             Map.entry("magma_cube", "a landing that sets what is within 2 alight (Searing stands in on the minion)"),
             Map.entry("panda", "temperaments by gene (variant capture)"),
             Map.entry("parrot", "the mimic alarm; wing lift 0.06 (flight from wings)"),
-            Map.entry("phantom", "Swift only at night; the pounce from above (Leap stands in)"),
+            Map.entry("phantom", "the pounce from above (Leap stands in)"),
             Map.entry("pig", "carrot-on-a-stick steering (the mount type)"),
             Map.entry("piglin", "the barterer job and its double roll; a held crossbow"),
             Map.entry("piglin_brute", "the brute guard (half again with an axe)"),
@@ -325,7 +323,6 @@ public class DataLintTests {
             Map.entry("rabbit", "the killer bunny (variant capture)"),
             Map.entry("ravager", "the rideable torso and its two seats (the mount type)"),
             Map.entry("salmon", "swimming up waterfalls; the fisher job"),
-            Map.entry("shulker", "the lid deflecting from the front only (it deflects from any side)"),
             Map.entry("skeleton", "held bows (it shoots innate arrows)"),
             Map.entry("skeleton_horse", "the seafloor steed: ridden underwater, sink mode"),
             Map.entry("sniffer", "the digger job; outlining suspicious sand and gravel (Blood Scent stands in)"),
@@ -342,9 +339,9 @@ public class DataLintTests {
             Map.entry("wither", "skull-firing heads (a minion's extra mouths)"),
             Map.entry("wolf", "the mood tail (drawn)"),
             Map.entry("zoglin", "berserk: attacking every mob, half again as hard"),
-            Map.entry("zombie", "the grab strike, breaking doors, mending in the dark"),
+            Map.entry("zombie", "the grab strike, breaking doors"),
             Map.entry("zombie_horse", "the undead steed walking the seabed (sink mode)"),
-            Map.entry("zombie_villager", "the shaky surgeon; the Curable Heart (no trait for Weakness immunity)"));
+            Map.entry("zombie_villager", "the shaky surgeon"));
 
     /** Facets of the families and overlays (spec 3.3, 3.4) that wait the same way. */
     private static final List<String> GROUP_WAITS = List.of(

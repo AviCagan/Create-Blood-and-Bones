@@ -1,0 +1,15 @@
+{
+  "name": "trait.bloodandbones.shell_lid",
+  "max_level": 1,
+  "effects": [
+    {
+      "trigger": "passive",
+      "effect": {
+        "type": "bloodandbones:deflect",
+        "chance": 0.3,
+        "mode": "reflect",
+        "arc": "front"
+      }
+    }
+  ]
+}

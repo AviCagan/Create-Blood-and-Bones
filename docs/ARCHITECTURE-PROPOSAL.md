@@ -1652,8 +1652,8 @@ no two groups edit the same file.
   set's last), so repeated presses cycle. Each effect has its own `cooldown`, shown with `ItemCooldowns` on the piece it
   came from (`ActiveTraits.Entry.slot`, the piece giving the trait its level), and may cost blood: `cost_mb` on the
   effect (default 0), drawn from the worn backtank or strapped chestplate, which must hold `c:blood` (a creative
-  player pays nothing). Too little refuses it with a word on the action bar ("Not enough blood in your tank"), and the
-  next press moves on. A minion's `MinionGoals.UseOrgan` (no move or look flags, so it fires while closing in) fires one
+  player pays nothing). With no tank, too little in it, or soul blood, it costs 3 hunger instead (spec 7.6); too hungry
+  for that as well refuses it with a word on the action bar, and the next press moves on (15.11). A minion's `MinionGoals.UseOrgan` (no move or look flags, so it fires while closing in) fires one
   when its target is within the effect's `range` (default 8) and its condition holds, paying from its own blood or
   canister (`MinionEntity.usePower`, never its last drop, so an ability never powers it down); a mindless minion never
   has a target. `activateCyclesPieces`, `activateCostsBlood`, `minionFiresOrganAtTarget`.
@@ -1801,14 +1801,14 @@ glides or bounces: design risk 2's run with lag on a real client and a dedicated
   Blows (a creature's own melee) are dodged in `LivingIncomingDamageEvent`. Its own chance comes up once a blow; the
   entry's cooldown starts when it works.
 - **detonate** {power, fire, block_damage, fuse, minion_powers_down}: `Level#explode` with the host as its source, the
-  host taken off the list it hits (`ExplosionEvent.Detonate`); blocks only with the trait's `block_damage`,
+  host and its own side (15.11) taken off the list it hits (`ExplosionEvent.Detonate`); blocks only with the trait's `block_damage`,
   `minion_block_damage` and mobGriefing (then fire too); a fuse hisses and smokes first; a minion then powers down.
 - **visibility** {multiplier, vs}: `LivingVisibilityEvent#modifyVisibility`, the change scaled by the trait strength.
 - Look and sound: a wet burst of blood where a blink leaves and where a blast goes off, scraps of meat from a minion's
   self-destruct, sparks from brass; bloodless mode draws none of the blood (the drops' own check) and keeps the vanilla
   portal and explosion particles. Vanilla sounds pitched down and layered (slime and honey for the squelch).
 - **Traits** (new data, with names, descriptions and a bloodless reading): wall_climber (sums), glider, bouncy,
-  powder_walker, silent_steps, quick_draw, trample, lava_walk (fire does not hurt it either), ender_mask, ender_calm,
+  powder_walker, silent_steps, quick_draw, trample, lava_walk (fire does not hurt it on or in lava), ender_mask, ender_calm,
   piglin_kin, inverted_healing, insulated, evasive, deflector, hiss, leap, dash, charge, warp, wind_burst, blast,
   self_destruct, rift, blink, fly_swat, loyal. stubborn needed no flag and is unchanged. Mob data only where a test
   needs it: the enderman's head armour is an ender mask, and the creeper's `bloodandbones:powder_sac` gives blast
@@ -1857,7 +1857,7 @@ client under xvfb in both modes):
   cobweb's snap; no item, no drops, swords cut it fast) and `cooled_crust` (frosted ice for lava: ages a step every one or
   two seconds after two or three, glowing through its cracks from the third, melts back to lava, and one left with fewer
   than two crusts beside it melts at once, as does one broken). Both are ordinary blocks: they ride contraptions and go on
-  ageing once set down.
+  ageing once set down (the web, with no collision, is in Create's `movable_empty_collider` tag as a cobweb is, 15.11).
 - **projectile** (`ProjectileEffect` {kind, count, spread, speed, damage, potion, power}): the eleven kinds of spec 5.6,
   vanilla's own entities. A player's key fires along their look; a minion's organ (an activate entry with a range) at its
   target; a hurt or attack entry at whoever else is in it. Falling kinds are aimed a little high as a skeleton aims.
@@ -2111,8 +2111,8 @@ its signature. 59 new mob files (69 in all), each listing its signature facets.
   Gland) and totem (the evoker's Totem Gland: 500 mB, 20 minutes).
 - **Stand-ins and caps**, where a built trait is near but not exact: levels past a trait's most are capped (the iron
   golem's Hardy V is III, the turtle's Thick Hide IV is III); Nine Lives uses undying's 5-minute cooldown, not 20; the
-  amphibian set dries out at 60 s, not 120; leap for the fox's and phantom's pounce; flinger for the hoglin's 15% toss;
-  echo sense for the dolphin's Melon; fatigue aura for the Elder Eye's armour side; featherfall for the ghast's boots;
+  amphibian set dries out at 60 s, not 120; leap for the fox's and phantom's pounce;
+  echo sense for the dolphin's Melon; featherfall for the ghast's boots;
   searing for the magma core's minion; blood scent for the sniffer; plain innate arrows for the stray's and bogged's
   tipped ones. A few built minion fields came with them: ram bites for goat, hoglin and zoglin heads (spec 6.4's horned
   heads), rideable camel legs.
@@ -2194,3 +2194,56 @@ its signature. 59 new mob files (69 in all), each listing its signature facets.
 - Left as it is: a half-built frame on a carcass body from before the rebuild (the old `minion_frame` component) loses
   what was fitted to it. Only development builds ever had it. `minion_death` scatter and destroy still let the void
   kill.
+
+### 15.11 Review of the effects work (fixed)
+
+The effects branch took in the minion review (15.10) by a merge, not by keeping its own side of the files both touched:
+a minion's `canAttack`, `onBelowWorld` and `safeGround`, the saddle seat and `steered`, the half-bucket rule, the take-apart
+and the drops with equipment all stand beside the effect hooks. Flesh's hide traits (`MinionEntity.hides()`, spec 6.6)
+are one more source in `ActiveTraits.fromBuild`; the trait tick runs once, every half second, awake or down (tick effects
+wait while it is down). `fleshKeepsItsHidesTraits` now asks that brass has no hide trait, since brass has its parts' own.
+
+- **Cooldowns start when the effect goes.** A hurt, attack, tick or fall entry used up its cooldown on a check whose
+  condition failed, so a Spleen's second wind hit at 18 of 20 health was spent for a minute, and a cat's morning gift
+  came up at two fixed times of day. `TraitEvents.goes`: off cooldown, the condition holding, then the chance; only then
+  does the cooldown start. `cooldownWaitsForTheCondition`.
+- **Cooldowns are saved** (spec 7.6). They were kept in a map by creature object, so a relog, a trip home from the End or
+  a minion's chunk reloading cleared them (a Totem every few seconds). Now each is the game time it runs out: an Organ
+  Ability's in the `cooldown_until` component of the piece it came from (it goes with the piece; logging in shows it on the
+  piece again), everything else in the `trait_cooldowns` attachment, saved with the creature and kept through a clone
+  that is not a death. `cooldownsOutliveTheCreature`.
+- **A minion's trait health survives a reload.** Trait modifiers are transient and not saved, so a loaded minion's health
+  was cut down to its torso's before its traits came back. `readAdditionalSaveData` builds its traits and sets the saved
+  health again. `traitHealthSurvivesReload`.
+- **Caps** (spec 5.8): trait modifiers on movement speed rise at most 40% of its base together, on jump strength 0.3, and
+  a minion's health stays within `MinionStats.MIN_HEALTH` and `MAX_HEALTH` (6 to 150); rises are scaled down together,
+  falls likewise (`ActiveTraits.capScale`). `traitCapsHold`.
+- **Organ Abilities without blood** cost 3 hunger (spec 7.6; `Activation.HUNGER_COST`), refused only when the player has
+  less. `activateCostsBlood`, `fireballActivateCostsBlood`.
+- **Nothing cheats the void or /kill** (`BYPASSES_INVULNERABILITY`), as with a Totem of Undying. `nothingSavesFromTheVoid`.
+- **The attack trigger is for blows.** Thorns sent back (a barbed hide's `damage_entity`), magic and blasts never fire
+  the causer's attack effects nor its outgoing multipliers or pack bonus (`TraitEvents.blow`: not
+  `avoids_guardian_thorns`), and a trait's beam strikes with no direct creature, so the data's "direct hit" guard keeps
+  on-hit traits out of it. `attackTriggerOnlyOnBlows`.
+- **Brass is brass** (spec 6.6): its own traits' Regeneration and Instant Health never go on it (`MobEffectEffect`), nor do
+  its flesh parts' weaknesses reach it (`ExposureEffect`: sun, water, heat). `brassNeverSelfHeals` now checks both.
+- **A minion's blast spares its side** (its maker and the maker's other minions), as its shoves and shots do.
+  `minionBlastSparesItsSide`.
+- **Webs.** A creature's web honours mobGriefing (vanilla's Weaving), and a minion's goes over grass, snow and the like
+  (which the web takes with it when it tears) only where `minion_block_damage` allows it too; into air it goes where mobs
+  may grief. `minionBlockDamageCoversShotsAndWebs` now spins webs under each setting, checks a landing shot's gate, and
+  that Create moves the web.
+- **Milking is the maker's.** Only its maker fills a bucket, bowl or bottle from a producing minion. `milkByHandAndHump`.
+- **lava_walk's fire immunity** holds only on or in lava (a `location_check` naming the lava fluids; immunity entries now
+  read their condition), so a strider-legged minion burns off the lava. `minionLavaWalkStandsOnLava`.
+- **dry_for** counts a creature first seen dry as long dry, so water_hurts no longer stings on login.
+  `dryForCondition`.
+- **Signatures written with the built types** (spec 8.2), their waits notes gone: the shulker's lid deflects 30% from
+  the front (shell_lid); the phantom's gland is swift only at night (night_swift); the Elder Eye in armour gives melee
+  attackers Mining Fatigue II for 6 s (elder_curse); the hoglin helmet tosses 15% of the time (toss); evoker shoulders
+  call fangs on 10% of hits, every 10 s at most (fang_strike); the Golem Core mends a minion standing still (still_mend)
+  and a zombie torso mends in the dark (dark_mend); the zombie villager's Curable Heart keeps Weakness off and makes a
+  golden apple Absorption II (curable, its own file).
+- **Hot paths make nothing each tick**: `ActiveTraits.find` and the activate facets are worked out once per built traits
+  and kept; the flag and drain loops walk those lists by index; the ranged goal looks at its shots again only when the
+  traits change; the sense goal asks for senses before jobs, with no stream; slot counts are read once per loop.

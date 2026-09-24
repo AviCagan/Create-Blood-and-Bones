@@ -12,8 +12,10 @@ import com.avicagan.bloodandbones.parts.Trigger;
 import com.avicagan.bloodandbones.parts.effect.MotionFlags;
 import com.avicagan.bloodandbones.parts.effect.RangedContent;
 import com.avicagan.bloodandbones.parts.effect.UpkeepEffects;
+import com.avicagan.bloodandbones.parts.effect.WebAction;
 import com.avicagan.bloodandbones.registry.BBEntities;
 import net.minecraft.core.BlockPos;
+import net.minecraft.core.Direction;
 import net.minecraft.gametest.framework.GameTest;
 import net.minecraft.gametest.framework.GameTestHelper;
 import net.minecraft.resources.ResourceLocation;
@@ -29,11 +31,15 @@ import net.minecraft.world.entity.monster.piglin.PiglinBrute;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.entity.projectile.Arrow;
 import net.minecraft.world.item.ItemStack;
+import net.minecraft.world.item.enchantment.EnchantedItemInUse;
+import net.minecraft.world.item.enchantment.LevelBasedValue;
 import net.minecraft.world.level.GameRules;
 import net.minecraft.world.level.GameType;
 import net.minecraft.world.level.block.Blocks;
 import net.minecraft.world.level.block.CropBlock;
+import net.minecraft.world.phys.BlockHitResult;
 import net.minecraft.world.phys.EntityHitResult;
+import net.minecraft.world.phys.Vec3;
 import net.neoforged.neoforge.event.EventHooks;
 import net.neoforged.neoforge.gametest.GameTestHolder;
 import net.neoforged.neoforge.gametest.PrefixGameTestTemplate;
@@ -200,7 +206,10 @@ public class MergedEffectTests {
 
     /**
      * A minion's shot (Ranged) breaks blocks only where Motion's minion_block_damage and mobGriefing both allow it, as a
-     * minion's blast and trampling do; and trampling tears Ranged's temporary web as it does a cobweb.
+     * minion's blast and trampling do, and so does its landing (a small fireball's fire is asked of the minion then);
+     * trampling tears Ranged's temporary web as it does a cobweb. A minion's web goes into air where mobs may grief, but
+     * over grass (which the web takes away with it when it tears) only where minion_block_damage allows it too; a
+     * player's always goes. The web rides contraptions, as a cobweb does.
      */
     @GameTest(template = "empty", timeoutTicks = 20)
     public static void minionBlockDamageCoversShotsAndWebs(GameTestHelper helper) {
@@ -216,23 +225,77 @@ public class MergedEffectTests {
         GameRules.BooleanValue griefing = level.getGameRules().getRule(GameRules.RULE_MOBGRIEFING);
         boolean griefed = griefing.get();
         boolean allowed = BBServerConfig.MINION_BLOCK_DAMAGE.get();
+        BlockPos grass = new BlockPos(2, 2, 2);
+        BlockPos grass2 = new BlockPos(2, 2, 8);
+        for (BlockPos p : List.of(grass, grass2)) {
+            helper.setBlock(p.below(), Blocks.GRASS_BLOCK);
+            helper.setBlock(p, Blocks.SHORT_GRASS);
+        }
+        BlockPos air = new BlockPos(8, 2, 2);
+        BlockPos air2 = new BlockPos(8, 2, 8);
+        WebAction spin = new WebAction(LevelBasedValue.constant(10.0F));
+        EnchantedItemInUse minions = new EnchantedItemInUse(ItemStack.EMPTY, null, minion, item -> {
+        });
+        EnchantedItemInUse players = new EnchantedItemInUse(ItemStack.EMPTY, null, maker, item -> {
+        });
+        Arrow landed = EntityType.ARROW.create(level);
+        landed.setOwner(minion);
+        landed.setData(RangedContent.SHOT, 2.0F);
+        BlockPos under = helper.absolutePos(new BlockPos(4, 1, 4));
         boolean byDefault;
         boolean noGriefing;
         boolean both;
+        boolean landingByDefault;
+        boolean landingAllowed;
+        boolean grassKept;
+        boolean airSpun;
+        boolean grassSpun;
+        boolean airKeptNoGriefing;
+        boolean playerSpun;
         int trampled;
         try {
             // the rule and the setting are the whole server's: changed and put back within this one call
             griefing.set(true, level.getServer());
             BBServerConfig.MINION_BLOCK_DAMAGE.set(false);
             byDefault = EventHooks.canEntityGrief(level, shot);
+            spin.apply(level, 1, minions, minion, helper.absoluteVec(Vec3.atCenterOf(grass)));
+            grassKept = helper.getBlockState(grass).is(Blocks.SHORT_GRASS);
+            spin.apply(level, 1, minions, minion, helper.absoluteVec(Vec3.atCenterOf(air)));
+            airSpun = helper.getBlockState(air).is(RangedContent.TEMPORARY_WEB.get());
+            // from here to the end of the tick its shot is landing
+            EventHooks.onProjectileImpact(landed, new BlockHitResult(Vec3.atCenterOf(under), Direction.UP, under, false));
+            landingByDefault = EventHooks.canEntityGrief(level, minion);
             BBServerConfig.MINION_BLOCK_DAMAGE.set(true);
             both = EventHooks.canEntityGrief(level, shot);
+            landingAllowed = EventHooks.canEntityGrief(level, minion);
+            spin.apply(level, 1, minions, minion, helper.absoluteVec(Vec3.atCenterOf(grass)));
+            grassSpun = helper.getBlockState(grass).is(RangedContent.TEMPORARY_WEB.get());
             trampled = MotionFlags.trample(minion);
             griefing.set(false, level.getServer());
             noGriefing = EventHooks.canEntityGrief(level, shot);
+            spin.apply(level, 1, minions, minion, helper.absoluteVec(Vec3.atCenterOf(air2)));
+            airKeptNoGriefing = helper.getBlockState(air2).isAir();
+            spin.apply(level, 1, players, maker, helper.absoluteVec(Vec3.atCenterOf(grass2)));
+            playerSpun = helper.getBlockState(grass2).is(RangedContent.TEMPORARY_WEB.get());
         } finally {
             griefing.set(griefed, level.getServer());
             BBServerConfig.MINION_BLOCK_DAMAGE.set(allowed);
+        }
+        landed.discard();
+        boolean rides = com.simibubi.create.api.contraption.BlockMovementChecks.isMovementNecessary(RangedContent.TEMPORARY_WEB.get().defaultBlockState(),
+                level, helper.absolutePos(web));
+        if (landingByDefault || !landingAllowed) {
+            helper.fail("A minion's shot landing should grief only with minion_block_damage allowing it: " + landingByDefault + ", " + landingAllowed);
+            return;
+        }
+        if (!grassKept || !airSpun || !grassSpun || !airKeptNoGriefing || !playerSpun) {
+            helper.fail("A minion's web: over grass only with minion_block_damage (" + grassKept + ", " + grassSpun + "), into air where mobs may grief ("
+                    + airSpun + ", " + airKeptNoGriefing + "); a player's always (" + playerSpun + ")");
+            return;
+        }
+        if (!rides) {
+            helper.fail("Create should move the temporary web with a contraption");
+            return;
         }
         boolean torn = helper.getBlockState(web).isAir();
         shot.discard();

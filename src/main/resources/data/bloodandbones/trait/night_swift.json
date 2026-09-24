@@ -1,0 +1,23 @@
+{
+  "name": "trait.bloodandbones.night_swift",
+  "max_level": 1,
+  "effects": [
+    {
+      "trigger": "passive",
+      "requirements": {
+        "condition": "minecraft:time_check",
+        "value": {
+          "min": 13000,
+          "max": 23000
+        },
+        "period": 24000
+      },
+      "effect": {
+        "type": "bloodandbones:attribute",
+        "attribute": "minecraft:generic.movement_speed",
+        "amount": 0.05,
+        "operation": "add_multiplied_base"
+      }
+    }
+  ]
+}

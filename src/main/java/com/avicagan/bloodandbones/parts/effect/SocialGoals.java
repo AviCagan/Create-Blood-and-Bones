@@ -43,7 +43,8 @@ public final class SocialGoals {
 
         @Override
         public boolean canUse() {
-            if (minion.poweredDown() || minion.stats().mindless() || !minion.stats().fights() || HUNTING_JOBS.stream().noneMatch(minion::hasJob)) {
+            if (minion.poweredDown() || ActiveTraits.peek(minion).find(SenseEffect.class).isEmpty() || minion.stats().mindless()
+                    || !minion.stats().fights() || !hunts(minion)) {
                 return false;
             }
             List<ActiveTraits.Found<SenseEffect>> senses = hunting(minion);
@@ -60,6 +61,16 @@ public final class SocialGoals {
                     target instanceof Enemy && !(target instanceof MinionEntity) && (!guard || target.distanceToSqr(home) < GUARD_REACH * GUARD_REACH)
                             && senses.stream().anyMatch(f -> f.effect().senses(minion, target, f.entry().level())));
             return super.canUse();
+        }
+
+        /** Whether its job is one that hunts (asked often, so no stream). */
+        private static boolean hunts(MinionEntity minion) {
+            for (String job : HUNTING_JOBS) {
+                if (minion.hasJob(job)) {
+                    return true;
+                }
+            }
+            return false;
         }
 
         /** Its echolocation and tremor senses that work now, their conditions holding. */

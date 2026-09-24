@@ -9,6 +9,7 @@ import net.minecraft.sounds.SoundEvents;
 import net.minecraft.world.entity.EquipmentSlot;
 import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.entity.player.Player;
+import net.minecraft.world.food.FoodData;
 import net.minecraft.world.item.ItemStack;
 import net.neoforged.neoforge.fluids.FluidStack;
 import org.jetbrains.annotations.Nullable;
@@ -24,8 +25,9 @@ import java.util.WeakHashMap;
  * effect among the pieces worn, in the order helmet, chestplate, leggings, boots (a full set's last), so pressing again
  * goes on to the next; a minion's AI fires one when its target is within the effect's range. Each has its own cooldown,
  * shown on the piece it came from as an ender pearl's is, and may cost blood ({@code cost_mb}): from the worn tank or a
- * strapped chestplate for a player (refused, with a word, if there is too little), from its own blood or canister for a
- * minion.
+ * strapped chestplate for a player, or {@link #HUNGER_COST} hunger instead when that holds too little blood, or soul blood,
+ * or there is none (section 7.6; refused, with a word, only if they are too hungry for that too); from its own blood or
+ * canister for a minion.
  */
 public final class Activation {
     /** One activate effect a host can fire: the trait it came from, its place in that trait, and its entry. */
@@ -35,14 +37,29 @@ public final class Activation {
         }
     }
 
+    /** What an Organ Ability costs a player whose tank cannot pay its blood: hunger points (docs/PARTS-AND-TRAITS.md section 7.6). */
+    public static final int HUNGER_COST = 3;
+
     /** The facet each player last fired or tried, so the next press goes on from there. */
     private static final Map<LivingEntity, String> LAST = Collections.synchronizedMap(new WeakHashMap<>());
 
     private Activation() {
     }
 
-    /** The host's activate effects that work here, piece by piece in the key's order. */
+    /** The host's activate effects that work here, piece by piece in the key's order (worked out once for its traits). */
     public static List<Facet> facets(ActiveTraits traits) {
+        if (traits.isEmpty()) {
+            return List.of();
+        }
+        List<Facet> known = traits.facets;
+        if (known == null) {
+            known = collect(traits);
+            traits.facets = known;
+        }
+        return known;
+    }
+
+    private static List<Facet> collect(ActiveTraits traits) {
         List<Facet> out = new ArrayList<>();
         for (int s = 0; s <= ActiveTraits.PIECES.length; s++) {
             EquipmentSlot slot = s < ActiveTraits.PIECES.length ? ActiveTraits.PIECES[s] : null;
@@ -58,12 +75,13 @@ public final class Activation {
                 }
             }
         }
-        return out;
+        return List.copyOf(out);
     }
 
     /**
      * A press of the Organ Ability key, on the server: the next activate effect after the last one tried that is off
-     * cooldown and whose condition holds. Too little blood for it refuses it with a word, and the next press moves on.
+     * cooldown and whose condition holds. Too little blood for it, and too hungry to pay in hunger, refuses it with a
+     * word, and the next press moves on.
      *
      * @return whether something fired
      */
@@ -92,7 +110,7 @@ public final class Activation {
             if (fire(player, facet, null)) {
                 return true;
             }
-            player.displayClientMessage(Component.translatable("bloodandbones.organ.no_blood", facet.facet().costMb()).withStyle(ChatFormatting.RED), true);
+            player.displayClientMessage(Component.translatable("bloodandbones.organ.no_blood", facet.facet().costMb(), HUNGER_COST).withStyle(ChatFormatting.RED), true);
             player.playNotifySound(SoundEvents.DISPENSER_FAIL, player.getSoundSource(), 0.5F, 0.6F);
             return false;
         }
@@ -114,14 +132,15 @@ public final class Activation {
     }
 
     /**
-     * Fire one: pay for it, start its cooldown (shown on the piece it came from), and run it (if its chance comes up).
+     * Fire one: pay for it (a player whose tank cannot, in hunger), start its cooldown (shown on the piece it came from),
+     * and run it (if its chance comes up).
      *
      * @param target a minion's target; null for a player, whose effects aim along their look
      * @return false, with nothing done, if the host could not pay
      */
     public static boolean fire(LivingEntity host, Facet facet, @Nullable LivingEntity target) {
         TraitEffect entry = facet.facet();
-        if (!pay(host, entry.costMb())) {
+        if (!pay(host, entry.costMb()) && !payHunger(host)) {
             return false;
         }
         TraitEvents.startCooldown(host, facet.entry(), facet.index(), entry.cooldown());
@@ -164,6 +183,25 @@ public final class Activation {
         }
         fluid.shrink(mb);
         FluidBacktankItem.setFluid(tank, fluid);
+        return true;
+    }
+
+    /**
+     * An Organ Ability a player's tank cannot pay for (none worn, too little in it, or soul blood) costs
+     * {@link #HUNGER_COST} hunger instead, if they have that much to give.
+     *
+     * @return false, and nothing taken, if they have too little
+     */
+    private static boolean payHunger(LivingEntity host) {
+        if (!(host instanceof Player player)) {
+            return false;
+        }
+        FoodData food = player.getFoodData();
+        if (food.getFoodLevel() < HUNGER_COST) {
+            return false;
+        }
+        food.setFoodLevel(food.getFoodLevel() - HUNGER_COST);
+        food.setSaturation(Math.min(food.getSaturationLevel(), food.getFoodLevel()));
         return true;
     }
 

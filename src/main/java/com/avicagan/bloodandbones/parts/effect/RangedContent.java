@@ -72,7 +72,8 @@ public final class RangedContent {
                 p.getVariantBuilder(c.get()).forAllStates(state -> ConfiguredModel.builder().modelFile(web).build());
             })
             .loot(NonNullBiConsumer.noop())
-            .tag(BlockTags.SWORD_EFFICIENT)
+            // Create moves a block with no collision only if tagged so, as it does cobwebs (rule 5: it rides contraptions)
+            .tag(BlockTags.SWORD_EFFICIENT, com.simibubi.create.AllTags.AllBlockTags.MOVABLE_EMPTY_COLLIDER.tag)
             .lang("Temporary Web")
             .register();
 

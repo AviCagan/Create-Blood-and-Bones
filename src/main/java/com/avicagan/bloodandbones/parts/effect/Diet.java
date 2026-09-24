@@ -185,14 +185,17 @@ public final class Diet {
      * @return whether it ate
      */
     static boolean forage(MinionEntity minion) {
+        float half = minion.stats().reservoir() * 0.5F;
+        if (minion.power() >= half) {
+            return false;
+        }
         List<TraitEffects.DietEffect> diets = new ArrayList<>();
         for (ActiveTraits.Found<TraitEffects.DietEffect> found : ActiveTraits.of(minion).find(TraitEffects.DietEffect.class)) {
             if (found.effect().forageMb() > 0 && !found.effect().foods().isEmpty() && UpkeepEffects.holds(minion, found)) {
                 diets.add(found.effect());
             }
         }
-        float half = minion.stats().reservoir() * 0.5F;
-        if (diets.isEmpty() || minion.power() >= half) {
+        if (diets.isEmpty()) {
             return false;
         }
         ServerLevel level = (ServerLevel) minion.level();

@@ -64,7 +64,8 @@ public final class TraitEffects {
 
     /**
      * A potion effect: on the host itself, on whoever hurt it, on what it hit, or on everything around it.
-     * Passive ones are kept up quietly for as long as the trait applies.
+     * Passive ones are kept up quietly for as long as the trait applies. Healing never goes on a brass minion from its
+     * own traits: brass never heals itself (docs/PARTS-AND-TRAITS.md section 6.6), a Brass Sheet mends it.
      */
     public record MobEffectEffect(Holder<MobEffect> effect, LevelBasedValue amplifier, int duration, String target, float radius) implements TraitEffect.Effect {
         public static final MapCodec<MobEffectEffect> CODEC = RecordCodecBuilder.mapCodec(i -> i.group(
@@ -85,7 +86,11 @@ public final class TraitEffects {
             LivingEntity host = ctx.host();
             MobEffectInstance instance = new MobEffectInstance(effect, duration, ctx.levelled(amplifier));
             switch (target) {
-                case "self" -> host.addEffect(instance);
+                case "self" -> {
+                    if (!healsBrass(host)) {
+                        host.addEffect(instance);
+                    }
+                }
                 case "attacker", "victim", "target" -> {
                     if (ctx.other() != null && ctx.other() != host) {
                         ctx.other().addEffect(instance, host);
@@ -101,8 +106,17 @@ public final class TraitEffects {
         /** Kept up quietly on the host; night vision past the point where it starts to flicker. */
         @Override
         public void keepUp(TraitContext ctx) {
+            if (healsBrass(ctx.host())) {
+                return;
+            }
             int ticks = effect.is(MobEffects.NIGHT_VISION) ? 220 : Math.max(40, duration);
             ctx.host().addEffect(new MobEffectInstance(effect, ticks, ctx.levelled(amplifier), true, false, true));
+        }
+
+        /** Whether this would heal a brass minion with its own trait (Regeneration, Instant Health), which brass never does. */
+        private boolean healsBrass(LivingEntity host) {
+            return (effect.is(MobEffects.REGENERATION) || effect.is(MobEffects.HEAL))
+                    && host instanceof com.avicagan.bloodandbones.minion.MinionEntity minion && minion.cybernetic();
         }
     }
 

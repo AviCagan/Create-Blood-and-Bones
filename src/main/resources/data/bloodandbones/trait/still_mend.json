@@ -1,0 +1,28 @@
+{
+  "name": "trait.bloodandbones.still_mend",
+  "max_level": 1,
+  "contexts": [
+    "minion"
+  ],
+  "effects": [
+    {
+      "trigger": "tick",
+      "interval": 80,
+      "requirements": {
+        "condition": "minecraft:entity_properties",
+        "entity": "this",
+        "predicate": {
+          "movement": {
+            "horizontal_speed": {
+              "max": 0.1
+            }
+          }
+        }
+      },
+      "effect": {
+        "type": "bloodandbones:regen",
+        "amount": 1
+      }
+    }
+  ]
+}

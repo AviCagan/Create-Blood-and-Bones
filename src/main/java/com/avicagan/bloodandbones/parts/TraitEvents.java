@@ -1,12 +1,15 @@
 package com.avicagan.bloodandbones.parts;
 
 import com.avicagan.bloodandbones.BloodAndBones;
+import com.avicagan.bloodandbones.body.BBAttachments;
+import com.avicagan.bloodandbones.registry.BBDataComponents;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Holder;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.sounds.SoundEvents;
 import net.minecraft.sounds.SoundSource;
+import net.minecraft.tags.DamageTypeTags;
 import net.minecraft.tags.TagKey;
 import net.minecraft.world.InteractionResult;
 import net.minecraft.world.damagesource.DamageSource;
@@ -21,6 +24,7 @@ import net.minecraft.world.entity.ai.attributes.Attributes;
 import net.minecraft.world.entity.ai.goal.AvoidEntityGoal;
 import net.minecraft.world.entity.ai.goal.target.NearestAttackableTargetGoal;
 import net.minecraft.world.entity.player.Player;
+import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.enchantment.Enchantment;
 import net.minecraft.world.level.block.Blocks;
 import net.minecraft.world.level.storage.loot.LootContext;
@@ -47,7 +51,6 @@ import org.jetbrains.annotations.Nullable;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.WeakHashMap;
 
 /**
  * Where traits act (docs/PARTS-AND-TRAITS.md section 5.2): each trigger on a NeoForge hook, each hook doing
@@ -59,8 +62,6 @@ import java.util.WeakHashMap;
 public final class TraitEvents {
     /** The most traits can take off damage between them (a full set alone may take it all). */
     public static final float REDUCTION_FLOOR = 0.2F;
-
-    private static final Map<LivingEntity, Map<String, Long>> COOLDOWNS = java.util.Collections.synchronizedMap(new WeakHashMap<>());
 
     private TraitEvents() {
     }
@@ -139,7 +140,31 @@ public final class TraitEvents {
     public static void onLogout(PlayerEvent.PlayerLoggedOutEvent event) {
         ActiveTraits.forget(event.getEntity());
         Activation.forget(event.getEntity());
-        COOLDOWNS.remove(event.getEntity());
+    }
+
+    /** Back in the world (logged in, or home from the End): the pieces still cooling down show it again. */
+    @SubscribeEvent
+    public static void onLogin(PlayerEvent.PlayerLoggedInEvent event) {
+        showCooldowns(event.getEntity());
+    }
+
+    @SubscribeEvent
+    public static void onRespawn(PlayerEvent.PlayerRespawnEvent event) {
+        showCooldowns(event.getEntity());
+    }
+
+    private static void showCooldowns(Player player) {
+        long now = player.level().getGameTime();
+        for (EquipmentSlot slot : ActiveTraits.PIECES) {
+            ItemStack piece = player.getItemBySlot(slot);
+            long until = 0L;
+            for (long u : piece.getOrDefault(BBDataComponents.COOLDOWN_UNTIL.get(), Map.<String, Long>of()).values()) {
+                until = Math.max(until, u);
+            }
+            if (until > now) {
+                player.getCooldowns().addCooldown(piece.getItem(), (int) Math.min(Integer.MAX_VALUE, until - now));
+            }
+        }
     }
 
     // ---- passive and tick
@@ -176,7 +201,7 @@ public final class TraitEvents {
                 if (effect.trigger() == Trigger.PASSIVE && TraitEffects.keepsUp(effect.effect()) && holds(host, entry, effect, null)) {
                     effect.effect().keepUp(new TraitContext(host, traits, entry, i, effect, Trigger.PASSIVE, null, null, 0.0F));
                 } else if (effect.trigger() == Trigger.TICK && !down && host.tickCount % Math.max(20, effect.interval()) < 10
-                        && ready(host, entry, i, effect) && holds(host, entry, effect, null)) {
+                        && goes(host, entry, i, effect, null)) {
                     effect.effect().run(new TraitContext(host, traits, entry, i, effect, Trigger.TICK, null, null, 0.0F));
                 }
             }
@@ -201,7 +226,8 @@ public final class TraitEvents {
                 if (!own.applies(effect)) {
                     continue;
                 }
-                if (effect.effect() instanceof TraitEffects.ImmunityEffect immunity && matches(source, immunity.damageTags()) && !immunity.damageTags().isEmpty()) {
+                if (effect.effect() instanceof TraitEffects.ImmunityEffect immunity && !immunity.damageTags().isEmpty() && matches(source, immunity.damageTags())
+                        && holds(victim, entry, effect, source)) {
                     event.setCanceled(true);
                     return;
                 }
@@ -217,7 +243,7 @@ public final class TraitEvents {
                 }
             }
         }
-        if (source.getEntity() instanceof LivingEntity attacker) {
+        if (source.getEntity() instanceof LivingEntity attacker && blow(source)) {
             ActiveTraits theirs = ActiveTraits.peek(attacker);
             for (ActiveTraits.Entry entry : theirs.entries()) {
                 for (TraitEffect effect : entry.trait().effects()) {
@@ -246,7 +272,7 @@ public final class TraitEvents {
         }
         LivingEntity attacker = event.getSource().getEntity() instanceof LivingEntity a ? a : null;
         fire(victim, Trigger.HURT, event.getSource(), attacker, event.getNewDamage());
-        if (attacker != null) {
+        if (attacker != null && blow(event.getSource())) {
             fire(attacker, Trigger.ATTACK, event.getSource(), victim, event.getNewDamage());
         }
     }
@@ -270,7 +296,7 @@ public final class TraitEvents {
             for (int i = 0; i < effects.size(); i++) {
                 TraitEffect effect = effects.get(i);
                 if (effect.trigger() == Trigger.FALL && effect.effect() instanceof TraitEffects.DamageEffect damage && "in".equals(damage.direction())
-                        && traits.applies(effect) && ready(host, entry, i, effect) && holds(host, entry, effect, null)) {
+                        && traits.applies(effect) && goes(host, entry, i, effect, null)) {
                     float m = strengthened(damage.multiplier().calculate(entry.level()));
                     if (m < 1.0F) {
                         reduction *= Math.max(0.0F, m);
@@ -293,13 +319,14 @@ public final class TraitEvents {
     /**
      * A lethal blow: first the host's lethal saves (any effect that is a {@link TraitEffect.DeathSaver}, of any trigger,
      * off cooldown, its chance come up and its condition holding), which call the death off; its cooldown starts only
-     * when it saves. A minion's own lethal save is collapsing, which it does before this is asked.
+     * when it saves. A minion's own lethal save is collapsing, which it does before this is asked. Nothing saves from
+     * what gets past invulnerability (the void, /kill), as with a Totem of Undying.
      */
     @SubscribeEvent(priority = EventPriority.HIGH)
     public static void onDeath(LivingDeathEvent event) {
         LivingEntity host = event.getEntity();
         ActiveTraits traits = ActiveTraits.peek(host);
-        if (host.level().isClientSide || traits.isEmpty()) {
+        if (host.level().isClientSide || traits.isEmpty() || event.getSource().is(DamageTypeTags.BYPASSES_INVULNERABILITY)) {
             return;
         }
         LivingEntity killer = event.getSource().getEntity() instanceof LivingEntity k ? k : null;
@@ -351,7 +378,7 @@ public final class TraitEvents {
                         || source != null && !filter(source, effect.filter())) {
                     continue;
                 }
-                if (ready(host, entry, i, effect) && holds(host, entry, effect, source)) {
+                if (goes(host, entry, i, effect, source)) {
                     effect.effect().run(new TraitContext(host, traits, entry, i, effect, trigger, other, source, amount));
                 }
             }
@@ -471,7 +498,18 @@ public final class TraitEvents {
         }
     }
 
-    /** Whether its chance comes up and its cooldown has run out; starts the cooldown if so. */
+    /**
+     * Whether one effect goes now: off cooldown, its condition holding, and then its chance come up. Its cooldown starts
+     * only then, so a hit or a check where the condition fails (or the chance does not come up) uses none of it.
+     */
+    static boolean goes(LivingEntity host, ActiveTraits.Entry entry, int index, TraitEffect effect, @Nullable DamageSource source) {
+        return !coolingDown(host, entry, index) && holds(host, entry, effect, source) && ready(host, entry, index, effect);
+    }
+
+    /**
+     * Whether its chance comes up and its cooldown has run out; starts the cooldown if so. Asked last, once the effect's
+     * condition is known to hold ({@link #goes}).
+     */
     public static boolean ready(LivingEntity host, ActiveTraits.Entry entry, int index, TraitEffect effect) {
         if (effect.chance() < 1.0F && host.getRandom().nextFloat() >= effect.chance()) {
             return false;
@@ -486,18 +524,62 @@ public final class TraitEvents {
         return true;
     }
 
-    /** Whether one effect of one trait is still cooling down on the host. */
+    /**
+     * Whether one effect of one trait is still cooling down on the host. Cooldowns are kept as the game time they run out
+     * (docs/PARTS-AND-TRAITS.md section 7.6), so they last through a relog or a reload: an Organ Ability's on the piece it
+     * came from, everything else on the creature ({@code BBAttachments.TRAIT_COOLDOWNS}).
+     */
     public static boolean coolingDown(LivingEntity host, ActiveTraits.Entry entry, int index) {
-        Map<String, Long> own = COOLDOWNS.get(host);
-        Long until = own == null ? null : own.get(entry.id() + "#" + index);
+        ItemStack piece = piece(host, entry, index);
+        Map<String, Long> kept = piece != null ? piece.getOrDefault(BBDataComponents.COOLDOWN_UNTIL.get(), Map.<String, Long>of())
+                : host.hasData(BBAttachments.TRAIT_COOLDOWNS) ? host.getData(BBAttachments.TRAIT_COOLDOWNS) : Map.<String, Long>of();
+        if (kept.isEmpty()) {
+            return false;
+        }
+        Long until = kept.get(cooldownKey(entry, index));
         return until != null && host.level().getGameTime() < until;
     }
 
-    /** Start one effect's cooldown on the host (nothing for none). */
+    /** Start one effect's cooldown on the host, or on the piece for an Organ Ability (nothing for none). Those run out are cleared. */
     public static void startCooldown(LivingEntity host, ActiveTraits.Entry entry, int index, int ticks) {
-        if (ticks > 0) {
-            COOLDOWNS.computeIfAbsent(host, h -> new HashMap<>()).put(entry.id() + "#" + index, host.level().getGameTime() + ticks);
+        if (ticks <= 0) {
+            return;
         }
+        long now = host.level().getGameTime();
+        ItemStack piece = piece(host, entry, index);
+        if (piece != null) {
+            Map<String, Long> kept = new HashMap<>(piece.getOrDefault(BBDataComponents.COOLDOWN_UNTIL.get(), Map.<String, Long>of()));
+            kept.values().removeIf(until -> until <= now);
+            kept.put(cooldownKey(entry, index), now + ticks);
+            piece.set(BBDataComponents.COOLDOWN_UNTIL.get(), Map.copyOf(kept));
+        } else {
+            Map<String, Long> kept = host.getData(BBAttachments.TRAIT_COOLDOWNS);
+            kept.values().removeIf(until -> until <= now);
+            kept.put(cooldownKey(entry, index), now + ticks);
+        }
+    }
+
+    private static String cooldownKey(ActiveTraits.Entry entry, int index) {
+        return entry.id() + "#" + index;
+    }
+
+    /** The piece an effect's cooldown is kept on: a player's Organ Ability, on the worn piece its trait counts from. Else null. */
+    @Nullable
+    private static ItemStack piece(LivingEntity host, ActiveTraits.Entry entry, int index) {
+        if (!(host instanceof Player) || entry.slot() == null || entry.trait().effects().get(index).trigger() != Trigger.ACTIVATE) {
+            return null;
+        }
+        ItemStack piece = host.getItemBySlot(entry.slot());
+        return piece.isEmpty() ? null : piece;
+    }
+
+    /**
+     * Whether damage is its causer's own hit, for the attack trigger (docs/PARTS-AND-TRAITS.md section 5.2): not thorns
+     * sent back (a barbed hide's, which counts as the wearer's direct hit), magic or a blast, the hits vanilla's thorns never
+     * answer either. A trait's beam is no blow as well: it strikes with no direct creature ({@code HitscanEffect}).
+     */
+    public static boolean blow(DamageSource source) {
+        return !source.is(DamageTypeTags.AVOIDS_GUARDIAN_THORNS);
     }
 
     private static boolean matches(DamageSource source, List<TagKey<DamageType>> tags) {
@@ -516,8 +598,8 @@ public final class TraitEvents {
     private static boolean filter(DamageSource source, String filter) {
         return switch (filter) {
             case "melee" -> source.getDirectEntity() instanceof LivingEntity && source.getDirectEntity() == source.getEntity();
-            case "projectile" -> source.is(net.minecraft.tags.DamageTypeTags.IS_PROJECTILE);
-            case "fire" -> source.is(net.minecraft.tags.DamageTypeTags.IS_FIRE);
+            case "projectile" -> source.is(DamageTypeTags.IS_PROJECTILE);
+            case "fire" -> source.is(DamageTypeTags.IS_FIRE);
             default -> true;
         };
     }

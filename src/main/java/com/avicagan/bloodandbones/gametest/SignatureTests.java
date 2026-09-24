@@ -263,7 +263,8 @@ public class SignatureTests {
      * Signature traits reach what is made of those mobs' parts: a zombie's torso burns in the sun on a minion and a husk's
      * does not (sunbaked); a pig's bacon fat holds a quarter more blood and a polar bear's brown fat half as much again; a
      * villager's pair of arms carries nine more stacks; a cow's rumen in a chestplate cleanses and a rabbit's foot in
-     * leggings is luck and a leap.
+     * leggings is luck and a leap. Signatures written with the built types: a zombie torso mends in the dark on a minion,
+     * and a zombie villager's Curable Heart keeps Weakness off its wearer.
      */
     @GameTest(template = "empty", timeoutTicks = 20)
     public static void signatureTraitsReachTheirHosts(GameTestHelper helper) {
@@ -295,6 +296,17 @@ public class SignatureTests {
         ActiveTraits worn = ActiveTraits.rebuild(player);
         if (worn.level(bb("cleanse")) != 1 || worn.level(bb("lucky")) != 2 || worn.level(bb("leap")) != 1) {
             helper.fail("A cow's rumen should cleanse, a rabbit's foot give Lucky II and a leap: " + worn.entries());
+            return;
+        }
+        if (!has(MinionData.traits(store.resolve(mob("zombie"), false), "torso"), "dark_mend")) {
+            helper.fail("A zombie torso should mend in the dark on a minion");
+            return;
+        }
+        player.setItemSlot(EquipmentSlot.CHEST, withOrgan("chestplate", mob("zombie_villager"), "curable_heart"));
+        ActiveTraits cured = ActiveTraits.rebuild(player);
+        player.addEffect(new net.minecraft.world.effect.MobEffectInstance(net.minecraft.world.effect.MobEffects.WEAKNESS, 100));
+        if (cured.level(bb("curable")) != 1 || player.hasEffect(net.minecraft.world.effect.MobEffects.WEAKNESS)) {
+            helper.fail("A zombie villager's Curable Heart should keep Weakness off: " + cured.entries());
             return;
         }
         helper.succeed();

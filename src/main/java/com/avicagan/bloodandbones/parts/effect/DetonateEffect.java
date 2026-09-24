@@ -26,7 +26,8 @@ import java.util.WeakHashMap;
 
 /**
  * A blast from the host that spares the host (docs/PARTS-AND-TRAITS.md section 5.4, detonate): {@code Level#explode}
- * with the host as its source, and the host taken off the list of what it hits ({@link MotionEffects#onDetonate}).
+ * with the host as its source, and the host and its own side (a minion's maker and fellow minions) taken off the list of
+ * what it hits ({@link MotionEffects#onDetonate}).
  * Blocks break only if the trait says so, the server's {@code minion_block_damage} allows it and so does mobGriefing;
  * otherwise nothing but creatures is touched. A minion that self-destructs then powers down where it stands, never
  * destroyed, until it gets blood again.
@@ -46,7 +47,7 @@ public record DetonateEffect(LevelBasedValue power, boolean fire, boolean blockD
             Codec.BOOL.optionalFieldOf("minion_powers_down", true).forGetter(DetonateEffect::minionPowersDown)
     ).apply(i, DetonateEffect::new));
 
-    /** Who is setting off a blast right now: the blast leaves them out. */
+    /** Who is setting off a blast right now: the blast leaves them (and their side) out. */
     static final Set<Entity> SPARED = Collections.synchronizedSet(Collections.newSetFromMap(new WeakHashMap<>()));
     /** Hosts hissing toward a blast, and what is left of their fuse. */
     private static final Map<LivingEntity, Lit> LIT = Collections.synchronizedMap(new WeakHashMap<>());
@@ -112,7 +113,7 @@ public record DetonateEffect(LevelBasedValue power, boolean fire, boolean blockD
         SPARED.clear();
     }
 
-    /** The blast itself, sparing the host; then a minion powers down. */
+    /** The blast itself, sparing the host and its side; then a minion powers down. */
     public void blow(LivingEntity host, float strength) {
         if (!(host.level() instanceof ServerLevel level)) {
             return;

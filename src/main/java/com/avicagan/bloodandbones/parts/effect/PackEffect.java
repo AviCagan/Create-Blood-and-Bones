@@ -44,10 +44,10 @@ public record PackEffect(LevelBasedValue perAlly, SocialFilter allies, float rad
 
     /**
      * What the attacker's pack traits multiply this hit by: 1 plus each one's share for each ally, times the trait
-     * strength. 1 for a creature with none, or a hit that is not its own.
+     * strength. 1 for a creature with none, or a hit that is not its own blow (thorns it sent back, say).
      */
     public static float multiplier(LivingEntity attacker, LivingEntity victim, DamageSource source) {
-        if (source.getDirectEntity() != attacker) {
+        if (source.getDirectEntity() != attacker || !TraitEvents.blow(source)) {
             return 1.0F;
         }
         ActiveTraits traits = ActiveTraits.peek(attacker);

@@ -48,6 +48,15 @@ public final class BBDataComponents {
     public static final DeferredHolder<DataComponentType<?>, DataComponentType<com.avicagan.bloodandbones.backtank.BacktankTier>> STRAPPED_TANK = COMPONENTS.registerComponentType("strapped_tank",
             builder -> builder.persistent(com.avicagan.bloodandbones.backtank.BacktankTier.CODEC).networkSynchronized(com.avicagan.bloodandbones.backtank.BacktankTier.STREAM_CODEC));
 
+    /**
+     * When each Organ Ability of a piece of carcass armour is ready again, as the game time, by its trait and place in it
+     * (docs/PARTS-AND-TRAITS.md section 7.6): the cooldown goes with the piece, and lasts through a relog.
+     */
+    public static final DeferredHolder<DataComponentType<?>, DataComponentType<java.util.Map<String, Long>>> COOLDOWN_UNTIL = COMPONENTS.registerComponentType("cooldown_until",
+            builder -> builder.persistent(com.mojang.serialization.Codec.unboundedMap(com.mojang.serialization.Codec.STRING, com.mojang.serialization.Codec.LONG))
+                    .networkSynchronized(ByteBufCodecs.<io.netty.buffer.ByteBuf, String, Long, java.util.Map<String, Long>>map(java.util.HashMap::new,
+                            ByteBufCodecs.STRING_UTF8, ByteBufCodecs.VAR_LONG).map(java.util.Map::copyOf, map -> map)));
+
     private BBDataComponents() {
     }
 }

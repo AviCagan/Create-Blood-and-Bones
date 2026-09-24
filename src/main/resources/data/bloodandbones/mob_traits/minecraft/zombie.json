@@ -16,7 +16,8 @@
     "torso": {
       "minion": {
         "traits": [
-          "bloodandbones:hunger_proof"
+          "bloodandbones:hunger_proof",
+          "bloodandbones:dark_mend"
         ]
       },
       "armour": [

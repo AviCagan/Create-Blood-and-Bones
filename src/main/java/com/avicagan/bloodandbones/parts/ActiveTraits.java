@@ -4,6 +4,7 @@ import com.avicagan.bloodandbones.BloodAndBones;
 import com.avicagan.bloodandbones.minion.MinionBuild;
 import com.avicagan.bloodandbones.minion.MinionData;
 import com.avicagan.bloodandbones.minion.MinionEntity;
+import com.avicagan.bloodandbones.minion.MinionStats;
 import net.minecraft.core.Holder;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.tags.FluidTags;
@@ -12,6 +13,7 @@ import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.entity.ai.attributes.Attribute;
 import net.minecraft.world.entity.ai.attributes.AttributeInstance;
 import net.minecraft.world.entity.ai.attributes.AttributeModifier;
+import net.minecraft.world.entity.ai.attributes.Attributes;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.item.ItemStack;
 import org.jetbrains.annotations.Nullable;
@@ -39,6 +41,10 @@ import java.util.WeakHashMap;
 public final class ActiveTraits {
     public static final String ARMOUR = "armour";
     public static final String MINION = "minion";
+    /** Movement caps from traits in total (docs/PARTS-AND-TRAITS.md section 5.8): speed up by at most 40% of its base... */
+    public static final float SPEED_CAP = 0.4F;
+    /** ...and jump strength by at most 0.3. */
+    public static final float JUMP_CAP = 0.3F;
 
     /**
      * One working trait. {@code fromSet}: it came with a full set, which alone may make damage vanish entirely.
@@ -71,6 +77,11 @@ public final class ActiveTraits {
     private final Object builtFrom;
     /** The attribute modifiers this put on the creature, to take off again on rebuild. */
     final Map<ResourceLocation, Holder<Attribute>> applied = new HashMap<>();
+    /** What {@link #find} found of each type, worked out once: hot paths (a flag every tick, a minion's drain) ask again and again. */
+    private final Map<Class<?>, List<?>> found = new java.util.concurrent.ConcurrentHashMap<>();
+    /** Its activate effects in the key's order ({@link Activation#facets}), worked out once. */
+    @Nullable
+    List<Activation.Facet> facets;
 
     private ActiveTraits(List<Entry> entries, int generation, Optional<ResolvedMob.FullSet> set, @Nullable ResourceLocation setMob, String context,
                          @Nullable Object builtFrom) {
@@ -121,9 +132,23 @@ public final class ActiveTraits {
 
     /**
      * Every effect of this type working here, for the hooks that read them where something happens (a flag, a
-     * visibility change, a deflection). Empty, and nothing made, for a creature with none.
+     * visibility change, a deflection). Empty for a creature with none. Worked out the first time each type is asked
+     * for, and the same list after.
      */
+    @SuppressWarnings("unchecked")
     public <T extends TraitEffect.Effect> List<Found<T>> find(Class<T> type) {
+        if (entries.isEmpty()) {
+            return List.of();
+        }
+        List<?> known = found.get(type);
+        if (known == null) {
+            known = collect(type);
+            found.put(type, known);
+        }
+        return (List<Found<T>>) known;
+    }
+
+    private <T extends TraitEffect.Effect> List<Found<T>> collect(Class<T> type) {
         List<Found<T>> out = null;
         for (Entry entry : entries) {
             List<TraitEffect> effects = entry.trait().effects();
@@ -137,7 +162,7 @@ public final class ActiveTraits {
                 }
             }
         }
-        return out == null ? List.of() : out;
+        return out == null ? List.of() : List.copyOf(out);
     }
 
     /** Who gets traits: players from their armour, minions from their build; nobody else (null). */
@@ -307,9 +332,11 @@ public final class ActiveTraits {
     /**
      * Put the passive attribute effects on the creature, as transient modifiers, times the trait strength.
      * Unconditional ones always; ones with a condition only while it holds ({@code unconditionalOnly} skips
-     * checking them, for the first build).
+     * checking them, for the first build). Those on a capped attribute are scaled down together to keep within its cap
+     * ({@link #capScale}).
      */
     void applyPassiveAttributes(LivingEntity host, boolean unconditionalOnly) {
+        List<Modifier> on = new ArrayList<>();
         for (Entry entry : entries) {
             List<TraitEffect> effects = entry.trait().effects();
             for (int i = 0; i < effects.size(); i++) {
@@ -332,10 +359,66 @@ public final class ActiveTraits {
                         continue;
                     }
                 }
-                put(host, modifierId(entry.id(), i), attribute.attribute(), attribute.amount().calculate(entry.level()) * TraitEffects.strength(),
-                        attribute.operation());
+                on.add(new Modifier(modifierId(entry.id(), i), attribute.attribute(), attribute.amount().calculate(entry.level()) * TraitEffects.strength(),
+                        attribute.operation()));
             }
         }
+        for (Modifier modifier : on) {
+            put(host, modifier.id(), modifier.attribute(), modifier.amount() * capScale(host, on, modifier), modifier.operation());
+        }
+    }
+
+    /** One attribute modifier a trait puts on now. */
+    private record Modifier(ResourceLocation id, Holder<Attribute> attribute, float amount, AttributeModifier.Operation operation) {
+    }
+
+    /**
+     * What one trait modifier is scaled by so the traits together keep within their caps (docs/PARTS-AND-TRAITS.md
+     * section 5.8): all of them on movement speed raise it by at most {@link #SPEED_CAP} of its base, on jump strength by
+     * at most {@link #JUMP_CAP}; a minion's health stays within {@code MinionStats}' 6 to 150. The rises are scaled down
+     * together by one share, the falls by another; 1 for anything else, or within the cap.
+     */
+    private static float capScale(LivingEntity host, List<Modifier> on, Modifier one) {
+        Holder<Attribute> attribute = one.attribute();
+        AttributeInstance instance = host.getAttribute(attribute);
+        if (instance == null) {
+            return 1.0F;
+        }
+        double base = instance.getBaseValue();
+        double rise;
+        double fall = Double.MAX_VALUE;
+        if (attribute.is(Attributes.MOVEMENT_SPEED)) {
+            rise = SPEED_CAP * base;
+        } else if (attribute.is(Attributes.JUMP_STRENGTH)) {
+            rise = JUMP_CAP;
+        } else if (host instanceof MinionEntity && attribute.is(Attributes.MAX_HEALTH)) {
+            rise = Math.max(0.0, MinionStats.MAX_HEALTH - base);
+            fall = Math.max(0.0, base - MinionStats.MIN_HEALTH);
+        } else {
+            return 1.0F;
+        }
+        double up = 0.0;
+        double down = 0.0;
+        for (Modifier other : on) {
+            if (other.attribute().is(attribute)) {
+                double added = added(other, base);
+                if (added > 0.0) {
+                    up += added;
+                } else {
+                    down -= added;
+                }
+            }
+        }
+        double own = added(one, base);
+        if (own > 0.0) {
+            return up > rise ? (float) (rise / up) : 1.0F;
+        }
+        return down > fall ? (float) (fall / down) : 1.0F;
+    }
+
+    /** About how much a modifier adds to an attribute of this base (a share of it, for the multiplying ones). */
+    private static double added(Modifier modifier, double base) {
+        return modifier.operation() == AttributeModifier.Operation.ADD_VALUE ? modifier.amount() : modifier.amount() * base;
     }
 
     private void put(LivingEntity host, ResourceLocation id, Holder<Attribute> attribute, float amount, AttributeModifier.Operation operation) {
@@ -368,25 +451,28 @@ public final class ActiveTraits {
 
     // ---- how long the host has been dry (the dry_for condition)
 
+    /** A host first looked at while dry counts as dry for longer than anything asks (not as just out of the water). */
+    private static final long NEVER_WET = Long.MIN_VALUE / 4;
+
     /** Note whether the host is wet now: in water, rain or a bubble column. The trait tick calls this every half second. */
     public static void updateDry(LivingEntity host) {
         long now = host.level().getGameTime();
         if (wet(host)) {
             LAST_WET.put(host, now);
         } else {
-            LAST_WET.putIfAbsent(host, now);
+            LAST_WET.putIfAbsent(host, NEVER_WET);
         }
     }
 
-    /** Seconds since the host was last wet, counted from when it was first looked at. */
+    /** Seconds since the host was last wet; a host never seen wet (a player just logged in on dry land) has been dry for ages. */
     public static float drySeconds(LivingEntity host) {
         long now = host.level().getGameTime();
         Long last = LAST_WET.get(host);
         if (last == null) {
             updateDry(host);
-            return 0.0F;
+            last = LAST_WET.get(host);
         }
-        return Math.max(0L, now - last) / 20.0F;
+        return last == null ? 0.0F : Math.max(0L, now - last) / 20.0F;
     }
 
     static boolean wet(LivingEntity host) {

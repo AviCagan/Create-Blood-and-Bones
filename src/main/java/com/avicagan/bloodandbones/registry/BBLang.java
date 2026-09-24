@@ -427,7 +427,8 @@ public class BBLang {
                 {"core", "Core", "Core"}, {"alchemical_gland", "Alchemical Gland", "Alchemical Core"}, {"bacon_fat", "Bacon Fat", "Fuel Cell"},
                 {"bamboo_gut", "Bamboo Gut", "Bamboo Hopper"}, {"blaze_core", "Blaze Core", "Blaze Core"}, {"boar_heart", "Boar Heart", "Boar Pump"},
                 {"brown_fat", "Brown Fat", "Insulation Cell"}, {"burrow_gland", "Burrow Gland", "Burrow Core"},
-                {"cheek_pouch", "Cheek Pouch", "Storage Pouch"}, {"drowned_lungs", "Drowned Lungs", "Drowned Bellows"},
+                {"cheek_pouch", "Cheek Pouch", "Storage Pouch"}, {"curable_heart", "Curable Heart", "Restorable Pump"},
+                {"drowned_lungs", "Drowned Lungs", "Drowned Bellows"},
                 {"echo_ear", "Echo Ear", "Echo Receiver"}, {"egg_gland", "Egg Gland", "Egg Dispenser"}, {"elder_eye", "Elder Eye", "Elder Lens"},
                 {"ender_gland", "Ender Gland", "Ender Core"}, {"frost_core", "Frost Core", "Frost Core"}, {"frost_marrow", "Frost Marrow", "Rime Core"},
                 {"gizzard", "Gizzard", "Grinder"}, {"glow_sac", "Glow Sac", "Glow Cell"}, {"gold_gizzard", "Gold Gizzard", "Gold Sorter"},
@@ -524,6 +525,14 @@ public class BBLang {
                 + "are burning. Once every 30 seconds.");
         trait("totem", "Totem", "A killing blow leaves you on 1 health instead, as a Totem of Undying does, for 500 mB of blood; then not "
                 + "again for 20 minutes. A minion collapses rather than dying.");
+        trait("shell_lid", "Shell Lid", "A three in ten chance to send back projectiles that come at you from the front, as a shulker's lid does.");
+        trait("night_swift", "Night Swift", "At night you move a twentieth faster.");
+        trait("elder_curse", "Elder Curse", "Whatever strikes you up close gets Mining Fatigue II for 6 seconds.");
+        trait("toss", "Toss", "One blow in seven or so tosses what you hit up into the air, as a hoglin's tusks do.");
+        trait("fang_strike", "Fang Strike", "A tenth of your blows call evoker fangs up under what you hit, at most once every 10 seconds.");
+        trait("still_mend", "Still Mend", "A minion standing still knits back 1 health every 4 seconds, for 5 mB of blood (brass never heals itself).");
+        trait("dark_mend", "Dark Mend", "A minion in the dark knits back 1 health every 10 seconds, for 5 mB of blood (brass never heals itself).");
+        trait("curable", "Curable", "Weakness never takes hold of you, and a golden apple gives you Absorption II.");
         // the four groups of trait effects add their own (docs/ARCHITECTURE-PROPOSAL.md section 15.8)
         com.avicagan.bloodandbones.parts.effect.MotionEffects.lang();
         com.avicagan.bloodandbones.parts.effect.RangedEffects.lang();
@@ -533,7 +542,7 @@ public class BBLang {
         // the Organ Ability (bloodless mode's organs are cores)
         BloodAndBones.REGISTRATE.addRawLang("key.bloodandbones.organ_ability", "Organ Ability");
         bloodless("key.bloodandbones.organ_ability", "Core Ability");
-        BloodAndBones.REGISTRATE.addRawLang("bloodandbones.organ.no_blood", "Not enough blood in your tank: that takes %s mB");
+        BloodAndBones.REGISTRATE.addRawLang("bloodandbones.organ.no_blood", "Not enough blood in your tank, and too hungry: that takes %s mB or %s hunger");
         BloodAndBones.REGISTRATE.addRawLang("bloodandbones.minion.organ_fitted", "Stitched in: %s");
         bloodless("bloodandbones.minion.organ_fitted", "Installed: %s");
         BloodAndBones.REGISTRATE.addRawLang("bloodandbones.set_bonus.flesh", "Flesh set: you heal from what you hit, and rot half as fast");

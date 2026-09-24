@@ -300,11 +300,14 @@ public class RangedEffectTests {
         player.setItemSlot(EquipmentSlot.CHEST, chestplate);
         ActiveTraits.rebuild(player);
         AABB around = new AABB(helper.absolutePos(new BlockPos(0, 0, 0))).expandTowards(12.0, 8.0, 12.0).inflate(8.0);
+        // too hungry to pay in hunger instead (spec 7.6)
+        player.getFoodData().setFoodLevel(2);
         OrganActivatePayload.handle(player);
         if (!helper.getLevel().getEntitiesOfClass(SmallFireball.class, around, f -> f.getOwner() == player).isEmpty()) {
-            helper.fail("With no tank to pay from, no fireball should fly");
+            helper.fail("With no tank to pay from and too hungry to pay in hunger, no fireball should fly");
             return;
         }
+        player.getFoodData().setFoodLevel(20);
         ItemStack tank = new ItemStack(BBItems.backtank(BacktankTier.IRON));
         FluidBacktankItem.setFluid(tank, new FluidStack(BBFluids.blood(), 1000));
         player.setItemSlot(EquipmentSlot.CHEST, FluidBacktankItem.strap(chestplate, tank));

@@ -90,7 +90,10 @@ public record PowerEffect(LevelBasedValue capacityMult, LevelBasedValue drainMul
     /** What the host's blood use is multiplied by from its power effects ({@code drain_mult}), those whose condition holds. */
     static float drain(LivingEntity host) {
         float mult = 1.0F;
-        for (ActiveTraits.Found<PowerEffect> found : ActiveTraits.peek(host).find(PowerEffect.class)) {
+        // every tick of every minion: an indexed walk of the list its traits keep, nothing made
+        List<ActiveTraits.Found<PowerEffect>> power = ActiveTraits.peek(host).find(PowerEffect.class);
+        for (int i = 0; i < power.size(); i++) {
+            ActiveTraits.Found<PowerEffect> found = power.get(i);
             if (found.facet().trigger() == Trigger.PASSIVE && UpkeepEffects.holds(host, found)) {
                 mult *= Math.max(0.0F, UpkeepEffects.strengthened(found.effect().drainMult().calculate(found.entry().level())));
             }
@@ -138,7 +141,8 @@ public record PowerEffect(LevelBasedValue capacityMult, LevelBasedValue drainMul
         if (minion.powerShare() >= MinionEntity.HUNGRY) {
             return false;
         }
-        for (int i = 0; i < minion.slots(); i++) {
+        int slots = minion.slots();
+        for (int i = 0; i < slots; i++) {
             ItemStack stack = minion.inventory.getItem(i);
             int mb = stack.isEmpty() ? 0 : worth(minion, stack);
             if (mb > 0) {

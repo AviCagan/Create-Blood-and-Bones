@@ -15,6 +15,7 @@ import net.minecraft.resources.ResourceKey;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.sounds.SoundEvents;
+import net.minecraft.world.damagesource.DamageSource;
 import net.minecraft.world.damagesource.DamageType;
 import net.minecraft.world.damagesource.DamageTypes;
 import net.minecraft.world.entity.Entity;
@@ -143,7 +144,9 @@ public record HitscanEffect(float range, LevelBasedValue damage, ResourceKey<Dam
         }
         float amount = ctx.scaled(damage);
         if (amount > 0.0F) {
-            victim.hurt(level.damageSources().source(damageType, host), amount);
+            // the host's doing, from where it stands, but no blow of its own: nothing direct, so its on-hit traits keep out of it
+            victim.hurt(new DamageSource(level.registryAccess().registryOrThrow(Registries.DAMAGE_TYPE).getHolderOrThrow(damageType), null, host,
+                    host.position()), amount);
         }
         if (knockback > 0.0F) {
             double resist = 1.0 - victim.getAttributeValue(Attributes.KNOCKBACK_RESISTANCE);

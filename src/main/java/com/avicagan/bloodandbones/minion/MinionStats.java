@@ -44,6 +44,8 @@ public record MinionStats(float health, float knockbackResistance, int slots, in
     /** A rideable minion's torso must be at least this share of its whole bulk, so a rabbit on horse legs cannot carry you. */
     public static final float RIDER_SHARE = 0.4F;
 
+    /** A minion's health, its traits' included, stays within these (docs/PARTS-AND-TRAITS.md section 5.8). */
+    public static final float MIN_HEALTH = 6.0F;
     public static final float MAX_HEALTH = 150.0F;
     public static final ResourceLocation COMPANION = BloodAndBones.asResource("companion");
     /** The jobs built so far; others a head names are left out until they are. */
@@ -58,7 +60,7 @@ public record MinionStats(float health, float knockbackResistance, int slots, in
         Optional<Rig> rig = store.rig(torso.entity(), torso.baby());
         float base = MinionData.scalar(torsoMob, "torso", "health", (float) MinionData.attribute(torso.entity(), Attributes.MAX_HEALTH, 10.0));
         float health = base * MinionData.scalar(torsoMob, "torso", "health_factor", 1.0F) * (torso.baby() ? 0.5F : 1.0F);
-        health = Math.max(6.0F, Math.min(MAX_HEALTH, health));
+        health = Math.max(MIN_HEALTH, Math.min(MAX_HEALTH, health));
         float weight = rig.map(Rig::weight).orElse(1.0F);
         float volume = rig.flatMap(r -> r.bone(torso.bone())).map(MinionStats::volume).orElse(0.2F);
         int slots = Math.max(3, Math.min(27, Math.round(18.0F * volume)));

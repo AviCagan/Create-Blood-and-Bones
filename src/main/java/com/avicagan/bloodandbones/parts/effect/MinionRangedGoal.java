@@ -1,6 +1,7 @@
 package com.avicagan.bloodandbones.parts.effect;
 
 import com.avicagan.bloodandbones.minion.MinionEntity;
+import com.avicagan.bloodandbones.minion.MinionStats;
 import com.avicagan.bloodandbones.parts.ActiveTraits;
 import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.entity.ai.goal.Goal;
@@ -28,6 +29,10 @@ public class MinionRangedGoal extends Goal {
     private RangedAttackGoal inner;
     private int interval = -1;
     private float radius = -1.0F;
+    /** The traits its shots were last worked out from: they are worked out again only when those change. */
+    @Nullable
+    private ActiveTraits builtFor;
+    private boolean hasShots;
 
     public MinionRangedGoal(MinionEntity minion) {
         this.minion = minion;
@@ -50,14 +55,30 @@ public class MinionRangedGoal extends Goal {
         if (target == null || !target.isAlive() || minion.poweredDown() || minion.stats().mindless() || minion.powerShare() < MinionEntity.HUNGRY) {
             return false;
         }
-        boolean hands = minion.stats().strikes().stream().anyMatch(s -> !"pacifist".equals(s.style()));
-        return !(hands && minion.distanceToSqr(target) < MELEE * MELEE);
+        return !(minion.distanceToSqr(target) < MELEE * MELEE && hands());
     }
 
-    /** Vanilla's goal for the range and rate of the minion's shots now; false if it has none. */
+    /** Whether it has an arm that hits (asked every tick it fights, so no stream). */
+    private boolean hands() {
+        List<MinionStats.Strike> strikes = minion.stats().strikes();
+        for (int i = 0; i < strikes.size(); i++) {
+            if (!"pacifist".equals(strikes.get(i).style())) {
+                return true;
+            }
+        }
+        return false;
+    }
+
+    /** Vanilla's goal for the range and rate of the minion's shots now; false if it has none. Looked at again only when its traits change. */
     private boolean build() {
-        List<ActiveTraits.Found<?>> shots = RangedEffects.shots(ActiveTraits.of(minion));
-        if (shots.isEmpty()) {
+        ActiveTraits traits = ActiveTraits.of(minion);
+        if (traits == builtFor) {
+            return hasShots;
+        }
+        builtFor = traits;
+        List<ActiveTraits.Found<?>> shots = RangedEffects.shots(traits);
+        hasShots = !shots.isEmpty();
+        if (!hasShots) {
             return false;
         }
         float reach = 0.0F;

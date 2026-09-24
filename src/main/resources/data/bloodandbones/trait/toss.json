@@ -1,0 +1,24 @@
+{
+  "name": "trait.bloodandbones.toss",
+  "max_level": 1,
+  "effects": [
+    {
+      "trigger": "attack",
+      "chance": 0.15,
+      "requirements": {
+        "condition": "minecraft:damage_source_properties",
+        "predicate": {
+          "is_direct": true
+        }
+      },
+      "effect": {
+        "type": "bloodandbones:vanilla",
+        "target": "victim",
+        "effect": {
+          "type": "bloodandbones:launch",
+          "up": 0.5
+        }
+      }
+    }
+  ]
+}

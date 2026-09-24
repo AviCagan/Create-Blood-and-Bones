@@ -14,6 +14,17 @@
     },
     {
       "trigger": "passive",
+      "requirements": {
+        "condition": "minecraft:location_check",
+        "predicate": {
+          "fluid": {
+            "fluids": [
+              "minecraft:lava",
+              "minecraft:flowing_lava"
+            ]
+          }
+        }
+      },
       "effect": {
         "type": "bloodandbones:immunity",
         "damage_tags": [

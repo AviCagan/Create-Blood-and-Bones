@@ -41,7 +41,8 @@
         {
           "trait": "bloodandbones:steady",
           "level": 3
-        }
+        },
+        "bloodandbones:still_mend"
       ],
       "armour": [
         {

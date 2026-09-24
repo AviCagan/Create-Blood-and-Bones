@@ -1,0 +1,27 @@
+{
+  "name": "trait.bloodandbones.dark_mend",
+  "max_level": 1,
+  "contexts": [
+    "minion"
+  ],
+  "effects": [
+    {
+      "trigger": "tick",
+      "interval": 200,
+      "requirements": {
+        "condition": "minecraft:location_check",
+        "predicate": {
+          "light": {
+            "light": {
+              "max": 7
+            }
+          }
+        }
+      },
+      "effect": {
+        "type": "bloodandbones:regen",
+        "amount": 1
+      }
+    }
+  ]
+}

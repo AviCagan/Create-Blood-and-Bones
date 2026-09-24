@@ -77,11 +77,15 @@ public class MotionEffectTests {
     }
 
     private static MinionEntity minion(GameTestHelper helper, BlockPos pos, MinionBuild build) {
+        return minion(helper, helper.makeMockPlayer(GameType.SURVIVAL), pos, build);
+    }
+
+    private static MinionEntity minion(GameTestHelper helper, Player maker, BlockPos pos, MinionBuild build) {
         ServerLevel level = helper.getLevel();
         MinionEntity minion = BBEntities.MINION.get().create(level);
         BlockPos at = helper.absolutePos(pos);
         minion.moveTo(at.getX() + 0.5, at.getY(), at.getZ() + 0.5, 0.0F, 0.0F);
-        minion.setup(helper.makeMockPlayer(GameType.SURVIVAL), at, build, 1000.0F);
+        minion.setup(maker, at, build, 1000.0F);
         level.addFreshEntity(minion);
         return minion;
     }
@@ -233,6 +237,42 @@ public class MotionEffectTests {
         if (!floorKept || !floorKept2 || !breaks) {
             helper.fail("Blocks should break only with mobGriefing on, the server allowing it and the blast asking to: whole before " + before
                     + ", kept " + floorKept + ", " + floorKept2 + ", broke " + breaks);
+            return;
+        }
+        helper.succeed();
+    }
+
+    /**
+     * A minion's blast spares its own side, as its shoves and shots do: its maker and its maker's other minion beside it
+     * take nothing, the zombie beside it is hurt.
+     */
+    @GameTest(template = "empty", timeoutTicks = 20)
+    public static void minionBlastSparesItsSide(GameTestHelper helper) {
+        ServerLevel level = helper.getLevel();
+        Player maker = helper.makeMockPlayer(GameType.SURVIVAL);
+        Vec3 at = helper.absoluteVec(new Vec3(5.5, 2.0, 3.5));
+        maker.moveTo(at.x, at.y, at.z, 0.0F, 0.0F);
+        level.addFreshEntity(maker);
+        MinionEntity bomber = minion(helper, maker, new BlockPos(5, 2, 5), MinionBuild.of(cow("body")));
+        MinionEntity sibling = minion(helper, maker, new BlockPos(6, 2, 7), MinionBuild.of(cow("body")));
+        bomber.setNoAi(true);
+        sibling.setNoAi(true);
+        Zombie zombie = helper.spawn(EntityType.ZOMBIE, new BlockPos(3, 2, 5));
+        zombie.setNoAi(true);
+        float zombieHealth = zombie.getHealth();
+        float makerHealth = maker.getHealth();
+        float siblingHealth = sibling.getHealth();
+        new DetonateEffect(LevelBasedValue.constant(3.0F), false, false, 0, false).blow(bomber, 3.0F);
+        boolean makerSpared = maker.getHealth() == makerHealth;
+        boolean siblingSpared = sibling.getHealth() == siblingHealth && !sibling.poweredDown();
+        boolean zombieHurt = !zombie.isAlive() || zombie.getHealth() < zombieHealth;
+        maker.discard();
+        bomber.discard();
+        sibling.discard();
+        zombie.discard();
+        if (!makerSpared || !siblingSpared || !zombieHurt) {
+            helper.fail("The blast should spare the maker (" + makerSpared + ") and its other minion (" + siblingSpared + ") and hurt the zombie ("
+                    + zombieHurt + ")");
             return;
         }
         helper.succeed();
@@ -584,7 +624,7 @@ public class MotionEffectTests {
 
     /**
      * A minion with lava walk dropped onto a pool of lava stands on it (a strider's half-block surface) and is not hurt by
-     * the fire; one without sinks to the bottom.
+     * the fire; one without sinks to the bottom. Off the lava, fire hurts it as it would any other.
      */
     @GameTest(template = "empty", timeoutTicks = 100)
     public static void minionLavaWalkStandsOnLava(GameTestHelper helper) {
@@ -596,6 +636,16 @@ public class MotionEffectTests {
         if (!walker.canStandOnFluid(Fluids.LAVA.defaultFluidState()) || sinker.canStandOnFluid(Fluids.LAVA.defaultFluidState())
                 || walker.canStandOnFluid(Fluids.WATER.defaultFluidState())) {
             helper.fail("Only the lava walker should stand on lava, and not on water");
+            return;
+        }
+        MinionEntity ashore = minion(helper, new BlockPos(8, 2, 2), withOrganTraits(helper, "lava_walk", "bloodandbones:lava_walk"));
+        ActiveTraits.of(ashore);
+        float dry = ashore.getHealth();
+        ashore.hurt(ashore.damageSources().inFire(), 2.0F);
+        boolean burnt = ashore.getHealth() < dry;
+        ashore.discard();
+        if (!burnt) {
+            helper.fail("Off the lava, fire should hurt a lava walker");
             return;
         }
         float health = walker.getHealth();

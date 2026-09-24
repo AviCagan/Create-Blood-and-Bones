@@ -111,7 +111,7 @@ public final class MotionEffects {
         BBLang.trait("silent_steps", "Silent Steps", "Your steps, landings and splashes make no vibrations for sculk or wardens to hear.");
         BBLang.trait("quick_draw", "Quick Draw", "Draw bows and load crossbows twice as fast.");
         BBLang.trait("trample", "Trample", "A minion breaks through leaves, grass and flowers in its way (where the server allows minions to break blocks).");
-        BBLang.trait("lava_walk", "Lava Walker", "A minion walks on lava as a strider does, and fire does not hurt it.");
+        BBLang.trait("lava_walk", "Lava Walker", "A minion walks on lava as a strider does, and fire does not hurt it while it stands on or in lava.");
         BBLang.trait("ender_mask", "Ender Mask", "Endermen do not mind being looked at.");
         // ender_calm and piglin_kin are worded with the other kin traits, in SocialEffects.
         BBLang.trait("inverted_healing", "Inverted Healing", "Healing potions hurt you and harming potions heal you, as with the undead.");
@@ -185,7 +185,10 @@ public final class MotionEffects {
             return 0;
         }
         int best = 0;
-        for (ActiveTraits.Found<FlagEffect> found : traits.find(FlagEffect.class)) {
+        // asked every tick for every player: an indexed walk of the list its traits keep, nothing made
+        List<ActiveTraits.Found<FlagEffect>> flags = traits.find(FlagEffect.class);
+        for (int i = 0; i < flags.size(); i++) {
+            ActiveTraits.Found<FlagEffect> found = flags.get(i);
             if (!found.effect().flag().equals(name) || found.facet().trigger() != Trigger.PASSIVE) {
                 continue;
             }
@@ -358,12 +361,15 @@ public final class MotionEffects {
         DetonateEffect.tickFuses();
     }
 
-    /** A host's own blast leaves it out of what it hits. */
+    /**
+     * A host's own blast leaves it out of what it hits, and its own side with it (a minion's maker and the maker's other
+     * minions; a wearer's minions), as its shoves and shots do.
+     */
     @SubscribeEvent
     public static void onDetonate(ExplosionEvent.Detonate event) {
         if (!DetonateEffect.SPARED.isEmpty() && event.getExplosion().getDirectSourceEntity() instanceof LivingEntity host
                 && DetonateEffect.SPARED.contains(host)) {
-            event.getAffectedEntities().remove(host);
+            event.getAffectedEntities().removeIf(e -> e == host || e instanceof LivingEntity other && ownSide(host, other));
         }
     }
 

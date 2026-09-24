@@ -71,11 +71,15 @@ public class UpkeepEffectTests {
     }
 
     private static MinionEntity minion(GameTestHelper helper, BlockPos pos, MinionBuild build, float power) {
+        return minion(helper, helper.makeMockPlayer(GameType.SURVIVAL), pos, build, power);
+    }
+
+    private static MinionEntity minion(GameTestHelper helper, Player maker, BlockPos pos, MinionBuild build, float power) {
         ServerLevel level = helper.getLevel();
         MinionEntity minion = BBEntities.MINION.get().create(level);
         BlockPos at = helper.absolutePos(pos);
         minion.moveTo(at.getX() + 0.5, at.getY(), at.getZ() + 0.5, 0.0F, 0.0F);
-        minion.setup(helper.makeMockPlayer(GameType.SURVIVAL), at, build, power);
+        minion.setup(maker, at, build, power);
         level.addFreshEntity(minion);
         return minion;
     }
@@ -174,7 +178,11 @@ public class UpkeepEffectTests {
         helper.succeed();
     }
 
-    /** The same regen on a brass minion does nothing: brass never heals itself (the brief), and pays nothing for it. */
+    /**
+     * The same regen on a brass minion does nothing: brass never heals itself (the brief), and pays nothing for it. Nor
+     * does Regeneration from its own trait (a horse's Spleen, hurt) go on it, nor its flesh parts' weaknesses (the sun
+     * setting a rotting torso alight) reach it, as both do on flesh (spec 6.6).
+     */
     @GameTest(template = "empty", timeoutTicks = 20)
     public static void brassNeverSelfHeals(GameTestHelper helper) {
         ResourceLocation regen = TestTraits.trait(helper, "regen_brass", """
@@ -189,6 +197,28 @@ public class UpkeepEffectTests {
         minion.discard();
         if (healed) {
             helper.fail("A brass minion should not mend itself");
+            return;
+        }
+        ResourceLocation fleshy = TestTraits.trait(helper, "regen_brass_potion", """
+                {"name": "trait.bloodandbones.second_wind",
+                 "effects": [{"trigger": "hurt", "effect": {"type": "bloodandbones:mob_effect", "effect": "minecraft:regeneration", "duration": 100}},
+                             {"trigger": "tick", "interval": 20, "effect": {"type": "bloodandbones:exposure", "ignite": 5}}]}""");
+        CarcassArmour.Organ organ = heart(helper, "regen_brass_potion", fleshy.toString());
+        MinionEntity brass = minion(helper, new BlockPos(5, 2, 2), brass().withOrgan(Optional.of(organ)), 1000.0F);
+        MinionEntity flesh = minion(helper, new BlockPos(2, 2, 5), flesh().withOrgan(Optional.of(organ)), 1000.0F);
+        for (MinionEntity each : List.of(brass, flesh)) {
+            TraitEvents.fire(each, Trigger.HURT, each.damageSources().generic(), null, 1.0F);
+            TraitEvents.fire(each, Trigger.TICK, null, null, 0.0F);
+        }
+        boolean brassHealing = brass.hasEffect(MobEffects.REGENERATION);
+        boolean brassBurning = brass.getRemainingFireTicks() > 0;
+        boolean fleshHealing = flesh.hasEffect(MobEffects.REGENERATION);
+        boolean fleshBurning = flesh.getRemainingFireTicks() > 0;
+        brass.discard();
+        flesh.discard();
+        if (brassHealing || brassBurning || !fleshHealing || !fleshBurning) {
+            helper.fail("Its own Regeneration and its parts' weakness should reach flesh only: brass " + brassHealing + ", " + brassBurning
+                    + "; flesh " + fleshHealing + ", " + fleshBurning);
             return;
         }
         helper.succeed();
@@ -299,6 +329,45 @@ public class UpkeepEffectTests {
         player.hurt(player.damageSources().magic(), 100.0F);
         if (!player.isDeadOrDying()) {
             helper.fail("A second killing blow inside the cooldown should kill: " + player.getHealth());
+            return;
+        }
+        helper.succeed();
+    }
+
+    /**
+     * Nothing saves from what gets past invulnerability (the void, /kill), as with a Totem of Undying: a player with
+     * undying V falls out of the world and dies, its cooldown not started, and a minion with it, where minions may die,
+     * dies too.
+     */
+    @GameTest(template = "empty", timeoutTicks = 20)
+    public static void nothingSavesFromTheVoid(GameTestHelper helper) {
+        ResourceLocation mob = helmetMob(helper, "undying_void", "{\"trait\": \"bloodandbones:undying\", \"level\": 5}");
+        Player player = wearing(helper, mob, new BlockPos(2, 2, 2));
+        player.hurt(player.damageSources().fellOutOfWorld(), 100.0F);
+        ActiveTraits.Entry entry = null;
+        for (ActiveTraits.Entry e : ActiveTraits.of(player).entries()) {
+            if (e.id().equals(bb("undying"))) {
+                entry = e;
+            }
+        }
+        boolean cooling = entry != null && TraitEvents.coolingDown(player, entry, 0);
+        if (!player.isDeadOrDying() || cooling) {
+            helper.fail("The void should kill through undying, starting no cooldown: " + player.getHealth() + ", " + cooling);
+            return;
+        }
+        MinionEntity minion = minion(helper, new BlockPos(5, 2, 5),
+                flesh().withOrgan(Optional.of(heart(helper, "undying_void_minion", "{\"trait\": \"bloodandbones:undying\", \"level\": 5}"))), 500.0F);
+        BBServerConfig.MinionDeath before = BBServerConfig.MINION_DEATH.get();
+        try {
+            BBServerConfig.MINION_DEATH.set(BBServerConfig.MinionDeath.DESTROY);
+            minion.hurt(minion.damageSources().genericKill(), 1000.0F);
+        } finally {
+            BBServerConfig.MINION_DEATH.set(before);
+        }
+        boolean died = minion.isDeadOrDying();
+        minion.discard();
+        if (!died) {
+            helper.fail("/kill should kill a minion through undying");
             return;
         }
         helper.succeed();
@@ -473,14 +542,23 @@ public class UpkeepEffectTests {
     }
 
     /**
-     * A flesh minion with a milk udder is milked by hand: an empty bucket used on it comes back full, for 50 mB. A hump
-     * doubles what a flesh body holds.
+     * A flesh minion with a milk udder is milked by hand, by its maker: an empty bucket used on it comes back full, for
+     * 50 mB. Anyone else's stays empty and costs it nothing. A hump doubles what a flesh body holds.
      */
     @GameTest(template = "empty", timeoutTicks = 20)
     public static void milkByHandAndHump(GameTestHelper helper) {
-        MinionEntity minion = minion(helper, new BlockPos(2, 2, 2),
-                flesh().withOrgan(Optional.of(heart(helper, "milk_udder", "bloodandbones:milk_udder"))), 500.0F);
         Player player = helper.makeMockPlayer(GameType.SURVIVAL);
+        MinionEntity minion = minion(helper, player, new BlockPos(2, 2, 2),
+                flesh().withOrgan(Optional.of(heart(helper, "milk_udder", "bloodandbones:milk_udder"))), 500.0F);
+        Player stranger = helper.makeMockPlayer(GameType.SURVIVAL);
+        stranger.setItemInHand(InteractionHand.MAIN_HAND, new ItemStack(Items.BUCKET));
+        float untouched = minion.power();
+        minion.interact(stranger, InteractionHand.MAIN_HAND);
+        if (!stranger.getItemInHand(InteractionHand.MAIN_HAND).is(Items.BUCKET) || minion.power() != untouched) {
+            minion.discard();
+            helper.fail("Only its maker should milk it: " + stranger.getItemInHand(InteractionHand.MAIN_HAND) + ", " + (untouched - minion.power()) + " mB spent");
+            return;
+        }
         player.setItemInHand(InteractionHand.MAIN_HAND, new ItemStack(Items.BUCKET));
         float before = minion.power();
         minion.interact(player, InteractionHand.MAIN_HAND);

@@ -101,13 +101,13 @@ public record ProduceEffect(Optional<Item> item, Optional<ResourceKey<LootTable>
     }
 
     /**
-     * A container one of the minion's produce effects fills, used on it by hand (a bucket on a milk udder): filled there
-     * and then, the minion paying the blood, or null if nothing of it takes this.
+     * A container one of the minion's produce effects fills, used on it by its maker (a bucket on a milk udder): filled
+     * there and then, the minion paying the blood, or null if nothing of it takes this. Nobody else spends its blood so.
      */
     @Nullable
     static InteractionResult byHand(MinionEntity minion, Player player, InteractionHand hand) {
         ItemStack held = player.getItemInHand(hand);
-        if (minion.cybernetic() || minion.poweredDown()) {
+        if (minion.cybernetic() || minion.poweredDown() || !minion.isMaker(player)) {
             return null;
         }
         for (ActiveTraits.Found<ProduceEffect> found : ActiveTraits.of(minion).find(ProduceEffect.class)) {
@@ -191,7 +191,8 @@ public record ProduceEffect(Optional<Item> item, Optional<ResourceKey<LootTable>
         }
         Item want = consumes.get();
         if (host instanceof MinionEntity minion) {
-            for (int i = 0; i < minion.slots(); i++) {
+            int slots = minion.slots();
+            for (int i = 0; i < slots; i++) {
                 ItemStack stack = minion.inventory.getItem(i);
                 if (stack.is(want)) {
                     if (take) {

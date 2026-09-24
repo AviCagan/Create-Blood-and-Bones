@@ -1,5 +1,6 @@
 package com.avicagan.bloodandbones.parts.effect;
 
+import com.avicagan.bloodandbones.minion.MinionEntity;
 import com.avicagan.bloodandbones.parts.TraitContext;
 import com.avicagan.bloodandbones.parts.TraitEffect;
 import com.mojang.serialization.Codec;
@@ -16,8 +17,9 @@ import net.minecraft.world.item.enchantment.LevelBasedValue;
  * What its surroundings do to a body that cannot stand them, the drawbacks' harm (docs/PARTS-AND-TRAITS.md section 5.10:
  * sun_cursed, water_hurts, heat_hurts): {@code damage} of {@code damage_type} and {@code ignite} seconds alight, each
  * time a tick entry comes up. Where and when is the entry's condition (open sky by day, rain or water, a hot biome).
- * Nothing here protects: a helmet does not keep the sun off. The spec reaches these through the vanilla adapter's ignite
- * and damage_entity (the Ranged group's); this small type lets the drawbacks work without it.
+ * Nothing here protects: a helmet does not keep the sun off. Only brass does: sheathed, a brass minion never suffers its
+ * flesh parts' weaknesses (section 6.6, flesh's alone). The spec reaches these through the vanilla adapter's ignite and
+ * damage_entity (the Ranged group's); this small type lets the drawbacks work without it.
  */
 public record ExposureEffect(LevelBasedValue damage, ResourceKey<DamageType> damageType, float ignite) implements TraitEffect.Effect {
     public static final MapCodec<ExposureEffect> CODEC = RecordCodecBuilder.mapCodec(i -> i.group(
@@ -34,7 +36,7 @@ public record ExposureEffect(LevelBasedValue damage, ResourceKey<DamageType> dam
     @Override
     public void run(TraitContext ctx) {
         LivingEntity host = ctx.host();
-        if (!host.isAlive()) {
+        if (!host.isAlive() || host instanceof MinionEntity minion && minion.cybernetic()) {
             return;
         }
         if (ignite > 0.0F) {

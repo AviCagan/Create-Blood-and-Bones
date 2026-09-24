@@ -226,7 +226,8 @@ Everything below is in development builds only; the art is placeholder (see the 
   Assembly Frame (a Cleaver takes it out again) for that organ's special.
 - The Organ Ability key (G by default, "Core Ability" in bloodless mode) fires the active abilities of the carcass
   armour you wear, one piece after the next (helmet, chestplate, leggings, boots) with each press. Each has its own
-  cooldown, shown on the piece, and some cost blood from your backtank or the tank strapped to your chestplate. A
+  cooldown, shown on the piece, and some cost blood from your backtank or the tank strapped to your chestplate (or 3
+  hunger without blood). A
   minion fires its organ's ability at what it fights, paying from its own blood. (The abilities themselves come
   with the next traits.)
 - Traits work only where they belong: armour traits on players, minion traits on minions; a mob that picks up
@@ -270,6 +271,18 @@ Everything below is in development builds only; the art is placeholder (see the 
   the zombie's Shambler and the skeleton's Ossuary are now whole sets of their own, with the undead's inverted healing.
   Thirteen new traits. Traits that only ever worked for players (luck, attack speed, reach, sneaking, mining, gliding,
   powder snow, quick draw, some diets) are no longer given to minions.
+- Trait fixes: cooldowns now last through a relog, a trip home from the End or a minion's chunk reloading (an Organ
+  Ability's is kept on its piece), and a trait with a condition no longer spends its cooldown when the condition is not
+  met (a Spleen's second wind, a cat's morning gift). With no blood in your tank, or soul blood, an Organ Ability costs 3
+  hunger instead. Nothing cheats death in the void or on /kill. On-hit traits go off on your blows only, not on thorns
+  sent back or a beam. Traits raise speed by at most 40% and jump by 0.3 between them, and keep a minion's health
+  within 6 to 150; a minion loaded again keeps the health its traits give it. A minion's blast spares its maker and
+  their other minions, and only its maker milks it. Brass takes no healing from its own traits and none of its flesh
+  parts' weaknesses. A minion's webs honour mobGriefing and go over grass only where `minion_block_damage` allows, and
+  temporary webs ride contraptions. A lava walker is fireproof only on or in lava. Eight more mob signatures: the
+  shulker lid's frontal deflect, the phantom's night speed, the Elder Eye's curse on attackers, the hoglin's toss,
+  evoker fangs on hit, the Golem Core mending a minion standing still, a zombie torso mending in the dark, and the
+  zombie villager's Curable Heart.
 
 ### Presentation
 

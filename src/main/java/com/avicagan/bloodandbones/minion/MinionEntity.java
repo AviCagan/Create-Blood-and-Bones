@@ -1005,6 +1005,12 @@ public class MinionEntity extends PathfinderMob implements net.minecraft.world.e
         entityData.set(SADDLED, tag.getBoolean("Saddled"));
         entityData.set(MODULE, tag.getString("Module"));
         stats = null;
+        if (!level().isClientSide && tag.contains("Health", net.minecraft.nbt.Tag.TAG_ANY_NUMERIC)) {
+            // its traits' health (a Golem Core's hardy) is not saved with it: back on first, so the health it was saved
+            // with is not cut down to its torso's
+            com.avicagan.bloodandbones.parts.ActiveTraits.rebuild(this);
+            setHealth(tag.getFloat("Health"));
+        }
     }
 
     @Override
