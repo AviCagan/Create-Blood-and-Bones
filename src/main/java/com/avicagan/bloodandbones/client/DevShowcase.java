@@ -408,7 +408,11 @@ public final class DevShowcase {
                         }
                         player.getInventory().clearContent();
                         // minions, somewhere clear: four stitched ones in a row, a trough, and one being built on the table
-                        player.teleportTo(player.serverLevel(), player.getBlockX() + 0.5, player.getY(), player.getBlockZ() - 40.5, 0.0F, 20.0F);
+                        // on the ground there, whatever the player was standing on before
+                        player.stopRiding();
+                        int groundY = player.serverLevel().getHeight(net.minecraft.world.level.levelgen.Heightmap.Types.MOTION_BLOCKING,
+                                player.getBlockX(), player.getBlockZ() - 41);
+                        player.teleportTo(player.serverLevel(), player.getBlockX() + 0.5, groundY, player.getBlockZ() - 40.5, 0.0F, 20.0F);
                         // four stitched minions beside: a cow on rabbit legs, a whole cow, a zombie with a pig's head on a
                         // rabbit's haunches, and a legless cow out of blood on its side
                         java.util.function.BiFunction<String, String, com.avicagan.bloodandbones.minion.PieceRef> ref = (mob, bone) ->
