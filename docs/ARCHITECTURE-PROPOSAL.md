@@ -1748,3 +1748,59 @@ through the existing bloodless checks, not another logic path; new blocks are or
 contraptions; an effect on a minion never destroys it (power it down instead: `MinionEntity.powerDown`); effects run on
 the server (`ctx.level()` is a ServerLevel), and movement a client predicts reads the same traits there through
 `ActiveTraits.of`, which notices a change of armour on either side.
+
+**Social, as built** (verified in tests and on a headless client; `SocialEffects`, `SocialClient`, records in
+`parts/effect/`). Five types, and two new reaction modes:
+
+- **Who an effect picks** (`SocialFilter`, one word or a list, any matching; "+" joins tests that must all hold):
+  `any`, `allies` (one side: a player, their minions and tamed animals, a minion's maker and fellow minions, team
+  mates), `others`, `hostile` (monsters, and any mob going for the host or its side), `wounded` (under half health),
+  `invisible`, `underwater`, `moving` (not still, not sneaking), an entity id or "#tag", `family:<group>` (a mob group
+  in the resolved layers, so "family:canid" is wolves and foxes).
+- **kin** {entities, provoked_seconds (30)}: `LivingChangeTargetEvent` (both goal and brain targeting) is cancelled
+  for those mobs unless the carrier hurt that very mob within the window (`SocialEffects.provoked`, a per-victim
+  last-hurt time noted in `LivingDamageEvent.Post`); kept up, it calls off any already after the carrier within 16.
+  Brain targets and anger are cleared too (`callOff`).
+- **sense** {kind, range (16), filter}: `night` keeps night vision up. For a player, `echolocate` (every 5 s),
+  `tremor`, `reveal` (monsters unless filtered) and `see_invisible` send the entity ids sensed (`SensePayload`, to that
+  player alone, never vanilla Glowing); the client outlines them through walls in the sense's colour (echoes pale with
+  a wet click and echoes back from what it found; tremor teal and shivering; reveal blood red, grey in bloodless mode,
+  its wounded dripping, grey sparks in bloodless mode; the unseen violet). `alert` pings (`AlertPayload`) when a mob
+  within range sets its sights on the player, as a passive or from the targeted trigger: a heartbeat's thump and "Zombie
+  has its eye on you" at the bottom right with an arrow for which way to look, turning as you turn. A minion guard
+  (or hunter or sentry, once those jobs exist) with echolocate or tremor gets `SocialGoals.SenseTarget`: monsters within
+  the sense's range as targets without line of sight (tremor only what moves); `see_invisible` restores an invisible
+  creature's visibility to it (`LivingVisibilityEvent`); an alert makes it look round.
+- **aura** {action, radius (4), interval (20, at least 20), filter, effect, amplifier, duration (100), strength,
+  sound, pitch, particle}: `mob_effect`, `pull_items` (items hop to the host, landing about where it stands),
+  `bonemeal` (one crop, sapling or berry bush, `BoneMealItem.applyBonemeal`, NeoForge's form of `growCrop`), `calm`
+  (mobs going for the host or its side give up and may not take aim at them again for `duration` ticks, until the
+  host hurts them), `push` (a knockback away), `rally` (the host's allies, or the filter's mobs, set on whoever hurt it,
+  or kept up, on whoever hurt it in the last 5 s). An `effect` with any other action goes on everything touched (the
+  roar's slowness). Kept up it goes off every interval; from a trigger, then; never twice in a second
+  (`pulseReady`).
+- **pack** {per_ally, allies (allies), radius (8), cap (3)}: a direct hit by the carrier is multiplied by 1 plus the
+  share for each ally within the radius, up to the cap, times the trait strength (`LivingIncomingDamageEvent`).
+- **glow** {colour ("#5fe8c8")}: drawn only. `CarcassGlowLayer` on players draws each worn piece whose own traits glow
+  (all four for a full set's) again with a speckle of photophores, full bright and added to what is under it, nudged
+  towards the camera as `armorCutoutNoCull` is, breathing slowly; a glowing minion is drawn at full brightness.
+- **reaction** gains `friendly` (those mobs never take aim at the carrier, unless it hurt that one within 30 s, as kin)
+  and `defend` (`SocialGoals.DefendHost`, handed out in `TraitEvents.onJoin`: whatever hurt a carrier within the radius
+  lately, or any monster it is fighting, becomes their target).
+- **Traits** (data, with words and bloodless wording): dead_face, skeleton_kin, raider_kin, piglin_kin, ender_calm
+  (minions), golem_trust, beloved, echo_sense (8 + 8L), tremor_sense, spectral_sight, blood_scent ("Damage Sense"
+  in bloodless mode), wide_eyes, pack_hunter, item_magnet (3 + 2L), horde_call, purr, toxin_puff, glow_aura,
+  wither_aura, fatigue_aura, roar (Organ Ability, 20 s), play_dead (its regeneration, and a calm for "hostiles lose
+  you"), cat_terror and warped_dread (mob_effect under the near condition), luminous (the glow, for glow squid parts).
+  alert gains its ping, dolphin_kick its minion half (Dolphin's Grace for its side), and the Shambler set (rotting)
+  dead_face. New entity tags `friendly_golem_trust`, `friendly_beloved`, `defends_beloved`.
+- **Tests** (`SocialEffectTests`): `fullZombieSetKin`, `kinProvokedWindowExpires`, `packHunterScalesWithAllies`,
+  `auraPurrHealsAllies`, `itemMagnetPullsItems`, `calmAuraClearsTargets`, `rallyAuraSetsAlliesOnAttacker`,
+  `alertSendsPing`, `echolocateMinionTargetsThroughWall`, `belovedGolemsDefend`, `socialTraitsLoadWithWords`.
+- **Shared code touched**: `TraitEvents.onJoin` (Social's) hands out the defend goal; `StitchedMinionRenderer` passes
+  its light through `SocialClient.minionLight`, one line, as nothing else reaches a minion's drawing.
+- **Left out**: no trait on the list waits for another group's type. Not built: senses outlining blocks (the
+  sniffer's suspicious sand) and the mimic's alarm; a sense does not raise a minion's follow range attribute (the
+  hunting goal reaches as far as the sense instead); villagers need no friendly reaction (they never attack), so
+  beloved's lists golems only. The mobs whose signatures use these (bat, dolphin, warden, spider, parrot, wolf, cat,
+  pufferfish, glow squid, zombified piglin, ravager) are wired with the rest of the mobs.

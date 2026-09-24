@@ -221,6 +221,11 @@ Everything below is in development builds only; the art is placeholder (see the 
   and how long you have been dry, and can act when you land or make a kill.
 - Server settings for traits: their strength, and effect types to switch off.
 - Hold Ctrl over a carcass piece to read what its traits do, for traits that say.
+- Social traits: kin (zombies, skeletons, raiders or piglins take you for one of their own until you hurt one),
+  golems that trust and defend you, senses that outline creatures through walls for you alone (echolocation's wet
+  click, tremors, the scent of blood, the invisible) and an alert with which way to look when something takes aim,
+  pack hunting, auras (a purr that heals your minions, an item magnet, a calm, a roar, a horde called to your
+  defence, poison, wither and fatigue), and glowing armour pieces and minions.
 
 ### Presentation
 

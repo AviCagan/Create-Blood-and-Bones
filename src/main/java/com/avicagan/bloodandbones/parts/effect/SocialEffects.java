@@ -104,7 +104,7 @@ public final class SocialEffects {
         BBLang.trait("golem_trust", "Trustworthy",
                 "Iron and snow golems trust you, whatever the villagers say of you. One you hurt fights back for 30 seconds.");
         BBLang.trait("beloved", "Beloved",
-                "Golems trust you and come to your defence: whatever hurts you within 16 blocks, or whatever you fight, they go for.");
+                "Golems trust you and come to your defence: whatever hurts you within 16 blocks, or any monster you fight, they go for.");
         // senses
         BBLang.trait("echo_sense", "Echo Sense",
                 "Every 5 seconds a wet click shows you the creatures within 16 blocks (24 at II), through walls. A minion hunts by it through walls.");

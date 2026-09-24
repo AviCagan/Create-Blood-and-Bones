@@ -127,11 +127,16 @@ public record SenseEffect(String kind, LevelBasedValue range, Optional<SocialFil
         host.addEffect(new MobEffectInstance(MobEffects.NIGHT_VISION, ticks, 0, true, false, true));
     }
 
-    /** One sweep: the creatures sensed now, outlined for the wearer alone for this long. Minions hunt by it instead. */
+    /**
+     * One sweep: the creatures sensed now, outlined for the wearer alone for this long (an echolocation's click goes out
+     * even when nothing answers; the steady senses send nothing when there is nothing to show). Minions hunt by it instead.
+     */
     private void pulse(TraitContext ctx, int ticks) {
         if (ctx.host() instanceof ServerPlayer player) {
             List<Integer> ids = sensed(player, ctx.traitLevel()).stream().map(LivingEntity::getId).toList();
-            PacketDistributor.sendToPlayer(player, new SensePayload(kind, ids, ticks));
+            if (!ids.isEmpty() || "echolocate".equals(kind)) {
+                PacketDistributor.sendToPlayer(player, new SensePayload(kind, ids, ticks));
+            }
         }
     }
 

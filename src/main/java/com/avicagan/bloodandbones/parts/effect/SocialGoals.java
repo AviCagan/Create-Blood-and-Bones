@@ -75,8 +75,8 @@ public final class SocialGoals {
 
     /**
      * Mobs a trait makes defend whoever carries it (a reaction in "defend" mode: golems for the beloved): whatever hurt a
-     * carrier within the radius lately, or whatever it is fighting, becomes their target. Never the carrier itself, nor
-     * one of its side.
+     * carrier within the radius lately, or any monster it is fighting, becomes their target. Never the carrier itself,
+     * one of its side, or one of their own kind.
      */
     public static class DefendHost extends TargetGoal {
         private final ResourceLocation trait;
@@ -104,8 +104,9 @@ public final class SocialGoals {
                     enemy = attacker;
                     return true;
                 }
+                // what it fights too, but only a monster: a golem never turns on a villager or a player for it
                 LivingEntity attacked = carrier.getLastHurtMob();
-                if (attacked != null && carrier.tickCount - carrier.getLastHurtMobTimestamp() < 100 && fair(carrier, attacked)) {
+                if (attacked instanceof Enemy && carrier.tickCount - carrier.getLastHurtMobTimestamp() < 100 && fair(carrier, attacked)) {
                     enemy = attacked;
                     return true;
                 }

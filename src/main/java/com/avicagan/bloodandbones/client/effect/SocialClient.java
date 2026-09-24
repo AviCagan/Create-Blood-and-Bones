@@ -128,6 +128,7 @@ public final class SocialClient {
         NeoForge.EVENT_BUS.addListener(SocialClient::onRenderLevel);
         NeoForge.EVENT_BUS.addListener(SocialClient::onClientTick);
         NeoForge.EVENT_BUS.addListener(SocialClient::onLoggingOut);
+        NeoForge.EVENT_BUS.addListener(SocialClient::onRespawned);
     }
 
     // ---- glow
@@ -235,6 +236,15 @@ public final class SocialClient {
     }
 
     private static void onLoggingOut(ClientPlayerNetworkEvent.LoggingOut event) {
+        forget();
+    }
+
+    /** A new world or a respawn: the entity ids noted belonged to the old one. */
+    private static void onRespawned(ClientPlayerNetworkEvent.Clone event) {
+        forget();
+    }
+
+    private static void forget() {
         OUTLINES.clear();
         ALERTS.clear();
         ECHOES.clear();
