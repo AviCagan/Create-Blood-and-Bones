@@ -160,6 +160,22 @@ public class BBBlocks {
             .lang("Bloody Casing")
             .register();
 
+    /** Brass casing splashed with blood, made and joined up as the Bloody Casing. */
+    public static final BlockEntry<com.simibubi.create.content.decoration.encasing.CasingBlock> BLOODY_BRASS_CASING = BloodAndBones.REGISTRATE
+            .block("bloody_brass_casing", com.simibubi.create.content.decoration.encasing.CasingBlock::new)
+            .properties(p -> p.mapColor(MapColor.CRIMSON_NYLIUM))
+            .transform(com.simibubi.create.foundation.data.BuilderTransformers.casing(() -> BBSpriteShifts.BLOODY_BRASS_CASING))
+            .lang("Bloody Brass Casing")
+            .register();
+
+    /** Copper casing splashed with blood, made and joined up as the Bloody Casing. */
+    public static final BlockEntry<com.simibubi.create.content.decoration.encasing.CasingBlock> BLOODY_COPPER_CASING = BloodAndBones.REGISTRATE
+            .block("bloody_copper_casing", com.simibubi.create.content.decoration.encasing.CasingBlock::new)
+            .properties(p -> p.mapColor(MapColor.CRIMSON_NYLIUM))
+            .transform(com.simibubi.create.foundation.data.BuilderTransformers.casing(() -> BBSpriteShifts.BLOODY_COPPER_CASING))
+            .lang("Bloody Copper Casing")
+            .register();
+
     /** A steel table to lay a piece on and chop it up with a Cleaver. */
     public static final BlockEntry<com.avicagan.bloodandbones.cooking.ButcherTableBlock> BUTCHER_TABLE = BloodAndBones.REGISTRATE
             .block("butcher_table", com.avicagan.bloodandbones.cooking.ButcherTableBlock::new)
@@ -191,6 +207,94 @@ public class BBBlocks {
             .tag(net.minecraft.tags.BlockTags.MINEABLE_WITH_HOE)
             .lang("Gut Chain")
             .item().model((c, p) -> p.generated(c, p.modLoc("item/gut_chain"))).build()
+            .register();
+
+    /** Morgue table: holds one item; tables side by side join into one run, legs only at its outer corners. */
+    public static final BlockEntry<com.avicagan.bloodandbones.decoration.SteelTableBlock> STEEL_TABLE = BloodAndBones.REGISTRATE
+            .block("steel_table", com.avicagan.bloodandbones.decoration.SteelTableBlock::new)
+            .initialProperties(() -> net.minecraft.world.level.block.Blocks.IRON_BLOCK)
+            .properties(p -> p.noOcclusion().strength(3.0F, 6.0F).mapColor(MapColor.METAL))
+            .blockstate((c, p) -> {
+                // the top always; a lip along each side that joins nothing, and its corner where either side is open;
+                // a leg in each corner where neither side joins (models drawn for the north side and north-west corner)
+                var builder = p.getMultipartBuilder(c.get());
+                builder.part().modelFile(p.models().getExistingFile(p.modLoc("block/steel_table_top"))).addModel().end();
+                net.minecraft.core.Direction[] sides = {net.minecraft.core.Direction.NORTH, net.minecraft.core.Direction.EAST,
+                        net.minecraft.core.Direction.SOUTH, net.minecraft.core.Direction.WEST};
+                for (int i = 0; i < 4; i++) {
+                    net.minecraft.core.Direction side = sides[i];
+                    net.minecraft.core.Direction before = sides[(i + 3) % 4];
+                    builder.part().modelFile(p.models().getExistingFile(p.modLoc("block/steel_table_lip"))).rotationY(i * 90).addModel()
+                            .condition(com.avicagan.bloodandbones.decoration.SteelTableBlock.side(side), false).end();
+                    builder.part().modelFile(p.models().getExistingFile(p.modLoc("block/steel_table_lip_corner"))).rotationY(i * 90).addModel()
+                            .useOr()
+                            .condition(com.avicagan.bloodandbones.decoration.SteelTableBlock.side(side), false)
+                            .condition(com.avicagan.bloodandbones.decoration.SteelTableBlock.side(before), false).end();
+                    builder.part().modelFile(p.models().getExistingFile(p.modLoc("block/steel_table_leg"))).rotationY(i * 90).addModel()
+                            .condition(com.avicagan.bloodandbones.decoration.SteelTableBlock.side(side), false)
+                            .condition(com.avicagan.bloodandbones.decoration.SteelTableBlock.side(before), false).end();
+                }
+            })
+            .tag(net.minecraft.tags.BlockTags.MINEABLE_WITH_PICKAXE)
+            .lang("Steel Table")
+            .item().model((c, p) -> p.withExistingParent(c.getName(), p.modLoc("block/steel_table_item"))).build()
+            .register();
+
+    /** Morgue shelves: two shelves of two places, each holding one item on show. */
+    public static final BlockEntry<com.avicagan.bloodandbones.decoration.SteelRackBlock> STEEL_RACK = BloodAndBones.REGISTRATE
+            .block("steel_rack", com.avicagan.bloodandbones.decoration.SteelRackBlock::new)
+            .initialProperties(() -> net.minecraft.world.level.block.Blocks.IRON_BLOCK)
+            .properties(p -> p.noOcclusion().strength(3.0F, 6.0F).mapColor(MapColor.METAL))
+            .blockstate((c, p) -> p.horizontalBlock(c.get(), p.models().getExistingFile(p.modLoc("block/steel_rack"))))
+            .tag(net.minecraft.tags.BlockTags.MINEABLE_WITH_PICKAXE)
+            .lang("Steel Rack")
+            .simpleItem()
+            .register();
+
+    /** A segment of giant rib; stacks and spans of them shape themselves into arches. */
+    public static final BlockEntry<com.avicagan.bloodandbones.decoration.RibcageArchBlock> RIBCAGE_ARCH = BloodAndBones.REGISTRATE
+            .block("ribcage_arch", com.avicagan.bloodandbones.decoration.RibcageArchBlock::new)
+            .initialProperties(() -> net.minecraft.world.level.block.Blocks.BONE_BLOCK)
+            .properties(p -> p.noOcclusion().strength(1.5F).mapColor(MapColor.SAND))
+            .blockstate((c, p) -> p.getVariantBuilder(c.get()).forAllStates(state -> net.neoforged.neoforge.client.model.generators.ConfiguredModel.builder()
+                    // drawn facing north, bending towards z = 0
+                    .modelFile(p.models().getExistingFile(p.modLoc("block/ribcage_arch_"
+                            + state.getValue(com.avicagan.bloodandbones.decoration.RibcageArchBlock.SHAPE).getSerializedName())))
+                    .rotationY(((int) state.getValue(net.minecraft.world.level.block.HorizontalDirectionalBlock.FACING).toYRot() + 180) % 360)
+                    .build()))
+            .tag(net.minecraft.tags.BlockTags.MINEABLE_WITH_PICKAXE)
+            .lang("Ribcage Arch")
+            .item().model((c, p) -> p.withExistingParent(c.getName(), p.modLoc("block/ribcage_arch_item"))).build()
+            .register();
+
+    /** Bones heaped in layers, as snow lies. Each layer drops two bones. */
+    public static final BlockEntry<com.avicagan.bloodandbones.decoration.BonePileBlock> BONE_PILE = BloodAndBones.REGISTRATE
+            .block("bone_pile", com.avicagan.bloodandbones.decoration.BonePileBlock::new)
+            // dug with a shovel or by hand, as gravel, with the bone block's sounds
+            .initialProperties(() -> net.minecraft.world.level.block.Blocks.GRAVEL)
+            .properties(p -> p.noOcclusion().strength(0.4F).mapColor(MapColor.SAND).sound(net.minecraft.world.level.block.SoundType.BONE_BLOCK).forceSolidOff()
+                    .isViewBlocking((state, level, pos) -> state.getValue(com.avicagan.bloodandbones.decoration.BonePileBlock.LAYERS) >= com.avicagan.bloodandbones.decoration.BonePileBlock.MAX_LAYERS))
+            .blockstate((c, p) -> p.getVariantBuilder(c.get()).forAllStates(state -> {
+                var model = p.models().getExistingFile(p.modLoc("block/bone_pile_height" + 2 * state.getValue(com.avicagan.bloodandbones.decoration.BonePileBlock.LAYERS)));
+                // any of four turns, picked by position, so the loose bones on top do not repeat
+                return new net.neoforged.neoforge.client.model.generators.ConfiguredModel[]{
+                        new net.neoforged.neoforge.client.model.generators.ConfiguredModel(model, 0, 0, false),
+                        new net.neoforged.neoforge.client.model.generators.ConfiguredModel(model, 0, 90, false),
+                        new net.neoforged.neoforge.client.model.generators.ConfiguredModel(model, 0, 180, false),
+                        new net.neoforged.neoforge.client.model.generators.ConfiguredModel(model, 0, 270, false)};
+            }))
+            .loot((lt, block) -> lt.add(block, net.minecraft.world.level.storage.loot.LootTable.lootTable().withPool(
+                    net.minecraft.world.level.storage.loot.LootPool.lootPool()
+                            .add(lt.applyExplosionDecay(block, net.minecraft.world.level.storage.loot.entries.LootItem.lootTableItem(net.minecraft.world.item.Items.BONE)
+                                    .apply(com.avicagan.bloodandbones.decoration.BonePileBlock.LAYERS.getPossibleValues(), layers ->
+                                            net.minecraft.world.level.storage.loot.functions.SetItemCountFunction.setCount(
+                                                            net.minecraft.world.level.storage.loot.providers.number.ConstantValue.exactly(layers * com.avicagan.bloodandbones.decoration.BonePileBlock.BONES_PER_LAYER))
+                                                    .when(net.minecraft.world.level.storage.loot.predicates.LootItemBlockStatePropertyCondition.hasBlockStateProperties(block)
+                                                            .setProperties(net.minecraft.advancements.critereon.StatePropertiesPredicate.Builder.properties()
+                                                                    .hasProperty(com.avicagan.bloodandbones.decoration.BonePileBlock.LAYERS, layers)))))))))
+            .tag(net.minecraft.tags.BlockTags.MINEABLE_WITH_SHOVEL)
+            .lang("Bone Pile")
+            .item().model((c, p) -> p.generated(c, p.modLoc("item/bone_pile"))).build()
             .register();
 
     /** Lie on it and have your limbs off, or new ones on. */

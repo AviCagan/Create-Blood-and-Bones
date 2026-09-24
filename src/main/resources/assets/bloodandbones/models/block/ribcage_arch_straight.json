@@ -1,0 +1,146 @@
+{
+  "parent": "block/block",
+  "textures": {
+    "bone": "bloodandbones:block/rib_bone",
+    "joint": "bloodandbones:block/rib_joint",
+    "particle": "bloodandbones:block/rib_bone"
+  },
+  "elements": [
+    {
+      "from": [
+        6,
+        0,
+        7.5
+      ],
+      "to": [
+        10,
+        16,
+        10.5
+      ],
+      "faces": {
+        "north": {
+          "texture": "#bone",
+          "uv": [
+            6,
+            0,
+            10,
+            16
+          ]
+        },
+        "south": {
+          "texture": "#bone",
+          "uv": [
+            6,
+            0,
+            10,
+            16
+          ]
+        },
+        "east": {
+          "texture": "#bone",
+          "uv": [
+            5.5,
+            0,
+            8.5,
+            16
+          ]
+        },
+        "west": {
+          "texture": "#bone",
+          "uv": [
+            7.5,
+            0,
+            10.5,
+            16
+          ]
+        },
+        "up": {
+          "texture": "#bone",
+          "uv": [
+            6,
+            7.5,
+            10,
+            10.5
+          ]
+        },
+        "down": {
+          "texture": "#bone",
+          "uv": [
+            6,
+            5.5,
+            10,
+            8.5
+          ]
+        }
+      }
+    },
+    {
+      "from": [
+        5.5,
+        0,
+        7.0
+      ],
+      "to": [
+        10.5,
+        1.5,
+        11.0
+      ],
+      "faces": {
+        "north": {
+          "texture": "#joint",
+          "uv": [
+            5.5,
+            14.5,
+            10.5,
+            16.0
+          ]
+        },
+        "south": {
+          "texture": "#joint",
+          "uv": [
+            5.5,
+            14.5,
+            10.5,
+            16.0
+          ]
+        },
+        "east": {
+          "texture": "#joint",
+          "uv": [
+            5.0,
+            14.5,
+            9.0,
+            16.0
+          ]
+        },
+        "west": {
+          "texture": "#joint",
+          "uv": [
+            7.0,
+            14.5,
+            11.0,
+            16.0
+          ]
+        },
+        "up": {
+          "texture": "#joint",
+          "uv": [
+            5.5,
+            7.0,
+            10.5,
+            11.0
+          ]
+        },
+        "down": {
+          "texture": "#joint",
+          "uv": [
+            5.5,
+            5.0,
+            10.5,
+            9.0
+          ]
+        }
+      }
+    }
+  ]
+}

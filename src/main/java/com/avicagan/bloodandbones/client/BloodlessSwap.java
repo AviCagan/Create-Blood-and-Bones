@@ -53,6 +53,21 @@ public final class BloodlessSwap extends BakedModelWrapper<BakedModel> {
             ResourceLocation.fromNamespaceAndPath("bloodandbones", "block/gut_chain"), ResourceLocation.fromNamespaceAndPath("bloodandbones", "block/gut_chain_clean"),
             ResourceLocation.fromNamespaceAndPath("bloodandbones", "item/gut_chain"), ResourceLocation.fromNamespaceAndPath("bloodandbones", "item/gut_chain_clean"));
 
+    /** Ribs and bone piles come out bleached and dry: no wet gristle at the joints, no blood between the bones. */
+    public static final Map<ResourceLocation, ResourceLocation> BONES = Map.of(
+            ResourceLocation.fromNamespaceAndPath("bloodandbones", "block/rib_bone"), ResourceLocation.fromNamespaceAndPath("bloodandbones", "block/rib_bone_clean"),
+            ResourceLocation.fromNamespaceAndPath("bloodandbones", "block/rib_joint"), ResourceLocation.fromNamespaceAndPath("bloodandbones", "block/rib_joint_clean"),
+            ResourceLocation.fromNamespaceAndPath("bloodandbones", "block/bone_pile_top"), ResourceLocation.fromNamespaceAndPath("bloodandbones", "block/bone_pile_top_clean"),
+            ResourceLocation.fromNamespaceAndPath("bloodandbones", "block/bone_pile_side"), ResourceLocation.fromNamespaceAndPath("bloodandbones", "block/bone_pile_side_clean"),
+            ResourceLocation.fromNamespaceAndPath("bloodandbones", "item/bone_pile"), ResourceLocation.fromNamespaceAndPath("bloodandbones", "item/bone_pile_clean"));
+
+    /** The bloody brass and copper casings come out as Create's own, as the Bloody Casing comes out andesite. */
+    public static final Map<ResourceLocation, ResourceLocation> CLADDING = Map.of(
+            ResourceLocation.fromNamespaceAndPath("bloodandbones", "block/bloody_brass_casing"), ResourceLocation.fromNamespaceAndPath("create", "block/brass_casing"),
+            ResourceLocation.fromNamespaceAndPath("bloodandbones", "block/bloody_brass_casing_connected"), ResourceLocation.fromNamespaceAndPath("create", "block/brass_casing_connected"),
+            ResourceLocation.fromNamespaceAndPath("bloodandbones", "block/bloody_copper_casing"), ResourceLocation.fromNamespaceAndPath("create", "block/copper_casing"),
+            ResourceLocation.fromNamespaceAndPath("bloodandbones", "block/bloody_copper_casing_connected"), ResourceLocation.fromNamespaceAndPath("create", "block/copper_casing_connected"));
+
     private final Map<ResourceLocation, ResourceLocation> swaps;
     /** Resolved on first use: the block atlas is only ready once baking is over. */
     @Nullable

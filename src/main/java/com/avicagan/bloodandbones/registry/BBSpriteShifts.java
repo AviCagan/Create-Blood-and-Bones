@@ -9,6 +9,10 @@ import com.simibubi.create.foundation.block.connected.CTSpriteShifter;
 public final class BBSpriteShifts {
     public static final CTSpriteShiftEntry BLOODY_CASING = CTSpriteShifter.getCT(AllCTTypes.OMNIDIRECTIONAL,
             BloodAndBones.asResource("block/bloody_casing"), BloodAndBones.asResource("block/bloody_casing_connected"));
+    public static final CTSpriteShiftEntry BLOODY_BRASS_CASING = CTSpriteShifter.getCT(AllCTTypes.OMNIDIRECTIONAL,
+            BloodAndBones.asResource("block/bloody_brass_casing"), BloodAndBones.asResource("block/bloody_brass_casing_connected"));
+    public static final CTSpriteShiftEntry BLOODY_COPPER_CASING = CTSpriteShifter.getCT(AllCTTypes.OMNIDIRECTIONAL,
+            BloodAndBones.asResource("block/bloody_copper_casing"), BloodAndBones.asResource("block/bloody_copper_casing_connected"));
 
     private BBSpriteShifts() {
     }

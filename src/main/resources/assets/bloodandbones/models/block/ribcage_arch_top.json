@@ -1,0 +1,214 @@
+{
+  "parent": "block/block",
+  "textures": {
+    "bone": "bloodandbones:block/rib_bone",
+    "joint": "bloodandbones:block/rib_joint",
+    "particle": "bloodandbones:block/rib_bone"
+  },
+  "elements": [
+    {
+      "from": [
+        6,
+        11.5,
+        0
+      ],
+      "to": [
+        10,
+        14.5,
+        16
+      ],
+      "faces": {
+        "north": {
+          "texture": "#bone",
+          "uv": [
+            6,
+            1.5,
+            10,
+            4.5
+          ]
+        },
+        "south": {
+          "texture": "#bone",
+          "uv": [
+            6,
+            1.5,
+            10,
+            4.5
+          ]
+        },
+        "east": {
+          "texture": "#bone",
+          "uv": [
+            0,
+            1.5,
+            16,
+            4.5
+          ]
+        },
+        "west": {
+          "texture": "#bone",
+          "uv": [
+            0,
+            1.5,
+            16,
+            4.5
+          ]
+        },
+        "up": {
+          "texture": "#bone",
+          "uv": [
+            6,
+            0,
+            10,
+            16
+          ]
+        },
+        "down": {
+          "texture": "#bone",
+          "uv": [
+            6,
+            0,
+            10,
+            16
+          ]
+        }
+      }
+    },
+    {
+      "from": [
+        5.5,
+        11.0,
+        0
+      ],
+      "to": [
+        10.5,
+        15.0,
+        1.5
+      ],
+      "faces": {
+        "north": {
+          "texture": "#joint",
+          "uv": [
+            5.5,
+            1.0,
+            10.5,
+            5.0
+          ]
+        },
+        "south": {
+          "texture": "#joint",
+          "uv": [
+            5.5,
+            1.0,
+            10.5,
+            5.0
+          ]
+        },
+        "east": {
+          "texture": "#joint",
+          "uv": [
+            14.5,
+            1.0,
+            16.0,
+            5.0
+          ]
+        },
+        "west": {
+          "texture": "#joint",
+          "uv": [
+            0,
+            1.0,
+            1.5,
+            5.0
+          ]
+        },
+        "up": {
+          "texture": "#joint",
+          "uv": [
+            5.5,
+            0,
+            10.5,
+            1.5
+          ]
+        },
+        "down": {
+          "texture": "#joint",
+          "uv": [
+            5.5,
+            14.5,
+            10.5,
+            16.0
+          ]
+        }
+      }
+    },
+    {
+      "from": [
+        5.5,
+        11.0,
+        14.5
+      ],
+      "to": [
+        10.5,
+        15.0,
+        16
+      ],
+      "faces": {
+        "north": {
+          "texture": "#joint",
+          "uv": [
+            5.5,
+            1.0,
+            10.5,
+            5.0
+          ]
+        },
+        "south": {
+          "texture": "#joint",
+          "uv": [
+            5.5,
+            1.0,
+            10.5,
+            5.0
+          ]
+        },
+        "east": {
+          "texture": "#joint",
+          "uv": [
+            0,
+            1.0,
+            1.5,
+            5.0
+          ]
+        },
+        "west": {
+          "texture": "#joint",
+          "uv": [
+            14.5,
+            1.0,
+            16.0,
+            5.0
+          ]
+        },
+        "up": {
+          "texture": "#joint",
+          "uv": [
+            5.5,
+            14.5,
+            10.5,
+            16.0
+          ]
+        },
+        "down": {
+          "texture": "#joint",
+          "uv": [
+            5.5,
+            0,
+            10.5,
+            1.5
+          ]
+        }
+      }
+    }
+  ]
+}

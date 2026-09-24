@@ -101,9 +101,15 @@ public class BBJeiPlugin implements IModPlugin {
                         new net.minecraft.world.item.ItemStack(BBBlocks.BUTCHER_TABLE.get())),
                 mezz.jei.api.constants.VanillaTypes.ITEM_STACK,
                 Component.translatable("bloodandbones.jei.display.1"), Component.translatable("bloodandbones.jei.display.2"));
-        registration.addIngredientInfo(java.util.List.of(new net.minecraft.world.item.ItemStack(BBBlocks.BLOODY_CASING.get()), new net.minecraft.world.item.ItemStack(BBBlocks.GUT_CHAIN.get())),
+        registration.addIngredientInfo(java.util.stream.Stream.of(BBBlocks.BLOODY_CASING, BBBlocks.BLOODY_BRASS_CASING, BBBlocks.BLOODY_COPPER_CASING,
+                                BBBlocks.GUT_CHAIN, BBBlocks.RIBCAGE_ARCH, BBBlocks.BONE_PILE)
+                        .map(e -> new net.minecraft.world.item.ItemStack(e.get())).toList(),
                 mezz.jei.api.constants.VanillaTypes.ITEM_STACK,
-                Component.translatable("bloodandbones.jei.decoration.1"), Component.translatable("bloodandbones.jei.decoration.2"));
+                Component.translatable("bloodandbones.jei.decoration.1"), Component.translatable("bloodandbones.jei.decoration.2"),
+                Component.translatable("bloodandbones.jei.decoration.3"));
+        registration.addIngredientInfo(java.util.List.of(new net.minecraft.world.item.ItemStack(BBBlocks.STEEL_TABLE.get()), new net.minecraft.world.item.ItemStack(BBBlocks.STEEL_RACK.get())),
+                mezz.jei.api.constants.VanillaTypes.ITEM_STACK,
+                Component.translatable("bloodandbones.jei.morgue.1"), Component.translatable("bloodandbones.jei.morgue.2"));
         registration.addIngredientInfo(java.util.List.of(new net.minecraft.world.item.ItemStack(BBBlocks.SURGERY_TABLE.get()), new net.minecraft.world.item.ItemStack(BBItems.PEG_LEG.get()),
                         new net.minecraft.world.item.ItemStack(BBItems.HOOK_HAND.get()), new net.minecraft.world.item.ItemStack(BBItems.SEVERED_ARM.get()),
                         new net.minecraft.world.item.ItemStack(BBItems.SEVERED_LEG.get())),
