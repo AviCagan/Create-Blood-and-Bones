@@ -51,7 +51,7 @@ Everything below is in development builds only; the art is placeholder (see the 
 
 ### Cooking, display and decoration
 
-- Spit Roast and Specimen Jar.
+- Spit Roast and Specimen Jar (the jar shows one item, any item; a carcass piece pickles in it).
 - Butcher's Hook: a wall hook to hang a piece on; a fresh piece drips blood onto the floor below
   until it runs dry.
 - Bloody Casing: andesite casing filled with blood, joining up like Create's casings.

@@ -94,6 +94,13 @@ public class CookingTests {
         if (!jar.put(piece) || jar.put(piece.copy())) {
             helper.fail("The jar should take one piece and only one");
         }
+        // the brief: one item, any item
+        BlockPos otherPos = new BlockPos(5, 2, 5);
+        helper.setBlock(otherPos, BBBlocks.SPECIMEN_JAR.getDefaultState());
+        SpecimenJarBlockEntity other = (SpecimenJarBlockEntity) helper.getLevel().getBlockEntity(helper.absolutePos(otherPos));
+        if (!other.put(new ItemStack(Items.DIAMOND))) {
+            helper.fail("The jar should take any item, a diamond too");
+        }
         helper.runAfterDelay(5, () -> {
             helper.getLevel().destroyBlock(helper.absolutePos(jarPos), false);
             helper.assertItemEntityPresent(com.avicagan.bloodandbones.registry.BBItems.CARCASS_PIECE.get(), jarPos, 2.0);
@@ -121,7 +128,7 @@ public class CookingTests {
         helper.setBlock(hookPos, hookState);
         ItemStack piece = cowBody(helper);
         SpecimenJarBlockEntity hook = (SpecimenJarBlockEntity) helper.getLevel().getBlockEntity(helper.absolutePos(hookPos));
-        if (!(hook instanceof com.avicagan.bloodandbones.cooking.ButcherHookBlockEntity) || !hook.put(piece) || hook.put(piece.copy())) {
+        if (!(hook instanceof com.avicagan.bloodandbones.cooking.ButcherHookBlockEntity) || hook.put(new ItemStack(Items.DIAMOND)) || !hook.put(piece) || hook.put(piece.copy())) {
             helper.fail("The hook should take one piece and only one");
         }
         helper.runAfterDelay(5, () -> {

@@ -19,6 +19,12 @@ import org.joml.Vector3d;
  * has blood in it, and drips it on the floor below until it has run dry (about two minutes).
  */
 public class ButcherHookBlockEntity extends SpecimenJarBlockEntity {
+    /** A carcass piece only. */
+    @Override
+    protected boolean accepts(net.minecraft.world.item.ItemStack stack) {
+        return com.avicagan.bloodandbones.item.CarcassPieceItem.piece(stack) != null;
+    }
+
     /** Seconds a freshly cut piece takes to drip dry. */
     public static final int DRIP_SECONDS = 120;
 

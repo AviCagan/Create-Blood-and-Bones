@@ -12,7 +12,7 @@ import net.minecraft.world.level.block.state.BlockState;
 
 import java.util.List;
 
-/** The piece in the jar. It keeps: a carried piece does not rot, and neither does one in a jar. */
+/** What is in the jar: one item, any item. It keeps: a carried piece does not rot, and neither does one in a jar. */
 public class SpecimenJarBlockEntity extends SmartBlockEntity {
     private ItemStack specimen = ItemStack.EMPTY;
 
@@ -28,8 +28,13 @@ public class SpecimenJarBlockEntity extends SmartBlockEntity {
         return specimen;
     }
 
+    /** What it holds: the jar, as the brief has it, one item, any item; the hook and table, carcass pieces. */
+    protected boolean accepts(ItemStack stack) {
+        return !stack.isEmpty();
+    }
+
     public boolean put(ItemStack stack) {
-        if (!specimen.isEmpty() || CarcassPieceItem.piece(stack) == null) {
+        if (!specimen.isEmpty() || !accepts(stack)) {
             return false;
         }
         specimen = stack;

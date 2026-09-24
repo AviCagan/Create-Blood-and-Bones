@@ -18,7 +18,7 @@ import net.minecraft.world.phys.BlockHitResult;
 import net.minecraft.world.phys.shapes.CollisionContext;
 import net.minecraft.world.phys.shapes.VoxelShape;
 
-/** A glass jar of cloudy preserving fluid. Put a carcass piece in to keep it on show; empty hand takes it out. */
+/** A glass jar of cloudy preserving fluid. Put anything in to keep it on show (a carcass piece drifts, pickled); empty hand takes it out. */
 public class SpecimenJarBlock extends Block implements IBE<SpecimenJarBlockEntity> {
     private static final VoxelShape SHAPE = Block.box(3, 0, 3, 13, 15, 13);
 
@@ -34,9 +34,6 @@ public class SpecimenJarBlock extends Block implements IBE<SpecimenJarBlockEntit
     @Override
     protected ItemInteractionResult useItemOn(ItemStack stack, BlockState state, Level level, BlockPos pos, Player player,
                                               InteractionHand hand, BlockHitResult hit) {
-        if (!stack.isEmpty() && !stack.is(BBItems.CARCASS_PIECE.get())) {
-            return ItemInteractionResult.PASS_TO_DEFAULT_BLOCK_INTERACTION;
-        }
         if (level.isClientSide) {
             // an empty hand on an empty one does nothing, so the other hand gets its turn (a piece held there)
             return stack.isEmpty() && level.getBlockEntity(pos) instanceof SpecimenJarBlockEntity be && be.specimen().isEmpty()

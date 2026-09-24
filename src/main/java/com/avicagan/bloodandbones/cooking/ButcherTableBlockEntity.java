@@ -19,6 +19,12 @@ import java.util.List;
 
 /** The piece on a butcher's table: held like a piece in a jar until a Cleaver takes it apart. */
 public class ButcherTableBlockEntity extends SpecimenJarBlockEntity {
+    /** A carcass piece only. */
+    @Override
+    protected boolean accepts(net.minecraft.world.item.ItemStack stack) {
+        return com.avicagan.bloodandbones.item.CarcassPieceItem.piece(stack) != null;
+    }
+
     /** For funnels and hoppers: one carcass piece goes on an empty table, and can be taken off again. */
     public final net.neoforged.neoforge.items.IItemHandler inventory = new net.neoforged.neoforge.items.IItemHandler() {
         @Override

@@ -89,8 +89,8 @@ public class BBLang {
                 "A hook for a wall, to hang a carcass piece on for show.",
                 "When R-Clicked with a Carcass Piece", "Hangs it on the hook. It _keeps_ there. R-Click with an _empty hand_ to take it down.");
         block("specimen_jar",
-                "A jar of cloudy _preserving fluid_ for keeping a carcass piece on show.",
-                "When R-Clicked with a Carcass Piece", "Puts it in, to drift in the fluid. R-Click with an _empty hand_ to take it out.");
+                "A jar of cloudy _preserving fluid_ for keeping _one item_ on show, any item.",
+                "When R-Clicked with an Item", "Puts it in, to drift in the fluid; a carcass piece pickles pale. R-Click with an _empty hand_ to take it out.");
 
         // ---- the body
         block("surgery_table",

@@ -22,13 +22,24 @@ public class SpecimenJarRenderer extends SafeBlockEntityRenderer<SpecimenJarBloc
 
     @Override
     protected void renderSafe(SpecimenJarBlockEntity be, float partialTicks, PoseStack ms, MultiBufferSource buffer, int light, int overlay) {
-        CarcassPieceItem.Piece piece = CarcassPieceItem.piece(be.specimen());
-        Rig rig = piece == null ? null : RigManager.clientRig(piece.entity(), piece.baby()).orElse(null);
-        Bone bone = rig == null ? null : rig.bone(piece.bone()).orElse(null);
-        if (bone == null || be.getLevel() == null) {
+        if (be.specimen().isEmpty() || be.getLevel() == null) {
             return;
         }
         float time = (be.getLevel().getGameTime() + partialTicks) / 20.0F + be.getBlockPos().hashCode() % 100;
+        CarcassPieceItem.Piece piece = CarcassPieceItem.piece(be.specimen());
+        Rig rig = piece == null ? null : RigManager.clientRig(piece.entity(), piece.baby()).orElse(null);
+        Bone bone = rig == null ? null : rig.bone(piece.bone()).orElse(null);
+        if (bone == null) {
+            // anything else drifts in the fluid as itself
+            ms.pushPose();
+            ms.translate(0.5F, 0.42F + 0.02F * (float) Math.sin(time * 0.8F), 0.5F);
+            ms.mulPose(Axis.YP.rotationDegrees(time * 6.0F));
+            ms.scale(0.5F, 0.5F, 0.5F);
+            net.minecraft.client.Minecraft.getInstance().getItemRenderer().renderStatic(be.specimen(), net.minecraft.world.item.ItemDisplayContext.FIXED,
+                    light, overlay, ms, buffer, be.getLevel(), 0);
+            ms.popPose();
+            return;
+        }
         ms.pushPose();
         ms.translate(0.5F, 0.42F + 0.02F * (float) Math.sin(time * 0.8F), 0.5F);
         ms.mulPose(Axis.YP.rotationDegrees(time * 6.0F));
