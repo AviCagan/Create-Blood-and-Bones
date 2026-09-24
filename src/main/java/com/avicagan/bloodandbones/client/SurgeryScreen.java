@@ -120,7 +120,7 @@ public class SurgeryScreen extends Screen {
             Surgery.Action action = Surgery.action(body, tool, part);
             // what stands in the way (no surgeon at the table, no blood for a ragged stump) shows in place of the action
             Component problem = action == Surgery.Action.NONE || operator == null ? null
-                    : Surgery.blocked(player.level(), player, operator, table, body, action, part);
+                    : Surgery.blocked(player.level(), player, operator, table, body, action, part, tool);
             button.setMessage(problem != null ? problem : Component.translatable(action.translationKey()));
             button.active = action != Surgery.Action.NONE && problem == null;
         });

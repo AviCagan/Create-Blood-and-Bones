@@ -31,7 +31,12 @@ public final class StitchedBody {
         public static final Motion STILL = new Motion(0, 0, 0, 0, "walk", 0);
     }
 
-    private record Cached(int generation, MinionBody.Layout layout) {
+    /** What drawing a piece needs that never changes: its coats, whether it bleeds, its raw cut ends, the socket's slot it moves as. */
+    private record Look(List<CarcassLook.Coat> coats, boolean bloody, List<String> cuts, PartSlot slot) {
+    }
+
+    /** A build laid out, with each piece's look (in the layout's order) and the torso's middle, front to back. */
+    private record Cached(int generation, MinionBody.Layout layout, List<Look> looks, float torsoZ) {
     }
 
     private static final Map<MinionBuild, Cached> LAYOUTS = new ConcurrentHashMap<>();
@@ -41,16 +46,25 @@ public final class StitchedBody {
 
     /** The layout of a build, worked out once per build and data load. */
     public static MinionBody.Layout layout(MinionBuild build) {
+        return cached(build).layout();
+    }
+
+    private static Cached cached(MinionBuild build) {
         PartsData.Store store = PartsData.CLIENT;
         Cached cached = LAYOUTS.get(build);
         if (cached == null || cached.generation() != store.generation()) {
             if (LAYOUTS.size() > 256) {
                 LAYOUTS.clear();
             }
-            cached = new Cached(store.generation(), MinionBody.layout(store, build));
+            MinionBody.Layout layout = MinionBody.layout(store, build);
+            List<Look> looks = new ArrayList<>();
+            for (MinionBody.Placement placement : layout.pieces()) {
+                looks.add(look(layout, placement));
+            }
+            cached = new Cached(store.generation(), layout, List.copyOf(looks), torsoCentreZ(layout));
             LAYOUTS.put(build, cached);
         }
-        return cached.layout();
+        return cached;
     }
 
     /**
@@ -59,7 +73,9 @@ public final class StitchedBody {
      *
      * @param tint ARGB laid over every piece (a hurt flash), -1 for none
      */
-    public static void draw(MinionBody.Layout layout, Motion motion, boolean lying, int tint, PoseStack ms, MultiBufferSource buffers, int light) {
+    public static void draw(MinionBuild build, Motion motion, boolean lying, int tint, PoseStack ms, MultiBufferSource buffers, int light) {
+        Cached cached = cached(build);
+        MinionBody.Layout layout = cached.layout();
         ms.pushPose();
         // centred over where it stands, so the hitbox (as wide as its widest side) holds all of it
         float centreX = (layout.min().x + layout.max().x) / 2.0F;
@@ -79,40 +95,18 @@ public final class StitchedBody {
             }
             ms.translate(-centreX / 16.0F, (layout.lift() + bob) / 16.0F, -centreZ / 16.0F);
         }
-        float torsoZ = torsoCentreZ(layout);
-        for (MinionBody.Placement placement : layout.pieces()) {
-            Matrix4f pose = animate(layout, placement, motion, lying, torsoZ);
+        for (int i = 0; i < layout.pieces().size(); i++) {
+            MinionBody.Placement placement = layout.pieces().get(i);
+            Look look = cached.looks().get(i);
+            Matrix4f pose = animate(placement, look.slot(), motion, lying, cached.torsoZ());
             ms.pushPose();
             ms.scale(1 / 16.0F, 1 / 16.0F, 1 / 16.0F);
             ms.mulPose(pose);
             ms.scale(16.0F, 16.0F, 16.0F);
-            drawPiece(layout, placement, tint, ms, buffers, light);
+            drawPiece(placement, look, tint, ms, buffers, light);
             ms.popPose();
         }
         ms.popPose();
-    }
-
-    /**
-     * The middle of the top of its torso, where a saddle sits: in block units in the entity's own frame (before its
-     * turn), matching how {@link #draw} places the body standing.
-     */
-    public static Vector3f saddlePoint(MinionBody.Layout layout) {
-        for (MinionBody.Placement placement : layout.pieces()) {
-            if (placement.socket() == null) {
-                Vector3f min = new Vector3f(Float.MAX_VALUE);
-                Vector3f max = new Vector3f(-Float.MAX_VALUE);
-                for (Vector3f c : MinionBody.corners(placement.pose(), placement.bone())) {
-                    min.min(c);
-                    max.max(c);
-                }
-                float centreX = (layout.min().x + layout.max().x) / 2.0F;
-                float centreZ = (layout.min().z + layout.max().z) / 2.0F;
-                // model space is drawn flipped in x and y: back to the entity's frame
-                return new Vector3f(-((min.x + max.x) / 2.0F - centreX) / 16.0F, (MinionBody.GROUND - (min.y + layout.lift())) / 16.0F,
-                        ((min.z + max.z) / 2.0F - centreZ) / 16.0F);
-            }
-        }
-        return new Vector3f(0.0F, layout.height(), 0.0F);
     }
 
     /** Where the torso's middle is, front to back: legs in front of it are front legs. */
@@ -131,14 +125,11 @@ public final class StitchedBody {
      * A piece's pose this frame: limbs swing about their socket as a walking animal's do (legs on one side
      * against the other, front against hind, arms against legs; a hopper's all together), a head turns to look.
      */
-    private static Matrix4f animate(MinionBody.Layout layout, MinionBody.Placement placement, Motion motion, boolean lying, float centreZ) {
+    private static Matrix4f animate(MinionBody.Placement placement, PartSlot slot, Motion motion, boolean lying, float centreZ) {
         if (placement.socket() == null || lying) {
             return placement.pose();
         }
         Vector3f pivot = placement.pose().getTranslation(new Vector3f());
-        // it moves as the socket it is in: an arm stitched in for a leg walks
-        PartSlot slot = layout.sockets().stream().filter(s -> s.id().equals(placement.socket())).findFirst()
-                .map(MinionBody.Socket::slot).orElse(placement.slot().slot());
         Matrix4f turn = new Matrix4f();
         if (slot == PartSlot.HEAD || slot == PartSlot.NECK) {
             turn.rotateY(Mth.clamp(motion.headYaw(), -60.0F, 60.0F) * Mth.DEG_TO_RAD).rotateX(Mth.clamp(motion.headPitch(), -40.0F, 40.0F) * Mth.DEG_TO_RAD);
@@ -169,22 +160,30 @@ public final class StitchedBody {
     }
 
     /** One piece in its own mob's look, gone off as far as it had when fitted, with its cut ends raw. */
-    private static void drawPiece(MinionBody.Layout layout, MinionBody.Placement placement, int tint, PoseStack ms, MultiBufferSource buffers, int light) {
+    private static void drawPiece(MinionBody.Placement placement, Look look, int tint, PoseStack ms, MultiBufferSource buffers, int light) {
         PieceRef piece = placement.piece();
-        Rig rig = placement.rig();
-        Bone bone = placement.bone();
-        List<CarcassLook.Coat> coats = piece.coats().stream().map(c -> new CarcassLook.Coat(c.layer(), c.texture(), c.tint())).toList();
         int color = CarcassModels.rotColor(piece.freshness());
         if (tint != -1) {
             color = FastColor.ARGB32.multiply(color, tint);
         }
-        CarcassModels.drawBone(rig, bone, piece.texture(), coats, color, ms, buffers, light);
-        CarcassModels.drawMaggots(rig, bone, piece.freshness(), ms, buffers, light);
+        CarcassModels.drawBone(placement.rig(), placement.bone(), piece.texture(), look.coats(), color, ms, buffers, light);
+        CarcassModels.drawMaggots(placement.rig(), placement.bone(), piece.freshness(), ms, buffers, light);
+        if (look.bloody()) {
+            WoundCaps.draw(placement.rig(), placement.bone(), look.cuts(), color, ms, buffers, light);
+        }
+    }
+
+    /** Worked out once per layout: a piece's coats, whether its mob bleeds, where it is cut raw, the slot it moves as. */
+    private static Look look(MinionBody.Layout layout, MinionBody.Placement placement) {
+        PieceRef piece = placement.piece();
+        Rig rig = placement.rig();
+        Bone bone = placement.bone();
+        List<CarcassLook.Coat> coats = piece.coats().stream().map(c -> new CarcassLook.Coat(c.layer(), c.texture(), c.tint())).toList();
         boolean bloody = net.minecraft.core.registries.BuiltInRegistries.ENTITY_TYPE.getOptional(piece.entity())
                 .map(type -> !type.is(com.avicagan.bloodandbones.registry.BBTags.BLOODLESS)).orElse(true);
-        if (!bloody) {
-            return;
-        }
+        // it moves as the socket it is in: an arm stitched in for a leg walks
+        PartSlot slot = layout.sockets().stream().filter(s -> s.id().equals(placement.socket())).findFirst()
+                .map(MinionBody.Socket::slot).orElse(placement.slot().slot());
         List<String> cuts = new ArrayList<>();
         if (placement.socket() != null) {
             // a fitted piece: raw where it was cut from its own mob, and where anything that hung off it was
@@ -203,6 +202,6 @@ public final class StitchedBody {
                 }
             }
         }
-        WoundCaps.draw(rig, bone, cuts, color, ms, buffers, light);
+        return new Look(coats, bloody, List.copyOf(cuts), slot);
     }
 }

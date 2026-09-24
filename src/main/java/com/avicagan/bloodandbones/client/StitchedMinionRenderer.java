@@ -17,6 +17,7 @@ import net.minecraft.util.Mth;
  */
 public class StitchedMinionRenderer extends EntityRenderer<MinionEntity> {
     private static final ResourceLocation NONE = ResourceLocation.withDefaultNamespace("textures/misc/white.png");
+    private static final net.minecraft.world.item.ItemStack SADDLE = new net.minecraft.world.item.ItemStack(net.minecraft.world.item.Items.SADDLE);
 
     public StitchedMinionRenderer(EntityRendererProvider.Context context) {
         super(context);
@@ -45,17 +46,17 @@ public class StitchedMinionRenderer extends EntityRenderer<MinionEntity> {
         ms.scale(-1.0F, -1.0F, 1.0F);
         ms.translate(0.0F, -1.501F, 0.0F);
         // a glowing minion (the glow trait) shines whatever the dark round it
-        StitchedBody.draw(layout, motion, lying, tint, ms, buffers, com.avicagan.bloodandbones.client.effect.SocialClient.minionLight(minion, light));
+        StitchedBody.draw(build, motion, lying, tint, ms, buffers, com.avicagan.bloodandbones.client.effect.SocialClient.minionLight(minion, light));
         ms.popPose();
         if (minion.isSaddled() && !lying) {
             // a plain saddle thrown over its back
-            org.joml.Vector3f at = StitchedBody.saddlePoint(layout);
+            org.joml.Vector3f at = MinionBody.saddlePoint(layout);
             ms.pushPose();
             ms.mulPose(Axis.YP.rotationDegrees(180.0F - bodyYaw));
             ms.translate(at.x, at.y + 0.02F, at.z);
             ms.mulPose(Axis.XP.rotationDegrees(90.0F));
             ms.scale(0.75F, 0.75F, 0.75F);
-            net.minecraft.client.Minecraft.getInstance().getItemRenderer().renderStatic(new net.minecraft.world.item.ItemStack(net.minecraft.world.item.Items.SADDLE),
+            net.minecraft.client.Minecraft.getInstance().getItemRenderer().renderStatic(SADDLE,
                     net.minecraft.world.item.ItemDisplayContext.FIXED, light, net.minecraft.client.renderer.texture.OverlayTexture.NO_OVERLAY, ms, buffers, minion.level(), 0);
             ms.popPose();
         }

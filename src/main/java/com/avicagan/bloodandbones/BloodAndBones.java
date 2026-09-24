@@ -59,7 +59,11 @@ public class BloodAndBones {
         NeoForge.EVENT_BUS.register(com.avicagan.bloodandbones.parts.effect.RangedEffects.class);
         NeoForge.EVENT_BUS.register(com.avicagan.bloodandbones.parts.effect.SocialEffects.class);
         NeoForge.EVENT_BUS.register(com.avicagan.bloodandbones.parts.effect.UpkeepEffects.class);
-        NeoForge.EVENT_BUS.addListener((net.neoforged.neoforge.event.server.ServerStoppedEvent event) -> com.avicagan.bloodandbones.cyber.Coupler.clear());
+        NeoForge.EVENT_BUS.addListener((net.neoforged.neoforge.event.server.ServerStoppedEvent event) -> {
+            com.avicagan.bloodandbones.cyber.Coupler.clear();
+            com.avicagan.bloodandbones.minion.BloodTroughBlockEntity.clear();
+            com.avicagan.bloodandbones.minion.ChargingCradleBlockEntity.clear();
+        });
         // an Analytical Lens reads machines as Create's goggles do
         com.simibubi.create.content.equipment.goggles.GogglesItem.addIsWearingPredicate(player ->
                 com.avicagan.bloodandbones.cyber.Modules.has(player, com.avicagan.bloodandbones.cyber.Module.ANALYTICAL_LENS));

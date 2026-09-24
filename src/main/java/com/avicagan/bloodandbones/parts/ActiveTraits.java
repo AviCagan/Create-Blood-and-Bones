@@ -247,13 +247,21 @@ public final class ActiveTraits {
         return new ActiveTraits(entries, store.generation(), set, set.isPresent() ? mob : null, ARMOUR, worn);
     }
 
-    /** A minion's: every fitted piece's minion traits (the torso's too) and its organ's, from its data (MinionData#traits). */
+    /**
+     * A minion's: every fitted piece's minion traits (the torso's too) and its organ's, from its data (MinionData#traits),
+     * and on flesh the hide traits of each different mob it keeps the hide of, up to three (section 6.6; brass none).
+     */
     private static ActiveTraits fromBuild(MinionEntity minion, PartsData.Store store) {
         MinionBuild build = minion.build().orElse(null);
         Map<ResourceLocation, Integer> levels = new LinkedHashMap<>();
         if (build != null) {
             for (List<TraitList.Resolved> source : MinionData.traits(store, build)) {
                 for (TraitList.Resolved t : source) {
+                    add(store, levels, t);
+                }
+            }
+            for (ResourceLocation hide : minion.hides()) {
+                for (TraitList.Resolved t : store.resolve(hide, false).hide()) {
                     add(store, levels, t);
                 }
             }

@@ -75,6 +75,10 @@ public class MinionEntity extends PathfinderMob implements net.minecraft.world.e
     public static final float REGEN_COST = 5.0F;
     /** What a brass sheet mends on a brass minion. */
     public static final float SHEET_REPAIR = 10.0F;
+    /** A bucket by hand goes in only when half of it fits (or half of all it holds, if it holds less), as a canister does. */
+    public static final float HALF_BUCKET = 500.0F;
+    /** Flesh keeps the hide traits of this many different mobs among its pieces (docs/PARTS-AND-TRAITS.md section 6.6). */
+    public static final int HIDES = 3;
 
     @Nullable
     private UUID maker;
@@ -84,6 +88,8 @@ public class MinionEntity extends PathfinderMob implements net.minecraft.world.e
     @Nullable
     private MinionStats stats;
     private int statsGeneration = -1;
+    /** Where a rider sits, on its back where the saddle is drawn, before its turn: worked out with its stats. */
+    private net.minecraft.world.phys.Vec3 seat = net.minecraft.world.phys.Vec3.ZERO;
     /** Blood not yet taken off a whole mB. */
     private float owed;
     /** A minion saved before minions were built of carcass parts: it falls apart on its first tick. */
@@ -154,6 +160,9 @@ public class MinionEntity extends PathfinderMob implements net.minecraft.world.e
             MinionBuild build = build().orElse(null);
             stats = build == null ? new MinionStats(10, 0, 3, 250, "crawl", 0.12F, 1, 0, List.of(), List.of(MinionStats.COMPANION), true, false, false, false, 0.6F, 0.6F, 0.6F, 0.6F)
                     : MinionStats.of(store, build);
+            // the saddle's place, turned into the frame a passenger's place is given in (the renderer turns it a half turn more)
+            org.joml.Vector3f saddle = build == null ? new org.joml.Vector3f(0.0F, stats.height(), 0.0F) : MinionBody.saddlePoint(MinionBody.layout(store, build));
+            seat = new net.minecraft.world.phys.Vec3(-saddle.x, saddle.y, -saddle.z);
             statsGeneration = store.generation();
             refreshDimensions();
         }
@@ -295,6 +304,18 @@ public class MinionEntity extends PathfinderMob implements net.minecraft.world.e
     @Override
     protected float getRiddenSpeed(Player player) {
         return (float) getAttributeValue(Attributes.MOVEMENT_SPEED);
+    }
+
+    /** Its rider sits on its back where the saddle is, not on top of its whole hitbox (a raised head and all). */
+    @Override
+    protected net.minecraft.world.phys.Vec3 getPassengerAttachmentPoint(net.minecraft.world.entity.Entity passenger, EntityDimensions dimensions, float scale) {
+        stats();
+        return seat.yRot(-getYRot() * net.minecraft.util.Mth.DEG_TO_RAD);
+    }
+
+    /** A rider is pressing on it: the server holds a ridden mob's own motion at nothing and moves it from the rider's packets. */
+    boolean steered() {
+        return getControllingPassenger() instanceof Player rider && (rider.zza != 0.0F || rider.xxa != 0.0F);
     }
 
     // ---- strikes (its arms take turns; with none, it bites)
@@ -441,6 +462,36 @@ public class MinionEntity extends PathfinderMob implements net.minecraft.world.e
         return player.getUUID().equals(maker);
     }
 
+    /** It never turns on its maker, nor on its maker's other minions (a stray sweep of the maker's sword included). */
+    @Override
+    public boolean canAttack(net.minecraft.world.entity.LivingEntity target) {
+        if (maker != null && (maker.equals(target.getUUID()) || target instanceof MinionEntity other && maker.equals(other.makerId()))) {
+            return false;
+        }
+        return super.canAttack(target);
+    }
+
+    /**
+     * The mobs whose hide it keeps, and their hide traits with them (docs/PARTS-AND-TRAITS.md section 6.6, flesh only):
+     * each different mob among its pieces fitted with the hide on, torso first, up to three.
+     */
+    public List<ResourceLocation> hides() {
+        MinionBuild build = build().orElse(null);
+        if (build == null || build.cybernetic()) {
+            return List.of();
+        }
+        List<ResourceLocation> out = new java.util.ArrayList<>();
+        List<PieceRef> pieces = new java.util.ArrayList<>();
+        pieces.add(build.torso());
+        build.parts().forEach(f -> pieces.add(f.piece()));
+        for (PieceRef piece : pieces) {
+            if (!piece.skinned() && !out.contains(piece.entity()) && out.size() < HIDES) {
+                out.add(piece.entity());
+            }
+        }
+        return out;
+    }
+
     public boolean cybernetic() {
         return build().map(MinionBuild::cybernetic).orElse(false);
     }
@@ -540,14 +591,14 @@ public class MinionEntity extends PathfinderMob implements net.minecraft.world.e
         }
     }
 
-    /** Blood used this tick: a little just to be awake, more moving, working, fighting. */
+    /** Blood used this tick: a little just to be awake, more moving (or ridden), working (driving a shaft too), fighting. */
     private void drain() {
         float rate = IDLE;
         if (getTarget() != null) {
             rate = FIGHTING;
-        } else if (working) {
+        } else if (working || com.avicagan.bloodandbones.cyber.Coupler.coupled(this)) {
             rate = WORKING;
-        } else if (getDeltaMovement().horizontalDistanceSqr() > 1.0E-4 || !getNavigation().isDone()) {
+        } else if (getDeltaMovement().horizontalDistanceSqr() > 1.0E-4 || !getNavigation().isDone() || steered()) {
             // keeping itself up in the air costs twice as much
             rate = stats().flies() ? MOVING * 2.0F : MOVING;
         }
@@ -574,9 +625,20 @@ public class MinionEntity extends PathfinderMob implements net.minecraft.world.e
             return;
         }
         if (legacy) {
-            // built the old way (a humanoid with implants): it falls apart, dropping what it had
+            // built the old way (a humanoid with implants): it falls apart, dropping what it carried, what it wore (a
+            // Fluid Backtank, fluid and all) and the implants that were in it, as its death did then
             for (int i = 0; i < inventory.getContainerSize(); i++) {
                 spawnAtLocation(inventory.removeItemNoUpdate(i));
+            }
+            for (net.minecraft.world.entity.EquipmentSlot slot : net.minecraft.world.entity.EquipmentSlot.values()) {
+                spawnAtLocation(getItemBySlot(slot));
+                setItemSlot(slot, ItemStack.EMPTY);
+            }
+            com.avicagan.bloodandbones.body.Body body = com.avicagan.bloodandbones.body.BodyEffects.body(this);
+            for (com.avicagan.bloodandbones.body.BodyPart part : com.avicagan.bloodandbones.body.BodyPart.values()) {
+                if (body.state(part) == com.avicagan.bloodandbones.body.Body.State.IMPLANT) {
+                    spawnAtLocation(body.unclip(part));
+                }
             }
             discard();
             return;
@@ -723,6 +785,39 @@ public class MinionEntity extends PathfinderMob implements net.minecraft.world.e
         return !poweredDown() && super.canBeSeenAsEnemy();
     }
 
+    /**
+     * Fallen out of the world (by default): set down on solid ground, where it was made if there is ground there, and
+     * powered down. The void is a lethal blow like any other.
+     */
+    @Override
+    protected void onBelowWorld() {
+        if (level() instanceof ServerLevel level && BBServerConfig.minionDeath() == BBServerConfig.MinionDeath.COLLAPSE) {
+            BlockPos ground = safeGround(level, home);
+            powerDown();
+            teleportTo(ground.getX() + 0.5, ground.getY(), ground.getZ() + 0.5);
+            setDeltaMovement(net.minecraft.world.phys.Vec3.ZERO);
+            resetFallDistance();
+            return;
+        }
+        super.onBelowWorld();
+    }
+
+    /**
+     * Solid ground to set a minion (or its folded form) down on, near here: the top of the world at this spot, or else
+     * at the world's spawn, or else the End's platform.
+     */
+    public static BlockPos safeGround(ServerLevel level, BlockPos near) {
+        BlockPos top = level.getHeightmapPos(net.minecraft.world.level.levelgen.Heightmap.Types.MOTION_BLOCKING_NO_LEAVES, near);
+        if (top.getY() > level.getMinBuildHeight()) {
+            return top;
+        }
+        top = level.getHeightmapPos(net.minecraft.world.level.levelgen.Heightmap.Types.MOTION_BLOCKING_NO_LEAVES, level.getSharedSpawnPos());
+        if (top.getY() > level.getMinBuildHeight()) {
+            return top;
+        }
+        return level.dimension() == Level.END ? ServerLevel.END_SPAWN_POINT : level.getSharedSpawnPos();
+    }
+
     /** A lethal blow collapses it (by default): 1 health, no blood, powered down. It is never destroyed that way. */
     @Override
     public void die(DamageSource source) {
@@ -738,9 +833,13 @@ public class MinionEntity extends PathfinderMob implements net.minecraft.world.e
         }
     }
 
+    /**
+     * Killed (where minions may die): what it carried and wore, and, scattering, its parts. Dropped as a horse drops
+     * its chest, with its equipment, so a world without mob loot still gives them back.
+     */
     @Override
-    protected void dropCustomDeathLoot(ServerLevel level, DamageSource source, boolean recentlyHit) {
-        super.dropCustomDeathLoot(level, source, recentlyHit);
+    protected void dropEquipment() {
+        super.dropEquipment();
         for (int i = 0; i < inventory.getContainerSize(); i++) {
             spawnAtLocation(inventory.removeItemNoUpdate(i));
         }
@@ -815,9 +914,20 @@ public class MinionEntity extends PathfinderMob implements net.minecraft.world.e
             return InteractionResult.sidedSuccess(level().isClientSide);
         }
         if (!cybernetic() && held.is(BBFluids.BLOOD.getBucket().get())) {
-            if (!level().isClientSide && feed(1000.0F) > 0.0F && !player.hasInfiniteMaterials()) {
-                held.shrink(1);
-                player.getInventory().placeItemBackInInventory(new ItemStack(Items.BUCKET));
+            // not poured away for a sip: only when half of it fits
+            if (!level().isClientSide && stats().reservoir() - power() >= Math.min(HALF_BUCKET, stats().reservoir() * 0.5F)) {
+                feed(1000.0F);
+                if (!player.hasInfiniteMaterials()) {
+                    held.shrink(1);
+                    player.getInventory().placeItemBackInInventory(new ItemStack(Items.BUCKET));
+                }
+            }
+            return InteractionResult.sidedSuccess(level().isClientSide);
+        }
+        if (isMaker(player) && poweredDown() && com.avicagan.bloodandbones.body.Surgery.isBlade(held)) {
+            // its maker takes it apart, lying on an Assembly Frame table: back to a frame there
+            if (!level().isClientSide) {
+                MinionAssembly.takeApart((ServerLevel) level(), this, player);
             }
             return InteractionResult.sidedSuccess(level().isClientSide);
         }

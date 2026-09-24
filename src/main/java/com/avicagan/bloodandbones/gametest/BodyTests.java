@@ -96,8 +96,7 @@ public class BodyTests {
         }
         table.take();
         table.put(new ItemStack(BBItems.HOOK_HAND.get()));
-        // the surgeon's cut is ragged: fitting into it takes a bucket of blood as well
-        player.getInventory().add(new ItemStack(com.avicagan.bloodandbones.registry.BBFluids.BLOOD.getBucket().get()));
+        // the surgeon's cut is ragged, but a crude prosthetic goes on with no blood: the safety floor
         if (Surgery.operate(level, player, table, BodyPart.RIGHT_ARM) != Surgery.Action.FIT
                 || BodyEffects.body(player).state(BodyPart.RIGHT_ARM) != Body.State.IMPLANT || !table.item().isEmpty()) {
             helper.fail("The Hook Hand should be fitted, and leave the table");

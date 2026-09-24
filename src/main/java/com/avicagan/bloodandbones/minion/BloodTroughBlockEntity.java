@@ -91,4 +91,9 @@ public class BloodTroughBlockEntity extends SmartBlockEntity {
     public static Set<BlockPos> all(Level level) {
         return TROUGHS.getOrDefault(level.dimension(), Set.of());
     }
+
+    /** Forget every trough (the server stopped: chunks are saved, not broken, so none took itself off). */
+    public static void clear() {
+        TROUGHS.clear();
+    }
 }

@@ -245,6 +245,8 @@ public class BBLang {
         BloodAndBones.REGISTRATE.addRawLang("bloodandbones.minion.too_rotten", "The body has gone off too far to wake");
         BloodAndBones.REGISTRATE.addRawLang("bloodandbones.minion.cap", "You have as many minions as this world allows");
         BloodAndBones.REGISTRATE.addRawLang("bloodandbones.minion.dormant", "Folded up, out of blood. Set it down and give it blood to wake it.");
+        BloodAndBones.REGISTRATE.addRawLang("bloodandbones.minion.take_apart_where", "Lay it on a clear Assembly Frame table to take it apart");
+        bloodless("bloodandbones.minion.needs_hide", "An essence construct takes parts with their covering still on");
         BloodAndBones.REGISTRATE.addRawLang("bloodandbones.body.left_arm", "Left arm");
         BloodAndBones.REGISTRATE.addRawLang("bloodandbones.body.right_arm", "Right arm");
         BloodAndBones.REGISTRATE.addRawLang("bloodandbones.body.left_leg", "Left leg");
@@ -261,6 +263,8 @@ public class BBLang {
                 "When R-Clicked on a Surgery Table", "Fits it (swapping out any other attachment). Then a carcass _torso_ laid on it can be built into a minion, with the heads, legs and arms of _any_ mob.",
                 "When Sneak-R-Clicked off an Empty Table", "An empty hand takes it back off.");
         BloodAndBones.REGISTRATE.addRawLang("bloodandbones.surgery.title_other", "Surgery on %s");
+        bloodless("block.bloodandbones.blood_trough.tooltip.summary",
+                "A trough of _essence_ for essence constructs: they walk to the nearest one they can reach and drink when they run low.");
         block("blood_trough",
                 "A trough of _blood_ for flesh minions: they walk to the nearest one they can reach and drink when they run low.",
                 "When Filled", "Takes _four buckets_ of any blood, from a bucket, a _Spout_ or _pipes_ on any side.");
@@ -280,6 +284,7 @@ public class BBLang {
         BloodAndBones.REGISTRATE.addRawLang("bloodandbones.minion.needs_sheathing", "A brass frame needs its Brass Sheathing before it can wake");
         BloodAndBones.REGISTRATE.addRawLang("bloodandbones.minion.wake_brass", "Brass wakes on a Soul Canister");
         BloodAndBones.REGISTRATE.addRawLang("bloodandbones.minion.wake_flesh", "Flesh wakes on a bucket of blood");
+        bloodless("bloodandbones.minion.wake_flesh", "An essence construct wakes on a bucket of essence");
         BloodAndBones.REGISTRATE.addRawLang("bloodandbones.minion.sheathe_skinned", "Brass Sheathing goes over a frame of skinned pieces");
         item("dormant_minion",
                 "A minion that ran out of blood, _folded up_ to carry. It keeps everything: what it is built of, its job, what it carries.",
@@ -290,6 +295,7 @@ public class BBLang {
         BloodAndBones.REGISTRATE.addRawLang("bloodandbones.surgery.state.natural", "Your own");
         BloodAndBones.REGISTRATE.addRawLang("bloodandbones.surgery.state.missing", "Missing");
         BloodAndBones.REGISTRATE.addRawLang("bloodandbones.surgery.state.ragged", "Ragged stump");
+        bloodless("bloodandbones.surgery.state.ragged", "Open socket");
         BloodAndBones.REGISTRATE.addRawLang("bloodandbones.surgery.needs_surgeon", "Needs a surgeon");
         BloodAndBones.REGISTRATE.addRawLang("bloodandbones.surgery.needs_blood", "Needs a bucket of blood");
         BloodAndBones.REGISTRATE.addRawLang("bloodandbones.surgery.action.none", "-");
@@ -674,8 +680,14 @@ public class BBLang {
                 "The Steel Rack has two shelves of two places. Right-click its front with an item on the place you are looking at; an empty hand takes it back. Funnels and hoppers fill it from the lower left.");
         jei("surgery",
                 "Amputation is a ritual: lay a Cleaver on the Surgery Table (with its Surgical Rig), have a surgeon minion (one with a villager's or a pillager's head, and an arm) awake beside it, and lie on the table (right-click with an empty hand) to have one of your own limbs, eyes or organs taken out. You get it back, with your name on it. Nothing takes a part any other way, and nothing can go wrong.",
-                "The surgeon hacks: what it takes off leaves a ragged stump, and fitting anything there later takes a bucket of blood as well (from a bucket or a Fluid Backtank you carry). Swap an implant straight in for a part of flesh and there is no stump at all.",
-                "A missing arm means no off-hand and slower swings, a missing leg no sprinting, a missing eye less to see by. Lay an implant or a part on the table and lie down again to fit it; an implant unclips with nothing on the table. Fitting never needs a surgeon, so a crude prosthetic can always go on.");
+                "The surgeon hacks: what it takes off leaves a ragged stump, and fitting anything but a crude prosthetic there later takes a bucket of blood as well (from a bucket or a Fluid Backtank you carry). Swap an implant straight in for a part of flesh and there is no stump at all.",
+                "A missing arm means no off-hand and slower swings, a missing leg no sprinting, a missing eye less to see by. Lay an implant or a part on the table and lie down again to fit it; an implant unclips with nothing on the table. Fitting never needs a surgeon, and a crude prosthetic never needs blood, so one can always go on.");
+        bloodless("bloodandbones.jei.surgery.1",
+                "Replacement is a procedure: lay a Cleaver on the Surgery Table (with its Surgical Rig), have a surgeon construct (one with a villager's or a pillager's head, and an arm) awake beside it, and lie on the table (right-click with an empty hand) to have one of your own limbs, eyes or organs removed. You get it back, with your name on it. Nothing removes a part any other way, and nothing can go wrong.");
+        bloodless("bloodandbones.jei.surgery.2",
+                "The surgeon works roughly: what it removes leaves an open socket, and fitting anything but a crude prosthetic there later takes a bucket of essence as well (from a bucket or a Fluid Backtank you carry). Swap an implant straight in for a part and there is no open socket at all.");
+        bloodless("bloodandbones.jei.surgery.3",
+                "A missing arm means no off-hand and slower swings, a missing leg no sprinting, a missing eye less to see by. Lay an implant or a part on the table and lie down again to fit it; an implant unclips with nothing on the table. Fitting never needs a surgeon, and a crude prosthetic never needs essence, so one can always go on.");
         jei("implants",
                 "Basic prosthetics (Peg Leg, Hook Hand) need nothing. Organic ones (Flesh Arm, Sinew Leg, Furnace Stomach) run on blood and cybernetics (Hydraulic Arm, Piston Leg, Optic Eye, Pump Heart, Bellows Lungs) on soul blood, from a worn Fluid Backtank, a mB or two a second. The Vent Arm runs on whatever the tank holds; the Port Arm needs nothing.",
                 "When the tank runs out of their fluid they stop working, as if the part were missing, until it is filled again. The Vent Arm sprays the tank (hold use, empty-handed); the Port Arm plugs the tank into pipes at a Backtank Port.");
@@ -698,7 +710,7 @@ public class BBLang {
         jei("minions",
                 "Fit an Assembly Frame to a Surgery Table and lay a carcass torso on it, or take a whole carcass lying on it with an empty hand (what is still attached comes along). Stitch on heads, legs, arms and tails of any mob, one a click: a cow on rabbit legs is a cow that hops. A Cleaver takes the last piece back. Wake it with a bucket of blood.",
                 "Every part does its own thing. The torso sets its size, health and how much it carries; the head its jobs and its bite; the legs how fast and how it moves; arms its blows. Crouch and R-Click it with an empty hand to change its job.",
-                "It runs on blood: a little all the time, more moving, working and fighting. Low, it walks to a Blood Trough to drink. Empty, it lies down where it is, alive, and nothing but a player can hurt it; give it blood and it gets up. Crouch-R-Click one lying down a few times to fold it up and carry it.");
+                "It runs on blood: a little all the time, more moving, working and fighting. Low, it walks to a Blood Trough to drink. Empty, it lies down where it is, alive, and nothing but a player can hurt it; give it blood and it gets up. Crouch-R-Click one lying down a few times to fold it up and carry it; set down, it works from there. Its maker's Cleaver on one lying down on an Assembly Frame table takes it back apart into a frame there.");
         jei("soul_blood",
                 "Soul Blood is blood with a soul in it. Mix blood, soul sand and a little liquid experience over a superheated Blaze Burner, or ferment blood with nether wart and soul soil under a Basin Lid.");
     }

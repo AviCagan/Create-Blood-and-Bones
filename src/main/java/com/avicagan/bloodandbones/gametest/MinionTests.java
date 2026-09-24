@@ -230,7 +230,10 @@ public class MinionTests {
         helper.succeed();
     }
 
-    /** However it is built, its lowest point stands on the ground: short legs lift it less, no legs lay it on its belly. */
+    /**
+     * However it is built, it stands on its legs: a cow's four legs all reach the ground, and the cow on rabbit legs is
+     * held up off it by them, its torso clear. Every piece is drawn.
+     */
     @GameTest(template = "empty", timeoutTicks = 20)
     public static void feetNeverBelowGround(GameTestHelper helper) {
         List<MinionBuild> builds = List.of(wholeCow(), cowOnRabbitLegs(), MinionBuild.of(ref("cow", "body")),
@@ -238,11 +241,28 @@ public class MinionTests {
                 MinionBuild.of(ref("zombie", "body")).with("head", ref("pig", "head")).with("right_leg", ref("rabbit", "right_haunch")));
         for (MinionBuild build : builds) {
             MinionBody.Layout layout = MinionBody.layout(PartsData.SERVER, build);
-            if (Math.abs(layout.max().y + layout.lift() - MinionBody.GROUND) > 0.001F || layout.pieces().size() != build.parts().size() + 1) {
-                helper.fail("Every piece drawn and the lowest on the ground: " + build.torso().entity() + " with " + build.parts().size() + " parts, lowest at "
-                        + (layout.max().y + layout.lift()) + ", " + layout.pieces().size() + " drawn");
+            if (layout.pieces().size() != build.parts().size() + 1) {
+                helper.fail("Every piece drawn: " + build.torso().entity() + " with " + build.parts().size() + " parts, " + layout.pieces().size() + " drawn");
                 return;
             }
+        }
+        // worked out from each piece's own placed box, not from the lift that was made to fit them
+        MinionBody.Layout cow = MinionBody.layout(PartsData.SERVER, wholeCow());
+        int legs = 0;
+        for (MinionBody.Placement placement : cow.pieces()) {
+            if (placement.slot().slot() == com.avicagan.bloodandbones.parts.PartSlot.LEG) {
+                legs++;
+                if (Math.abs(lowest(placement) + cow.lift() - MinionBody.GROUND) > 0.01F) {
+                    helper.fail("Each of a cow's legs should reach the ground: " + placement.piece().bone() + " ends at " + (lowest(placement) + cow.lift()));
+                    return;
+                }
+            }
+        }
+        MinionBody.Layout hopper = MinionBody.layout(PartsData.SERVER, cowOnRabbitLegs());
+        MinionBody.Placement torso = hopper.pieces().stream().filter(p -> p.socket() == null).findFirst().orElseThrow();
+        if (legs != 4 || !(lowest(torso) + hopper.lift() < MinionBody.GROUND - 0.5F)) {
+            helper.fail("Rabbit legs should hold the cow's torso up off the ground: " + legs + " legs, torso's underside at " + (lowest(torso) + hopper.lift()));
+            return;
         }
         // rabbit legs are shorter than a cow's: the rabbit-legged cow stands lower
         MinionBody.Layout tall = MinionBody.layout(PartsData.SERVER, wholeCow());
@@ -252,6 +272,15 @@ public class MinionTests {
             return;
         }
         helper.succeed();
+    }
+
+    /** The lowest point of a placed piece, in model pixels (y down), before the lift. */
+    private static float lowest(MinionBody.Placement placement) {
+        float max = -Float.MAX_VALUE;
+        for (org.joml.Vector3f c : MinionBody.corners(placement.pose(), placement.bone())) {
+            max = Math.max(max, c.y);
+        }
+        return max;
     }
 
     /** Its hitbox holds all of it: as wide as its widest side and as tall as it stands. */
@@ -331,7 +360,10 @@ public class MinionTests {
         });
     }
 
-    /** A trough walled in where it cannot get to is no use: it runs dry and stays down, the trough full. */
+    /**
+     * A trough walled in where it cannot get to is no use: hungry, with blood enough to walk there and back, it never
+     * drinks from it, not even from right up against the glass.
+     */
     @GameTest(template = "empty", timeoutTicks = 300)
     public static void cannotReachTroughStaysDown(GameTestHelper helper) {
         BlockPos at = new BlockPos(8, 2, 8);
@@ -343,34 +375,97 @@ public class MinionTests {
             }
         }
         helper.setBlock(at.above(), Blocks.GLASS);
-        MinionEntity minion = minion(helper, new BlockPos(1, 2, 1), cowOnRabbitLegs(), 0.2F);
-        helper.runAfterDelay(280, () -> {
+        MinionEntity minion = minion(helper, new BlockPos(1, 2, 1), cowOnRabbitLegs(), 150.0F);
+        float start = minion.power();
+        helper.runAfterDelay(250, () -> {
             BloodTroughBlockEntity trough = (BloodTroughBlockEntity) helper.getBlockEntity(at);
-            if (!minion.poweredDown() || trough.amount() != 4000) {
-                helper.fail("It should run dry and stay down, the walled-in trough untouched (" + minion.power() + ", " + trough.amount() + ")");
+            if (trough.amount() != 4000 || minion.power() > start) {
+                helper.fail("It should never drink from the walled-in trough (" + minion.power() + " of " + start + ", trough " + trough.amount() + ")");
                 return;
             }
             helper.succeed();
         });
     }
 
-    /** Saved and loaded, it keeps its build, job, blood, being down, maker, home and what it carries. */
-    @GameTest(template = "empty", timeoutTicks = 20)
-    public static void minionSavedAndLoaded(GameTestHelper helper) {
-        MinionEntity minion = minion(helper, new BlockPos(2, 2, 2), cowOnRabbitLegs(), 321.0F);
-        minion.inventory.addItem(new ItemStack(Items.WHEAT, 5));
-        minion.powerDown();
+    /**
+     * A trough just the other side of a wall, within reach of its head, is no use either: an awake minion does not
+     * drink through the wall, and one powered down beside it is not woken through it.
+     */
+    @GameTest(template = "empty", timeoutTicks = 240)
+    public static void troughBehindAWallIsNoUse(GameTestHelper helper) {
+        for (int z = 0; z <= 10; z++) {
+            for (int y = 2; y <= 6; y++) {
+                helper.setBlock(new BlockPos(5, y, z), Blocks.STONE);
+            }
+        }
+        trough(helper, new BlockPos(7, 2, 2), 4000);
+        trough(helper, new BlockPos(7, 2, 8), 4000);
+        MinionEntity awake = minion(helper, new BlockPos(3, 2, 2), cowOnRabbitLegs(), 150.0F);
+        MinionEntity down = minion(helper, new BlockPos(3, 2, 8), cowOnRabbitLegs(), 150.0F);
+        down.powerDown();
+        float start = awake.power();
+        helper.runAfterDelay(200, () -> {
+            BloodTroughBlockEntity near = (BloodTroughBlockEntity) helper.getBlockEntity(new BlockPos(7, 2, 2));
+            BloodTroughBlockEntity far = (BloodTroughBlockEntity) helper.getBlockEntity(new BlockPos(7, 2, 8));
+            if (near.amount() != 4000 || awake.power() > start) {
+                helper.fail("It should not drink through the wall (" + awake.power() + " of " + start + ", trough " + near.amount() + ")");
+                return;
+            }
+            if (far.amount() != 4000 || !down.poweredDown()) {
+                helper.fail("A trough behind a wall should not wake one lying by it (" + far.amount() + ")");
+                return;
+            }
+            helper.succeed();
+        });
+    }
+
+    /** A minion saved and loaded again, as a chunk unloading and loading does. */
+    private static MinionEntity reload(GameTestHelper helper, MinionEntity minion) {
         net.minecraft.nbt.CompoundTag tag = new net.minecraft.nbt.CompoundTag();
         minion.saveWithoutId(tag);
         MinionEntity loaded = BBEntities.MINION.get().create(helper.getLevel());
         loaded.load(tag);
+        return loaded;
+    }
+
+    /** Saved and loaded, it keeps its build, job, blood, being awake or down, maker, home, what it carries, its saddle and its module. */
+    @GameTest(template = "empty", timeoutTicks = 20)
+    public static void minionSavedAndLoaded(GameTestHelper helper) {
+        MinionEntity minion = minion(helper, new BlockPos(2, 2, 2), cowOnRabbitLegs(), 321.0F);
+        minion.inventory.addItem(new ItemStack(Items.WHEAT, 5));
+        MinionEntity loaded = reload(helper, minion);
         if (!loaded.build().equals(minion.build()) || !loaded.home().equals(minion.home()) || loaded.inventory.countItem(Items.WHEAT) != 5
-                || !loaded.job().equals(minion.job()) || !loaded.poweredDown() || loaded.makerId() == null || !loaded.makerId().equals(minion.makerId())
-                || Math.abs(loaded.getMaxHealth() - 15.0F) > 0.01F) {
-            helper.fail("A saved minion should come back the same");
+                || !loaded.job().equals(minion.job()) || loaded.poweredDown() || loaded.power() != 321.0F || loaded.makerId() == null
+                || !loaded.makerId().equals(minion.makerId()) || Math.abs(loaded.getMaxHealth() - 15.0F) > 0.01F) {
+            helper.fail("A saved minion should come back the same, awake with its 321 mB: " + loaded.power() + " " + loaded.poweredDown());
+            return;
+        }
+        minion.powerDown();
+        if (!reload(helper, minion).poweredDown()) {
+            helper.fail("One saved powered down should come back down");
+            return;
+        }
+        MinionEntity saddled = minion(helper, new BlockPos(6, 2, 2), horseLegs(), 500.0F);
+        saddled.equipSaddle(new ItemStack(Items.SADDLE), null);
+        MinionEntity brass = minion(helper, new BlockPos(2, 2, 6), new MinionBuild(true, skinned("cow", "body"), List.of(), true).with("head", skinned("cow", "head")), 800.0F);
+        brass.setModule(com.avicagan.bloodandbones.cyber.Module.MAGNET_COIL);
+        if (!reload(helper, saddled).isSaddled() || reload(helper, brass).module() != com.avicagan.bloodandbones.cyber.Module.MAGNET_COIL) {
+            helper.fail("Its saddle and its module should come back with it");
             return;
         }
         helper.succeed();
+    }
+
+    /** A cow on horse legs: rideable. */
+    private static MinionBuild horseLegs() {
+        return MinionBuild.of(ref("cow", "body")).with("head", ref("cow", "head")).with("right_front_leg", ref("horse", "right_front_leg"))
+                .with("left_front_leg", ref("horse", "left_front_leg")).with("right_hind_leg", ref("horse", "right_hind_leg"))
+                .with("left_hind_leg", ref("horse", "left_hind_leg"));
+    }
+
+    private static PieceRef skinned(String entity, String bone) {
+        return new PieceRef(mob(entity), bone, ResourceLocation.withDefaultNamespace("textures/entity/" + entity + "/" + entity + ".png"), List.of(), 1.0F,
+                true, Map.of(), false);
     }
 
     /** With a cap of one set, a second minion will not wake; the table keeps its build. */
@@ -420,6 +515,10 @@ public class MinionTests {
         List<MinionEntity> back = level.getEntitiesOfClass(MinionEntity.class, new AABB(floor).inflate(2));
         if (back.size() != 1 || !back.get(0).poweredDown() || !back.get(0).build().equals(minion.build()) || back.get(0).inventory.countItem(Items.BONE) != 2) {
             helper.fail("Set down it should come back as it was, still down: " + back.size());
+            return;
+        }
+        if (!back.get(0).home().equals(floor.above())) {
+            helper.fail("Set down somewhere new, it should work from there: home " + back.get(0).home() + ", set down at " + floor.above());
             return;
         }
         back.get(0).feed(100.0F);
@@ -488,6 +587,188 @@ public class MinionTests {
             var crop = helper.getBlockState(field.above());
             helper.assertTrue(minion.hasJob("farmer") && chest.countItem(Items.WHEAT) >= 1
                     && crop.is(Blocks.WHEAT) && crop.getValue(CropBlock.AGE) < 7, "the farmer has not reaped, replanted and stored the wheat yet");
+        });
+    }
+
+    /** A minion of this build, made by this player. */
+    private static MinionEntity minionOf(GameTestHelper helper, BlockPos pos, MinionBuild build, float blood, Player maker) {
+        ServerLevel level = helper.getLevel();
+        MinionEntity minion = BBEntities.MINION.get().create(level);
+        BlockPos at = helper.absolutePos(pos);
+        minion.moveTo(at.getX() + 0.5, at.getY(), at.getZ() + 0.5, 0.0F, 0.0F);
+        minion.setup(maker, at, build, blood);
+        level.addFreshEntity(minion);
+        return minion;
+    }
+
+    /** Hit by its maker (a sweep of the sword, a slip), it does not turn on them; nor would it on its maker's other minions. */
+    @GameTest(template = "empty", timeoutTicks = 80)
+    public static void neverTurnsOnItsMaker(GameTestHelper helper) {
+        Player maker = helper.makeMockPlayer(GameType.SURVIVAL);
+        // standing beside it, well within what it would chase
+        BlockPos by = helper.absolutePos(new BlockPos(5, 2, 3));
+        maker.moveTo(by.getX() + 0.5, by.getY(), by.getZ() + 0.5);
+        MinionEntity minion = minionOf(helper, new BlockPos(3, 2, 3), wholeCow(), 500.0F, maker);
+        MinionEntity other = minionOf(helper, new BlockPos(7, 2, 7), wholeCow(), 500.0F, maker);
+        if (minion.canAttack(maker) || minion.canAttack(other)) {
+            helper.fail("A minion should never take its maker, or its maker's other minions, for a target");
+            return;
+        }
+        // not on its first tick: a hurt then is stamped with the same tick a goal starts from, and no goal would see it
+        helper.runAfterDelay(5, () -> {
+            minion.hurt(helper.getLevel().damageSources().playerAttack(maker), 1.0F);
+            helper.runAfterDelay(40, () -> {
+                if (minion.getTarget() == maker) {
+                    helper.fail("Hurt by its maker, it should not go for them");
+                    return;
+                }
+                helper.succeed();
+            });
+        });
+    }
+
+    /** A pacifist (a villager's pair of arms) takes no target when hurt: it never attacks, so it neither pays for fighting nor stands its ground. */
+    @GameTest(template = "empty", timeoutTicks = 80)
+    public static void pacifistTakesNoTarget(GameTestHelper helper) {
+        MinionBuild build = MinionBuild.of(ref("villager", "body")).with("head", ref("villager", "head")).with("arms", ref("villager", "arms"));
+        MinionEntity minion = minion(helper, new BlockPos(3, 2, 3), build, 500.0F);
+        Zombie zombie = helper.spawn(EntityType.ZOMBIE, new BlockPos(7, 2, 7));
+        zombie.setNoAi(true);
+        helper.runAfterDelay(5, () -> {
+            minion.hurt(helper.getLevel().damageSources().mobAttack(zombie), 1.0F);
+            helper.runAfterDelay(40, () -> {
+                if (minion.stats().fights() || minion.getTarget() != null) {
+                    helper.fail("A pacifist should take no target: " + minion.getTarget());
+                    return;
+                }
+                helper.succeed();
+            });
+        });
+    }
+
+    /**
+     * Its maker's Cleaver on it, powered down and lying on a clear Assembly Frame table: it comes apart into a frame on
+     * the table again, what it carried and its saddle come back, and it no longer counts toward the cap. Anywhere else,
+     * the Cleaver does nothing.
+     */
+    @GameTest(template = "empty", timeoutTicks = 40)
+    public static void takenApartOnTheTable(GameTestHelper helper) {
+        ServerLevel level = helper.getLevel();
+        Player maker = helper.makeMockPlayer(GameType.SURVIVAL);
+        maker.setItemInHand(net.minecraft.world.InteractionHand.MAIN_HAND, new ItemStack(BBItems.CLEAVER.get()));
+        MinionEntity away = minionOf(helper, new BlockPos(8, 2, 8), wholeCow(), 100.0F, maker);
+        away.powerDown();
+        away.interact(maker, net.minecraft.world.InteractionHand.MAIN_HAND);
+        if (away.isRemoved()) {
+            helper.fail("Off the table, the Cleaver should do nothing");
+            return;
+        }
+        SurgeryTableBlockEntity table = assemblyTable(helper, new BlockPos(3, 2, 3));
+        MinionEntity minion = minionOf(helper, new BlockPos(3, 3, 3), horseLegs(), 100.0F, maker);
+        minion.inventory.addItem(new ItemStack(Items.BONE, 4));
+        minion.equipSaddle(new ItemStack(Items.SADDLE), null);
+        MinionBuild build = minion.build().orElseThrow();
+        com.avicagan.bloodandbones.minion.MinionCensus.count(level.getServer(), maker.getUUID(), minion.getUUID());
+        int before = com.avicagan.bloodandbones.minion.MinionCensus.of(level.getServer(), maker.getUUID());
+        minion.powerDown();
+        helper.runAfterDelay(10, () -> {
+            minion.interact(maker, net.minecraft.world.InteractionHand.MAIN_HAND);
+            if (!minion.isRemoved() || !table.build().equals(java.util.Optional.of(build))) {
+                helper.fail("It should come apart into its frame on the table: " + minion.isRemoved() + " " + table.build());
+                return;
+            }
+            if (maker.getInventory().countItem(Items.BONE) != 4 || maker.getInventory().countItem(Items.SADDLE) != 1
+                    || com.avicagan.bloodandbones.minion.MinionCensus.of(level.getServer(), maker.getUUID()) != before - 1) {
+                helper.fail("What it carried and its saddle should come back, and it should count no more");
+                return;
+            }
+            helper.succeed();
+        });
+    }
+
+    /**
+     * A minion saved before minions were built of carcass pieces falls apart on its first tick, and gives back all it
+     * had: what it carried, the Fluid Backtank it wore (fluid and all) and the implants fitted in it.
+     */
+    @GameTest(template = "empty", timeoutTicks = 40)
+    public static void oldMinionFallsApartKeepingEverything(GameTestHelper helper) {
+        ServerLevel level = helper.getLevel();
+        MinionEntity old = BBEntities.MINION.get().create(level);
+        ItemStack tank = new ItemStack(BBItems.backtank(com.avicagan.bloodandbones.backtank.BacktankTier.COPPER));
+        com.avicagan.bloodandbones.backtank.FluidBacktankItem.setFluid(tank, new FluidStack(BBFluids.blood(), 1500));
+        old.setItemSlot(net.minecraft.world.entity.EquipmentSlot.CHEST, tank);
+        com.avicagan.bloodandbones.body.BodyEffects.body(old).fit(com.avicagan.bloodandbones.body.BodyPart.RIGHT_ARM, new ItemStack(BBItems.HOOK_HAND.get()));
+        old.inventory.addItem(new ItemStack(Items.BONE, 3));
+        net.minecraft.nbt.CompoundTag tag = new net.minecraft.nbt.CompoundTag();
+        old.saveWithoutId(tag);
+        tag.remove("Build");
+        MinionEntity loaded = BBEntities.MINION.get().create(level);
+        loaded.load(tag);
+        BlockPos at = helper.absolutePos(new BlockPos(5, 2, 5));
+        loaded.moveTo(at.getX() + 0.5, at.getY(), at.getZ() + 0.5, 0.0F, 0.0F);
+        level.addFreshEntity(loaded);
+        helper.runAfterDelay(5, () -> {
+            List<ItemEntity> drops = level.getEntitiesOfClass(ItemEntity.class, new AABB(at).inflate(3));
+            boolean backtank = drops.stream().anyMatch(e -> e.getItem().getItem() instanceof com.avicagan.bloodandbones.backtank.FluidBacktankItem
+                    && com.avicagan.bloodandbones.backtank.FluidBacktankItem.fluid(e.getItem()).getAmount() == 1500);
+            boolean hook = drops.stream().anyMatch(e -> e.getItem().is(BBItems.HOOK_HAND.get()));
+            int bones = drops.stream().filter(e -> e.getItem().is(Items.BONE)).mapToInt(e -> e.getItem().getCount()).sum();
+            if (!loaded.isRemoved() || !backtank || !hook || bones != 3) {
+                helper.fail("It should fall apart, dropping its backtank with its blood, its Hook Hand and its bones: " + loaded.isRemoved() + " "
+                        + backtank + " " + hook + " " + bones);
+                return;
+            }
+            helper.succeed();
+        });
+    }
+
+    /** Knocked or fallen out of the world, it is set back down on solid ground, powered down, not destroyed. */
+    @GameTest(template = "empty", timeoutTicks = 40)
+    public static void fallenOutOfTheWorldIsSetDown(GameTestHelper helper) {
+        ServerLevel level = helper.getLevel();
+        MinionEntity minion = minion(helper, new BlockPos(3, 2, 3), wholeCow(), 500.0F);
+        minion.teleportTo(minion.getX(), level.getMinBuildHeight() - 70, minion.getZ());
+        helper.runAfterDelay(5, () -> {
+            if (!minion.isAlive() || minion.isRemoved() || !minion.poweredDown() || minion.getY() < level.getMinBuildHeight()) {
+                helper.fail("Out of the world it should be set down on the ground, powered down: " + minion.getY() + " " + minion.isAlive());
+                return;
+            }
+            helper.succeed();
+        });
+    }
+
+    /** Folded up and dropped, it never goes: it does not age away, burn, or break on a cactus, and it comes back up out of the void. */
+    @GameTest(template = "empty", timeoutTicks = 40)
+    public static void foldedMinionIsNeverLost(GameTestHelper helper) {
+        ServerLevel level = helper.getLevel();
+        MinionEntity minion = minion(helper, new BlockPos(3, 2, 3), cowOnRabbitLegs(), 50.0F);
+        minion.powerDown();
+        Player maker = helper.makeMockPlayer(GameType.SURVIVAL);
+        DormantMinionItem.fold(minion, maker);
+        ItemStack folded = maker.getInventory().items.stream().filter(st -> st.is(BBItems.DORMANT_MINION.get())).findFirst().orElseThrow();
+        BlockPos at = helper.absolutePos(new BlockPos(6, 2, 6));
+        ItemEntity item = new ItemEntity(level, at.getX() + 0.5, at.getY() + 0.2, at.getZ() + 0.5, folded.copy());
+        level.addFreshEntity(item);
+        item.hurt(level.damageSources().lava(), 100.0F);
+        item.hurt(level.damageSources().cactus(), 100.0F);
+        item.hurt(level.damageSources().explosion(null, null), 100.0F);
+        if (item.isRemoved() || !item.fireImmune()) {
+            helper.fail("Lava, a cactus or a blast should not destroy a folded minion");
+            return;
+        }
+        helper.runAfterDelay(3, () -> {
+            if (item.getAge() != -32768) {
+                helper.fail("A folded minion on the ground should never age away: " + item.getAge());
+                return;
+            }
+            item.teleportTo(item.getX(), level.getMinBuildHeight() - 10, item.getZ());
+            helper.runAfterDelay(3, () -> {
+                if (item.isRemoved() || item.getY() < level.getMinBuildHeight()) {
+                    helper.fail("Fallen out of the world, it should be set back on the ground: " + item.getY());
+                    return;
+                }
+                helper.succeed();
+            });
         });
     }
 }

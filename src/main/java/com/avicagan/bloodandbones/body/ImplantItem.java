@@ -56,6 +56,12 @@ public class ImplantItem extends Item {
         return spec.fuel() != null;
     }
 
+    /** A crude prosthetic, the safety floor: it runs on nothing and gives back normal working, and nothing more. */
+    public boolean crude() {
+        return spec.fuel() == null && spec.ability() == ImplantSpec.Ability.NONE && spec.slots() == 0 && spec.walk() <= 1.0F && spec.jump() <= 1.0F
+                && spec.work() <= 1.0F && spec.attack() <= 0.0F && spec.reach() <= 0.0F && spec.safeFall() <= 0.0F;
+    }
+
     @Nullable
     public Fluid fuel() {
         return switch (spec.fuel() == null ? "" : spec.fuel()) {

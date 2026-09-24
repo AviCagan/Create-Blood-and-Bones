@@ -119,6 +119,13 @@ public class MinionBodyTests {
             helper.fail("Saddled, its maker should climb on and steer it");
             return;
         }
+        // seated on its back where the saddle is drawn, below the top of its raised head
+        float saddle = com.avicagan.bloodandbones.minion.MinionBody.saddlePoint(com.avicagan.bloodandbones.minion.MinionBody.layout(PartsData.SERVER, horseLegs)).y;
+        double seat = minion.getPassengerRidingPosition(maker).y - minion.getY();
+        if (Math.abs(seat - saddle) > 0.01 || !(seat < minion.getBbHeight() - 0.05)) {
+            helper.fail("Its rider should sit on the saddle, at " + saddle + ", not at " + seat + " (its hitbox " + minion.getBbHeight() + " tall)");
+            return;
+        }
         minion.powerDown();
         if (maker.getVehicle() == minion) {
             helper.fail("Out of blood, it throws its rider");
@@ -189,5 +196,20 @@ public class MinionBodyTests {
             }
             helper.succeed();
         });
+    }
+
+    /** A flier running low goes to a trough from the air (it is never on the ground to set off from) and drinks. */
+    @GameTest(template = "empty", timeoutTicks = 400)
+    public static void hungryFlierDrinks(GameTestHelper helper) {
+        helper.setBlock(new BlockPos(8, 2, 5), BBBlocks.BLOOD_TROUGH.getDefaultState());
+        BloodTroughBlockEntity trough = (BloodTroughBlockEntity) helper.getBlockEntity(new BlockPos(8, 2, 5));
+        trough.tank().fill(new FluidStack(BBFluids.blood(), 4000), IFluidHandler.FluidAction.EXECUTE);
+        MinionBuild build = MinionBuild.of(ref("bat", "body")).with("head", ref("bat", "head"));
+        // a fifth of what it holds: hungry
+        MinionEntity minion = minion(helper, new BlockPos(2, 4, 5), build, MinionStats.of(PartsData.SERVER, build).reservoir() * 0.2F,
+                helper.makeMockPlayer(GameType.SURVIVAL));
+        float start = minion.power();
+        helper.succeedWhen(() -> helper.assertTrue(minion.isNoGravity() && minion.power() > start + 50.0F && trough.amount() < 4000,
+                "the flier has not flown to the trough and drunk yet (at " + minion.position() + ", blood " + minion.power() + ")"));
     }
 }

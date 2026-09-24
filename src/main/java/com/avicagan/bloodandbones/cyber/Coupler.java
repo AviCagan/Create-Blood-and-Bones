@@ -74,8 +74,9 @@ public final class Coupler {
             if (machine.getBlock() instanceof IRotate rotate && !(machine.getBlock() instanceof CouplerBlock)
                     && rotate.hasShaftTowards(level, pos, machine, face)) {
                 BlockState there = level.getBlockState(front);
-                boolean ours = there.is(BBBlocks.COUPLER.get()) && owns(player.getUUID(), level, front);
-                return (there.canBeReplaced() || ours) && level.mayInteract(player, front) ? new BlockHitResult(at, face, pos, false) : null;
+                // a coupler is replaceable, but someone else's (a minion's, another player's) is not free
+                boolean free = there.is(BBBlocks.COUPLER.get()) ? owns(player.getUUID(), level, front) : there.canBeReplaced();
+                return free && level.mayInteract(player, front) ? new BlockHitResult(at, face, pos, false) : null;
             }
             if (!machine.canBeReplaced() && !(machine.getBlock() instanceof CouplerBlock)) {
                 return null;
@@ -135,7 +136,9 @@ public final class Coupler {
             return;
         }
         ServerLevel level = owner.getServer().getLevel(link.level);
-        if (level != null && level.isLoaded(link.pos) && level.getBlockState(link.pos).is(BBBlocks.COUPLER.get())) {
+        // only its own: a coupler someone else holds there now stays
+        if (level != null && level.isLoaded(link.pos) && level.getBlockState(link.pos).is(BBBlocks.COUPLER.get())
+                && level.getBlockEntity(link.pos) instanceof CouplerBlockEntity coupler && owner.getUUID().equals(coupler.owner())) {
             level.removeBlock(link.pos, false);
             level.playSound(null, link.pos, net.minecraft.sounds.SoundEvents.PISTON_CONTRACT, net.minecraft.sounds.SoundSource.PLAYERS, 0.6F, 1.4F);
         }

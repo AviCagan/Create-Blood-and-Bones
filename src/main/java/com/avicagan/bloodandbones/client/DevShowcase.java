@@ -496,6 +496,12 @@ public final class DevShowcase {
                         horse.setNoAi(true);
                         player.serverLevel().addFreshEntity(horse);
                         horse.equipSaddle(new ItemStack(net.minecraft.world.item.Items.SADDLE), null);
+                        // someone in the saddle, to see the seat sits on the torso and not on top of the head
+                        var rider = net.minecraft.world.entity.EntityType.VILLAGER.create(player.serverLevel());
+                        rider.moveTo(horse.getX(), horse.getY() + 1.0, horse.getZ(), 200.0F, 0.0F);
+                        rider.setNoAi(true);
+                        player.serverLevel().addFreshEntity(rider);
+                        rider.startRiding(horse, true);
                     });
                     mc.options.setCameraType(net.minecraft.client.CameraType.FIRST_PERSON);
                     mc.options.hideGui = true;

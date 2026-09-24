@@ -83,9 +83,9 @@ Everything below is in development builds only; the art is placeholder (see the 
   can go wrong.
 - Amputation is a ritual, as the brief has it: a player's flesh only comes off with a surgeon minion
   (a villager's or a pillager's head, and an arm) awake beside the table. It hacks: the stump it leaves
-  is ragged, and fitting anything there later takes a bucket of blood as well (from a bucket or a worn
-  backtank). Fitting never needs a surgeon, so a crude prosthetic can always go on. A surgeon keeps to
-  its table and tends whoever lies on it.
+  is ragged, and fitting anything but a crude prosthetic there later takes a bucket of blood as well (from
+  a bucket or a worn backtank). Fitting never needs a surgeon, and a crude prosthetic never needs blood, so
+  one can always go on. A surgeon keeps to its table and tends whoever lies on it.
 - Stumps show: a limb gone leaves the top of it in your own skin with a raw end; a ragged one is
   longer, torn, with flaps of flesh hanging off.
 - Missing parts follow the design brief: an arm gone means no off-hand and swings a quarter slower
@@ -185,22 +185,35 @@ Everything below is in development builds only; the art is placeholder (see the 
 - It runs on blood, more when it moves, works or fights. Low, it walks to the nearest Blood Trough it
   can reach (four buckets of blood, filled by bucket, Spout or pipe) and drinks. Empty, it lies down
   where it is, alive: only a player can hurt it and mobs ignore it. Blood wakes it again. Its maker can
-  fold one that is down into a Dormant Minion to carry. A killing blow collapses it the same way (a
-  server setting can make it fall apart into its pieces, or die). A server can cap minions per player
-  (no cap by default).
-- A minion from an older build falls apart, dropping what it carried.
+  fold one that is down into a Dormant Minion to carry, and set it down to work somewhere new; a folded
+  minion never despawns, burns or breaks, and comes back up out of the void. A killing blow collapses it
+  the same way, and so does falling out of the world (a server setting can make it fall apart into its
+  pieces, or die, dropping what it carried either way). A server can cap minions per player (no cap by
+  default); its maker's Cleaver on one lying down on an Assembly Frame table takes it back apart into a
+  frame there, freeing its place.
+- A minion never turns on its maker, and one that never fights (a villager's pair of arms) no longer
+  stands its ground when hurt. It drinks only from a trough it can walk to, never through a wall, and
+  gives up on a trough, cradle, crop or chest it cannot get to rather than standing by it.
+- A minion from an older build falls apart, dropping what it carried, the backtank it wore and the
+  implants that were in it.
 - Legs set how it moves, as the brief has it: spider legs climb walls (a hungry minion goes straight over
   a wall to its trough); horse legs under a heavy enough torso take a saddle, and its maker rides and steers
-  it; a flying torso (a bat's, a blaze's) flies, its legs dangling. Arms set how it hits, each in its own
-  style and taking turns: a zombie's punch, an iron golem's fling that throws the target up, a spider's
-  sting, a villager's pair of arms that never fights. Flesh mends itself slowly on its blood.
+  it (its rider sits on the saddle, and riding costs what walking does); a flying torso (a bat's, a
+  blaze's) flies, its legs dangling, and goes to a trough from the air when it runs low. Arms set how it
+  hits, each in its own style and taking turns: a zombie's punch, an iron golem's fling that throws the
+  target up, a spider's sting, a villager's pair of arms that never fights. Flesh mends itself slowly on
+  its blood, and keeps the hide traits of up to three of the mobs it is built of (a cow's thick hide is
+  armour).
 - Brass minions: lay a skinned torso on the frame and build it of skinned pieces, sheathe it in Brass
   Sheathing, and wake it with a Soul Canister (an empty canister filled at a Spout; an Item Drain empties
   it). Brass drains a quarter as fast, shrugs off poison and drowning, and never heals itself (a brass
   sheet mends it). The Charging Cradle, a shaft-driven block, swaps full canisters into brass minions
-  beside it and keeps the empties for a hopper; stocked with brass sheets it mends them. Its maker can fit
-  a brass minion with one of the player's cybernetic modules: a Magnet Coil draws items in, an Analytical
-  Lens sees through walls, a Rotational Coupler drives a shaft it stands beside, and more.
+  beside it and keeps the empties for a hopper; stocked with brass sheets it mends them. A low brass minion
+  walks to the nearest cradle it can reach that is turning with a full canister and room for the empty.
+  Its maker can fit a brass minion with one of the player's cybernetic modules: a Magnet Coil draws items
+  in, an Analytical Lens sees through walls, a Rotational Coupler drives a shaft it stands beside (at the
+  working rate of soul blood; only into air, never over water, snow or plants, and never into someone
+  else's coupler), and more.
 
 ### Parts and traits
 
@@ -264,7 +277,8 @@ Everything below is in development builds only; the art is placeholder (see the 
   blood drops or stains, skinned carcasses pale, the hook in a carcass and the machines clean (and
   the bits that fly off them when broken), blood
   a muddy brown, the Gut Chain plain cord, and names and descriptions reworded (Blood Steel reads as
-  Essence Steel, the Bleeding Rack as the Draining Rack).
+  Essence Steel, the Bleeding Rack as the Draining Rack, a minion as a construct, a ragged stump as an
+  open socket). A folded minion is a clean riveted bundle.
 - The mod's own sounds with subtitles ("Carcass thuds", "Bone snaps", "Blade falls"...), playing
   vanilla sounds for now; a resource pack can replace them.
 - Item descriptions, JEI pages (a Butchery page per mob, sent to players on servers too), Ponder
@@ -292,4 +306,5 @@ Everything below is in development builds only; the art is placeholder (see the 
 - Special organs (glands, sacs, cores) are in every mob's data but have no item yet, so they cannot be cut out and
   fitted in survival; the heart, lungs, stomach and eyes can. What each mob's signature still waits for (jobs, movement
   modes, mounts, variants, held weapons) is logged by the signature lint game test.
+- A half-built minion frame from a development build before the rebuild loses what had been fitted to it.
 - All art is placeholder (see the README).

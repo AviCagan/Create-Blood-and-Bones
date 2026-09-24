@@ -137,8 +137,7 @@ public class ImplantTests {
         }
         table.take();
         table.put(new ItemStack(BBItems.GLASS_EYE.get()));
-        // the surgeon left the socket ragged: fitting it takes a bucket of blood too
-        player.getInventory().add(new ItemStack(BBFluids.BLOOD.getBucket().get()));
+        // the surgeon left the socket ragged, but a Glass Eye (the safety floor) goes in with no blood
         if (Surgery.operate(helper.getLevel(), player, table, BodyPart.RIGHT_EYE) != Surgery.Action.FIT || !BodyEffects.sees(BodyEffects.body(player), player)) {
             helper.fail("A Glass Eye should give sight back");
             return;

@@ -1,6 +1,6 @@
 {
   "parent": "minecraft:item/generated",
   "textures": {
-    "layer0": "bloodandbones:item/dormant_minion"
+    "layer0": "bloodandbones:item/dormant_minion_clean"
   }
 }
