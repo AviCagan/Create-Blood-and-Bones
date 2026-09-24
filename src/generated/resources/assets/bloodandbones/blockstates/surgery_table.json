@@ -1,7 +1,25 @@
 {
-  "variants": {
-    "": {
-      "model": "bloodandbones:block/surgery_table"
+  "multipart": [
+    {
+      "apply": {
+        "model": "bloodandbones:block/surgery_table"
+      }
+    },
+    {
+      "apply": {
+        "model": "bloodandbones:block/surgery_table_surgical"
+      },
+      "when": {
+        "attachment": "surgical"
+      }
+    },
+    {
+      "apply": {
+        "model": "bloodandbones:block/surgery_table_assembly"
+      },
+      "when": {
+        "attachment": "assembly"
+      }
     }
-  }
+  ]
 }

@@ -188,7 +188,15 @@ public class BBBlocks {
             .block("surgery_table", com.avicagan.bloodandbones.body.SurgeryTableBlock::new)
             .initialProperties(() -> net.minecraft.world.level.block.Blocks.IRON_BLOCK)
             .properties(p -> p.noOcclusion().strength(3.0F, 6.0F))
-            .blockstate((c, p) -> p.simpleBlock(c.get(), p.models().getExistingFile(p.modLoc("block/surgery_table"))))
+            .blockstate((c, p) -> {
+                // the table, and over it whichever attachment is fitted
+                var builder = p.getMultipartBuilder(c.get());
+                builder.part().modelFile(p.models().getExistingFile(p.modLoc("block/surgery_table"))).addModel().end();
+                builder.part().modelFile(p.models().getExistingFile(p.modLoc("block/surgery_table_surgical"))).addModel()
+                        .condition(com.avicagan.bloodandbones.body.SurgeryTableBlock.ATTACHMENT, com.avicagan.bloodandbones.body.TableAttachment.SURGICAL).end();
+                builder.part().modelFile(p.models().getExistingFile(p.modLoc("block/surgery_table_assembly"))).addModel()
+                        .condition(com.avicagan.bloodandbones.body.SurgeryTableBlock.ATTACHMENT, com.avicagan.bloodandbones.body.TableAttachment.ASSEMBLY).end();
+            })
             .tag(net.minecraft.tags.BlockTags.MINEABLE_WITH_PICKAXE)
             .lang("Surgery Table")
             .simpleItem()

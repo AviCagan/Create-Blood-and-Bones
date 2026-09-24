@@ -48,8 +48,48 @@ public class SurgeryScreen extends Screen {
                 ? living : null;
     }
 
+    /** The camera before surgery, and the head's tilt, put back when the screen closes. */
+    @org.jetbrains.annotations.Nullable
+    private net.minecraft.client.CameraType before;
+    private float pitchBefore;
+
+    /**
+     * On yourself, the brief's outside view: you look at yourself from a little above (the front camera with the
+     * head tipped back, so the camera sits above and looks down; see BodyRendering's camera distance).
+     */
+    private void outsideView() {
+        Player player = Minecraft.getInstance().player;
+        if (before == null && player != null && player.getId() == patientId) {
+            before = Minecraft.getInstance().options.getCameraType();
+            pitchBefore = player.getXRot();
+            Minecraft.getInstance().options.setCameraType(net.minecraft.client.CameraType.THIRD_PERSON_FRONT);
+            player.setXRot(-55.0F);
+            player.xRotO = -55.0F;
+        }
+    }
+
+    @Override
+    public void removed() {
+        Player player = Minecraft.getInstance().player;
+        if (before != null) {
+            Minecraft.getInstance().options.setCameraType(before);
+            if (player != null) {
+                player.setXRot(pitchBefore);
+                player.xRotO = pitchBefore;
+            }
+            before = null;
+        }
+        super.removed();
+    }
+
+    /** Whether the local player is on the table with this screen up, for the camera distance. */
+    public static boolean operatingOnSelf() {
+        return Minecraft.getInstance().screen instanceof SurgeryScreen screen && screen.before != null;
+    }
+
     @Override
     protected void init() {
+        outsideView();
         int top = top();
         int i = 0;
         for (BodyPart part : BodyPart.values()) {

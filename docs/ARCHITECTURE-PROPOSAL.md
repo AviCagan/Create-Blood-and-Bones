@@ -1104,3 +1104,15 @@ contradicted it. Fixed:
   cybernetic throttle system and modules (Grappling Spool, Rotational Coupler, Piston Ram, Magnet Coil,
   Analytical Lens, Gyroscopic Stabilizer, Barometric Vent); the graft and module set bonuses.
 
+### 14.8 The table's attachments and the outside view (brief § Machines, § Self-augmentation)
+
+- `SurgeryTableBlock.ATTACHMENT` (none, surgical, assembly), a multipart model per attachment. Right-click an
+  empty table with a Surgical Rig or Assembly Frame to fit it (the old one comes back); sneak with an empty
+  hand and nothing on the table to take it off; breaking the table drops it. With the Rig the table does
+  everything surgical (patients, tools, organs from carcass pieces; the screen's actions check for it);
+  with the Frame it only takes a carcass body and builds a minion on it. `attachmentsSetTheJob`.
+- The outside view: while the surgery screen is open on yourself, the camera is the front third-person one
+  with the head tipped back 55 degrees (so it sits above and looks down) and pulled in to 2.5 blocks
+  (`CalculateDetachedCameraDistanceEvent`); the camera and tilt go back when the screen closes. NeoForge's
+  `ComputeCameraAngles` only turns the camera, it cannot move it, hence the tilt.
+

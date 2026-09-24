@@ -147,6 +147,14 @@ public final class BodyRendering {
         }
     }
 
+    /** The outside view during surgery on yourself sits close: a little above, looking down. */
+    @SubscribeEvent
+    public static void onCameraDistance(net.neoforged.neoforge.client.event.CalculateDetachedCameraDistanceEvent event) {
+        if (SurgeryScreen.operatingOnSelf()) {
+            event.setDistance(Math.min(event.getDistance(), 2.5F));
+        }
+    }
+
     /** Nothing is held, in first person, by an arm that is not there. */
     @SubscribeEvent
     public static void onRenderHand(RenderHandEvent event) {

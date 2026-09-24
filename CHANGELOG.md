@@ -59,6 +59,10 @@ Everything below is in development builds only; the art is placeholder (see the 
 
 ### The body
 
+- The Surgery Table takes one of two attachments, as the brief has it: a Surgical Rig (an overhead
+  arm of lamps and blades) makes it a place to operate and to take organs out of carcasses; an Assembly
+  Frame (clamps and a jig) makes it a place to build minions. A bare table does nothing. Operating on
+  yourself turns the camera to look at you from a little above.
 - Surgery Table: lie on it (empty hand) and a screen shows each limb. A Cleaver laid on the table
   takes one off, and you keep it ("Steve's Arm"); a Peg Leg, a Hook Hand or a severed limb laid on it
   goes where one is missing; a prosthetic unclips. Limbs are only ever lost by choice, and nothing

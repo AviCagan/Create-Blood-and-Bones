@@ -92,6 +92,18 @@ public class BBItems {
             .lang("Animal Fat")
             .register();
 
+    // ---- the Surgery Table's two attachments
+    public static final ItemEntry<net.minecraft.world.item.Item> SURGICAL_RIG = BloodAndBones.REGISTRATE
+            .item("surgical_rig", net.minecraft.world.item.Item::new)
+            .properties(p -> p.stacksTo(1))
+            .lang("Surgical Rig")
+            .register();
+    public static final ItemEntry<net.minecraft.world.item.Item> ASSEMBLY_FRAME = BloodAndBones.REGISTRATE
+            .item("assembly_frame", net.minecraft.world.item.Item::new)
+            .properties(p -> p.stacksTo(1))
+            .lang("Assembly Frame")
+            .register();
+
     // ---- implants: basic (nothing to run), organic (blood from the backtank), cybernetic (soul blood)
     // the crude prosthetics are the safety floor: iron, leather and bone, no nether needed; each gives back
     // normal working and nothing more, so a part taken out can always be made good

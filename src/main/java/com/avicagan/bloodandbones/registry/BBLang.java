@@ -94,7 +94,7 @@ public class BBLang {
 
         // ---- the body
         block("surgery_table",
-                "A padded table with straps, for _surgery_. Lie on it to have a limb _off_, or a new one _on_. Nothing can go wrong.",
+                "A padded table with straps. What it does depends on its _attachment_: a _Surgical Rig_ to operate (have a limb _off_, or a new one _on_; nothing can go wrong), an _Assembly Frame_ to build minions.",
                 "When R-Clicked with a Blade, Implant or Limb", "Lays it on the table: a _Cleaver_ takes a limb off, a _prosthetic_ or a _severed limb_ goes where one is missing.",
                 "When R-Clicked with an Empty Hand", "You _lie down_ on it and choose which part to operate on. _Sneak_ to get up.",
                 "When Sneak-R-Clicked with an Empty Hand", "Takes back what lies on the table.",
@@ -195,6 +195,16 @@ public class BBLang {
         BloodAndBones.REGISTRATE.addRawLang("bloodandbones.body.left_leg", "Left leg");
         BloodAndBones.REGISTRATE.addRawLang("bloodandbones.body.right_leg", "Right leg");
         BloodAndBones.REGISTRATE.addRawLang("bloodandbones.surgery.title", "Surgery");
+        BloodAndBones.REGISTRATE.addRawLang("bloodandbones.surgery.bare", "Fit a Surgical Rig to operate, or an Assembly Frame to build minions");
+        BloodAndBones.REGISTRATE.addRawLang("bloodandbones.minion.lay_body", "Lay a carcass body on the frame to build a minion on it");
+        item("surgical_rig",
+                "A Surgery Table _attachment_: an overhead arm of lamps, clamps and blades. Makes the table a place to _operate_.",
+                "When R-Clicked on a Surgery Table", "Fits it (swapping out any other attachment). Then patients can lie on the table, and carcass pieces give up their _organs_.",
+                "When Sneak-R-Clicked off an Empty Table", "An empty hand takes it back off.");
+        item("assembly_frame",
+                "A Surgery Table _attachment_: clamps and a jig for stitching bodies together. Makes the table a place to build _minions_.",
+                "When R-Clicked on a Surgery Table", "Fits it (swapping out any other attachment). Then a carcass _body_ laid on it can be built into a minion.",
+                "When Sneak-R-Clicked off an Empty Table", "An empty hand takes it back off.");
         BloodAndBones.REGISTRATE.addRawLang("bloodandbones.surgery.title_other", "Surgery on %s");
         BloodAndBones.REGISTRATE.addRawLang("bloodandbones.surgery.no_organs", "Nothing more to take out of it");
         BloodAndBones.REGISTRATE.addRawLang("bloodandbones.surgery.empty", "Nothing on the table: lay a Cleaver, a prosthetic or a limb on it");

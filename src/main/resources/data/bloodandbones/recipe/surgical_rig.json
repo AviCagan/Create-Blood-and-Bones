@@ -1,0 +1,26 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "category": "building",
+  "pattern": [
+    "IGI",
+    "ISI",
+    " C "
+  ],
+  "key": {
+    "I": {
+      "tag": "c:ingots/iron"
+    },
+    "G": {
+      "item": "minecraft:glowstone_dust"
+    },
+    "S": {
+      "item": "minecraft:shears"
+    },
+    "C": {
+      "item": "bloodandbones:cleaver"
+    }
+  },
+  "result": {
+    "id": "bloodandbones:surgical_rig"
+  }
+}

@@ -148,6 +148,8 @@ public class PatientTests {
         BlockPos tablePos = new BlockPos(3, 2, 3);
         BlockPos deployerPos = tablePos.above(2);
         SurgeryTableBlockEntity table = table(helper, tablePos);
+        helper.setBlock(tablePos, BBBlocks.SURGERY_TABLE.getDefaultState().setValue(SurgeryTableBlock.ATTACHMENT, com.avicagan.bloodandbones.body.TableAttachment.SURGICAL));
+        table = (SurgeryTableBlockEntity) helper.getLevel().getBlockEntity(helper.absolutePos(tablePos));
         helper.setBlock(deployerPos, com.simibubi.create.AllBlocks.DEPLOYER.getDefaultState()
                 .setValue(com.simibubi.create.content.kinetics.base.DirectionalKineticBlock.FACING, net.minecraft.core.Direction.DOWN)
                 .setValue(com.simibubi.create.content.kinetics.base.DirectionalAxisKineticBlock.AXIS_ALONG_FIRST_COORDINATE, true));
@@ -158,13 +160,61 @@ public class PatientTests {
         }
         ResourceLocation cow = ResourceLocation.withDefaultNamespace("cow");
         table.put(piece(cow, com.avicagan.bloodandbones.carcass.rig.RigManager.forEntity(cow).orElseThrow().root().name()));
+        SurgeryTableBlockEntity onTable = table;
         helper.runAfterDelay(2, () -> {
             var deployer = (com.simibubi.create.content.kinetics.deployer.DeployerBlockEntity) helper.getLevel().getBlockEntity(helper.absolutePos(deployerPos));
             deployer.getPlayer().setItemInHand(net.minecraft.world.InteractionHand.MAIN_HAND, new ItemStack(BBItems.CLEAVER.get()));
         });
-        helper.succeedWhen(() -> helper.assertTrue(CarcassPieceItem.piece(table.item()) != null
-                && Surgery.organsTaken(CarcassPieceItem.piece(table.item())) == 3, "the deployer has not taken all three organs yet: "
-                + (CarcassPieceItem.piece(table.item()) == null ? "no piece" : Surgery.organsTaken(CarcassPieceItem.piece(table.item())))));
+        helper.succeedWhen(() -> helper.assertTrue(CarcassPieceItem.piece(onTable.item()) != null
+                && Surgery.organsTaken(CarcassPieceItem.piece(onTable.item())) == 3, "the deployer has not taken all three organs yet: "
+                + (CarcassPieceItem.piece(onTable.item()) == null ? "no piece" : Surgery.organsTaken(CarcassPieceItem.piece(onTable.item())))));
+    }
+
+    /** The table's job comes from its attachment: a bare table takes nothing; a Surgical Rig takes tools; an Assembly Frame, a body. */
+    @GameTest(template = "empty", timeoutTicks = 20)
+    public static void attachmentsSetTheJob(GameTestHelper helper) {
+        ServerLevel level = helper.getLevel();
+        BlockPos rel = new BlockPos(3, 2, 3);
+        table(helper, rel);
+        BlockPos at = helper.absolutePos(rel);
+        Player player = helper.makeMockPlayer(GameType.SURVIVAL);
+        net.minecraft.world.phys.BlockHitResult hit = new net.minecraft.world.phys.BlockHitResult(net.minecraft.world.phys.Vec3.atCenterOf(at),
+                net.minecraft.core.Direction.UP, at, false);
+        java.util.function.Function<ItemStack, net.minecraft.world.ItemInteractionResult> click = stack -> {
+            player.setItemInHand(net.minecraft.world.InteractionHand.MAIN_HAND, stack);
+            return level.getBlockState(at).useItemOn(stack, level, player, net.minecraft.world.InteractionHand.MAIN_HAND, hit);
+        };
+        SurgeryTableBlockEntity table = (SurgeryTableBlockEntity) level.getBlockEntity(at);
+        click.apply(new ItemStack(BBItems.CLEAVER.get()));
+        if (!table.item().isEmpty()) {
+            helper.fail("A bare table should take nothing");
+            return;
+        }
+        ItemStack rig = new ItemStack(BBItems.SURGICAL_RIG.get());
+        click.apply(rig);
+        if (SurgeryTableBlock.attachment(level, at) != com.avicagan.bloodandbones.body.TableAttachment.SURGICAL || !rig.isEmpty()) {
+            helper.fail("The Surgical Rig should fit and be used up");
+            return;
+        }
+        click.apply(new ItemStack(BBItems.CLEAVER.get()));
+        if (!table.item().is(BBItems.CLEAVER.get())) {
+            helper.fail("With the Surgical Rig the table should take a Cleaver");
+            return;
+        }
+        table.take();
+        click.apply(new ItemStack(BBItems.ASSEMBLY_FRAME.get()));
+        if (SurgeryTableBlock.attachment(level, at) != com.avicagan.bloodandbones.body.TableAttachment.ASSEMBLY || count(player, BBItems.SURGICAL_RIG.get()) != 1) {
+            helper.fail("The Assembly Frame should swap in and hand the Surgical Rig back");
+            return;
+        }
+        click.apply(new ItemStack(BBItems.CLEAVER.get()));
+        ResourceLocation cow = ResourceLocation.withDefaultNamespace("cow");
+        click.apply(piece(cow, com.avicagan.bloodandbones.carcass.rig.RigManager.forEntity(cow).orElseThrow().root().name()));
+        if (!com.avicagan.bloodandbones.minion.MinionFrame.isBody(table.item(), level)) {
+            helper.fail("With the Assembly Frame the table should take a carcass body, not a Cleaver: " + table.item());
+            return;
+        }
+        helper.succeed();
     }
 
     private static ItemStack piece(ResourceLocation entity, String bone) {

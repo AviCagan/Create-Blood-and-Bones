@@ -255,7 +255,8 @@ public final class Surgery {
             return;
         }
         net.minecraft.world.entity.LivingEntity patient = patientAt(player.level(), payload.pos());
-        if (patient == null || !mayOperate(player, patient, payload.pos())) {
+        if (patient == null || !mayOperate(player, patient, payload.pos())
+                || SurgeryTableBlock.attachment(player.level(), payload.pos()) != TableAttachment.SURGICAL) {
             return;
         }
         if (operate(player.serverLevel(), patient, player, table, payload.part()) == Action.NONE) {

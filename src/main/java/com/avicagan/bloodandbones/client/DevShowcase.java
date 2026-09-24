@@ -321,7 +321,8 @@ public final class DevShowcase {
                     server.execute(() -> {
                         ServerPlayer player = server.getPlayerList().getPlayers().get(0);
                         BlockPos at = player.blockPosition().east(2);
-                        player.serverLevel().setBlockAndUpdate(at, BBBlocks.SURGERY_TABLE.getDefaultState());
+                        player.serverLevel().setBlockAndUpdate(at, BBBlocks.SURGERY_TABLE.getDefaultState()
+                                .setValue(com.avicagan.bloodandbones.body.SurgeryTableBlock.ATTACHMENT, com.avicagan.bloodandbones.body.TableAttachment.SURGICAL));
                         if (player.serverLevel().getBlockEntity(at) instanceof com.avicagan.bloodandbones.body.SurgeryTableBlockEntity table) {
                             table.put(new ItemStack(BBItems.CLEAVER.get()));
                         }
