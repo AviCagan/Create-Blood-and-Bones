@@ -51,8 +51,11 @@ provided by [Sable](https://github.com/ryanhcode/sable).
 - **Cooking and display.** The Spit Roast turns a carcass piece over a fire until it browns (or
   burns). The Specimen Jar keeps a piece on show, and so does the Butcher's Hook, on a wall, where
   a fresh piece drips blood on the floor. The Bloody Casing (spout 250 mB of blood onto an Andesite
-  Casing) joins up like Create's casings, and the Gut Chain (three offal in a column) hangs like a
-  chain.
+  Casing, and the same for Brass and Copper Casing) joins up like Create's casings, and the Gut Chain
+  (three offal in a column) hangs like a chain, and rides Create's chain conveyors when used on one.
+  The morgue is cold steel: Steel Tables join into one run and hold an item each, and a Steel Rack
+  shows four parts on its shelves. Ribcage Arches shape themselves into the inside of a ribcage, and
+  Bone Piles heap up in layers like snow.
 - **The body.** Lie on the Surgery Table and choose what to do to each part of you: arms, legs,
   eyes, heart, lungs and stomach. A Cleaver on the table takes one out (you keep it, with your name on
   it), but only with a surgeon minion (a villager's or pillager's head) beside the table, and its ragged
@@ -98,8 +101,8 @@ incremental. `./gradlew runClient` / `runServer` / `runData` are configured by M
 
 ### Development aids
 
-- `./gradlew runGameTestServer` runs the game tests headless (241: every rigged mob and baby,
-  butchery, rot, bleeding, machines and their filters, cooking and display, surgery, implants, backtanks, minions, chains, recipes,
+- `./gradlew runGameTestServer` runs the game tests headless (249: every rigged mob and baby,
+  butchery, rot, bleeding, machines and their filters, cooking and display, decoration, surgery, implants, backtanks, minions, chains, recipes,
   advancements and sounds).
 - `./gradlew runData -Dbloodandbones.dump_layers=minecraft:goat#main,...` writes those vanilla
   models' part trees to `run/build/layer-dump.txt`, for writing new rig targets in
@@ -138,7 +141,8 @@ before any public release. Until then, treat these as not releasable:
   `block/blood_steel_block.png`, and the Butcher's Table's `block/butcher_table_top.png`,
   `block/butcher_table_side.png` and their `_clean` twins (the iron block).
 - Recoloured from Create's textures: `block/bloody_casing.png` and `block/bloody_casing_connected.png`
-  (andesite casing and its connected sheet), `block/bloody_saw.png` and its bloodless twin
+  (andesite casing and its connected sheet), `block/bloody_brass_casing.png`,
+  `block/bloody_copper_casing.png` and their `_connected` sheets (brass and copper casing), `block/bloody_saw.png` and its bloodless twin
   `block/bloody_saw_clean.png` (the saw blade).
 - This mod's own tool placeholders with blood added: `item/cleaver_bloody.png`,
   `item/flensing_knife_bloody.png`, `item/blood_steel_cleaver_bloody.png`.
