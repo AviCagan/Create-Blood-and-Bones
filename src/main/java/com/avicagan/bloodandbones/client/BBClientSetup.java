@@ -48,8 +48,8 @@ public final class BBClientSetup {
     public static void onAddLayers(net.neoforged.neoforge.client.event.EntityRenderersEvent.AddLayers event) {
         for (net.minecraft.client.resources.PlayerSkin.Model skin : event.getSkins()) {
             if (event.getSkin(skin) instanceof net.minecraft.client.renderer.entity.player.PlayerRenderer renderer) {
-                renderer.addLayer(new BodyRendering.ImplantLayer(renderer));
-                renderer.addLayer(new FluidBacktankLayer(renderer));
+                renderer.addLayer(new BodyRendering.ImplantLayer<>(renderer));
+                renderer.addLayer(new FluidBacktankLayer<>(renderer));
             }
         }
     }

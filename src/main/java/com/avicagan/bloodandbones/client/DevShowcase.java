@@ -270,6 +270,25 @@ public final class DevShowcase {
                                 com.avicagan.bloodandbones.registry.BBFluids.soulBlood(), 32000));
                         player.setItemSlot(net.minecraft.world.entity.EquipmentSlot.CHEST, tank);
                         player.serverLevel().setBlockAndUpdate(player.blockPosition().offset(4, 0, 5), BBBlocks.BACKTANK_PORT.getDefaultState());
+                        // three minions beside: a farmer (whole), a fighter (a Hook Hand, a Peg Leg), a courier (no eyes)
+                        for (int m = 0; m < 3; m++) {
+                            var built = new com.avicagan.bloodandbones.body.Body();
+                            if (m == 1) {
+                                built.fit(com.avicagan.bloodandbones.body.BodyPart.RIGHT_ARM, new ItemStack(BBItems.HOOK_HAND.get()));
+                                built.fit(com.avicagan.bloodandbones.body.BodyPart.LEFT_LEG, new ItemStack(BBItems.PEG_LEG.get()));
+                            } else if (m == 2) {
+                                built.lose(com.avicagan.bloodandbones.body.BodyPart.LEFT_EYE);
+                                built.lose(com.avicagan.bloodandbones.body.BodyPart.RIGHT_EYE);
+                                built.lose(com.avicagan.bloodandbones.body.BodyPart.LEFT_LEG);
+                            }
+                            var minion = com.avicagan.bloodandbones.registry.BBEntities.MINION.get().create(player.serverLevel());
+                            BlockPos at = player.blockPosition().offset(m * 2 - 2, 0, 2);
+                            minion.moveTo(at.getX() + 0.5, at.getY(), at.getZ() + 0.5, 180.0F, 0.0F);
+                            minion.setup(player, at, new com.avicagan.bloodandbones.minion.MinionFrame.Frame(built, java.util.Optional.empty()));
+                            minion.setNoAi(true);
+                            player.serverLevel().addFreshEntity(minion);
+                            com.avicagan.bloodandbones.body.BodyEffects.changed(minion);
+                        }
                         player.teleportTo(player.serverLevel(), player.getX(), player.getY(), player.getZ(), 180.0F, -25.0F);
                         // every tier of backtank set down in a row behind
                         for (var tier : com.avicagan.bloodandbones.backtank.BacktankTier.values()) {

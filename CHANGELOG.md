@@ -96,6 +96,20 @@ Everything below is in development builds only; the art is placeholder (see the 
   pressed with a super experience block. The soul netherite tank is a smithing upgrade of the blood
   diamond one.
 
+### Minions
+
+- Built on the Surgery Table on a carcass body (which keeps the organs not taken out of it): a carcass
+  head (with its eyes), severed limbs, organs and implants, one a click. Woken with a bucket of soul
+  blood once it has a head and a heart ("It's Alive!").
+- Its parts decide its job, checked every second: a weapon arm (Hook Hand, Hydraulic Arm, Vent Arm)
+  makes a fighter that follows its maker and fights monsters (a Vent Arm sprays from range); two working
+  arms and an eye, a farmer that reaps and replants ripe crops near where it was made and stores the
+  harvest in a chest there; two arms and no eye, a courier that carries dropped things to that chest;
+  anything less, a companion that follows its maker.
+- Legs, arms, heart and eyes work on it as on anyone. Its maker can give it a backtank (right-click)
+  to run powered implants, and take it back (sneak, empty hand). It can be led back onto the table to
+  be changed. Killed, it drops what it carried and its implants. Drawn as a stitched, pale body.
+
 ### Presentation
 
 - Bloodless mode (a client setting, or the `bloodandbonesBloodless` game rule for everyone): no
@@ -122,5 +136,5 @@ Everything below is in development builds only; the art is placeholder (see the 
   proof.
 - A patient on the Surgery Table is drawn sitting, not lying. An item held in a missing hand, and
   armour over a missing limb, still show in third person. Nothing is drawn on mobs that have been
-  operated on.
+  operated on. A minion carries a carcass head's name but is drawn with its own stitched head.
 - All art is placeholder (see the README).

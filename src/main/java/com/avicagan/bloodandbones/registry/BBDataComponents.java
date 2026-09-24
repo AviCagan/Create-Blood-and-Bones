@@ -23,6 +23,11 @@ public final class BBDataComponents {
     public static final DeferredHolder<DataComponentType<?>, DataComponentType<net.neoforged.neoforge.fluids.SimpleFluidContent>> FLUID = COMPONENTS.registerComponentType("fluid",
             builder -> builder.persistent(net.neoforged.neoforge.fluids.SimpleFluidContent.CODEC).networkSynchronized(net.neoforged.neoforge.fluids.SimpleFluidContent.STREAM_CODEC));
 
+    /** A minion being built on a carcass body: what it has so far. */
+    public static final DeferredHolder<DataComponentType<?>, DataComponentType<com.avicagan.bloodandbones.minion.MinionFrame.Frame>> FRAME = COMPONENTS.registerComponentType("minion_frame",
+            builder -> builder.persistent(com.avicagan.bloodandbones.minion.MinionFrame.Frame.CODEC)
+                    .networkSynchronized(ByteBufCodecs.fromCodecWithRegistries(com.avicagan.bloodandbones.minion.MinionFrame.Frame.CODEC)));
+
     private BBDataComponents() {
     }
 }

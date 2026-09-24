@@ -1052,3 +1052,31 @@ later. The head and torso cannot be taken.
   in creative; night vision now lasts about ten seconds past a stopped Optic Eye.
 - Known: in third person a held item and armour are still drawn on a missing limb.
 
+### 14.6 Slice 11e as built: minions (verified)
+
+- The frame (`minion/MinionFrame`): a carcass body piece on the Surgery Table. Its `minion_frame`
+  component holds a `Body` (arms, legs and eyes missing to start; organs missing as far as its
+  `organs_taken`) and whose head it has. A carcass head fits once (bringing its eyes, less those taken);
+  a severed part or an implant fits the first missing part of its kind (eyes only with a head). An empty
+  hand reads out the status; a soul blood bucket wakes it when it has a head and a heart (the bucket comes
+  back empty; `summoned_entity` is triggered for the advancement).
+- `MinionJob.of(body, wearer)`, recomputed every second: a working Hook Hand, Hydraulic Arm or Vent Arm
+  on either arm makes a FIGHTER; both arms working and an eye, a FARMER; both arms and no eye, a COURIER;
+  otherwise a COMPANION. *Default* choices, all easy to change.
+- `MinionEntity` (a `PathfinderMob`, persistent): maker, home (the table), head, a 9-slot inventory. Goals:
+  melee, or the Vent from range with a Vent Arm; follow the maker (fighter, companion); reap ripe
+  `CropBlock`s within 8 of home, taking the drops and replanting from them (farmer); pick up items within
+  10 of home and put them in the nearest item-handler block within 6 (courier, farmer); drift home. It
+  targets monsters (`Enemy`) only as a fighter. The body attachment makes its legs, arms and organs work
+  as for any mob (§14.4). Goals that wait between searches use a random chance, not `tickCount % n`:
+  goal starts are checked on alternate ticks offset by the entity id, so a fixed modulus could never
+  line up (the courier and farmer tests caught it).
+- Drawing: `MinionRenderer` is a `HumanoidMobRenderer` on the player model with a stitched flesh texture,
+  hiding missing limbs every frame; the implant and backtank layers are now generic over humanoid models,
+  so minions show their implants, eyes and tank like players.
+- `MinionTests`: building (a head, two arms, a leg and a Peg Leg; no third arm) and waking a farmer;
+  jobs from parts; a Hook Hand fighter hurting a zombie; a courier storing dropped bones; a farmer reaping,
+  replanting and storing wheat; a minion saved and loaded.
+- Not yet: the minion's head drawn as the carcass's; more jobs (miner, builder, fluid carrier with a
+  Port Arm); machines working on living patients.
+

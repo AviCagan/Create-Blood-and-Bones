@@ -99,7 +99,8 @@ public class BBLang {
                 "When R-Clicked with an Empty Hand", "You _lie down_ on it and choose which part to operate on. _Sneak_ to get up.",
                 "When Sneak-R-Clicked with an Empty Hand", "Takes back what lies on the table.",
                 "With Someone Else on It", "R-Click with an _empty hand_ to operate on them: another player, or a _mob_ you led onto it on a lead. What comes out is yours.",
-                "With a Carcass Piece on It", "R-Click with a _Cleaver_ to take its _organs_ out, one a cut: a body's heart, lungs and stomach, a head's eyes.");
+                "With a Carcass Piece on It", "R-Click with a _Cleaver_ to take its _organs_ out, one a cut: a body's heart, lungs and stomach, a head's eyes.",
+                "Building a Minion", "A carcass _body_ on the table is a minion in the making. R-Click with a carcass _head_, severed limbs, organs or implants to add them; with a bucket of _soul blood_ to wake it once it has a head and a heart.");
         item("peg_leg",
                 "A wooden leg for a leg that is _gone_. Needs nothing to run.",
                 "When Fitted", "You walk almost as well as on flesh (_90%_).");
@@ -166,6 +167,16 @@ public class BBLang {
         BloodAndBones.REGISTRATE.addRawLang("bloodandbones.body.stomach", "Stomach");
         BloodAndBones.REGISTRATE.addRawLang("bloodandbones.surgery.action.replace", "Swap in what is on the table");
         BloodAndBones.REGISTRATE.addRawLang("bloodandbones.surgery.state.dead", "%s (dry)");
+        BloodAndBones.REGISTRATE.addRawLang("bloodandbones.minion.job.fighter", "Fighter");
+        BloodAndBones.REGISTRATE.addRawLang("bloodandbones.minion.job.farmer", "Farmer");
+        BloodAndBones.REGISTRATE.addRawLang("bloodandbones.minion.job.courier", "Courier");
+        BloodAndBones.REGISTRATE.addRawLang("bloodandbones.minion.job.companion", "Companion");
+        BloodAndBones.REGISTRATE.addRawLang("bloodandbones.minion.frame", "A minion in the making, a %s so far.");
+        BloodAndBones.REGISTRATE.addRawLang("bloodandbones.minion.needs", "Needs %s.");
+        BloodAndBones.REGISTRATE.addRawLang("bloodandbones.minion.needs.head", "a head");
+        BloodAndBones.REGISTRATE.addRawLang("bloodandbones.minion.needs.heart", "a heart");
+        BloodAndBones.REGISTRATE.addRawLang("bloodandbones.minion.ready", "Ready: wake it with a bucket of soul blood.");
+        BloodAndBones.REGISTRATE.addRawLang("bloodandbones.minion.status", "Minion: %s");
         BloodAndBones.REGISTRATE.addRawLang("bloodandbones.body.left_arm", "Left arm");
         BloodAndBones.REGISTRATE.addRawLang("bloodandbones.body.right_arm", "Right arm");
         BloodAndBones.REGISTRATE.addRawLang("bloodandbones.body.left_leg", "Left leg");
@@ -269,6 +280,7 @@ public class BBLang {
         advancement("organic", "Grown, Not Made", "Make an organic prosthetic");
         advancement("cybernetic", "More Machine Than Man", "Make a cybernetic");
         advancement("heart", "Heartless", "Hold your own heart");
+        advancement("minion", "It's Alive!", "Wake a minion with soul blood");
         advancement("soul_netherite", "Thirty-Two Buckets", "Make a Soul Netherite Fluid Backtank");
 
         // ---- Ponder scenes (text_N in the order each scene shows its text)
@@ -324,6 +336,9 @@ public class BBLang {
         jei("backtank",
                 "The Fluid Backtank holds any fluid, worn in the chest slot with the armour of its tier: copper 2 buckets, gold 3, iron 4, diamond 6, blood steel 8, blood diamond 16, soul netherite 32.",
                 "Right-click a block to set it down; pipes fill or empty it from any side, and it keeps its fluid when broken. A Spout fills it and an Item Drain empties it in the hand. The soul netherite tank is a smithing upgrade of the blood diamond one.");
+        jei("minions",
+                "Lay a carcass body on the Surgery Table (it keeps whatever organs were not taken out of it) and build a minion on it: a carcass head, then severed limbs, organs and implants where parts are missing, one a click. Wake it with a bucket of soul blood once it has a head and a heart.",
+                "Its parts decide its job. A weapon arm (Hook Hand, Hydraulic Arm, Vent Arm) makes a fighter that follows you and fights monsters. Two working arms and an eye make a farmer that reaps and replants ripe crops by where it was made; two arms and no eye, a courier that carries dropped things to a chest there; anything less, a companion. Give it a backtank to run powered implants; change it on the table.");
         jei("soul_blood",
                 "Soul Blood is blood with a soul in it. Mix blood, soul sand and a little liquid experience over a superheated Blaze Burner, or ferment blood with nether wart and soul soil under a Basin Lid.");
     }

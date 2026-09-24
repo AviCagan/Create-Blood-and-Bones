@@ -46,8 +46,23 @@ public class SurgeryTableBlock extends Block implements IBE<SurgeryTableBlockEnt
     @Override
     protected ItemInteractionResult useItemOn(ItemStack stack, BlockState state, Level level, BlockPos pos, Player player,
                                               InteractionHand hand, BlockHitResult hit) {
-        if (stack.isEmpty() || !Surgery.accepts(stack) || !(level.getBlockEntity(pos) instanceof SurgeryTableBlockEntity table)) {
+        if (stack.isEmpty() || !(level.getBlockEntity(pos) instanceof SurgeryTableBlockEntity table)
+                || (!Surgery.accepts(stack) && !(com.avicagan.bloodandbones.minion.MinionFrame.isBody(table.item(), level)
+                && stack.is(com.avicagan.bloodandbones.registry.BBFluids.SOUL_BLOOD.getBucket().get())))) {
             return ItemInteractionResult.PASS_TO_DEFAULT_BLOCK_INTERACTION;
+        }
+        // a carcass body on the table is a minion being built: parts go on it, soul blood wakes it
+        if (!table.item().isEmpty() && com.avicagan.bloodandbones.minion.MinionFrame.isBody(table.item(), level) && !Surgery.isBlade(stack)) {
+            if (stack.is(com.avicagan.bloodandbones.registry.BBFluids.SOUL_BLOOD.getBucket().get())) {
+                if (!level.isClientSide) {
+                    com.avicagan.bloodandbones.minion.MinionFrame.wake((ServerLevel) level, player, table, stack);
+                }
+                return ItemInteractionResult.sidedSuccess(level.isClientSide);
+            }
+            if (!level.isClientSide && com.avicagan.bloodandbones.minion.MinionFrame.fit((ServerLevel) level, player, table, stack)) {
+                player.displayClientMessage(com.avicagan.bloodandbones.minion.MinionFrame.status(com.avicagan.bloodandbones.minion.MinionFrame.frame(table.item())), true);
+            }
+            return ItemInteractionResult.sidedSuccess(level.isClientSide);
         }
         if (Surgery.isBlade(stack) && table.item().is(com.avicagan.bloodandbones.registry.BBItems.CARCASS_PIECE.get())) {
             if (!level.isClientSide) {
@@ -82,6 +97,11 @@ public class SurgeryTableBlock extends Block implements IBE<SurgeryTableBlockEnt
             return InteractionResult.SUCCESS;
         }
         ServerLevel server = (ServerLevel) level;
+        if (com.avicagan.bloodandbones.minion.MinionFrame.isBody(table.item(), level)) {
+            // a minion being built: say what it has and what it still needs
+            player.displayClientMessage(com.avicagan.bloodandbones.minion.MinionFrame.status(com.avicagan.bloodandbones.minion.MinionFrame.frame(table.item())), true);
+            return InteractionResult.CONSUME;
+        }
         net.minecraft.world.entity.LivingEntity patient = Surgery.patientAt(level, pos);
         if (patient != null && patient != player) {
             // someone else on the table: work on them

@@ -63,6 +63,12 @@ provided by [Sable](https://github.com/ryanhcode/sable).
   plugs the tank into pipes at a Backtank Port. Everyone sees what you are missing and what is fitted.
   The table takes other patients too: another player, a mob led onto it on a lead, or a carcass piece
   whose organs a Cleaver (or a Deployer holding one) takes out one a cut.
+- **Minions.** Lay a carcass body on the Surgery Table and build on it: a carcass head, limbs, organs
+  and implants. A bucket of soul blood wakes it once it has a head and a heart. Its parts decide its
+  job: a weapon arm makes a fighter that follows you and fights monsters; two arms and an eye, a farmer
+  that reaps and replants crops where it was made; two arms and no eye, a courier that carries dropped
+  things to a chest there; anything less, a companion. It can wear a backtank for powered implants, and
+  can go back on the table to be changed.
 - **The Fluid Backtank.** A tank for any fluid, worn in the chest slot with the armour of its tier:
   copper 2 buckets, gold 3, iron 4, diamond 6, blood steel 8, blood diamond 16, and soul netherite 32
   (a smithing upgrade with a Soul Netherite Ingot: a netherite ingot filled with soul blood and pressed
@@ -88,8 +94,8 @@ incremental. `./gradlew runClient` / `runServer` / `runData` are configured by M
 
 ### Development aids
 
-- `./gradlew runGameTestServer` runs the game tests headless (195: every rigged mob and baby,
-  butchery, rot, bleeding, machines and their filters, cooking and display, surgery, implants, backtanks, chains, recipes,
+- `./gradlew runGameTestServer` runs the game tests headless (201: every rigged mob and baby,
+  butchery, rot, bleeding, machines and their filters, cooking and display, surgery, implants, backtanks, minions, chains, recipes,
   advancements and sounds).
 - `./gradlew runData -Dbloodandbones.dump_layers=minecraft:goat#main,...` writes those vanilla
   models' part trees to `run/build/layer-dump.txt`, for writing new rig targets in

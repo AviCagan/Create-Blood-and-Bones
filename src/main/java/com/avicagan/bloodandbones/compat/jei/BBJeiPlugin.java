@@ -114,6 +114,8 @@ public class BBJeiPlugin implements IModPlugin {
                         .map(e -> new net.minecraft.world.item.ItemStack(e.get())).toList(),
                 mezz.jei.api.constants.VanillaTypes.ITEM_STACK,
                 Component.translatable("bloodandbones.jei.implants.1"), Component.translatable("bloodandbones.jei.implants.2"));
+        registration.addIngredientInfo(new net.minecraft.world.item.ItemStack(BBBlocks.SURGERY_TABLE.get()), mezz.jei.api.constants.VanillaTypes.ITEM_STACK,
+                Component.translatable("bloodandbones.jei.minions.1"), Component.translatable("bloodandbones.jei.minions.2"));
         registration.addIngredientInfo(BBItems.BACKTANKS.values().stream().map(e -> new net.minecraft.world.item.ItemStack(e.get())).toList(),
                 mezz.jei.api.constants.VanillaTypes.ITEM_STACK,
                 Component.translatable("bloodandbones.jei.backtank.1"), Component.translatable("bloodandbones.jei.backtank.2"));

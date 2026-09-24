@@ -48,7 +48,7 @@ public final class Vent {
     public static final int XP_MB = 20;
     /** Game ticks between shots. */
     private static final int GAP = 3;
-    private static final Map<Player, Long> LAST = new WeakHashMap<>();
+    private static final Map<LivingEntity, Long> LAST = new WeakHashMap<>();
 
     public enum Effect implements StringRepresentable {
         FIRE, SPLASH, EXPERIENCE, CLEANSE, SPILL;
@@ -77,7 +77,7 @@ public final class Vent {
     }
 
     /** Whether the main arm is a working Vent Arm with nothing in the hand. */
-    public static boolean ready(Player player) {
+    public static boolean ready(LivingEntity player) {
         Body body = BodyEffects.body(player);
         BodyPart arm = BodyEffects.armFor(player, InteractionHand.MAIN_HAND);
         return !player.isSpectator() && player.isAlive() && player.getMainHandItem().isEmpty() && body.works(arm, player) && body.state(arm) == Body.State.IMPLANT
@@ -90,7 +90,7 @@ public final class Vent {
      * @return what it did, or null for nothing (no Vent Arm, nothing in the tank, too soon)
      */
     @Nullable
-    public static Effect spray(Player player) {
+    public static Effect spray(LivingEntity player) {
         if (!(player.level() instanceof ServerLevel level) || !ready(player)) {
             return null;
         }
@@ -126,7 +126,8 @@ public final class Vent {
                 hit.forEach(LivingEntity::clearFire);
                 for (double d = 1.0; d <= RANGE; d += 0.5) {
                     BlockPos at = BlockPos.containing(eye.add(look.scale(d)));
-                    if (level.getBlockState(at).getBlock() instanceof BaseFireBlock && level.mayInteract(player, at)) {
+                    if (level.getBlockState(at).getBlock() instanceof BaseFireBlock && (player instanceof Player p ? level.mayInteract(p, at)
+                            : level.getGameRules().getBoolean(net.minecraft.world.level.GameRules.RULE_MOBGRIEFING))) {
                         level.removeBlock(at, false);
                     }
                 }

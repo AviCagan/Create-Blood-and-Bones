@@ -23,6 +23,15 @@ public class BBEntities {
             .lang("Surgery Table")
             .register();
 
+    /** A body stitched together on the Surgery Table and woken with soul blood. */
+    public static final EntityEntry<com.avicagan.bloodandbones.minion.MinionEntity> MINION = BloodAndBones.REGISTRATE
+            .<com.avicagan.bloodandbones.minion.MinionEntity>entity("minion", com.avicagan.bloodandbones.minion.MinionEntity::new, MobCategory.MISC)
+            .properties(b -> b.sized(0.6f, 1.8f).clientTrackingRange(10))
+            .attributes(com.avicagan.bloodandbones.minion.MinionEntity::createAttributes)
+            .renderer(() -> com.avicagan.bloodandbones.client.MinionRenderer::new)
+            .lang("Minion")
+            .register();
+
     public static void register() {
     }
 }

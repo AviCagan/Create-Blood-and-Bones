@@ -18,13 +18,13 @@ import net.minecraft.world.level.block.HorizontalDirectionalBlock;
 import net.minecraft.world.level.block.state.BlockState;
 
 /** A worn Fluid Backtank drawn on the wearer's back as its block, as Create draws its own backtank. */
-public class FluidBacktankLayer extends RenderLayer<AbstractClientPlayer, PlayerModel<AbstractClientPlayer>> {
-    public FluidBacktankLayer(RenderLayerParent<AbstractClientPlayer, PlayerModel<AbstractClientPlayer>> parent) {
+public class FluidBacktankLayer<T extends net.minecraft.world.entity.LivingEntity, M extends net.minecraft.client.model.HumanoidModel<T>> extends RenderLayer<T, M> {
+    public FluidBacktankLayer(RenderLayerParent<T, M> parent) {
         super(parent);
     }
 
     @Override
-    public void render(PoseStack ms, MultiBufferSource buffers, int light, AbstractClientPlayer player,
+    public void render(PoseStack ms, MultiBufferSource buffers, int light, T player,
                        float limbSwing, float limbSwingAmount, float partialTick, float ageInTicks, float netHeadYaw, float headPitch) {
         ItemStack worn = FluidBacktankItem.wornBy(player);
         if (worn.isEmpty() || player.getPose() == Pose.SLEEPING || player.isInvisible()) {

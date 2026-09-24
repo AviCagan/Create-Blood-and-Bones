@@ -1,0 +1,39 @@
+{
+  "parent": "bloodandbones:surgery_table",
+  "display": {
+    "icon": {
+      "id": "bloodandbones:heart"
+    },
+    "title": {
+      "translate": "advancements.bloodandbones.minion.title"
+    },
+    "description": {
+      "translate": "advancements.bloodandbones.minion.description"
+    },
+    "frame": "goal",
+    "show_toast": true,
+    "announce_to_chat": true,
+    "hidden": false
+  },
+  "criteria": {
+    "woke": {
+      "trigger": "minecraft:summoned_entity",
+      "conditions": {
+        "entity": [
+          {
+            "condition": "minecraft:entity_properties",
+            "entity": "this",
+            "predicate": {
+              "type": "bloodandbones:minion"
+            }
+          }
+        ]
+      }
+    }
+  },
+  "requirements": [
+    [
+      "woke"
+    ]
+  ]
+}
