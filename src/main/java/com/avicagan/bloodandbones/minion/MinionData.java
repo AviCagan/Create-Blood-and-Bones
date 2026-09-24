@@ -53,6 +53,12 @@ public final class MinionData {
                 .filter(o -> o.has(inner)).map(o -> o.get(inner).getAsString()).orElse(fallback);
     }
 
+    /** A true/false inside a part's minion object ("movement": {"rideable": true}); false if absent. */
+    public static boolean flag(ResolvedMob mob, String key, String field, String inner) {
+        return field(mob, key, field).filter(JsonElement::isJsonObject).map(JsonElement::getAsJsonObject)
+                .filter(o -> o.has(inner)).map(o -> o.get(inner).getAsBoolean()).orElse(false);
+    }
+
     public static float scalar(ResolvedMob mob, String key, String field, float fallback) {
         return field(mob, key, field).filter(JsonElement::isJsonPrimitive).map(JsonElement::getAsFloat).orElse(fallback);
     }

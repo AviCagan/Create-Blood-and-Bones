@@ -145,7 +145,7 @@ public final class MinionBody {
     }
 
     /** The eight corners of a bone's box, placed. */
-    static Vector3f[] corners(Matrix4f pose, Bone bone) {
+    public static Vector3f[] corners(Matrix4f pose, Bone bone) {
         Vector3f lo = bone.boxMin();
         Vector3f hi = bone.boxMax();
         Vector3f[] out = new Vector3f[8];

@@ -92,6 +92,29 @@ public final class StitchedBody {
         ms.popPose();
     }
 
+    /**
+     * The middle of the top of its torso, where a saddle sits: in block units in the entity's own frame (before its
+     * turn), matching how {@link #draw} places the body standing.
+     */
+    public static Vector3f saddlePoint(MinionBody.Layout layout) {
+        for (MinionBody.Placement placement : layout.pieces()) {
+            if (placement.socket() == null) {
+                Vector3f min = new Vector3f(Float.MAX_VALUE);
+                Vector3f max = new Vector3f(-Float.MAX_VALUE);
+                for (Vector3f c : MinionBody.corners(placement.pose(), placement.bone())) {
+                    min.min(c);
+                    max.max(c);
+                }
+                float centreX = (layout.min().x + layout.max().x) / 2.0F;
+                float centreZ = (layout.min().z + layout.max().z) / 2.0F;
+                // model space is drawn flipped in x and y: back to the entity's frame
+                return new Vector3f(-((min.x + max.x) / 2.0F - centreX) / 16.0F, (MinionBody.GROUND - (min.y + layout.lift())) / 16.0F,
+                        ((min.z + max.z) / 2.0F - centreZ) / 16.0F);
+            }
+        }
+        return new Vector3f(0.0F, layout.height(), 0.0F);
+    }
+
     /** Where the torso's middle is, front to back: legs in front of it are front legs. */
     private static float torsoCentreZ(MinionBody.Layout layout) {
         for (MinionBody.Placement placement : layout.pieces()) {

@@ -48,11 +48,14 @@ import java.util.UUID;
  * when it moves, works or fights; low, it walks to a Blood Trough to drink; empty, it powers down where it is and
  * lies on its side, alive, until it gets blood again. Neglect never destroys it.
  */
-public class MinionEntity extends PathfinderMob {
+public class MinionEntity extends PathfinderMob implements net.minecraft.world.entity.Saddleable {
     private static final EntityDataAccessor<Optional<MinionBuild>> BUILD = SynchedEntityData.defineId(MinionEntity.class, MinionSerializers.BUILD.get());
     private static final EntityDataAccessor<String> JOB = SynchedEntityData.defineId(MinionEntity.class, EntityDataSerializers.STRING);
     private static final EntityDataAccessor<Boolean> DOWN = SynchedEntityData.defineId(MinionEntity.class, EntityDataSerializers.BOOLEAN);
     private static final EntityDataAccessor<Float> POWER = SynchedEntityData.defineId(MinionEntity.class, EntityDataSerializers.FLOAT);
+    private static final EntityDataAccessor<Boolean> SADDLED = SynchedEntityData.defineId(MinionEntity.class, EntityDataSerializers.BOOLEAN);
+    /** Up against a wall on climbing legs: synced, as the spider's is, so clients predict the climb. */
+    private static final EntityDataAccessor<Boolean> CLIMBING = SynchedEntityData.defineId(MinionEntity.class, EntityDataSerializers.BOOLEAN);
     /** How far from home it works. */
     public static final double RANGE = 10.0;
     /** mB of blood a minute: idle, moving, working, fighting (docs/PARTS-AND-TRAITS.md section 6.7). */
@@ -76,6 +79,10 @@ public class MinionEntity extends PathfinderMob {
     private boolean legacy;
     /** Set by job goals while they are doing something, for the drain. */
     boolean working;
+    /** Which way of getting about its navigation is set up for: ground, climb, swim or fly. */
+    private String movedBy = "";
+    /** Which arm strikes next: they take turns. */
+    private int nextStrike;
     /** Crouch-held clicks by the maker on it powered down, toward folding it up. */
     private int foldClicks;
     private long lastFoldClick;
@@ -89,7 +96,8 @@ public class MinionEntity extends PathfinderMob {
         // the follow range also sizes its path finding: as far as the trough search reaches by default, so a trough
         // round a wall or two is still found
         return PathfinderMob.createMobAttributes().add(Attributes.MAX_HEALTH, 10.0).add(Attributes.MOVEMENT_SPEED, 0.2)
-                .add(Attributes.ATTACK_DAMAGE, 1.0).add(Attributes.FOLLOW_RANGE, 48.0).add(Attributes.KNOCKBACK_RESISTANCE, 0.0);
+                .add(Attributes.ATTACK_DAMAGE, 1.0).add(Attributes.FOLLOW_RANGE, 48.0).add(Attributes.KNOCKBACK_RESISTANCE, 0.0)
+                .add(Attributes.FLYING_SPEED, 0.4);
     }
 
     @Override
@@ -99,6 +107,8 @@ public class MinionEntity extends PathfinderMob {
         builder.define(JOB, MinionStats.COMPANION.toString());
         builder.define(DOWN, false);
         builder.define(POWER, 0.0F);
+        builder.define(SADDLED, false);
+        builder.define(CLIMBING, false);
     }
 
     /** Just woken: its maker, where it was made, what it is built of, and the blood it was woken with. */
@@ -126,7 +136,7 @@ public class MinionEntity extends PathfinderMob {
         PartsData.Store store = PartsData.of(level());
         if (stats == null || statsGeneration != store.generation()) {
             MinionBuild build = build().orElse(null);
-            stats = build == null ? new MinionStats(10, 0, 3, 250, "crawl", 0.12F, 1, 0, List.of(), List.of(MinionStats.COMPANION), true, 0.6F, 0.6F, 0.6F, 0.6F)
+            stats = build == null ? new MinionStats(10, 0, 3, 250, "crawl", 0.12F, 1, 0, List.of(), List.of(MinionStats.COMPANION), true, false, false, false, 0.6F, 0.6F, 0.6F, 0.6F)
                     : MinionStats.of(store, build);
             statsGeneration = store.generation();
             refreshDimensions();
@@ -140,12 +150,183 @@ public class MinionEntity extends PathfinderMob {
         base(Attributes.MAX_HEALTH, s.health());
         base(Attributes.MOVEMENT_SPEED, s.speed());
         base(Attributes.KNOCKBACK_RESISTANCE, s.knockbackResistance());
-        float arm = s.arms().stream().max(Float::compare).orElse(0.0F);
+        base(Attributes.FLYING_SPEED, Math.max(0.1, s.speed() * 2.0));
+        float arm = (float) s.strikes().stream().mapToDouble(MinionStats.Strike::damage).max().orElse(0.0);
         base(Attributes.ATTACK_DAMAGE, Math.max(arm, s.biteDamage()));
         if (getHealth() > getMaxHealth()) {
             setHealth(getMaxHealth());
         }
+        if (!level().isClientSide) {
+            moveBy(s);
+            if (isSaddled() && !s.rideable()) {
+                // its horse legs came off: the saddle comes off with them
+                entityData.set(SADDLED, false);
+                ejectPassengers();
+                spawnAtLocation(Items.SADDLE);
+            }
+        }
         refreshDimensions();
+    }
+
+    /**
+     * Set its navigation to the way it gets about (docs/PARTS-AND-TRAITS.md section 5.4, movement): climbing legs
+     * path up walls as a spider does, a flying torso flies, a swimmer takes to water; the rest walk. Changed only
+     * when the build does.
+     */
+    private void moveBy(MinionStats s) {
+        String kind = s.flies() ? "fly" : s.climbs() ? "climb" : "swim".equals(s.mode()) || "amphibious".equals(s.mode()) ? "swim" : "ground";
+        boolean floats = "fly".equals(kind) && !poweredDown();
+        if (isNoGravity() != floats) {
+            setNoGravity(floats);
+        }
+        if (kind.equals(movedBy)) {
+            return;
+        }
+        movedBy = kind;
+        navigation.stop();
+        switch (kind) {
+            case "fly" -> {
+                var flying = new net.minecraft.world.entity.ai.navigation.FlyingPathNavigation(this, level());
+                flying.setCanOpenDoors(false);
+                flying.setCanFloat(true);
+                navigation = flying;
+                moveControl = new net.minecraft.world.entity.ai.control.FlyingMoveControl(this, 20, true);
+            }
+            case "climb" -> {
+                navigation = new net.minecraft.world.entity.ai.navigation.WallClimberNavigation(this, level());
+                moveControl = new net.minecraft.world.entity.ai.control.MoveControl(this);
+            }
+            case "swim" -> {
+                navigation = new net.minecraft.world.entity.ai.navigation.AmphibiousPathNavigation(this, level());
+                moveControl = new net.minecraft.world.entity.ai.control.MoveControl(this);
+            }
+            default -> {
+                navigation = new net.minecraft.world.entity.ai.navigation.GroundPathNavigation(this, level());
+                moveControl = new net.minecraft.world.entity.ai.control.MoveControl(this);
+            }
+        }
+    }
+
+    /** Climbing legs cling to the wall it is up against, as a spider's do. */
+    @Override
+    public boolean onClimbable() {
+        return entityData.get(CLIMBING) || super.onClimbable();
+    }
+
+    /** A flier does not take fall damage from its own landings; a climber none from the walls it climbs. */
+    @Override
+    public boolean causeFallDamage(float distance, float multiplier, DamageSource source) {
+        return !stats().flies() && super.causeFallDamage(distance, multiplier, source);
+    }
+
+    // ---- riding (horse legs, a saddle, a torso heavy enough)
+
+    @Override
+    public boolean isSaddleable() {
+        return isAlive() && !poweredDown() && stats().rideable();
+    }
+
+    @Override
+    public void equipSaddle(ItemStack stack, @Nullable SoundSource source) {
+        entityData.set(SADDLED, true);
+        if (source != null) {
+            level().playSound(null, this, SoundEvents.HORSE_SADDLE, source, 0.5F, 1.0F);
+        }
+    }
+
+    @Override
+    public boolean isSaddled() {
+        return entityData.get(SADDLED);
+    }
+
+    /** Saddled, whoever rides it steers it. */
+    @Nullable
+    @Override
+    public net.minecraft.world.entity.LivingEntity getControllingPassenger() {
+        return isSaddled() && !poweredDown() && getFirstPassenger() instanceof Player player ? player : super.getControllingPassenger();
+    }
+
+    @Override
+    protected void tickRidden(Player player, net.minecraft.world.phys.Vec3 travel) {
+        super.tickRidden(player, travel);
+        setRot(player.getYRot(), player.getXRot() * 0.5F);
+        yRotO = yBodyRot = yHeadRot = getYRot();
+    }
+
+    /** As a horse: forward and back (back slowly), and half-speed sideways. */
+    @Override
+    protected net.minecraft.world.phys.Vec3 getRiddenInput(Player player, net.minecraft.world.phys.Vec3 travel) {
+        float forward = player.zza <= 0.0F ? player.zza * 0.25F : player.zza;
+        return new net.minecraft.world.phys.Vec3(player.xxa * 0.5F, 0.0, forward);
+    }
+
+    @Override
+    protected float getRiddenSpeed(Player player) {
+        return (float) getAttributeValue(Attributes.MOVEMENT_SPEED);
+    }
+
+    // ---- strikes (its arms take turns; with none, it bites)
+
+    /**
+     * One blow at its target, in the style of the arm whose turn it is (docs/PARTS-AND-TRAITS.md section 5.6): a
+     * punch, a kick that throws them back, a fling that throws them up, a grab that holds them, a sting that
+     * poisons, a slam that hits everything round them, a claw or hook that tears. With no arm, the head bites.
+     */
+    @Override
+    public boolean doHurtTarget(net.minecraft.world.entity.Entity target) {
+        MinionStats s = stats();
+        List<MinionStats.Strike> strikes = s.strikes().stream().filter(k -> !"pacifist".equals(k.style())).toList();
+        MinionStats.Strike strike = strikes.isEmpty() ? new MinionStats.Strike("bite", s.biteDamage()) : strikes.get(Math.floorMod(nextStrike++, strikes.size()));
+        swing(InteractionHand.MAIN_HAND);
+        if ("flap".equals(strike.style())) {
+            knock(target, 0.8F);
+            return true;
+        }
+        DamageSource source = damageSources().mobAttack(this);
+        if (!target.hurt(source, Math.max(0.5F, strike.damage()))) {
+            return false;
+        }
+        setLastHurtMob(target);
+        net.minecraft.world.entity.LivingEntity living = target instanceof net.minecraft.world.entity.LivingEntity l ? l : null;
+        switch (strike.style()) {
+            case "kick" -> knock(target, 1.4F);
+            case "ram" -> knock(target, 1.1F);
+            case "fling" -> {
+                target.push(0.0, 0.9, 0.0);
+                target.hurtMarked = true;
+            }
+            case "grab" -> {
+                if (living != null) {
+                    living.addEffect(new net.minecraft.world.effect.MobEffectInstance(net.minecraft.world.effect.MobEffects.MOVEMENT_SLOWDOWN, 60, 1), this);
+                }
+            }
+            case "sting" -> {
+                if (living != null) {
+                    living.addEffect(new net.minecraft.world.effect.MobEffectInstance(net.minecraft.world.effect.MobEffects.POISON, 100, 0), this);
+                }
+            }
+            case "slam" -> {
+                for (net.minecraft.world.entity.LivingEntity near : level().getEntitiesOfClass(net.minecraft.world.entity.LivingEntity.class,
+                        target.getBoundingBox().inflate(2.0), e -> e != this && e != target && e != maker() && !(e instanceof MinionEntity))) {
+                    near.hurt(source, strike.damage() * 0.5F);
+                }
+            }
+            case "claw", "hook" -> com.avicagan.bloodandbones.carcass.Blood.burst((ServerLevel) level(),
+                    new org.joml.Vector3d(target.getX(), target.getY(0.6), target.getZ()), 6, false);
+            case "pounce" -> {
+                net.minecraft.world.phys.Vec3 at = target.position().subtract(position()).normalize();
+                setDeltaMovement(at.x * 0.4, 0.3, at.z * 0.4);
+            }
+            default -> knock(target, s.biteKnockback());
+        }
+        return true;
+    }
+
+    private void knock(net.minecraft.world.entity.Entity target, float strength) {
+        if (strength > 0.0F && target instanceof net.minecraft.world.entity.LivingEntity living) {
+            living.knockback(strength, Math.sin(getYRot() * Math.PI / 180.0), -Math.cos(getYRot() * Math.PI / 180.0));
+            target.hurtMarked = true;
+        }
     }
 
     private void base(net.minecraft.core.Holder<net.minecraft.world.entity.ai.attributes.Attribute> attribute, double value) {
@@ -280,11 +461,13 @@ public class MinionEntity extends PathfinderMob {
         return in;
     }
 
-    /** Out of blood: it stops where it is and lies down. */
+    /** Out of blood: it stops where it is and lies down (a flier drops), throwing off anyone riding it. */
     public void powerDown() {
         entityData.set(POWER, 0.0F);
         if (!poweredDown()) {
             entityData.set(DOWN, true);
+            ejectPassengers();
+            setNoGravity(false);
             getNavigation().stop();
             setTarget(null);
             refreshDimensions();
@@ -328,9 +511,10 @@ public class MinionEntity extends PathfinderMob {
             discard();
             return;
         }
-        if (tickCount % 20 == 0) {
+        if (tickCount % 20 == 0 || movedBy.isEmpty()) {
             applyStats();
         }
+        entityData.set(CLIMBING, stats().climbs() && horizontalCollision && !poweredDown());
         if (poweredDown()) {
             // down: a trough right beside it tops it up (so a guard fallen by its trough gets up again)
             if (tickCount % 20 == 0) {
@@ -407,6 +591,9 @@ public class MinionEntity extends PathfinderMob {
         for (int i = 0; i < inventory.getContainerSize(); i++) {
             spawnAtLocation(inventory.removeItemNoUpdate(i));
         }
+        if (isSaddled()) {
+            spawnAtLocation(Items.SADDLE);
+        }
         if (BBServerConfig.minionDeath() == BBServerConfig.MinionDeath.SCATTER && build().isPresent()) {
             // it falls apart into what it was built of, half gone off
             MinionBuild build = build().get();
@@ -435,6 +622,13 @@ public class MinionEntity extends PathfinderMob {
         }
         if (!held.isEmpty()) {
             return super.mobInteract(player, hand);
+        }
+        if (isSaddled() && !isVehicle() && !poweredDown() && isMaker(player) && !player.isSecondaryUseActive()) {
+            // saddled: its maker climbs on
+            if (!level().isClientSide) {
+                player.startRiding(this);
+            }
+            return InteractionResult.sidedSuccess(level().isClientSide);
         }
         if (level().isClientSide) {
             return InteractionResult.SUCCESS;
@@ -478,6 +672,7 @@ public class MinionEntity extends PathfinderMob {
         tag.putString("Job", entityData.get(JOB));
         tag.putFloat("Power", power());
         tag.putBoolean("Down", poweredDown());
+        tag.putBoolean("Saddled", isSaddled());
         tag.put("Inventory", inventory.createTag(registryAccess()));
     }
 
@@ -495,6 +690,7 @@ public class MinionEntity extends PathfinderMob {
         entityData.set(JOB, tag.getString("Job"));
         entityData.set(POWER, tag.getFloat("Power"));
         entityData.set(DOWN, tag.getBoolean("Down"));
+        entityData.set(SADDLED, tag.getBoolean("Saddled"));
         stats = null;
     }
 

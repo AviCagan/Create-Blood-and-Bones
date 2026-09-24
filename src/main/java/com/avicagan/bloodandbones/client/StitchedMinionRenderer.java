@@ -46,6 +46,18 @@ public class StitchedMinionRenderer extends EntityRenderer<MinionEntity> {
         ms.translate(0.0F, -1.501F, 0.0F);
         StitchedBody.draw(layout, motion, lying, tint, ms, buffers, light);
         ms.popPose();
+        if (minion.isSaddled() && !lying) {
+            // a plain saddle thrown over its back
+            org.joml.Vector3f at = StitchedBody.saddlePoint(layout);
+            ms.pushPose();
+            ms.mulPose(Axis.YP.rotationDegrees(180.0F - bodyYaw));
+            ms.translate(at.x, at.y + 0.02F, at.z);
+            ms.mulPose(Axis.XP.rotationDegrees(90.0F));
+            ms.scale(0.75F, 0.75F, 0.75F);
+            net.minecraft.client.Minecraft.getInstance().getItemRenderer().renderStatic(new net.minecraft.world.item.ItemStack(net.minecraft.world.item.Items.SADDLE),
+                    net.minecraft.world.item.ItemDisplayContext.FIXED, light, net.minecraft.client.renderer.texture.OverlayTexture.NO_OVERLAY, ms, buffers, minion.level(), 0);
+            ms.popPose();
+        }
         super.render(minion, yaw, partialTicks, ms, buffers, light);
     }
 

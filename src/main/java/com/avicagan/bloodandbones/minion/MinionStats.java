@@ -23,11 +23,25 @@ import java.util.Optional;
  * @param slots     inventory slots, from the torso's size
  * @param reservoir mB of blood it holds when full (organic)
  * @param jobs      what its head lets it do, first the one it starts with; a body with no head only keeps company
+ * @param strikes   one per arm, in the order fitted: they take turns (a zombie arm and a bear's: a punch, then a maul)
+ * @param climbs    at least half its legs climb (spider legs)
+ * @param rideable  a saddle can go on: at least two rideable legs under a torso heavy enough to carry someone
+ * @param flies     its torso flies, hovers or floats by itself (its legs, if any, dangle)
  * @param lyingWidth  its hitbox lying on its side, powered down: rolled a quarter turn, its width across becomes its height
  */
 public record MinionStats(float health, float knockbackResistance, int slots, int reservoir, String mode, float speed,
-                          float biteDamage, float biteKnockback, List<Float> arms, List<ResourceLocation> jobs, boolean mindless,
+                          float biteDamage, float biteKnockback, List<Strike> strikes, List<ResourceLocation> jobs, boolean mindless,
+                          boolean climbs, boolean rideable, boolean flies,
                           float width, float height, float lyingWidth, float lyingHeight) {
+    /** How one arm hits: its style (docs/PARTS-AND-TRAITS.md section 5.6) and damage. */
+    public record Strike(String style, float damage) {
+    }
+
+    /** Modes a torso moves by on its own, legs or none: they win over legs, which dangle. */
+    public static final List<String> SELF_FLYING = List.of("fly", "hover", "float");
+    /** A rideable minion's torso must be at least this share of its whole bulk, so a rabbit on horse legs cannot carry you. */
+    public static final float RIDER_SHARE = 0.4F;
+
     public static final float MAX_HEALTH = 150.0F;
     public static final ResourceLocation COMPANION = BloodAndBones.asResource("companion");
     /** The jobs built so far; others a head names are left out until they are. */
@@ -52,7 +66,9 @@ public record MinionStats(float health, float knockbackResistance, int slots, in
         long ownLegs = sockets.stream().filter(s -> s.slot() == PartSlot.LEG).count();
         List<Float> legSpeeds = new ArrayList<>();
         List<String> legModes = new ArrayList<>();
-        List<Float> arms = new ArrayList<>();
+        int rideableLegs = 0;
+        List<Strike> strikes = new ArrayList<>();
+        float bulk = volume(rig.flatMap(r -> r.bone(torso.bone())));
         PieceRef head = null;
         for (MinionBuild.Fitted fitted : build.parts()) {
             PieceRef piece = fitted.piece();
@@ -62,13 +78,24 @@ public record MinionStats(float health, float knockbackResistance, int slots, in
             }
             var slot = com.avicagan.bloodandbones.parts.PartSlots.of(store, piece.entity(), pieceRig.get(), piece.bone());
             ResolvedMob mob = store.resolve(piece.entity(), piece.baby());
+            bulk += volume(pieceRig.get().bone(piece.bone()));
             switch (slot.slot()) {
                 case LEG -> {
                     float fallback = (float) Math.max(0.1, Math.min(0.35, MinionData.attribute(piece.entity(), Attributes.MOVEMENT_SPEED, 0.25)));
                     legSpeeds.add(MinionData.number(mob, slot.key(), "movement", "speed", fallback));
                     legModes.add(MinionData.text(mob, slot.key(), "movement", "mode", "walk"));
+                    // rideable: "movement": {"rideable": true}, or "rideable": true on the leg
+                    if (MinionData.flag(mob, slot.key(), "movement", "rideable") || MinionData.field(mob, slot.key(), "rideable")
+                            .filter(com.google.gson.JsonElement::isJsonPrimitive).map(com.google.gson.JsonElement::getAsBoolean).orElse(false)) {
+                        rideableLegs++;
+                    }
                 }
-                case ARM -> arms.add((float) Math.max(1.0, Math.min(10.0, 1.0 + 0.5 * MinionData.attribute(piece.entity(), Attributes.ATTACK_DAMAGE, 1.0))));
+                case ARM -> {
+                    float blow = (float) Math.max(1.0, Math.min(10.0, 1.0 + 0.5 * MinionData.attribute(piece.entity(), Attributes.ATTACK_DAMAGE, 1.0)));
+                    String style = MinionData.text(mob, slot.key(), "strike", "style", "punch");
+                    float mult = MinionData.number(mob, slot.key(), "strike", "damage_mult", STYLE_DAMAGE.getOrDefault(style, 1.0F));
+                    strikes.add(new Strike(style, "pacifist".equals(style) ? 0.0F : blow * mult));
+                }
                 case HEAD, NECK -> head = piece;
                 case TORSO -> head = head == null ? piece : head;
                 default -> {
@@ -77,9 +104,11 @@ public record MinionStats(float health, float knockbackResistance, int slots, in
         }
         String mode;
         float speed;
-        if (legSpeeds.isEmpty()) {
+        String own = MinionData.text(torsoMob, "torso", "self_move", "mode", "crawl");
+        boolean flies = SELF_FLYING.contains(own);
+        if (legSpeeds.isEmpty() || flies) {
             // no legs: the body moves as it can on its own (a slime hops, a fish swims, most crawl)
-            mode = MinionData.text(torsoMob, "torso", "self_move", "mode", "crawl");
+            mode = own;
             // a mob's speed counts about squared in how fast it goes: 0.12 is a slow drag, 0.05 would barely move
             speed = MinionData.number(torsoMob, "torso", "self_move", "speed", 0.12F);
         } else {
@@ -94,7 +123,7 @@ public record MinionStats(float health, float knockbackResistance, int slots, in
         if (head != null) {
             ResolvedMob headMob = store.resolve(head.entity(), head.baby());
             for (ResourceLocation job : MinionData.ids(headMob, "head", "jobs")) {
-                if (JOBS.contains(job) && !jobs.contains(job) && (!arms.isEmpty() || !HANDS.contains(job))) {
+                if (JOBS.contains(job) && !jobs.contains(job) && (!strikes.isEmpty() || !HANDS.contains(job))) {
                     jobs.add(job);
                 }
             }
@@ -107,8 +136,12 @@ public record MinionStats(float health, float knockbackResistance, int slots, in
         MinionBody.Layout layout = MinionBody.layout(store, build);
         float across = (layout.max().x - layout.min().x) / 16.0F;
         float along = Math.max(layout.max().y - layout.min().y, layout.max().z - layout.min().z) / 16.0F;
-        return new MinionStats(health, Math.max(0.0F, Math.min(0.9F, weight / 6.0F)), slots, reservoir, mode, speed, bite, knock, List.copyOf(arms),
-                List.copyOf(jobs), mindless, Math.max(0.3F, Math.min(3.0F, layout.width())), Math.max(0.3F, Math.min(4.0F, layout.height())),
+        long climbing = legModes.stream().filter("climb"::equals).count();
+        boolean climbs = !legModes.isEmpty() && climbing * 2 >= legModes.size();
+        float torsoShare = bulk <= 0.0F ? 0.0F : volume(rig.flatMap(r -> r.bone(torso.bone()))) / bulk;
+        boolean rideable = !flies && rideableLegs >= 2 && rideableLegs * 2 >= legModes.size() && torsoShare >= RIDER_SHARE;
+        return new MinionStats(health, Math.max(0.0F, Math.min(0.9F, weight / 6.0F)), slots, reservoir, mode, speed, bite, knock, List.copyOf(strikes),
+                List.copyOf(jobs), mindless, climbs, rideable, flies, Math.max(0.3F, Math.min(3.0F, layout.width())), Math.max(0.3F, Math.min(4.0F, layout.height())),
                 Math.max(0.3F, Math.min(4.0F, along)), Math.max(0.3F, Math.min(3.0F, across)));
     }
 
@@ -133,6 +166,19 @@ public record MinionStats(float health, float knockbackResistance, int slots, in
             }
         }
         return best;
+    }
+
+    /** How hard each strike style hits against a plain blow (section 5.6): scrabble is fast and light, a slam heavy. */
+    public static final java.util.Map<String, Float> STYLE_DAMAGE = java.util.Map.of("scrabble", 0.5F, "slam", 1.2F, "flap", 0.0F, "pacifist", 0.0F,
+            "claw", 0.9F, "ram", 1.3F, "kick", 1.1F);
+
+    /** Whether it has an arm that hits at all. */
+    public boolean fights() {
+        return strikes.isEmpty() || strikes.stream().anyMatch(s -> !"pacifist".equals(s.style()));
+    }
+
+    private static float volume(Optional<Bone> bone) {
+        return bone.map(MinionStats::volume).orElse(0.0F);
     }
 
     /** A bone's box in blocks cubed. */

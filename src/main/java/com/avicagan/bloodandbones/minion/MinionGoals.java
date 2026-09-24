@@ -105,7 +105,8 @@ public final class MinionGoals {
 
         @Override
         public boolean canUse() {
-            return !minion.stats().mindless() && super.canUse();
+            // a pacifist (a villager's pair of arms and no bite of its own worth using) never attacks
+            return !minion.stats().mindless() && minion.stats().fights() && super.canUse();
         }
     }
 
@@ -156,7 +157,9 @@ public final class MinionGoals {
                     return pos;
                 }
                 Path path = minion.getNavigation().createPath(pos, accuracy(minion));
-                if (path != null && path.canReach()) {
+                // a climber goes straight up and over what a walking path cannot (its navigation heads for the spot
+                // itself when the path runs out, as a spider's does)
+                if (path != null && (path.canReach() || minion.stats().climbs())) {
                     return pos;
                 }
                 // it must walk there itself: a trough it cannot reach is no use to it
