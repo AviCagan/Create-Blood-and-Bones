@@ -238,4 +238,86 @@ public class BrassMinionTests {
             helper.succeed();
         });
     }
+
+    private static MinionEntity withModule(GameTestHelper helper, BlockPos pos, com.avicagan.bloodandbones.cyber.Module module) {
+        MinionEntity minion = minion(helper, pos, brassCow(), 800.0F);
+        minion.setNoAi(true);
+        minion.setModule(module);
+        return minion;
+    }
+
+    /** Its maker fits a module by hand (one already there comes back); the Grappling Spool is not for minions; a Wrench takes it out. */
+    @GameTest(template = "empty", timeoutTicks = 20)
+    public static void brassMinionTakesAModule(GameTestHelper helper) {
+        ServerLevel level = helper.getLevel();
+        BlockPos at = helper.absolutePos(new BlockPos(3, 2, 3));
+        Player maker = helper.makeMockPlayer(GameType.SURVIVAL);
+        MinionEntity minion = BBEntities.MINION.get().create(level);
+        minion.moveTo(at.getX() + 0.5, at.getY(), at.getZ() + 0.5, 0.0F, 0.0F);
+        minion.setup(maker, at, brassCow(), 800.0F);
+        level.addFreshEntity(minion);
+        maker.setItemInHand(InteractionHand.MAIN_HAND, new ItemStack(BBItems.module(com.avicagan.bloodandbones.cyber.Module.GRAPPLING_SPOOL)));
+        minion.interact(maker, InteractionHand.MAIN_HAND);
+        if (minion.module() != null) {
+            helper.fail("A Grappling Spool is not for minions");
+            return;
+        }
+        maker.setItemInHand(InteractionHand.MAIN_HAND, new ItemStack(BBItems.module(com.avicagan.bloodandbones.cyber.Module.MAGNET_COIL)));
+        minion.interact(maker, InteractionHand.MAIN_HAND);
+        maker.setItemInHand(InteractionHand.MAIN_HAND, new ItemStack(BBItems.module(com.avicagan.bloodandbones.cyber.Module.ANALYTICAL_LENS)));
+        minion.interact(maker, InteractionHand.MAIN_HAND);
+        if (minion.module() != com.avicagan.bloodandbones.cyber.Module.ANALYTICAL_LENS
+                || maker.getInventory().countItem(BBItems.module(com.avicagan.bloodandbones.cyber.Module.MAGNET_COIL)) != 1) {
+            helper.fail("The Lens should go in, the Magnet Coil coming back");
+            return;
+        }
+        maker.setItemInHand(InteractionHand.MAIN_HAND, new ItemStack(AllItems.WRENCH.get()));
+        minion.interact(maker, InteractionHand.MAIN_HAND);
+        if (minion.module() != null || maker.getInventory().countItem(BBItems.module(com.avicagan.bloodandbones.cyber.Module.ANALYTICAL_LENS)) != 1) {
+            helper.fail("A Wrench should take the module out");
+            return;
+        }
+        helper.succeed();
+    }
+
+    /** A Magnet Coil draws loose items to it. */
+    @GameTest(template = "empty", timeoutTicks = 100)
+    public static void magnetCoilDrawsItems(GameTestHelper helper) {
+        MinionEntity minion = withModule(helper, new BlockPos(2, 2, 2), com.avicagan.bloodandbones.cyber.Module.MAGNET_COIL);
+        BlockPos drop = helper.absolutePos(new BlockPos(7, 2, 2));
+        net.minecraft.world.entity.item.ItemEntity item = new net.minecraft.world.entity.item.ItemEntity(helper.getLevel(), drop.getX() + 0.5, drop.getY() + 0.2,
+                drop.getZ() + 0.5, new ItemStack(net.minecraft.world.item.Items.BONE));
+        helper.getLevel().addFreshEntity(item);
+        double start = item.distanceTo(minion);
+        helper.succeedWhen(() -> helper.assertTrue(item.distanceTo(minion) < start - 2.0, "the bone has not drifted to it yet"));
+    }
+
+    /** A Rotational Coupler: standing by the end of a shaft, it drives it. */
+    @GameTest(template = "empty", timeoutTicks = 100)
+    public static void couplerDrivesAShaft(GameTestHelper helper) {
+        BlockPos shaft = new BlockPos(4, 2, 3);
+        helper.setBlock(shaft, AllBlocks.SHAFT.getDefaultState().setValue(net.minecraft.world.level.block.RotatedPillarBlock.AXIS, Direction.Axis.X));
+        withModule(helper, new BlockPos(3, 2, 3), com.avicagan.bloodandbones.cyber.Module.ROTATIONAL_COUPLER);
+        helper.succeedWhen(() -> helper.assertTrue(helper.getBlockEntity(shaft) instanceof com.simibubi.create.content.kinetics.base.KineticBlockEntity kinetic
+                && Math.abs(kinetic.getSpeed()) > 0.0F, "the shaft is not turning yet"));
+    }
+
+    /** An Analytical Lens sees a zombie through a wall; without one it does not. */
+    @GameTest(template = "empty", timeoutTicks = 20)
+    public static void lensSeesThroughWalls(GameTestHelper helper) {
+        for (int y = 2; y <= 4; y++) {
+            for (int z = 0; z <= 6; z++) {
+                helper.setBlock(new BlockPos(4, y, z), net.minecraft.world.level.block.Blocks.STONE);
+            }
+        }
+        MinionEntity lens = withModule(helper, new BlockPos(2, 2, 3), com.avicagan.bloodandbones.cyber.Module.ANALYTICAL_LENS);
+        MinionEntity plain = withModule(helper, new BlockPos(2, 2, 1), null);
+        net.minecraft.world.entity.monster.Zombie zombie = helper.spawn(net.minecraft.world.entity.EntityType.ZOMBIE, new BlockPos(6, 2, 3));
+        zombie.setNoAi(true);
+        if (!lens.hasLineOfSight(zombie) || plain.hasLineOfSight(zombie)) {
+            helper.fail("The Lens should see through the wall and plain brass should not");
+            return;
+        }
+        helper.succeed();
+    }
 }

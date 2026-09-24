@@ -93,29 +93,48 @@ public final class Coupler {
             stop(player);
             return;
         }
-        BlockPos at = hit.getBlockPos().relative(hit.getDirection());
-        Link link = LINKS.get(player.getUUID());
+        couple(player, hit.getBlockPos().relative(hit.getDirection()), hit.getDirection().getOpposite(), rpm(level));
+    }
+
+    /**
+     * Couple this owner (a player's arm, a brass minion) into the machine whose face is in front of {@code at},
+     * {@code towardMachine} pointing from {@code at} into it, turning it at this RPM. Moves the link if it was
+     * somewhere else.
+     */
+    public static void couple(net.minecraft.world.entity.Entity owner, BlockPos at, net.minecraft.core.Direction towardMachine, int rpm) {
+        ServerLevel world = (ServerLevel) owner.level();
+        Link link = LINKS.get(owner.getUUID());
         if (link != null && (!link.pos.equals(at) || link.level != world.dimension())) {
-            stop(player);
+            release(owner);
             link = null;
         }
         if (link == null) {
-            LINKS.put(player.getUUID(), new Link(world.dimension(), at));
-            world.setBlock(at, BBBlocks.COUPLER.get().defaultBlockState().setValue(CouplerBlock.FACING, hit.getDirection().getOpposite()), 3);
+            LINKS.put(owner.getUUID(), new Link(world.dimension(), at));
+            world.setBlock(at, BBBlocks.COUPLER.get().defaultBlockState().setValue(CouplerBlock.FACING, towardMachine), 3);
             world.playSound(null, at, net.minecraft.sounds.SoundEvents.PISTON_EXTEND, net.minecraft.sounds.SoundSource.PLAYERS, 0.6F, 1.4F);
         }
         if (world.getBlockEntity(at) instanceof CouplerBlockEntity coupler) {
-            coupler.drive(player, rpm(level));
+            coupler.drive(owner, rpm);
         }
+    }
+
+    /** Whether this owner is coupled into something now. */
+    public static boolean coupled(net.minecraft.world.entity.Entity owner) {
+        return LINKS.containsKey(owner.getUUID());
     }
 
     /** Let go: the shaft pulls back out of the machine. */
     static void stop(Player player) {
-        Link link = LINKS.remove(player.getUUID());
-        if (link == null || player.getServer() == null) {
+        release(player);
+    }
+
+    /** The owner lets go (or is gone): the shaft pulls back out of the machine. */
+    public static void release(net.minecraft.world.entity.Entity owner) {
+        Link link = LINKS.remove(owner.getUUID());
+        if (link == null || owner.getServer() == null) {
             return;
         }
-        ServerLevel level = player.getServer().getLevel(link.level);
+        ServerLevel level = owner.getServer().getLevel(link.level);
         if (level != null && level.isLoaded(link.pos) && level.getBlockState(link.pos).is(BBBlocks.COUPLER.get())) {
             level.removeBlock(link.pos, false);
             level.playSound(null, link.pos, net.minecraft.sounds.SoundEvents.PISTON_CONTRACT, net.minecraft.sounds.SoundSource.PLAYERS, 0.6F, 1.4F);

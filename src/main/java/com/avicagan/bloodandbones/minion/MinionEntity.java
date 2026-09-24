@@ -55,6 +55,8 @@ public class MinionEntity extends PathfinderMob implements net.minecraft.world.e
     private static final EntityDataAccessor<Boolean> DOWN = SynchedEntityData.defineId(MinionEntity.class, EntityDataSerializers.BOOLEAN);
     private static final EntityDataAccessor<Float> POWER = SynchedEntityData.defineId(MinionEntity.class, EntityDataSerializers.FLOAT);
     private static final EntityDataAccessor<Boolean> SADDLED = SynchedEntityData.defineId(MinionEntity.class, EntityDataSerializers.BOOLEAN);
+    /** A brass minion's one module, by name ("" for none). */
+    private static final EntityDataAccessor<String> MODULE = SynchedEntityData.defineId(MinionEntity.class, EntityDataSerializers.STRING);
     /** Up against a wall on climbing legs: synced, as the spider's is, so clients predict the climb. */
     private static final EntityDataAccessor<Boolean> CLIMBING = SynchedEntityData.defineId(MinionEntity.class, EntityDataSerializers.BOOLEAN);
     /** How far from home it works. */
@@ -116,6 +118,7 @@ public class MinionEntity extends PathfinderMob implements net.minecraft.world.e
         builder.define(DOWN, false);
         builder.define(POWER, 0.0F);
         builder.define(SADDLED, false);
+        builder.define(MODULE, "");
         builder.define(CLIMBING, false);
     }
 
@@ -224,6 +227,10 @@ public class MinionEntity extends PathfinderMob implements net.minecraft.world.e
     /** A flier does not take fall damage from its own landings; a climber none from the walls it climbs. */
     @Override
     public boolean causeFallDamage(float distance, float multiplier, DamageSource source) {
+        com.avicagan.bloodandbones.cyber.Module module = module();
+        if (module == com.avicagan.bloodandbones.cyber.Module.GYROSCOPIC_STABILIZER || module == com.avicagan.bloodandbones.cyber.Module.BAROMETRIC_VENT) {
+            return false;
+        }
         return !stats().flies() && super.causeFallDamage(distance, multiplier, source);
     }
 
@@ -326,6 +333,9 @@ public class MinionEntity extends PathfinderMob implements net.minecraft.world.e
                 setDeltaMovement(at.x * 0.4, 0.3, at.z * 0.4);
             }
             default -> knock(target, s.biteKnockback());
+        }
+        if (module() == com.avicagan.bloodandbones.cyber.Module.PISTON_RAM) {
+            knock(target, MinionModules.RAM_KNOCKBACK);
         }
         return true;
     }
@@ -476,6 +486,9 @@ public class MinionEntity extends PathfinderMob implements net.minecraft.world.e
             entityData.set(DOWN, true);
             ejectPassengers();
             setNoGravity(false);
+            if (!level().isClientSide) {
+                com.avicagan.bloodandbones.cyber.Coupler.release(this);
+            }
             getNavigation().stop();
             setTarget(null);
             refreshDimensions();
@@ -534,12 +547,49 @@ public class MinionEntity extends PathfinderMob implements net.minecraft.world.e
             }
         } else {
             drain();
+            MinionModules.tick(this, module());
             // flesh mends itself on its blood; brass never does (a brass sheet, or a cradle stocked with them)
             if (!cybernetic() && tickCount % REGEN_TICKS == 0 && getHealth() < getMaxHealth() && powerShare() > 0.1F) {
                 heal(1.0F);
                 entityData.set(POWER, Math.max(0.0F, power() - REGEN_COST));
             }
         }
+    }
+
+    /** Its module, if it is brass and has one fitted. */
+    @Nullable
+    public com.avicagan.bloodandbones.cyber.Module module() {
+        String name = entityData.get(MODULE);
+        if (name.isEmpty() || !cybernetic()) {
+            return null;
+        }
+        for (com.avicagan.bloodandbones.cyber.Module module : com.avicagan.bloodandbones.cyber.Module.values()) {
+            if (module.getSerializedName().equals(name)) {
+                return module;
+            }
+        }
+        return null;
+    }
+
+    public void setModule(@Nullable com.avicagan.bloodandbones.cyber.Module module) {
+        entityData.set(MODULE, module == null ? "" : module.getSerializedName());
+    }
+
+    /** An Analytical Lens sees its targets through walls. */
+    @Override
+    public boolean hasLineOfSight(net.minecraft.world.entity.Entity entity) {
+        if (module() == com.avicagan.bloodandbones.cyber.Module.ANALYTICAL_LENS && distanceToSqr(entity) < MinionModules.LENS_RANGE * MinionModules.LENS_RANGE) {
+            return true;
+        }
+        return super.hasLineOfSight(entity);
+    }
+
+    @Override
+    public void remove(RemovalReason reason) {
+        if (!level().isClientSide) {
+            com.avicagan.bloodandbones.cyber.Coupler.release(this);
+        }
+        super.remove(reason);
     }
 
     /** A soul canister's worth into a brass minion (a cradle or its maker's hand): wakes it if it was down. */
@@ -637,6 +687,9 @@ public class MinionEntity extends PathfinderMob implements net.minecraft.world.e
         if (isSaddled()) {
             spawnAtLocation(Items.SADDLE);
         }
+        if (module() != null) {
+            spawnAtLocation(BBItems.module(module()));
+        }
         if (BBServerConfig.minionDeath() == BBServerConfig.MinionDeath.SCATTER && build().isPresent()) {
             // it falls apart into what it was built of, half gone off
             MinionBuild build = build().get();
@@ -661,6 +714,28 @@ public class MinionEntity extends PathfinderMob implements net.minecraft.world.e
             if (!level().isClientSide && charge() && !player.hasInfiniteMaterials()) {
                 held.shrink(1);
                 player.getInventory().placeItemBackInInventory(new ItemStack(BBItems.EMPTY_SOUL_CANISTER.get()));
+            }
+            return InteractionResult.sidedSuccess(level().isClientSide);
+        }
+        if (cybernetic() && isMaker(player) && held.getItem() instanceof com.avicagan.bloodandbones.cyber.ModuleItem item && MinionModules.FITS.contains(item.module())) {
+            // its maker fits a module into its socket; one already there comes back
+            if (!level().isClientSide) {
+                com.avicagan.bloodandbones.cyber.Module old = module();
+                setModule(item.module());
+                held.consume(1, player);
+                if (old != null) {
+                    player.getInventory().placeItemBackInInventory(new ItemStack(BBItems.module(old)));
+                }
+                level().playSound(null, blockPosition(), SoundEvents.CHAIN_PLACE, SoundSource.NEUTRAL, 1.0F, 1.3F);
+            }
+            return InteractionResult.sidedSuccess(level().isClientSide);
+        }
+        if (cybernetic() && isMaker(player) && held.is(com.simibubi.create.AllItems.WRENCH.get()) && module() != null) {
+            if (!level().isClientSide) {
+                player.getInventory().placeItemBackInInventory(new ItemStack(BBItems.module(module())));
+                setModule(null);
+                com.avicagan.bloodandbones.cyber.Coupler.release(this);
+                level().playSound(null, blockPosition(), SoundEvents.CHAIN_BREAK, SoundSource.NEUTRAL, 1.0F, 1.3F);
             }
             return InteractionResult.sidedSuccess(level().isClientSide);
         }
@@ -732,6 +807,7 @@ public class MinionEntity extends PathfinderMob implements net.minecraft.world.e
         tag.putFloat("Power", power());
         tag.putBoolean("Down", poweredDown());
         tag.putBoolean("Saddled", isSaddled());
+        tag.putString("Module", entityData.get(MODULE));
         tag.put("Inventory", inventory.createTag(registryAccess()));
     }
 
@@ -750,6 +826,7 @@ public class MinionEntity extends PathfinderMob implements net.minecraft.world.e
         entityData.set(POWER, tag.getFloat("Power"));
         entityData.set(DOWN, tag.getBoolean("Down"));
         entityData.set(SADDLED, tag.getBoolean("Saddled"));
+        entityData.set(MODULE, tag.getString("Module"));
         stats = null;
     }
 

@@ -26,11 +26,11 @@ public class CouplerBlockEntity extends GeneratingKineticBlockEntity {
         super(type, pos, state);
     }
 
-    /** Driven by this player at this RPM. */
-    void drive(Player player, int rpm) {
-        boolean changed = this.rpm != rpm || !player.getUUID().equals(owner);
-        owner = player.getUUID();
-        ownerId = player.getId();
+    /** Driven by this owner (a player's arm, a brass minion) at this RPM. */
+    void drive(net.minecraft.world.entity.Entity driver, int rpm) {
+        boolean changed = this.rpm != rpm || !driver.getUUID().equals(owner);
+        owner = driver.getUUID();
+        ownerId = driver.getId();
         if (changed) {
             this.rpm = rpm;
             updateGeneratedRotation();
