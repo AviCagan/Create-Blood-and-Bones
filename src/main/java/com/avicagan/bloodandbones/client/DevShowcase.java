@@ -413,7 +413,7 @@ public final class DevShowcase {
                         // rabbit's haunches, and a legless cow out of blood on its side
                         java.util.function.BiFunction<String, String, com.avicagan.bloodandbones.minion.PieceRef> ref = (mob, bone) ->
                                 new com.avicagan.bloodandbones.minion.PieceRef(net.minecraft.resources.ResourceLocation.withDefaultNamespace(mob), bone,
-                                        net.minecraft.resources.ResourceLocation.withDefaultNamespace("textures/entity/" + mob + "/" + (mob.equals("rabbit") ? "brown" : mob) + ".png"),
+                                        net.minecraft.resources.ResourceLocation.withDefaultNamespace("textures/entity/" + mob + "/" + (mob.equals("rabbit") ? "brown" : mob.equals("horse") ? "horse_brown" : mob) + ".png"),
                                         java.util.List.of(), 1.0F, false, java.util.Map.of(), false);
                         var cow = com.avicagan.bloodandbones.minion.MinionBuild.of(ref.apply("cow", "body")).with("head", ref.apply("cow", "head"));
                         var hopper = cow.with("right_front_leg", ref.apply("rabbit", "right_front_leg")).with("left_front_leg", ref.apply("rabbit", "left_front_leg"))
