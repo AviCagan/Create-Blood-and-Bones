@@ -86,6 +86,7 @@ public class MinionEntity extends PathfinderMob implements net.minecraft.world.e
     @Nullable
     private Player makerEntity;
     private BlockPos home = BlockPos.ZERO;
+    private boolean findingPath;
     /** Room for the most a minion can carry (spec 6.4: up to 54 with storage traits); {@link #slots} says how much it may use. */
     public final SimpleContainer inventory = new SimpleContainer(54);
     /** Brass only: what it may pick up, reap or go for (a Create filter, or any item). */
@@ -226,17 +227,61 @@ public class MinionEntity extends PathfinderMob implements net.minecraft.world.e
                 moveControl = new net.minecraft.world.entity.ai.control.FlyingMoveControl(this, 20, true);
             }
             case "climb" -> {
-                navigation = new net.minecraft.world.entity.ai.navigation.WallClimberNavigation(this, level());
+                navigation = new net.minecraft.world.entity.ai.navigation.WallClimberNavigation(this, level()) {
+                    @Override
+                    protected net.minecraft.world.level.pathfinder.Path createPath(java.util.Set<BlockPos> targets, int regionOffset, boolean offsetUpward,
+                                                                                    int accuracy, float followRange) {
+                        return pathing(() -> super.createPath(targets, regionOffset, offsetUpward, accuracy, followRange));
+                    }
+                };
                 moveControl = new net.minecraft.world.entity.ai.control.MoveControl(this);
             }
             case "swim" -> {
-                navigation = new net.minecraft.world.entity.ai.navigation.AmphibiousPathNavigation(this, level());
+                navigation = new net.minecraft.world.entity.ai.navigation.AmphibiousPathNavigation(this, level()) {
+                    @Override
+                    protected net.minecraft.world.level.pathfinder.Path createPath(java.util.Set<BlockPos> targets, int regionOffset, boolean offsetUpward,
+                                                                                    int accuracy, float followRange) {
+                        return pathing(() -> super.createPath(targets, regionOffset, offsetUpward, accuracy, followRange));
+                    }
+                };
                 moveControl = new net.minecraft.world.entity.ai.control.MoveControl(this);
             }
             default -> {
-                navigation = new net.minecraft.world.entity.ai.navigation.GroundPathNavigation(this, level());
+                navigation = createNavigation(level());
                 moveControl = new net.minecraft.world.entity.ai.control.MoveControl(this);
             }
+        }
+    }
+
+    /** It walks, until its build says otherwise; see {@link #pathing}. */
+    @Override
+    protected net.minecraft.world.entity.ai.navigation.PathNavigation createNavigation(net.minecraft.world.level.Level level) {
+        return new net.minecraft.world.entity.ai.navigation.GroundPathNavigation(this, level) {
+            @Override
+            protected net.minecraft.world.level.pathfinder.Path createPath(java.util.Set<BlockPos> targets, int regionOffset, boolean offsetUpward,
+                                                                            int accuracy, float followRange) {
+                return pathing(() -> super.createPath(targets, regionOffset, offsetUpward, accuracy, followRange));
+            }
+        };
+    }
+
+    /** Whether it is working out a path just now (see {@link #pathing}). */
+    public boolean findingPath() {
+        return findingPath;
+    }
+
+    /**
+     * Work out a path. While it does, walking on lava is asked only of the lava itself: a path's start climbs up through
+     * whatever it can stand on, and the empty fluid over lava that counts for Sable's collisions would have it climb
+     * through the air forever.
+     */
+    private <T> T pathing(java.util.function.Supplier<T> path) {
+        boolean was = findingPath;
+        findingPath = true;
+        try {
+            return path.get();
+        } finally {
+            findingPath = was;
         }
     }
 

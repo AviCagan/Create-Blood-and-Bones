@@ -671,6 +671,33 @@ public class MotionEffectTests {
         });
     }
 
+    /**
+     * A lava walker standing on lava works out a path across it. Its path's start once climbed the air over its feet
+     * forever (the empty fluid over lava counted as lava to stand on), which hung the server the moment it set off to
+     * follow its maker.
+     */
+    @GameTest(template = "empty", timeoutTicks = 80)
+    public static void lavaWalkerFindsAPathOnLava(GameTestHelper helper) {
+        pool(helper, 1, 1);
+        MinionEntity walker = minion(helper, new BlockPos(2, 4, 2), withOrganTraits(helper, "lava_walk", "bloodandbones:lava_walk"));
+        ActiveTraits.of(walker);
+        helper.runAfterDelay(40, () -> {
+            double surface = helper.absoluteVec(new Vec3(0.0, 2.5, 0.0)).y;
+            if (Math.abs(walker.getY() - surface) > 0.1) {
+                walker.discard();
+                helper.fail("The lava walker should be standing on the lava before it sets off: " + walker.getY());
+                return;
+            }
+            net.minecraft.world.level.pathfinder.Path path = walker.getNavigation().createPath(helper.absolutePos(new BlockPos(3, 3, 3)), 0);
+            walker.discard();
+            if (path == null || path.getNodeCount() == 0) {
+                helper.fail("A lava walker on the lava should find a path across it");
+                return;
+            }
+            helper.succeed();
+        });
+    }
+
     /** A 3 by 3 pool of lava one block deep on the floor, walled with stone, its corner at (x, 2, z). */
     private static void pool(GameTestHelper helper, int x, int z) {
         for (int dx = -1; dx <= 3; dx++) {

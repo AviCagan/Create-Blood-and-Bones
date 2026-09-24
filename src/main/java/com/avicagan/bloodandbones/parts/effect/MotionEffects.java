@@ -209,10 +209,11 @@ public final class MotionEffects {
     /**
      * A minion walks on lava (lava_walk). Vanilla asks this with the lava itself; Sable's collision context
      * ({@code TheFasterEntityCollisionContext}) asks with the fluid above the lava's surface instead, so nothing is
-     * ever above the lava there: over lava, that empty fluid counts as the lava it stands on.
+     * ever above the lava there: over lava, that empty fluid counts as the lava it stands on. Not while it works out a
+     * path, whose start climbs up through all it can stand on: it would climb through the air forever.
      */
     public static boolean standsOn(MinionEntity minion, FluidState fluid) {
-        if (fluid.is(FluidTags.LAVA) || fluid.isEmpty() && overLava(minion)) {
+        if (fluid.is(FluidTags.LAVA) || fluid.isEmpty() && !minion.findingPath() && overLava(minion)) {
             return flag(minion, FlagEffect.LAVA_WALK) > 0;
         }
         return false;
