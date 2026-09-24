@@ -1,0 +1,28 @@
+{
+  "name": "trait.bloodandbones.shulker_bolt",
+  "max_level": 1,
+  "effects": [
+    {
+      "trigger": "activate",
+      "context": "armour",
+      "cooldown": 100,
+      "cost_mb": 40,
+      "range": 16,
+      "effect": {
+        "type": "bloodandbones:projectile",
+        "kind": "shulker_bullet"
+      }
+    },
+    {
+      "trigger": "activate",
+      "context": "minion",
+      "cooldown": 100,
+      "cost_mb": 5,
+      "range": 16,
+      "effect": {
+        "type": "bloodandbones:projectile",
+        "kind": "shulker_bullet"
+      }
+    }
+  ]
+}

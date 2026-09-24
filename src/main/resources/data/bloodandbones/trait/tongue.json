@@ -1,0 +1,36 @@
+{
+  "name": "trait.bloodandbones.tongue",
+  "max_level": 1,
+  "effects": [
+    {
+      "trigger": "activate",
+      "context": "armour",
+      "cooldown": 100,
+      "cost_mb": 15,
+      "range": 6,
+      "effect": {
+        "type": "bloodandbones:vanilla",
+        "target": "other",
+        "effect": {
+          "type": "bloodandbones:pull",
+          "strength": 1.2
+        }
+      }
+    },
+    {
+      "trigger": "activate",
+      "context": "minion",
+      "cooldown": 60,
+      "cost_mb": 2,
+      "range": 6,
+      "effect": {
+        "type": "bloodandbones:vanilla",
+        "target": "other",
+        "effect": {
+          "type": "bloodandbones:pull",
+          "strength": 1.2
+        }
+      }
+    }
+  ]
+}

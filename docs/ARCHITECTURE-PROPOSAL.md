@@ -1823,3 +1823,85 @@ glides or bounces: design risk 2's run with lag on a real client and a dedicated
   its maker must be a player in the world's player list, which a game test sharing one world should not add.
 - **Shared files touched**: `BBServerConfig` (the `minion_block_damage` setting spec 6.11 names), and
   `bloodandbones.mixins.json` (one line for the mixin).
+
+**Ranged, as built** (`RangedEffects`, `RangedContent`, `RangedClient`; verified in tests, and the look checked on a
+client under xvfb in both modes):
+
+- **The vanilla adapter** (`bloodandbones:vanilla` {effect, target}, `VanillaEffect`): any enchantment entity effect runs
+  as `effect.apply(level, traitLevel, new EnchantedItemInUse(piece, slot, host), entity, position)`, the piece being the
+  one the trait counts from (nothing on a minion or from a set). `target` is "self", "other" (also written "attacker",
+  "victim", "target": whoever else is in it, or for a player's key the creature they look at within the entry's range;
+  nothing if nobody) or "look" (the creature or block face looked at, or a minion's target; on a block the host stands in
+  as the entity, so it is for place effects: summon_entity, explode, particles). A passive entry runs every half second
+  while its condition holds. `damage_item` is refused where the trait is read, nested in all_of or not, and in a
+  hitscan's `hit` (a lint that cannot be missed: the trait fails to load with the reason).
+- **Our seven actions** in `Registries.ENCHANTMENT_ENTITY_EFFECT_TYPE` (so datapack enchantments can use them), one record
+  a file: `launch` {up, away (0)} and `pull` {strength} (knockback resistance takes its share; both land at the end of the
+  tick, after the knockback of the hit that set them off, which would otherwise flatten them), `web` {seconds} (a
+  `temporary_web` round the feet, only in air or grass-like space and never in water), `bleed` {seconds, amplifier (0)},
+  `steal_item` {} (a mob's main hand, else off hand, into the thief's inventory or a minion's, dropped if full; never from
+  a player or a minion), `blink_target` {range} (16 tries, as an enderman, through `EntityTeleportEvent.EnderEntity`;
+  bosses stay), `ink_cloud` {radius, seconds} (Blindness to all within the radius but the host's side, a puff of squid
+  ink and a squirt).
+- **Bleeding** (`bloodandbones:bleeding`, `BleedingMobEffect`): half a heart every 40 ticks, halved each level, never
+  quicker than 12 (inside half a creature's hurt time a second wound would be shrugged off), as the new damage type
+  `bloodandbones:bleeding` (bypasses armour, no knockback; "bled out", bloodless "leaked dry"). Each wound drips (existing
+  blood drops, soul blood for nether mobs), squelches, and lays a stain under it through `Blood.stain` one time in three
+  at the first level, two in three at the second, always from the third. What has no blood (`Blood.bleeds`: skeletons,
+  golems) leaks: the same harm, a hiss, grey sparks (`leak_spark`), no drops, no stain. The ambient particle is its own
+  `bleeding_drip`, which a client in bloodless mode shows as a grey spark; the effect is named "Leaking" there and its HUD
+  and inventory icon is swapped for a grey one (`IClientMobEffectExtensions`), through `BBClientConfig.bloodless()` as
+  every other gory visual is.
+- **Blocks**: `temporary_web` (holds as a cobweb, `life` 1-15 seconds counted down by scheduled ticks, then tears with the
+  cobweb's snap; no item, no drops, swords cut it fast) and `cooled_crust` (frosted ice for lava: ages a step every one or
+  two seconds after two or three, glowing through its cracks from the third, melts back to lava, and one left with fewer
+  than two crusts beside it melts at once, as does one broken). Both are ordinary blocks: they ride contraptions and go on
+  ageing once set down.
+- **projectile** (`ProjectileEffect` {kind, count, spread, speed, damage, potion, power}): the eleven kinds of spec 5.6,
+  vanilla's own entities. A player's key fires along their look; a minion's organ (an activate entry with a range) at its
+  target; a hurt or attack entry at whoever else is in it. Falling kinds are aimed a little high as a skeleton aims.
+  `damage` is an arrow's base damage and, for the other kinds, what the hit does in place of their own (blasts left
+  alone; the shot is marked with the `trait_shot` attachment). A shot passes through its host's side. A minion's blasts
+  and fires break and light nothing (`EntityMobGriefingEvent`, asked of the shot or of its minion as it lands): the
+  spec's `minion_block_damage` is off by default, and there is no such setting yet. Innate arrows and a thrown trident
+  (only when the host holds one) cannot be picked up; a splash potion comes out of the host's inventory (a minion's too),
+  else from `potion`.
+- **A minion's ranged attack**: a passive projectile or hitscan entry (its arms' or organ's) makes it fight at a distance
+  with vanilla's `RangedAttackGoal` (`MinionRangedGoal`, priority 1 from `minionGoals`; it holds a vanilla goal and builds
+  it again when the minion's longest range or shortest cooldown changes). `MinionEntity` implements `RangedAttackMob`, its
+  `performRangedAttack` calling `RangedEffects.rangedAttack`: each shot in range, off its own cooldown, its condition
+  holding, its chance come up and its `cost_mb` paid (never the last drop) fires. With arms that hit it lets the melee goal
+  have anything within 4 blocks, and it gives way to hunger. Skeleton arms are Bowmen (`mob_traits/minecraft/skeleton.json`):
+  arrows of 2, every 30 ticks, 1 mB each, from 12 blocks.
+- **hitscan** (`HitscanEffect` {range (16), damage, damage_type (mob_projectile), windup, beam, knockback, hit}): `level.clip`
+  for blocks, then the line swept for creatures (0.3 fat), the first hit hurt with `damageSources().source(type, host)`,
+  pushed, and given `hit` (any vanilla or our effect; the web shot's web). It squirts blood where it goes in. With a windup
+  it charges on the server (a list ticked each server tick) locked on a minion's target or on what a player looked at when
+  they pressed (else it follows their look), and lands if the host is still there. `BeamPayload` tells the clients
+  tracking the host (and the host) to draw the beam: `RangedClient` draws it as `GuardianRenderer` does (the
+  guardian's texture, a turning tube): the guardian's warming from purple to yellow, the warden's wider and sculk teal
+  (and its rings along the line when it lands, with its sounds), a strand of silk thin and pale; a shot with no windup
+  flashes for 4 ticks.
+- **Traits** (new files, lang and bloodless wording; the armour side costs and cooldowns from spec 8, the minion side
+  cheaper): fireball (three small fireballs; armour 50 mB, 8 s; minion 9 mB, 5 s, range 12), great_fireball (100 mB, 30 s;
+  minion 20 mB), web_shot (hitscan 10, a 5 s web; 25 mB, 10 s; minion 8 s), spit (10 mB, 2 s), shulker_bolt (40 mB, 5 s),
+  sonic_boom (10 ignoring armour, 34 tick charge, 100 mB, 30 s), guardian_beam (6, 3 s charge, 40 mB, 5 s), fangs (an evoker
+  fang through vanilla's summon_entity where you look; 30 mB, 10 s), snowball_volley (armour: five, 3 s; minion: a passive
+  volley of three every second, free), tongue (pull within 6; 15 mB, 5 s), bowman (minion only), webbing (20%, 3 s web, 5 s
+  cooldown), bleeding (3 s a level; "Leaking" in bloodless mode), mauler (attack damage +1 and a 3 s bleed), flinger (up
+  0.3 a level), displacer (15%, blink within 8), thief (5%), searing (ignite 2 s a level), barbed (1 thorns damage a level
+  to melee attackers, not set off by thorns), ember_skin (melee attackers burn 2 s), lava_wader (replace_disk of lava, and
+  of its own crust so standing still keeps it, into `cooled_crust` under you while on the ground; fire ×0.75), frost_path
+  (replace_disk water → frosted_ice, as Frost Walker). On-hit traits need a direct hit. ink_cloud was a mob_effect
+  stand-in; it is now the ink_cloud action: a minion's when hurt (15 s), armour's when hurt below half health (30 s).
+- **Tests** (`RangedEffectTests`): `skeletonArmsShoot`, `bleedingDamagesOverTime`, `bleedingBloodlessNoStain`,
+  `webShotPlacesTemporaryWebThatDecays`, `lavaWaderCoolsLavaThatMeltsBack`, `fireballActivateCostsBlood`,
+  `hitscanHitsFirstInLine`, `squidInkBlinds`, `stealItemNeverFromPlayer`, `vanillaDamageItemRejected`, and
+  `flingerThrowsUpAfterTheBlow` (the throw lands after the blow's knockback).
+- **Left out, and why**: no trait waits on another group's type. Held weapons (a bow or crossbow in a minion's hand, with
+  ammo) are spec 6.4's slice 6 goals, not built; skeleton arms shoot innately. Mauler's +1 is the attack damage attribute,
+  which a minion's strikes do not read (their damage comes from its build), so on a minion only its bleed works, as with
+  brawler. Only the skeleton's arms are wired to a trait; every other mob's ranged signature (blaze core, ghast, spider,
+  llama, shulker, warden, guardian, evoker, snow golem, frog, strider) waits for the wiring step. Fangs are one fang, where
+  the evoker's are a row. The spec's `minion_block_damage` setting does not exist yet: minion shots never grief until it
+  does.

@@ -1,0 +1,27 @@
+{
+  "name": "trait.bloodandbones.flinger",
+  "max_level": 3,
+  "effects": [
+    {
+      "trigger": "attack",
+      "requirements": {
+        "condition": "minecraft:damage_source_properties",
+        "predicate": {
+          "is_direct": true
+        }
+      },
+      "effect": {
+        "type": "bloodandbones:vanilla",
+        "target": "victim",
+        "effect": {
+          "type": "bloodandbones:launch",
+          "up": {
+            "type": "minecraft:linear",
+            "base": 0.3,
+            "per_level_above_first": 0.3
+          }
+        }
+      }
+    }
+  ]
+}

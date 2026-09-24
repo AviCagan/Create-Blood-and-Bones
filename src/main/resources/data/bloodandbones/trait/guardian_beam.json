@@ -1,0 +1,36 @@
+{
+  "name": "trait.bloodandbones.guardian_beam",
+  "max_level": 1,
+  "effects": [
+    {
+      "trigger": "activate",
+      "context": "armour",
+      "cooldown": 100,
+      "cost_mb": 40,
+      "range": 14,
+      "effect": {
+        "type": "bloodandbones:hitscan",
+        "range": 14,
+        "damage": 6,
+        "damage_type": "minecraft:indirect_magic",
+        "windup": 60,
+        "beam": "guardian_beam"
+      }
+    },
+    {
+      "trigger": "activate",
+      "context": "minion",
+      "cooldown": 100,
+      "cost_mb": 5,
+      "range": 14,
+      "effect": {
+        "type": "bloodandbones:hitscan",
+        "range": 14,
+        "damage": 6,
+        "damage_type": "minecraft:indirect_magic",
+        "windup": 60,
+        "beam": "guardian_beam"
+      }
+    }
+  ]
+}

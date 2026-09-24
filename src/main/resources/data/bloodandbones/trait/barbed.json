@@ -1,0 +1,39 @@
+{
+  "name": "trait.bloodandbones.barbed",
+  "max_level": 3,
+  "effects": [
+    {
+      "trigger": "hurt",
+      "filter": "melee",
+      "requirements": {
+        "condition": "minecraft:damage_source_properties",
+        "predicate": {
+          "tags": [
+            {
+              "id": "minecraft:avoids_guardian_thorns",
+              "expected": false
+            }
+          ]
+        }
+      },
+      "effect": {
+        "type": "bloodandbones:vanilla",
+        "target": "attacker",
+        "effect": {
+          "type": "minecraft:damage_entity",
+          "damage_type": "minecraft:thorns",
+          "min_damage": {
+            "type": "minecraft:linear",
+            "base": 1,
+            "per_level_above_first": 1
+          },
+          "max_damage": {
+            "type": "minecraft:linear",
+            "base": 1,
+            "per_level_above_first": 1
+          }
+        }
+      }
+    }
+  ]
+}

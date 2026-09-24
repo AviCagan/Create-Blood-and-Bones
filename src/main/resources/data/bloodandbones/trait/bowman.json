@@ -1,0 +1,19 @@
+{
+  "name": "trait.bloodandbones.bowman",
+  "max_level": 1,
+  "contexts": [
+    "minion"
+  ],
+  "effects": [
+    {
+      "cooldown": 30,
+      "cost_mb": 1,
+      "range": 12,
+      "effect": {
+        "type": "bloodandbones:projectile",
+        "kind": "arrow",
+        "damage": 2
+      }
+    }
+  ]
+}

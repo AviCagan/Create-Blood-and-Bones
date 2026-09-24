@@ -1,0 +1,11 @@
+{
+  "parts": {
+    "arm": {
+      "minion": {
+        "traits": [
+          "bloodandbones:bowman"
+        ]
+      }
+    }
+  }
+}

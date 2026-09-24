@@ -227,6 +227,13 @@ Everything below is in development builds only; the art is placeholder (see the 
   carcass armour gets its armour points only. Traits can now depend on your health, your blood, what is near you
   and how long you have been dry, and can act when you land or make a kill.
 - Server settings for traits: their strength, and effect types to switch off.
+- Ranged abilities and on-hit traits: fireballs (small and great), a web shot that leaves a temporary web, spit, a
+  shulker's bolt, the warden's sonic boom and the guardian's beam (charged, drawn as a beam), evoker fangs, a snowball
+  volley and a frog's tongue; hits that web, bleed, fling, blink away, set alight or steal what a mob holds; spikes and
+  embers that hurt what hits you; lava that crusts over under a lava wader's feet and melts back, and water that freezes
+  under a frost path. Minions with skeleton arms keep their distance and shoot arrows. The new Bleeding effect drips and
+  stains the ground ("Leaking", with grey sparks, in bloodless mode, and on anything with no blood). A squid organ's ink
+  now puffs out a real cloud.
 - Hold Ctrl over a carcass piece to read what its traits do, for traits that say.
 
 ### Presentation

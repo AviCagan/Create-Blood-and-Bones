@@ -1,0 +1,21 @@
+{
+  "name": "trait.bloodandbones.sonic_boom",
+  "max_level": 1,
+  "effects": [
+    {
+      "trigger": "activate",
+      "cooldown": 600,
+      "cost_mb": 100,
+      "range": 15,
+      "effect": {
+        "type": "bloodandbones:hitscan",
+        "range": 15,
+        "damage": 10,
+        "damage_type": "minecraft:sonic_boom",
+        "windup": 34,
+        "beam": "sonic_boom",
+        "knockback": 2.5
+      }
+    }
+  ]
+}
