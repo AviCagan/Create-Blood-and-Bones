@@ -70,6 +70,9 @@ public final class DevShowcase {
     /** Logged at each shot: the wither is the biggest, oddest body in the scene. */
     private static CarcassSavedData.Carcass witherShown;
     private static long moveAt;
+    /** The view whose picture shows bits breaking off the bloody blocks, and where they are thrown. */
+    private static int debrisView = -1;
+    private static BlockPos debrisAt;
     /** Server ticks to let the scene play before the first picture, and between pictures. */
     private static final int SETTLE = 400;
     private static final int SHOT_GAP = 40;
@@ -149,6 +152,8 @@ public final class DevShowcase {
                             }));
                         }
                         shot++;
+                    } else if (moved > shot && shot == debrisView && age - moveAt >= SHOT_GAP - 15) {
+                        debris(mc);
                     }
                 } else if (age - moveAt > SHOT_GAP + 20) {
                     stage = 3;
@@ -669,13 +674,32 @@ public final class DevShowcase {
                 new View(o.getX() - 4.5, eye + 1.0, decoZ - 3.1, 0, 25),
                 // the steel rack and a table on its own
                 new View(o.getX() - 1.5, eye + 0.5, decoZ - 2.2, 0, 20),
+                // that table's front under the crosshair: its outline should hug the drawn top
+                new View(o.getX() - 0.5, eye, decoZ - 1.5, 0, 28),
                 // inside the ribcage
                 new View(o.getX() + 3.0, eye + 0.2, decoZ - 3.0, 0, 5),
                 // bone piles and the bloody brass and copper casings
                 new View(o.getX() + 10.0, eye + 1.2, decoZ - 4.0, 0, 18),
+                // the bits that fly off the bloody blocks when broken, thrown in mid-air just before the shot
+                new View(o.getX() + 0.5, eye, decoZ + 8.0, 0, 0),
                 // gut chains riding the chain conveyor
                 new View(o.getX() - 2.5, eye + 1.5, decoZ + 1.0, 0, -12));
+        debrisView = views.size() - 2;
+        debrisAt = new BlockPos(o.getX(), o.getY() + 1, decoZ + 13);
         BloodAndBones.LOGGER.info("[showcase] built at {}", o);
+    }
+
+    /**
+     * Client: bits flying off each bloody block as if it were broken, in a row in mid-air: bone pile, rib,
+     * brass, copper and andesite casing, gut chain. In bloodless mode they should come off clean.
+     */
+    private static void debris(Minecraft mc) {
+        net.minecraft.world.level.block.state.BlockState[] states = {BBBlocks.BONE_PILE.getDefaultState().setValue(com.avicagan.bloodandbones.decoration.BonePileBlock.LAYERS, 8),
+                BBBlocks.RIBCAGE_ARCH.getDefaultState(), BBBlocks.BLOODY_BRASS_CASING.getDefaultState(), BBBlocks.BLOODY_COPPER_CASING.getDefaultState(),
+                BBBlocks.BLOODY_CASING.getDefaultState(), BBBlocks.GUT_CHAIN.getDefaultState()};
+        for (int i = 0; i < states.length; i++) {
+            mc.particleEngine.destroy(debrisAt.offset(i * 2 - 5, 0, 0), states[i]);
+        }
     }
 
     /** The brief's decoration, laid out along one row from x - 7 to x + 12. */

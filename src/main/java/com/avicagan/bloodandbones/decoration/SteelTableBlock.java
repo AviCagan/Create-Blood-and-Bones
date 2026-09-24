@@ -42,7 +42,10 @@ public class SteelTableBlock extends Block implements IBE<SteelTableBlockEntity>
     /** Height of the top the item lies on, in pixels. */
     public static final float TOP = 15.0F;
 
-    private static final VoxelShape PLATE = Block.box(0, 13, 0, 16, 15, 16);
+    /** Where the top's underside is, in pixels: the model's top is 12 to 15 and its legs reach up to 12. */
+    private static final float UNDERSIDE = 12.0F;
+
+    private static final VoxelShape PLATE = Block.box(0, UNDERSIDE, 0, 16, TOP, 16);
     private final Map<BlockState, VoxelShape> shapes = new HashMap<>();
 
     public SteelTableBlock(Properties properties) {
@@ -80,16 +83,16 @@ public class SteelTableBlock extends Block implements IBE<SteelTableBlockEntity>
             shape = Shapes.or(shape, Block.box(15, 15, 0, 16, 16, 16));
         }
         if (leg(state, Direction.NORTH, Direction.WEST)) {
-            shape = Shapes.or(shape, Block.box(1, 0, 1, 3, 13, 3));
+            shape = Shapes.or(shape, Block.box(1, 0, 1, 3, UNDERSIDE, 3));
         }
         if (leg(state, Direction.NORTH, Direction.EAST)) {
-            shape = Shapes.or(shape, Block.box(13, 0, 1, 15, 13, 3));
+            shape = Shapes.or(shape, Block.box(13, 0, 1, 15, UNDERSIDE, 3));
         }
         if (leg(state, Direction.SOUTH, Direction.WEST)) {
-            shape = Shapes.or(shape, Block.box(1, 0, 13, 3, 13, 15));
+            shape = Shapes.or(shape, Block.box(1, 0, 13, 3, UNDERSIDE, 15));
         }
         if (leg(state, Direction.SOUTH, Direction.EAST)) {
-            shape = Shapes.or(shape, Block.box(13, 0, 13, 15, 13, 15));
+            shape = Shapes.or(shape, Block.box(13, 0, 13, 15, UNDERSIDE, 15));
         }
         return shape;
     }

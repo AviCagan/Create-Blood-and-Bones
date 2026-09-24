@@ -30,22 +30,27 @@ import net.minecraft.nbt.CompoundTag;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.world.InteractionHand;
 import net.minecraft.world.ItemInteractionResult;
+import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.EntityType;
 import net.minecraft.world.entity.animal.Cow;
 import net.minecraft.world.entity.item.ItemEntity;
 import net.minecraft.world.entity.player.Player;
+import net.minecraft.world.entity.projectile.ProjectileUtil;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.Items;
 import net.minecraft.world.item.context.UseOnContext;
 import net.minecraft.world.level.GameType;
 import net.minecraft.world.level.block.Block;
+import net.minecraft.world.level.block.Blocks;
 import net.minecraft.world.level.block.HorizontalDirectionalBlock;
 import net.minecraft.world.level.block.Rotation;
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.phys.AABB;
 import net.minecraft.world.phys.BlockHitResult;
+import net.minecraft.world.phys.EntityHitResult;
 import net.minecraft.world.phys.Vec3;
 import net.minecraft.world.phys.shapes.CollisionContext;
+import net.minecraft.world.phys.shapes.VoxelShape;
 import net.neoforged.neoforge.gametest.GameTestHolder;
 import net.neoforged.neoforge.gametest.PrefixGameTestTemplate;
 
@@ -61,9 +66,23 @@ public class DecorationTests {
         return helper.getLevel().getBlockState(pos).getShape(helper.getLevel(), pos).bounds().minY;
     }
 
+    /** The lowest and highest point, in blocks, that one of our block models draws, read from its file. */
+    private static double[] modelHeights(String model) {
+        try (var in = BloodAndBones.class.getResourceAsStream("/assets/bloodandbones/models/block/" + model + ".json")) {
+            var json = com.google.gson.JsonParser.parseReader(new java.io.InputStreamReader(in)).getAsJsonObject();
+            double[] heights = {16, 0};
+            for (var element : json.getAsJsonArray("elements")) {
+                heights[0] = Math.min(heights[0], element.getAsJsonObject().getAsJsonArray("from").get(1).getAsDouble());
+                heights[1] = Math.max(heights[1], element.getAsJsonObject().getAsJsonArray("to").get(1).getAsDouble());
+            }
+            return new double[]{heights[0] / 16.0, heights[1] / 16.0};
+        } catch (Exception e) {
+            throw new IllegalStateException("Could not read the model " + model, e);
+        }
+    }
+
     /**
-     * Picks up what a test dropped, so nothing is left lying about for the tests beside it (a courier
-     * minion's test counts the bones it carries home).
+     * Picks up what a test dropped, so nothing is left lying about for the tests beside it.
      */
     private static void clearDrops(GameTestHelper helper) {
         helper.killAllEntitiesOfClass(ItemEntity.class);
@@ -115,6 +134,20 @@ public class DecorationTests {
         }
         if (shapeBottom(helper, a) > 0.01 || shapeBottom(helper, d) > 0.01) {
             helper.fail("The ends of the run should reach the floor");
+        }
+        // the shape follows the model: the top as thick as it is drawn, and the legs reaching up to it
+        double[] top = modelHeights("steel_table_top");
+        double[] leg = modelHeights("steel_table_leg");
+        if (Math.abs(shapeBottom(helper, b) - top[0]) > 1.0e-6 || Math.abs(leg[1] - top[0]) > 1.0e-6) {
+            helper.fail("The table's shape should start where its drawn top does, at " + top[0] + ", not " + shapeBottom(helper, b));
+        }
+        VoxelShape withLegs = sa.getShape(helper.getLevel(), helper.absolutePos(a));
+        for (double y = 0.02; y < top[1]; y += 0.05) {
+            double at = y;
+            if (withLegs.toAabbs().stream().noneMatch(box -> box.contains(2 / 16.0, at, 2 / 16.0))) {
+                helper.fail("A leg should stand under the corner all the way up into the top, a gap at " + at);
+                break;
+            }
         }
         // turned a quarter clockwise on a contraption, the corner's joins turn with it
         BlockState turned = sc.rotate(Rotation.CLOCKWISE_90);
@@ -384,7 +417,12 @@ public class DecorationTests {
                 helper.fail("More Gut Chain should lengthen it to eight links and no more: " + chain[0].links() + " links, " + player.getMainHandItem().getCount() + " left");
             }
             if (chain[0].getBoundingBox().getYsize() < HangingGutChainEntity.MAX_LINKS) {
-                helper.fail("Its box should hang the string's length, to be hit anywhere along it");
+                helper.fail("Its box should hang the string's length");
+            }
+            if (java.util.Arrays.stream(chain[0].getParts()).filter(Entity::isPickable).count() != HangingGutChainEntity.MAX_LINKS
+                    || java.util.Arrays.stream(chain[0].getParts()).mapToDouble(part -> part.getBoundingBox().minY).min().orElse(0)
+                    > chain[0].getY() - HangingGutChainEntity.MAX_LINKS) {
+                helper.fail("Each of its eight links should be a hit box, down its whole length, to be hit anywhere along it");
             }
             // what a client makes of the synced data: a copy with the same length and box
             HangingGutChainEntity copy = BBEntities.HANGING_GUT_CHAIN.get().create(level);
@@ -438,9 +476,108 @@ public class DecorationTests {
     }
 
     /**
+     * A string hung across a section line (the game files entities by 16-block sections) is found by a player
+     * aiming at its lower end, below the line, as the game's own aim finds entities: more Gut Chain lengthens
+     * it and a hit takes it down. The string's own box, filed in the section above, is not found from there.
+     */
+    @GameTest(template = "empty", timeoutTicks = 20)
+    public static void gutChainIsHitBelowASectionLine(GameTestHelper helper) {
+        ServerLevel level = helper.getLevel();
+        BlockPos base = helper.absolutePos(new BlockPos(5, 0, 5));
+        // the chain two and a half blocks above the next section line up, so seven links hang well below it
+        int line = (Math.floorDiv(base.getY(), 16) + 1) * 16;
+        Vec3 top = new Vec3(base.getX() + 0.5, line + 2.5, base.getZ() + 0.5);
+        HangingGutChainEntity chain = BBEntities.HANGING_GUT_CHAIN.get().create(level);
+        chain.setLinks(HangingGutChainEntity.MAX_LINKS - 1);
+        chain.moveTo(top.x, top.y, top.z);
+        level.addFreshEntity(chain);
+        // a player below the line, two blocks off, looking level at the string's sixth link
+        Player player = helper.makeMockPlayer(GameType.SURVIVAL);
+        Vec3 aim = top.subtract(0, 5.5, 0);
+        player.moveTo(aim.x, aim.y - player.getEyeHeight(), aim.z - 2.0);
+        player.lookAt(EntityAnchorArgument.Anchor.EYES, aim);
+        player.setItemInHand(InteractionHand.MAIN_HAND, new ItemStack(BBBlocks.GUT_CHAIN.asItem()));
+        double range = Math.max(player.blockInteractionRange(), player.entityInteractionRange());
+        Vec3 eye = player.getEyePosition();
+        Vec3 view = player.getViewVector(1.0F);
+        AABB searched = player.getBoundingBox().expandTowards(view.scale(range)).inflate(1.0);
+        String problem = null;
+        if (level.getEntities((Entity) null, searched, e -> e == chain).size() != 0 || searched.maxY >= line) {
+            problem = "The test should look for the string from below the section line it hangs across";
+        } else {
+            EntityHitResult hit = ProjectileUtil.getEntityHitResult(player, eye, eye.add(view.scale(range)), searched,
+                    e -> !e.isSpectator() && e.isPickable(), range * range);
+            if (hit == null || !(hit.getEntity() instanceof HangingGutChainEntity.Link link) || link.getParent() != chain) {
+                problem = "A player aiming at the string below a section line should find it, found " + (hit == null ? "nothing" : hit.getEntity());
+            } else {
+                player.interactOn(hit.getEntity(), InteractionHand.MAIN_HAND);
+                if (chain.links() != HangingGutChainEntity.MAX_LINKS || !player.getMainHandItem().isEmpty()) {
+                    problem = "Gut Chain used on its lower end should lengthen the string, it has " + chain.links() + " links";
+                } else {
+                    player.attack(hit.getEntity());
+                    if (!chain.isRemoved()) {
+                        problem = "Hitting its lower end should take the string down";
+                    }
+                }
+            }
+        }
+        if (!chain.isRemoved()) {
+            chain.discard();
+        }
+        level.getEntitiesOfClass(ItemEntity.class, new AABB(top, top).inflate(2.0, 10.0, 2.0)).forEach(Entity::discard);
+        if (problem != null) {
+            helper.fail(problem);
+            return;
+        }
+        helper.succeed();
+    }
+
+    /**
+     * A client's copy of the string, fed the server's position once a tick as a client is, glides there a
+     * step each tick rather than jumping; and swinging behind a fast chain, all of it stays inside the box
+     * it is culled by, though it trails out of its straight-down box.
+     */
+    @GameTest(template = "empty", timeoutTicks = 20)
+    public static void gutChainGlidesOnClients(GameTestHelper helper) {
+        HangingGutChainEntity copy = BBEntities.HANGING_GUT_CHAIN.get().create(helper.getLevel());
+        copy.setLinks(HangingGutChainEntity.MAX_LINKS);
+        Vec3 start = Vec3.atCenterOf(helper.absolutePos(new BlockPos(2, 12, 5)));
+        copy.moveTo(start.x, start.y, start.z);
+        // blocks a tick: a chain conveyor at 256 RPM
+        double speed = 0.7;
+        for (int t = 1; t <= 60; t++) {
+            // a move packet, then the client's tick
+            copy.lerpTo(start.x + speed * t, start.y, start.z, 0.0F, 0.0F, 3);
+            copy.setOldPosAndRot();
+            copy.clientTick();
+            double step = copy.getX() - copy.xo;
+            if (t > 20 && Math.abs(step - speed) > 0.05) {
+                helper.fail("A client's copy should move smoothly at the chain's speed, it moved " + step + " on tick " + t);
+                return;
+            }
+            AABB culled = copy.cullingBox();
+            for (float partialTick : new float[]{0.0F, 0.5F, 1.0F}) {
+                for (Vec3 joint : copy.drawnJoints(partialTick)) {
+                    if (!culled.contains(joint)) {
+                        helper.fail("The string is drawn outside the box it is culled by, at " + joint + " on tick " + t);
+                        return;
+                    }
+                }
+            }
+        }
+        Vec3[] joints = copy.drawnJoints(1.0F);
+        if (copy.getBoundingBox().inflate(1.0).contains(joints[joints.length - 1])) {
+            helper.fail("Behind a fast chain the string should trail out of its straight-down box, its end is at " + joints[joints.length - 1]);
+            return;
+        }
+        helper.succeed();
+    }
+
+    /**
      * On a Create contraption, the new blocks move and keep what they hold: a Mechanical Piston pushes a
-     * table with an item on it, a rack with things on its shelves, a rib, both bloody casings and a bone
-     * pile lying on one of them two blocks along, and they are set down whole.
+     * table with an item on it, a rack with things on its shelves, a rib, both bloody casings, a bone pile
+     * lying on one of them and a stone the pile pushes in front of it (with a single layer of bones on top,
+     * which has no collision) two blocks along, and they are set down whole.
      */
     @GameTest(template = "empty", timeoutTicks = 200)
     public static void decorationRidesAContraption(GameTestHelper helper) {
@@ -457,8 +594,12 @@ public class DecorationTests {
         helper.setBlock(new BlockPos(4, y, z), BBBlocks.STEEL_RACK.getDefaultState().setValue(HorizontalDirectionalBlock.FACING, Direction.NORTH));
         helper.setBlock(new BlockPos(5, y, z), BBBlocks.RIBCAGE_ARCH.getDefaultState().setValue(HorizontalDirectionalBlock.FACING, Direction.NORTH));
         helper.setBlock(new BlockPos(6, y, z), BBBlocks.BLOODY_BRASS_CASING.getDefaultState());
-        helper.setBlock(new BlockPos(6, y + 1, z), BBBlocks.BONE_PILE.getDefaultState().setValue(BonePileBlock.LAYERS, 1));
         helper.setBlock(new BlockPos(7, y, z), BBBlocks.BLOODY_COPPER_CASING.getDefaultState());
+        // a pile the stone in front of it runs into unless the pile pushes it (Create would count a brittle
+        // block as holding nothing up on any side), and a single layer on that stone
+        helper.setBlock(new BlockPos(6, y + 1, z), BBBlocks.BONE_PILE.getDefaultState().setValue(BonePileBlock.LAYERS, 3));
+        helper.setBlock(new BlockPos(7, y + 1, z), Blocks.STONE);
+        helper.setBlock(new BlockPos(7, y + 2, z), BBBlocks.BONE_PILE.getDefaultState().setValue(BonePileBlock.LAYERS, 1));
         Cow cow = helper.spawn(EntityType.COW, new BlockPos(8, 2, 1));
         CarcassSavedData.Carcass carcass = CarcassAssembler.assemble(cow, null);
         cow.discard();
@@ -483,15 +624,18 @@ public class DecorationTests {
             helper.assertBlockPresent(BBBlocks.STEEL_RACK.get(), new BlockPos(6, y, z));
             helper.assertBlockPresent(BBBlocks.RIBCAGE_ARCH.get(), new BlockPos(7, y, z));
             helper.assertBlockPresent(BBBlocks.BLOODY_BRASS_CASING.get(), new BlockPos(8, y, z));
-            helper.assertBlockPresent(BBBlocks.BONE_PILE.get(), new BlockPos(8, y + 1, z));
+            helper.assertBlockProperty(new BlockPos(8, y + 1, z), BonePileBlock.LAYERS, 3);
             helper.assertBlockPresent(BBBlocks.BLOODY_COPPER_CASING.get(), new BlockPos(9, y, z));
+            helper.assertBlockPresent(Blocks.STONE, new BlockPos(9, y + 1, z));
+            helper.assertBlockProperty(new BlockPos(9, y + 2, z), BonePileBlock.LAYERS, 1);
             helper.assertBlockNotPresent(BBBlocks.BONE_PILE.get(), new BlockPos(6, y + 1, z));
+            helper.assertBlockNotPresent(BBBlocks.BONE_PILE.get(), new BlockPos(7, y + 2, z));
             SteelTableBlockEntity table = (SteelTableBlockEntity) level.getBlockEntity(helper.absolutePos(new BlockPos(5, y, z)));
             SteelRackBlockEntity moved = (SteelRackBlockEntity) level.getBlockEntity(helper.absolutePos(new BlockPos(6, y, z)));
             helper.assertTrue(table != null && ItemStack.isSameItemSameComponents(table.specimen(), head), "the table lost its piece on the way");
             helper.assertTrue(moved != null && moved.item(0).is(Items.DIAMOND) && moved.item(3).is(BBItems.OFFAL.get()), "the rack lost its things on the way");
-            // nothing fell off and dropped on the way
-            helper.assertTrue(level.getEntitiesOfClass(ItemEntity.class, new AABB(helper.absolutePos(BlockPos.ZERO)).inflate(12)).isEmpty(), "something dropped on the way");
+            // nothing fell off and dropped on the way (looking in this test's own ground, not its neighbours')
+            helper.assertTrue(level.getEntitiesOfClass(ItemEntity.class, helper.getBounds()).isEmpty(), "something dropped on the way");
         });
     }
 

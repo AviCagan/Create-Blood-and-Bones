@@ -176,7 +176,8 @@ Everything below is in development builds only; the art is placeholder (see the 
 ### Presentation
 
 - Bloodless mode (a client setting, or the `bloodandbonesBloodless` game rule for everyone): no
-  blood drops or stains, skinned carcasses pale, the hook in a carcass and the machines clean, blood
+  blood drops or stains, skinned carcasses pale, the hook in a carcass and the machines clean (and
+  the bits that fly off them when broken), blood
   a muddy brown, the Gut Chain plain cord, and names and descriptions reworded (Blood Steel reads as
   Essence Steel, the Bleeding Rack as the Draining Rack).
 - The mod's own sounds with subtitles ("Carcass thuds", "Bone snaps", "Blade falls"...), playing

@@ -724,7 +724,8 @@ dragon and tropical fish, middle-sized (size 2) slimes, and final art.
   blood stains (baked model wrapper), the flesh texture of a skinned carcass (a pale bloodless copy), the
   hook drawn in a carcass (the clean model), and the machines' bloody casings, blades, saw, roller and
   Mangler top (`BloodlessSwap` re-points each quad's UVs from the bloody sprite to a clean one, for block
-  and item models; the clean textures are the bloody ones with the red taken out), and the blood fluid,
+  and item models; the clean textures are the bloody ones with the red taken out; it swaps the model's
+  particle texture too, so the bits that fly off when one is broken, dug, run or landed on are clean), and the blood fluid,
   drawn a muddy brown in the world, tanks, pipes and buckets (`TintedFluidType` picks its tint per
   frame).
 - Names and descriptions: `BloodlessLanguage` wraps the game's language (`Language.inject`, and I18n's
@@ -906,7 +907,8 @@ description in `BBLang`, a place in the creative tab and JEI information pages (
   always, a raised lip along each side that joins nothing (and its corner piece when either side of the
   corner is open), and a leg in a corner only when neither side of that corner joins. So a straight run
   stands on legs at its two ends, a turn has one leg on its outside corner, and a table in the middle has
-  none; the block's shape follows the same rule. Turning the block (a contraption, a structure block)
+  none; the block's shape follows the same rule and the model's heights (the top 12 to 15 pixels, the
+  legs up to it; the test reads them from the model files). Turning the block (a contraption, a structure block)
   turns the joins, as a fence's do. It holds one item, any item, reusing the Specimen Jar's block entity:
   put on by clicking the top (clicking a side places a held block as usual, so a run can be built out),
   taken back with an empty hand, loaded and emptied by funnels and hoppers through a one-slot item
@@ -947,12 +949,21 @@ description in `BBLang`, a place in the creative tab and JEI information pages (
   and drops all its links (none for a creative player). A broken chain drops it the same way. The chain is
   found with `ChainPicker`, which now works on either side: the client asks too, and when the chain is
   nearer than the block behind it, it does not place the held Gut Chain on that block. The length is
-  synced entity data, so every client draws the right length and its hit box hangs the string's full
-  length; the position follows the usual entity tracking, every tick. Each client swings its own copy of
+  synced entity data, so every client draws the right length. Each link is a hit box of its own, a
+  NeoForge part entity (`HangingGutChainEntity.Link`, as the Ender Dragon's parts), passing hits and
+  clicks on to the string: the game files an entity under the 16-block section its position is in and a
+  search for entities looks only a little below its box, so one long box hanging from the chain was
+  missed by a player or an arrow aiming at its lower end once that hung below a section line. Parts are
+  kept in a list of their own that every search looks through. The position follows the usual entity
+  tracking, every tick, and a client glides to each new position over a few ticks (`lerpTo`, as a
+  minecart), so it moves smoothly between ticks. Each client swings its own copy of
   the string (a Verlet rope, two joints a link, the top held on the chain, gravity and air drag), so it
   trails and sways as it goes round wheels and stops; the swinging is drawn only, never simulated on the
-  server. Drawn with the Gut Chain block's texture as two crossed strips four pixels wide, bending at
-  each joint; the plain cord texture in bloodless mode, and "Hanging Cord Chain" as its name.
+  server, and the renderer culls by a box round the swinging joints, since on a fast chain the string
+  trails several blocks behind its top. Drawn with the Gut Chain block's texture as two crossed strips four pixels wide, bending at
+  each joint; the plain cord texture in bloodless mode, and "Hanging Cord Chain" as its name. The hit
+  boxes hang straight down, so a string trailing behind a fast chain is hit where it would hang, not
+  where it is drawn.
   Not done: a chain conveyor on a Sable sub-level, as for trolleys (§13.11); a conveyor moved by a
   contraption drops its strings.
 - Blood-stained cladding: Bloody Brass Casing and Bloody Copper Casing, made exactly as the Bloody
@@ -961,24 +972,35 @@ description in `BBLang`, a place in the creative tab and JEI information pages (
   Create's own brass and copper casing sheets (copied out of the Create jar) with blood drips and splats
   painted over each tile. In bloodless mode they show as Create's plain brass and copper casings
   (`BloodlessSwap.CLADDING`, wrapped after Create's connected textures like the Bloody Casing), named
-  "Stained Brass Casing" and "Stained Copper Casing".
+  "Stained Brass Casing" and "Stained Copper Casing"; the bits that fly off them when broken are the
+  plain casings' too (the showcase throws them in mid-air to check).
 - On contraptions: the table, rack, rib and casings are ordinary solid blocks, and the table's and rack's
   item handlers are not a plain `ItemStackHandler`, so Create carries their contents as block data rather
   than as the contraption's storage. A bone pile lies on the block below as a carpet does: attached
   downwards and brittle (`BBMovementChecks`), which also makes a single layer, which has no collision,
-  move at all. `decorationRidesAContraption` pushes a table with a carcass piece on it, a rack with two
-  things on it, a rib, both new casings and a bone pile on one of them two blocks with a Mechanical
+  move at all. Create counts a brittle block as holding nothing up on any side, so a pile would not push
+  the block in front of it and the piston stalled against it; as Create does for carpets, only a pile's
+  top holds nothing up (a full pile's top does). `decorationRidesAContraption` pushes a table with a
+  carcass piece on it, a rack with two things on it, a rib, both new casings, a three-layer pile on one of
+  them and a stone that pile pushes, with a single layer on that stone, two blocks with a Mechanical
   Piston, and checks they are set down whole with nothing dropped.
+  Not done: a pile right in front of a piston's head is not picked up, since Create's piston makes that
+  exception for its own carpets only (as for a torch there): a single layer is broken by the head,
+  dropping its bones, and a thicker pile stops the piston. Tried in a game test, not guessed.
 - Tests (`DecorationTests`): `steelTablesJoinIntoARun`, `steelTableHoldsOneItem`,
   `steelRackPlacesWhatYouLookAt`, `ribcageArchesShapeThemselves`, `bonePilesLayerUp`,
   `gutChainRidesAChainConveyor` (a player aims at the chain and hangs a link, lengthens it past eight,
   a client's copy gets the length from the synced data, it saves and loads, it rides the moving chain,
-  and hit it drops eight links), `decorationRidesAContraption`, `bloodyCladdingRecipes`; the recipes are in
-  `recipesLoad`. The tests pick up what they drop before they finish: once, before they did, the minion
-  test `courierCarries` failed, most likely by carrying one of their bones home (it wants exactly three
-  in its chest, and its courier looks 10 blocks round). Looked at in the showcase, normal and bloodless (row E: a run of tables and a rack with
-  things on them, four rib arches, piles of each height, the casings beside Create's own, and gut chains
-  riding a turning conveyor).
+  and hit it drops eight links), `gutChainIsHitBelowASectionLine` (a string hung across a section line,
+  aimed at from below the line the way the game aims: found, lengthened and taken down),
+  `gutChainGlidesOnClients` (a client's copy fed a position a tick moves at the chain's speed every tick,
+  and trailing behind a fast chain stays inside its culling box), `decorationRidesAContraption`,
+  `bloodyCladdingRecipes`; the recipes are in `recipesLoad`. The tests pick up what they drop before they
+  finish, to keep their ground tidy. The minion test `courierCarries` timed out once in an earlier run;
+  the cause is not known. It was not these tests' bones: from a neighbouring test's ground they land at
+  least 15 blocks from its courier's home along x or z, and it looks 10 blocks round. Looked at in the showcase, normal and bloodless (row E: a run of tables and a rack with
+  things on them, four rib arches, piles of each height, the casings beside Create's own, gut chains
+  riding a turning conveyor, and the bits that fly off each bloody block when broken, thrown in mid-air).
 
 ---
 

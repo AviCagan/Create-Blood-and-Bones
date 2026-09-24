@@ -88,9 +88,10 @@ public class HangingGutChainRenderer extends EntityRenderer<HangingGutChainEntit
                 .setOverlay(OverlayTexture.NO_OVERLAY).setLight(light).setNormal(pose, (float) normal.x, (float) normal.y, (float) normal.z);
     }
 
+    /** Culled by where the string swings, not its straight-down box: on a fast chain it trails well behind its top. */
     @Override
     public boolean shouldRender(HangingGutChainEntity entity, Frustum frustum, double x, double y, double z) {
-        return frustum.isVisible(entity.getBoundingBox().inflate(1.0));
+        return frustum.isVisible(entity.cullingBox());
     }
 
     @Override
