@@ -427,7 +427,10 @@ public final class TraitEvents {
 
     // ---- reactions
 
-    /** Mobs a trait makes hunt or flee whoever carries it get the goal as they join the world. */
+    /**
+     * Mobs a trait makes hunt, flee or defend whoever carries it get the goal as they join the world. A friendly
+     * reaction needs no goal: the mobs are kept off the carrier where they take aim ({@code SocialEffects#onChangeTarget}).
+     */
     @SubscribeEvent
     public static void onJoin(EntityJoinLevelEvent event) {
         if (event.getLevel().isClientSide || !(event.getEntity() instanceof Mob mob)) {
@@ -444,6 +447,8 @@ public final class TraitEvents {
                     } else if ("hunt".equals(reaction.mode())) {
                         mob.targetSelector.addGoal(2, new NearestAttackableTargetGoal<>(mob, Player.class, 10, true, false,
                                 living -> ActiveTraits.peek(living).level(id) > 0 && !((Player) living).isCreative()));
+                    } else if ("defend".equals(reaction.mode())) {
+                        mob.targetSelector.addGoal(1, new com.avicagan.bloodandbones.parts.effect.SocialGoals.DefendHost(mob, id, reaction.radius()));
                     }
                 }
             }

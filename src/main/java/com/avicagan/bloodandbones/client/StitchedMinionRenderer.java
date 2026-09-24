@@ -44,7 +44,8 @@ public class StitchedMinionRenderer extends EntityRenderer<MinionEntity> {
         // entity models are drawn upside down, their ground at 24 pixels (as LivingEntityRenderer does)
         ms.scale(-1.0F, -1.0F, 1.0F);
         ms.translate(0.0F, -1.501F, 0.0F);
-        StitchedBody.draw(layout, motion, lying, tint, ms, buffers, light);
+        // a glowing minion (the glow trait) shines whatever the dark round it
+        StitchedBody.draw(layout, motion, lying, tint, ms, buffers, com.avicagan.bloodandbones.client.effect.SocialClient.minionLight(minion, light));
         ms.popPose();
         if (minion.isSaddled() && !lying) {
             // a plain saddle thrown over its back

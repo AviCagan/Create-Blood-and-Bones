@@ -113,8 +113,7 @@ public final class MotionEffects {
         BBLang.trait("trample", "Trample", "A minion breaks through leaves, grass and flowers in its way (where the server allows minions to break blocks).");
         BBLang.trait("lava_walk", "Lava Walker", "A minion walks on lava as a strider does, and fire does not hurt it.");
         BBLang.trait("ender_mask", "Ender Mask", "Endermen do not mind being looked at.");
-        BBLang.trait("ender_calm", "Ender Calm", "Endermen never go for the minion.");
-        BBLang.trait("piglin_kin", "Piglin Kin", "Piglins take you for one of their own, as if you wore gold.");
+        // ender_calm and piglin_kin are worded with the other kin traits, in SocialEffects.
         BBLang.trait("inverted_healing", "Inverted Healing", "Healing potions hurt you and harming potions heal you, as with the undead.");
         BBLang.trait("insulated", "Insulated", "Freezing does not hurt you, and you walk on powder snow (worn on carcass boots).");
         BBLang.trait("evasive", "Evasive", "A chance to twist aside from a blow: a tenth a level.");

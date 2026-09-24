@@ -1,0 +1,21 @@
+{
+  "name": "trait.bloodandbones.wither_aura",
+  "max_level": 1,
+  "effects": [
+    {
+      "trigger": "passive",
+      "effect": {
+        "type": "bloodandbones:aura",
+        "action": "mob_effect",
+        "effect": "minecraft:wither",
+        "duration": 60,
+        "radius": 4,
+        "interval": 40,
+        "filter": "others",
+        "particle": {
+          "type": "minecraft:smoke"
+        }
+      }
+    }
+  ]
+}

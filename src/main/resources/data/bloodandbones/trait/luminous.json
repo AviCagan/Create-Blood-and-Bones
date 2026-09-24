@@ -1,0 +1,13 @@
+{
+  "name": "trait.bloodandbones.luminous",
+  "max_level": 1,
+  "effects": [
+    {
+      "trigger": "passive",
+      "effect": {
+        "type": "bloodandbones:glow",
+        "colour": "#5fe8c8"
+      }
+    }
+  ]
+}

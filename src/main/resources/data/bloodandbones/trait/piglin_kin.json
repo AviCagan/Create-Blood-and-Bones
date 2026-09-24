@@ -8,6 +8,17 @@
         "type": "bloodandbones:flag",
         "flag": "piglin_neutral"
       }
+    },
+    {
+      "trigger": "passive",
+      "effect": {
+        "type": "bloodandbones:kin",
+        "entities": [
+          "minecraft:piglin",
+          "minecraft:piglin_brute"
+        ],
+        "provoked_seconds": 30
+      }
     }
   ]
 }

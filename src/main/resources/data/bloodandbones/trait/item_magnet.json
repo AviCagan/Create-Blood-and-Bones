@@ -1,0 +1,19 @@
+{
+  "name": "trait.bloodandbones.item_magnet",
+  "max_level": 3,
+  "effects": [
+    {
+      "trigger": "passive",
+      "effect": {
+        "type": "bloodandbones:aura",
+        "action": "pull_items",
+        "radius": {
+          "type": "minecraft:linear",
+          "base": 5,
+          "per_level_above_first": 2
+        },
+        "interval": 20
+      }
+    }
+  ]
+}

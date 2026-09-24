@@ -1,0 +1,14 @@
+{
+  "name": "trait.bloodandbones.tremor_sense",
+  "max_level": 1,
+  "effects": [
+    {
+      "trigger": "passive",
+      "effect": {
+        "type": "bloodandbones:sense",
+        "kind": "tremor",
+        "range": 16
+      }
+    }
+  ]
+}

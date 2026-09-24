@@ -1,0 +1,21 @@
+{
+  "name": "trait.bloodandbones.glow_aura",
+  "max_level": 1,
+  "effects": [
+    {
+      "trigger": "passive",
+      "effect": {
+        "type": "bloodandbones:aura",
+        "action": "mob_effect",
+        "effect": "minecraft:glowing",
+        "duration": 60,
+        "radius": 8,
+        "interval": 40,
+        "filter": "hostile",
+        "particle": {
+          "type": "minecraft:glow"
+        }
+      }
+    }
+  ]
+}

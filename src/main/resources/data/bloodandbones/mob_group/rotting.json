@@ -41,7 +41,8 @@
         {
           "trait": "bloodandbones:brawler",
           "level": 2
-        }
+        },
+        "bloodandbones:dead_face"
       ]
     }
   }

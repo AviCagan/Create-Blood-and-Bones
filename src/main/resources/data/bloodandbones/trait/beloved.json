@@ -1,0 +1,23 @@
+{
+  "name": "trait.bloodandbones.beloved",
+  "max_level": 1,
+  "effects": [
+    {
+      "trigger": "passive",
+      "effect": {
+        "type": "bloodandbones:reaction",
+        "entities": "bloodandbones:friendly_beloved",
+        "mode": "friendly"
+      }
+    },
+    {
+      "trigger": "passive",
+      "effect": {
+        "type": "bloodandbones:reaction",
+        "entities": "bloodandbones:defends_beloved",
+        "mode": "defend",
+        "radius": 16
+      }
+    }
+  ]
+}

@@ -1,15 +1,12 @@
 {
-  "name": "trait.bloodandbones.ender_calm",
+  "name": "trait.bloodandbones.skeleton_kin",
   "max_level": 1,
-  "contexts": [
-    "minion"
-  ],
   "effects": [
     {
       "trigger": "passive",
       "effect": {
         "type": "bloodandbones:kin",
-        "entities": "minecraft:enderman",
+        "entities": "#minecraft:skeletons",
         "provoked_seconds": 30
       }
     }

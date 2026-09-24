@@ -235,6 +235,11 @@ Everything below is in development builds only; the art is placeholder (see the 
   stains the ground ("Leaking", with grey sparks, in bloodless mode, and on anything with no blood). A squid organ's ink
   now puffs out a real cloud.
 - Hold Ctrl over a carcass piece to read what its traits do, for traits that say.
+- Social traits: kin (zombies, skeletons, raiders or piglins take you for one of their own until you hurt one),
+  golems that trust and defend you, senses that outline creatures through walls for you alone (echolocation's wet
+  click, tremors, the scent of blood, the invisible) and an alert with which way to look when something takes aim,
+  pack hunting, auras (a purr that heals your minions, an item magnet, a calm, a roar, a horde called to your
+  defence, poison, wither and fatigue), and glowing armour pieces and minions.
 
 ### Presentation
 

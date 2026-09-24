@@ -1,0 +1,38 @@
+{
+  "name": "trait.bloodandbones.play_dead",
+  "max_level": 1,
+  "effects": [
+    {
+      "trigger": "hurt",
+      "cooldown": 1200,
+      "requirements": {
+        "condition": "bloodandbones:health_below",
+        "fraction": 0.25
+      },
+      "effect": {
+        "type": "bloodandbones:mob_effect",
+        "effect": "minecraft:regeneration",
+        "amplifier": 1,
+        "duration": 100,
+        "target": "self"
+      }
+    },
+    {
+      "trigger": "hurt",
+      "cooldown": 1200,
+      "requirements": {
+        "condition": "bloodandbones:health_below",
+        "fraction": 0.25
+      },
+      "effect": {
+        "type": "bloodandbones:aura",
+        "action": "calm",
+        "radius": 16,
+        "duration": 100,
+        "filter": "hostile",
+        "sound": "minecraft:entity.axolotl.hurt",
+        "pitch": 0.7
+      }
+    }
+  ]
+}
