@@ -111,6 +111,8 @@ public final class DevShowcase {
                 if (mc.player != null && mc.level != null && mc.getSingleplayerServer() != null && ++ticks > 60) {
                     stage = 2;
                     ticks = 0;
+                    // the movement tutorial's toast would cover a corner of every picture
+                    mc.getTutorial().setStep(net.minecraft.client.tutorial.TutorialSteps.NONE);
                     MinecraftServer server = mc.getSingleplayerServer();
                     ServerPlayer player = server.getPlayerList().getPlayers().get(0);
                     origin = player.blockPosition();
@@ -203,6 +205,11 @@ public final class DevShowcase {
                                 BBBlocks.BLOODY_CASING.asStack().getHoverName().getString(),
                                 com.avicagan.bloodandbones.registry.BBFluids.blood().getFluidType().getDescription().getString(),
                                 net.minecraft.client.resources.language.I18n.get("block.bloodandbones.bleeding_rack.tooltip.summary"));
+                        BloodAndBones.LOGGER.info("[showcase] decoration names: {} | {} | {} | {}",
+                                BBBlocks.BLOODY_BRASS_CASING.asStack().getHoverName().getString(),
+                                BBBlocks.GUT_CHAIN.asStack().getHoverName().getString(),
+                                com.avicagan.bloodandbones.registry.BBEntities.HANGING_GUT_CHAIN.get().getDescription().getString(),
+                                net.minecraft.client.resources.language.I18n.get("block.bloodandbones.ribcage_arch.tooltip.summary"));
                         // what Create's Attribute Filter offers for a pig's head, as the player reads it
                         ItemStack head = new ItemStack(BBItems.CARCASS_PIECE.get());
                         head.set(com.avicagan.bloodandbones.registry.BBDataComponents.PIECE.get(), new CarcassPieceItem.Piece(
@@ -628,6 +635,10 @@ public final class DevShowcase {
             }
         }
 
+        // row E, the brief's decoration: morgue furniture, a ribcage, bone piles, bloody cladding, gut chain on a conveyor
+        int decoZ = o.getZ() + 34;
+        decoration(level, o, decoZ, jarPig, roastCow);
+
         double eye = o.getY();
         views = List.of(
                 // carcasses, from behind the row
@@ -653,8 +664,116 @@ public final class DevShowcase {
                 // the foal beside a grown horse, and a baby llama
                 new View(o.getX() + 8.5, eye + 1.2, o.getZ() - 2.0, 0, 18),
                 // bloody casing and butcher's hooks
-                new View(o.getX() - 1.0, eye + 1.0, wallZ - 4.0, 0, 8));
+                new View(o.getX() - 1.0, eye + 1.0, wallZ - 4.0, 0, 8),
+                // steel tables in a run, turning a corner
+                new View(o.getX() - 4.5, eye + 1.0, decoZ - 3.1, 0, 25),
+                // the steel rack and a table on its own
+                new View(o.getX() - 1.5, eye + 0.5, decoZ - 2.2, 0, 20),
+                // inside the ribcage
+                new View(o.getX() + 3.0, eye + 0.2, decoZ - 3.0, 0, 5),
+                // bone piles and the bloody brass and copper casings
+                new View(o.getX() + 10.0, eye + 1.2, decoZ - 4.0, 0, 18),
+                // gut chains riding the chain conveyor
+                new View(o.getX() - 2.5, eye + 1.5, decoZ + 1.0, 0, -12));
         BloodAndBones.LOGGER.info("[showcase] built at {}", o);
+    }
+
+    /** The brief's decoration, laid out along one row from x - 7 to x + 12. */
+    private static void decoration(ServerLevel level, BlockPos o, int z, CarcassSavedData.Carcass pig, CarcassSavedData.Carcass cow) {
+        int y = o.getY();
+        // a run of steel tables turning a corner, and one on its own; things laid on them
+        List<BlockPos> tables = List.of(new BlockPos(o.getX() - 7, y, z), new BlockPos(o.getX() - 6, y, z), new BlockPos(o.getX() - 5, y, z),
+                new BlockPos(o.getX() - 5, y, z + 1), new BlockPos(o.getX() - 1, y, z));
+        for (BlockPos at : tables) {
+            level.setBlockAndUpdate(at, BBBlocks.STEEL_TABLE.getDefaultState());
+        }
+        for (BlockPos at : tables) {
+            level.setBlockAndUpdate(at, net.minecraft.world.level.block.Block.updateFromNeighbourShapes(level.getBlockState(at), level, at));
+        }
+        ItemStack[] onTables = {pig == null ? ItemStack.EMPTY : CarcassPieceItem.of(pig, "head"), new ItemStack(BBItems.HEART.get()),
+                cow == null ? ItemStack.EMPTY : CarcassPieceItem.of(cow, "body"), new ItemStack(net.minecraft.world.item.Items.BONE),
+                new ItemStack(net.minecraft.world.item.Items.SKELETON_SKULL)};
+        for (int i = 0; i < tables.size(); i++) {
+            if (level.getBlockEntity(tables.get(i)) instanceof com.avicagan.bloodandbones.decoration.SteelTableBlockEntity table && !onTables[i].isEmpty()) {
+                table.put(onTables[i]);
+            }
+        }
+        // a rack beside them, a part on each place
+        BlockPos rackPos = new BlockPos(o.getX() - 3, y, z);
+        level.setBlockAndUpdate(rackPos, BBBlocks.STEEL_RACK.getDefaultState().setValue(net.minecraft.world.level.block.HorizontalDirectionalBlock.FACING, Direction.NORTH));
+        if (level.getBlockEntity(rackPos) instanceof com.avicagan.bloodandbones.decoration.SteelRackBlockEntity rack) {
+            ItemStack[] parts = {pig == null ? ItemStack.EMPTY : CarcassPieceItem.of(pig, "right_front_leg"), new ItemStack(BBItems.OFFAL.get()),
+                    new ItemStack(BBItems.HEART.get()), cow == null ? ItemStack.EMPTY : CarcassPieceItem.of(cow, "head")};
+            for (int slot = 0; slot < parts.length; slot++) {
+                rack.put(slot, parts[slot]);
+            }
+        }
+        // a ribcage: four arches in a row, two stacks of three facing each other with two level ribs between
+        List<BlockPos> ribs = new java.util.ArrayList<>();
+        for (int dz = 0; dz < 4; dz++) {
+            for (int dy = 0; dy < 3; dy++) {
+                place(level, ribs, new BlockPos(o.getX() + 1, y + dy, z + dz), Direction.EAST);
+                place(level, ribs, new BlockPos(o.getX() + 4, y + dy, z + dz), Direction.WEST);
+            }
+            place(level, ribs, new BlockPos(o.getX() + 2, y + 2, z + dz), Direction.EAST);
+            place(level, ribs, new BlockPos(o.getX() + 3, y + 2, z + dz), Direction.WEST);
+        }
+        for (BlockPos at : ribs) {
+            level.setBlockAndUpdate(at, net.minecraft.world.level.block.Block.updateFromNeighbourShapes(level.getBlockState(at), level, at));
+        }
+        // bones heaped on its floor, and piles of each height beside it, one full with more on top
+        pile(level, new BlockPos(o.getX() + 2, y, z + 1), 2);
+        pile(level, new BlockPos(o.getX() + 3, y, z + 2), 1);
+        int[] heights = {1, 3, 5, 8};
+        for (int i = 0; i < heights.length; i++) {
+            pile(level, new BlockPos(o.getX() + 7 + i, y, z), heights[i]);
+        }
+        pile(level, new BlockPos(o.getX() + 10, y + 1, z), 3);
+        // bloody brass and copper casing, each beside Create's own
+        for (int dy = 0; dy < 2; dy++) {
+            for (int dx = 0; dx < 6; dx++) {
+                BlockEntry<?> casing = switch (dx) {
+                    case 0, 1 -> BBBlocks.BLOODY_BRASS_CASING;
+                    case 2 -> AllBlocks.BRASS_CASING;
+                    case 3, 4 -> BBBlocks.BLOODY_COPPER_CASING;
+                    default -> AllBlocks.COPPER_CASING;
+                };
+                level.setBlockAndUpdate(new BlockPos(o.getX() + 7 + dx, y + dy, z + 3), casing.getDefaultState());
+            }
+        }
+        // a chain conveyor overhead, turning, with gut chains of two, three and four links riding it
+        BlockPos a = new BlockPos(o.getX() - 7, y + 4, z + 6);
+        BlockPos b = new BlockPos(o.getX() + 1, y + 4, z + 6);
+        level.setBlockAndUpdate(a, AllBlocks.CHAIN_CONVEYOR.getDefaultState());
+        level.setBlockAndUpdate(b, AllBlocks.CHAIN_CONVEYOR.getDefaultState());
+        level.setBlockAndUpdate(a.above(), AllBlocks.CREATIVE_MOTOR.getDefaultState().setValue(DirectionalKineticBlock.FACING, Direction.DOWN));
+        if (level.getBlockEntity(a) instanceof com.simibubi.create.content.kinetics.chainConveyor.ChainConveyorBlockEntity aBe
+                && level.getBlockEntity(b) instanceof com.simibubi.create.content.kinetics.chainConveyor.ChainConveyorBlockEntity bBe) {
+            // a conveyor just placed has not worked out its strands yet
+            aBe.prepareStats();
+            bBe.prepareStats();
+            bBe.addConnectionTo(a);
+            aBe.addConnectionTo(b);
+            if (level.getBlockEntity(a.above()) instanceof CreativeMotorBlockEntity motor) {
+                motor.generatedSpeed.setValue(24);
+            }
+            aBe.prepareStats();
+            float[] along = {1.5F, 4.0F, 6.5F};
+            int[] links = {2, 3, 4};
+            for (int i = 0; i < along.length; i++) {
+                var cursor = new com.avicagan.bloodandbones.carcass.trolley.ChainCursor(a, b.subtract(a), along[i], aBe.reversed);
+                level.addFreshEntity(com.avicagan.bloodandbones.decoration.HangingGutChainEntity.create(level, cursor, links[i]));
+            }
+        }
+    }
+
+    private static void place(ServerLevel level, List<BlockPos> placed, BlockPos at, Direction facing) {
+        level.setBlockAndUpdate(at, BBBlocks.RIBCAGE_ARCH.getDefaultState().setValue(net.minecraft.world.level.block.HorizontalDirectionalBlock.FACING, facing));
+        placed.add(at);
+    }
+
+    private static void pile(ServerLevel level, BlockPos at, int layers) {
+        level.setBlockAndUpdate(at, BBBlocks.BONE_PILE.getDefaultState().setValue(com.avicagan.bloodandbones.decoration.BonePileBlock.LAYERS, layers));
     }
 
     /** Step 0..HANDS-1: hold a tool facing a carcass; then hook a leg and drag it. */
