@@ -26,16 +26,23 @@ import java.util.Optional;
  *                  the first it can do with nothing in hand, hunting aside: MinionJobs#wakeJob); a body with no head only keeps company
  * @param strikes   one per arm, in the order fitted: they take turns (a zombie arm and a bear's: a punch, then a maul)
  * @param climbs    at least half its legs climb (spider legs)
- * @param rideable  a saddle can go on: at least two rideable legs under a torso heavy enough to carry someone
- * @param flies     its torso flies, hovers or floats by itself (its legs, if any, dangle)
+ * @param rideable  a saddle can go on: at least two rideable legs under a torso heavy enough to carry someone (at least
+ *                  {@link #RIDER_SHARE} of it and its legs)
+ * @param flies     it keeps itself up in the air: its torso flies, hovers or floats by itself (its legs, if any, dangle), its
+ *                  legs float (a ghast's tentacles), or its wings lift more than its torso weighs
  * @param lyingWidth  its hitbox lying on its side, powered down: rolled a quarter turn, its width across becomes its height
  * @param sight     how far it notices things (its targets, what a job looks for), in blocks: its head's follow range, 4
  *                  for a head whose eyes were taken out, 8 with no head at all
+ * @param lift      what its wings (arms with a "lift") hold up together, in blocks cubed of torso: at least the torso's
+ *                  own it flies, less it only falls slowly (docs/PARTS-AND-TRAITS.md section 6.4)
+ * @param mount     how it carries riders: its seats and what steers it
+ * @param berserk   its head's disposition is berserk: it goes for every creature but its own side, half again as hard
  */
 public record MinionStats(float health, float knockbackResistance, int slots, int reservoir, String mode, float speed,
                           float biteDamage, float biteKnockback, List<Strike> strikes, List<ResourceLocation> jobs, boolean mindless,
                           boolean climbs, boolean rideable, boolean flies,
-                          float width, float height, float lyingWidth, float lyingHeight, float sight) {
+                          float width, float height, float lyingWidth, float lyingHeight, float sight, float lift, Mount mount,
+                          boolean berserk) {
     /** How one arm hits and holds: its style and damage, and its grip (hand, paw, claw, wing...; docs/PARTS-AND-TRAITS.md section 5.6). */
     public record Strike(String style, float damage, String grip) {
         /** A blow with no arm behind it: a bite. */
@@ -44,11 +51,28 @@ public record MinionStats(float health, float knockbackResistance, int slots, in
         }
     }
 
+    /**
+     * How it carries riders (docs/PARTS-AND-TRAITS.md section 5.4, mount): how many at once (a camel's torso or a
+     * ravager's two), and what its rider must hold to steer it: nothing but the saddle, or an item on a stick (a pig's
+     * head a carrot on a stick, strider legs a warped fungus on a stick), which takes {@code wear} each time it spurs it
+     * on, as a pig's or a strider's does.
+     */
+    public record Mount(int seats, java.util.Optional<ResourceLocation> steer, int wear) {
+        public static final Mount SADDLE = new Mount(1, java.util.Optional.empty(), 0);
+    }
+
     /** Modes a torso moves by on its own, legs or none: they win over legs, which dangle. */
     public static final List<String> SELF_FLYING = List.of("fly", "hover", "float");
     /** mB of soul blood in a Soul Canister. */
     public static final int CANISTER = 1000;
-    /** A rideable minion's torso must be at least this share of its whole bulk, so a rabbit on horse legs cannot carry you. */
+    /** How fast a body flies on wings alone, with no legs to say otherwise: a bat's pace. */
+    public static final float WING_SPEED = 0.2F;
+    /** A berserk head's blows land half again as hard (docs/PARTS-AND-TRAITS.md section 8.2: the zoglin). */
+    public static final float BERSERK_DAMAGE = 1.5F;
+    /**
+     * A rideable minion's torso must be at least this share of it and its legs together, so a rabbit on horse legs cannot
+     * carry you (a ravager's great head and neck are not what its legs are judged by).
+     */
     public static final float RIDER_SHARE = 0.4F;
 
     /** A minion's health, its traits' included, stays within these (docs/PARTS-AND-TRAITS.md section 5.8). */
@@ -56,15 +80,14 @@ public record MinionStats(float health, float knockbackResistance, int slots, in
     public static final float MAX_HEALTH = 150.0F;
     public static final ResourceLocation COMPANION = BloodAndBones.asResource("companion");
     /**
-     * The jobs built so far (docs/PARTS-AND-TRAITS.md section 6.9); others a head names are left out until they are
-     * (the sapper waits for the detonate effect).
+     * The jobs built so far (docs/PARTS-AND-TRAITS.md section 6.9); others a head names are left out until they are.
      */
     public static final List<ResourceLocation> JOBS = List.of(COMPANION, BloodAndBones.asResource("courier"), BloodAndBones.asResource("farmer"),
             BloodAndBones.asResource("bodyguard"), BloodAndBones.asResource("guard"), BloodAndBones.asResource("surgeon"),
             BloodAndBones.asResource("sentry"), BloodAndBones.asResource("scavenger"), BloodAndBones.asResource("herder"),
             BloodAndBones.asResource("fisher"), BloodAndBones.asResource("hunter"), BloodAndBones.asResource("hauler"),
             BloodAndBones.asResource("butcher"), BloodAndBones.asResource("medic"), BloodAndBones.asResource("barterer"),
-            BloodAndBones.asResource("digger"));
+            BloodAndBones.asResource("digger"), BloodAndBones.asResource("sapper"));
     /**
      * Jobs that need a hand to do (section 5.6): a minion with no arm of hand grip is not offered them, but for the
      * farmer, whom a paw or claw does for too.
@@ -102,7 +125,10 @@ public record MinionStats(float health, float knockbackResistance, int slots, in
         List<Float> legSpeeds = new ArrayList<>();
         List<String> legModes = new ArrayList<>();
         int rideableLegs = 0;
+        // what its rideable legs are steered with, one each (none: the saddle alone)
+        List<Optional<com.google.gson.JsonObject>> legSteers = new ArrayList<>();
         List<Strike> strikes = new ArrayList<>();
+        float lift = 0.0F;
         float bulk = volume(rig.flatMap(r -> r.bone(torso.bone())));
         PieceRef head = head(store, build);
         for (MinionBuild.Fitted fitted : build.parts()) {
@@ -113,9 +139,10 @@ public record MinionStats(float health, float knockbackResistance, int slots, in
             }
             var slot = com.avicagan.bloodandbones.parts.PartSlots.of(store, piece.entity(), pieceRig.get(), piece.bone());
             ResolvedMob mob = store.resolve(piece.entity(), piece.baby());
-            bulk += volume(pieceRig.get().bone(piece.bone()));
             switch (slot.slot()) {
                 case LEG -> {
+                    // what the legs carry is the torso: it must be heavy enough against them to seat a rider
+                    bulk += volume(pieceRig.get().bone(piece.bone()));
                     float fallback = (float) Math.max(0.1, Math.min(0.35, MinionData.attribute(piece.entity(), Attributes.MOVEMENT_SPEED, 0.25)));
                     legSpeeds.add(MinionData.number(mob, slot.key(), "movement", "speed", fallback));
                     legModes.add(MinionData.text(mob, slot.key(), "movement", "mode", "walk"));
@@ -123,6 +150,7 @@ public record MinionStats(float health, float knockbackResistance, int slots, in
                     if (MinionData.flag(mob, slot.key(), "movement", "rideable") || MinionData.field(mob, slot.key(), "rideable")
                             .filter(com.google.gson.JsonElement::isJsonPrimitive).map(com.google.gson.JsonElement::getAsBoolean).orElse(false)) {
                         rideableLegs++;
+                        legSteers.add(steer(mob, piece.traits(), slot.key()));
                     }
                 }
                 case ARM -> {
@@ -132,6 +160,8 @@ public record MinionStats(float health, float knockbackResistance, int slots, in
                     String grip = MinionData.field(mob, slot.key(), "grip").filter(com.google.gson.JsonElement::isJsonPrimitive)
                             .map(com.google.gson.JsonElement::getAsString).orElse("hand");
                     strikes.add(new Strike(style, "pacifist".equals(style) ? 0.0F : blow * mult, grip));
+                    // a wing holds up its share of the body
+                    lift += Math.max(0.0F, MinionData.scalar(mob, piece.traits(), slot.key(), "lift", 0.0F));
                 }
                 default -> {
                 }
@@ -151,11 +181,20 @@ public record MinionStats(float health, float knockbackResistance, int slots, in
             speed = mean * Math.min(1.0F, legSpeeds.size() / (float) Math.max(2, ownLegs));
             mode = majority(legModes, legSpeeds);
         }
+        // wings strong enough for the torso they are stitched to fly it; weaker ones only slow its fall
+        boolean winged = lift > 0.0F && lift >= volume;
+        if (winged && !SELF_FLYING.contains(mode)) {
+            mode = "fly";
+            speed = Math.max(speed, WING_SPEED);
+        }
+        flies = SELF_FLYING.contains(mode);
         List<ResourceLocation> jobs = new ArrayList<>();
         float bite = 1.0F;
         float knock = 0.0F;
         boolean mindless = head == null;
         float sight = MINDLESS_SIGHT;
+        Optional<com.google.gson.JsonObject> headSteer = Optional.empty();
+        boolean berserk = false;
         if (head != null) {
             ResolvedMob headMob = store.resolve(head.entity(), head.baby());
             boolean blind = blind(headMob, head);
@@ -172,6 +211,9 @@ public record MinionStats(float health, float knockbackResistance, int slots, in
             knock = MinionData.number(headMob, head.traits(), "head", "bite", "knockback", 0.0F);
             sight = blind ? BLIND_SIGHT : MinionData.scalar(headMob, head.traits(), "head", "follow_range",
                     (float) MinionData.attribute(head.entity(), Attributes.FOLLOW_RANGE, 16.0));
+            headSteer = steer(headMob, head.traits(), "head");
+            berserk = MinionData.field(headMob, head.traits(), "head", "disposition").filter(com.google.gson.JsonElement::isJsonPrimitive)
+                    .map(com.google.gson.JsonElement::getAsString).filter("berserk"::equals).isPresent();
         }
         if (jobs.isEmpty()) {
             jobs.add(COMPANION);
@@ -183,9 +225,29 @@ public record MinionStats(float health, float knockbackResistance, int slots, in
         boolean climbs = !legModes.isEmpty() && climbing * 2 >= legModes.size();
         float torsoShare = bulk <= 0.0F ? 0.0F : volume(rig.flatMap(r -> r.bone(torso.bone()))) / bulk;
         boolean rideable = !flies && rideableLegs >= 2 && rideableLegs * 2 >= legModes.size() && torsoShare >= RIDER_SHARE;
+        int seats = Math.max(1, Math.min(4, Math.round(MinionData.scalar(torsoMob, torso.traits(), "torso", "seats", 1.0F))));
+        // the head's steering first (a pig's carrot), then what most of its rideable legs share (a strider's fungus)
+        Optional<com.google.gson.JsonObject> steer = headSteer.isPresent() ? headSteer : shared(legSteers);
+        Mount mount = steer.filter(o -> o.has("item")).map(o -> new Mount(seats, Optional.ofNullable(ResourceLocation.tryParse(o.get("item").getAsString())),
+                o.has("wear") ? Math.max(0, o.get("wear").getAsInt()) : 1)).orElse(new Mount(seats, Optional.empty(), 0));
         return new MinionStats(health, Math.max(0.0F, Math.min(0.9F, weight / 6.0F)), slots, reservoir, mode, speed, bite, knock, List.copyOf(strikes),
                 List.copyOf(jobs), mindless, climbs, rideable, flies, Math.max(0.3F, Math.min(3.0F, layout.width())), Math.max(0.3F, Math.min(4.0F, layout.height())),
-                Math.max(0.3F, Math.min(4.0F, along)), Math.max(0.3F, Math.min(3.0F, across)), sight);
+                Math.max(0.3F, Math.min(4.0F, along)), Math.max(0.3F, Math.min(3.0F, across)), sight, lift, mount, berserk);
+    }
+
+    /** A part's "steer" ({"item": ..., "wear": ...}), if its data gives one. */
+    private static Optional<com.google.gson.JsonObject> steer(ResolvedMob mob, java.util.Map<String, String> traits, String key) {
+        return MinionData.field(mob, traits, key, "steer").filter(com.google.gson.JsonElement::isJsonObject).map(com.google.gson.JsonElement::getAsJsonObject);
+    }
+
+    /** What at least half of these name, the first such (none if they disagree or most name nothing). */
+    private static Optional<com.google.gson.JsonObject> shared(List<Optional<com.google.gson.JsonObject>> steers) {
+        for (Optional<com.google.gson.JsonObject> steer : steers) {
+            if (steer.isPresent() && steers.stream().filter(steer::equals).count() * 2 >= steers.size()) {
+                return steer;
+            }
+        }
+        return Optional.empty();
     }
 
     /**
@@ -251,6 +313,16 @@ public record MinionStats(float health, float knockbackResistance, int slots, in
     /** How hard each strike style hits against a plain blow (section 5.6): scrabble is fast and light, a slam heavy. */
     public static final java.util.Map<String, Float> STYLE_DAMAGE = java.util.Map.of("scrabble", 0.5F, "slam", 1.2F, "flap", 0.0F, "pacifist", 0.0F,
             "claw", 0.9F, "ram", 1.3F, "kick", 1.1F);
+
+    /** Its legs walk the bottom of water at full speed, never paddling up (a drowned's, an iron golem's). */
+    public boolean sinks() {
+        return "sink".equals(mode);
+    }
+
+    /** It has wings, but too weak to fly its torso: they slow its fall instead. */
+    public boolean slowFalls() {
+        return lift > 0.0F && !flies;
+    }
 
     /** Whether it has an arm that hits at all. */
     public boolean fights() {

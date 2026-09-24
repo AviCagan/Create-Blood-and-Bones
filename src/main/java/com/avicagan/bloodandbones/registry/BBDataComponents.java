@@ -44,6 +44,15 @@ public final class BBDataComponents {
     public static final DeferredHolder<DataComponentType<?>, DataComponentType<net.minecraft.resources.ResourceLocation>> ORGAN = COMPONENTS.registerComponentType("organ",
             builder -> builder.persistent(net.minecraft.resources.ResourceLocation.CODEC).networkSynchronized(net.minecraft.resources.ResourceLocation.STREAM_CODEC));
 
+    /**
+     * What an organ's mob was, as far as its data's variants read it for that organ (a charged creeper's powder sac:
+     * {charged: true}). Only set when there is something: a plain creeper's sac has none and stacks with its like.
+     */
+    public static final DeferredHolder<DataComponentType<?>, DataComponentType<java.util.Map<String, String>>> ORGAN_TRAITS = COMPONENTS.registerComponentType("organ_traits",
+            builder -> builder.persistent(com.mojang.serialization.Codec.unboundedMap(com.mojang.serialization.Codec.STRING, com.mojang.serialization.Codec.STRING))
+                    .networkSynchronized(ByteBufCodecs.<io.netty.buffer.ByteBuf, String, String, java.util.Map<String, String>>map(java.util.HashMap::new,
+                            ByteBufCodecs.STRING_UTF8, ByteBufCodecs.STRING_UTF8).map(java.util.Map::copyOf, map -> map)));
+
     /** What a piece of carcass armour is made of. */
     public static final DeferredHolder<DataComponentType<?>, DataComponentType<com.avicagan.bloodandbones.parts.CarcassArmour>> CARCASS_ARMOUR = COMPONENTS.registerComponentType("carcass_armour",
             builder -> builder.persistent(com.avicagan.bloodandbones.parts.CarcassArmour.CODEC).networkSynchronized(com.avicagan.bloodandbones.parts.CarcassArmour.STREAM_CODEC));

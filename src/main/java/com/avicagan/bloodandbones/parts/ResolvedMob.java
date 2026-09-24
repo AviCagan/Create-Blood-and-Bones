@@ -15,10 +15,12 @@ import java.util.Optional;
  * @param minion   by part key: the minion data of each layer, in order, for minions to read
  * @param organs   by organ id: what that organ of this mob does, on a minion and in armour
  * @param organLists by part key: the organs a piece of that part holds, in the order they are cut out
+ * @param variants what particular mobs add, by the traits their carcass kept (a snow fox's hide, a charged creeper's sac)
  */
 public record ResolvedMob(ResourceLocation entity, List<ResourceLocation> layers, ResourceLocation material, int colour,
                           Map<String, Part> parts, Map<String, List<com.google.gson.JsonElement>> minion, List<TraitList.Resolved> hide,
-                          Map<ResourceLocation, Organ> organs, Optional<FullSet> fullSet, Map<String, List<ResourceLocation>> organLists) {
+                          Map<ResourceLocation, Organ> organs, Optional<FullSet> fullSet, Map<String, List<ResourceLocation>> organLists,
+                          List<Variant> variants) {
     public record Part(List<TraitList.Resolved> armour, Map<String, List<TraitList.Resolved>> pieces) {
     }
 
@@ -26,6 +28,90 @@ public record ResolvedMob(ResourceLocation entity, List<ResourceLocation> layers
     }
 
     public record FullSet(String name, List<TraitList.Resolved> bonus, List<TraitList.Resolved> drawback) {
+    }
+
+    /**
+     * What a particular kind of this mob adds on top, when what its carcass kept matches {@code when}: more hide traits,
+     * more organ traits (added to the plain ones, the same trait counting once at its highest level).
+     */
+    public record Variant(com.google.gson.JsonObject when, List<TraitList.Resolved> hide, Map<ResourceLocation, Organ> organs) {
+        /**
+         * Whether traits a carcass kept match a variant's "if": {"trait": name, "equals": value}, {"trait": name, "in":
+         * [values]}, or just {"trait": name} for any value at all.
+         */
+        public static boolean matches(@org.jetbrains.annotations.Nullable com.google.gson.JsonObject when, Map<String, String> traits) {
+            if (when == null || !when.has("trait")) {
+                return false;
+            }
+            String value = traits.get(when.get("trait").getAsString());
+            if (value == null) {
+                return false;
+            }
+            if (when.has("equals")) {
+                return value.equals(when.get("equals").getAsString());
+            }
+            if (when.has("in") && when.get("in").isJsonArray()) {
+                for (com.google.gson.JsonElement e : when.getAsJsonArray("in")) {
+                    if (value.equals(e.getAsString())) {
+                        return true;
+                    }
+                }
+                return false;
+            }
+            return true;
+        }
+    }
+
+    /** The hide traits of one particular mob of this kind: the plain ones and its variants'. */
+    public List<TraitList.Resolved> hide(Map<String, String> traits) {
+        List<TraitList.Resolved> out = hide;
+        for (Variant variant : variants) {
+            if (!variant.hide().isEmpty() && Variant.matches(variant.when(), traits)) {
+                out = TraitList.union(out, variant.hide());
+            }
+        }
+        return out;
+    }
+
+    /** An organ's minion traits, as cut out of one particular mob of this kind (a charged creeper's sac holds more). */
+    public List<TraitList.Resolved> organMinion(ResourceLocation organ, Map<String, String> traits) {
+        Organ plain = organs.get(organ);
+        List<TraitList.Resolved> out = plain == null ? List.of() : plain.minion();
+        for (Variant variant : variants) {
+            Organ more = variant.organs().get(organ);
+            if (more != null && Variant.matches(variant.when(), traits)) {
+                out = TraitList.union(out, more.minion());
+            }
+        }
+        return out;
+    }
+
+    /** The same for armour. */
+    public List<TraitList.Resolved> organArmour(ResourceLocation organ, Map<String, String> traits) {
+        Organ plain = organs.get(organ);
+        List<TraitList.Resolved> out = plain == null ? List.of() : plain.armour();
+        for (Variant variant : variants) {
+            Organ more = variant.organs().get(organ);
+            if (more != null && Variant.matches(variant.when(), traits)) {
+                out = TraitList.union(out, more.armour());
+            }
+        }
+        return out;
+    }
+
+    /**
+     * What an organ cut out of this carcass keeps of it: only the traits a variant of this organ reads, and only when one
+     * matches (a charged creeper's sac keeps {charged: true}; a plain one, or a fox's name, keeps nothing, so it stacks).
+     */
+    public Map<String, String> organTraitsKept(ResourceLocation organ, Map<String, String> traits) {
+        Map<String, String> out = new java.util.TreeMap<>();
+        for (Variant variant : variants) {
+            if (variant.organs().containsKey(organ) && Variant.matches(variant.when(), traits)) {
+                String key = variant.when().get("trait").getAsString();
+                out.put(key, traits.get(key));
+            }
+        }
+        return out.isEmpty() ? Map.of() : Map.copyOf(out);
     }
 
     /**

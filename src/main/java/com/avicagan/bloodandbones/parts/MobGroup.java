@@ -21,12 +21,14 @@ import java.util.Optional;
  * @param parts     by part key ("head", "leg", "leg.hind", "arm.wing"...): what it does on a minion, and in armour
  * @param boneSlots a mob file's slot for a bone the naming rules get wrong (the shulker's lid is an arm)
  * @param organs    by part key ("torso", "head", "leg.hind"): the organs cut out of that piece at the Surgical Rig, in order
+ * @param variants  what a particular mob of this layer adds, by what its carcass kept of it (a snow fox's hide, a charged
+ *                  creeper's sac): its hide traits and its organs' traits
  */
 public record MobGroup(ResourceLocation id, Kind kind, int priority, List<String> members,
                        Optional<ResourceLocation> archetype, Optional<ResourceLocation> family, List<ResourceLocation> overlays,
                        Optional<ResourceLocation> scrapMaterial, Map<String, PartEntry> parts, Optional<TraitList> hide,
                        Map<ResourceLocation, OrganEntry> organTraits, Optional<FullSet> fullSet, Map<String, SlotInfo> boneSlots,
-                       Optional<Integer> colour, Map<String, OrganList> organs) {
+                       Optional<Integer> colour, Map<String, OrganList> organs, List<Variant> variants) {
     public enum Kind {
         ARCHETYPE, FAMILY, OVERLAY, MOB
     }
@@ -76,6 +78,14 @@ public record MobGroup(ResourceLocation id, Kind kind, int priority, List<String
         }
     }
 
+    /**
+     * What one kind of this layer's mobs adds on top (docs/PARTS-AND-TRAITS.md section 9, slice 3: variants from the carcass's
+     * traits): {"if": {"trait": "variant", "equals": "snow"}, "hide": [...], "organ_traits": {id: {"minion": [...],
+     * "armour": [...]}}}. A part's minion data has variants of its own, inside its "minion" object.
+     */
+    public record Variant(JsonObject when, Optional<TraitList> hide, Map<ResourceLocation, OrganEntry> organTraits) {
+    }
+
     /** A full set from this one mob: its bonus and its drawback, always together. */
     public record FullSet(Optional<String> name, TraitList bonus, TraitList drawback, boolean replace) {
     }
@@ -100,11 +110,15 @@ public record MobGroup(ResourceLocation id, Kind kind, int priority, List<String
                 parts.put(e.getKey(), part(e.getValue().getAsJsonObject(), ops, id));
             }
         }
-        Map<ResourceLocation, OrganEntry> organs = new LinkedHashMap<>();
-        if (json.has("organ_traits")) {
-            for (Map.Entry<String, JsonElement> e : json.getAsJsonObject("organ_traits").entrySet()) {
-                JsonObject o = e.getValue().getAsJsonObject();
-                organs.put(ResourceLocation.parse(e.getKey()), new OrganEntry(opt(o, "minion", TraitList.CODEC, ops, id), opt(o, "armour", TraitList.CODEC, ops, id)));
+        Map<ResourceLocation, OrganEntry> organs = organs(json, ops, id);
+        List<Variant> variants = new ArrayList<>();
+        if (json.has("variants")) {
+            for (JsonElement e : json.getAsJsonArray("variants")) {
+                JsonObject o = e.getAsJsonObject();
+                if (!o.has("if") || !o.get("if").isJsonObject()) {
+                    throw new IllegalArgumentException(id + " variants: each needs an \"if\"");
+                }
+                variants.add(new Variant(o.getAsJsonObject("if"), opt(o, "hide", TraitList.CODEC, ops, id), organs(o, ops, id)));
             }
         }
         Optional<FullSet> set = Optional.empty();
@@ -139,7 +153,19 @@ public record MobGroup(ResourceLocation id, Kind kind, int priority, List<String
                 json.has("family") ? Optional.of(ResourceLocation.parse(json.get("family").getAsString())) : Optional.empty(),
                 List.copyOf(overlays),
                 json.has("scrap_material") ? Optional.of(ResourceLocation.parse(json.get("scrap_material").getAsString())) : Optional.empty(),
-                parts, opt(json, "hide", TraitList.CODEC, ops, id), organs, set, boneSlots, colour, organLists);
+                parts, opt(json, "hide", TraitList.CODEC, ops, id), organs, set, boneSlots, colour, organLists, List.copyOf(variants));
+    }
+
+    /** An object's "organ_traits": each organ's minion and armour lists. */
+    private static Map<ResourceLocation, OrganEntry> organs(JsonObject json, DynamicOps<JsonElement> ops, ResourceLocation id) {
+        Map<ResourceLocation, OrganEntry> organs = new LinkedHashMap<>();
+        if (json.has("organ_traits")) {
+            for (Map.Entry<String, JsonElement> e : json.getAsJsonObject("organ_traits").entrySet()) {
+                JsonObject o = e.getValue().getAsJsonObject();
+                organs.put(ResourceLocation.parse(e.getKey()), new OrganEntry(opt(o, "minion", TraitList.CODEC, ops, id), opt(o, "armour", TraitList.CODEC, ops, id)));
+            }
+        }
+        return organs;
     }
 
     private static PartEntry part(JsonObject o, DynamicOps<JsonElement> ops, ResourceLocation id) {

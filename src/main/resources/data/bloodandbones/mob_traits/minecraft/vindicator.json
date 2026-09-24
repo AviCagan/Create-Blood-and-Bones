@@ -1,0 +1,20 @@
+{
+  "signature": [
+    "parts.head"
+  ],
+  "parts": {
+    "head": {
+      "minion": {
+        "variants": [
+          {
+            "if": {
+              "trait": "name",
+              "equals": "Johnny"
+            },
+            "disposition": "berserk"
+          }
+        ]
+      }
+    }
+  }
+}

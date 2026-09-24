@@ -122,7 +122,7 @@ public class CarcassArmourFittingRecipe extends CustomRecipe {
             if (!Organs.fits(store, organ.organ(), armour.piece())) {
                 return null;
             }
-            List<ItemStack> giveBack = armour.organ().map(old -> Organs.stack(store, old.organ(), old.entity(), old.baby())).filter(back -> !back.isEmpty())
+            List<ItemStack> giveBack = armour.organ().map(old -> Organs.stack(store, old)).filter(back -> !back.isEmpty())
                     .map(List::of).orElse(List.of());
             return new Fit(remake(piece, armour.withOrgan(Optional.of(organ)), store), pieceSlot, giveBack);
         }
@@ -149,7 +149,7 @@ public class CarcassArmourFittingRecipe extends CustomRecipe {
 
     /** A fitted organ as an item again, named and stamped as it was when cut out. */
     public static ItemStack organItem(CarcassArmour.Organ organ) {
-        return Organs.stack(CarcassArmourItem.store(), organ.organ(), organ.entity(), organ.baby());
+        return Organs.stack(CarcassArmourItem.store(), organ);
     }
 
     /** Whether Create's Mechanical Crafters are asking: they give back nothing a recipe returns. */

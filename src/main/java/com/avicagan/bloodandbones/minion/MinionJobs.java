@@ -104,8 +104,8 @@ import java.util.UUID;
  * with what it carries. What a scavenger fetches and what a herder leads by is whatever it holds. A brass minion's
  * filter ({@link MinionFilter}) narrows what the scavenger, herder, hunter and sentry take.
  * <p>
- * None of them breaks or places a block. The sapper waits for the detonate effect of the Motion group. The two game
- * events here are the sentry's: its arrows pass through its own side, and a crossbow's can be picked up.
+ * None of them breaks or places a block, but for the sapper's blast where the server allows it ({@link MinionSapper}).
+ * The two game events here are the sentry's: its arrows pass through its own side, and a crossbow's can be picked up.
  */
 public final class MinionJobs {
     public static final ResourceLocation SENTRY = BloodAndBones.asResource("sentry");
@@ -118,10 +118,11 @@ public final class MinionJobs {
     public static final ResourceLocation MEDIC = BloodAndBones.asResource("medic");
     public static final ResourceLocation BARTERER = BloodAndBones.asResource("barterer");
     public static final ResourceLocation DIGGER = BloodAndBones.asResource("digger");
+    public static final ResourceLocation SAPPER = MinionSapper.SAPPER;
 
     /** Jobs worked from home: idle, it goes back there (a sentry to its post). */
     public static final List<ResourceLocation> HOMEBODIES = List.of(BloodAndBones.asResource("farmer"), BloodAndBones.asResource("courier"),
-            BloodAndBones.asResource("guard"), SENTRY, SCAVENGER, HERDER, FISHER, HUNTER, HAULER, BUTCHER, MEDIC, BARTERER, DIGGER);
+            BloodAndBones.asResource("guard"), SENTRY, SCAVENGER, HERDER, FISHER, HUNTER, HAULER, BUTCHER, MEDIC, BARTERER, DIGGER, SAPPER);
     /** Jobs whose takings go into the nearest container by home. */
     public static final List<ResourceLocation> STORERS = List.of(BloodAndBones.asResource("courier"), BloodAndBones.asResource("farmer"),
             FISHER, BUTCHER, DIGGER, BARTERER);
@@ -162,6 +163,7 @@ public final class MinionJobs {
     /** Every job's goals, given to every minion; each works only while the minion has its job. */
     static void goals(MinionEntity minion, GoalSelector goals, GoalSelector targets) {
         goals.addGoal(2, new Sentry(minion));
+        goals.addGoal(2, new MinionSapper.Sap(minion));
         goals.addGoal(3, new Fish(minion));
         goals.addGoal(3, new Dig(minion));
         goals.addGoal(3, new Barter(minion));
@@ -213,10 +215,16 @@ public final class MinionJobs {
         return out;
     }
 
-    /** A job's needs beyond the build: a ranged attack for a sentry, a rod or a fish's mouth for a fisher, a blade for a butcher. */
+    /**
+     * A job's needs beyond the build: a ranged attack for a sentry, a rod or a fish's mouth for a fisher, a blade for a
+     * butcher, an organ that detonates for a sapper.
+     */
     static boolean needsMet(PartsData.Store store, MinionBuild build, MinionStats stats, ItemStack held, boolean ranged, ResourceLocation job) {
         if (job.equals(SENTRY)) {
             return ranged;
+        }
+        if (job.equals(SAPPER)) {
+            return MinionSapper.hasDetonator(store, build);
         }
         if (job.equals(FISHER)) {
             return !stats.strikes().isEmpty() && held.getItem() instanceof FishingRodItem || ownTool(store, build, FISHER);
@@ -235,11 +243,11 @@ public final class MinionJobs {
 
     /**
      * The job it wakes to, of those it is offered with nothing in hand: the first but hunting, which would go straight
-     * for the animals kept round the table it was made at (unless it is offered nothing else). Its maker puts it to
-     * hunting with a click.
+     * for the animals kept round the table it was made at, and sapping, which would spend its blast on the first monster
+     * to wander by (unless it is offered nothing else). Its maker puts it to either with a click.
      */
     public static ResourceLocation wakeJob(List<ResourceLocation> offered) {
-        return offered.stream().filter(job -> !job.equals(HUNTER)).findFirst().orElse(offered.get(0));
+        return offered.stream().filter(job -> !job.equals(HUNTER) && !job.equals(SAPPER)).findFirst().orElse(offered.get(0));
     }
 
     /** A job it has that it can no longer do (its bow broke, its rod was taken) gives way to the first it can. */
@@ -1664,10 +1672,26 @@ public final class MinionJobs {
         private static final double HOOK_REACH = 5.0;
         /** How high over the body a hook's tip may be for it to be hung there, as from a player's reach beside it. */
         private static final double HOOK_HEIGHT = 4.0;
-        /** How near over the middle of a rack the body must be to be let down on it (a tray catches a little wide). */
+        /**
+         * How near over the middle of a rack the body must come to be let down on it (a tray catches a little wide): it is
+         * let down once well inside the tray's rim, or else where it passes nearest the middle, never as soon as it crosses
+         * this (just past the rim, it lay across it and slid off).
+         */
         private static final double ON_TRAY = 0.8;
-        /** Ticks a body let down on a rack is given to settle before it is checked to lie in the tray. */
-        private static final int SETTLE = 40;
+        /** Inside the tray's rim (half a block from its middle), with room to spare: let down at once. */
+        private static final double IN_TRAY = 0.35;
+        /**
+         * How near, with its path ended short, the torso must be to be let down anyway: still over the tray's edge, not
+         * past it (lying across the rim, it slid off beyond the tray's reach).
+         */
+        private static final double NEAR_TRAY = 1.2;
+        /**
+         * Ticks a body let down on a rack has to come to rest in the tray (to lie still and fold, as the bleeding waits for)
+         * before it is taken up again for another pass: until it rests it may still slide off the rim.
+         */
+        private static final int SETTLE = 200;
+        /** While it settles in the tray, every this many ticks it is steadied (every piece stilled again). */
+        private static final int STEADY = 20;
         /** Ticks it may stand still with the body not over the tray before it takes another pass. */
         private static final int STUCK = 60;
         /** Passes over a rack before it gives the body up. */
@@ -1686,6 +1710,8 @@ public final class MinionJobs {
         private int settleUntil = -1;
         /** Since when it has stood still with the body short of the tray, or -1. */
         private int stuckSince = -1;
+        /** How far the torso was from the tray's middle last tick, to let it down where it passes nearest. */
+        private double lastOff = Double.MAX_VALUE;
         private int tries;
         private final List<UUID> unreachable = new ArrayList<>();
         private int forgotAt;
@@ -1913,17 +1939,23 @@ public final class MinionJobs {
             }
             Vec3 torso = new Vec3(at.x, at.y, at.z);
             if (settleUntil >= 0) {
-                // let down on a rack: once it has settled it must lie in the tray (where the bleeding finds the rack), or it
-                // slid off and is taken up again for another pass
-                if (minion.tickCount < settleUntil) {
-                    return;
-                }
-                settleUntil = -1;
+                // let down on a rack: it is done once the body has come to rest (lain still and folded, as the bleeding waits
+                // for) in the tray, where the bleeding finds the rack. A body rocking on the tray's rims is steadied now and
+                // then; one that came to rest off the tray, slid off, or never came to rest is taken up again for another pass
                 BleedingRackBlockEntity under = onRack(level, c);
-                if (under != null && under.getBlockPos().equals(to)) {
-                    done = true;
-                } else {
+                boolean inTray = under != null && under.getBlockPos().equals(to);
+                if (c.resting) {
+                    settleUntil = -1;
+                    if (inTray) {
+                        done = true;
+                    } else {
+                        another();
+                    }
+                } else if (minion.tickCount >= settleUntil) {
+                    settleUntil = -1;
                     another();
+                } else if (inTray && (settleUntil - minion.tickCount) % STEADY == 0) {
+                    layDown(level, c);
                 }
                 return;
             }
@@ -1944,6 +1976,7 @@ public final class MinionJobs {
                     return;
                 }
                 dragging = true;
+                lastOff = Double.MAX_VALUE;
                 // it walks a straight line from here through the hook or rack, fixed now: towed behind it, the body comes
                 // onto that line and so under or over it
                 Vec3 end = level.getBlockEntity(to) instanceof ShackleHookBlockEntity hook ? ShackleHookBlock.tip(to, hook.getBlockState()) : Vec3.atCenterOf(to);
@@ -1979,8 +2012,12 @@ public final class MinionJobs {
                 Vec3 tray = Vec3.atCenterOf(to);
                 BleedingRackBlockEntity under = onRack(level, c);
                 boolean stood = minion.getNavigation().isDone();
-                boolean overTray = Math.hypot(torso.x - tray.x, torso.z - tray.z) < ON_TRAY && torso.y > tray.y - 0.5 && torso.y < tray.y + 2.0;
-                if (under != null && under.getBlockPos().equals(to) && (overTray || stood)) {
+                double off = Math.hypot(torso.x - tray.x, torso.z - tray.z);
+                boolean levelled = torso.y > tray.y - 0.5 && torso.y < tray.y + 2.0;
+                // well inside the rim, or as near the middle as this pass brings it (it has begun to draw away again)
+                boolean overTray = levelled && (off < IN_TRAY || off < ON_TRAY && off > lastOff + 1.0e-3);
+                lastOff = off;
+                if (under != null && under.getBlockPos().equals(to) && (overTray || stood && off < NEAR_TRAY && levelled)) {
                     // over the tray, where the bleeding finds this rack under the body: it lets it down there, gently (not
                     // flung on at a walk), and waits
                     CarcassDrag.stop(level, minion);

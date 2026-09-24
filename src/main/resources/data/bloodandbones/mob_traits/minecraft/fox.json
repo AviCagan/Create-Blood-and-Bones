@@ -2,7 +2,8 @@
   "signature": [
     "parts.head",
     "parts.leg",
-    "organs.bloodandbones:cheek_pouch"
+    "organs.bloodandbones:cheek_pouch",
+    "variants"
   ],
   "organs": {
     "head": {
@@ -16,6 +17,11 @@
       "minion": {
         "traits": [
           "bloodandbones:thief"
+        ],
+        "jobs": [
+          "bloodandbones:scavenger",
+          "bloodandbones:hunter",
+          "bloodandbones:guard"
         ]
       },
       "armour": [
@@ -39,5 +45,16 @@
         "bloodandbones:item_magnet"
       ]
     }
-  }
+  },
+  "variants": [
+    {
+      "if": {
+        "trait": "variant",
+        "equals": "snow"
+      },
+      "hide": [
+        "bloodandbones:insulated"
+      ]
+    }
+  ]
 }

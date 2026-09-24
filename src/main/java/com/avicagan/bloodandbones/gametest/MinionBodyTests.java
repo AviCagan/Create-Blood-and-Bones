@@ -137,23 +137,26 @@ public class MinionBodyTests {
         helper.succeed();
     }
 
-    /** Arms take turns, each in its own style: a zombie's punch, then an iron golem's fling that throws the target up. */
+    /**
+     * Arms take turns, each in its own style: a zombie's grab (spec 8.1) that slows what it holds, then an iron golem's
+     * fling that throws the target up.
+     */
     @GameTest(template = "empty", timeoutTicks = 20)
     public static void armsTakeTurnsInTheirStyles(GameTestHelper helper) {
         MinionBuild build = MinionBuild.of(ref("zombie", "body")).with("head", ref("zombie", "head"))
                 .with("right_arm", ref("zombie", "right_arm")).with("left_arm", ref("iron_golem", "left_arm"));
         MinionStats stats = MinionStats.of(PartsData.SERVER, build);
-        if (stats.strikes().size() != 2 || !"punch".equals(stats.strikes().get(0).style()) || !"fling".equals(stats.strikes().get(1).style())
+        if (stats.strikes().size() != 2 || !"grab".equals(stats.strikes().get(0).style()) || !"fling".equals(stats.strikes().get(1).style())
                 || !(stats.strikes().get(1).damage() > stats.strikes().get(0).damage())) {
-            helper.fail("A zombie arm should punch and an iron golem's fling, harder: " + stats.strikes());
+            helper.fail("A zombie arm should grab and an iron golem's fling, harder: " + stats.strikes());
             return;
         }
         MinionEntity minion = minion(helper, new BlockPos(3, 2, 3), build, 800.0F, helper.makeMockPlayer(GameType.SURVIVAL));
         Zombie first = helper.spawn(EntityType.ZOMBIE, new BlockPos(4, 2, 3));
         first.setNoAi(true);
         minion.doHurtTarget(first);
-        if (first.getDeltaMovement().y > 0.3) {
-            helper.fail("The punch should not throw the zombie up");
+        if (first.getDeltaMovement().y > 0.3 || !first.hasEffect(net.minecraft.world.effect.MobEffects.MOVEMENT_SLOWDOWN)) {
+            helper.fail("The grab should hold the zombie, slowed, and not throw it up");
             return;
         }
         Zombie second = helper.spawn(EntityType.ZOMBIE, new BlockPos(3, 2, 4));

@@ -1,6 +1,7 @@
 {
   "signature": [
-    "organs.bloodandbones:harmonic_gland"
+    "organs.bloodandbones:harmonic_gland",
+    "parts.head"
   ],
   "organs": {
     "torso": {
@@ -20,6 +21,16 @@
       "armour": [
         "bloodandbones:item_magnet"
       ]
+    }
+  },
+  "parts": {
+    "head": {
+      "minion": {
+        "jobs": [
+          "bloodandbones:scavenger",
+          "bloodandbones:companion"
+        ]
+      }
     }
   }
 }

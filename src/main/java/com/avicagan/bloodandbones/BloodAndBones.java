@@ -55,6 +55,7 @@ public class BloodAndBones {
         NeoForge.EVENT_BUS.register(com.avicagan.bloodandbones.cyber.SetBonus.class);
         NeoForge.EVENT_BUS.register(com.avicagan.bloodandbones.parts.TraitEvents.class);
         NeoForge.EVENT_BUS.register(com.avicagan.bloodandbones.minion.MinionJobs.class);
+        NeoForge.EVENT_BUS.register(com.avicagan.bloodandbones.minion.MinionMoves.class);
         // organs as items: their words on every organ item and carcass piece; the traits commands
         NeoForge.EVENT_BUS.register(com.avicagan.bloodandbones.parts.Organs.class);
         NeoForge.EVENT_BUS.addListener(com.avicagan.bloodandbones.parts.TraitsCommand::onRegisterCommands);

@@ -73,15 +73,34 @@ public final class Organs {
      * with the organ's id), or a vanilla item left plain where the data map already says it is this mob's.
      */
     public static ItemStack stack(PartsData.Store store, ResourceLocation organ, ResourceLocation entity, boolean baby) {
+        return stack(store, organ, entity, baby, Map.of());
+    }
+
+    /** A fitted organ as an item again, as it was when it went in (a charged creeper's sac still charged). */
+    public static ItemStack stack(PartsData.Store store, CarcassArmour.Organ organ) {
+        return stack(store, organ.organ(), organ.entity(), organ.baby(), organ.traits());
+    }
+
+    /**
+     * The same, out of one particular mob: what its carcass kept ({@code traits}: a creeper's charge) goes with the organ
+     * where its data's variants read it for this organ, and makes the item a stamped one.
+     */
+    public static ItemStack stack(PartsData.Store store, ResourceLocation organ, ResourceLocation entity, boolean baby, Map<String, String> traits) {
         Item item = kind(store, organ).item();
+        Map<String, String> kept = traits.isEmpty() ? Map.of() : store.resolve(entity, baby).organTraitsKept(organ, traits);
+        ItemStack stack;
         if (item instanceof SeveredLimbItem limb) {
-            return limb.of(entity, baby);
+            stack = limb.of(entity, baby);
+        } else {
+            stack = new ItemStack(item);
+            OrganSource mapped = item instanceof GlandItem ? null : stack.getItemHolder().getData(SOURCES);
+            if (mapped == null || !mapped.entity().equals(entity) || !mapped.organ().equals(organ) || baby || !kept.isEmpty()) {
+                stack.set(BBDataComponents.ORGAN.get(), organ);
+                stack.set(BBDataComponents.SOURCE.get(), new Source(entity, partOf(store, entity, baby, organ), baby));
+            }
         }
-        ItemStack stack = new ItemStack(item);
-        OrganSource mapped = item instanceof GlandItem ? null : stack.getItemHolder().getData(SOURCES);
-        if (mapped == null || !mapped.entity().equals(entity) || !mapped.organ().equals(organ) || baby) {
-            stack.set(BBDataComponents.ORGAN.get(), organ);
-            stack.set(BBDataComponents.SOURCE.get(), new Source(entity, partOf(store, entity, baby, organ), baby));
+        if (!kept.isEmpty()) {
+            stack.set(BBDataComponents.ORGAN_TRAITS.get(), kept);
         }
         return stack;
     }
@@ -97,12 +116,13 @@ public final class Organs {
         }
         Source source = stack.get(BBDataComponents.SOURCE.get());
         ResourceLocation organ = stack.get(BBDataComponents.ORGAN.get());
+        Map<String, String> traits = stack.getOrDefault(BBDataComponents.ORGAN_TRAITS.get(), Map.of());
         if (organ != null) {
-            return source == null ? null : new CarcassArmour.Organ(organ, source.entity(), source.baby());
+            return source == null ? null : new CarcassArmour.Organ(organ, source.entity(), source.baby(), traits);
         }
         if (stack.getItem() instanceof SeveredLimbItem) {
             ResourceLocation id = store.organFor(stack.getItem());
-            return id == null || source == null ? null : new CarcassArmour.Organ(id, source.entity(), source.baby());
+            return id == null || source == null ? null : new CarcassArmour.Organ(id, source.entity(), source.baby(), traits);
         }
         OrganSource mapped = stack.getItemHolder().getData(SOURCES);
         return mapped == null ? null : new CarcassArmour.Organ(mapped.organ(), mapped.entity(), false);
@@ -199,14 +219,15 @@ public final class Organs {
      */
     public static void describe(PartsData.Store store, CarcassArmour.Organ organ, List<Component> tooltip, TooltipFlag flag) {
         OrganKind kind = kind(store, organ.organ());
-        ResolvedMob.Organ traits = store.resolve(organ.entity(), organ.baby()).organs().get(organ.organ());
+        ResolvedMob mob = store.resolve(organ.entity(), organ.baby());
         tooltip.add(Component.translatable("bloodandbones.organ.of", ScrapsItem.mobName(organ.entity())).withStyle(ChatFormatting.GRAY));
         MutableComponent pieces = Component.empty();
         for (int i = 0; i < kind.armourPieces().size(); i++) {
             pieces.append(i == 0 ? Component.empty() : Component.literal(", ")).append(Component.translatable("bloodandbones.piece." + kind.armourPieces().get(i)));
         }
-        boolean described = line(store, tooltip, flag, Component.translatable("bloodandbones.organ.armour", pieces), traits == null ? List.of() : traits.armour());
-        described |= line(store, tooltip, flag, Component.translatable("bloodandbones.organ.minion"), traits == null ? List.of() : traits.minion());
+        // with what its variant adds (a charged creeper's sac blasts harder)
+        boolean described = line(store, tooltip, flag, Component.translatable("bloodandbones.organ.armour", pieces), mob.organArmour(organ.organ(), organ.traits()));
+        described |= line(store, tooltip, flag, Component.translatable("bloodandbones.organ.minion"), mob.organMinion(organ.organ(), organ.traits()));
         if (described && !flag.hasControlDown()) {
             tooltip.add(Component.translatable("bloodandbones.carcass_armour.hold_ctrl").withStyle(ChatFormatting.DARK_GRAY));
         }

@@ -2569,3 +2569,121 @@ in survival nobody could cut a rumen or a powder sac out and fit it.
   creative tab until the next world. The spec's powder sac bloodless name is "Charge Cell"; the data's is "Powder Core"
   (Motion's wording, kept).
 - The suite is 428 tests (417 before, and eleven new in `OrganTests`).
+
+### 15.17 The minion leftovers: the sapper, held things drawn, lava, wings, the seabed, mounts and variants (brief § Minions)
+
+What 15.12 left out, 15.15 had not fixed yet and the signature lint was waiting for, where the built jobs and movement
+now reach.
+
+- **The sapper** (`minion/MinionSapper`, spec 6.9): a head that offers it (the volatile family's, so a creeper's: sapper
+  or guard, spec 8.1) and an organ whose minion traits hold an activate detonate effect (`MinionSapper.hasDetonator`: the
+  creeper's Powder Sac, whose Self-Destruct is Motion's detonate) make a minion that walks up to its target and blows
+  itself up there through its organ (`Activation.fire`, as its UseOrgan goal fires it, paying from its own blood), holding
+  still while the fuse hisses; the detonate effect then powers it down where it stands, whole, never destroyed, and blocks
+  break only where the effect may break them, `minion_block_damage` and mobGriefing all allow it. Its targets are a
+  guard's (monsters near home it can see) and whatever hurts it; it never bites. Its mark is a banner: handed a banner, it
+  goes for the nearest banner of that colour standing within 16 of home (block entities of loaded chunks only), as a sapper
+  goes for the flag its side planted; the maker takes the banner back to stop it. It never wakes a sapper
+  (`MinionJobs.wakeJob`, as with hunting: it would spend its blast on the first monster to wander by); its maker puts it
+  to sapping with a click. `sapperDetonatesAndPowersDown` (offered only with the sac in; it walks to a husk, blows, hurts
+  it, lies down unhurt, the floor whole), `sapperGoesForItsBanner` (the red banner, not the blue; both still stand).
+- **Held things and helmets drawn** (spec 6.10; `MinionBody.anchors`, the same layout both sides use, and
+  `StitchedBody.Attach`, a hook that draws on a piece in its own frame as it is turned that frame): what a minion holds is at
+  the far end of its first arm of hand grip, at the middle across and the front, which for a humanoid arm is exactly
+  vanilla's hand point (1 pixel in, 10 down, 2 forward), turned and drawn as `ItemInHandLayer` does (a right or left hand's
+  item by the side the arm is on); a pair of folded arms holds it in front of them, upright, as `CrossedArmsItemLayer`
+  does; a head with no hand holds it across its mouth, as `FoxHeldItemLayer` does. What it wears on its head sits over the
+  head it has (`MinionStats.head`): a helmet is the humanoid helmet (the outer armour model's head and hat) stretched to the
+  head's box, a cow's long skull getting a long helmet, in its material's layers, tinted and glinting through NeoForge's
+  armour hooks (so dyed leather and carcass helmets draw right); anything else worn (a carved pumpkin, a skull) is the
+  item's own head look sized to the head, as `CustomHeadLayer` sizes it to a humanoid's. Wings beat in the air, a flier
+  bobs (a floater slower and deeper), and a mood tail (a wolf's, `"mood": true`) is held up by its health and hangs as it is
+  hurt. `heldItemAnchors`. On screen: the showcase's zombie with a cow's head holds a bow, an iron helmet stretched over
+  the cow's skull, a pig's head wears a carved pumpkin, and a cow hangs in the air on a phantom's wings.
+- **Walking across lava** (15.15's "not fixed yet"): a lava walker's navigation is a strider's
+  (`MinionMoves.LavaNavigation`: lava a stable destination, lava and fire no bar to a path) and, while it has lava_walk, its
+  path costs for lava, fire and the edge of fire are 0 (vanilla's own are put back when it loses it), so it goes straight
+  over a pool rather than round it or nowhere; the path is still worked out inside `MinionEntity.pathing`. It is never set
+  alight nor burnt by the lava it walks in (`lavaHurt`, through a synced flag so its client does not show it burning), so
+  it steps off the far side unhurt, and one that walks in from a bank lower than the surface steps up onto the lava as onto
+  a slab rather than wading (`MotionFlags.floatOnLava`). `lavaWalkerCrossesLava` (a cow on strider legs follows its maker
+  over a wall-to-wall pool: never below the surface, never alight, never hurt).
+- **Wing lift** (spec 6.4): each arm's `"lift"` adds up (phantom wings 0.4, chicken 0.02, parrot 0.06); at least the
+  torso's volume flies it (mode fly, at least a bat's 0.2, flying navigation, no gravity, twice the blood moving), less only
+  slows its fall as a chicken's wings do (`MinionStats.slowFalls`: its fall held to six tenths, and no fall damage).
+  `phantomWingsLiftCow`, `chickenWingsDoNot` (it falls far slower than a wingless cow and lands unhurt).
+- **Sink and float** (spec 5.6): sink legs (drowned, iron golem, skeleton and zombie horse) walk the bottom of water: the
+  float goal leaves it be, its `water_movement_efficiency` is 1 (so on the bottom it walks at its land speed, vanilla's own
+  attribute) and it drops through water rather than drifting; ground navigation paths along the bottom. Only a sinker's
+  rider stays on under water (`canBeRiddenUnderFluidType`), the undead steeds' signature; the others throw theirs off as a
+  horse does. Legs whose own mode keeps it up (float, hover, fly: a ghast's tentacles float) fly it as a flying torso does.
+  `sinkWalksSeabed` (eight blocks along a channel's bottom within six seconds, never more than 0.6 off it),
+  `floatStaysUp`.
+- **Mounts** (spec 5.4 type 25, as part data rather than a trait: the legs say rideable, the head and legs what steers,
+  the torso how many sit): `MinionStats.Mount` (seats, steer, wear). A head's `"steer"` comes first (the pig's
+  `{"item": "minecraft:carrot_on_a_stick", "wear": 7}`), else the one at least half its rideable legs share (strider legs'
+  warped fungus on a stick, wear 1), else the saddle alone. Steered with a stick, its front rider controls it only while
+  holding one, it goes on where they look, and a use spurs it on for a while by vanilla's own `ItemBasedSteering`; vanilla's
+  `FoodOnAStickItem` boosts only its own mob type, so `MinionMoves.onUseStick` (`PlayerInteractEvent.RightClickItem`)
+  does it for a minion, wearing the stick as vanilla does (`hurtAndConvertOnBreak` back to a fishing rod). The torso's
+  `"seats"` (the camel's, the behemoth family's for the ravager) let its maker ride in front and anyone else, with an
+  empty hand, behind, spread along the torso's back (`MinionBody.seats`). The rideable torso share is now against the torso
+  and its legs only, as spec 6.4's rabbit example means, so a whole ravager (whose great head and neck outweighed it) takes
+  a saddle as spec 6.5 says. `pigHeadSteersWithCarrot`, `striderLegsSteerWithFungus`, `camelCarriesTwo`.
+- **Variant capture** (spec 9, slice 3): `CarcassLook.traits` now keeps a mob's `variant` (any `VariantHolder`: its
+  own name, or its registry id's path for a vanilla one: a snow fox, a warm frog, the killer bunny `evil`), a panda's `gene`
+  (the one it shows), a creeper's `charged` and the `name` it was given. Data uses them three ways: a part's minion object's
+  variants may now carry `"traits"` (added after that layer's own, `MinionData.traits`; a warm frog's legs are fireproof, a
+  weak panda's head sneezes); and a mob file's top-level `"variants"`, each `{"if", "hide", "organ_traits"}`, add hide and
+  organ traits (`MobGroup.Variant`, `ResolvedMob.Variant`, `ResolvedMob.hide(traits)`, `organMinion`, `organArmour`: the
+  snow fox's hide is insulated, a charged creeper's sac self-destructs at level 2, power 4). A flesh minion's hides are read
+  from the first piece of each mob (`MinionEntity.hidePieces`), with its traits; an organ now carries what its carcass
+  kept (`CarcassArmour.Organ.traits`, optional in the codec, the old constructor kept), which organ harvesting (15.16) is to
+  fill. A head's `"disposition": "berserk"` (the zoglin; the killer bunny, as a bodyguard or guard biting for 8; a
+  vindicator named Johnny) goes for any mob it can see but its own side, half again as hard (`MinionStats.berserk`).
+  `chargedCreeperSacIsStronger`, `snowFoxHideInsulates`, `carcassKeepsVariants`.
+- **Signatures wired** (spec 8.2, in the mob files, the lint's `"variants"` facet new): allay (scavenger head), camel (two
+  seats), cod and salmon (fishers with their mouths), creeper (sapper head through its family; the charged sac), fox (a
+  thief's head fetches, and its bite now always snatches; the snow fox's hide), frog (warm and cold legs), ghast (floating
+  tentacles), iron golem and drowned (sink legs), panda (docile, but aggressive a bodyguard or guard, lazy a sentry, weak
+  sneezes the `panda_sneeze` table), parrot (wing lift), pig (carrot steering), pillager (quick-drawing arms: a sentry's
+  bow and crossbow are drawn with use-item ticks, so Quick Draw now works on minions too), rabbit (the killer bunny),
+  ravager (rideable legs), skeleton and zombie horse (seafloor steeds: sink, rideable, gills), strider (fungus-steered
+  legs; its Lava Bladder is now Lava Soak, fire and lava half as harmful only while in lava), vindicator (Johnny), wolf (the
+  mood tail), zoglin (berserk), zombie (arms that grab, spec 8.1), zombie villager (a shaky surgeon: its head's `"pace"` of
+  0.5 tends a patient every ten seconds, not five). New traits: `sneeze`, `lava_soak`. The lint also reads variants' traits.
+  The waiting list went from 48 mobs to 33; what still waits, and why, is logged every run (below).
+- **Tests changed**: `armsTakeTurnsInTheirStyles` now expects the zombie's arm to grab (spec 8.1), and checks the hold's
+  slowness.
+- Found on the way: `haulerLaysCarcassOnRack` failed in two of the six full runs made before the fix (one of them on the
+  starting commit): the hauler let a body down the moment its torso came within 0.8 of the tray's middle (so
+  always just past the rim, the torso arriving from outside), and called it done 40 ticks later if the bleeding's test
+  found the rack then; but the bleeding waits for the body to come to rest (lie still and fold), and a body lying across the
+  rim rocked there without resting, or slid off beyond the tray's reach first (the failures left it 1.1 to 1.7 blocks past
+  the middle, resting, the rack dry). Logged runs showed both. Now it is let down once well inside the rim (0.35) or where
+  it passes nearest the middle (within 0.8), or with its path ended short only with the torso still over the tray's edge
+  (1.2); it is steadied (every piece stilled) each second while it settles; and it is done only once the body has come to
+  rest where the bleeding finds the rack, else it takes another pass. In the logged runs after, every body came to rest in
+  the tray on the first pass, within five to seven seconds. A random blink could land within half a block of where it
+  started (a pick that close in the radius: `teleportRandomStaysOnGround` failed once on the starting commit); a pick
+  within a block of the start is skipped now. A
+  test that posts a stick's use through the whole event bus reaches another mod's handler, which takes a stand-in player
+  (not a server player) for a client and loads client classes on the server; the tests call the minion's handler directly.
+  A client turns a new mob's body to its head's turn, so the showcase sets both.
+- **Shared files touched**: `BloodAndBones` (MinionMoves on the bus, one line), `BBLang` (the sapper's name, two traits'
+  words), `ActiveTraits` (a flesh minion's hides with their traits), `CarcassArmour` (the organ's traits),
+  `MobGroup`, `ResolvedMob`, `PartsData` (variants), `CarcassLook` (the captures), `MotionFlags` (stepping up onto lava),
+  `TeleportEffect` (the blink fix), `RangedEffects` (the thief's words), `MinionJobs` (the sapper's hooks, the hauler's
+  lay-down), `DataLintTests`, `MinionBodyTests`, `DevShowcase`, `README`, `CHANGELOG`.
+- **Left out, and why**: a held weapon outside a sentry's post (a bow in a skeleton-armed fight, a drowned's thrown trident,
+  the axeman's and brute's axe damage: a minion's blows still come from its build, not its held item); a ridden minion's
+  jump (`PlayerRideableJumping`, and so Centaur's Jump Boost for your mount); armour trims and other mods' custom armour
+  models on a helmet (the vanilla helmet shape is stretched instead); dispositions other than berserk (still only data);
+  armour-side variants (a hide or scraps carry no traits of their mob, so a snow fox hide fitted to armour is a plain fox's)
+  and organs cut out in play carrying their carcass's traits (organ harvesting's, 15.16, to fill `Organ.traits`); the
+  playful panda's tumbles and the worried one's flight from thunder; and the other waits the signature lint logs (the sting
+  that spends a limb, carrying blocks, the row of fangs, the caravan, trader's guard and homing jobs, the mimic alarm,
+  skull-firing heads, rolling, being scooped into a bucket, froglights, the Gold Gizzard's double roll, and the rest), each a
+  mechanism of its own rather than wiring.
+- The suite is 431 tests (417 before, and fourteen new: `MinionMovementTests`, 8, and `MinionVariantTests`, 6), and passed
+  three runs in a row.

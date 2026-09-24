@@ -16,7 +16,17 @@
       "minion": {
         "traits": [
           "bloodandbones:lava_walk"
-        ]
+        ],
+        "movement": {
+          "mode": "walk",
+          "speed": 0.2,
+          "gait": "stride",
+          "rideable": true
+        },
+        "steer": {
+          "item": "minecraft:warped_fungus_on_a_stick",
+          "wear": 1
+        }
       },
       "armour": {
         "boots": [
@@ -28,16 +38,10 @@
   "organ_traits": {
     "bloodandbones:lava_bladder": {
       "minion": [
-        {
-          "trait": "bloodandbones:fireproof",
-          "level": 2
-        }
+        "bloodandbones:lava_soak"
       ],
       "armour": [
-        {
-          "trait": "bloodandbones:fireproof",
-          "level": 2
-        }
+        "bloodandbones:lava_soak"
       ]
     }
   }

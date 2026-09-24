@@ -71,16 +71,24 @@ public record TeleportEffect(String mode, LevelBasedValue radius, String who, fl
         }
     }
 
-    /** Anywhere within the radius, sixteen tries. */
+    /**
+     * Anywhere within the radius, sixteen tries; never a spot within a block of where it stands (a pick that close would
+     * land it where it was, and a blink that goes nowhere is none).
+     */
     public static boolean random(LivingEntity mover, float radius) {
         RandomSource random = mover.getRandom();
         ServerLevel level = (ServerLevel) mover.level();
         for (int i = 0; i < 16; i++) {
-            double x = mover.getX() + (random.nextDouble() - 0.5) * 2.0 * radius;
+            double dx = (random.nextDouble() - 0.5) * 2.0 * radius;
+            double dz = (random.nextDouble() - 0.5) * 2.0 * radius;
             // a whole block up or down, so it lands standing on the ground and not a little above it
             double y = Mth.clamp(Math.floor(mover.getY()) + random.nextInt(Mth.ceil(radius) * 2 + 1) - Mth.ceil(radius), level.getMinBuildHeight(),
                     level.getMinBuildHeight() + level.getLogicalHeight() - 1);
-            double z = mover.getZ() + (random.nextDouble() - 0.5) * 2.0 * radius;
+            if (dx * dx + dz * dz < 1.0) {
+                continue;
+            }
+            double x = mover.getX() + dx;
+            double z = mover.getZ() + dz;
             if (to(mover, x, y, z)) {
                 return true;
             }

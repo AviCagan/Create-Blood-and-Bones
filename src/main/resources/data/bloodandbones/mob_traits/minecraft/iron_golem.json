@@ -2,7 +2,8 @@
   "signature": [
     "parts.torso",
     "organs.bloodandbones:golem_core",
-    "full_set"
+    "full_set",
+    "parts.leg"
   ],
   "organs": {
     "torso": {
@@ -27,7 +28,12 @@
             "trait": "bloodandbones:heavy",
             "level": 2
           }
-        ]
+        ],
+        "movement": {
+          "mode": "sink",
+          "speed": 0.2,
+          "gait": "stomp"
+        }
       }
     }
   },

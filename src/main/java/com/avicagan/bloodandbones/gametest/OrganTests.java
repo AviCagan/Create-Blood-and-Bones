@@ -26,6 +26,7 @@ import com.avicagan.bloodandbones.parts.Organs;
 import com.avicagan.bloodandbones.parts.PartsData;
 import com.avicagan.bloodandbones.parts.ResolvedMob;
 import com.avicagan.bloodandbones.parts.Source;
+import com.avicagan.bloodandbones.parts.TraitList;
 import com.avicagan.bloodandbones.parts.TraitsCommand;
 import com.avicagan.bloodandbones.registry.BBBlocks;
 import com.avicagan.bloodandbones.registry.BBDataComponents;
@@ -574,6 +575,65 @@ public class OrganTests {
         helper.succeed();
     }
 
+    /**
+     * A charged creeper's sac, cut out of its torso, keeps its charge (what the creeper's variant reads, and nothing else
+     * its carcass kept, such as its name), so it does not stack with a plain one. Fitted, it blasts at level 2 in a
+     * chestplate and self-destructs at level 2 in a minion, and it comes back out of each still charged.
+     */
+    @GameTest(template = "empty", timeoutTicks = 20)
+    public static void chargedSacKeepsItsCharge(GameTestHelper helper) {
+        ServerLevel level = helper.getLevel();
+        PartsData.Store store = PartsData.SERVER;
+        SurgeryTableBlockEntity rig = table(helper, new BlockPos(2, 2, 2), TableAttachment.SURGICAL);
+        Player surgeon = helper.makeMockPlayer(GameType.SURVIVAL);
+        ItemStack blade = new ItemStack(BBItems.CLEAVER.get());
+        ItemStack torso = piece(CREEPER, null);
+        CarcassPieceItem.Piece plain = CarcassPieceItem.piece(torso);
+        torso.set(BBDataComponents.PIECE.get(), new CarcassPieceItem.Piece(plain.entity(), plain.bone(), plain.texture(), plain.coats(), plain.freshness(),
+                plain.skinned(), Map.of("charged", "true", "name", "Bob"), 0.0F, 0.0F, 0.0F, false));
+        rig.put(torso);
+        Surgery.harvest(level, surgeon, rig, blade);
+        ItemStack charged = first(surgeon, BBItems.GLAND.get());
+        rig.take();
+        Player other = helper.makeMockPlayer(GameType.SURVIVAL);
+        rig.put(piece(CREEPER, null));
+        Surgery.harvest(level, other, rig, blade);
+        ItemStack sac = first(other, BBItems.GLAND.get());
+        CarcassArmour.Organ organ = Organs.of(charged, store);
+        if (organ == null || !organ.traits().equals(Map.of("charged", "true")) || sac.has(BBDataComponents.ORGAN_TRAITS.get())
+                || ItemStack.isSameItemSameComponents(charged, sac)) {
+            helper.fail("A charged creeper's sac should keep its charge and nothing else, and a plain one nothing: " + charged.getComponentsPatch()
+                    + ", " + sac.getComponentsPatch());
+            return;
+        }
+        List<ItemStack> fitted = craft(helper, TestTraits.piece("chestplate", CREEPER), charged);
+        int blast = fitted == null ? 0 : CarcassArmourItem.armour(fitted.get(0)).traits(store).stream().filter(t -> t.id().equals(bb("blast")))
+                .mapToInt(TraitList.Resolved::level).max().orElse(0);
+        List<ItemStack> swapped = fitted == null ? null : craft(helper, fitted.get(0), sac);
+        if (blast != 2 || swapped == null || swapped.size() != 2 || !ItemStack.isSameItemSameComponents(swapped.get(1), charged)) {
+            helper.fail("The charged sac should blast at 2 in a chestplate (" + blast + ") and come back out still charged: " + swapped);
+            return;
+        }
+        BlockPos at = new BlockPos(5, 2, 5);
+        SurgeryTableBlockEntity frame = table(helper, at, TableAttachment.ASSEMBLY);
+        Player maker = helper.makeMockPlayer(GameType.SURVIVAL);
+        if (!MinionAssembly.layDown(frame, piece(COW, null), level)) {
+            helper.fail("A cow torso should lie down as a frame");
+            return;
+        }
+        click(helper, maker, at, charged.copy());
+        MinionBuild build = frame.build().orElseThrow();
+        int destruct = MinionData.traits(store, build).stream().flatMap(List::stream).filter(t -> t.id().equals(bb("self_destruct")))
+                .mapToInt(TraitList.Resolved::level).max().orElse(0);
+        MinionAssembly.takeBack(level, frame, maker);
+        ItemStack back = first(maker, BBItems.GLAND.get());
+        if (destruct != 2 || !ItemStack.isSameItemSameComponents(back, charged)) {
+            helper.fail("The charged sac should self-destruct at 2 in a minion (" + destruct + ") and come back out still charged: " + back.getComponentsPatch());
+            return;
+        }
+        helper.succeed();
+    }
+
     // ---- vanilla organs
 
     /**
@@ -708,8 +768,9 @@ public class OrganTests {
                 net.minecraft.world.phys.Vec2.ZERO, level, 4, "organ_test", Component.literal("organ_test"), level.getServer(), null);
         level.getServer().getCommands().performPrefixedCommand(source, "bloodandbones traits explain minecraft:creeper");
         String all = String.join("\n", said);
-        if (said.size() < 5 || !all.contains("bloodless_mob") || !all.contains("Powder Sac") || !all.contains("Self-Destruct") || !all.contains("Blast")) {
-            helper.fail("Explain should list the creeper's layers, its powder sac and what it does: " + all);
+        if (said.size() < 5 || !all.contains("bloodless_mob") || !all.contains("Powder Sac") || !all.contains("Self-Destruct") || !all.contains("Blast")
+                || !all.contains("charged = true")) {
+            helper.fail("Explain should list the creeper's layers, its powder sac and what it does, and what a charged one adds: " + all);
             return;
         }
         said.clear();
@@ -722,9 +783,11 @@ public class OrganTests {
             helper.fail("The dump should write " + file + ": " + e + " (said " + said + ")");
             return;
         }
-        boolean sacRow = rows.stream().anyMatch(r -> r.startsWith("minecraft:creeper,") && r.contains("organ:bloodandbones:powder_sac,armour:chestplate,bloodandbones:blast,1"));
-        if (rows.isEmpty() || !rows.get(0).startsWith("mob,") || !sacRow || rows.size() < 500) {
-            helper.fail("The dump should have a header and the creeper's sac's Blast among " + rows.size() + " rows");
+        boolean sacRow = rows.stream().anyMatch(r -> r.startsWith("minecraft:creeper,") && r.contains(",organ:bloodandbones:powder_sac,armour:chestplate,bloodandbones:blast,1"));
+        boolean chargedRow = rows.stream().anyMatch(r -> r.startsWith("minecraft:creeper,")
+                && r.contains(",variant[charged = true]:organ:bloodandbones:powder_sac,armour:chestplate,bloodandbones:blast,2"));
+        if (rows.isEmpty() || !rows.get(0).startsWith("mob,") || !sacRow || !chargedRow || rows.size() < 500) {
+            helper.fail("The dump should have a header and the creeper's sac's Blast, plain and charged, among " + rows.size() + " rows");
             return;
         }
         helper.succeed();

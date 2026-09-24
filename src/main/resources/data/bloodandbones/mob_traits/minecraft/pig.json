@@ -1,6 +1,7 @@
 {
   "signature": [
-    "organs.bloodandbones:bacon_fat"
+    "organs.bloodandbones:bacon_fat",
+    "parts.head"
   ],
   "organs": {
     "torso": {
@@ -18,6 +19,16 @@
         "bloodandbones:hardy",
         "bloodandbones:frost_guard"
       ]
+    }
+  },
+  "parts": {
+    "head": {
+      "minion": {
+        "steer": {
+          "item": "minecraft:carrot_on_a_stick",
+          "wear": 7
+        }
+      }
     }
   }
 }

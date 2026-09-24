@@ -1,7 +1,8 @@
 {
   "signature": [
     "parts.head",
-    "organs.bloodandbones:war_heart"
+    "organs.bloodandbones:war_heart",
+    "parts.leg"
   ],
   "organs": {
     "torso": {
@@ -20,6 +21,16 @@
       "armour": [
         "bloodandbones:roar"
       ]
+    },
+    "leg": {
+      "minion": {
+        "movement": {
+          "mode": "walk",
+          "speed": 0.25,
+          "gait": "stomp",
+          "rideable": true
+        }
+      }
     }
   },
   "organ_traits": {

@@ -1,10 +1,18 @@
 {
   "signature": [
-    "full_set"
+    "full_set",
+    "parts.arm.wing"
   ],
   "full_set": {
     "drawback": [
       "bloodandbones:cookie_poison"
     ]
+  },
+  "parts": {
+    "arm.wing": {
+      "minion": {
+        "lift": 0.06
+      }
+    }
   }
 }

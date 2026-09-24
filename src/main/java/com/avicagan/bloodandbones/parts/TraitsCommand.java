@@ -58,7 +58,7 @@ public final class TraitsCommand {
         return lines.size();
     }
 
-    /** The lines of "explain", for a mob: the layers, each part, the hide, the organs, the full set. */
+    /** The lines of "explain", for a mob: the layers, each part, the hide, the organs, the full set, the variants. */
     public static List<Component> explain(PartsData.Store store, ResourceLocation mob, boolean baby) {
         ResolvedMob resolved = store.resolve(mob, baby);
         List<Component> out = new ArrayList<>();
@@ -102,7 +102,33 @@ public final class TraitsCommand {
         }
         resolved.fullSet().ifPresent(set -> out.add(Component.translatable("bloodandbones.command.explain.set", Component.translatable(set.name()),
                 list(store, set.bonus()), list(store, set.drawback())).withStyle(ChatFormatting.DARK_PURPLE)));
+        // what a particular one adds, by what its carcass kept (a snow fox's hide, a charged creeper's sac)
+        for (ResolvedMob.Variant variant : resolved.variants()) {
+            out.add(Component.translatable("bloodandbones.command.explain.variant", Component.literal(when(variant.when())).withStyle(ChatFormatting.WHITE))
+                    .withStyle(ChatFormatting.GRAY));
+            if (!variant.hide().isEmpty()) {
+                out.add(Component.literal("  ").append(Component.translatable("bloodandbones.command.explain.hide", list(store, variant.hide())))
+                        .withStyle(ChatFormatting.GRAY));
+            }
+            variant.organs().forEach((organ, traits) -> out.add(Component.literal("  ").append(Component.translatable("bloodandbones.command.explain.organ",
+                    Organs.name(store, organ), list(store, traits.minion()), String.join(", ", Organs.kind(store, organ).armourPieces()),
+                    list(store, traits.armour()))).withStyle(ChatFormatting.GRAY)));
+        }
         return out;
+    }
+
+    /** A variant's "if" as it reads: "charged = true", "variant = red, snow", "name". */
+    private static String when(com.google.gson.JsonObject when) {
+        String trait = when.has("trait") ? when.get("trait").getAsString() : "?";
+        if (when.has("equals")) {
+            return trait + " = " + when.get("equals").getAsString();
+        }
+        if (when.has("in") && when.get("in").isJsonArray()) {
+            List<String> values = new ArrayList<>();
+            when.getAsJsonArray("in").forEach(e -> values.add(e.getAsString()));
+            return trait + " = " + String.join(", ", values);
+        }
+        return trait;
     }
 
     /** Every part key the mob's data names, minion or armour side, the plain ones before their sub-keys. */
@@ -155,7 +181,7 @@ public final class TraitsCommand {
 
     /**
      * The dump as CSV rows, a header first: one row per trait a facet gives, with the mob's archetype, family and
-     * overlays, the facet (a part key, the hide, an organ, a full set, an organ list) and who gets it (minion, armour, a
+     * overlays, the facet (a part key, the hide, an organ, a full set, an organ list, a variant's hide or organ) and who gets it (minion, armour, a
      * piece, a set's bonus or drawback). An organ list's rows name the organ in the trait column, its place in the level.
      */
     public static List<String> rows(PartsData.Store store) {
@@ -206,6 +232,14 @@ public final class TraitsCommand {
                 traits(out, head, "set:" + set.name(), "bonus", set.bonus());
                 traits(out, head, "set:" + set.name(), "drawback", set.drawback());
             });
+            for (ResolvedMob.Variant variant : resolved.variants()) {
+                String facet = "variant[" + when(variant.when()) + "]:";
+                traits(out, head, facet + "hide", "armour", variant.hide());
+                variant.organs().forEach((organ, traits) -> {
+                    traits(out, head, facet + "organ:" + organ, "minion", traits.minion());
+                    traits(out, head, facet + "organ:" + organ, "armour:" + String.join(" ", Organs.kind(store, organ).armourPieces()), traits.armour());
+                });
+            }
         }
         return out;
     }

@@ -180,8 +180,9 @@ public final class MotionFlags {
     }
 
     /**
-     * A lava-walking minion after it moves, as a strider floats: on the surface it has its footing; sunk below it (a
-     * drop, a push), it bobs back up.
+     * A lava-walking minion after it moves, as a strider floats: on the surface it has its footing; walked in from a bank
+     * lower than the surface, it steps up onto the lava as onto a slab rather than wading; sunk further below it (a drop,
+     * a push), it bobs back up.
      */
     public static void floatOnLava(MinionEntity minion) {
         if (!minion.isInLava() || MotionEffects.flag(minion, FlagEffect.LAVA_WALK) <= 0) {
@@ -189,9 +190,22 @@ public final class MotionFlags {
         }
         if (onLava(minion)) {
             minion.setOnGround(true);
-        } else {
-            minion.setDeltaMovement(minion.getDeltaMovement().scale(0.5).add(0.0, 0.05, 0.0));
+            return;
         }
+        BlockPos at = minion.blockPosition();
+        var fluid = minion.level().getFluidState(at);
+        if (fluid.is(FluidTags.LAVA) && fluid.isSource() && !minion.level().getFluidState(at.above()).is(FluidTags.LAVA)) {
+            // the top of a lava source's standing shape (LiquidBlock.STABLE_SHAPE)
+            double up = at.getY() + LiquidBlock.STABLE_SHAPE.max(net.minecraft.core.Direction.Axis.Y) - minion.getY();
+            if (up > 0.0 && up <= minion.maxUpStep() && minion.level().noCollision(minion, minion.getBoundingBox().move(0.0, up, 0.0))) {
+                minion.setPos(minion.getX(), minion.getY() + up, minion.getZ());
+                Vec3 motion = minion.getDeltaMovement();
+                minion.setDeltaMovement(motion.x, Math.max(0.0, motion.y), motion.z);
+                minion.setOnGround(true);
+                return;
+            }
+        }
+        minion.setDeltaMovement(minion.getDeltaMovement().scale(0.5).add(0.0, 0.05, 0.0));
     }
 
     /** Forget every bounce and cushion (the server stopped). */

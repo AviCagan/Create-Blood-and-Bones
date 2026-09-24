@@ -30,13 +30,22 @@ public record CarcassArmour(String piece, ResourceLocation body, boolean baby, O
         ).apply(i, Hide::new));
     }
 
-    /** An organ fitted into the piece: which organ (bloodandbones:heart...), and the mob it was cut out of. */
-    public record Organ(ResourceLocation organ, ResourceLocation entity, boolean baby) {
+    /**
+     * An organ fitted into the piece (or a minion): which organ (bloodandbones:heart...), the mob it was cut out of, and
+     * what that mob's carcass kept of it (its traits: a creeper's charge), which its data's variants read.
+     */
+    public record Organ(ResourceLocation organ, ResourceLocation entity, boolean baby, java.util.Map<String, String> traits) {
         public static final Codec<Organ> CODEC = RecordCodecBuilder.create(i -> i.group(
                 ResourceLocation.CODEC.fieldOf("organ").forGetter(Organ::organ),
                 ResourceLocation.CODEC.fieldOf("entity").forGetter(Organ::entity),
-                Codec.BOOL.optionalFieldOf("baby", false).forGetter(Organ::baby)
+                Codec.BOOL.optionalFieldOf("baby", false).forGetter(Organ::baby),
+                Codec.unboundedMap(Codec.STRING, Codec.STRING).optionalFieldOf("traits", java.util.Map.of()).forGetter(Organ::traits)
         ).apply(i, Organ::new));
+
+        /** An organ of a mob whose carcass kept nothing in particular. */
+        public Organ(ResourceLocation organ, ResourceLocation entity, boolean baby) {
+            this(organ, entity, baby, java.util.Map.of());
+        }
     }
 
     public static final Codec<CarcassArmour> CODEC = RecordCodecBuilder.create(i -> i.group(
@@ -101,10 +110,7 @@ public record CarcassArmour(String piece, ResourceLocation body, boolean baby, O
         }
         if (organ.isPresent()) {
             // the organ's armour traits for its mob; a mob whose data names none gives nothing, but it still fits
-            ResolvedMob.Organ traits = store.resolve(organ.get().entity(), organ.get().baby()).organs().get(organ.get().organ());
-            if (traits != null) {
-                out = TraitList.union(out, traits.armour());
-            }
+            out = TraitList.union(out, store.resolve(organ.get().entity(), organ.get().baby()).organArmour(organ.get().organ(), organ.get().traits()));
         }
         return out;
     }

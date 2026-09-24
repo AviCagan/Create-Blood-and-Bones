@@ -1,0 +1,19 @@
+{
+  "name": "trait.bloodandbones.sneeze",
+  "max_level": 1,
+  "contexts": [
+    "minion"
+  ],
+  "effects": [
+    {
+      "trigger": "tick",
+      "interval": 2400,
+      "effect": {
+        "type": "bloodandbones:produce",
+        "loot_table": "minecraft:gameplay/panda_sneeze",
+        "cost_mb": 5,
+        "sound": "minecraft:entity.panda.sneeze"
+      }
+    }
+  ]
+}

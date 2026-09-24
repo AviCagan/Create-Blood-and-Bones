@@ -339,6 +339,8 @@ public final class Surgery {
         net.minecraft.resources.ResourceLocation entity;
         boolean baby;
         net.minecraft.resources.ResourceLocation organ;
+        // what the carcass kept of its mob, for the organ to keep what its data reads (a charged creeper's sac)
+        java.util.Map<String, String> kept;
         if (piece != null) {
             java.util.List<net.minecraft.resources.ResourceLocation> held = com.avicagan.bloodandbones.parts.Organs.held(store, piece.entity(), piece.baby(), piece.bone());
             int taken = organsTaken(piece);
@@ -355,6 +357,7 @@ public final class Surgery {
             entity = piece.entity();
             baby = piece.baby();
             organ = held.get(taken);
+            kept = piece.traits();
         } else {
             com.avicagan.bloodandbones.carcass.CarcassSavedData.Carcass carcass = stack.isEmpty() ? carcassOn(level, pos) : null;
             if (carcass == null) {
@@ -387,8 +390,9 @@ public final class Surgery {
             entity = carcass.entity;
             baby = carcass.baby;
             organ = held.get(taken);
+            kept = carcass.traits;
         }
-        ItemStack out = com.avicagan.bloodandbones.parts.Organs.stack(store, organ, entity, baby);
+        ItemStack out = com.avicagan.bloodandbones.parts.Organs.stack(store, organ, entity, baby, kept);
         // a Deployer's stand-in would hold it and stall: it drops on the table, as the Butcher's Table's cuts do
         Player receiver = surgeon instanceof net.neoforged.neoforge.common.util.FakePlayer ? null : surgeon;
         give(receiver, out.copy(), pos, level);

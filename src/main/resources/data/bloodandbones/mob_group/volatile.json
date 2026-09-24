@@ -6,5 +6,15 @@
     "#bloodandbones:family/volatile"
   ],
   "scrap_material": "bloodandbones:gristle",
-  "colour": "#58a043"
+  "colour": "#58a043",
+  "parts": {
+    "head": {
+      "minion": {
+        "jobs": [
+          "bloodandbones:sapper",
+          "bloodandbones:guard"
+        ]
+      }
+    }
+  }
 }

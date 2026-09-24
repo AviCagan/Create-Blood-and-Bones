@@ -294,8 +294,16 @@ public final class PartsData {
             List<TraitList.Resolved> bonus = List.of();
             List<TraitList.Resolved> drawback = List.of();
             List<ResourceLocation> ids = new ArrayList<>();
+            List<ResolvedMob.Variant> variants = new ArrayList<>();
             for (MobGroup layer : layers) {
                 ids.add(layer.id());
+                for (MobGroup.Variant variant : layer.variants()) {
+                    // what a variant adds, resolved for this mob; it is added to the plain lists when one matches
+                    Map<ResourceLocation, ResolvedMob.Organ> more = new LinkedHashMap<>();
+                    variant.organTraits().forEach((organ, entry) -> more.put(organ, new ResolvedMob.Organ(
+                            entry.minion().map(t -> t.applyTo(List.of(), entity)).orElse(List.of()), entry.armour().map(t -> t.applyTo(List.of(), entity)).orElse(List.of()))));
+                    variants.add(new ResolvedMob.Variant(variant.when(), variant.hide().map(t -> t.applyTo(List.of(), entity)).orElse(List.of()), Map.copyOf(more)));
+                }
                 if (layer.scrapMaterial().isPresent()) {
                     material = layer.scrapMaterial().get();
                 }
@@ -352,7 +360,7 @@ public final class PartsData {
             minion.forEach((k, v) -> minionCopy.put(k, List.copyOf(v)));
             organLists.values().removeIf(List::isEmpty);
             return new ResolvedMob(entity, List.copyOf(ids), material, colour, Map.copyOf(parts), Map.copyOf(minionCopy), hide, Map.copyOf(organs), set,
-                    java.util.Collections.unmodifiableMap(organLists));
+                    java.util.Collections.unmodifiableMap(organLists), List.copyOf(variants));
         }
 
         /** The group of this kind that lists the mob, by id or tag; the highest priority wins. */

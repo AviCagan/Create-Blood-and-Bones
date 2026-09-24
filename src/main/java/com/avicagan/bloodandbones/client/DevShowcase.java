@@ -448,7 +448,8 @@ public final class DevShowcase {
                         // rabbit's haunches, and a legless cow out of blood on its side
                         java.util.function.BiFunction<String, String, com.avicagan.bloodandbones.minion.PieceRef> ref = (mob, bone) ->
                                 new com.avicagan.bloodandbones.minion.PieceRef(net.minecraft.resources.ResourceLocation.withDefaultNamespace(mob), bone,
-                                        net.minecraft.resources.ResourceLocation.withDefaultNamespace("textures/entity/" + mob + "/" + (mob.equals("rabbit") ? "brown" : mob.equals("horse") ? "horse_brown" : mob) + ".png"),
+                                        net.minecraft.resources.ResourceLocation.withDefaultNamespace(mob.equals("phantom") ? "textures/entity/phantom.png"
+                                                : "textures/entity/" + mob + "/" + (mob.equals("rabbit") ? "brown" : mob.equals("horse") ? "horse_brown" : mob) + ".png"),
                                         java.util.List.of(), 1.0F, false, java.util.Map.of(), false);
                         var cow = com.avicagan.bloodandbones.minion.MinionBuild.of(ref.apply("cow", "body")).with("head", ref.apply("cow", "head"));
                         var hopper = cow.with("right_front_leg", ref.apply("rabbit", "right_front_leg")).with("left_front_leg", ref.apply("rabbit", "left_front_leg"))
@@ -467,6 +468,10 @@ public final class DevShowcase {
                             minion.moveTo(at.getX() + 0.5, at.getY(), at.getZ() + 0.5, 180.0F, 0.0F);
                             minion.setup(player, at, builds.get(m), 1000.0F);
                             minion.setNoAi(true);
+                            if (m == 2) {
+                                // the zombie's torso burns by day: a carved pumpkin on its pig's head keeps the sun off
+                                minion.setItemSlot(net.minecraft.world.entity.EquipmentSlot.HEAD, new ItemStack(net.minecraft.world.item.Items.CARVED_PUMPKIN));
+                            }
                             player.serverLevel().addFreshEntity(minion);
                             if (m == 3) {
                                 minion.powerDown();
@@ -523,6 +528,33 @@ public final class DevShowcase {
                         rider.setNoAi(true);
                         player.serverLevel().addFreshEntity(rider);
                         rider.startRiding(horse, true);
+                        // a zombie with a cow's head holding a bow, an iron helmet stretched over the cow's skull, and a cow
+                        // hanging in the air on a phantom's wings (its hind legs dangling)
+                        var archer = com.avicagan.bloodandbones.minion.MinionBuild.of(ref.apply("zombie", "body")).with("head", ref.apply("cow", "head"))
+                                .with("right_arm", ref.apply("zombie", "right_arm")).with("left_arm", ref.apply("zombie", "left_arm"))
+                                .with("right_leg", ref.apply("zombie", "right_leg")).with("left_leg", ref.apply("zombie", "left_leg"));
+                        var bowman = com.avicagan.bloodandbones.registry.BBEntities.MINION.get().create(player.serverLevel());
+                        BlockPos bowAt = player.blockPosition().offset(-3, 0, 11);
+                        bowman.moveTo(bowAt.getX() + 0.5, bowAt.getY(), bowAt.getZ() + 0.5, 160.0F, 0.0F);
+                        // a client turns a new mob's body to its head's turn
+                        bowman.setYHeadRot(160.0F);
+                        bowman.setYBodyRot(160.0F);
+                        bowman.setup(player, bowAt, archer, 1000.0F);
+                        bowman.setNoAi(true);
+                        bowman.setItemSlot(net.minecraft.world.entity.EquipmentSlot.MAINHAND, new ItemStack(net.minecraft.world.item.Items.BOW));
+                        bowman.setItemSlot(net.minecraft.world.entity.EquipmentSlot.HEAD, new ItemStack(net.minecraft.world.item.Items.IRON_HELMET));
+                        player.serverLevel().addFreshEntity(bowman);
+                        var winged = cow.with("right_front_leg", ref.apply("phantom", "body/right_wing_base")).with("left_front_leg", ref.apply("phantom", "body/left_wing_base"))
+                                .with("right_hind_leg", ref.apply("cow", "right_hind_leg")).with("left_hind_leg", ref.apply("cow", "left_hind_leg"));
+                        var flier = com.avicagan.bloodandbones.registry.BBEntities.MINION.get().create(player.serverLevel());
+                        BlockPos flyAt = player.blockPosition().offset(3, 2, 11);
+                        flier.moveTo(flyAt.getX() + 0.5, flyAt.getY(), flyAt.getZ() + 0.5, 200.0F, 0.0F);
+                        flier.setYHeadRot(200.0F);
+                        flier.setYBodyRot(200.0F);
+                        flier.setup(player, flyAt, winged, 1000.0F);
+                        flier.setNoAi(true);
+                        flier.setNoGravity(true);
+                        player.serverLevel().addFreshEntity(flier);
                     });
                     mc.options.setCameraType(net.minecraft.client.CameraType.FIRST_PERSON);
                     mc.options.hideGui = true;
