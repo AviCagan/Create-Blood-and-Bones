@@ -172,4 +172,26 @@ public class BleedingRackTests {
         }
         helper.succeed();
     }
+
+    /**
+     * A body lying on the ground beside a rack has its lowest point right on the floor's top, or pressed a hair into it:
+     * the rack beside it is found either way (it was missed by a rounding, and a hauler's carcass lay beside a tray unbled).
+     */
+    @GameTest(template = "empty", timeoutTicks = 20)
+    public static void bodyOnTheFloorBesideARackFindsIt(GameTestHelper helper) {
+        ServerLevel level = helper.getLevel();
+        BlockPos rackAt = new BlockPos(5, 2, 5);
+        helper.setBlock(rackAt, BBBlocks.BLEEDING_RACK.getDefaultState());
+        BleedingRackBlockEntity rack = (BleedingRackBlockEntity) level.getBlockEntity(helper.absolutePos(rackAt));
+        // beside the rack, on the floor whose top is the rack's bottom
+        BlockPos beside = helper.absolutePos(rackAt.west());
+        for (double sunk : new double[]{0.0, 1.0E-6, 0.01, 0.05}) {
+            org.joml.Vector3d lowest = new org.joml.Vector3d(beside.getX() + 0.5, beside.getY() - sunk, beside.getZ() + 0.5);
+            if (com.avicagan.bloodandbones.carcass.CarcassBleeding.rackBelow(level, lowest, com.avicagan.bloodandbones.carcass.CarcassBleeding.LYING_REACH) != rack) {
+                helper.fail("A body lying on the floor beside the rack, pressed " + sunk + " into it, should bleed into the rack");
+                return;
+            }
+        }
+        helper.succeed();
+    }
 }

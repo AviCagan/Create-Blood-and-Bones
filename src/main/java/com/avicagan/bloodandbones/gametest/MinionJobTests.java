@@ -667,7 +667,7 @@ public class MinionJobTests {
      * A hauler (a leatherworker's head) with a Bleeding Rack by home and no hook drags the cow carcass over the tray and
      * lets it down there, where it bleeds into it.
      */
-    @GameTest(template = "empty", timeoutTicks = 800)
+    @GameTest(template = "empty", timeoutTicks = 1200)
     public static void haulerLaysCarcassOnRack(GameTestHelper helper) {
         pen(helper);
         ServerLevel level = helper.getLevel();

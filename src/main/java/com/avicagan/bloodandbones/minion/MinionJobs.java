@@ -1642,6 +1642,12 @@ public final class MinionJobs {
         private static final double HOOK_HEIGHT = 4.0;
         /** How near over the middle of a rack the body must be to be let down on it (a tray catches a little wide). */
         private static final double ON_TRAY = 0.8;
+        /** Ticks a body let down on a rack is given to settle before it is checked to lie in the tray. */
+        private static final int SETTLE = 40;
+        /** Ticks it may stand still with the body not over the tray before it takes another pass. */
+        private static final int STUCK = 60;
+        /** Passes over a rack before it gives the body up. */
+        private static final int TRIES = 3;
         private final MinionEntity minion;
         @Nullable
         private UUID carcass;
@@ -1652,6 +1658,11 @@ public final class MinionJobs {
         private Vec3 through = Vec3.ZERO;
         private boolean done;
         private int startedAt;
+        /** When a body let down on a rack is checked, or -1 when it has not been let down. */
+        private int settleUntil = -1;
+        /** Since when it has stood still with the body short of the tray, or -1. */
+        private int stuckSince = -1;
+        private int tries;
         private final List<UUID> unreachable = new ArrayList<>();
         private int forgotAt;
         private final MinionGoals.Approach approach = new MinionGoals.Approach();
@@ -1804,6 +1815,9 @@ public final class MinionJobs {
             dragging = false;
             done = false;
             startedAt = minion.tickCount;
+            settleUntil = -1;
+            stuckSince = -1;
+            tries = 0;
             approach.reset(minion);
         }
 
@@ -1819,6 +1833,34 @@ public final class MinionJobs {
             }
             carcass = null;
             to = null;
+        }
+
+        /** Lower a body it lets go of: every piece stops where it is, so it does not slide on at the pace it was towed. */
+        private static void layDown(ServerLevel level, CarcassSavedData.Carcass c) {
+            var container = dev.ryanhcode.sable.api.sublevel.SubLevelContainer.getContainer(level);
+            if (!(container instanceof dev.ryanhcode.sable.api.sublevel.ServerSubLevelContainer server)) {
+                return;
+            }
+            var pipeline = server.physicsSystem().getPipeline();
+            for (UUID id : c.bones.values()) {
+                if (server.getSubLevel(id) instanceof dev.ryanhcode.sable.sublevel.ServerSubLevel bone && !bone.isRemoved()) {
+                    pipeline.resetVelocity(bone);
+                }
+            }
+        }
+
+        /**
+         * The body missed the tray: it takes hold again from where it stands and walks another line over the rack, or,
+         * after {@link #TRIES} passes, gives it up.
+         */
+        private void another() {
+            stuckSince = -1;
+            if (++tries >= TRIES) {
+                giveUp();
+                return;
+            }
+            dragging = false;
+            approach.reset(minion);
         }
 
         /** It cannot get this carcass there: it lets go and leaves it for half a minute. */
@@ -1846,6 +1888,21 @@ public final class MinionJobs {
                 return;
             }
             Vec3 torso = new Vec3(at.x, at.y, at.z);
+            if (settleUntil >= 0) {
+                // let down on a rack: once it has settled it must lie in the tray (where the bleeding finds the rack), or it
+                // slid off and is taken up again for another pass
+                if (minion.tickCount < settleUntil) {
+                    return;
+                }
+                settleUntil = -1;
+                BleedingRackBlockEntity under = onRack(level, c);
+                if (under != null && under.getBlockPos().equals(to)) {
+                    done = true;
+                } else {
+                    another();
+                }
+                return;
+            }
             if (!dragging) {
                 // within arm's length of the body (it lies in the way of getting any nearer), as a player hooks one from
                 double reach = 3.0 + minion.getBbWidth() / 2.0;
@@ -1896,10 +1953,27 @@ public final class MinionJobs {
                 }
             } else if (level.getBlockEntity(to) instanceof BleedingRackBlockEntity) {
                 Vec3 tray = Vec3.atCenterOf(to);
-                if (Math.hypot(torso.x - tray.x, torso.z - tray.z) < ON_TRAY && torso.y > tray.y - 0.5 && torso.y < tray.y + 2.0) {
-                    // over the tray: it lets the body down there
+                BleedingRackBlockEntity under = onRack(level, c);
+                boolean stood = minion.getNavigation().isDone();
+                boolean overTray = Math.hypot(torso.x - tray.x, torso.z - tray.z) < ON_TRAY && torso.y > tray.y - 0.5 && torso.y < tray.y + 2.0;
+                if (under != null && under.getBlockPos().equals(to) && (overTray || stood)) {
+                    // over the tray, where the bleeding finds this rack under the body: it lets it down there, gently (not
+                    // flung on at a walk), and waits
                     CarcassDrag.stop(level, minion);
-                    done = true;
+                    minion.getNavigation().stop();
+                    layDown(level, c);
+                    settleUntil = minion.tickCount + SETTLE;
+                    stuckSince = -1;
+                    return;
+                }
+                if (!stood) {
+                    stuckSince = -1;
+                } else if (stuckSince < 0) {
+                    stuckSince = minion.tickCount;
+                } else if (minion.tickCount - stuckSince > STUCK) {
+                    // stood where its path ends with the body trailing short of the tray: it lets go and takes another pass
+                    CarcassDrag.stop(level, minion);
+                    another();
                     return;
                 }
                 over = Vec3.atCenterOf(to).add(0.0, 0.5, 0.0);
