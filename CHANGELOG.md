@@ -221,6 +221,13 @@ Everything below is in development builds only; the art is placeholder (see the 
   and how long you have been dry, and can act when you land or make a kill.
 - Server settings for traits: their strength, and effect types to switch off.
 - Hold Ctrl over a carcass piece to read what its traits do, for traits that say.
+- Upkeep traits: flesh minions lay eggs, give milk and stew (use a bucket or bowl on them), grow wool in their sheep's
+  colour, spin string, squeeze out ink and bring up honey, paying blood for each; brass makes nothing. Minions mend on
+  their blood (brass never mends itself), take an iron ingot for 25 health, carry more (saddlebags, a chest on a beast of
+  burden), hold more blood (a hump) or less efficiently (leaky), eat rotten flesh and raw meat for blood, and forage
+  grass, seeds or mushrooms until half full. Armour can make seeds, bamboo and mushrooms food, fill you more, poison you
+  on cookies, cheat death once in a while (a minion collapses instead), and burn you in the sun, hurt you in water or
+  heat, or slow you once you have been dry too long. A new Blood Upkeep attribute scales what implants and minions drink.
 
 ### Presentation
 

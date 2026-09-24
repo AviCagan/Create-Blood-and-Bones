@@ -1748,3 +1748,73 @@ through the existing bloodless checks, not another logic path; new blocks are or
 contraptions; an effect on a minion never destroys it (power it down instead: `MinionEntity.powerDown`); effects run on
 the server (`ctx.level()` is a ServerLevel), and movement a client predicts reads the same traits there through
 `ActiveTraits.of`, which notices a change of armour on either side.
+
+**Upkeep, as built** (`UpkeepEffects`, its records in `parts/effect/`, `Diet`; verified in tests; nothing new is drawn,
+so `UpkeepClient` is still empty):
+
+- **regen** (`RegenEffect` {amount, cure, mob_effect}): `amount` health each time its entry comes up. A flesh minion pays
+  5 mB a heart (`MinionEntity.REGEN_COST`) through `usePower`, never below a tenth of its blood, as its own mending does; a
+  brass minion never heals itself (the brief). `cure` clears "harmful", "all" or named effects and `mob_effect` gives one
+  after, so one ability is honey (poison cured, then Regeneration II) and cleanse is a regen of nothing that clears every
+  harmful effect. (The spec gives mob_effect a `clear`; putting it on regen kept the engine's record untouched.)
+- **mend** (`MendEffect` {mode, items, amount}): "item": one of `items` (ids or "#tags") used on a hurt minion mends
+  `amount`, flesh or brass alike, and is used up (the `interact` hook); on armour it is a valid anvil repair
+  (`repairsWith`). "self": the piece the trait counts from (every worn piece, for a full set's) knits `amount` durability
+  back on each tick.
+- **produce** (`ProduceEffect` {item or loot_table, count, consumes, cost_mb, coloured, sound}): a flesh minion puts it in
+  its pack (on the ground when full), paying `cost_mb`; a brass one makes nothing. A player gets it in their pack, paying
+  from the tank. With `consumes` it needs that container (bucket, bowl, glass bottle) and makes nothing without; the same
+  container used on the minion by hand is filled at once for the same blood (milking). `coloured` swaps a white item for
+  the colour the minion's sheep carcass kept ("wool"). A tick entry's first go waits a whole interval after the host loads,
+  so reloading a chunk is no faster way to milk it. Loot tables roll with the gift parameters, as a cat's morning gift does.
+- **storage** (`StorageEffect` {slots, chest}): slots on top of the torso's (`extraSlots`). `MinionEntity.inventory`
+  now holds 54, the spec's most; `slots()` is what it may use. Once a second (`onMinionTick`, down or not) anything past
+  its slots moves into a free slot or falls out, never lost. `chest`: only once its maker has used a chest on it (kept in
+  the entity's persistent data; dropped if the trait goes, or on death).
+- **power** (`PowerEffect` {capacity_mult, drain_mult, refuel, feed_on_kill_mb}): `capacity_mult` scales a flesh
+  build's reservoir in `MinionStats` (pure: `PowerEffect.capacity(store, build)` stacks the build's traits as
+  `ActiveTraits` does; brass holds whole canisters), so troughs, gauges and conditions all see it. `drain_mult` multiplies
+  `drainMultiplier`, with the minion's `blood_upkeep`. `refuel` {item or "#tag": mB} is blood food: fed by hand, or eaten
+  from its pack once below a quarter. `feed_on_kill_mb` feeds a minion, or a player's worn tank if it holds blood or
+  nothing. On a player, `drain_mult` goes on the new `bloodandbones:blood_upkeep` attribute (1 by default, on players and
+  minions, spec 5.7), which `BodyEffects.drain` now pays implant drain at (a share of a drop paid that share of the time).
+- **diet** (`TraitEffects.DietEffect`, grown in place: {effect, hunger, foods, saturation, amount, mob_effect, forage_mb};
+  the eating is `Diet`): on `LivingEntityUseItemEvent.Finish`, "safe" takes off the food's harmful effects,
+  "bonus_saturation" adds `saturation` plus `amount` of the food's own, "cure_one" clears one harmful effect, "toxic" gives
+  `mob_effect` (poison by default); any kind may give `mob_effect`. "edible" makes things food: used while hungry (a
+  `RightClickItem`), eaten at once for `hunger` and `saturation`. A flesh minion forages a diet with `forage_mb` once a second
+  while awake and under half full: food from its pack, else (where mobs may grief) grass or mushrooms at its feet, or a
+  grass, mycelium or podzol block under it, which goes to dirt. Foods are ids or "#tags", read when eaten, so tags need not
+  have loaded when the trait did. Graze stays in `TraitEvents#onUseBlock`.
+- **lethal_save** (`LethalSaveEffect` {chance, health, cost_mb}, a `DeathSaver`): `chance` at the trait's level; a player
+  is left on `health` with harmful effects and fire gone, paying `cost_mb` from the tank; a minion collapses (1 health,
+  powered down). With the default `minion_death` a minion collapses before savers are asked; with scatter or destroy the
+  saver collapses it. `MinionEntity.die` now forgets a minion in the census only if the death went through. A heartbeat,
+  a totem's flicker and a spray of blood (bloodless mode leaves the flicker: the drops' own check hides them).
+- **exposure** (`ExposureEffect` {damage, damage_type, ignite}), not one of the spec's 30: the harm a drawback's
+  surroundings do. The spec reaches sun_cursed, water_hurts and heat_hurts through the vanilla adapter's ignite and
+  damage_entity (Ranged's, not in this branch); once merged they could move there and this type go.
+- **Traits** (new files, lang, bloodless names where the word is flesh: Milk Tap, Stew Tap, Egg Dispenser, Silk
+  Spinner, Ink and Glow Reservoir, Honey Hopper, Bamboo and Mycelial Stomach, Lean Core): milk_udder, stew_udder
+  (5 min, 50 mB; by hand too), egg_layer (minion 5 min, 10 mB; armour 10 min), wool_regrowth (5 min, 20 mB, its sheep's
+  colour), silk_gland, ink_gland, glow_gland, honey_stomach (a bottle a minute; the spec's bonemealing is aura's, left
+  out), scute_shed, morning_gift (the cat's gift table in the first minute of the morning, once a day), four_chambers
+  (plant foods +50% saturation), omnivore (+1), seed_eater, bamboo_gut, mycelial_gut (mushrooms edible; mushrooms and
+  stews give Regeneration I 5 s), forager (wheat, hay, grass: 100 mB each), cookie_poison, iron_gut (extended: rotten flesh
+  and raw meat safe; a minion's blood food at 25 mB), beast_of_burden (drag strength +0.15, a chest for +18; minions now
+  have the drag_strength attribute), saddlebags (+15), hump (reservoir x2; no second seat, as there are no seats yet),
+  leaky (x1.5), marrow (x0.8), repair_with_iron (an ingot mends 25; minion-only, as spec 5.10 lists it), cleanse (50 mB,
+  2 min), honey (30 mB, 2 min), undying (20% a level, 5 minutes), second_wind, adrenaline (levelled to II), roll_up,
+  sun_cursed (by day, open sky, dry a second: alight 8 s; no helmet helps), water_hurts (1 a second while wet, as drowning),
+  dry_out (a minute dry: Slowness and armour -2), heat_hurts (the biomes where snow golems melt, named one by one since
+  biome tags are not bound when traits load, or the Nether). The chicken's egg gland is wired
+  (`mob_traits/minecraft/chicken.json`).
+- **Tests** (`UpkeepEffectTests`): `chickenOrganLaysEgg`, `produceInertOnCyber`, `regenHealsMinionForBlood`,
+  `brassNeverSelfHeals`, `repairWithIronHeals25`, `saddlebagsAddStorageKeepsItems`, `undyingSavesOnceThenCooldown`,
+  `undyingMinionCollapsesNotDies`, `sunCursedIgnitesInDaylight` (open sky, the time set and put back in one call),
+  `dryOutAfterSeconds` (a one-second twin of dry_out), `ironGutRefuelsMinion`, `dietOnEating`, `milkByHandAndHump`,
+  `woolRegrowsInItsColour`, `mendSelfRepairsArmour`.
+- **Shared code touched**: `TraitEffects.DietEffect` (its fields), `MinionStats.of` (the reservoir), `MinionEntity`
+  (54 slots; the census after a called-off death), `BodyEffects.drain` (blood upkeep).
+- **Left for later**: the beast of burden's chest is not drawn; the evoker's totem undying (500 mB, 20 minutes) and every
+  other mob's wiring wait for the per-mob data.
