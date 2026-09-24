@@ -102,6 +102,7 @@ public class ImplantTests {
         helper.setBlock(new BlockPos(3, 2, 3), BBBlocks.SURGERY_TABLE.getDefaultState());
         SurgeryTableBlockEntity table = (SurgeryTableBlockEntity) helper.getLevel().getBlockEntity(helper.absolutePos(new BlockPos(3, 2, 3)));
         Player player = helper.makeMockPlayer(GameType.SURVIVAL);
+        MinionTests.surgeon(helper, new BlockPos(4, 2, 4));
         table.put(new ItemStack(BBItems.PUMP_HEART.get()));
         if (Surgery.operate(helper.getLevel(), player, table, BodyPart.HEART) != Surgery.Action.REPLACE
                 || player.getInventory().countItem(BBItems.HEART.get()) != 1 || BodyEffects.body(player).state(BodyPart.HEART) != Body.State.IMPLANT) {
@@ -136,6 +137,8 @@ public class ImplantTests {
         }
         table.take();
         table.put(new ItemStack(BBItems.GLASS_EYE.get()));
+        // the surgeon left the socket ragged: fitting it takes a bucket of blood too
+        player.getInventory().add(new ItemStack(BBFluids.BLOOD.getBucket().get()));
         if (Surgery.operate(helper.getLevel(), player, table, BodyPart.RIGHT_EYE) != Surgery.Action.FIT || !BodyEffects.sees(BodyEffects.body(player), player)) {
             helper.fail("A Glass Eye should give sight back");
             return;

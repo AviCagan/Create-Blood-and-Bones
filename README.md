@@ -55,7 +55,9 @@ provided by [Sable](https://github.com/ryanhcode/sable).
   chain.
 - **The body.** Lie on the Surgery Table and choose what to do to each part of you: arms, legs,
   eyes, heart, lungs and stomach. A Cleaver on the table takes one out (you keep it, with your name on
-  it); an implant or a part goes where one is missing, or swaps straight in. Nothing takes a part any
+  it), but only with a surgeon minion (a villager's or pillager's head) beside the table, and its ragged
+  stump takes a bucket of blood to fit later; an implant or a part goes where one is missing, or swaps
+  straight in. Nothing takes a part any
   other way, and surgery cannot go wrong. As the design brief has it, a missing part is an interesting
   penalty, not a health shave: an arm gone, no off-hand and slower swings; a leg gone, no sprinting; an
   eye gone, fog closing in; the heart is only ever swapped. Crude prosthetics (Peg Leg, Hook Hand, Glass
@@ -96,7 +98,7 @@ incremental. `./gradlew runClient` / `runServer` / `runData` are configured by M
 
 ### Development aids
 
-- `./gradlew runGameTestServer` runs the game tests headless (235: every rigged mob and baby,
+- `./gradlew runGameTestServer` runs the game tests headless (241: every rigged mob and baby,
   butchery, rot, bleeding, machines and their filters, cooking and display, surgery, implants, backtanks, minions, chains, recipes,
   advancements and sounds).
 - `./gradlew runData -Dbloodandbones.dump_layers=minecraft:goat#main,...` writes those vanilla

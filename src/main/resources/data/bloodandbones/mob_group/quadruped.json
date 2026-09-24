@@ -38,7 +38,7 @@
         "health_factor": 1.0,
         "self_move": {
           "mode": "crawl",
-          "speed": 0.05
+          "speed": 0.12
         }
       },
       "armour": [

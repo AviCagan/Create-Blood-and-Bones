@@ -67,6 +67,13 @@ Everything below is in development builds only; the art is placeholder (see the 
   takes one off, and you keep it ("Steve's Arm"); a Peg Leg, a Hook Hand or a severed limb laid on it
   goes where one is missing; a prosthetic unclips. Limbs are only ever lost by choice, and nothing
   can go wrong.
+- Amputation is a ritual, as the brief has it: a player's flesh only comes off with a surgeon minion
+  (a villager's or a pillager's head, and an arm) awake beside the table. It hacks: the stump it leaves
+  is ragged, and fitting anything there later takes a bucket of blood as well (from a bucket or a worn
+  backtank). Fitting never needs a surgeon, so a crude prosthetic can always go on. A surgeon keeps to
+  its table and tends whoever lies on it.
+- Stumps show: a limb gone leaves the top of it in your own skin with a raw end; a ragged one is
+  longer, torn, with flaps of flesh hanging off.
 - Missing parts follow the design brief: an arm gone means no off-hand and swings a quarter slower
   (the main hand always works); a leg gone means no sprinting; an eye gone closes the view in with fog
   (to a few blocks with none); the heart is only ever swapped, never taken out alone.

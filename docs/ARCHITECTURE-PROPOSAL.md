@@ -1199,6 +1199,34 @@ The brief says to build the throttle once, as shared infrastructure, and then th
   stabilizer cost a quarter less, and knockback resistance +0.25. Both kinds in one body: neither, and no
   penalty. Crude prosthetics count for neither. `setBonusesNeedFourAndNoMixing`.
 
+### 14.12 The surgeon minion and the ragged stump (brief § Self-augmentation)
+
+- "Amputation is a prepared ritual, never a field action": cutting flesh off a player (taking a part off with a
+  Cleaver on the table, or swapping flesh for an implant in one go) needs an awake **surgeon minion** within 4
+  blocks of the table (`Surgery.surgeonAt`). Without one the screen shows "Needs a surgeon" and nothing happens.
+  A mob on the table (led on with a lead) is still cut by the player standing by it: the ritual is about the
+  player's own body. `amputationNeedsSurgeon` (none, one out of blood, one across the room, one at the table).
+- **Surgeons**: the surgeon job comes from the head, as the brief says: villager and pillager heads (their data
+  in `mob_traits/minecraft/villager.json` and `pillager.json`; a villager's head starts as a surgeon and also
+  offers farmer and courier). The job needs a hand, so a head on a body with no arm fitted is not offered it (nor
+  farmer). A surgeon keeps to its table (its home, or the nearest table within 6 blocks when it is set down
+  elsewhere) and tends whoever lies there, a heart every five seconds. `villagerAndPillagerHeadsOfferSurgeon`,
+  `surgeonKeepsToItsTable`.
+- **The ragged stump**: what a surgeon cuts off leaves the stump ragged (`Body.ragged`, saved with the body).
+  Fitting anything into a ragged stump (a prosthetic, or the limb back) takes a bucket's worth of blood as well,
+  from a bucket or any fluid item the operator carries, a worn Fluid Backtank included. Once fitted the stump is
+  dressed: take the implant out and it is an ordinary empty slot. Swapping an implant straight in for flesh
+  leaves no stump. `raggedStumpCostsBlood`, `raggedStumpPaidFromBacktank`.
+- **The safety floor holds**: fitting, reattaching, swapping implants and modules never need a surgeon, and blood
+  is cheap and early (a Bleeding Rack needs no power), so a crude prosthetic can always go on.
+  `safetyFloorNeverNeedsSurgeon`.
+- **Drawn**: a limb gone leaves a stump on the player, the top of the limb in their own skin (sleeve or trouser
+  leg and all) with a raw end; a ragged one is longer, its end torn, flaps of flesh hanging off it. In bloodless
+  mode the end is plain.
+- Found on the way: minion goals that count game ticks ran on every other tick (Minecraft's default), so a
+  minion by a trough sometimes never drank; they now run every tick. And a legless body's crawl was 0.05, which
+  (a speed counts about squared) barely moved: now 0.12.
+
 ## 15. Parts and traits: minions and carcass armour from every piece of a mob
 
 The user asked for "each part of a mob (leg arm head torso and special organ) being a craft ingredient for
@@ -1220,7 +1248,8 @@ file, composed from about 30 effect types.
 6. Organic frames take only unskinned pieces and brass frames only skinned ones (the brief's deglove
    pipeline); hideless mobs count as both.
 7. A quadruped's front leg is a leg.
-8. Surgeon heads: the villager and illager families (villager and pillager as the brief names, and their kin).
+8. Surgeon heads: built for villager and pillager heads, as the brief names them; their kin (other illagers, the
+   zombie villager) come with the per-mob data.
 9. Per-mob signatures are authored last, once the base system works, as the brief defers them.
 10. Boss parts (warden, wither) usable by default.
 11. Tiers upgrade by crafting (piece + ingot), which Mechanical Crafters automate.
@@ -1287,7 +1316,7 @@ saved the old way falls apart on its first tick, dropping what it carried.
   specific key first ("leg.hind" before "leg"): health is the torso mob's times its `health_factor` (6 to 150);
   slots and blood held from the torso's size; speed the mean of its legs' speeds, cut by the share of the torso's
   own legs present; the mode (walk, hop) the one most legs share; no legs, the torso's own way (most crawl at
-  0.05); jobs and bite from the head. A cow on four rabbit legs with a cow's head is 15 health, hops at 0.325 and
+  0.12); jobs and bite from the head. A cow on four rabbit legs with a cow's head is 15 health, hops at 0.325 and
   starts as a courier (`buildCowOnFourRabbitLegs`, `cowOnRabbitLegsOutpacesCow`). Data so far: the quadruped and
   biped archetypes, the grazer and small prey families, the rabbit's hind legs, the villager's head (farmer).
 - **Blood** (`MinionEntity`): it drinks 3 mB a minute idle, 15 moving, 25 working, 40 fighting (times the

@@ -115,10 +115,14 @@ public class SurgeryScreen extends Screen {
         }
         Body body = BodyEffects.body(player);
         ItemStack tool = tool();
+        Player operator = Minecraft.getInstance().player;
         buttons.forEach((part, button) -> {
             Surgery.Action action = Surgery.action(body, tool, part);
-            button.setMessage(Component.translatable(action.translationKey()));
-            button.active = action != Surgery.Action.NONE;
+            // what stands in the way (no surgeon at the table, no blood for a ragged stump) shows in place of the action
+            Component problem = action == Surgery.Action.NONE || operator == null ? null
+                    : Surgery.blocked(player.level(), player, operator, table, body, action, part);
+            button.setMessage(problem != null ? problem : Component.translatable(action.translationKey()));
+            button.active = action != Surgery.Action.NONE && problem == null;
         });
     }
 
@@ -152,7 +156,7 @@ public class SurgeryScreen extends Screen {
         for (BodyPart part : BodyPart.values()) {
             Component state = switch (body.state(part)) {
                 case NATURAL -> Component.translatable("bloodandbones.surgery.state.natural");
-                case MISSING -> Component.translatable("bloodandbones.surgery.state.missing");
+                case MISSING -> Component.translatable(body.ragged(part) ? "bloodandbones.surgery.state.ragged" : "bloodandbones.surgery.state.missing");
                 case IMPLANT -> body.works(part, player) ? body.implant(part).getHoverName()
                         : Component.translatable("bloodandbones.surgery.state.dead", body.implant(part).getHoverName());
             };

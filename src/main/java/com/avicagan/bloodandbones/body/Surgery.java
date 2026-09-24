@@ -21,6 +21,11 @@ import org.joml.Vector3d;
  * and on what lies on the table: a blade takes a part of flesh out (a limb, an eye, an organ); an implant
  * that fits takes a part of flesh's place in one go, or goes where one is missing; a part of flesh goes back
  * where one is missing; and an implant comes out with nothing needed. Nothing can go wrong.
+ * <p>
+ * The brief's ritual: cutting flesh off a player (taking it off, or swapping it for an implant) needs a
+ * surgeon minion awake by the table, and a part it takes off leaves a ragged stump; fitting anything into a
+ * ragged stump later takes a bucket of blood as well. Fitting, reattaching, swapping implants and modules
+ * never need a surgeon, so a crude prosthetic can always be fitted: the safety floor is always in reach.
  */
 public final class Surgery {
     public enum Action {
@@ -32,6 +37,90 @@ public final class Surgery {
     }
 
     private Surgery() {
+    }
+
+    /** How near the table a surgeon minion must stand. */
+    public static final double SURGEON_REACH = 4.0;
+    /** What fitting into a ragged stump costs on top, in mB of blood. */
+    public static final int RAGGED_BLOOD = 1000;
+
+    /** An awake surgeon minion by this table, if there is one. */
+    @org.jetbrains.annotations.Nullable
+    public static com.avicagan.bloodandbones.minion.MinionEntity surgeonAt(net.minecraft.world.level.Level level, BlockPos table) {
+        for (com.avicagan.bloodandbones.minion.MinionEntity minion : level.getEntitiesOfClass(com.avicagan.bloodandbones.minion.MinionEntity.class,
+                new net.minecraft.world.phys.AABB(table).inflate(SURGEON_REACH))) {
+            if (minion.isAlive() && !minion.poweredDown() && minion.hasJob("surgeon")) {
+                return minion;
+            }
+        }
+        return null;
+    }
+
+    /** Whether this cuts flesh away. */
+    public static boolean cuts(Action action) {
+        return action == Action.TAKE_OFF || action == Action.REPLACE;
+    }
+
+    /**
+     * Why this cannot be done right now, or null if it can: cutting a player needs a surgeon at the table;
+     * fitting into a ragged stump needs a bucket of blood on whoever is operating. The same on both sides, for
+     * the screen.
+     */
+    @org.jetbrains.annotations.Nullable
+    public static Component blocked(net.minecraft.world.level.Level level, net.minecraft.world.entity.LivingEntity patient,
+                                    @org.jetbrains.annotations.Nullable Player operator, BlockPos table, Body body, Action action, BodyPart part) {
+        if (cuts(action) && patient instanceof Player && surgeonAt(level, table) == null) {
+            return Component.translatable("bloodandbones.surgery.needs_surgeon");
+        }
+        if ((action == Action.FIT || action == Action.REATTACH) && body.ragged(part) && (operator == null || !payBlood(operator, false))) {
+            return Component.translatable("bloodandbones.surgery.needs_blood");
+        }
+        return null;
+    }
+
+    /**
+     * A bucket's worth of blood (any fluid tagged c:blood) from what this player carries: a bucket, a worn or
+     * carried Fluid Backtank, anything holding fluid. Only looks when {@code take} is false.
+     *
+     * @return whether they had it
+     */
+    public static boolean payBlood(Player player, boolean take) {
+        var inventory = player.getInventory();
+        for (int slot = 0; slot < inventory.getContainerSize(); slot++) {
+            ItemStack stack = inventory.getItem(slot);
+            if (stack.isEmpty()) {
+                continue;
+            }
+            ItemStack one = stack.copyWithCount(1);
+            var handler = net.neoforged.neoforge.fluids.FluidUtil.getFluidHandler(one).orElse(null);
+            if (handler == null) {
+                continue;
+            }
+            for (int tank = 0; tank < handler.getTanks(); tank++) {
+                net.neoforged.neoforge.fluids.FluidStack in = handler.getFluidInTank(tank);
+                if (!in.getFluid().is(com.avicagan.bloodandbones.minion.BloodTroughBlockEntity.BLOOD) || in.getAmount() < RAGGED_BLOOD) {
+                    continue;
+                }
+                net.neoforged.neoforge.fluids.FluidStack want = in.copyWithAmount(RAGGED_BLOOD);
+                if (handler.drain(want, net.neoforged.neoforge.fluids.capability.IFluidHandler.FluidAction.SIMULATE).getAmount() < RAGGED_BLOOD) {
+                    continue;
+                }
+                if (take && !player.hasInfiniteMaterials()) {
+                    handler.drain(want, net.neoforged.neoforge.fluids.capability.IFluidHandler.FluidAction.EXECUTE);
+                    ItemStack after = handler.getContainer();
+                    if (stack.getCount() == 1) {
+                        inventory.setItem(slot, after);
+                    } else {
+                        stack.shrink(1);
+                        if (!inventory.add(after)) {
+                            player.drop(after, false);
+                        }
+                    }
+                }
+                return true;
+            }
+        }
+        return false;
     }
 
     public static boolean isBlade(ItemStack stack) {
@@ -91,12 +180,28 @@ public final class Surgery {
         Action action = action(body, table.item(), part);
         BlockPos pos = table.getBlockPos();
         Vector3d at = new Vector3d(pos.getX() + 0.5, pos.getY() + 1.1, pos.getZ() + 0.5);
+        Component problem = action == Action.NONE ? null : blocked(level, patient, surgeon, pos, body, action, part);
+        if (problem != null) {
+            if (surgeon != null) {
+                surgeon.displayClientMessage(problem, true);
+            }
+            return Action.NONE;
+        }
+        // on a player the surgeon minion does the cutting, and leaves the stump ragged
+        com.avicagan.bloodandbones.minion.MinionEntity cutter = cuts(action) && patient instanceof Player ? surgeonAt(level, pos) : null;
+        if (cutter != null) {
+            cutter.getLookControl().setLookAt(patient);
+            cutter.swing(net.minecraft.world.InteractionHand.MAIN_HAND);
+        }
+        if ((action == Action.FIT || action == Action.REATTACH) && body.ragged(part) && surgeon != null) {
+            payBlood(surgeon, true);
+        }
         switch (action) {
             case NONE -> {
                 return action;
             }
             case TAKE_OFF -> {
-                body.lose(part);
+                body.lose(part, cutter != null);
                 ItemStack blade = table.item();
                 com.avicagan.bloodandbones.carcass.Blood.bloody(blade, level);
                 table.setChanged();

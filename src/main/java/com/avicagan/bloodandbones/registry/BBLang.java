@@ -95,7 +95,7 @@ public class BBLang {
         // ---- the body
         block("surgery_table",
                 "A padded table with straps. What it does depends on its _attachment_: a _Surgical Rig_ to operate (have a limb _off_, or a new one _on_; nothing can go wrong), an _Assembly Frame_ to build minions.",
-                "When R-Clicked with a Blade, Implant or Limb", "Lays it on the table: a _Cleaver_ takes a limb off, a _prosthetic_ or a _severed limb_ goes where one is missing.",
+                "When R-Clicked with a Blade, Implant or Limb", "Lays it on the table: a _Cleaver_ takes a limb off (a player's only with a _surgeon minion_ at the table), a _prosthetic_ or a _severed limb_ goes where one is missing.",
                 "When R-Clicked with an Empty Hand", "You _lie down_ on it and choose which part to operate on. _Sneak_ to get up.",
                 "When Sneak-R-Clicked with an Empty Hand", "Takes back what lies on the table.",
                 "With Someone Else on It", "R-Click with an _empty hand_ to operate on them: another player, or a _mob_ you led onto it on a lead. What comes out is yours.",
@@ -231,6 +231,9 @@ public class BBLang {
         BloodAndBones.REGISTRATE.addRawLang("bloodandbones.surgery.on_table", "On the table: %s");
         BloodAndBones.REGISTRATE.addRawLang("bloodandbones.surgery.state.natural", "Your own");
         BloodAndBones.REGISTRATE.addRawLang("bloodandbones.surgery.state.missing", "Missing");
+        BloodAndBones.REGISTRATE.addRawLang("bloodandbones.surgery.state.ragged", "Ragged stump");
+        BloodAndBones.REGISTRATE.addRawLang("bloodandbones.surgery.needs_surgeon", "Needs a surgeon");
+        BloodAndBones.REGISTRATE.addRawLang("bloodandbones.surgery.needs_blood", "Needs a bucket of blood");
         BloodAndBones.REGISTRATE.addRawLang("bloodandbones.surgery.action.none", "-");
         BloodAndBones.REGISTRATE.addRawLang("bloodandbones.surgery.action.take_off", "Take it off");
         BloodAndBones.REGISTRATE.addRawLang("bloodandbones.surgery.action.fit", "Fit what is on the table");
@@ -457,8 +460,9 @@ public class BBLang {
                 "Bloody Casing: fill an Andesite Casing with 250 mB of blood from a Spout. It joins up with its neighbours like Create's own casings.",
                 "Gut Chain: three pieces of offal in a column make three. It hangs and lies like a chain.");
         jei("surgery",
-                "Lay a Cleaver on the Surgery Table and lie on it (right-click with an empty hand) to take out one of your own limbs, eyes or organs. You get it back, with your name on it. Nothing takes a part any other way, and nothing can go wrong.",
-                "A missing arm uses and swings nothing, a missing leg slows you down, no eyes blind you, no heart leaves you weak, no lungs winded, no stomach unable to eat. Lay an implant or a part on the table and lie down again to fit it (or swap it in for a part of flesh); an implant unclips with nothing on the table.");
+                "Amputation is a ritual: lay a Cleaver on the Surgery Table (with its Surgical Rig), have a surgeon minion (one with a villager's or a pillager's head, and an arm) awake beside it, and lie on the table (right-click with an empty hand) to have one of your own limbs, eyes or organs taken out. You get it back, with your name on it. Nothing takes a part any other way, and nothing can go wrong.",
+                "The surgeon hacks: what it takes off leaves a ragged stump, and fitting anything there later takes a bucket of blood as well (from a bucket or a Fluid Backtank you carry). Swap an implant straight in for a part of flesh and there is no stump at all.",
+                "A missing arm means no off-hand and slower swings, a missing leg no sprinting, a missing eye less to see by. Lay an implant or a part on the table and lie down again to fit it; an implant unclips with nothing on the table. Fitting never needs a surgeon, so a crude prosthetic can always go on.");
         jei("implants",
                 "Basic prosthetics (Peg Leg, Hook Hand) need nothing. Organic ones (Flesh Arm, Sinew Leg, Furnace Stomach) run on blood and cybernetics (Hydraulic Arm, Piston Leg, Optic Eye, Pump Heart, Bellows Lungs) on soul blood, from a worn Fluid Backtank, a mB or two a second. The Vent Arm runs on whatever the tank holds; the Port Arm needs nothing.",
                 "When the tank runs out of their fluid they stop working, as if the part were missing, until it is filled again. The Vent Arm sprays the tank (hold use, empty-handed); the Port Arm plugs the tank into pipes at a Backtank Port.");

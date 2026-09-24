@@ -15,6 +15,7 @@ import java.util.Map;
 /**
  * Which parts of a body are its own, which are gone, and what has been fitted in their place. Kept on a
  * player as a data attachment (see {@link BBAttachments#BODY}): saved, kept through death, sent to clients.
+ * A part a surgeon minion cut off leaves a ragged stump, which costs more to fit (see {@link Surgery}).
  */
 public final class Body {
     public enum State {
@@ -23,10 +24,12 @@ public final class Body {
 
     private final EnumSet<BodyPart> lost = EnumSet.noneOf(BodyPart.class);
     private final EnumMap<BodyPart, ItemStack> implants = new EnumMap<>(BodyPart.class);
+    private final EnumSet<BodyPart> ragged = EnumSet.noneOf(BodyPart.class);
 
     public static final Codec<Body> CODEC = RecordCodecBuilder.create(i -> i.group(
             BodyPart.CODEC.listOf().optionalFieldOf("lost", List.of()).forGetter(b -> List.copyOf(b.lost)),
-            Codec.unboundedMap(BodyPart.CODEC, ItemStack.CODEC).optionalFieldOf("implants", Map.of()).forGetter(b -> Map.copyOf(b.implants))
+            Codec.unboundedMap(BodyPart.CODEC, ItemStack.CODEC).optionalFieldOf("implants", Map.of()).forGetter(b -> Map.copyOf(b.implants)),
+            BodyPart.CODEC.listOf().optionalFieldOf("ragged", List.of()).forGetter(b -> List.copyOf(b.ragged))
     ).apply(i, Body::of));
 
     public static final StreamCodec<RegistryFriendlyByteBuf, Body> STREAM_CODEC = ByteBufCodecs.fromCodecWithRegistries(CODEC);
@@ -34,9 +37,10 @@ public final class Body {
     public Body() {
     }
 
-    private static Body of(List<BodyPart> lost, Map<BodyPart, ItemStack> implants) {
+    private static Body of(List<BodyPart> lost, Map<BodyPart, ItemStack> implants, List<BodyPart> ragged) {
         Body body = new Body();
         body.lost.addAll(lost);
+        body.ragged.addAll(ragged);
         implants.forEach((part, stack) -> {
             if (!stack.isEmpty()) {
                 body.lost.add(part);
@@ -47,7 +51,7 @@ public final class Body {
     }
 
     public Body copy() {
-        return of(List.copyOf(lost), implants);
+        return of(List.copyOf(lost), implants, List.copyOf(ragged));
     }
 
     public State state(BodyPart part) {
@@ -71,21 +75,39 @@ public final class Body {
         };
     }
 
-    /** The part comes off; anything fitted there is gone with it. */
+    /** The part comes off, cleanly; anything fitted there is gone with it. */
     public void lose(BodyPart part) {
-        lost.add(part);
-        implants.remove(part);
+        lose(part, false);
     }
 
+    /** The part comes off, leaving a ragged stump if a surgeon hacked it off. */
+    public void lose(BodyPart part, boolean rough) {
+        lost.add(part);
+        implants.remove(part);
+        if (rough) {
+            ragged.add(part);
+        } else {
+            ragged.remove(part);
+        }
+    }
+
+    /** Whether the part is gone and left a ragged stump: fitting anything there costs more. */
+    public boolean ragged(BodyPart part) {
+        return ragged.contains(part) && state(part) == State.MISSING;
+    }
+
+    /** Fitted: the stump is dressed, ragged no more. */
     public void fit(BodyPart part, ItemStack implant) {
         lost.add(part);
         implants.put(part, implant.copyWithCount(1));
+        ragged.remove(part);
     }
 
     /** A limb of flesh back in its place. */
     public void restore(BodyPart part) {
         lost.remove(part);
         implants.remove(part);
+        ragged.remove(part);
     }
 
     /** Take the implant out, leaving the part missing. */
@@ -110,7 +132,7 @@ public final class Body {
 
     @Override
     public boolean equals(Object o) {
-        if (!(o instanceof Body other) || !lost.equals(other.lost) || !implants.keySet().equals(other.implants.keySet())) {
+        if (!(o instanceof Body other) || !lost.equals(other.lost) || !ragged.equals(other.ragged) || !implants.keySet().equals(other.implants.keySet())) {
             return false;
         }
         for (Map.Entry<BodyPart, ItemStack> e : implants.entrySet()) {
@@ -128,6 +150,6 @@ public final class Body {
 
     @Override
     public String toString() {
-        return "Body{lost=" + lost + ", implants=" + implants + "}";
+        return "Body{lost=" + lost + ", ragged=" + ragged + ", implants=" + implants + "}";
     }
 }

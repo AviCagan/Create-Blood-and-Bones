@@ -282,6 +282,84 @@ public final class MinionGoals {
         }
     }
 
+    /**
+     * A surgeon keeps by its Surgery Table (its home, or the nearest one it finds when set down elsewhere), where the
+     * amputation ritual needs it (Surgery#surgeonAt), and tends whoever lies there, a heart a few seconds.
+     */
+    public static class AttendTable extends Goal {
+        /** How far it looks for a table when its home is not one. */
+        private static final int SEARCH = 6;
+        private final MinionEntity minion;
+        private int nextSearch;
+
+        public AttendTable(MinionEntity minion) {
+            this.minion = minion;
+            setFlags(EnumSet.of(Flag.MOVE, Flag.LOOK));
+        }
+
+        @Override
+        public boolean requiresUpdateEveryTick() {
+            return true;
+        }
+
+        @Override
+        public boolean canUse() {
+            return minion.hasJob("surgeon") && table() != null;
+        }
+
+        @Override
+        public boolean canContinueToUse() {
+            return canUse();
+        }
+
+        @Nullable
+        private BlockPos table() {
+            if (minion.level().getBlockState(minion.home()).getBlock() instanceof com.avicagan.bloodandbones.body.SurgeryTableBlock) {
+                return minion.home();
+            }
+            if (minion.tickCount < nextSearch) {
+                return null;
+            }
+            nextSearch = minion.tickCount + 100;
+            BlockPos best = null;
+            for (BlockPos pos : BlockPos.betweenClosed(minion.blockPosition().offset(-SEARCH, -2, -SEARCH), minion.blockPosition().offset(SEARCH, 2, SEARCH))) {
+                if (minion.level().getBlockState(pos).getBlock() instanceof com.avicagan.bloodandbones.body.SurgeryTableBlock
+                        && (best == null || pos.distSqr(minion.blockPosition()) < best.distSqr(minion.blockPosition()))) {
+                    best = pos.immutable();
+                }
+            }
+            if (best != null) {
+                minion.setHome(best);
+            }
+            return best;
+        }
+
+        @Override
+        public void tick() {
+            BlockPos table = minion.home();
+            Vec3 centre = Vec3.atCenterOf(table);
+            double near = com.avicagan.bloodandbones.body.Surgery.SURGEON_REACH - 1.5;
+            if (minion.distanceToSqr(centre) > near * near) {
+                if (minion.getNavigation().isDone() || minion.tickCount % 20 == 0) {
+                    minion.getNavigation().moveTo(minion.getNavigation().createPath(table, accuracy(minion)), 1.0);
+                }
+                return;
+            }
+            minion.getNavigation().stop();
+            net.minecraft.world.entity.LivingEntity patient = com.avicagan.bloodandbones.body.Surgery.patientAt(minion.level(), table);
+            if (patient != null) {
+                minion.getLookControl().setLookAt(patient);
+                // it tends them: a heart every five seconds while they lie there hurt
+                if (minion.tickCount % 100 == 0 && patient.getHealth() < patient.getMaxHealth()) {
+                    patient.heal(1.0F);
+                    minion.swing(net.minecraft.world.InteractionHand.MAIN_HAND);
+                }
+            } else {
+                minion.getLookControl().setLookAt(centre);
+            }
+        }
+    }
+
     /** Minions with work at home wander back there when idle. */
     public static class StayNearHome extends Goal {
         private final MinionEntity minion;

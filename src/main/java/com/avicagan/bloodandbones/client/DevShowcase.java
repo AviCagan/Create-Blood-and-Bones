@@ -451,6 +451,25 @@ public final class DevShowcase {
                 } else if (t == 220) {
                     Screenshot.grab(mc.gameDirectory, PREFIX + "minions_1.png", mc.getMainRenderTarget(), message -> {
                     });
+                    // stumps: a ragged one where a surgeon hacked the left arm off, a clean one for the right leg
+                    server.execute(() -> {
+                        ServerPlayer player = server.getPlayerList().getPlayers().get(0);
+                        var body = com.avicagan.bloodandbones.body.BodyEffects.body(player);
+                        body.lose(com.avicagan.bloodandbones.body.BodyPart.LEFT_ARM, true);
+                        body.lose(com.avicagan.bloodandbones.body.BodyPart.RIGHT_LEG, false);
+                        com.avicagan.bloodandbones.body.BodyEffects.changed(player);
+                        player.teleportTo(player.serverLevel(), player.getX(), player.getY(), player.getZ(), 150.0F, 15.0F);
+                    });
+                    mc.options.setCameraType(net.minecraft.client.CameraType.THIRD_PERSON_FRONT);
+                } else if (t == 240) {
+                    Screenshot.grab(mc.gameDirectory, PREFIX + "stumps.png", mc.getMainRenderTarget(), message -> {
+                    });
+                    server.execute(() -> {
+                        ServerPlayer player = server.getPlayerList().getPlayers().get(0);
+                        player.setData(com.avicagan.bloodandbones.body.BBAttachments.BODY, new com.avicagan.bloodandbones.body.Body());
+                        com.avicagan.bloodandbones.body.BodyEffects.changed(player);
+                    });
+                    mc.options.setCameraType(net.minecraft.client.CameraType.FIRST_PERSON);
                     mc.options.hideGui = false;
                     stage = 4;
                     ticks = 0;

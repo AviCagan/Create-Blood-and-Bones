@@ -106,6 +106,19 @@ public class MinionTests {
         return minion;
     }
 
+    /**
+     * A surgeon minion standing here, still (no AI, so a test knows where it is): a zombie's torso and arm, a
+     * villager's head. The amputation ritual needs one at the table.
+     */
+    public static MinionEntity surgeon(GameTestHelper helper, BlockPos pos) {
+        MinionBuild build = MinionBuild.of(ref("zombie", "body")).with("head", ref("villager", "head")).with("right_arm", ref("zombie", "right_arm"))
+                .with("left_leg", ref("zombie", "left_leg")).with("right_leg", ref("zombie", "right_leg"));
+        MinionEntity minion = minion(helper, pos, build, 1000.0F);
+        minion.setNoAi(true);
+        minion.setJob(BloodAndBones.asResource("surgeon"));
+        return minion;
+    }
+
     /** A trough here with this much blood in it. */
     private static BloodTroughBlockEntity trough(GameTestHelper helper, BlockPos pos, int blood) {
         helper.setBlock(pos, BBBlocks.BLOOD_TROUGH.getDefaultState());
@@ -465,6 +478,11 @@ public class MinionTests {
                 .with("right_leg", ref("zombie", "right_leg")).with("left_leg", ref("zombie", "left_leg"))
                 .with("right_arm", ref("zombie", "right_arm")).with("left_arm", ref("zombie", "left_arm"));
         MinionEntity minion = minion(helper, new BlockPos(3, 2, 3), build, 1000.0F);
+        // a villager's head starts as a surgeon; its maker puts it to farming
+        if (!minion.hasJob("surgeon") || !minion.setJob(BloodAndBones.asResource("farmer"))) {
+            helper.fail("A villager's head should start as a surgeon and offer farming");
+            return;
+        }
         helper.succeedWhen(() -> {
             ChestBlockEntity chest = (ChestBlockEntity) helper.getBlockEntity(new BlockPos(1, 2, 1));
             var crop = helper.getBlockState(field.above());

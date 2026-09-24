@@ -668,7 +668,7 @@ The lungs and eyes are left out on purpose: they come from the quadruped archety
     "head": ["bloodandbones:eye", "bloodandbones:eye"]
   },
   "parts": {
-    "torso": {"minion": {"health_factor": 1.0, "self_move": {"mode": "crawl", "speed": 0.05}},
+    "torso": {"minion": {"health_factor": 1.0, "self_move": {"mode": "crawl", "speed": 0.12}},
               "armour": [{"trait": "bloodandbones:hardy", "level": 1}]},
     "head":  {"minion": {"jobs": ["bloodandbones:companion", "bloodandbones:courier"], "disposition": "loyal",
                          "bite": {"style": "bite", "damage": 1.0}},

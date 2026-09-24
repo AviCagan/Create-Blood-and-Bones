@@ -126,7 +126,7 @@ public class MinionEntity extends PathfinderMob {
         PartsData.Store store = PartsData.of(level());
         if (stats == null || statsGeneration != store.generation()) {
             MinionBuild build = build().orElse(null);
-            stats = build == null ? new MinionStats(10, 0, 3, 250, "crawl", 0.05F, 1, 0, List.of(), List.of(MinionStats.COMPANION), true, 0.6F, 0.6F, 0.6F, 0.6F)
+            stats = build == null ? new MinionStats(10, 0, 3, 250, "crawl", 0.12F, 1, 0, List.of(), List.of(MinionStats.COMPANION), true, 0.6F, 0.6F, 0.6F, 0.6F)
                     : MinionStats.of(store, build);
             statsGeneration = store.generation();
             refreshDimensions();
@@ -183,12 +183,26 @@ public class MinionEntity extends PathfinderMob {
         return job == null ? MinionStats.COMPANION : job;
     }
 
+    /** Put it to one of the jobs its head offers; false if it offers no such job. */
+    public boolean setJob(ResourceLocation job) {
+        if (!stats().jobs().contains(job)) {
+            return false;
+        }
+        entityData.set(JOB, job.toString());
+        return true;
+    }
+
     public boolean hasJob(String name) {
         return job().equals(BloodAndBones.asResource(name));
     }
 
     public BlockPos home() {
         return home;
+    }
+
+    /** Where it works from now (a surgeon moved to another table). */
+    public void setHome(BlockPos home) {
+        this.home = home.immutable();
     }
 
     @Nullable
@@ -348,6 +362,7 @@ public class MinionEntity extends PathfinderMob {
         goalSelector.addGoal(1, new MinionGoals.SeekBlood(this));
         goalSelector.addGoal(2, new MinionGoals.Bite(this));
         goalSelector.addGoal(3, new MinionGoals.Farm(this));
+        goalSelector.addGoal(3, new MinionGoals.AttendTable(this));
         goalSelector.addGoal(4, new MinionGoals.Deposit(this));
         goalSelector.addGoal(5, new MinionGoals.Collect(this));
         goalSelector.addGoal(6, new MinionGoals.FollowMaker(this));

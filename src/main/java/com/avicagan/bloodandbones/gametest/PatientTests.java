@@ -55,6 +55,7 @@ public class PatientTests {
         table.put(new ItemStack(BBItems.CLEAVER.get()));
         Player patient = helper.makeMockPlayer(GameType.SURVIVAL);
         Player surgeon = helper.makeMockPlayer(GameType.SURVIVAL);
+        MinionTests.surgeon(helper, new BlockPos(4, 2, 4));
         BlockPos at = table.getBlockPos();
         surgeon.moveTo(at.getX() + 2.5, at.getY(), at.getZ() + 0.5);
         SurgeryTableBlock.lieDown(level, at, patient);

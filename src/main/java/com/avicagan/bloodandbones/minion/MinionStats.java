@@ -19,7 +19,7 @@ import java.util.Optional;
  * the legs the movement.
  *
  * @param speed     movement speed attribute; a cow on four rabbit legs 0.325, on its own 0.2
- * @param mode      walk, hop or crawl (a body with no legs uses its own way of moving)
+ * @param mode      walk, hop or crawl (a body with no legs uses its own way of moving; most crawl at 0.12)
  * @param slots     inventory slots, from the torso's size
  * @param reservoir mB of blood it holds when full (organic)
  * @param jobs      what its head lets it do, first the one it starts with; a body with no head only keeps company
@@ -32,7 +32,9 @@ public record MinionStats(float health, float knockbackResistance, int slots, in
     public static final ResourceLocation COMPANION = BloodAndBones.asResource("companion");
     /** The jobs built so far; others a head names are left out until they are. */
     public static final List<ResourceLocation> JOBS = List.of(COMPANION, BloodAndBones.asResource("courier"), BloodAndBones.asResource("farmer"),
-            BloodAndBones.asResource("bodyguard"), BloodAndBones.asResource("guard"));
+            BloodAndBones.asResource("bodyguard"), BloodAndBones.asResource("guard"), BloodAndBones.asResource("surgeon"));
+    /** Jobs that need a hand to do: a minion with no arm fitted is not offered them. */
+    public static final List<ResourceLocation> HANDS = List.of(BloodAndBones.asResource("farmer"), BloodAndBones.asResource("surgeon"));
 
     public static MinionStats of(PartsData.Store store, MinionBuild build) {
         PieceRef torso = build.torso();
@@ -78,7 +80,8 @@ public record MinionStats(float health, float knockbackResistance, int slots, in
         if (legSpeeds.isEmpty()) {
             // no legs: the body moves as it can on its own (a slime hops, a fish swims, most crawl)
             mode = MinionData.text(torsoMob, "torso", "self_move", "mode", "crawl");
-            speed = MinionData.number(torsoMob, "torso", "self_move", "speed", 0.05F);
+            // a mob's speed counts about squared in how fast it goes: 0.12 is a slow drag, 0.05 would barely move
+            speed = MinionData.number(torsoMob, "torso", "self_move", "speed", 0.12F);
         } else {
             float mean = (float) legSpeeds.stream().mapToDouble(Float::doubleValue).average().orElse(0.2);
             speed = mean * Math.min(1.0F, legSpeeds.size() / (float) Math.max(2, ownLegs));
@@ -91,7 +94,7 @@ public record MinionStats(float health, float knockbackResistance, int slots, in
         if (head != null) {
             ResolvedMob headMob = store.resolve(head.entity(), head.baby());
             for (ResourceLocation job : MinionData.ids(headMob, "head", "jobs")) {
-                if (JOBS.contains(job) && !jobs.contains(job)) {
+                if (JOBS.contains(job) && !jobs.contains(job) && (!arms.isEmpty() || !HANDS.contains(job))) {
                     jobs.add(job);
                 }
             }

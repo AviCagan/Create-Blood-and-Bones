@@ -216,6 +216,93 @@ public final class BodyRendering {
         return texture.withPath(p -> p.substring(0, p.length() - ".png".length()) + "_glow.png");
     }
 
+    private static final net.minecraft.resources.ResourceLocation WOUND = BloodAndBones.asResource("textures/entity/wound.png");
+    private static final net.minecraft.resources.ResourceLocation RAGGED = BloodAndBones.asResource("textures/entity/wound_ragged.png");
+    private static final net.minecraft.resources.ResourceLocation FLAPS = BloodAndBones.asResource("textures/entity/stump_flaps.png");
+    /** How long a stump is, in model pixels: a clean cut close, a ragged one longer and torn. */
+    private static final float CLEAN_STUMP = 3.0F;
+    private static final float RAGGED_STUMP = 4.5F;
+    /** How far a ragged stump's torn flaps hang past its end. */
+    private static final float FLAP = 2.0F;
+
+    /**
+     * A stump where a limb was: the top of the limb in its own skin, cut short, its end raw (none of the blood in
+     * bloodless mode). A ragged one is longer, its end torn, with flaps of flesh hanging off it.
+     */
+    static void stump(PoseStack poseStack, MultiBufferSource buffers, int packedLight, int overlay, PlayerModel<?> model, BodyPart part,
+                      boolean ragged, net.minecraft.resources.ResourceLocation skin) {
+        ModelPart limb = part(model, part);
+        if (limb == null || limb.isEmpty()) {
+            return;
+        }
+        ModelPart.Cube box = limb.getRandomCube(net.minecraft.util.RandomSource.create(0));
+        float length = ragged ? RAGGED_STUMP : CLEAN_STUMP;
+        float end = box.minY + length;
+        poseStack.pushPose();
+        limb.translateAndRotate(poseStack);
+        // the top of the limb in the wearer's own skin, sleeve or trouser leg and all, cut short
+        stumpPart(part, box, length).render(poseStack, buffers.getBuffer(RenderType.entityCutoutNoCull(skin)), packedLight, overlay);
+        if (!com.avicagan.bloodandbones.config.BBClientConfig.bloodless()) {
+            PoseStack.Pose pose = poseStack.last();
+            // over the end of the sleeve or trouser leg too, which sits a quarter pixel out
+            float x0 = box.minX - 0.3F, x1 = box.maxX + 0.3F, z0 = box.minZ - 0.3F, z1 = box.maxZ + 0.3F;
+            float y = end + 0.3F;
+            var wound = buffers.getBuffer(RenderType.entityCutoutNoCull(ragged ? RAGGED : WOUND));
+            quad(wound, pose, packedLight, overlay, x0, y, z0, x1, y, z0, x1, y, z1, x0, y, z1, 0, 1, 0);
+            if (ragged) {
+                // torn flesh hanging off each side, flaring a little
+                var flaps = buffers.getBuffer(RenderType.entityCutoutNoCull(FLAPS));
+                float f = 0.3F;
+                float low = y + FLAP;
+                quad(flaps, pose, packedLight, overlay, x0, y, z0, x1, y, z0, x1 + f, low, z0 - f, x0 - f, low, z0 - f, 0, 0, -1);
+                quad(flaps, pose, packedLight, overlay, x1, y, z1, x0, y, z1, x0 - f, low, z1 + f, x1 + f, low, z1 + f, 0, 0, 1);
+                quad(flaps, pose, packedLight, overlay, x0, y, z1, x0, y, z0, x0 - f, low, z0 - f, x0 - f, low, z1 + f, -1, 0, 0);
+                quad(flaps, pose, packedLight, overlay, x1, y, z0, x1, y, z1, x1 + f, low, z1 + f, x1 + f, low, z0 - f, 1, 0, 0);
+            }
+        }
+        poseStack.popPose();
+    }
+
+    private static final java.util.Map<String, ModelPart> STUMPS = new java.util.concurrent.ConcurrentHashMap<>();
+
+    /**
+     * A short box over the top of a limb, textured from the same place on the player skin as the limb (and its
+     * outer layer, a little bigger), so a stump shows the shoulder or hip, not a squashed hand or shoe.
+     */
+    private static ModelPart stumpPart(BodyPart part, ModelPart.Cube box, float length) {
+        float width = box.maxX - box.minX;
+        return STUMPS.computeIfAbsent(part + "/" + width + "/" + length, key -> {
+            int[] uv = switch (part) {
+                case RIGHT_ARM -> new int[]{40, 16, 40, 32};
+                case LEFT_ARM -> new int[]{32, 48, 48, 48};
+                case RIGHT_LEG -> new int[]{0, 16, 0, 32};
+                default -> new int[]{16, 48, 0, 48};
+            };
+            var mesh = new net.minecraft.client.model.geom.builders.MeshDefinition();
+            mesh.getRoot().addOrReplaceChild("stump", net.minecraft.client.model.geom.builders.CubeListBuilder.create()
+                    .texOffs(uv[0], uv[1]).addBox(box.minX, box.minY, box.minZ, width, length, box.maxZ - box.minZ)
+                    .texOffs(uv[2], uv[3]).addBox(box.minX, box.minY, box.minZ, width, length, box.maxZ - box.minZ,
+                            new net.minecraft.client.model.geom.builders.CubeDeformation(0.25F)), net.minecraft.client.model.geom.PartPose.ZERO);
+            return net.minecraft.client.model.geom.builders.LayerDefinition.create(mesh, 64, 64).bakeRoot().getChild("stump");
+        });
+    }
+
+    /** One textured quad, corners in model pixels, the texture's top edge along the first two. */
+    private static void quad(com.mojang.blaze3d.vertex.VertexConsumer buffer, PoseStack.Pose pose, int light, int overlay,
+                             float x0, float y0, float z0, float x1, float y1, float z1, float x2, float y2, float z2, float x3, float y3, float z3,
+                             float nx, float ny, float nz) {
+        float[][] corners = {{x0, y0, z0}, {x1, y1, z1}, {x2, y2, z2}, {x3, y3, z3}};
+        float[][] uvs = {{0, 0}, {1, 0}, {1, 1}, {0, 1}};
+        for (int i = 0; i < 4; i++) {
+            buffer.addVertex(pose, corners[i][0] / 16.0F, corners[i][1] / 16.0F, corners[i][2] / 16.0F)
+                    .setColor(0xFFFFFFFF)
+                    .setUv(uvs[i][0], uvs[i][1])
+                    .setOverlay(overlay)
+                    .setLight(light)
+                    .setNormal(pose, nx, ny, nz);
+        }
+    }
+
     /** Implants drawn where the parts they replace were, posed like them. */
     public static class ImplantLayer<T extends net.minecraft.world.entity.LivingEntity, M extends PlayerModel<T>> extends RenderLayer<T, M> {
         public ImplantLayer(RenderLayerParent<T, M> parent) {
@@ -230,6 +317,13 @@ public final class BodyRendering {
                 return;
             }
             eyes(poseStack, buffers, packedLight, player, body, getParentModel().head);
+            // a limb gone leaves a stump: a clean one where a blade took it, a ragged one where a surgeon hacked it
+            for (BodyPart part : new BodyPart[]{BodyPart.LEFT_ARM, BodyPart.RIGHT_ARM, BodyPart.LEFT_LEG, BodyPart.RIGHT_LEG}) {
+                if (body.state(part) == Body.State.MISSING) {
+                    stump(poseStack, buffers, packedLight, net.minecraft.client.renderer.entity.LivingEntityRenderer.getOverlayCoords(player, 0.0F),
+                            getParentModel(), part, body.ragged(part), getTextureLocation(player));
+                }
+            }
             for (BodyPart part : BodyPart.values()) {
                 if (body.state(part) == Body.State.IMPLANT && body.implant(part).getItem() instanceof ImplantItem implant
                         && implant.texture() != null && part(getParentModel(), part) != null) {

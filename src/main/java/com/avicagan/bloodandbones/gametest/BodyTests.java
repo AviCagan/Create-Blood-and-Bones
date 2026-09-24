@@ -72,6 +72,7 @@ public class BodyTests {
         BlockPos at = new BlockPos(3, 2, 3);
         SurgeryTableBlockEntity table = table(helper, at);
         Player player = helper.makeMockPlayer(GameType.SURVIVAL);
+        MinionTests.surgeon(helper, new BlockPos(4, 2, 4));
         if (Surgery.operate(level, player, table, BodyPart.RIGHT_ARM) != Surgery.Action.NONE) {
             helper.fail("An empty table should do nothing to a whole arm");
             return;
@@ -95,6 +96,8 @@ public class BodyTests {
         }
         table.take();
         table.put(new ItemStack(BBItems.HOOK_HAND.get()));
+        // the surgeon's cut is ragged: fitting into it takes a bucket of blood as well
+        player.getInventory().add(new ItemStack(com.avicagan.bloodandbones.registry.BBFluids.BLOOD.getBucket().get()));
         if (Surgery.operate(level, player, table, BodyPart.RIGHT_ARM) != Surgery.Action.FIT
                 || BodyEffects.body(player).state(BodyPart.RIGHT_ARM) != Body.State.IMPLANT || !table.item().isEmpty()) {
             helper.fail("The Hook Hand should be fitted, and leave the table");
@@ -172,6 +175,7 @@ public class BodyTests {
         ServerLevel level = helper.getLevel();
         SurgeryTableBlockEntity table = table(helper, new BlockPos(3, 2, 3));
         Player player = helper.makeMockPlayer(GameType.SURVIVAL);
+        MinionTests.surgeon(helper, new BlockPos(4, 2, 4));
         table.put(new ItemStack(BBItems.CLEAVER.get()));
         if (Surgery.operate(level, player, table, BodyPart.HEART) != Surgery.Action.NONE) {
             helper.fail("A blade should do nothing to a heart");
