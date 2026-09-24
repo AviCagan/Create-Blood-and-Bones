@@ -1447,3 +1447,52 @@ saved the old way falls apart on its first tick, dropping what it carried.
   tail sways. Down, it lies on its side. The table draws the minion being built lying on it.
 - Jobs kept from before: companion, courier, farmer, bodyguard, guard (`courierCarries`, `farmerReaps`); the
   others heads name (herder, surgeon, ...) come with slice 7.
+
+### 15.5 Minion bodies: legs set movement, arms the attack (brief § Minions)
+
+- **Legs** (`MinionStats`): at least half the legs climbing (spider legs, `"movement": {"mode": "climb"}`) makes it
+  a climber: a spider's `WallClimberNavigation` and `onClimbable` while it is against a wall, synced as the spider's
+  is; hungry, it goes straight over a wall to a trough a walking path cannot reach. `spiderLegsMakeItClimb`,
+  `spiderLegsClimbAWallToTheTrough`.
+- **Riding**: at least two rideable legs (horse legs, `"rideable": true`), at least half of all its legs, and a torso
+  that is at least 0.4 of its whole bulk (so a rabbit's torso on horse legs cannot carry you) make it take a saddle
+  (`Saddleable`, vanilla's Saddle item). Saddled, its maker climbs on with an empty hand and steers it as a horse is
+  steered (`getControllingPassenger`, `tickRidden`, `getRiddenInput`, `getRiddenSpeed`). Out of blood it throws its
+  rider; if its horse legs come off, so does the saddle. The saddle is drawn on its back. `horseLegsAcceptRider`.
+- **Flying torsos**: a torso that flies, hovers or floats by itself (a bat's, a blaze's) wins over any legs, which
+  dangle: flying navigation and move control, no gravity, no fall damage; moving costs twice the blood. Out of blood it
+  drops. `flyingTorsoFlies`.
+- **Arms**: each arm brings its strike (`"strike": {"style": ...}`, spec 5.6), and they take turns: punch, kick
+  (throws back), ram, fling (throws up), grab (Slowness II), sting (Poison), slam (hits everything within 2 of the
+  target), claw and hook (tear, with blood), pounce, flap (a buffet, no harm), scrabble (light). A pacifist's arms (a
+  villager's pair) never attack. With no arm it bites. `armsTakeTurnsInTheirStyles`, `villagerArmsArePacifist`.
+
+### 15.6 Brass minions: soul canisters and the Charging Cradle (brief § Minions)
+
+- **Building brass**: a skinned torso laid on the Assembly Frame makes a brass frame (the brief's deglove pipeline:
+  skinned pieces feed brass, unskinned flesh); it takes only skinned pieces (hideless mobs either way). Brass
+  Sheathing (8 brass sheets round an andesite alloy) goes over it, and a Soul Canister wakes it; the empty comes back.
+  Blood does not wake brass, nor a canister an unsheathed frame. `brassFrameWakesOnCanister`.
+- **Soul Canisters**: an Empty Soul Canister (brass and glass) and 1000 mB of soul blood through a plain
+  `create:filling` recipe (a Spout) make a Soul Canister; `create:emptying` (an Item Drain) reverses it, so JEI shows
+  it and stock Create automates it. A brass minion holds one canister's worth, two in a torso over a block. Its maker
+  can hand-feed one. `spoutFillsCanister`.
+- **Power**: brass drains a quarter of what flesh does for the same activity. `brassDrainsAQuarter`.
+- **The Charging Cradle**: a kinetic block (2 su per RPM, shaft from below, at least 16 RPM) holding 8 full and 8
+  empty canisters and a stack of brass sheets. Any brass minion within 2 blocks that is below a quarter or powered
+  down gets a full canister (the empty stays in the cradle for a hopper to take back to the Spout); the faster it
+  turns the quicker the swap (a second at 64 RPM). With sheets it mends a docked brass minion a heart a second, a
+  sheet every ten. Funnels, hoppers and chutes put full canisters and sheets in and take empties out; by hand, a
+  canister or sheet goes in and an empty hand takes the empties. Brass minions low on soul blood walk to the nearest
+  cradle with a full canister. Cradles keep a per-level list, and one riding a contraption does nothing.
+  `cradleRevivesPoweredDown`, `cradleAutomation`.
+- **Each kind has what the other lacks** (spec 6.6): brass is not poisoned, withered or starved, and does not drown,
+  but never heals itself: a brass sheet by hand mends 10 health, or the cradle's sheets; flesh mends a heart every five
+  seconds on its blood (5 mB each) while it has more than a tenth left. `eachKindHasWhatTheOtherLacks`.
+- **The module socket** (brass only): its maker fits one of the player's cybernetic modules by hand (one already
+  there comes back; a Wrench takes it out), run at its baseline with no throttle: Magnet Coil (loose items within 6
+  drift to it), Analytical Lens (sees its targets through walls, within 24), Rotational Coupler (standing still by the
+  end of a machine's shaft, it drives it at 16 RPM, 256 su, the same hidden generator a player's arm uses, gone when
+  it moves off or runs dry), Piston Ram (its blows throw hard), Gyroscopic Stabilizer (no fall damage), Barometric
+  Vent (drifts down slowly). The Grappling Spool needs aiming, so it is not for minions. `brassMinionTakesAModule`,
+  `magnetCoilDrawsItems`, `couplerDrivesAShaft`, `lensSeesThroughWalls`.

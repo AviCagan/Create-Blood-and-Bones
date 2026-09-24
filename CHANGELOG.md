@@ -172,6 +172,18 @@ Everything below is in development builds only; the art is placeholder (see the 
   server setting can make it fall apart into its pieces, or die). A server can cap minions per player
   (no cap by default).
 - A minion from an older build falls apart, dropping what it carried.
+- Legs set how it moves, as the brief has it: spider legs climb walls (a hungry minion goes straight over
+  a wall to its trough); horse legs under a heavy enough torso take a saddle, and its maker rides and steers
+  it; a flying torso (a bat's, a blaze's) flies, its legs dangling. Arms set how it hits, each in its own
+  style and taking turns: a zombie's punch, an iron golem's fling that throws the target up, a spider's
+  sting, a villager's pair of arms that never fights. Flesh mends itself slowly on its blood.
+- Brass minions: lay a skinned torso on the frame and build it of skinned pieces, sheathe it in Brass
+  Sheathing, and wake it with a Soul Canister (an empty canister filled at a Spout; an Item Drain empties
+  it). Brass drains a quarter as fast, shrugs off poison and drowning, and never heals itself (a brass
+  sheet mends it). The Charging Cradle, a shaft-driven block, swaps full canisters into brass minions
+  beside it and keeps the empties for a hopper; stocked with brass sheets it mends them. Its maker can fit
+  a brass minion with one of the player's cybernetic modules: a Magnet Coil draws items in, an Analytical
+  Lens sees through walls, a Rotational Coupler drives a shaft it stands beside, and more.
 
 ### Presentation
 
