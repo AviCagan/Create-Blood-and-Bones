@@ -405,7 +405,7 @@ public final class MinionAssembly {
     /** A line on what is built so far: its health, speed and what it would do (woken with nothing in hand). */
     public static Component status(PartsData.Store store, MinionBuild build) {
         MinionStats stats = MinionStats.of(store, build);
-        ResourceLocation job = MinionJobs.offered(store, build, stats, ItemStack.EMPTY, false).get(0);
+        ResourceLocation job = MinionJobs.wakeJob(MinionJobs.offered(store, build, stats, ItemStack.EMPTY, false));
         MutableComponent line = Component.translatable("bloodandbones.minion.frame_stats", Math.round(stats.health()), String.format("%.2f", stats.speed()),
                 Component.translatable(MinionEntity.jobKey(job)), build.parts().size(), MinionBody.sockets(store, build.torso()).size());
         return line;

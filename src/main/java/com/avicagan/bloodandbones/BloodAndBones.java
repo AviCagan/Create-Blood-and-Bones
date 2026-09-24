@@ -54,6 +54,7 @@ public class BloodAndBones {
         NeoForge.EVENT_BUS.register(com.avicagan.bloodandbones.cyber.ModuleActions.class);
         NeoForge.EVENT_BUS.register(com.avicagan.bloodandbones.cyber.SetBonus.class);
         NeoForge.EVENT_BUS.register(com.avicagan.bloodandbones.parts.TraitEvents.class);
+        NeoForge.EVENT_BUS.register(com.avicagan.bloodandbones.minion.MinionJobs.class);
         // the four groups of trait effects, each with its own handlers (docs/ARCHITECTURE-PROPOSAL.md section 15.8)
         NeoForge.EVENT_BUS.register(com.avicagan.bloodandbones.parts.effect.MotionEffects.class);
         NeoForge.EVENT_BUS.register(com.avicagan.bloodandbones.parts.effect.RangedEffects.class);

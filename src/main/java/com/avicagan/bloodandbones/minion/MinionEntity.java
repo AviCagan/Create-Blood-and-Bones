@@ -141,8 +141,8 @@ public class MinionEntity extends PathfinderMob implements net.minecraft.world.e
         setBuild(build);
         setHealth(getMaxHealth());
         entityData.set(POWER, Math.min(power, stats().reservoir()));
-        // the first job its head offers that it can do now, with nothing in hand
-        entityData.set(JOB, MinionJobs.offered(this).get(0).toString());
+        // the first job its head offers that it can do now, with nothing in hand (never straight to hunting)
+        entityData.set(JOB, MinionJobs.wakeJob(MinionJobs.offered(this)).toString());
     }
 
     public Optional<MinionBuild> build() {

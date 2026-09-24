@@ -22,8 +22,8 @@ import java.util.Optional;
  * @param mode      walk, hop or crawl (a body with no legs uses its own way of moving; most crawl at 0.12)
  * @param slots     inventory slots, from the torso's size
  * @param reservoir mB of blood it holds when full (organic)
- * @param jobs      what its head lets it do, in its order, less what needs a hand it lacks or eyes taken out (it starts
- *                  with the first it can do with nothing in hand, MinionJobs#offered); a body with no head only keeps company
+ * @param jobs      what its head lets it do, in its order, less what needs a hand it lacks or eyes taken out (it wakes to
+ *                  the first it can do with nothing in hand, hunting aside: MinionJobs#wakeJob); a body with no head only keeps company
  * @param strikes   one per arm, in the order fitted: they take turns (a zombie arm and a bear's: a punch, then a maul)
  * @param climbs    at least half its legs climb (spider legs)
  * @param rideable  a saddle can go on: at least two rideable legs under a torso heavy enough to carry someone
@@ -36,8 +36,12 @@ public record MinionStats(float health, float knockbackResistance, int slots, in
                           float biteDamage, float biteKnockback, List<Strike> strikes, List<ResourceLocation> jobs, boolean mindless,
                           boolean climbs, boolean rideable, boolean flies,
                           float width, float height, float lyingWidth, float lyingHeight, float sight) {
-    /** How one arm hits: its style (docs/PARTS-AND-TRAITS.md section 5.6) and damage. */
-    public record Strike(String style, float damage) {
+    /** How one arm hits and holds: its style and damage, and its grip (hand, paw, claw, wing...; docs/PARTS-AND-TRAITS.md section 5.6). */
+    public record Strike(String style, float damage, String grip) {
+        /** A blow with no arm behind it: a bite. */
+        public Strike(String style, float damage) {
+            this(style, damage, "none");
+        }
     }
 
     /** Modes a torso moves by on its own, legs or none: they win over legs, which dangle. */
@@ -59,9 +63,14 @@ public record MinionStats(float health, float knockbackResistance, int slots, in
             BloodAndBones.asResource("fisher"), BloodAndBones.asResource("hunter"), BloodAndBones.asResource("hauler"),
             BloodAndBones.asResource("butcher"), BloodAndBones.asResource("medic"), BloodAndBones.asResource("barterer"),
             BloodAndBones.asResource("digger"));
-    /** Jobs that need a hand to do: a minion with no arm fitted is not offered them. */
+    /**
+     * Jobs that need a hand to do (section 5.6): a minion with no arm of hand grip is not offered them, but for the
+     * farmer, whom a paw or claw does for too.
+     */
     public static final List<ResourceLocation> HANDS = List.of(BloodAndBones.asResource("farmer"), BloodAndBones.asResource("surgeon"),
             BloodAndBones.asResource("butcher"), BloodAndBones.asResource("medic"));
+    /** Grips that can harvest: a hand, a paw, a claw. An arm whose data names none has a hand. */
+    public static final List<String> HARVESTING = List.of("hand", "paw", "claw");
     /** Jobs that need eyes: a head whose two eyes were taken out is not offered them (section 6.4). */
     public static final List<ResourceLocation> SIGHT = List.of(BloodAndBones.asResource("farmer"), BloodAndBones.asResource("sentry"),
             BloodAndBones.asResource("surgeon"), BloodAndBones.asResource("hunter"), BloodAndBones.asResource("fisher"));
@@ -89,7 +98,7 @@ public record MinionStats(float health, float knockbackResistance, int slots, in
         int rideableLegs = 0;
         List<Strike> strikes = new ArrayList<>();
         float bulk = volume(rig.flatMap(r -> r.bone(torso.bone())));
-        PieceRef head = null;
+        PieceRef head = head(store, build);
         for (MinionBuild.Fitted fitted : build.parts()) {
             PieceRef piece = fitted.piece();
             Optional<Rig> pieceRig = store.rig(piece.entity(), piece.baby());
@@ -114,10 +123,10 @@ public record MinionStats(float health, float knockbackResistance, int slots, in
                     float blow = (float) Math.max(1.0, Math.min(10.0, 1.0 + 0.5 * MinionData.attribute(piece.entity(), Attributes.ATTACK_DAMAGE, 1.0)));
                     String style = MinionData.text(mob, slot.key(), "strike", "style", "punch");
                     float mult = MinionData.number(mob, slot.key(), "strike", "damage_mult", STYLE_DAMAGE.getOrDefault(style, 1.0F));
-                    strikes.add(new Strike(style, "pacifist".equals(style) ? 0.0F : blow * mult));
+                    String grip = MinionData.field(mob, slot.key(), "grip").filter(com.google.gson.JsonElement::isJsonPrimitive)
+                            .map(com.google.gson.JsonElement::getAsString).orElse("hand");
+                    strikes.add(new Strike(style, "pacifist".equals(style) ? 0.0F : blow * mult, grip));
                 }
-                case HEAD, NECK -> head = piece;
-                case TORSO -> head = head == null ? piece : head;
                 default -> {
                 }
             }
@@ -144,9 +153,12 @@ public record MinionStats(float health, float knockbackResistance, int slots, in
         if (head != null) {
             ResolvedMob headMob = store.resolve(head.entity(), head.baby());
             boolean blind = blind(headMob, head);
+            boolean hand = strikes.stream().anyMatch(s -> "hand".equals(s.grip()));
+            boolean harvests = strikes.stream().anyMatch(s -> HARVESTING.contains(s.grip()));
             // the head's own traits pick its variant (a villager's profession names its jobs)
             for (ResourceLocation job : MinionData.ids(headMob, head.traits(), "head", "jobs")) {
-                if (JOBS.contains(job) && !jobs.contains(job) && (!strikes.isEmpty() || !HANDS.contains(job)) && !(blind && SIGHT.contains(job))) {
+                boolean held = !HANDS.contains(job) || hand || harvests && job.equals(BloodAndBones.asResource("farmer"));
+                if (JOBS.contains(job) && !jobs.contains(job) && held && !(blind && SIGHT.contains(job))) {
                     jobs.add(job);
                 }
             }
@@ -181,6 +193,30 @@ public record MinionStats(float health, float knockbackResistance, int slots, in
         }
         List<ResourceLocation> senses = MinionData.ids(headMob, head.traits(), "head", "senses");
         return !senses.contains(BloodAndBones.asResource("echolocate")) && !senses.contains(BloodAndBones.asResource("tremor"));
+    }
+
+    /**
+     * Its head, which sets its jobs, bite and sight: the first piece fitted in a head or neck socket (of several heads,
+     * the first sets the job: section 6.4), else a torso-like piece standing in for one; null for none (mindless).
+     */
+    @org.jetbrains.annotations.Nullable
+    public static PieceRef head(PartsData.Store store, MinionBuild build) {
+        PieceRef stand = null;
+        for (MinionBuild.Fitted fitted : build.parts()) {
+            PieceRef piece = fitted.piece();
+            Optional<Rig> rig = store.rig(piece.entity(), piece.baby());
+            if (rig.isEmpty()) {
+                continue;
+            }
+            PartSlot slot = com.avicagan.bloodandbones.parts.PartSlots.of(store, piece.entity(), rig.get(), piece.bone()).slot();
+            if (slot == PartSlot.HEAD || slot == PartSlot.NECK) {
+                return piece;
+            }
+            if (slot == PartSlot.TORSO && stand == null) {
+                stand = piece;
+            }
+        }
+        return stand;
     }
 
     /** The mode most legs share; a tie goes to the slower. */

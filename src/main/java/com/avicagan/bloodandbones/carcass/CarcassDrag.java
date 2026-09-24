@@ -134,6 +134,16 @@ public final class CarcassDrag {
         return false;
     }
 
+    /** Whether anyone but this dragger has hold of the carcass too (a player's Meat Hook on the body a hauler tows). */
+    public static boolean isDraggedByAnother(UUID carcassId, LivingEntity dragger) {
+        for (Drag drag : DRAGS.values()) {
+            if (drag.carcass.equals(carcassId) && !drag.player.equals(dragger.getUUID())) {
+                return true;
+            }
+        }
+        return false;
+    }
+
     public static boolean start(ServerLevel level, LivingEntity player, BlockPos plotPos, @Nullable Vec3 hitLocation) {
         if (!(level.getBlockEntity(plotPos) instanceof CarcassPartBlockEntity part) || part.carcassId() == null) {
             return false;

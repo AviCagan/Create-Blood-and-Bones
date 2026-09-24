@@ -179,6 +179,11 @@ public class MinionJobTests {
         return minion.inventory.countItem(item);
     }
 
+    /** Whether the action bar's last line was this one. */
+    private static boolean said(Maker maker, String key) {
+        return !maker.told.isEmpty() && maker.told.get(maker.told.size() - 1).getContents() instanceof TranslatableContents last && last.getKey().equals(key);
+    }
+
     private static boolean saidJob(Maker maker, String name) {
         if (maker.told.isEmpty() || !(maker.told.get(maker.told.size() - 1).getContents() instanceof TranslatableContents said)) {
             return false;
@@ -266,6 +271,35 @@ public class MinionJobTests {
             helper.fail("A nitwit's head should offer only companion: " + stats.jobs());
             return;
         }
+        helper.succeed();
+    }
+
+    /**
+     * A hand's work needs a hand (section 5.6): a chicken's own wings under a butcher's head give neither surgeon nor
+     * butcher, and cannot draw a bow held in its beak; a zombie's arms under the same head give both jobs.
+     */
+    @GameTest(template = "empty", timeoutTicks = 20)
+    public static void wingsAreNoHands(GameTestHelper helper) {
+        MinionBuild winged = MinionBuild.of(ref("chicken", "body")).with("head", villagerHead("butcher")).with("right_wing", ref("chicken", "right_wing"))
+                .with("left_wing", ref("chicken", "left_wing"));
+        MinionStats stats = MinionStats.of(PartsData.SERVER, winged);
+        if (stats.strikes().size() != 2 || !stats.strikes().stream().allMatch(s -> "wing".equals(s.grip())) || !stats.jobs().equals(List.of(MinionStats.COMPANION))) {
+            helper.fail("A butcher's head on a chicken's wings should keep company only, its wings no hands: " + stats.jobs() + " " + stats.strikes());
+            return;
+        }
+        MinionStats handed = MinionStats.of(PartsData.SERVER, armed(villagerHead("butcher")));
+        if (!handed.jobs().equals(List.of(job("surgeon"), job("butcher")))) {
+            helper.fail("With a zombie's hands the same head should offer surgeon and butcher: " + handed.jobs());
+            return;
+        }
+        Maker maker = new Maker(helper, new BlockPos(3, 2, 3));
+        MinionEntity minion = minion(helper, new BlockPos(5, 2, 5), winged, maker);
+        give(minion, maker, new ItemStack(Items.BOW));
+        if (!minion.getMainHandItem().is(Items.BOW) || minion.hasRangedAttack() || MinionJobs.offered(minion).contains(job("sentry"))) {
+            helper.fail("It may hold a bow in its beak, but cannot draw it with wings: " + minion.getMainHandItem() + " " + minion.hasRangedAttack());
+            return;
+        }
+        minion.discard();
         helper.succeed();
     }
 
@@ -359,7 +393,8 @@ public class MinionJobTests {
 
     /**
      * A sentry holding a bow never moves from its post: it turns to a husk in its pen and shoots it, arrows from what it
-     * carries.
+     * carries. Its maker stocks the arrows as they hand it anything, by using the stack on it: they go in with what it
+     * carries, the bow stays in its hand.
      */
     @GameTest(template = "empty", timeoutTicks = 400)
     public static void sentryShootsWithHeldBow(GameTestHelper helper) {
@@ -367,7 +402,13 @@ public class MinionJobTests {
         Maker maker = new Maker(helper, new BlockPos(1, 2, 1));
         MinionEntity minion = minion(helper, new BlockPos(2, 2, 5), armed(ref("pillager", "head")), maker);
         give(minion, maker, new ItemStack(Items.BOW));
-        minion.inventory.addItem(new ItemStack(Items.ARROW, 16));
+        give(minion, maker, new ItemStack(Items.ARROW, 16));
+        if (!minion.getMainHandItem().is(Items.BOW) || count(minion, Items.ARROW) != 16 || !maker.getMainHandItem().isEmpty()
+                || !said(maker, "bloodandbones.minion.carries")) {
+            helper.fail("The stack of arrows should go in with what it carries, the bow kept in hand: holding " + minion.getMainHandItem() + ", "
+                    + count(minion, Items.ARROW) + " arrows carried, " + maker.getMainHandItem() + " left in the maker's hand");
+            return;
+        }
         if (!switchTo(minion, maker, "sentry")) {
             helper.fail("Holding a bow, a pillager's head should take up sentry");
             return;
@@ -382,6 +423,76 @@ public class MinionJobTests {
             helper.assertTrue(husk.getLastDamageSource() != null && husk.getLastDamageSource().getDirectEntity() instanceof AbstractArrow
                     && husk.getLastDamageSource().getEntity() == minion, "the husk was hurt by something else: " + husk.getLastDamageSource());
             helper.assertTrue(count(minion, Items.ARROW) < 16, "no arrow was taken from what it carries");
+        });
+    }
+
+    /**
+     * A sentry's arrows pass through its own side: loosed straight at a villager and at another of its maker's minions they
+     * hurt neither and fly on, while one loosed at a husk hurts it.
+     */
+    @GameTest(template = "empty", timeoutTicks = 100)
+    public static void sentryArrowsSpareItsSide(GameTestHelper helper) {
+        pen(helper);
+        ServerLevel level = helper.getLevel();
+        Maker maker = new Maker(helper, new BlockPos(1, 2, 1));
+        MinionEntity sentry = minion(helper, new BlockPos(2, 2, 5), armed(ref("pillager", "head")), maker);
+        sentry.setNoAi(true);
+        Villager villager = helper.spawn(EntityType.VILLAGER, new BlockPos(6, 2, 3));
+        villager.setNoAi(true);
+        MinionEntity other = minion(helper, new BlockPos(6, 2, 5), armed(ref("zombie", "head")), maker);
+        other.setNoAi(true);
+        Husk husk = helper.spawn(EntityType.HUSK, new BlockPos(6, 2, 7));
+        husk.setNoAi(true);
+        for (net.minecraft.world.entity.LivingEntity target : List.of(villager, other, husk)) {
+            net.minecraft.world.entity.projectile.Arrow arrow = new net.minecraft.world.entity.projectile.Arrow(level, sentry, new ItemStack(Items.ARROW), null);
+            arrow.shoot(target.getX() - sentry.getX(), target.getY(0.5) - arrow.getY(), target.getZ() - sentry.getZ(), 1.6F, 0.0F);
+            level.addFreshEntity(arrow);
+        }
+        // long after all three would have landed
+        helper.runAfterDelay(30, () -> {
+            if (!(husk.getHealth() < husk.getMaxHealth())) {
+                helper.fail("The arrow loosed at the husk should hurt it");
+                return;
+            }
+            if (villager.getHealth() < villager.getMaxHealth() || other.getHealth() < other.getMaxHealth()) {
+                helper.fail("Its arrows should pass through the villager and its maker's other minion: " + villager.getHealth() + ", " + other.getHealth());
+                return;
+            }
+            sentry.discard();
+            other.discard();
+            helper.succeed();
+        });
+    }
+
+    /**
+     * A sentry with a crossbow loads it from the arrows its maker handed it and shoots a husk; its arrows, like its bow's,
+     * can be picked up where they land (vanilla leaves a mob's crossbow arrows to no one).
+     */
+    @GameTest(template = "empty", timeoutTicks = 400)
+    public static void crossbowSentryArrowsCanBePickedUp(GameTestHelper helper) {
+        pen(helper);
+        ServerLevel level = helper.getLevel();
+        Maker maker = new Maker(helper, new BlockPos(1, 2, 1));
+        MinionEntity minion = minion(helper, new BlockPos(2, 2, 5), armed(ref("pillager", "head")), maker);
+        give(minion, maker, new ItemStack(Items.CROSSBOW));
+        give(minion, maker, new ItemStack(Items.ARROW, 16));
+        if (!minion.getMainHandItem().is(Items.CROSSBOW) || count(minion, Items.ARROW) != 16 || !switchTo(minion, maker, "sentry")) {
+            helper.fail("Holding a crossbow and carrying the arrows, a pillager's head should take up sentry: " + minion.getMainHandItem() + ", "
+                    + count(minion, Items.ARROW) + " arrows, " + minion.job());
+            return;
+        }
+        Husk husk = helper.spawn(EntityType.HUSK, new BlockPos(8, 2, 5));
+        husk.setNoAi(true);
+        float full = husk.getHealth();
+        AABB area = area(helper);
+        Set<AbstractArrow.Pickup> seen = new HashSet<>();
+        helper.onEachTick(() -> level.getEntitiesOfClass(AbstractArrow.class, area, a -> a.getOwner() == minion).forEach(a -> seen.add(a.pickup)));
+        helper.succeedWhen(() -> {
+            helper.assertTrue(husk.getHealth() < full || !husk.isAlive(), "the husk has not been hit yet (" + count(minion, Items.ARROW) + " arrows left)");
+            helper.assertTrue(seen.contains(AbstractArrow.Pickup.ALLOWED) && !seen.contains(AbstractArrow.Pickup.DISALLOWED),
+                    "its crossbow's arrows should be free to pick up: " + seen);
+            // shot enough: it looks for nothing else to shoot while the other tests run
+            minion.discard();
         });
     }
 
@@ -455,8 +566,9 @@ public class MinionJobTests {
     }
 
     /**
-     * A hunter (a wolf's head) with a Meat Hook in hand kills a cow in its pen, and the cow is left an intact carcass, as a
-     * player's Meat Hook kill leaves it: no beef on the ground.
+     * A hunter (a wolf's head, which wakes as a guard: never straight to the animals round its table) with a Meat Hook in
+     * hand kills a cow in its pen, and the cow is left an intact carcass, as a player's Meat Hook kill leaves it: no beef
+     * on the ground.
      */
     @GameTest(template = "empty", timeoutTicks = 500)
     public static void hunterWithMeatHookLeavesCarcass(GameTestHelper helper) {
@@ -466,8 +578,8 @@ public class MinionJobTests {
         CarcassSavedData.get(level).all().forEach(c -> before.add(c.id));
         Maker maker = new Maker(helper, new BlockPos(1, 2, 1));
         MinionEntity minion = minion(helper, new BlockPos(2, 2, 2), armed(ref("wolf", "head/real_head")), maker);
-        if (!minion.hasJob("hunter")) {
-            helper.fail("A wolf's head should make a hunter: " + minion.job());
+        if (minion.hasJob("hunter") || !switchTo(minion, maker, "hunter")) {
+            helper.fail("A wolf's head should offer hunting, but not wake to it: " + minion.job() + " of " + MinionJobs.offered(minion));
             return;
         }
         give(minion, maker, new ItemStack(BBItems.MEAT_HOOK.get()));
@@ -586,9 +698,10 @@ public class MinionJobTests {
 
     /**
      * A butcher's head with a Cleaver in hand takes a cow carcass by home apart by hand: a leg cut off and broken down,
-     * what came off in its own hands (none left lying).
+     * what came off in its own hands (seen in what it carries, none left lying). A leg's small yield may roll nothing, so
+     * it has the time and the reach (home beside the cow) to go on to the next piece.
      */
-    @GameTest(template = "empty", timeoutTicks = 600)
+    @GameTest(template = "empty", timeoutTicks = 900)
     public static void butcherButchersWithCleaver(GameTestHelper helper) {
         pen(helper);
         ServerLevel level = helper.getLevel();
@@ -604,7 +717,7 @@ public class MinionJobTests {
         CarcassSavedData.get(level).all().forEach(c -> before.add(c.id));
         before.remove(carcass.id);
         Maker maker = new Maker(helper, new BlockPos(1, 2, 1));
-        MinionEntity minion = minion(helper, new BlockPos(3, 2, 3), armed(villagerHead("butcher")), maker);
+        MinionEntity minion = minion(helper, new BlockPos(4, 2, 4), armed(villagerHead("butcher")), maker);
         if (MinionJobs.offered(minion).contains(job("butcher"))) {
             helper.fail("With no blade, a butcher's head should not be offered butchering");
             return;
@@ -615,6 +728,15 @@ public class MinionJobTests {
             return;
         }
         AABB area = area(helper);
+        // the most it has carried at once (a butcher stores what it has in a container by home, as a courier does)
+        int[] carried = {0};
+        helper.onEachTick(() -> {
+            int now = 0;
+            for (int i = 0; i < minion.inventory.getContainerSize(); i++) {
+                now += minion.inventory.getItem(i).getCount();
+            }
+            carried[0] = Math.max(carried[0], now);
+        });
         helper.succeedWhen(() -> {
             // this cow's pieces: the carcass and whatever was cut off it since
             int left = 0;
@@ -626,12 +748,15 @@ public class MinionJobTests {
             helper.assertTrue(left < bones, "no piece of the cow has been broken down yet (" + left + " of " + bones + " left)");
             helper.assertTrue(level.getEntitiesOfClass(ItemEntity.class, area, e -> e.getItem().is(Items.BEEF) || e.getItem().is(Items.BONE)
                     || e.getItem().is(BBItems.OFFAL.get())).isEmpty(), "what it cut off should be in its hands, not on the ground");
+            helper.assertTrue(carried[0] > 0, "what it broke down should be in what it carries, but it has carried nothing yet (" + left + " of "
+                    + bones + " pieces left, the butcher at " + minion.position() + ")");
         });
     }
 
     /**
-     * A cleric's head (a medic) throws a splash potion of healing at its hurt maker, and at a hurt villager, whom it
-     * heals. (The stand-in maker is not in the world, so no splash reaches them; the villager shows the healing lands.)
+     * A cleric's head (a medic), handed two splash potions of healing, throws one at its hurt maker, and one at a hurt
+     * villager, whom it heals. (The stand-in maker is not in the world, so no splash reaches them; the villager shows the
+     * healing lands.)
      */
     @GameTest(template = "empty", timeoutTicks = 500)
     public static void medicThrowsHealingAtHurtMaker(GameTestHelper helper) {
@@ -646,8 +771,14 @@ public class MinionJobTests {
             helper.fail("A cleric's head should offer medic: " + MinionJobs.offered(minion));
             return;
         }
-        minion.inventory.addItem(PotionContents.createItemStack(Items.SPLASH_POTION, Potions.HEALING));
-        minion.inventory.addItem(PotionContents.createItemStack(Items.SPLASH_POTION, Potions.HEALING));
+        // its maker hands it the potions as anything is handed over: healing goes in with what it carries, its hand left empty
+        give(minion, maker, PotionContents.createItemStack(Items.SPLASH_POTION, Potions.HEALING));
+        give(minion, maker, PotionContents.createItemStack(Items.SPLASH_POTION, Potions.HEALING));
+        if (minion.inventory.countItem(Items.SPLASH_POTION) != 2 || !minion.getMainHandItem().isEmpty()) {
+            helper.fail("Both healing potions should go in with what it carries: " + minion.inventory.countItem(Items.SPLASH_POTION) + " carried, holding "
+                    + minion.getMainHandItem());
+            return;
+        }
         boolean[] atMaker = {false};
         List<ThrownPotion> seen = new ArrayList<>();
         Villager[] villager = {null};
@@ -677,7 +808,10 @@ public class MinionJobTests {
         });
     }
 
-    /** A piglin's head (a barterer) takes gold from the chest by home and puts back what a piglin would trade for it. */
+    /**
+     * A piglin's head (a barterer) takes gold from the chest by home and puts back what a piglin would trade for it; the
+     * ingot it is looking over is kept with what it carries meanwhile.
+     */
     @GameTest(template = "empty", timeoutTicks = 500)
     public static void bartererTradesGold(GameTestHelper helper) {
         pen(helper);
@@ -690,7 +824,11 @@ public class MinionJobTests {
             helper.fail("A piglin's head should make a barterer: " + minion.job());
             return;
         }
+        // while it looks the ingot over, the ingot is in what it carries (saved, folded and dropped with it)
+        boolean[] carried = {false};
+        helper.onEachTick(() -> carried[0] |= chest.countItem(Items.GOLD_INGOT) == 2 && count(minion, Items.GOLD_INGOT) == 1);
         helper.succeedWhen(() -> {
+            helper.assertTrue(carried[0], "the ingot it looks over was never seen in what it carries");
             int gold = chest.countItem(Items.GOLD_INGOT);
             boolean traded = false;
             for (int i = 0; i < chest.getContainerSize(); i++) {
@@ -774,7 +912,7 @@ public class MinionJobTests {
         pen(helper);
         Maker maker = new Maker(helper, new BlockPos(1, 2, 1));
         MinionEntity minion = minion(helper, new BlockPos(2, 2, 2), brassArmed(ref("wolf", "head/real_head")), maker);
-        if (!minion.cybernetic() || !minion.hasJob("hunter")) {
+        if (!minion.cybernetic() || !switchTo(minion, maker, "hunter")) {
             helper.fail("A brass wolf's head should make a hunter: " + minion.job());
             return;
         }

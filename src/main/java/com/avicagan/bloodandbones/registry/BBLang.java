@@ -239,6 +239,8 @@ public class BBLang {
         bloodless("bloodandbones.minion.job.butcher", "Dismantler");
         BloodAndBones.REGISTRATE.addRawLang("bloodandbones.minion.holds", "Holding %s");
         BloodAndBones.REGISTRATE.addRawLang("bloodandbones.minion.cannot_hold", "It has no hand or head to hold that with");
+        BloodAndBones.REGISTRATE.addRawLang("bloodandbones.minion.carries", "Carrying %s");
+        BloodAndBones.REGISTRATE.addRawLang("bloodandbones.minion.no_room", "It has no room left to carry that");
         BloodAndBones.REGISTRATE.addRawLang("bloodandbones.minion.job_now", "Job: %s");
         BloodAndBones.REGISTRATE.addRawLang("bloodandbones.minion.status", "%s, blood %s of %s mB");
         BloodAndBones.REGISTRATE.addRawLang("bloodandbones.minion.status_down", "%s, out of blood (%s of %s mB): give it blood to wake it");

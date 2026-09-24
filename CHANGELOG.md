@@ -228,16 +228,19 @@ Everything below is in development builds only; the art is placeholder (see the 
   eyes were both cut out at the Surgical Rig loses the jobs that need sight and notices things only four
   blocks off.
 - Ten new jobs. Hand your minion something by using it on it (an empty hand takes it back), and it works
-  with it:
+  with it; arrows for its bow and healing potions for a medic go in with what it carries, a stack at a time:
   - a sentry holding a bow, crossbow or trident stands its post and shoots monsters, arrows from what it
-    carries;
-  - a scavenger fetches items like the one it holds, from up to 32 blocks, and brings them to you;
-  - a herder holding wheat (or seeds, carrots...) walks animals that stray back home;
+    carries; its arrows fly through you, your other minions and villagers, and can be picked up where they land;
+  - a scavenger fetches items like the one it holds, from up to 32 blocks, and brings them to you when you are
+    near home;
+  - a herder holding wheat (or seeds, carrots...) walks animals that stray back home, leaving pets and named
+    animals be;
   - a fisher with a rod (or a fish's head) fishes by water near home;
-  - a hunter kills livestock and game near home, and with a Meat Hook in hand leaves intact carcasses;
+  - a hunter kills livestock and game near home, and with a Meat Hook in hand leaves intact carcasses (only where
+    mobGriefing is on; a minion wakes to another of its jobs, and is put to hunting by hand);
   - a hauler drags carcasses to the nearest Shackle Hook and hangs them, or onto a Bleeding Rack to bleed;
   - a butcher with a Cleaver or Flensing Knife takes carcasses by home apart by hand;
-  - a medic throws splash potions of healing at you, your other minions and villagers when they are hurt;
+  - a medic throws splash potions of healing at you, your other flesh minions and villagers when they are hurt;
   - a barterer trades gold from the chest by home as a piglin does;
   - a digger sniffs the grass and moss round home and turns up what a sniffer finds.
 
