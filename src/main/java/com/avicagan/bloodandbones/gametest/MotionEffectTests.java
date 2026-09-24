@@ -655,6 +655,7 @@ public class MotionEffectTests {
             return;
         }
         float health = walker.getHealth();
+        float sinkerHealth = sinker.getHealth();
         double surface = helper.absoluteVec(new Vec3(0.0, 2.5, 0.0)).y;
         // the lowest the other gets while in the lava: it goes under before it paddles up again
         double[] lowest = {Double.MAX_VALUE};
@@ -673,9 +674,10 @@ public class MotionEffectTests {
                 helper.fail("The lava walker should stand unhurt on the lava's surface at " + surface + ": " + walkerY + ", " + walkerHealth);
                 return;
             }
-            // one standing on the lava stays right on its surface; this one goes under it
-            if (sinkerY > surface - 0.1) {
-                helper.fail("The minion without it should sink: " + sinkerY);
+            // one standing on the lava stays right on its surface, unhurt; this one goes under it (it floats back up, so
+            // not far) and burns
+            if (sinkerY > surface - 0.02 || !(sinker.getHealth() < sinkerHealth)) {
+                helper.fail("The minion without it should go into the lava and burn: " + sinkerY + ", " + sinker.getHealth() + " of " + sinkerHealth);
                 return;
             }
             helper.succeed();
