@@ -230,9 +230,15 @@ public class BBLang {
         BloodAndBones.REGISTRATE.addRawLang("bloodandbones.surgery.state.dead", "%s (dry)");
         // ---- minions (docs/PARTS-AND-TRAITS.md section 6)
         for (String[] job : new String[][]{{"companion", "Companion"}, {"courier", "Courier"}, {"farmer", "Farmer"}, {"bodyguard", "Bodyguard"},
-                {"guard", "Guard"}, {"herder", "Herder"}, {"surgeon", "Surgeon"}}) {
+                {"guard", "Guard"}, {"herder", "Herder"}, {"surgeon", "Surgeon"}, {"sentry", "Sentry"}, {"scavenger", "Scavenger"},
+                {"fisher", "Fisher"}, {"hunter", "Hunter"}, {"hauler", "Hauler"}, {"butcher", "Butcher"}, {"medic", "Medic"},
+                {"barterer", "Barterer"}, {"digger", "Digger"}}) {
             BloodAndBones.REGISTRATE.addRawLang("bloodandbones.minion.job." + job[0], job[1]);
         }
+        // a construct takes things apart rather than butchering them (brief rule 4)
+        bloodless("bloodandbones.minion.job.butcher", "Dismantler");
+        BloodAndBones.REGISTRATE.addRawLang("bloodandbones.minion.holds", "Holding %s");
+        BloodAndBones.REGISTRATE.addRawLang("bloodandbones.minion.cannot_hold", "It has no hand or head to hold that with");
         BloodAndBones.REGISTRATE.addRawLang("bloodandbones.minion.job_now", "Job: %s");
         BloodAndBones.REGISTRATE.addRawLang("bloodandbones.minion.status", "%s, blood %s of %s mB");
         BloodAndBones.REGISTRATE.addRawLang("bloodandbones.minion.status_down", "%s, out of blood (%s of %s mB): give it blood to wake it");

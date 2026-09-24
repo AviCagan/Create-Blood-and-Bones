@@ -59,6 +59,12 @@ public final class MinionGoals {
             public boolean canUse() {
                 return minion.hasJob("guard") && minion.stats().fights() && super.canUse();
             }
+
+            /** No further than its head notices things (a blind head: 4 blocks); asked first while it is being made. */
+            @Override
+            protected double getFollowDistance() {
+                return minion.build().isEmpty() ? super.getFollowDistance() : Math.min(super.getFollowDistance(), minion.stats().sight());
+            }
         });
     }
 
@@ -184,8 +190,9 @@ public final class MinionGoals {
 
         @Override
         public boolean canUse() {
-            // a pacifist (a villager's pair of arms and no bite of its own worth using) never attacks
-            return !minion.stats().mindless() && minion.stats().fights() && super.canUse();
+            // a pacifist (a villager's pair of arms and no bite of its own worth using) never attacks, and a sentry
+            // shoots from where it stands rather than closing in
+            return !minion.stats().mindless() && minion.stats().fights() && !minion.hasJob("sentry") && super.canUse();
         }
     }
 
@@ -572,7 +579,7 @@ public final class MinionGoals {
         }
     }
 
-    /** Minions with work at home wander back there when idle. */
+    /** Minions with work at home wander back there when idle (a sentry to its post). */
     public static class StayNearHome extends Goal {
         private final MinionEntity minion;
 
@@ -583,8 +590,7 @@ public final class MinionGoals {
 
         @Override
         public boolean canUse() {
-            return (minion.hasJob("farmer") || minion.hasJob("courier") || minion.hasJob("guard"))
-                    && minion.distanceToSqr(Vec3.atCenterOf(minion.home())) > 16.0;
+            return MinionJobs.HOMEBODIES.contains(minion.job()) && minion.distanceToSqr(Vec3.atCenterOf(minion.home())) > 16.0;
         }
 
         @Override
@@ -687,7 +693,7 @@ public final class MinionGoals {
         }
     }
 
-    /** A courier or farmer carries what it holds to a container by home. */
+    /** A courier, farmer, fisher, butcher, digger or barterer carries what it holds to a container by home. */
     public static class Deposit extends Goal {
         private final MinionEntity minion;
         @Nullable
@@ -730,7 +736,7 @@ public final class MinionGoals {
 
         @Override
         public boolean canUse() {
-            if ((!minion.hasJob("courier") && !minion.hasJob("farmer")) || minion.inventory.isEmpty() || minion.getRandom().nextInt(10) != 0) {
+            if (!MinionJobs.STORERS.contains(minion.job()) || minion.inventory.isEmpty() || minion.getRandom().nextInt(10) != 0) {
                 return false;
             }
             container = findContainer();

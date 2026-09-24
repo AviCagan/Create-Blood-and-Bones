@@ -187,19 +187,28 @@ public class ShackleHookBlockEntity extends BlockEntity {
             release(level);
             return;
         }
+        hang(level, player);
+    }
+
+    /**
+     * Hang the carcass this one is dragging (a player, or a hauler minion) on the free hook, by its torso.
+     *
+     * @return whether it went up
+     */
+    public boolean hang(ServerLevel level, net.minecraft.world.entity.LivingEntity player) {
         CarcassDrag.Drag drag = CarcassDrag.current(player);
-        if (drag == null) {
-            return;
+        if (drag == null || isOccupied()) {
+            return false;
         }
         CarcassSavedData.Carcass carcass = CarcassSavedData.get(level).carcass(drag.carcass);
         if (carcass == null) {
-            return;
+            return false;
         }
         CarcassDrag.stop(level, player);
         ServerSubLevelContainer container = SubLevelContainer.getContainer(level);
         SubLevel torsoSubLevel = container == null ? null : container.getSubLevel(carcass.bones.get(carcass.rootBone));
         if (!(torsoSubLevel instanceof ServerSubLevel torso) || torso.isRemoved()) {
-            return;
+            return false;
         }
         // Always hang by the torso, hooked where the neck meets it, belly facing out from the mount
         // (or toward whoever hung it on a ceiling hook).
@@ -220,6 +229,7 @@ public class ShackleHookBlockEntity extends BlockEntity {
         setChanged();
         level.sendBlockUpdated(worldPosition, getBlockState(), getBlockState(), 3);
         attach(level, false);
+        return true;
     }
 
     public void release(ServerLevel level) {

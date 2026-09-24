@@ -25,6 +25,10 @@ public final class BBAttributes {
 
     public static void register(IEventBus modBus) {
         ATTRIBUTES.register(modBus);
-        modBus.addListener((EntityAttributeModificationEvent event) -> event.add(EntityType.PLAYER, DRAG_STRENGTH));
+        modBus.addListener((EntityAttributeModificationEvent event) -> {
+            event.add(EntityType.PLAYER, DRAG_STRENGTH);
+            // a hauler minion drags carcasses too, its parts' hauler traits easing it (docs/PARTS-AND-TRAITS.md section 6.9)
+            event.add(BBEntities.MINION.get(), DRAG_STRENGTH);
+        });
     }
 }

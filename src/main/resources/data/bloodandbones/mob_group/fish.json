@@ -43,6 +43,9 @@
           "bloodandbones:courier",
           "bloodandbones:companion"
         ],
+        "no_tool": [
+          "bloodandbones:fisher"
+        ],
         "disposition": "skittish",
         "bite": {
           "style": "bite"

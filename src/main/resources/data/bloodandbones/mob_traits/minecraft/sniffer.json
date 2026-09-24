@@ -1,0 +1,12 @@
+{
+  "parts": {
+    "head": {
+      "minion": {
+        "jobs": [
+          "bloodandbones:digger",
+          "bloodandbones:hauler"
+        ]
+      }
+    }
+  }
+}

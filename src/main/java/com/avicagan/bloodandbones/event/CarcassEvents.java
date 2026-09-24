@@ -132,6 +132,8 @@ public class CarcassEvents {
     public static void onLevelTick(net.neoforged.neoforge.event.tick.LevelTickEvent.Post event) {
         if (event.getLevel() instanceof ServerLevel level) {
             com.avicagan.bloodandbones.carcass.CarcassHandover.tick(level);
+            // hauler minions' drags (a player's is kept by its own tick)
+            CarcassDrag.tickOthers(level);
             com.avicagan.bloodandbones.carcass.CarcassRest.levelTick(level);
             com.avicagan.bloodandbones.carcass.CarcassRot.levelTick(level);
         }

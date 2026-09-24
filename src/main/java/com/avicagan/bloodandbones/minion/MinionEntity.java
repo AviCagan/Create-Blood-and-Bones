@@ -82,6 +82,9 @@ public class MinionEntity extends PathfinderMob implements net.minecraft.world.e
 
     @Nullable
     private UUID maker;
+    /** The maker who woke it, while that very player is still about (a test's stand-in maker is never in the level). */
+    @Nullable
+    private Player makerEntity;
     private BlockPos home = BlockPos.ZERO;
     public final SimpleContainer inventory = new SimpleContainer(27);
     @Nullable
@@ -131,11 +134,13 @@ public class MinionEntity extends PathfinderMob implements net.minecraft.world.e
     /** Just woken: its maker, where it was made, what it is built of, and the blood it was woken with. */
     public void setup(@Nullable Player maker, BlockPos home, MinionBuild build, float power) {
         this.maker = maker == null ? null : maker.getUUID();
+        this.makerEntity = maker;
         this.home = home.immutable();
         setBuild(build);
         setHealth(getMaxHealth());
         entityData.set(POWER, Math.min(power, stats().reservoir()));
-        entityData.set(JOB, stats().jobs().get(0).toString());
+        // the first job its head offers that it can do now, with nothing in hand
+        entityData.set(JOB, MinionJobs.offered(this).get(0).toString());
     }
 
     public Optional<MinionBuild> build() {
@@ -157,7 +162,8 @@ public class MinionEntity extends PathfinderMob implements net.minecraft.world.e
         PartsData.Store store = PartsData.of(level());
         if (stats == null || statsGeneration != store.generation()) {
             MinionBuild build = build().orElse(null);
-            stats = build == null ? new MinionStats(10, 0, 3, 250, "crawl", 0.12F, 1, 0, List.of(), List.of(MinionStats.COMPANION), true, false, false, false, 0.6F, 0.6F, 0.6F, 0.6F)
+            stats = build == null ? new MinionStats(10, 0, 3, 250, "crawl", 0.12F, 1, 0, List.of(), List.of(MinionStats.COMPANION), true, false, false, false, 0.6F, 0.6F, 0.6F, 0.6F,
+                    MinionStats.MINDLESS_SIGHT)
                     : MinionStats.of(store, build);
             // the saddle's place, turned into the frame a passenger's place is given in (the renderer turns it a half turn more)
             org.joml.Vector3f saddle = build == null ? new org.joml.Vector3f(0.0F, stats.height(), 0.0F) : MinionBody.saddlePoint(MinionBody.layout(store, build));
@@ -419,9 +425,9 @@ public class MinionEntity extends PathfinderMob implements net.minecraft.world.e
         return job == null ? MinionStats.COMPANION : job;
     }
 
-    /** Put it to one of the jobs its head offers; false if it offers no such job. */
+    /** Put it to one of the jobs its head offers and it can do now (a sentry needs its bow in hand); false if not. */
     public boolean setJob(ResourceLocation job) {
-        if (!stats().jobs().contains(job)) {
+        if (!MinionJobs.offered(this).contains(job)) {
             return false;
         }
         entityData.set(JOB, job.toString());
@@ -448,7 +454,32 @@ public class MinionEntity extends PathfinderMob implements net.minecraft.world.e
 
     @Nullable
     public Player maker() {
-        return maker == null ? null : level().getPlayerByUUID(maker);
+        if (maker == null) {
+            return null;
+        }
+        Player found = level().getPlayerByUUID(maker);
+        if (makerEntity != null && makerEntity.isRemoved()) {
+            // logged out or respawned as another: only the id is kept from now on
+            makerEntity = null;
+        }
+        if (found == null && makerEntity != null && makerEntity.level() == level()) {
+            found = makerEntity;
+        }
+        return found;
+    }
+
+    /**
+     * Whether it has a ranged attack: a bow, crossbow or trident in a hand that fights (docs/PARTS-AND-TRAITS.md
+     * section 6.4). Innate shots from its traits join this when they come.
+     */
+    public boolean hasRangedAttack() {
+        return MinionJobs.heldWeapon(this) != null;
+    }
+
+    /** Arrows (or rockets) for the bow or crossbow in its hand, from what it carries: the stack itself, so a shot uses one up. */
+    @Override
+    public ItemStack getProjectile(ItemStack weapon) {
+        return MinionJobs.ammo(this, weapon);
     }
 
     public boolean isMaker(Player player) {
@@ -576,6 +607,8 @@ public class MinionEntity extends PathfinderMob implements net.minecraft.world.e
             setNoGravity(false);
             if (!level().isClientSide) {
                 com.avicagan.bloodandbones.cyber.Coupler.release(this);
+                // a hauler lets go of what it drags
+                com.avicagan.bloodandbones.carcass.CarcassDrag.stop((ServerLevel) level(), this);
             }
             getNavigation().stop();
             setTarget(null);
@@ -640,6 +673,8 @@ public class MinionEntity extends PathfinderMob implements net.minecraft.world.e
             applyStats();
             // its traits, built again if its build or the data changed
             com.avicagan.bloodandbones.parts.ActiveTraits.of(this);
+            // a job it can no longer do (its bow broke, a data reload took it from its head) gives way to one it can
+            MinionJobs.keepValid(this);
         }
         if ((tickCount + getId()) % 10 == 0) {
             // its traits' tick, staggered as players' are (tick effects wait while it is down)
@@ -758,6 +793,8 @@ public class MinionEntity extends PathfinderMob implements net.minecraft.world.e
         goalSelector.addGoal(8, new LookAtPlayerGoal(this, Player.class, 8.0F));
         goalSelector.addGoal(9, new RandomLookAroundGoal(this));
         MinionGoals.targets(this, targetSelector);
+        // the jobs of slice 7 (docs/PARTS-AND-TRAITS.md section 6.9): sentry, scavenger, herder, fisher, hunter...
+        MinionJobs.goals(this, goalSelector, targetSelector);
         // what each group of trait effects adds (a ranged minion's keep-away, say)
         com.avicagan.bloodandbones.parts.effect.MotionEffects.minionGoals(this, goalSelector, targetSelector);
         com.avicagan.bloodandbones.parts.effect.RangedEffects.minionGoals(this, goalSelector, targetSelector);
@@ -837,6 +874,7 @@ public class MinionEntity extends PathfinderMob implements net.minecraft.world.e
         for (int i = 0; i < inventory.getContainerSize(); i++) {
             spawnAtLocation(inventory.removeItemNoUpdate(i));
         }
+        MinionJobs.dropHeld(this);
         if (isSaddled()) {
             spawnAtLocation(Items.SADDLE);
         }
@@ -925,6 +963,11 @@ public class MinionEntity extends PathfinderMob implements net.minecraft.world.e
             }
             return InteractionResult.sidedSuccess(level().isClientSide);
         }
+        // its maker hands it something to hold (a bow, a rod, a Cleaver, what a scavenger fetches), or takes it back
+        InteractionResult hands = MinionJobs.handInteract(this, player, hand);
+        if (hands != null) {
+            return hands;
+        }
         if (!held.isEmpty()) {
             return super.mobInteract(player, hand);
         }
@@ -948,10 +991,10 @@ public class MinionEntity extends PathfinderMob implements net.minecraft.world.e
                 }
                 return InteractionResult.CONSUME;
             }
-            List<ResourceLocation> jobs = stats().jobs();
+            // the jobs its head offers that it can do now, in turn
+            List<ResourceLocation> jobs = MinionJobs.offered(this);
             ResourceLocation next = jobs.get((jobs.indexOf(job()) + 1) % jobs.size());
-            entityData.set(JOB, next.toString());
-            setTarget(null);
+            MinionJobs.startJob(this, next);
             player.displayClientMessage(Component.translatable("bloodandbones.minion.job_now", Component.translatable(jobKey(next))), true);
             return InteractionResult.CONSUME;
         }

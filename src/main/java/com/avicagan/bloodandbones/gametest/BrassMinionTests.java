@@ -297,6 +297,8 @@ public class BrassMinionTests {
                 .with("right_front_leg", ref("rabbit", "right_front_leg", false)).with("left_front_leg", ref("horse", "left_front_leg", false))
                 .with("right_hind_leg", ref("sheep", "right_hind_leg", false));
         MinionEntity many = minion(helper, new BlockPos(2, 2, 7), mixed, 500.0F);
+        // a pig's head would hunt; kept to carrying, it leaves the other tests' animals alone
+        many.setJob(BloodAndBones.asResource("courier"));
         ResourceLocation thickHide = BloodAndBones.asResource("thick_hide");
         helper.runAfterDelay(25, () -> {
             if (com.avicagan.bloodandbones.parts.ActiveTraits.of(flesh).level(thickHide) < 1

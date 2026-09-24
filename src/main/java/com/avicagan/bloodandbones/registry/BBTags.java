@@ -16,6 +16,9 @@ public final class BBTags {
     /** Nether mobs: their carcasses drain Soul Blood, not blood (the trickle path to it). */
     public static final TagKey<net.minecraft.world.entity.EntityType<?>> SOUL_BLEEDERS = TagKey.create(Registries.ENTITY_TYPE, BloodAndBones.asResource("soul_bleeders"));
 
+    /** What a hunter minion goes after when its head's data names no prey of its own: game and livestock. */
+    public static final TagKey<net.minecraft.world.entity.EntityType<?>> HUNTER_PREY = TagKey.create(Registries.ENTITY_TYPE, BloodAndBones.asResource("hunter_prey"));
+
     private BBTags() {
     }
 }
