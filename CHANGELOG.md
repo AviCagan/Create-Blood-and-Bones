@@ -172,6 +172,30 @@ Everything below is in development builds only; the art is placeholder (see the 
 
 ### Minions
 
+- The sapper: a creeper's head, with a creeper's Powder Sac stitched in, offers a job that walks up to a monster near
+  home (or to a banner of the colour you hand it) and blows itself up there, sparing itself and your side; then it lies
+  powered down, whole, until it gets blood again. It breaks blocks only where the server lets minions break blocks.
+- What a minion holds is drawn: in the hand at the end of its first arm (a sword, a bow, a rod), in front of a villager's
+  folded arms, or in the mouth of a head with no hand. A helmet is stretched over whatever head it has (a cow's long skull
+  gets a long helmet), and a carved pumpkin or skull sits on it sized to it.
+- Lava walkers (strider legs) walk straight across lava to where they are going, as a strider does, never wading in and
+  never catching alight from it.
+- Wings as arms lift a torso they can carry: a cow on phantom wings flies; on a chicken's it only falls slowly and lands
+  unhurt. Drowned, iron golem and undead horse legs walk the bottom of water at their land speed (and a skeleton or zombie
+  horse's rider stays on under water); a ghast's tentacles float. Wings beat in the air, and a wolf's tail droops as its
+  minion is hurt.
+- Mounts: a pig's head is steered with a carrot on a stick and strider legs with a warped fungus on a stick (use it to
+  spur it on; the stick wears as on a pig or strider). A camel carries its maker and one more behind; a whole ravager takes
+  a saddle and two riders too.
+- A carcass remembers more of its mob: a charged creeper, a fox's, frog's or rabbit's kind, a panda's gene, a name. A
+  charged creeper's sac blows twice as hard, a snow fox's hide shrugs off freezing, a warm frog's legs are fireproof and a
+  cold one's frost-guarded, the killer bunny's head is a berserk bodyguard biting for 8, as is a vindicator named Johnny's
+  and a zoglin's, a lazy panda's head keeps watch and a weak one's sneezes slime. More of the mobs' own specials are wired:
+  cod and salmon heads fish with their mouths, allay and fox heads fetch, an axolotl's hunts what axolotls hunt, a
+  pillager's arms draw bows twice as fast, a zombie's arms grab, a zombie villager's head is a shaky surgeon.
+- Fixed: a creature's random blink could land where it already stood. A hauler sometimes left a body lying across a
+  Bleeding Rack's rim, where it rocked or slid off without bleeding; it now lays it in the middle of the tray and steadies
+  it until it lies still there.
 - A minion with a head wears a helmet (or a pumpkin) its maker puts on it; a zombie's torso in one does not burn by day,
   the helmet wearing for it instead.
 - Fixed: a lava-walking minion standing on lava hung the server as soon as it set off anywhere.
@@ -205,7 +229,7 @@ Everything below is in development builds only; the art is placeholder (see the 
   a wall to its trough); horse legs under a heavy enough torso take a saddle, and its maker rides and steers
   it (its rider sits on the saddle, and riding costs what walking does); a flying torso (a bat's, a
   blaze's) flies, its legs dangling, and goes to a trough from the air when it runs low. Arms set how it
-  hits, each in its own style and taking turns: a zombie's punch, an iron golem's fling that throws the
+  hits, each in its own style and taking turns: a zombie's grab, an iron golem's fling that throws the
   target up, a spider's sting, a villager's pair of arms that never fights. Flesh mends itself slowly on
   its blood, and keeps the hide traits of up to three of the mobs it is built of (a cow's thick hide is
   armour).
@@ -347,11 +371,11 @@ Everything below is in development builds only; the art is placeholder (see the 
 - A patient on the Surgery Table is drawn sitting, not lying. An item held in a missing hand, and
   armour over a missing limb, still show in third person. Nothing is drawn on mobs that have been
   operated on.
-- Minions: every job but the sapper is built (it waits for a way to set off a detonating organ on a
-  marked target). What a minion holds is not drawn yet. A hauler with no room to walk on past a hook or rack gives
-  up and tries again later.
+- Minions: a held bow, crossbow or trident is used only by a sentry at its post, and a held axe hits no harder; a ridden
+  minion cannot jump. A hauler with no room to walk on past a hook or rack gives up and tries again later.
 - Special organs (glands, sacs, cores) are in every mob's data but have no item yet, so they cannot be cut out and
-  fitted in survival; the heart, lungs, stomach and eyes can. What each mob's signature still waits for (movement
-  modes, mounts, variants) is logged by the signature lint game test.
+  fitted in survival; the heart, lungs, stomach and eyes can. What each mob's signature still waits for (33 mobs:
+  new mechanisms such as the caravan and homing jobs, the mimic's alarm, skull-firing heads) is logged by the signature
+  lint game test.
 - A half-built minion frame from a development build before the rebuild loses what had been fitted to it.
 - All art is placeholder (see the README).
