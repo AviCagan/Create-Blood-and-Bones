@@ -1,0 +1,18 @@
+{
+  "kind": "overlay",
+  "priority": 51,
+  "members": [
+    "#minecraft:can_breathe_under_water"
+  ],
+  "parts": {
+    "torso": {
+      "minion": {
+        "traits": {
+          "add": [
+            "bloodandbones:gills"
+          ]
+        }
+      }
+    }
+  }
+}

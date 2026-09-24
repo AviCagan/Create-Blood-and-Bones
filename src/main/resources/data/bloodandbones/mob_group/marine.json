@@ -1,0 +1,98 @@
+{
+  "kind": "family",
+  "priority": 100,
+  "members": [
+    "minecraft:cod",
+    "minecraft:salmon",
+    "minecraft:pufferfish",
+    "minecraft:dolphin",
+    "#bloodandbones:family/marine"
+  ],
+  "scrap_material": "bloodandbones:scale",
+  "colour": "#6e94a4",
+  "organs": {
+    "torso": {
+      "add": [
+        "bloodandbones:swim_bladder"
+      ]
+    }
+  },
+  "parts": {
+    "torso": {
+      "minion": {
+        "self_move": {
+          "mode": "swim",
+          "speed": 0.3,
+          "gait": "undulate",
+          "land_speed": 0.05
+        },
+        "traits": [
+          "bloodandbones:gills"
+        ]
+      },
+      "armour": [
+        "bloodandbones:waterborn"
+      ]
+    },
+    "head": {
+      "minion": {
+        "jobs": [
+          "bloodandbones:fisher",
+          "bloodandbones:courier"
+        ]
+      },
+      "armour": [
+        {
+          "trait": "bloodandbones:long_winded",
+          "level": 2
+        }
+      ]
+    },
+    "tail": {
+      "minion": {
+        "traits": [
+          {
+            "trait": "bloodandbones:fins",
+            "level": 2
+          }
+        ]
+      },
+      "armour": {
+        "hips": [
+          "bloodandbones:waterborn"
+        ]
+      }
+    },
+    "leg": {
+      "armour": {
+        "leggings": [
+          "bloodandbones:waterborn"
+        ],
+        "boots": [
+          "bloodandbones:fins"
+        ]
+      }
+    }
+  },
+  "organ_traits": {
+    "bloodandbones:swim_bladder": {
+      "minion": [
+        "bloodandbones:waterborn"
+      ],
+      "armour": [
+        "bloodandbones:waterborn"
+      ]
+    }
+  },
+  "full_set": {
+    "replace": true,
+    "name": "set.bloodandbones.gills",
+    "bonus": [
+      "bloodandbones:gills",
+      {
+        "trait": "bloodandbones:waterborn",
+        "level": 3
+      }
+    ]
+  }
+}

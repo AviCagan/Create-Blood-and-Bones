@@ -1,0 +1,15 @@
+{
+  "name": "trait.bloodandbones.villagers_flee",
+  "max_level": 1,
+  "effects": [
+    {
+      "trigger": "passive",
+      "effect": {
+        "type": "bloodandbones:reaction",
+        "entities": "bloodandbones:flees_villagers_flee",
+        "mode": "flee",
+        "radius": 12
+      }
+    }
+  ]
+}

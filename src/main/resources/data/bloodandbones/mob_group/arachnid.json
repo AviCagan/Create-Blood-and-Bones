@@ -1,0 +1,70 @@
+{
+  "kind": "family",
+  "priority": 100,
+  "members": [
+    "minecraft:spider",
+    "minecraft:cave_spider",
+    "#bloodandbones:family/arachnid"
+  ],
+  "scrap_material": "bloodandbones:chitin",
+  "colour": "#3b2f2c",
+  "organs": {
+    "torso": {
+      "add": [
+        "bloodandbones:spinneret"
+      ]
+    }
+  },
+  "parts": {
+    "head": {
+      "minion": {
+        "jobs": [
+          "bloodandbones:hunter",
+          "bloodandbones:guard"
+        ],
+        "disposition": "nocturnal",
+        "traits": [
+          "bloodandbones:dark_sight"
+        ],
+        "bite": {
+          "style": "bite",
+          "damage": 1.5
+        }
+      },
+      "armour": [
+        "bloodandbones:dark_sight"
+      ]
+    },
+    "torso": {
+      "armour": [
+        "bloodandbones:shell_guard"
+      ]
+    },
+    "leg": {
+      "minion": {
+        "movement": {
+          "mode": "climb",
+          "speed": 0.3,
+          "gait": "skitter"
+        }
+      }
+    }
+  },
+  "full_set": {
+    "replace": true,
+    "name": "set.bloodandbones.brood",
+    "bonus": [
+      "bloodandbones:venom_proof",
+      {
+        "trait": "bloodandbones:fall_guard",
+        "level": 4
+      }
+    ],
+    "drawback": [
+      {
+        "trait": "bloodandbones:fire_weak",
+        "level": 2
+      }
+    ]
+  }
+}

@@ -1,0 +1,36 @@
+{
+  "name": "trait.bloodandbones.beached",
+  "max_level": 2,
+  "effects": [
+    {
+      "trigger": "passive",
+      "requirements": {
+        "condition": "minecraft:inverted",
+        "term": {
+          "condition": "minecraft:entity_properties",
+          "entity": "this",
+          "predicate": {
+            "location": {
+              "fluid": {
+                "fluids": [
+                  "minecraft:water",
+                  "minecraft:flowing_water"
+                ]
+              }
+            }
+          }
+        }
+      },
+      "effect": {
+        "type": "bloodandbones:attribute",
+        "attribute": "minecraft:generic.movement_speed",
+        "amount": {
+          "type": "minecraft:linear",
+          "base": -0.05,
+          "per_level_above_first": -0.05
+        },
+        "operation": "add_multiplied_base"
+      }
+    }
+  ]
+}

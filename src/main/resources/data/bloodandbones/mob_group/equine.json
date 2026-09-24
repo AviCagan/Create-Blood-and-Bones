@@ -1,0 +1,105 @@
+{
+  "kind": "family",
+  "priority": 100,
+  "members": [
+    "minecraft:horse",
+    "minecraft:donkey",
+    "minecraft:mule",
+    "minecraft:skeleton_horse",
+    "minecraft:zombie_horse",
+    "#bloodandbones:family/equine"
+  ],
+  "scrap_material": "bloodandbones:hide_plate",
+  "colour": "#7b5534",
+  "parts": {
+    "torso": {
+      "minion": {
+        "health": 22.0,
+        "saddle": true,
+        "traits": [
+          {
+            "trait": "bloodandbones:hauler",
+            "level": 2
+          }
+        ]
+      },
+      "armour": [
+        "bloodandbones:draft_chest"
+      ]
+    },
+    "head": {
+      "minion": {
+        "jobs": [
+          "bloodandbones:courier",
+          "bloodandbones:hauler",
+          "bloodandbones:companion"
+        ],
+        "disposition": "loyal"
+      },
+      "armour": [
+        "bloodandbones:bolt"
+      ]
+    },
+    "leg": {
+      "minion": {
+        "movement": {
+          "mode": "walk",
+          "speed": 0.3,
+          "gait": "gallop",
+          "rideable": true
+        },
+        "traits": [
+          {
+            "trait": "bloodandbones:sure_footed",
+            "level": 2
+          }
+        ]
+      },
+      "armour": {
+        "leggings": [
+          "bloodandbones:canter"
+        ],
+        "boots": [
+          "bloodandbones:galloper"
+        ]
+      }
+    },
+    "tail": {
+      "armour": {
+        "hips": [
+          "bloodandbones:swift"
+        ]
+      }
+    }
+  },
+  "hide": [
+    "bloodandbones:groomed_coat"
+  ],
+  "organ_traits": {
+    "bloodandbones:heart": {
+      "minion": [
+        "bloodandbones:stallion_heart"
+      ],
+      "armour": [
+        "bloodandbones:stallion_heart"
+      ]
+    }
+  },
+  "full_set": {
+    "replace": true,
+    "name": "set.bloodandbones.centaur",
+    "bonus": [
+      {
+        "trait": "bloodandbones:galloper",
+        "level": 3
+      },
+      {
+        "trait": "bloodandbones:sure_footed",
+        "level": 2
+      }
+    ],
+    "drawback": [
+      "bloodandbones:hay_burner"
+    ]
+  }
+}

@@ -1,0 +1,21 @@
+{
+  "name": "trait.bloodandbones.fire_weak",
+  "max_level": 3,
+  "effects": [
+    {
+      "trigger": "hurt",
+      "effect": {
+        "type": "bloodandbones:damage",
+        "direction": "in",
+        "multiplier": {
+          "type": "minecraft:linear",
+          "base": 1.25,
+          "per_level_above_first": 0.25
+        },
+        "damage_tags": [
+          "minecraft:is_fire"
+        ]
+      }
+    }
+  ]
+}

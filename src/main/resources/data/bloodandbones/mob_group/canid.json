@@ -1,0 +1,72 @@
+{
+  "kind": "family",
+  "priority": 100,
+  "members": [
+    "minecraft:wolf",
+    "minecraft:fox",
+    "#bloodandbones:family/canid"
+  ],
+  "scrap_material": "bloodandbones:sinew",
+  "colour": "#9c8f84",
+  "organs": {
+    "torso": {
+      "add": [
+        "bloodandbones:pack_gland"
+      ]
+    }
+  },
+  "parts": {
+    "head": {
+      "minion": {
+        "jobs": [
+          "bloodandbones:hunter",
+          "bloodandbones:guard",
+          "bloodandbones:herder"
+        ],
+        "disposition": "brave",
+        "bite": {
+          "style": "bite",
+          "damage": 1.5
+        }
+      }
+    },
+    "torso": {
+      "armour": [
+        "bloodandbones:brawler"
+      ]
+    },
+    "leg": {
+      "minion": {
+        "movement": {
+          "mode": "walk",
+          "speed": 0.3,
+          "gait": "lope"
+        },
+        "traits": [
+          "bloodandbones:swift"
+        ]
+      },
+      "armour": {
+        "leggings": [
+          "bloodandbones:swift"
+        ]
+      }
+    }
+  },
+  "hide": [
+    "bloodandbones:frost_guard"
+  ],
+  "full_set": {
+    "replace": true,
+    "name": "set.bloodandbones.alpha",
+    "bonus": [
+      {
+        "trait": "bloodandbones:brawler",
+        "level": 2
+      }
+    ],
+    "drawback": [
+      "bloodandbones:howl"
+    ]
+  }
+}

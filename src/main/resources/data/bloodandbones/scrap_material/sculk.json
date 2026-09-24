@@ -1,0 +1,21 @@
+{
+  "look": "sculk",
+  "armour": {
+    "helmet": 3,
+    "chestplate": 6,
+    "leggings": 5,
+    "boots": 3
+  },
+  "toughness": 2.0,
+  "knockback_resistance": 0.1,
+  "durability": 25,
+  "enchantability": 12,
+  "density": 28,
+  "quirk": [
+    {
+      "attribute": "minecraft:player.sneaking_speed",
+      "amount": 0.1,
+      "operation": "add_value"
+    }
+  ]
+}

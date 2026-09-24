@@ -1,0 +1,23 @@
+{
+  "kind": "overlay",
+  "priority": 110,
+  "members": [
+    "#minecraft:aquatic",
+    "#bloodandbones:overlay/aquatic"
+  ],
+  "parts": {
+    "torso": {
+      "minion": {
+        "traits": {
+          "add": [
+            "bloodandbones:gills"
+          ]
+        },
+        "out_of_water": {
+          "suffocates": false,
+          "power_loss_percent_per_minute": 1
+        }
+      }
+    }
+  }
+}

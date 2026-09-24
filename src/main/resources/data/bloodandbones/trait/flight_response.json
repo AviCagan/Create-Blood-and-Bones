@@ -1,0 +1,17 @@
+{
+  "name": "trait.bloodandbones.flight_response",
+  "max_level": 1,
+  "effects": [
+    {
+      "trigger": "hurt",
+      "cooldown": 600,
+      "effect": {
+        "type": "bloodandbones:mob_effect",
+        "effect": "minecraft:speed",
+        "amplifier": 1,
+        "duration": 60,
+        "target": "self"
+      }
+    }
+  ]
+}

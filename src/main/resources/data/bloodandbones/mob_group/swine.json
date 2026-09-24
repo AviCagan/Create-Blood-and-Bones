@@ -1,0 +1,64 @@
+{
+  "kind": "family",
+  "priority": 100,
+  "members": [
+    "minecraft:pig",
+    "minecraft:hoglin",
+    "minecraft:zoglin",
+    "#bloodandbones:family/swine"
+  ],
+  "scrap_material": "bloodandbones:hide_plate",
+  "colour": "#d4927f",
+  "parts": {
+    "torso": {
+      "minion": {
+        "health_factor": 1.2
+      },
+      "armour": [
+        "bloodandbones:lard"
+      ]
+    },
+    "head": {
+      "minion": {
+        "jobs": [
+          "bloodandbones:hunter",
+          "bloodandbones:courier"
+        ],
+        "bite": {
+          "style": "bite",
+          "damage": 1.5
+        }
+      },
+      "armour": [
+        "bloodandbones:stubborn"
+      ]
+    },
+    "leg": {
+      "minion": {
+        "movement": {
+          "mode": "walk",
+          "speed": 0.25,
+          "gait": "trot"
+        }
+      },
+      "armour": {
+        "leggings": [
+          "bloodandbones:swift"
+        ],
+        "boots": [
+          "bloodandbones:trotters"
+        ]
+      }
+    }
+  },
+  "full_set": {
+    "replace": true,
+    "name": "set.bloodandbones.hog_wild",
+    "bonus": [
+      {
+        "trait": "bloodandbones:hog_wild",
+        "level": 2
+      }
+    ]
+  }
+}

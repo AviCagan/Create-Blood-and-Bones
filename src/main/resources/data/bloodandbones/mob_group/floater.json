@@ -1,0 +1,110 @@
+{
+  "kind": "archetype",
+  "priority": 0,
+  "members": [
+    "minecraft:allay",
+    "minecraft:vex",
+    "minecraft:blaze",
+    "minecraft:breeze"
+  ],
+  "scrap_material": "bloodandbones:gristle",
+  "organs": {
+    "torso": [
+      "bloodandbones:heart",
+      "bloodandbones:lungs",
+      "bloodandbones:stomach"
+    ],
+    "head": [
+      "bloodandbones:eye",
+      "bloodandbones:eye"
+    ]
+  },
+  "parts": {
+    "torso": {
+      "minion": {
+        "health_factor": 1.0,
+        "self_move": {
+          "mode": "hover",
+          "speed": 0.2
+        }
+      },
+      "armour": [
+        "bloodandbones:light_boned"
+      ]
+    },
+    "head": {
+      "minion": {
+        "jobs": [
+          "bloodandbones:scavenger",
+          "bloodandbones:sentry",
+          "bloodandbones:companion"
+        ],
+        "disposition": "loyal",
+        "bite": {
+          "style": "bite"
+        }
+      },
+      "armour": [
+        "bloodandbones:clear_eyed"
+      ]
+    },
+    "arm": {
+      "minion": {
+        "strike": {
+          "style": "punch"
+        },
+        "grip": "hand"
+      },
+      "armour": [
+        "bloodandbones:quick_hands"
+      ]
+    },
+    "arm.wing": {
+      "minion": {
+        "strike": {
+          "style": "flap"
+        },
+        "grip": "wing"
+      },
+      "armour": [
+        "bloodandbones:featherfall"
+      ]
+    },
+    "leg": {
+      "armour": {
+        "leggings": [
+          "bloodandbones:light_boned"
+        ],
+        "boots": [
+          "bloodandbones:featherfall"
+        ]
+      }
+    }
+  },
+  "organ_traits": {
+    "bloodandbones:heart": {
+      "minion": [
+        "bloodandbones:hardy"
+      ],
+      "armour": [
+        "bloodandbones:hardy"
+      ]
+    },
+    "bloodandbones:lungs": {
+      "minion": [
+        "bloodandbones:long_winded"
+      ],
+      "armour": [
+        "bloodandbones:long_winded"
+      ]
+    },
+    "bloodandbones:eye": {
+      "minion": [
+        "bloodandbones:keen_eye"
+      ],
+      "armour": [
+        "bloodandbones:dark_sight"
+      ]
+    }
+  }
+}

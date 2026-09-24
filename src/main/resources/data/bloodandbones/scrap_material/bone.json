@@ -1,0 +1,14 @@
+{
+  "look": "bone",
+  "armour": {
+    "helmet": 2,
+    "chestplate": 4,
+    "leggings": 3,
+    "boots": 1
+  },
+  "toughness": 0.0,
+  "knockback_resistance": 0.0,
+  "durability": 9,
+  "enchantability": 18,
+  "density": 28
+}

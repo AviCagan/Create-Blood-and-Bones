@@ -1,0 +1,84 @@
+{
+  "kind": "family",
+  "priority": 100,
+  "members": [
+    "minecraft:piglin",
+    "minecraft:piglin_brute",
+    "minecraft:zombified_piglin",
+    "#bloodandbones:family/piglin"
+  ],
+  "scrap_material": "bloodandbones:skin",
+  "colour": "#d6977c",
+  "organs": {
+    "torso": {
+      "add": [
+        "bloodandbones:gold_gizzard"
+      ]
+    }
+  },
+  "parts": {
+    "head": {
+      "minion": {
+        "jobs": [
+          "bloodandbones:guard",
+          "bloodandbones:courier"
+        ]
+      }
+    },
+    "torso": {
+      "armour": [
+        "bloodandbones:fireproof"
+      ]
+    },
+    "arm": {
+      "minion": {
+        "strike": {
+          "style": "punch"
+        },
+        "grip": "hand"
+      },
+      "armour": {
+        "shoulders": [
+          "bloodandbones:gold_fever"
+        ]
+      }
+    },
+    "leg": {
+      "minion": {
+        "movement": {
+          "mode": "walk",
+          "speed": 0.25,
+          "gait": "stride"
+        }
+      },
+      "armour": {
+        "leggings": [
+          "bloodandbones:fireproof"
+        ],
+        "boots": [
+          "bloodandbones:swift"
+        ]
+      }
+    }
+  },
+  "organ_traits": {
+    "bloodandbones:gold_gizzard": {
+      "minion": [
+        "bloodandbones:lucky"
+      ],
+      "armour": [
+        "bloodandbones:lucky"
+      ]
+    }
+  },
+  "full_set": {
+    "replace": true,
+    "name": "set.bloodandbones.bartered",
+    "bonus": [
+      "bloodandbones:lucky"
+    ],
+    "drawback": [
+      "bloodandbones:zombify"
+    ]
+  }
+}

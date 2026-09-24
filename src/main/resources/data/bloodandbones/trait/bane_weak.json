@@ -1,0 +1,36 @@
+{
+  "name": "trait.bloodandbones.bane_weak",
+  "max_level": 1,
+  "effects": [
+    {
+      "trigger": "hurt",
+      "requirements": {
+        "condition": "minecraft:damage_source_properties",
+        "predicate": {
+          "source_entity": {
+            "equipment": {
+              "mainhand": {
+                "predicates": {
+                  "minecraft:enchantments": [
+                    {
+                      "enchantments": "minecraft:bane_of_arthropods"
+                    }
+                  ]
+                }
+              }
+            }
+          }
+        }
+      },
+      "effect": {
+        "type": "bloodandbones:damage",
+        "direction": "in",
+        "multiplier": {
+          "type": "minecraft:linear",
+          "base": 1.5,
+          "per_level_above_first": 0.0
+        }
+      }
+    }
+  ]
+}

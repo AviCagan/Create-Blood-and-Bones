@@ -1,0 +1,17 @@
+{
+  "name": "trait.bloodandbones.appraiser",
+  "max_level": 1,
+  "effects": [
+    {
+      "effect": {
+        "type": "bloodandbones:attribute",
+        "attribute": "minecraft:generic.luck",
+        "amount": {
+          "type": "minecraft:linear",
+          "base": 1,
+          "per_level_above_first": 1
+        }
+      }
+    }
+  ]
+}

@@ -1,0 +1,19 @@
+{
+  "name": "trait.bloodandbones.hero",
+  "max_level": 2,
+  "effects": [
+    {
+      "trigger": "passive",
+      "effect": {
+        "type": "bloodandbones:mob_effect",
+        "effect": "minecraft:hero_of_the_village",
+        "amplifier": {
+          "type": "minecraft:linear",
+          "base": 0,
+          "per_level_above_first": 1
+        },
+        "target": "self"
+      }
+    }
+  ]
+}

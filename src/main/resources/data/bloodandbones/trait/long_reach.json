@@ -1,0 +1,28 @@
+{
+  "name": "trait.bloodandbones.long_reach",
+  "max_level": 2,
+  "effects": [
+    {
+      "effect": {
+        "type": "bloodandbones:attribute",
+        "attribute": "minecraft:player.block_interaction_range",
+        "amount": {
+          "type": "minecraft:linear",
+          "base": 0.5,
+          "per_level_above_first": 0.5
+        }
+      }
+    },
+    {
+      "effect": {
+        "type": "bloodandbones:attribute",
+        "attribute": "minecraft:player.entity_interaction_range",
+        "amount": {
+          "type": "minecraft:linear",
+          "base": 0.5,
+          "per_level_above_first": 0.5
+        }
+      }
+    }
+  ]
+}

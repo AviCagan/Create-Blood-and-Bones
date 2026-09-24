@@ -1,0 +1,33 @@
+{
+  "name": "trait.bloodandbones.thirst",
+  "max_level": 1,
+  "effects": [
+    {
+      "trigger": "passive",
+      "requirements": {
+        "condition": "minecraft:all_of",
+        "terms": [
+          {
+            "condition": "minecraft:time_check",
+            "value": {
+              "min": 0,
+              "max": 12000
+            },
+            "period": 24000
+          },
+          {
+            "condition": "minecraft:location_check",
+            "predicate": {
+              "can_see_sky": true
+            }
+          }
+        ]
+      },
+      "effect": {
+        "type": "bloodandbones:mob_effect",
+        "effect": "minecraft:hunger",
+        "target": "self"
+      }
+    }
+  ]
+}

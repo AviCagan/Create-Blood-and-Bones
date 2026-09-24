@@ -1,0 +1,28 @@
+{
+  "name": "trait.bloodandbones.galloper",
+  "max_level": 3,
+  "effects": [
+    {
+      "trigger": "passive",
+      "requirements": {
+        "condition": "minecraft:entity_properties",
+        "entity": "this",
+        "predicate": {
+          "flags": {
+            "is_sprinting": true
+          }
+        }
+      },
+      "effect": {
+        "type": "bloodandbones:attribute",
+        "attribute": "minecraft:generic.movement_speed",
+        "amount": {
+          "type": "minecraft:linear",
+          "base": 0.07,
+          "per_level_above_first": 0.07
+        },
+        "operation": "add_multiplied_base"
+      }
+    }
+  ]
+}

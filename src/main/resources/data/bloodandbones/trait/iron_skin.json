@@ -1,0 +1,28 @@
+{
+  "name": "trait.bloodandbones.iron_skin",
+  "max_level": 1,
+  "effects": [
+    {
+      "effect": {
+        "type": "bloodandbones:attribute",
+        "attribute": "minecraft:generic.armor",
+        "amount": {
+          "type": "minecraft:linear",
+          "base": 2,
+          "per_level_above_first": 0.0
+        }
+      }
+    },
+    {
+      "effect": {
+        "type": "bloodandbones:attribute",
+        "attribute": "minecraft:generic.knockback_resistance",
+        "amount": {
+          "type": "minecraft:linear",
+          "base": 0.1,
+          "per_level_above_first": 0.0
+        }
+      }
+    }
+  ]
+}

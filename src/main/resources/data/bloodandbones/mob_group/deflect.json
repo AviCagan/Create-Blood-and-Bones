@@ -1,0 +1,7 @@
+{
+  "kind": "overlay",
+  "priority": 52,
+  "members": [
+    "#minecraft:deflects_projectiles"
+  ]
+}

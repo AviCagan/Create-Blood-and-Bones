@@ -1,0 +1,19 @@
+{
+  "kind": "overlay",
+  "priority": 150,
+  "members": [
+    "#minecraft:undead",
+    "#bloodandbones:overlay/undead"
+  ],
+  "parts": {
+    "torso": {
+      "minion": {
+        "traits": {
+          "add": [
+            "bloodandbones:undead_body"
+          ]
+        }
+      }
+    }
+  }
+}

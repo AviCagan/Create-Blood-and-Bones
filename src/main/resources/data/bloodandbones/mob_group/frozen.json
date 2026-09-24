@@ -1,0 +1,8 @@
+{
+  "kind": "overlay",
+  "priority": 130,
+  "members": [
+    "#minecraft:freeze_immune_entity_types",
+    "#bloodandbones:overlay/frozen"
+  ]
+}

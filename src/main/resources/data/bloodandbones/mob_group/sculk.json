@@ -1,0 +1,10 @@
+{
+  "kind": "family",
+  "priority": 100,
+  "members": [
+    "minecraft:warden",
+    "#bloodandbones:family/sculk"
+  ],
+  "scrap_material": "bloodandbones:sculk",
+  "colour": "#0e4550"
+}

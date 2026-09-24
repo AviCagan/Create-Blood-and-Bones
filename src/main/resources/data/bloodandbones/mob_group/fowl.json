@@ -1,0 +1,89 @@
+{
+  "kind": "family",
+  "priority": 100,
+  "members": [
+    "minecraft:chicken",
+    "minecraft:parrot",
+    "#bloodandbones:family/fowl"
+  ],
+  "scrap_material": "bloodandbones:feather",
+  "colour": "#e8e1d1",
+  "parts": {
+    "head": {
+      "minion": {
+        "jobs": [
+          "bloodandbones:scavenger",
+          "bloodandbones:companion"
+        ],
+        "disposition": "skittish",
+        "bite": {
+          "style": "bite",
+          "damage": 1.0
+        }
+      },
+      "armour": [
+        "bloodandbones:pecking_order"
+      ]
+    },
+    "torso": {
+      "armour": [
+        "bloodandbones:light_boned"
+      ]
+    },
+    "arm.wing": {
+      "minion": {
+        "strike": {
+          "style": "flap"
+        },
+        "grip": "wing",
+        "lift": 0.02,
+        "traits": [
+          "bloodandbones:featherfall"
+        ]
+      },
+      "armour": {
+        "shoulders": [
+          "bloodandbones:featherfall"
+        ]
+      }
+    },
+    "leg": {
+      "minion": {
+        "movement": {
+          "mode": "hop",
+          "speed": 0.25,
+          "gait": "strut"
+        }
+      },
+      "armour": {
+        "leggings": [
+          "bloodandbones:swift"
+        ],
+        "boots": [
+          "bloodandbones:fall_guard"
+        ]
+      }
+    }
+  },
+  "hide": [
+    "bloodandbones:downy"
+  ],
+  "full_set": {
+    "replace": true,
+    "name": "set.bloodandbones.featherweight",
+    "bonus": [
+      "bloodandbones:featherfall",
+      {
+        "trait": "bloodandbones:fall_guard",
+        "level": 4
+      }
+    ],
+    "drawback": [
+      {
+        "trait": "bloodandbones:frail",
+        "level": 3
+      },
+      "bloodandbones:prey"
+    ]
+  }
+}

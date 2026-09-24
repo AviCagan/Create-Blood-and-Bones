@@ -1,0 +1,13 @@
+{
+  "signature": [
+    "organs.bloodandbones:lava_bladder"
+  ],
+  "scrap_material": "bloodandbones:ember",
+  "organs": {
+    "torso": {
+      "add": [
+        "bloodandbones:lava_bladder"
+      ]
+    }
+  }
+}

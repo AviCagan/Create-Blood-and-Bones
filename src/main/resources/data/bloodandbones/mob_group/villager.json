@@ -1,0 +1,102 @@
+{
+  "kind": "family",
+  "priority": 100,
+  "members": [
+    "minecraft:villager",
+    "minecraft:wandering_trader",
+    "minecraft:witch",
+    "minecraft:zombie_villager",
+    "#bloodandbones:family/villager"
+  ],
+  "scrap_material": "bloodandbones:skin",
+  "colour": "#b88a6a",
+  "organs": {
+    "torso": {
+      "add": [
+        "bloodandbones:village_heart"
+      ]
+    }
+  },
+  "parts": {
+    "head": {
+      "minion": {
+        "jobs": [
+          "bloodandbones:surgeon",
+          "bloodandbones:farmer",
+          "bloodandbones:courier"
+        ],
+        "disposition": "meek"
+      },
+      "armour": [
+        "bloodandbones:appraiser"
+      ]
+    },
+    "torso": {
+      "armour": [
+        "bloodandbones:hardy"
+      ]
+    },
+    "arm": {
+      "armour": {
+        "shoulders": [
+          "bloodandbones:quick_hands"
+        ]
+      }
+    },
+    "arm.pair": {
+      "minion": {
+        "strike": {
+          "style": "pacifist"
+        },
+        "grip": "hand",
+        "hands": 2,
+        "storage": 9
+      }
+    },
+    "leg": {
+      "minion": {
+        "movement": {
+          "mode": "walk",
+          "speed": 0.25,
+          "gait": "stride"
+        }
+      },
+      "armour": {
+        "leggings": [
+          "bloodandbones:sure_footed"
+        ],
+        "boots": [
+          "bloodandbones:stealthy"
+        ]
+      }
+    }
+  },
+  "organ_traits": {
+    "bloodandbones:village_heart": {
+      "armour": [
+        "bloodandbones:hero"
+      ]
+    }
+  },
+  "full_set": {
+    "replace": true,
+    "name": "set.bloodandbones.elder",
+    "bonus": [
+      {
+        "trait": "bloodandbones:hero",
+        "level": 2
+      },
+      {
+        "trait": "bloodandbones:lucky",
+        "level": 2
+      }
+    ],
+    "drawback": [
+      {
+        "trait": "bloodandbones:meek",
+        "level": 2
+      },
+      "bloodandbones:zombie_bait"
+    ]
+  }
+}

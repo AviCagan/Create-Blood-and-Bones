@@ -346,6 +346,13 @@ public class BBLang {
         BloodAndBones.REGISTRATE.addRawLang("scrap_material.bloodandbones.hide_plate", "Hide");
         BloodAndBones.REGISTRATE.addRawLang("scrap_material.bloodandbones.sinew", "Sinew");
         BloodAndBones.REGISTRATE.addRawLang("scrap_material.bloodandbones.gristle", "Gristle");
+        // the item name is mob, material, piece: "Pelt" and "Plate", so a polar bear's is not "Polar Bear Bear Hide Chestplate"
+        String[][] materials = {
+                {"bear_hide", "Pelt"}, {"shell", "Shell"}, {"chitin", "Chitin"}, {"bone", "Bone"}, {"skin", "Skin"}, {"scale", "Scale"},
+                {"feather", "Feather"}, {"ectoplasm", "Ectoplasm"}, {"gel", "Gel"}, {"ember", "Ember"}, {"golem_plate", "Plate"}, {"sculk", "Sculk"}};
+        for (String[] material : materials) {
+            BloodAndBones.REGISTRATE.addRawLang("scrap_material.bloodandbones." + material[0], material[1]);
+        }
         BloodAndBones.REGISTRATE.addRawLang("bloodandbones.carcass_armour.body", "Made from: %s");
         BloodAndBones.REGISTRATE.addRawLang("bloodandbones.carcass_armour.shoulders", "Shoulders: %s");
         BloodAndBones.REGISTRATE.addRawLang("bloodandbones.carcass_armour.hips", "Hips: %s");
@@ -356,15 +363,46 @@ public class BBLang {
         BloodAndBones.REGISTRATE.addRawLang("set.bloodandbones.herd_beast", "Herd Beast");
         BloodAndBones.REGISTRATE.addRawLang("set.bloodandbones.warren", "Warren");
         BloodAndBones.REGISTRATE.addRawLang("set.bloodandbones.pure", "Pure Set");
+        String[][] sets = {
+                {"centaur", "Centaur"}, {"hog_wild", "Hog Wild"}, {"alpha", "Alpha"}, {"nine_lives", "Nine Lives"}, {"hibernator", "Hibernator"},
+                {"fortress", "Fortress"}, {"juggernaut", "Juggernaut"}, {"amphibious", "Amphibious"}, {"elder", "Elder"}, {"raid_captain", "Raid Captain"},
+                {"bartered", "Bartered"}, {"brood", "Brood"}, {"infestation", "Infestation"}, {"featherweight", "Featherweight"},
+                {"night_wing", "Night Wing"}, {"ethereal", "Ethereal"}, {"gills", "Gills"}, {"deep_one", "Deep One"}, {"kraken", "Kraken"},
+                {"gelatinous", "Gelatinous"}, {"decay_lord", "Decay Lord"}, {"shambler", "Shambler"}, {"ossuary", "Ossuary"}};
+        for (String[] set : sets) {
+            BloodAndBones.REGISTRATE.addRawLang("set.bloodandbones." + set[0], set[1]);
+        }
         BloodAndBones.REGISTRATE.addRawLang("attribute.bloodandbones.drag_strength", "Drag Strength");
         String[][] traits = {
                 {"hardy", "Hardy"}, {"frail", "Frail"}, {"swift", "Swift"}, {"sluggish", "Sluggish"}, {"steady", "Steady"}, {"sturdy", "Sturdy"},
                 {"barrel_chest", "Barrel Chest"}, {"hooves", "Hooves"}, {"thick_hide", "Thick Hide"}, {"hauler", "Hauler"}, {"meek", "Meek"},
                 {"springy", "Springy"}, {"light_boned", "Light-Boned"}, {"fall_guard", "Fall Guard"}, {"cud_chewer", "Cud Chewer"},
-                {"alert", "Alert"}, {"prey", "Prey"}};
+                {"alert", "Alert"}, {"prey", "Prey"},
+                {"appraiser", "Appraiser"}, {"aquaphobe", "Aquaphobe"}, {"bane_weak", "Weak to Bane"}, {"beached", "Beached"},
+                {"big_heart", "Big Heart"}, {"blast_padding", "Blast Padding"}, {"bolt", "Bolt"}, {"brawler", "Brawler"}, {"burrower", "Burrower"},
+                {"canter", "Canter"}, {"cat_ward", "Cat Ward"}, {"chilling", "Chilling"}, {"clear_eyed", "Clear-Eyed"}, {"dark_sight", "Dark Sight"},
+                {"deep_digger", "Deep Digger"}, {"dolphin_kick", "Dolphin Kick"}, {"downy", "Downy"}, {"draft_chest", "Draft Chest"},
+                {"drowsy", "Drowsy"}, {"featherfall", "Featherfall"}, {"fins", "Fins"}, {"fire_weak", "Weak to Fire"}, {"fireproof", "Fireproof"},
+                {"flight_response", "Flight Response"}, {"frost_guard", "Frost Guard"}, {"galloper", "Galloper"}, {"gills", "Gills"},
+                {"gold_fever", "Gold Fever"}, {"golems_hostile", "Golems Hostile"}, {"grabbing", "Grabbing"}, {"groomed_coat", "Groomed Coat"},
+                {"hay_burner", "Hay Burner"}, {"heavy", "Heavy"}, {"hero", "Hero"}, {"hibernator", "Hibernator"}, {"hog_wild", "Hog Wild"},
+                {"hollow_frame", "Hollow Frame"}, {"howl", "Howl"}, {"hunger_proof", "Hunger-Proof"}, {"hungering", "Hungering"},
+                {"ink_cloud", "Ink Cloud"}, {"iron_gut", "Iron Gut"}, {"iron_skin", "Iron Skin"}, {"juggernaut", "Juggernaut"},
+                {"keen_eye", "Keen Eye"}, {"land_on_feet", "Land on Feet"}, {"lard", "Lard"}, {"light_hurts", "Light Hurts"},
+                {"long_reach", "Long Reach"}, {"long_winded", "Long-Winded"}, {"lucky", "Lucky"}, {"magic_ward", "Magic Ward"}, {"mirror", "Mirror"},
+                {"murk_sight", "Murk Sight"}, {"night_eyes", "Night Eyes"}, {"pecking_order", "Pecking Order"}, {"quick_hands", "Quick Hands"},
+                {"regrowth", "Regrowth"}, {"relentless", "Relentless"}, {"screamer", "Screamer"}, {"sharpshooter", "Sharpshooter"},
+                {"shell_guard", "Shell Guard"}, {"slick", "Slick"}, {"stallion_heart", "Stallion Heart"}, {"stealthy", "Stealthy"},
+                {"sticky", "Sticky"}, {"stubborn", "Stubborn"}, {"sure_footed", "Sure-Footed"}, {"territorial", "Territorial"}, {"thirst", "Thirst"},
+                {"tough", "Tough"}, {"toxic_skin", "Toxic Skin"}, {"trotters", "Trotters"}, {"turtle_up", "Turtle Up"},
+                {"undead_body", "Undead Body"}, {"venom_proof", "Venom-Proof"}, {"venomous", "Venomous"}, {"villagers_flee", "Villagers Flee"},
+                {"waterborn", "Waterborn"}, {"wither_proof", "Wither-Proof"}, {"withering", "Withering"}, {"zombie_bait", "Zombie Bait"},
+                {"zombify", "Zombify"}};
         for (String[] trait : traits) {
             BloodAndBones.REGISTRATE.addRawLang("trait.bloodandbones." + trait[0], trait[1]);
         }
+        // softening "gut" would make it "Iron Cord"
+        BloodAndBones.REGISTRATE.addRawLang("bloodless.trait.bloodandbones.iron_gut", "Iron Stomach");
         BloodAndBones.REGISTRATE.addRawLang("bloodandbones.set_bonus.flesh", "Flesh set: you heal from what you hit, and rot half as fast");
         BloodAndBones.REGISTRATE.addRawLang("bloodandbones.set_bonus.brass", "Brass set: the throttle costs a quarter less, and you are hard to shove");
         BloodAndBones.REGISTRATE.addRawLang("bloodandbones.surgery.nothing", "Nothing on the table can do that");

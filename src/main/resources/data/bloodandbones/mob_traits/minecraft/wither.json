@@ -1,0 +1,35 @@
+{
+  "signature": [
+    "organs.bloodandbones:wither_core",
+    "full_set"
+  ],
+  "scrap_material": "bloodandbones:bone",
+  "organs": {
+    "torso": {
+      "add": [
+        "bloodandbones:wither_core"
+      ]
+    }
+  },
+  "organ_traits": {
+    "bloodandbones:wither_core": {
+      "armour": [
+        "bloodandbones:withering"
+      ]
+    }
+  },
+  "full_set": {
+    "name": "set.bloodandbones.decay_lord",
+    "bonus": [
+      "bloodandbones:wither_proof",
+      "bloodandbones:withering"
+    ],
+    "drawback": [
+      "bloodandbones:golems_hostile",
+      {
+        "trait": "bloodandbones:frail",
+        "level": 3
+      }
+    ]
+  }
+}

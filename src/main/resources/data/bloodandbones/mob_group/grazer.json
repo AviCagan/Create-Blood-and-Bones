@@ -46,7 +46,10 @@
           "mode": "walk",
           "speed": 0.2,
           "gait": "amble"
-        }
+        },
+        "traits": [
+          "bloodandbones:sure_footed"
+        ]
       },
       "armour": {
         "leggings": [
@@ -62,6 +65,7 @@
     "bloodandbones:thick_hide"
   ],
   "full_set": {
+    "replace": true,
     "name": "set.bloodandbones.herd_beast",
     "bonus": [
       {
@@ -79,5 +83,15 @@
         "level": 2
       }
     ]
+  },
+  "organ_traits": {
+    "bloodandbones:heart": {
+      "minion": [
+        "bloodandbones:big_heart"
+      ],
+      "armour": [
+        "bloodandbones:big_heart"
+      ]
+    }
   }
 }

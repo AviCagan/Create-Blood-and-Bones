@@ -28,6 +28,17 @@
     "minecraft:strider"
   ],
   "scrap_material": "bloodandbones:gristle",
+  "organs": {
+    "torso": [
+      "bloodandbones:heart",
+      "bloodandbones:lungs",
+      "bloodandbones:stomach"
+    ],
+    "head": [
+      "bloodandbones:eye",
+      "bloodandbones:eye"
+    ]
+  },
   "parts": {
     "torso": {
       "minion": {
@@ -68,6 +79,43 @@
       },
       "armour": [
         "bloodandbones:swift"
+      ]
+    },
+    "arm": {
+      "minion": {
+        "strike": {
+          "style": "punch"
+        },
+        "grip": "hand"
+      },
+      "armour": [
+        "bloodandbones:quick_hands"
+      ]
+    }
+  },
+  "organ_traits": {
+    "bloodandbones:heart": {
+      "minion": [
+        "bloodandbones:hardy"
+      ],
+      "armour": [
+        "bloodandbones:hardy"
+      ]
+    },
+    "bloodandbones:lungs": {
+      "minion": [
+        "bloodandbones:long_winded"
+      ],
+      "armour": [
+        "bloodandbones:long_winded"
+      ]
+    },
+    "bloodandbones:eye": {
+      "minion": [
+        "bloodandbones:keen_eye"
+      ],
+      "armour": [
+        "bloodandbones:dark_sight"
       ]
     }
   },

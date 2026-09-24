@@ -1,0 +1,17 @@
+{
+  "name": "trait.bloodandbones.clear_eyed",
+  "max_level": 1,
+  "effects": [
+    {
+      "trigger": "passive",
+      "effect": {
+        "type": "bloodandbones:immunity",
+        "mob_effects": [
+          "minecraft:blindness",
+          "minecraft:darkness",
+          "minecraft:nausea"
+        ]
+      }
+    }
+  ]
+}

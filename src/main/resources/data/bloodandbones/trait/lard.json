@@ -1,0 +1,32 @@
+{
+  "name": "trait.bloodandbones.lard",
+  "max_level": 2,
+  "effects": [
+    {
+      "effect": {
+        "type": "bloodandbones:attribute",
+        "attribute": "minecraft:generic.max_health",
+        "amount": {
+          "type": "minecraft:linear",
+          "base": 2,
+          "per_level_above_first": 2
+        }
+      }
+    },
+    {
+      "trigger": "hurt",
+      "effect": {
+        "type": "bloodandbones:damage",
+        "direction": "in",
+        "multiplier": {
+          "type": "minecraft:linear",
+          "base": 0.75,
+          "per_level_above_first": -0.25
+        },
+        "damage_tags": [
+          "minecraft:is_freezing"
+        ]
+      }
+    }
+  ]
+}

@@ -1,0 +1,17 @@
+{
+  "name": "trait.bloodandbones.long_winded",
+  "max_level": 3,
+  "effects": [
+    {
+      "effect": {
+        "type": "bloodandbones:attribute",
+        "attribute": "minecraft:generic.oxygen_bonus",
+        "amount": {
+          "type": "minecraft:linear",
+          "base": 1,
+          "per_level_above_first": 1
+        }
+      }
+    }
+  ]
+}

@@ -1,0 +1,106 @@
+{
+  "kind": "family",
+  "priority": 100,
+  "members": [
+    "minecraft:turtle",
+    "minecraft:armadillo",
+    "minecraft:shulker",
+    "#bloodandbones:family/shellback"
+  ],
+  "scrap_material": "bloodandbones:shell",
+  "colour": "#6f8a4f",
+  "organs": {
+    "torso": {
+      "add": [
+        "bloodandbones:shell_gland"
+      ]
+    }
+  },
+  "parts": {
+    "torso": {
+      "minion": {
+        "health_factor": 1.3,
+        "traits": [
+          {
+            "trait": "bloodandbones:thick_hide",
+            "level": 2
+          }
+        ]
+      },
+      "armour": [
+        "bloodandbones:turtle_up"
+      ]
+    },
+    "head": {
+      "minion": {
+        "jobs": [
+          "bloodandbones:guard",
+          "bloodandbones:sentry"
+        ],
+        "bite": {
+          "style": "bite",
+          "damage": 1.0
+        }
+      },
+      "armour": [
+        "bloodandbones:shell_guard"
+      ]
+    },
+    "leg": {
+      "minion": {
+        "movement": {
+          "mode": "walk",
+          "speed": 0.15,
+          "gait": "plod"
+        },
+        "traits": [
+          {
+            "trait": "bloodandbones:steady",
+            "level": 2
+          }
+        ]
+      },
+      "armour": {
+        "leggings": [
+          "bloodandbones:steady"
+        ],
+        "boots": [
+          "bloodandbones:steady"
+        ]
+      }
+    }
+  },
+  "hide": [
+    "bloodandbones:shell_guard"
+  ],
+  "organ_traits": {
+    "bloodandbones:shell_gland": {
+      "armour": [
+        {
+          "trait": "bloodandbones:thick_hide",
+          "level": 2
+        }
+      ]
+    }
+  },
+  "full_set": {
+    "replace": true,
+    "name": "set.bloodandbones.fortress",
+    "bonus": [
+      {
+        "trait": "bloodandbones:shell_guard",
+        "level": 3
+      },
+      {
+        "trait": "bloodandbones:steady",
+        "level": 3
+      }
+    ],
+    "drawback": [
+      {
+        "trait": "bloodandbones:heavy",
+        "level": 3
+      }
+    ]
+  }
+}

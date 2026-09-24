@@ -1,0 +1,47 @@
+{
+  "kind": "family",
+  "priority": 100,
+  "members": [
+    "minecraft:blaze",
+    "minecraft:breeze",
+    "minecraft:ghast",
+    "#bloodandbones:family/elemental"
+  ],
+  "scrap_material": "bloodandbones:ember",
+  "colour": "#e3892b",
+  "parts": {
+    "torso": {
+      "minion": {
+        "self_move": {
+          "mode": "hover",
+          "speed": 0.2
+        },
+        "traits": [
+          {
+            "trait": "bloodandbones:fireproof",
+            "level": 2
+          }
+        ]
+      },
+      "armour": [
+        "bloodandbones:fireproof"
+      ]
+    },
+    "head": {
+      "minion": {
+        "jobs": [
+          "bloodandbones:sentry",
+          "bloodandbones:guard"
+        ]
+      },
+      "armour": [
+        "bloodandbones:fireproof"
+      ]
+    },
+    "leg": {
+      "armour": [
+        "bloodandbones:fireproof"
+      ]
+    }
+  }
+}

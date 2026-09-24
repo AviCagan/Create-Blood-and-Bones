@@ -185,6 +185,13 @@ Everything below is in development builds only; the art is placeholder (see the 
   a brass minion with one of the player's cybernetic modules: a Magnet Coil draws items in, an Analytical
   Lens sees through walls, a Rotational Coupler drives a shaft it stands beside, and more.
 
+### Parts and traits
+
+- Every one of the 79 rigged mobs now has parts that do their own thing, from 11 body shapes, 27 families
+  and 16 overlays keyed off tags (so a modded undead or aquatic mob joins in by the tags its author already
+  set). About 100 traits, and 15 armour materials each with its own look (chitin, bone, ember, sculk, golem
+  plate, scale, feather...), bloodless versions included.
+
 ### Presentation
 
 - Bloodless mode (a client setting, or the `bloodandbonesBloodless` game rule for everyone): no

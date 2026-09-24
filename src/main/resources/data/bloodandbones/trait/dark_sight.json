@@ -1,0 +1,25 @@
+{
+  "name": "trait.bloodandbones.dark_sight",
+  "max_level": 1,
+  "effects": [
+    {
+      "trigger": "passive",
+      "requirements": {
+        "condition": "minecraft:location_check",
+        "predicate": {
+          "light": {
+            "light": {
+              "max": 7
+            }
+          }
+        }
+      },
+      "effect": {
+        "type": "bloodandbones:mob_effect",
+        "effect": "minecraft:night_vision",
+        "amplifier": 0,
+        "target": "self"
+      }
+    }
+  ]
+}

@@ -1,0 +1,15 @@
+{
+  "name": "trait.bloodandbones.cat_ward",
+  "max_level": 1,
+  "effects": [
+    {
+      "trigger": "passive",
+      "effect": {
+        "type": "bloodandbones:reaction",
+        "entities": "bloodandbones:flees_cat_ward",
+        "mode": "flee",
+        "radius": 16
+      }
+    }
+  ]
+}

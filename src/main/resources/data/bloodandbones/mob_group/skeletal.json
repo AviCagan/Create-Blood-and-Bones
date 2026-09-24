@@ -1,0 +1,45 @@
+{
+  "kind": "overlay",
+  "priority": 210,
+  "members": [
+    "#minecraft:skeletons",
+    "#bloodandbones:overlay/skeletal"
+  ],
+  "scrap_material": "bloodandbones:bone",
+  "organs": {
+    "torso": {
+      "replace": true,
+      "add": [
+        "bloodandbones:marrow"
+      ]
+    },
+    "head": {
+      "replace": true
+    }
+  },
+  "hide": {
+    "replace": true
+  },
+  "parts": {
+    "torso": {
+      "minion": {
+        "traits": {
+          "add": [
+            "bloodandbones:hollow_frame"
+          ]
+        }
+      }
+    }
+  },
+  "full_set": {
+    "name": "set.bloodandbones.ossuary",
+    "bonus": {
+      "add": [
+        {
+          "trait": "bloodandbones:sharpshooter",
+          "level": 2
+        }
+      ]
+    }
+  }
+}

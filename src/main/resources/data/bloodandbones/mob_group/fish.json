@@ -1,0 +1,94 @@
+{
+  "kind": "archetype",
+  "priority": 0,
+  "members": [
+    "minecraft:cod",
+    "minecraft:salmon",
+    "minecraft:pufferfish",
+    "minecraft:tadpole",
+    "minecraft:dolphin",
+    "minecraft:guardian",
+    "minecraft:elder_guardian"
+  ],
+  "scrap_material": "bloodandbones:gristle",
+  "organs": {
+    "torso": [
+      "bloodandbones:heart",
+      "bloodandbones:stomach"
+    ],
+    "head": [
+      "bloodandbones:eye",
+      "bloodandbones:eye"
+    ]
+  },
+  "parts": {
+    "torso": {
+      "minion": {
+        "health_factor": 1.0,
+        "self_move": {
+          "mode": "swim",
+          "speed": 0.3,
+          "gait": "undulate",
+          "land_speed": 0.05
+        }
+      },
+      "armour": [
+        "bloodandbones:waterborn"
+      ]
+    },
+    "head": {
+      "minion": {
+        "jobs": [
+          "bloodandbones:fisher",
+          "bloodandbones:courier",
+          "bloodandbones:companion"
+        ],
+        "disposition": "skittish",
+        "bite": {
+          "style": "bite"
+        }
+      },
+      "armour": [
+        "bloodandbones:long_winded"
+      ]
+    },
+    "leg": {
+      "armour": {
+        "leggings": [
+          "bloodandbones:slick"
+        ],
+        "boots": [
+          "bloodandbones:fins"
+        ]
+      }
+    },
+    "tail": {
+      "minion": {
+        "traits": [
+          "bloodandbones:fins"
+        ]
+      },
+      "armour": [
+        "bloodandbones:fins"
+      ]
+    }
+  },
+  "organ_traits": {
+    "bloodandbones:heart": {
+      "minion": [
+        "bloodandbones:hardy"
+      ],
+      "armour": [
+        "bloodandbones:hardy"
+      ]
+    },
+    "bloodandbones:eye": {
+      "minion": [
+        "bloodandbones:keen_eye"
+      ],
+      "armour": [
+        "bloodandbones:dark_sight"
+      ]
+    }
+  }
+}

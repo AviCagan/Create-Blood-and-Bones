@@ -1,0 +1,83 @@
+{
+  "kind": "family",
+  "priority": 100,
+  "members": [
+    "minecraft:frog",
+    "minecraft:axolotl",
+    "minecraft:tadpole",
+    "#bloodandbones:family/amphibian"
+  ],
+  "scrap_material": "bloodandbones:scale",
+  "colour": "#7a9c5a",
+  "organs": {
+    "torso": {
+      "add": [
+        "bloodandbones:regrowth_gland"
+      ]
+    }
+  },
+  "parts": {
+    "head": {
+      "minion": {
+        "jobs": [
+          "bloodandbones:companion",
+          "bloodandbones:hunter"
+        ],
+        "bite": {
+          "style": "bite",
+          "damage": 1.0
+        }
+      },
+      "armour": [
+        {
+          "trait": "bloodandbones:long_winded",
+          "level": 2
+        }
+      ]
+    },
+    "torso": {
+      "armour": [
+        "bloodandbones:regrowth"
+      ]
+    },
+    "leg": {
+      "minion": {
+        "movement": {
+          "mode": "amphibious",
+          "speed": 0.25,
+          "gait": "paddle",
+          "swim_speed": 0.35
+        },
+        "traits": [
+          "bloodandbones:springy"
+        ]
+      },
+      "armour": {
+        "leggings": [
+          "bloodandbones:waterborn"
+        ],
+        "boots": [
+          "bloodandbones:springy"
+        ]
+      }
+    }
+  },
+  "organ_traits": {
+    "bloodandbones:regrowth_gland": {
+      "minion": [
+        "bloodandbones:regrowth"
+      ],
+      "armour": [
+        "bloodandbones:regrowth"
+      ]
+    }
+  },
+  "full_set": {
+    "replace": true,
+    "name": "set.bloodandbones.amphibious",
+    "bonus": [
+      "bloodandbones:gills",
+      "bloodandbones:regrowth"
+    ]
+  }
+}

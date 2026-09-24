@@ -1,0 +1,17 @@
+{
+  "kind": "overlay",
+  "priority": 140,
+  "members": [
+    "#bloodandbones:overlay/ender"
+  ],
+  "parts": {
+    "torso": {
+      "minion": {
+        "unstuck": {
+          "mode": "blink_step",
+          "after_ticks": 60
+        }
+      }
+    }
+  }
+}
