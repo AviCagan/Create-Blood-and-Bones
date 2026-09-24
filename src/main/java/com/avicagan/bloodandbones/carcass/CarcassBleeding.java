@@ -35,6 +35,8 @@ public final class CarcassBleeding {
     public static final int INTERVAL = 10;
     /** How far below a hanging body a rack still catches the blood. */
     public static final int HANGING_REACH = 8;
+    /** How far into what it lies on a resting body's lowest point may be pressed and still count as lying on top of it. */
+    private static final double SURFACE = 0.1;
     /** How far below a lying body a rack must be. */
     public static final int LYING_REACH = 1;
     /** Fan speed that doubles the rate; the boost is capped at four times. */
@@ -252,7 +254,9 @@ public final class CarcassBleeding {
                                                     @org.jetbrains.annotations.Nullable net.minecraft.world.level.material.Fluid fluid) {
         java.util.function.Predicate<BleedingRackBlockEntity> takes = rack -> fluid == null
                 || rack.getFluid().isEmpty() || rack.getFluid().getFluid().isSame(fluid);
-        BlockPos start = BlockPos.containing(from.x, from.y, from.z);
+        // a body lying on the ground has its lowest point right on the floor's top (or a hair into it, pressed in): it
+        // counts in the block above, where it lies, or a rack beside it would be missed by a rounding
+        BlockPos start = BlockPos.containing(from.x, from.y + SURFACE, from.z);
         for (int i = 0; i <= reach; i++) {
             BlockPos pos = start.below(i);
             if (!level.isLoaded(pos)) {
