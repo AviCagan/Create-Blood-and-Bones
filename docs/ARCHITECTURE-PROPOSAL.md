@@ -1198,3 +1198,32 @@ The brief says to build the throttle once, as shared infrastructure, and then th
   as fast. Four or more brass modules with no flesh graft make the **brass set**: the throttle and the
   stabilizer cost a quarter less, and knockback resistance +0.25. Both kinds in one body: neither, and no
   penalty. Crude prosthetics count for neither. `setBonusesNeedFourAndNoMixing`.
+
+## 15. Parts and traits: minions and carcass armour from every piece of a mob
+
+The user asked for "each part of a mob (leg arm head torso and special organ) being a craft ingredient for
+either a minion or the armor sets", carried over to "a massively diverse system of unique characteristics".
+The design is in `docs/PARTS-AND-TRAITS.md` (a design panel's merged spec, checked against the brief): every
+piece has two futures, whole into a minion or through the Mangler into armour scraps that remember their mob
+and part; what each does comes from data layered as body shape, family, tag overlays and an optional per-mob
+file, composed from about 30 effect types.
+
+### 15.1 Open questions, answered with the design's defaults for now (the user may overturn any)
+
+1. Scraps come from the Mangler only, as the brief's Mangler row says.
+2. A carcass chestplate can have a Fluid Backtank strapped on (tier and fluid carried on the chestplate), so
+   armour does not unplug every prosthetic.
+3. A minion killed in a fight collapses, powered down at 1 HP; never destroyed (config `minion_death`).
+4. Items store only where their parts came from; a datapack retune changes items already made (rule 3).
+5. Heavy torsos and limbs (never items) are dragged into the Surgery Table's work zone and claimed with an
+   empty hand.
+6. Organic frames take only unskinned pieces and brass frames only skinned ones (the brief's deglove
+   pipeline); hideless mobs count as both.
+7. A quadruped's front leg is a leg.
+8. Surgeon heads: the villager and illager families (villager and pillager as the brief names, and their kin).
+9. Per-mob signatures are authored last, once the base system works, as the brief defers them.
+10. Boss parts (warden, wither) usable by default.
+11. Tiers upgrade by crafting (piece + ingot), which Mechanical Crafters automate.
+12. A powered-down minion can be folded into a Dormant Minion item by its maker.
+13. Mobs that pick up carcass armour get its armour points only.
+14. The name is "carcass armour", apart from the "flesh grafts" of self-augmentation.
