@@ -77,7 +77,13 @@ public class MotionEffectTests {
     }
 
     private static MinionEntity minion(GameTestHelper helper, BlockPos pos, MinionBuild build) {
-        return minion(helper, helper.makeMockPlayer(GameType.SURVIVAL), pos, build);
+        return minion(helper, beside(helper.makeMockPlayer(GameType.SURVIVAL), helper.absolutePos(pos)), pos, build);
+    }
+
+    /** A stand-in maker stood beside where its minion wakes, so it has no call to walk off after them. */
+    private static Player beside(Player maker, BlockPos at) {
+        maker.moveTo(at.getX() + 1.5, at.getY(), at.getZ() + 0.5);
+        return maker;
     }
 
     private static MinionEntity minion(GameTestHelper helper, Player maker, BlockPos pos, MinionBuild build) {
@@ -650,9 +656,13 @@ public class MotionEffectTests {
         }
         float health = walker.getHealth();
         double surface = helper.absoluteVec(new Vec3(0.0, 2.5, 0.0)).y;
-        // the lowest the other gets: it sinks to the bottom before it paddles up again
-        double[] lowest = {sinker.getY()};
-        helper.onEachTick(() -> lowest[0] = Math.min(lowest[0], sinker.getY()));
+        // the lowest the other gets while in the lava: it goes under before it paddles up again
+        double[] lowest = {Double.MAX_VALUE};
+        helper.onEachTick(() -> {
+            if (sinker.isInLava()) {
+                lowest[0] = Math.min(lowest[0], sinker.getY());
+            }
+        });
         helper.runAfterDelay(40, () -> {
             double walkerY = walker.getY();
             double sinkerY = lowest[0];
@@ -663,7 +673,8 @@ public class MotionEffectTests {
                 helper.fail("The lava walker should stand unhurt on the lava's surface at " + surface + ": " + walkerY + ", " + walkerHealth);
                 return;
             }
-            if (sinkerY > surface - 0.3) {
+            // one standing on the lava stays right on its surface; this one goes under it
+            if (sinkerY > surface - 0.1) {
                 helper.fail("The minion without it should sink: " + sinkerY);
                 return;
             }
@@ -685,7 +696,10 @@ public class MotionEffectTests {
             double surface = helper.absoluteVec(new Vec3(0.0, 2.5, 0.0)).y;
             if (Math.abs(walker.getY() - surface) > 0.1) {
                 walker.discard();
-                helper.fail("The lava walker should be standing on the lava before it sets off: " + walker.getY());
+                helper.fail("The lava walker should be standing on the lava before it sets off: " + walker.position() + " on "
+                        + helper.getLevel().getBlockState(walker.blockPosition().below()) + " / " + helper.getLevel().getBlockState(walker.blockPosition())
+                        + ", pool corner " + helper.absolutePos(new BlockPos(1, 2, 1)) + ", goals " + walker.goalSelector.getAvailableGoals().stream()
+                        .filter(net.minecraft.world.entity.ai.goal.WrappedGoal::isRunning).map(g -> g.getGoal().getClass().getSimpleName()).toList());
                 return;
             }
             net.minecraft.world.level.pathfinder.Path path = walker.getNavigation().createPath(helper.absolutePos(new BlockPos(3, 3, 3)), 0);

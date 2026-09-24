@@ -30,6 +30,7 @@ import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.world.InteractionHand;
 import net.minecraft.world.entity.EntityType;
+import net.minecraft.world.entity.EquipmentSlot;
 import net.minecraft.world.entity.animal.Cow;
 import net.minecraft.world.entity.item.ItemEntity;
 import net.minecraft.world.entity.monster.Husk;
@@ -137,6 +138,8 @@ public class MinionJobTests {
         BlockPos at = helper.absolutePos(pos);
         minion.moveTo(at.getX() + 0.5, at.getY(), at.getZ() + 0.5, 0.0F, 0.0F);
         minion.setup(maker, at, build, 1000.0F);
+        // the pens are open to the sky, and a zombie's torso burns by day unless it wears a helmet (section 8.1)
+        minion.setItemSlot(EquipmentSlot.HEAD, new ItemStack(Items.LEATHER_HELMET));
         level.addFreshEntity(minion);
         return minion;
     }
@@ -439,7 +442,8 @@ public class MinionJobTests {
         sentry.setNoAi(true);
         Villager villager = helper.spawn(EntityType.VILLAGER, new BlockPos(6, 2, 3));
         villager.setNoAi(true);
-        MinionEntity other = minion(helper, new BlockPos(6, 2, 5), armed(ref("zombie", "head")), maker);
+        // a cow of its maker's (a zombie's torso would burn in the sun, which is not what this looks at)
+        MinionEntity other = minion(helper, new BlockPos(6, 2, 5), cowWith(ref("cow", "head")), maker);
         other.setNoAi(true);
         Husk husk = helper.spawn(EntityType.HUSK, new BlockPos(6, 2, 7));
         husk.setNoAi(true);

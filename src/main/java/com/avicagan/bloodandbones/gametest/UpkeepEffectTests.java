@@ -61,6 +61,11 @@ public class UpkeepEffectTests {
                 List.of(), 1.0F, skinned, Map.of(), false);
     }
 
+    private static PieceRef zombie(String bone) {
+        return new PieceRef(ResourceLocation.withDefaultNamespace("zombie"), bone, ResourceLocation.withDefaultNamespace("textures/entity/zombie/zombie.png"),
+                List.of(), 1.0F, false, Map.of(), false);
+    }
+
     private static MinionBuild flesh() {
         return MinionBuild.of(cow("body", false));
     }
@@ -71,7 +76,13 @@ public class UpkeepEffectTests {
     }
 
     private static MinionEntity minion(GameTestHelper helper, BlockPos pos, MinionBuild build, float power) {
-        return minion(helper, helper.makeMockPlayer(GameType.SURVIVAL), pos, build, power);
+        return minion(helper, beside(helper.makeMockPlayer(GameType.SURVIVAL), helper.absolutePos(pos)), pos, build, power);
+    }
+
+    /** A stand-in maker stood beside where its minion wakes, so it has no call to walk off after them. */
+    private static Player beside(Player maker, BlockPos at) {
+        maker.moveTo(at.getX() + 1.5, at.getY(), at.getZ() + 0.5);
+        return maker;
     }
 
     private static MinionEntity minion(GameTestHelper helper, Player maker, BlockPos pos, MinionBuild build, float power) {
@@ -434,6 +445,61 @@ public class UpkeepEffectTests {
                 helper.fail("By day under the sky it should burn (" + day + "), at night not (" + night + ")");
                 return;
             }
+            helper.succeed();
+        });
+    }
+
+    /**
+     * A flesh minion on a zombie's torso burns by day under open sky, unless it wears a helmet, which takes the sun for it
+     * and wears as a zombie's does (section 8.1). Its maker puts the helmet on with a click, and takes it off with an
+     * empty hand.
+     */
+    @GameTest(template = "empty", timeoutTicks = 60, skyAccess = true)
+    public static void sunCursedMinionShadedByHelmet(GameTestHelper helper) {
+        Player maker = beside(helper.makeMockPlayer(GameType.SURVIVAL), helper.absolutePos(new BlockPos(2, 2, 2)));
+        MinionBuild zombie = MinionBuild.of(zombie("body")).with("head", zombie("head"));
+        MinionEntity bare = minion(helper, maker, new BlockPos(2, 2, 2), zombie, 1000.0F);
+        MinionEntity hatted = minion(helper, maker, new BlockPos(6, 2, 6), zombie, 1000.0F);
+        maker.setItemInHand(net.minecraft.world.InteractionHand.MAIN_HAND, new ItemStack(net.minecraft.world.item.Items.IRON_HELMET));
+        hatted.interact(maker, net.minecraft.world.InteractionHand.MAIN_HAND);
+        if (!hatted.getItemBySlot(net.minecraft.world.entity.EquipmentSlot.HEAD).is(net.minecraft.world.item.Items.IRON_HELMET)) {
+            helper.fail("Its maker's click should put the helmet on its head: " + hatted.getItemBySlot(net.minecraft.world.entity.EquipmentSlot.HEAD));
+            return;
+        }
+        ActiveTraits.updateDry(bare);
+        ActiveTraits.updateDry(hatted);
+        helper.runAfterDelay(30, () -> {
+            ServerLevel level = helper.getLevel();
+            if (!level.canSeeSky(bare.blockPosition()) || !level.canSeeSky(hatted.blockPosition())) {
+                helper.fail("The test needs open sky over both");
+                return;
+            }
+            long time = level.getDayTime();
+            boolean bareBurns;
+            boolean hattedBurns;
+            try {
+                level.setDayTime(6000L);
+                bare.clearFire();
+                hatted.clearFire();
+                TraitEvents.fire(bare, Trigger.TICK, null, null, 0.0F);
+                TraitEvents.fire(hatted, Trigger.TICK, null, null, 0.0F);
+                bareBurns = bare.isOnFire();
+                hattedBurns = hatted.isOnFire();
+            } finally {
+                level.setDayTime(time);
+            }
+            if (!bareBurns || hattedBurns) {
+                helper.fail("By day the bare zombie torso should burn (" + bareBurns + ") and the one in a helmet not (" + hattedBurns + ")");
+                return;
+            }
+            maker.setItemInHand(net.minecraft.world.InteractionHand.MAIN_HAND, ItemStack.EMPTY);
+            hatted.interact(maker, net.minecraft.world.InteractionHand.MAIN_HAND);
+            if (!hatted.getItemBySlot(net.minecraft.world.entity.EquipmentSlot.HEAD).isEmpty()) {
+                helper.fail("An empty hand should take the helmet back");
+                return;
+            }
+            bare.discard();
+            hatted.discard();
             helper.succeed();
         });
     }

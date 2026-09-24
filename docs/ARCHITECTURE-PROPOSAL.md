@@ -2443,3 +2443,28 @@ socket, and brass repair by hand. This finishes it.
 - A medic no longer heals brass minions: brass is mended by brass sheets, by hand or cradle (spec 6.6).
 - `butcherButchersWithCleaver` checks that what came off is in the butcher's hands, not only off the ground.
 - The suite is 340 tests.
+
+### 15.15 Putting the effects and the jobs together (fixed)
+
+The effects and the jobs were built apart; together, four things broke that neither did alone.
+- **A lava walker hung the server.** The empty fluid over lava counts as lava to stand on (Sable's collisions ask with
+  it, 15.8), and a path's start (`WalkNodeEvaluator.getStart`) climbs up through everything the mob can stand on: a lava
+  walker standing on lava that set off anywhere climbed the air forever. It only showed once the jobs let a minion find a
+  test's stand-in maker and follow it. While a minion works out a path (`MinionEntity.pathing`, around every walking
+  navigation's `createPath`), only the lava itself counts. `lavaWalkerFindsAPathOnLava`.
+- **A body lying beside a Bleeding Rack bled or not by a rounding.** Its lowest point sits right on the floor's top, and
+  whether that fell in the floor block or the one above decided whether the rack beside it was found. It counts in the
+  block above now (`CarcassBleeding.rackBelow`). The hauler also lets a body down on a rack gently (every piece stilled,
+  not slid on at walking pace), only where the bleeding finds that rack, and after it settles checks it is still in the
+  tray, taking another pass (up to three) if not. `bodyOnTheFloorBesideARackFindsIt`; the hauler's rack test passed 96
+  runs in a row, where it had failed about one run in three.
+- **Zombie-framed workers burned to a collapse.** The rotting family's torso is sun-cursed (spec 8.1: "it burns by day
+  unless it wears a helmet, and at worst collapses"), but nothing let a minion wear one. The maker now puts a helmet (or a
+  pumpkin) on a minion with a head by clicking it, and takes it off with an empty hand when it holds nothing; a minion's
+  helmet takes the sun for it and wears as a zombie's does. A player's helmet still does not (the set's own is part of
+  the curse). It drops, folds and comes back from the table as a held item does. `sunCursedMinionShadedByHelmet`; the
+  jobs tests' zombie-framed minions wear leather helmets, as a player would give them.
+- **Tests' stand-in makers stood at the world's origin**, which minions now walk off to follow. The effect tests stand
+  them beside their minions.
+- **Not fixed yet:** a lava walker stands on lava but cannot walk across it; its path treats lava as a wall and it wades
+  in when it moves. It needs a strider's navigation (lava as a stable, walkable node), which is on the next minion list.

@@ -172,6 +172,11 @@ Everything below is in development builds only; the art is placeholder (see the 
 
 ### Minions
 
+- A minion with a head wears a helmet (or a pumpkin) its maker puts on it; a zombie's torso in one does not burn by day,
+  the helmet wearing for it instead.
+- Fixed: a lava-walking minion standing on lava hung the server as soon as it set off anywhere.
+- Fixed: a carcass lying on the floor beside a Bleeding Rack sometimes did not bleed into it; a hauler lays bodies on a
+  rack gently and makes sure they stay in the tray.
 - Rebuilt from carcass pieces: fit an Assembly Frame to the Surgery Table, lay a carcass torso on it
   (or take a whole carcass lying on it with an empty hand, whatever is still attached coming along),
   then stitch on the heads, legs, arms and tails of any mob, one a click. A Cleaver takes the last

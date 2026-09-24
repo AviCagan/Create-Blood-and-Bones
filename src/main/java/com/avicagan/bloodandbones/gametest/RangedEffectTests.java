@@ -72,12 +72,18 @@ public class RangedEffectTests {
                 List.of(), 1.0F, false, Map.of(), false);
     }
 
+    /** A stand-in maker stood beside where its minion wakes, so it has no call to walk off after them. */
+    private static Player beside(Player maker, BlockPos at) {
+        maker.moveTo(at.getX() + 1.5, at.getY(), at.getZ() + 0.5);
+        return maker;
+    }
+
     private static MinionEntity minion(GameTestHelper helper, BlockPos pos, MinionBuild build) {
         ServerLevel level = helper.getLevel();
         MinionEntity minion = BBEntities.MINION.get().create(level);
         BlockPos at = helper.absolutePos(pos);
         minion.moveTo(at.getX() + 0.5, at.getY(), at.getZ() + 0.5, 0.0F, 0.0F);
-        minion.setup(helper.makeMockPlayer(GameType.SURVIVAL), at, build, 1000.0F);
+        minion.setup(beside(helper.makeMockPlayer(GameType.SURVIVAL), at), at, build, 1000.0F);
         level.addFreshEntity(minion);
         return minion;
     }

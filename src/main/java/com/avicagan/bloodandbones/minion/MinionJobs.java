@@ -284,6 +284,14 @@ public final class MinionJobs {
         }
         ItemStack holding = minion.getMainHandItem();
         if (given.isEmpty()) {
+            if (holding.isEmpty() && hand == InteractionHand.MAIN_HAND && !minion.getItemBySlot(EquipmentSlot.HEAD).isEmpty()
+                    && !(minion.isSaddled() && !minion.isVehicle())) {
+                // nothing in its hand: the helmet comes off
+                player.getInventory().placeItemBackInInventory(minion.getItemBySlot(EquipmentSlot.HEAD));
+                minion.setItemSlot(EquipmentSlot.HEAD, ItemStack.EMPTY);
+                minion.level().playSound(null, minion.blockPosition(), SoundEvents.ARMOR_EQUIP_LEATHER.value(), SoundSource.NEUTRAL, 0.6F, 0.8F);
+                return InteractionResult.CONSUME;
+            }
             if (holding.isEmpty() || hand != InteractionHand.MAIN_HAND || minion.isSaddled() && !minion.isVehicle()) {
                 return null;
             }
@@ -308,6 +316,22 @@ public final class MinionJobs {
                 given.shrink(taken);
             }
             minion.level().playSound(null, minion.blockPosition(), SoundEvents.ITEM_PICKUP, SoundSource.NEUTRAL, 0.6F, 1.0F);
+            return InteractionResult.CONSUME;
+        }
+        if (!minion.stats().mindless() && minion.getEquipmentSlotForItem(given) == EquipmentSlot.HEAD) {
+            // a helmet (or a pumpkin) goes on its head, as a zombie's keeps the sun off it (section 8.1)
+            ItemStack worn = minion.getItemBySlot(EquipmentSlot.HEAD);
+            ItemStack one = given.copyWithCount(1);
+            if (!player.hasInfiniteMaterials()) {
+                given.shrink(1);
+            }
+            if (!worn.isEmpty()) {
+                player.getInventory().placeItemBackInInventory(worn);
+            }
+            minion.setItemSlot(EquipmentSlot.HEAD, one);
+            minion.setDropChance(EquipmentSlot.HEAD, 0.0F);
+            minion.level().playSound(null, minion.blockPosition(), SoundEvents.ARMOR_EQUIP_GENERIC.value(), SoundSource.NEUTRAL, 0.6F, 1.0F);
+            player.displayClientMessage(Component.translatable("bloodandbones.minion.wears", one.getHoverName()), true);
             return InteractionResult.CONSUME;
         }
         if (minion.stats().mindless() && minion.stats().strikes().isEmpty()) {
@@ -346,7 +370,7 @@ public final class MinionJobs {
 
     /** Killed (where minions may die): what it held drops with what it carried. */
     static void dropHeld(MinionEntity minion) {
-        for (EquipmentSlot slot : new EquipmentSlot[]{EquipmentSlot.MAINHAND, EquipmentSlot.OFFHAND}) {
+        for (EquipmentSlot slot : new EquipmentSlot[]{EquipmentSlot.MAINHAND, EquipmentSlot.OFFHAND, EquipmentSlot.HEAD}) {
             ItemStack held = minion.getItemBySlot(slot);
             if (!held.isEmpty()) {
                 minion.spawnAtLocation(held);

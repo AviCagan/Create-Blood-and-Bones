@@ -308,9 +308,10 @@ public final class MinionAssembly {
         if (!filter.isEmpty()) {
             maker.getInventory().placeItemBackInInventory(filter);
         }
-        // and what it held (a bow, a rod, a Cleaver)
+        // and what it held (a bow, a rod, a Cleaver) and wore on its head
         for (net.minecraft.world.entity.EquipmentSlot slot : new net.minecraft.world.entity.EquipmentSlot[]{
-                net.minecraft.world.entity.EquipmentSlot.MAINHAND, net.minecraft.world.entity.EquipmentSlot.OFFHAND}) {
+                net.minecraft.world.entity.EquipmentSlot.MAINHAND, net.minecraft.world.entity.EquipmentSlot.OFFHAND,
+                net.minecraft.world.entity.EquipmentSlot.HEAD}) {
             if (!minion.getItemBySlot(slot).isEmpty()) {
                 maker.getInventory().placeItemBackInInventory(minion.getItemBySlot(slot));
                 minion.setItemSlot(slot, ItemStack.EMPTY);
