@@ -33,8 +33,13 @@ public final class BodyEffects {
     private BodyEffects() {
     }
 
-    public static Body body(Player player) {
-        return player.getData(BBAttachments.BODY);
+    public static Body body(LivingEntity entity) {
+        return entity.getData(BBAttachments.BODY);
+    }
+
+    /** Whether this creature has lost or had fitted anything, without giving every mob a body to find out. */
+    public static boolean altered(LivingEntity entity) {
+        return entity.hasData(BBAttachments.BODY) && !entity.getData(BBAttachments.BODY).whole();
     }
 
     private static float leg(Body body, BodyPart part, LivingEntity wearer, boolean jump) {
@@ -64,7 +69,7 @@ public final class BodyEffects {
     }
 
     /** The arm that holds what is in this hand. */
-    public static BodyPart armFor(Player player, InteractionHand hand) {
+    public static BodyPart armFor(LivingEntity player, InteractionHand hand) {
         HumanoidArm main = player.getMainArm();
         return BodyPart.arm(hand == InteractionHand.MAIN_HAND ? main : main.getOpposite());
     }
@@ -85,8 +90,11 @@ public final class BodyEffects {
 
     private static final ResourceLocation ARMS = BloodAndBones.asResource("arms");
 
-    /** Bring the player's walking, jumping, hitting and reach in line with their limbs. */
-    public static void refresh(Player player) {
+    /**
+     * Bring the creature's walking, jumping, hitting and reach in line with its limbs. A mob with an arm gone
+     * hits half as hard, with both gone not at all.
+     */
+    public static void refresh(LivingEntity player) {
         Body body = body(player);
         apply(player.getAttribute(Attributes.MOVEMENT_SPEED), LEGS, walk(body, player) - 1.0F, AttributeModifier.Operation.ADD_MULTIPLIED_TOTAL);
         apply(player.getAttribute(Attributes.JUMP_STRENGTH), LEGS, jump(body, player) - 1.0F, AttributeModifier.Operation.ADD_MULTIPLIED_TOTAL);
@@ -97,7 +105,12 @@ public final class BodyEffects {
         }
         apply(player.getAttribute(Attributes.SAFE_FALL_DISTANCE), LEGS, safeFall, AttributeModifier.Operation.ADD_VALUE);
         ImplantSpec main = working(body, armFor(player, InteractionHand.MAIN_HAND), player);
-        apply(player.getAttribute(Attributes.ATTACK_DAMAGE), ARMS, main == null ? 0.0F : main.attack(), AttributeModifier.Operation.ADD_VALUE);
+        if (player instanceof Player) {
+            apply(player.getAttribute(Attributes.ATTACK_DAMAGE), ARMS, main == null ? 0.0F : main.attack(), AttributeModifier.Operation.ADD_VALUE);
+        } else {
+            float arms = ((body.works(BodyPart.LEFT_ARM, player) ? 1 : 0) + (body.works(BodyPart.RIGHT_ARM, player) ? 1 : 0)) / 2.0F;
+            apply(player.getAttribute(Attributes.ATTACK_DAMAGE), ARMS, arms - 1.0F, AttributeModifier.Operation.ADD_MULTIPLIED_TOTAL);
+        }
         float reach = 0.0F;
         for (BodyPart arm : new BodyPart[]{BodyPart.LEFT_ARM, BodyPart.RIGHT_ARM}) {
             ImplantSpec spec = working(body, arm, player);
@@ -128,7 +141,7 @@ public final class BodyEffects {
      * what they do. A heart that is gone or dead leaves you weak and slow (it does not kill); lungs, winded
      * (no sprinting); no working eye, blind; no working stomach, you cannot eat.
      */
-    public static void second(Player player) {
+    public static void second(LivingEntity player) {
         Body body = body(player);
         if (body.whole()) {
             return;
@@ -156,12 +169,12 @@ public final class BodyEffects {
         }
     }
 
-    private static void effect(Player player, net.minecraft.core.Holder<net.minecraft.world.effect.MobEffect> effect, int amplifier, int ticks) {
+    private static void effect(LivingEntity player, net.minecraft.core.Holder<net.minecraft.world.effect.MobEffect> effect, int amplifier, int ticks) {
         player.addEffect(new net.minecraft.world.effect.MobEffectInstance(effect, ticks, amplifier, true, false, true));
     }
 
     /** Each working powered implant takes its fuel for a second from the worn tank. */
-    public static void drain(Player player) {
+    public static void drain(LivingEntity player) {
         Body body = body(player);
         net.minecraft.world.item.ItemStack tank = com.avicagan.bloodandbones.backtank.FluidBacktankItem.wornBy(player);
         if (tank.isEmpty()) {
@@ -180,7 +193,7 @@ public final class BodyEffects {
     }
 
     /** Take up to this much from the worn tank; how much there was. */
-    public static int take(Player player, int amount) {
+    public static int take(LivingEntity player, int amount) {
         net.minecraft.world.item.ItemStack tank = com.avicagan.bloodandbones.backtank.FluidBacktankItem.wornBy(player);
         net.neoforged.neoforge.fluids.FluidStack fluid = com.avicagan.bloodandbones.backtank.FluidBacktankItem.fluid(tank);
         int taken = Math.min(amount, fluid.getAmount());
@@ -191,11 +204,21 @@ public final class BodyEffects {
         return taken;
     }
 
-    /** After any change: the effects now, and everyone who can see the player told. */
-    public static void changed(Player player) {
-        refresh(player);
-        if (player instanceof ServerPlayer server) {
-            BodySync.send(server);
+    /** After any change: the effects now, and everyone who can see the creature told. */
+    public static void changed(LivingEntity entity) {
+        refresh(entity);
+        if (!entity.level().isClientSide) {
+            BodySync.send(entity);
+        }
+    }
+
+    /** Mobs that have been operated on: their legs, arms and organs, once a second. */
+    @SubscribeEvent
+    public static void onMobTick(net.neoforged.neoforge.event.tick.EntityTickEvent.Post event) {
+        if (event.getEntity() instanceof LivingEntity living && !(living instanceof Player) && !living.level().isClientSide
+                && living.tickCount % 20 == 0 && altered(living)) {
+            refresh(living);
+            second(living);
         }
     }
 
@@ -289,7 +312,8 @@ public final class BodyEffects {
 
     @SubscribeEvent
     public static void onStartTracking(PlayerEvent.StartTracking event) {
-        if (event.getTarget() instanceof Player target && event.getEntity() instanceof ServerPlayer watcher) {
+        if (event.getTarget() instanceof LivingEntity target && event.getEntity() instanceof ServerPlayer watcher
+                && (target instanceof Player || altered(target))) {
             BodySync.sendTo(watcher, target);
         }
     }

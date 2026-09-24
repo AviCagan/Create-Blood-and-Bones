@@ -61,6 +61,8 @@ provided by [Sable](https://github.com/ryanhcode/sable).
   Heart, Bellows Lungs) on soul blood from the backtank, and stop working when it runs dry. The Vent Arm
   sprays whatever the tank holds (lava burns, water douses, experience gives experience); the Port Arm
   plugs the tank into pipes at a Backtank Port. Everyone sees what you are missing and what is fitted.
+  The table takes other patients too: another player, a mob led onto it on a lead, or a carcass piece
+  whose organs a Cleaver (or a Deployer holding one) takes out one a cut.
 - **The Fluid Backtank.** A tank for any fluid, worn in the chest slot with the armour of its tier:
   copper 2 buckets, gold 3, iron 4, diamond 6, blood steel 8, blood diamond 16, and soul netherite 32
   (a smithing upgrade with a Soul Netherite Ingot: a netherite ingot filled with soul blood and pressed
@@ -86,7 +88,7 @@ incremental. `./gradlew runClient` / `runServer` / `runData` are configured by M
 
 ### Development aids
 
-- `./gradlew runGameTestServer` runs the game tests headless (189: every rigged mob and baby,
+- `./gradlew runGameTestServer` runs the game tests headless (193: every rigged mob and baby,
   butchery, rot, bleeding, machines and their filters, cooking and display, surgery, implants, backtanks, chains, recipes,
   advancements and sounds).
 - `./gradlew runData -Dbloodandbones.dump_layers=minecraft:goat#main,...` writes those vanilla

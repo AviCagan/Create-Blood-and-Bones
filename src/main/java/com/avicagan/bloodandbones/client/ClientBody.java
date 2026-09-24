@@ -20,7 +20,7 @@ public final class ClientBody {
         }
     }
 
-    public static void openSurgery(BlockPos table) {
-        Minecraft.getInstance().setScreen(new SurgeryScreen(table));
+    public static void openSurgery(BlockPos table, int patient) {
+        Minecraft.getInstance().setScreen(new SurgeryScreen(table, patient));
     }
 }

@@ -9,7 +9,7 @@ import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.entity.player.Player;
 import net.neoforged.neoforge.network.PacketDistributor;
 
-/** Sends a player's body to them and to everyone who can see them, so it is drawn and felt the same everywhere. */
+/** Sends a body to its owner and to everyone who can see it, so it is drawn and felt the same everywhere. */
 public final class BodySync {
     private BodySync() {
     }
@@ -25,11 +25,11 @@ public final class BodySync {
         }
     }
 
-    public static void send(ServerPlayer player) {
-        PacketDistributor.sendToPlayersTrackingEntityAndSelf(player, new Payload(player.getId(), BodyEffects.body(player).copy()));
+    public static void send(net.minecraft.world.entity.LivingEntity entity) {
+        PacketDistributor.sendToPlayersTrackingEntityAndSelf(entity, new Payload(entity.getId(), BodyEffects.body(entity).copy()));
     }
 
-    public static void sendTo(ServerPlayer watcher, Player target) {
+    public static void sendTo(ServerPlayer watcher, net.minecraft.world.entity.LivingEntity target) {
         PacketDistributor.sendToPlayer(watcher, new Payload(target.getId(), BodyEffects.body(target).copy()));
     }
 }

@@ -23,7 +23,7 @@ public class BBNetwork {
         registrar.playToClient(com.avicagan.bloodandbones.body.BodySync.Payload.TYPE, com.avicagan.bloodandbones.body.BodySync.Payload.STREAM_CODEC,
                 (payload, context) -> context.enqueueWork(() -> com.avicagan.bloodandbones.client.ClientBody.receive(payload)));
         registrar.playToClient(com.avicagan.bloodandbones.body.Surgery.OpenPayload.TYPE, com.avicagan.bloodandbones.body.Surgery.OpenPayload.STREAM_CODEC,
-                (payload, context) -> context.enqueueWork(() -> com.avicagan.bloodandbones.client.ClientBody.openSurgery(payload.pos())));
+                (payload, context) -> context.enqueueWork(() -> com.avicagan.bloodandbones.client.ClientBody.openSurgery(payload.pos(), payload.patient())));
         registrar.playToServer(com.avicagan.bloodandbones.body.Surgery.ActionPayload.TYPE, com.avicagan.bloodandbones.body.Surgery.ActionPayload.STREAM_CODEC,
                 (payload, context) -> context.enqueueWork(() -> {
                     if (context.player() instanceof net.minecraft.server.level.ServerPlayer player) {

@@ -78,6 +78,11 @@ Everything below is in development builds only; the art is placeholder (see the 
 - Vent Arm: hold use empty-handed to spray the tank ahead of you. What it does comes from a data map
   (`data_maps/fluid/vent_effects.json`): lava burns, water puts fires out, liquid experience gives
   experience, milk clears effects, anything else spills.
+- The Surgery Table takes others: with another player or a mob (led onto it on a lead) lying on it,
+  an empty hand opens the screen for them and what comes out is yours. A mob missing a leg walks
+  slower, one missing an arm hits softer. A carcass piece on the table gives up its organs to a Cleaver,
+  one a cut (a body's heart, lungs and stomach, a head's eyes, named for the animal); a Deployer holding
+  a Cleaver does it too, dropping them on the table.
 - Port Arm and Backtank Port: next to a port with a Port Arm, your tank is the port to the pipes, so a
   pump fills or empties it.
 

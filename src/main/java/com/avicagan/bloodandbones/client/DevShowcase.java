@@ -307,7 +307,7 @@ public final class DevShowcase {
                             table.put(new ItemStack(BBItems.CLEAVER.get()));
                         }
                         if (com.avicagan.bloodandbones.body.SurgeryTableBlock.lieDown(player.serverLevel(), at, player)) {
-                            net.neoforged.neoforge.network.PacketDistributor.sendToPlayer(player, new com.avicagan.bloodandbones.body.Surgery.OpenPayload(at));
+                            net.neoforged.neoforge.network.PacketDistributor.sendToPlayer(player, new com.avicagan.bloodandbones.body.Surgery.OpenPayload(at, player.getId()));
                         }
                     });
                 } else if (t == 130) {

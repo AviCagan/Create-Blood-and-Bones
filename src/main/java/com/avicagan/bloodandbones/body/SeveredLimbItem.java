@@ -1,7 +1,6 @@
 package com.avicagan.bloodandbones.body;
 
 import net.minecraft.network.chat.Component;
-import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.item.Item;
 import net.minecraft.world.item.ItemStack;
 
@@ -25,11 +24,15 @@ public class SeveredLimbItem extends Item {
         return part.kind() == kind;
     }
 
-    /** One of this player's limbs, with their name on it. */
-    public ItemStack of(Player owner) {
+    /** One of this creature's parts, with its name on it. */
+    public ItemStack of(net.minecraft.world.entity.Entity owner) {
+        return of(owner.getName());
+    }
+
+    /** A part with a name on it: a player's, a mob's, a kind of animal's. */
+    public ItemStack of(Component owner) {
         ItemStack stack = new ItemStack(this);
-        stack.set(net.minecraft.core.component.DataComponents.ITEM_NAME,
-                Component.translatable(getDescriptionId() + ".of", owner.getName()));
+        stack.set(net.minecraft.core.component.DataComponents.ITEM_NAME, Component.translatable(getDescriptionId() + ".of", owner));
         return stack;
     }
 }

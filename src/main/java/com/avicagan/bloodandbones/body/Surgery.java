@@ -38,9 +38,10 @@ public final class Surgery {
         return stack.getItem() instanceof CleaverItem;
     }
 
-    /** What the table takes to lie on it: a blade, an implant or a severed limb. */
+    /** What the table takes to lie on it: a blade, an implant, a part, or a carcass piece to take organs from. */
     public static boolean accepts(ItemStack stack) {
-        return isBlade(stack) || stack.getItem() instanceof ImplantItem || stack.getItem() instanceof SeveredLimbItem;
+        return isBlade(stack) || stack.getItem() instanceof ImplantItem || stack.getItem() instanceof SeveredLimbItem
+                || stack.is(com.avicagan.bloodandbones.registry.BBItems.CARCASS_PIECE.get());
     }
 
     /** What would be done to this part, with this on the table. The same on both sides, for the screen. */
@@ -54,12 +55,19 @@ public final class Surgery {
         };
     }
 
+    /** On yourself. */
+    public static Action operate(ServerLevel level, Player patient, SurgeryTableBlockEntity table, BodyPart part) {
+        return operate(level, patient, patient, table, part);
+    }
+
     /**
-     * Do it: the patient lies on the table.
+     * Do it: the patient lies on the table, and the surgeon (the patient, or someone else) works on them.
+     * What comes out goes to the surgeon.
      *
      * @return what was done ({@link Action#NONE} for nothing)
      */
-    public static Action operate(ServerLevel level, Player patient, SurgeryTableBlockEntity table, BodyPart part) {
+    public static Action operate(ServerLevel level, net.minecraft.world.entity.LivingEntity patient, @org.jetbrains.annotations.Nullable Player surgeon,
+                                 SurgeryTableBlockEntity table, BodyPart part) {
         Body body = BodyEffects.body(patient);
         Action action = action(body, table.item(), part);
         BlockPos pos = table.getBlockPos();
@@ -74,10 +82,10 @@ public final class Surgery {
                 com.avicagan.bloodandbones.carcass.Blood.bloody(blade, level);
                 table.setChanged();
                 table.sendData();
-                cutOut(level, patient, part, pos, at);
+                cutOut(level, patient, surgeon, part, pos, at);
             }
             case REPLACE -> {
-                cutOut(level, patient, part, pos, at);
+                cutOut(level, patient, surgeon, part, pos, at);
                 body.fit(part, table.take());
                 level.playSound(null, pos, SoundEvents.ARMOR_EQUIP_IRON.value(), SoundSource.PLAYERS, 1.0F, 0.8F);
             }
@@ -92,7 +100,7 @@ public final class Surgery {
                 level.playSound(null, pos, SoundEvents.SLIME_BLOCK_PLACE, SoundSource.PLAYERS, 1.0F, 0.8F);
             }
             case UNCLIP -> {
-                give(patient, body.unclip(part), pos);
+                give(surgeon, body.unclip(part), pos, level);
                 level.playSound(null, pos, SoundEvents.ARMOR_EQUIP_CHAIN.value(), SoundSource.PLAYERS, 1.0F, 1.2F);
             }
         }
@@ -101,25 +109,105 @@ public final class Surgery {
         return action;
     }
 
-    /** The part of flesh comes out, bloodily, into the patient's hands. */
-    private static void cutOut(ServerLevel level, Player patient, BodyPart part, BlockPos pos, Vector3d at) {
-        give(patient, com.avicagan.bloodandbones.registry.BBItems.partItem(part.kind()).of(patient), pos);
+    /** The part of flesh comes out, bloodily, into the surgeon's hands. */
+    private static void cutOut(ServerLevel level, net.minecraft.world.entity.LivingEntity patient, @org.jetbrains.annotations.Nullable Player surgeon,
+                               BodyPart part, BlockPos pos, Vector3d at) {
+        give(surgeon, com.avicagan.bloodandbones.registry.BBItems.partItem(part.kind()).of(patient), pos, level);
         com.avicagan.bloodandbones.carcass.Blood.burst(level, at, 12);
         com.avicagan.bloodandbones.carcass.Blood.stain(level, at, 3);
         level.playSound(null, pos, com.avicagan.bloodandbones.registry.BBSounds.CARCASS_CUT.get(), SoundSource.PLAYERS, 1.0F, 0.9F);
     }
 
-    private static void give(Player player, ItemStack stack, BlockPos pos) {
-        if (!stack.isEmpty() && !player.getInventory().add(stack)) {
-            net.minecraft.world.level.block.Block.popResource(player.level(), pos.above(), stack);
+    private static void give(@org.jetbrains.annotations.Nullable Player player, ItemStack stack, BlockPos pos, net.minecraft.world.level.Level level) {
+        if (!stack.isEmpty() && (player == null || !player.getInventory().add(stack))) {
+            net.minecraft.world.level.block.Block.popResource(level, pos.above(), stack);
         }
     }
 
-    /** The server tells a player lying on a table to show the surgery screen. */
-    public record OpenPayload(BlockPos pos) implements CustomPacketPayload {
+    /** Whoever lies on the table there, if anyone. */
+    @org.jetbrains.annotations.Nullable
+    public static net.minecraft.world.entity.LivingEntity patientAt(net.minecraft.world.level.Level level, BlockPos table) {
+        for (SurgerySeatEntity seat : level.getEntitiesOfClass(SurgerySeatEntity.class, new net.minecraft.world.phys.AABB(table))) {
+            for (net.minecraft.world.entity.Entity rider : seat.getPassengers()) {
+                if (rider instanceof net.minecraft.world.entity.LivingEntity living) {
+                    return living;
+                }
+            }
+        }
+        return null;
+    }
+
+    /** How far from the table a surgeon may work on someone else. */
+    public static final double REACH = 6.0;
+
+    /** Whether this surgeon may work on whoever lies on this table: it is them, or they stand by it. */
+    public static boolean mayOperate(Player surgeon, net.minecraft.world.entity.LivingEntity patient, BlockPos table) {
+        return surgeon == patient ? lyingOn(surgeon, table)
+                : patient.getVehicle() instanceof SurgerySeatEntity seat && seat.blockPosition().equals(table)
+                && surgeon.distanceToSqr(net.minecraft.world.phys.Vec3.atCenterOf(table)) <= REACH * REACH && surgeon.isAlive();
+    }
+
+    /**
+     * A Cleaver on a carcass piece lying on the table takes out its organs, one a cut: a body's heart, lungs
+     * and stomach, a head's eyes, each named for the animal. A mob with no blood has none.
+     *
+     * @return whether an organ came out
+     */
+    public static boolean harvest(ServerLevel level, Player surgeon, SurgeryTableBlockEntity table, ItemStack blade) {
+        ItemStack stack = table.item();
+        com.avicagan.bloodandbones.item.CarcassPieceItem.Piece piece = com.avicagan.bloodandbones.item.CarcassPieceItem.piece(stack);
+        if (piece == null) {
+            return false;
+        }
+        var type = net.minecraft.core.registries.BuiltInRegistries.ENTITY_TYPE.getOptional(piece.entity());
+        if (type.isEmpty() || type.get().is(com.avicagan.bloodandbones.registry.BBTags.BLOODLESS)) {
+            surgeon.displayClientMessage(Component.translatable("bloodandbones.surgery.no_organs"), true);
+            return false;
+        }
+        String kind = com.avicagan.bloodandbones.registry.BBItemAttributes.PiecePart.kindOf(piece, level);
+        java.util.List<BodyPart.Kind> organs = switch (kind) {
+            case "body" -> java.util.List.of(BodyPart.Kind.HEART, BodyPart.Kind.LUNGS, BodyPart.Kind.STOMACH);
+            case "head" -> java.util.List.of(BodyPart.Kind.EYE, BodyPart.Kind.EYE);
+            default -> java.util.List.of();
+        };
+        int taken = organsTaken(piece);
+        if (taken >= organs.size()) {
+            surgeon.displayClientMessage(Component.translatable("bloodandbones.surgery.no_organs"), true);
+            return false;
+        }
+        java.util.Map<String, String> traits = new java.util.HashMap<>(piece.traits());
+        traits.put(ORGANS_TAKEN, Integer.toString(taken + 1));
+        stack.set(com.avicagan.bloodandbones.registry.BBDataComponents.PIECE.get(), new com.avicagan.bloodandbones.item.CarcassPieceItem.Piece(
+                piece.entity(), piece.bone(), piece.texture(), piece.coats(), piece.freshness(), piece.skinned(), java.util.Map.copyOf(traits),
+                piece.blood(), piece.bloodMax(), piece.decay(), piece.baby()));
+        table.notifyUpdate();
+        BlockPos pos = table.getBlockPos();
+        // a Deployer's stand-in would hold it and stall: it drops on the table, as the Butcher's Table's cuts do
+        give(surgeon instanceof net.neoforged.neoforge.common.util.FakePlayer ? null : surgeon,
+                com.avicagan.bloodandbones.registry.BBItems.partItem(organs.get(taken)).of(type.get().getDescription()), pos, level);
+        com.avicagan.bloodandbones.carcass.Blood.bloody(blade, level);
+        Vector3d at = new Vector3d(pos.getX() + 0.5, pos.getY() + 1.1, pos.getZ() + 0.5);
+        com.avicagan.bloodandbones.carcass.Blood.burst(level, at, 8, com.avicagan.bloodandbones.carcass.Blood.soul(piece.entity()));
+        level.playSound(null, pos, com.avicagan.bloodandbones.registry.BBSounds.CARCASS_CUT.get(), SoundSource.PLAYERS, 1.0F, 1.1F);
+        return true;
+    }
+
+    /** The trait on a carcass piece counting the organs already taken from it. */
+    public static final String ORGANS_TAKEN = "organs_taken";
+
+    public static int organsTaken(com.avicagan.bloodandbones.item.CarcassPieceItem.Piece piece) {
+        try {
+            return Integer.parseInt(piece.traits().getOrDefault(ORGANS_TAKEN, "0"));
+        } catch (NumberFormatException e) {
+            return 0;
+        }
+    }
+
+    /** The server tells a surgeon to show the surgery screen for whoever lies on the table (themselves, or another). */
+    public record OpenPayload(BlockPos pos, int patient) implements CustomPacketPayload {
         public static final Type<OpenPayload> TYPE = new Type<>(BloodAndBones.asResource("surgery_open"));
         public static final StreamCodec<RegistryFriendlyByteBuf, OpenPayload> STREAM_CODEC = StreamCodec.composite(
-                BlockPos.STREAM_CODEC, OpenPayload::pos, OpenPayload::new);
+                BlockPos.STREAM_CODEC, OpenPayload::pos, net.minecraft.network.codec.ByteBufCodecs.VAR_INT, OpenPayload::patient, OpenPayload::new);
 
         @Override
         public Type<? extends CustomPacketPayload> type() {
@@ -144,12 +232,16 @@ public final class Surgery {
         return player.getVehicle() instanceof SurgerySeatEntity seat && seat.blockPosition().equals(table);
     }
 
-    /** From the screen: only for a player lying on that table. */
+    /** From the screen: for whoever lies on that table, by them or by someone standing by it. */
     public static void handle(ServerPlayer player, ActionPayload payload) {
-        if (!lyingOn(player, payload.pos()) || !(player.level().getBlockEntity(payload.pos()) instanceof SurgeryTableBlockEntity table)) {
+        if (!player.level().isLoaded(payload.pos()) || !(player.level().getBlockEntity(payload.pos()) instanceof SurgeryTableBlockEntity table)) {
             return;
         }
-        if (operate(player.serverLevel(), player, table, payload.part()) == Action.NONE) {
+        net.minecraft.world.entity.LivingEntity patient = patientAt(player.level(), payload.pos());
+        if (patient == null || !mayOperate(player, patient, payload.pos())) {
+            return;
+        }
+        if (operate(player.serverLevel(), patient, player, table, payload.part()) == Action.NONE) {
             player.displayClientMessage(Component.translatable("bloodandbones.surgery.nothing"), true);
         }
     }

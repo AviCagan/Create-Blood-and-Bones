@@ -97,7 +97,9 @@ public class BBLang {
                 "A padded table with straps, for _surgery_. Lie on it to have a limb _off_, or a new one _on_. Nothing can go wrong.",
                 "When R-Clicked with a Blade, Implant or Limb", "Lays it on the table: a _Cleaver_ takes a limb off, a _prosthetic_ or a _severed limb_ goes where one is missing.",
                 "When R-Clicked with an Empty Hand", "You _lie down_ on it and choose which part to operate on. _Sneak_ to get up.",
-                "When Sneak-R-Clicked with an Empty Hand", "Takes back what lies on the table.");
+                "When Sneak-R-Clicked with an Empty Hand", "Takes back what lies on the table.",
+                "With Someone Else on It", "R-Click with an _empty hand_ to operate on them: another player, or a _mob_ you led onto it on a lead. What comes out is yours.",
+                "With a Carcass Piece on It", "R-Click with a _Cleaver_ to take its _organs_ out, one a cut: a body's heart, lungs and stomach, a head's eyes.");
         item("peg_leg",
                 "A wooden leg for a leg that is _gone_. Needs nothing to run.",
                 "When Fitted", "You walk almost as well as on flesh (_90%_).");
@@ -169,6 +171,8 @@ public class BBLang {
         BloodAndBones.REGISTRATE.addRawLang("bloodandbones.body.left_leg", "Left leg");
         BloodAndBones.REGISTRATE.addRawLang("bloodandbones.body.right_leg", "Right leg");
         BloodAndBones.REGISTRATE.addRawLang("bloodandbones.surgery.title", "Surgery");
+        BloodAndBones.REGISTRATE.addRawLang("bloodandbones.surgery.title_other", "Surgery on %s");
+        BloodAndBones.REGISTRATE.addRawLang("bloodandbones.surgery.no_organs", "Nothing more to take out of it");
         BloodAndBones.REGISTRATE.addRawLang("bloodandbones.surgery.empty", "Nothing on the table: lay a Cleaver, a prosthetic or a limb on it");
         BloodAndBones.REGISTRATE.addRawLang("bloodandbones.surgery.on_table", "On the table: %s");
         BloodAndBones.REGISTRATE.addRawLang("bloodandbones.surgery.state.natural", "Your own");

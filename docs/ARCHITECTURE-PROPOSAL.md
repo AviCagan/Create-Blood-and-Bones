@@ -1013,3 +1013,24 @@ later. The head and torso cannot be taken.
   heart swapped for a Pump Heart, weak when dry and healing when fed, eyes out one at a time to blindness;
   the Vent Arm's fire, water and spill; the port reaching a worn tank only with a Port Arm.
 
+### 14.4 Slice 11d as built (verified)
+
+- Anyone on the table: `Surgery.patientAt` is the seat's rider. Right-clicking with an empty hand opens the
+  screen for someone else lying there (`OpenPayload` now carries the patient's id); the server does the
+  action only if `mayOperate` (you are the patient on that table, or you stand within 6 blocks of it) and
+  gives what comes out to the surgeon. The screen closes when that stops being true.
+- Mobs: led onto the table on a lead (the lead drops). The body attachment works on any living thing;
+  `BodyEffects` refreshes a mob's once a second from `EntityTickEvent`, only for mobs already operated on
+  (`hasData`, so other mobs are never given a body). A mob's arms scale its attack (half with one gone).
+  Nothing is drawn on mobs yet.
+- Carcass organs: a Cleaver on a carcass piece lying on the table takes the next organ (a body: heart,
+  lungs, stomach; a head: two eyes; bloodless mobs none), counted in the piece's `organs_taken` trait and
+  named for the animal. A Deployer's stand-in player would keep the organ and Create's Deployer stalls while
+  it holds overflow, so for a fake player the organ drops on the table. *Default*: a piece's organs are not
+  taken off its later butchery yield.
+- The "powered table" is so far the Deployer on carcass pieces. Machines working on living patients wait
+  for the minion slice.
+- `PatientTests`: another player's arm to the surgeon, and no reach from across the room; a zombie's leg
+  and arm (60% walking, half damage, the leg named for it); a cow's body and head organs and none from a
+  skeleton; a Deployer taking all three organs.
+

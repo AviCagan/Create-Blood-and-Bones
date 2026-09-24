@@ -24,9 +24,11 @@ import net.minecraft.world.phys.shapes.VoxelShape;
 import net.neoforged.neoforge.network.PacketDistributor;
 
 /**
- * The Surgery Table. Lay a blade, an implant or a severed limb on it; right-click it with an empty hand to
- * lie on it and choose what to do to which part; sneak and right-click with an empty hand to take back what
- * lies on it.
+ * The Surgery Table. Lay a blade, an implant or a part on it; right-click it with an empty hand to lie on it
+ * and choose what to do to which part of you; sneak and right-click with an empty hand to take back what lies
+ * on it. With someone else on it, an empty hand opens the same screen for them. A mob on a lead is laid on it
+ * by right-clicking with an empty hand while leading it. A carcass piece laid on it gives up its organs to a
+ * Cleaver, one a cut.
  */
 public class SurgeryTableBlock extends Block implements IBE<SurgeryTableBlockEntity> {
     private static final VoxelShape SHAPE = Shapes.or(Block.box(0, 10, 0, 16, 15, 16),
@@ -44,10 +46,16 @@ public class SurgeryTableBlock extends Block implements IBE<SurgeryTableBlockEnt
     @Override
     protected ItemInteractionResult useItemOn(ItemStack stack, BlockState state, Level level, BlockPos pos, Player player,
                                               InteractionHand hand, BlockHitResult hit) {
-        if (stack.isEmpty() || !Surgery.accepts(stack)) {
+        if (stack.isEmpty() || !Surgery.accepts(stack) || !(level.getBlockEntity(pos) instanceof SurgeryTableBlockEntity table)) {
             return ItemInteractionResult.PASS_TO_DEFAULT_BLOCK_INTERACTION;
         }
-        if (!(level.getBlockEntity(pos) instanceof SurgeryTableBlockEntity table) || !table.item().isEmpty()) {
+        if (Surgery.isBlade(stack) && table.item().is(com.avicagan.bloodandbones.registry.BBItems.CARCASS_PIECE.get())) {
+            if (!level.isClientSide) {
+                Surgery.harvest((ServerLevel) level, player, table, stack);
+            }
+            return ItemInteractionResult.sidedSuccess(level.isClientSide);
+        }
+        if (!table.item().isEmpty()) {
             return ItemInteractionResult.PASS_TO_DEFAULT_BLOCK_INTERACTION;
         }
         if (!level.isClientSide && table.put(stack)) {
@@ -73,10 +81,32 @@ public class SurgeryTableBlock extends Block implements IBE<SurgeryTableBlockEnt
         if (level.isClientSide) {
             return InteractionResult.SUCCESS;
         }
-        if (lieDown((ServerLevel) level, pos, player) && player instanceof ServerPlayer server) {
-            PacketDistributor.sendToPlayer(server, new Surgery.OpenPayload(pos));
+        ServerLevel server = (ServerLevel) level;
+        net.minecraft.world.entity.LivingEntity patient = Surgery.patientAt(level, pos);
+        if (patient != null && patient != player) {
+            // someone else on the table: work on them
+            if (player instanceof ServerPlayer surgeon && Surgery.mayOperate(player, patient, pos)) {
+                PacketDistributor.sendToPlayer(surgeon, new Surgery.OpenPayload(pos, patient.getId()));
+            }
+            return InteractionResult.CONSUME;
+        }
+        net.minecraft.world.entity.Mob led = ledBy(server, player);
+        if (patient == null && led != null) {
+            led.dropLeash(true, !player.hasInfiniteMaterials());
+            lieDown(server, pos, led);
+            return InteractionResult.CONSUME;
+        }
+        if (lieDown(server, pos, player) && player instanceof ServerPlayer self) {
+            PacketDistributor.sendToPlayer(self, new Surgery.OpenPayload(pos, player.getId()));
         }
         return InteractionResult.CONSUME;
+    }
+
+    /** A mob this player is leading on a lead, near enough to lay on the table. */
+    @org.jetbrains.annotations.Nullable
+    private static net.minecraft.world.entity.Mob ledBy(ServerLevel level, Player player) {
+        return level.getEntitiesOfClass(net.minecraft.world.entity.Mob.class, player.getBoundingBox().inflate(10.0),
+                mob -> mob.getLeashHolder() == player).stream().findFirst().orElse(null);
     }
 
     /** Put a patient on the table, unless someone else is on it. */

@@ -20,11 +20,13 @@ import java.util.EnumMap;
 import java.util.Map;
 
 /**
- * Lying on the Surgery Table: each part of your body, what it is now, and what the thing on the table would
- * do to it. It closes when you get off the table.
+ * Surgery: each part of the body of whoever lies on the table (you, or someone you are working on), what it
+ * is now, and what the thing on the table would do to it. It closes when they get off the table, or when you
+ * walk away from it.
  */
 public class SurgeryScreen extends Screen {
     private final BlockPos table;
+    private final int patientId;
     private final Map<BodyPart, Button> buttons = new EnumMap<>(BodyPart.class);
 
     /** Height of a part's row: nine parts fit a small window. */
@@ -34,9 +36,16 @@ public class SurgeryScreen extends Screen {
         return Math.max(32, (height - BodyPart.values().length * ROW - 30) / 2 + 10);
     }
 
-    public SurgeryScreen(BlockPos table) {
+    public SurgeryScreen(BlockPos table, int patient) {
         super(Component.translatable("bloodandbones.surgery.title"));
         this.table = table;
+        this.patientId = patient;
+    }
+
+    @org.jetbrains.annotations.Nullable
+    private net.minecraft.world.entity.LivingEntity patient() {
+        return Minecraft.getInstance().level != null && Minecraft.getInstance().level.getEntity(patientId) instanceof net.minecraft.world.entity.LivingEntity living
+                ? living : null;
     }
 
     @Override
@@ -60,7 +69,7 @@ public class SurgeryScreen extends Screen {
     }
 
     private void refresh() {
-        Player player = Minecraft.getInstance().player;
+        net.minecraft.world.entity.LivingEntity player = patient();
         if (player == null) {
             return;
         }
@@ -75,8 +84,9 @@ public class SurgeryScreen extends Screen {
 
     @Override
     public void tick() {
-        Player player = Minecraft.getInstance().player;
-        if (player == null || !(player.getVehicle() instanceof SurgerySeatEntity seat) || !seat.blockPosition().equals(table)) {
+        Player surgeon = Minecraft.getInstance().player;
+        net.minecraft.world.entity.LivingEntity patient = patient();
+        if (surgeon == null || patient == null || !com.avicagan.bloodandbones.body.Surgery.mayOperate(surgeon, patient, table)) {
             onClose();
             return;
         }
@@ -86,12 +96,13 @@ public class SurgeryScreen extends Screen {
     @Override
     public void render(GuiGraphics graphics, int mouseX, int mouseY, float partialTick) {
         super.render(graphics, mouseX, mouseY, partialTick);
-        Player player = Minecraft.getInstance().player;
+        net.minecraft.world.entity.LivingEntity player = patient();
         if (player == null) {
             return;
         }
         int top = top();
-        graphics.drawCenteredString(font, title, width / 2, top - 28, 0xFFFFFF);
+        Component heading = player == Minecraft.getInstance().player ? title : Component.translatable("bloodandbones.surgery.title_other", player.getName());
+        graphics.drawCenteredString(font, heading, width / 2, top - 28, 0xFFFFFF);
         ItemStack tool = tool();
         Component lying = tool.isEmpty() ? Component.translatable("bloodandbones.surgery.empty")
                 : Component.translatable("bloodandbones.surgery.on_table", tool.getHoverName());
