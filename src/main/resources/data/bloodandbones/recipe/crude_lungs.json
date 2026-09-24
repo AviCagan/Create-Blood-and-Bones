@@ -2,22 +2,22 @@
   "type": "minecraft:crafting_shaped",
   "category": "equipment",
   "pattern": [
-    "L",
-    "I",
-    "B"
+    "L L",
+    "LBL",
+    "N N"
   ],
   "key": {
     "L": {
       "item": "minecraft:leather"
     },
-    "I": {
-      "tag": "c:ingots/iron"
-    },
     "B": {
       "item": "minecraft:bone"
+    },
+    "N": {
+      "item": "minecraft:iron_nugget"
     }
   },
   "result": {
-    "id": "bloodandbones:peg_leg"
+    "id": "bloodandbones:crude_lungs"
   }
 }

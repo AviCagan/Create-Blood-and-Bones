@@ -93,10 +93,20 @@ public class BBItems {
             .register();
 
     // ---- implants: basic (nothing to run), organic (blood from the backtank), cybernetic (soul blood)
+    // the crude prosthetics are the safety floor: iron, leather and bone, no nether needed; each gives back
+    // normal working and nothing more, so a part taken out can always be made good
     public static final ItemEntry<com.avicagan.bloodandbones.body.ImplantItem> PEG_LEG = implant("peg_leg", "Peg Leg",
-            com.avicagan.bloodandbones.body.ImplantSpec.basic(com.avicagan.bloodandbones.body.BodyPart.Kind.LEG, 0.9F, 1.0F, bodyTexture("peg_leg")));
+            com.avicagan.bloodandbones.body.ImplantSpec.basic(com.avicagan.bloodandbones.body.BodyPart.Kind.LEG, 1.0F, 1.0F, bodyTexture("peg_leg")));
     public static final ItemEntry<com.avicagan.bloodandbones.body.ImplantItem> HOOK_HAND = implant("hook_hand", "Hook Hand",
-            com.avicagan.bloodandbones.body.ImplantSpec.basic(com.avicagan.bloodandbones.body.BodyPart.Kind.ARM, 1.0F, 0.7F, bodyTexture("hook_hand")));
+            com.avicagan.bloodandbones.body.ImplantSpec.basic(com.avicagan.bloodandbones.body.BodyPart.Kind.ARM, 1.0F, 1.0F, bodyTexture("hook_hand")));
+    public static final ItemEntry<com.avicagan.bloodandbones.body.ImplantItem> GLASS_EYE = implant("glass_eye", "Glass Eye",
+            com.avicagan.bloodandbones.body.ImplantSpec.basic(com.avicagan.bloodandbones.body.BodyPart.Kind.EYE, 1.0F, 1.0F, bodyTexture("glass_eye")));
+    public static final ItemEntry<com.avicagan.bloodandbones.body.ImplantItem> CRUDE_HEART = implant("crude_heart", "Crude Heart",
+            com.avicagan.bloodandbones.body.ImplantSpec.basic(com.avicagan.bloodandbones.body.BodyPart.Kind.HEART, 1.0F, 1.0F, null));
+    public static final ItemEntry<com.avicagan.bloodandbones.body.ImplantItem> CRUDE_LUNGS = implant("crude_lungs", "Crude Lungs",
+            com.avicagan.bloodandbones.body.ImplantSpec.basic(com.avicagan.bloodandbones.body.BodyPart.Kind.LUNGS, 1.0F, 1.0F, null));
+    public static final ItemEntry<com.avicagan.bloodandbones.body.ImplantItem> CRUDE_STOMACH = implant("crude_stomach", "Crude Stomach",
+            com.avicagan.bloodandbones.body.ImplantSpec.basic(com.avicagan.bloodandbones.body.BodyPart.Kind.STOMACH, 1.0F, 1.0F, null));
     public static final ItemEntry<com.avicagan.bloodandbones.body.ImplantItem> FLESH_ARM = implant("flesh_arm", "Flesh Arm",
             powered(com.avicagan.bloodandbones.body.BodyPart.Kind.ARM, "blood", 1, 1.0F, 1.0F, 1.3F, 1.0F, 0.0F, 0.0F, com.avicagan.bloodandbones.body.ImplantSpec.Ability.NONE, "flesh_arm"));
     public static final ItemEntry<com.avicagan.bloodandbones.body.ImplantItem> SINEW_LEG = implant("sinew_leg", "Sinew Leg",
@@ -110,7 +120,7 @@ public class BBItems {
     public static final ItemEntry<com.avicagan.bloodandbones.body.ImplantItem> PORT_ARM = implant("port_arm", "Port Arm",
             powered(com.avicagan.bloodandbones.body.BodyPart.Kind.ARM, null, 0, 1.0F, 1.0F, 1.0F, 0.0F, 0.0F, 0.0F, com.avicagan.bloodandbones.body.ImplantSpec.Ability.PORT, "port_arm"));
     public static final ItemEntry<com.avicagan.bloodandbones.body.ImplantItem> OPTIC_EYE = implant("optic_eye", "Optic Eye",
-            powered(com.avicagan.bloodandbones.body.BodyPart.Kind.EYE, "soul_blood", 1, 1.0F, 1.0F, 1.0F, 0.0F, 0.0F, 0.0F, com.avicagan.bloodandbones.body.ImplantSpec.Ability.NIGHT_VISION, null));
+            powered(com.avicagan.bloodandbones.body.BodyPart.Kind.EYE, "soul_blood", 1, 1.0F, 1.0F, 1.0F, 0.0F, 0.0F, 0.0F, com.avicagan.bloodandbones.body.ImplantSpec.Ability.NIGHT_VISION, "optic_eye"));
     public static final ItemEntry<com.avicagan.bloodandbones.body.ImplantItem> PUMP_HEART = implant("pump_heart", "Pump Heart",
             powered(com.avicagan.bloodandbones.body.BodyPart.Kind.HEART, "soul_blood", 2, 1.0F, 1.0F, 1.0F, 0.0F, 0.0F, 0.0F, com.avicagan.bloodandbones.body.ImplantSpec.Ability.REGENERATION, null));
     public static final ItemEntry<com.avicagan.bloodandbones.body.ImplantItem> BELLOWS_LUNGS = implant("bellows_lungs", "Bellows Lungs",

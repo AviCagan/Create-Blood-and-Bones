@@ -24,7 +24,7 @@ import org.joml.Vector3d;
  */
 public final class Surgery {
     public enum Action {
-        NONE, TAKE_OFF, REPLACE, FIT, REATTACH, UNCLIP;
+        NONE, TAKE_OFF, REPLACE, SWAP, FIT, REATTACH, UNCLIP;
 
         public String translationKey() {
             return "bloodandbones.surgery.action." + name().toLowerCase(java.util.Locale.ROOT);
@@ -46,10 +46,13 @@ public final class Surgery {
 
     /** What would be done to this part, with this on the table. The same on both sides, for the screen. */
     public static Action action(Body body, ItemStack tool, BodyPart part) {
+        boolean fits = tool.getItem() instanceof ImplantItem implant && implant.fits(part)
+                || tool.getItem() instanceof SeveredLimbItem limb && limb.fits(part);
         return switch (body.state(part)) {
-            case IMPLANT -> Action.UNCLIP;
-            case NATURAL -> isBlade(tool) ? Action.TAKE_OFF
-                    : tool.getItem() instanceof ImplantItem implant && implant.fits(part) ? Action.REPLACE : Action.NONE;
+            // an implant is swapped for what fits on the table, or unclipped; a heart is never left empty
+            case IMPLANT -> fits ? Action.SWAP : part == BodyPart.HEART ? Action.NONE : Action.UNCLIP;
+            // flesh comes out with a blade (not the heart: that is only ever replaced), or is swapped straight out
+            case NATURAL -> fits ? Action.REPLACE : isBlade(tool) && part != BodyPart.HEART ? Action.TAKE_OFF : Action.NONE;
             case MISSING -> tool.getItem() instanceof ImplantItem implant && implant.fits(part) ? Action.FIT
                     : tool.getItem() instanceof SeveredLimbItem limb && limb.fits(part) ? Action.REATTACH : Action.NONE;
         };
@@ -86,7 +89,12 @@ public final class Surgery {
             }
             case REPLACE -> {
                 cutOut(level, patient, surgeon, part, pos, at);
-                body.fit(part, table.take());
+                put(body, part, table.take());
+                level.playSound(null, pos, SoundEvents.ARMOR_EQUIP_IRON.value(), SoundSource.PLAYERS, 1.0F, 0.8F);
+            }
+            case SWAP -> {
+                give(surgeon, body.unclip(part), pos, level);
+                put(body, part, table.take());
                 level.playSound(null, pos, SoundEvents.ARMOR_EQUIP_IRON.value(), SoundSource.PLAYERS, 1.0F, 0.8F);
             }
             case FIT -> {
@@ -107,6 +115,15 @@ public final class Surgery {
         patient.setData(BBAttachments.BODY, body);
         BodyEffects.changed(patient);
         return action;
+    }
+
+    /** What came off the table goes in: an implant, or a part of flesh (flesh again). */
+    private static void put(Body body, BodyPart part, ItemStack item) {
+        if (item.getItem() instanceof ImplantItem) {
+            body.fit(part, item);
+        } else {
+            body.restore(part);
+        }
     }
 
     /** The part of flesh comes out, bloodily, into the surgeon's hands. */

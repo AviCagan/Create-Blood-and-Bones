@@ -1080,3 +1080,23 @@ later. The head and torso cannot be taken.
 - Not yet: the minion's head drawn as the carcass's; more jobs (miner, builder, fluid carrier with a
   Port Arm); machines working on living patients.
 
+### 14.7 Aligned with the design brief's self-augmentation rules
+
+The design brief (§ Self-augmentation) was not re-read when slices 11a-11e were built, and several defaults
+contradicted it. Fixed:
+- Crude prosthetics "just return normal functioning with no extra benefit": the Peg Leg and Hook Hand
+  were 90% and 70%, now exactly flesh, and their recipes are iron, leather and bone. Every removable part
+  now has one (Glass Eye, Crude Heart, Crude Lungs, Crude Stomach), so the safety floor covers every slot.
+- Empty-slot penalties as the brief lists them, for players: an arm out means no off-hand and a quarter
+  slower swings (attack speed and mining) per arm, and the main hand always works; a leg out means no
+  sprinting (the walk is unchanged); an eye out means reduced vision, fog on the client
+  (`ViewportEvent.RenderFog`, half the view with one eye, six blocks with none), not the blindness effect.
+  Mobs keep the old scheme (slower walk, weaker hit, blind), having no off-hand or sprint.
+- "A heart can't be removed while empty; replacement is simultaneous": a blade does nothing to a heart,
+  an implant or heart swaps in (`REPLACE`), and a heart implant only swaps out (`SWAP`, now for every
+  part: an implant on the table that fits swaps for the fitted one).
+- Still to align with the brief (not done): amputation needing a surgeon minion, the outside camera view
+  and the ragged stump; the table's two attachments; use-based necrosis on organic prosthetics; the
+  cybernetic throttle system and modules (Grappling Spool, Rotational Coupler, Piston Ram, Magnet Coil,
+  Analytical Lens, Gyroscopic Stabilizer, Barometric Vent); the graft and module set bonuses.
+

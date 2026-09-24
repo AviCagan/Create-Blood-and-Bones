@@ -2,24 +2,22 @@
   "type": "minecraft:crafting_shaped",
   "category": "equipment",
   "pattern": [
-    "NI",
-    "BL"
+    "LIL",
+    "IBI",
+    "LIL"
   ],
   "key": {
-    "N": {
-      "item": "minecraft:iron_nugget"
+    "L": {
+      "item": "minecraft:leather"
     },
     "I": {
-      "tag": "c:ingots/iron"
+      "item": "minecraft:iron_nugget"
     },
     "B": {
       "item": "minecraft:bone"
-    },
-    "L": {
-      "item": "minecraft:leather"
     }
   },
   "result": {
-    "id": "bloodandbones:hook_hand"
+    "id": "bloodandbones:crude_heart"
   }
 }

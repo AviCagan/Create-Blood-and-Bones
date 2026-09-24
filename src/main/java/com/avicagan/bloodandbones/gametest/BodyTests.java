@@ -119,50 +119,78 @@ public class BodyTests {
         helper.succeed();
     }
 
-    /** A missing leg slows you and weakens the jump; a peg leg nearly makes up for it. */
+    /** As the brief has it: a leg gone means no sprinting, not a slower walk; a Peg Leg gives it back exactly. */
     @GameTest(template = "empty", timeoutTicks = 20)
-    public static void legsSetTheWalk(GameTestHelper helper) {
+    public static void legsSetTheSprint(GameTestHelper helper) {
         Player player = helper.makeMockPlayer(GameType.SURVIVAL);
         double walk = player.getAttributeValue(Attributes.MOVEMENT_SPEED);
-        double jump = player.getAttributeValue(Attributes.JUMP_STRENGTH);
         Body body = BodyEffects.body(player);
         body.lose(BodyPart.LEFT_LEG);
         BodyEffects.changed(player);
-        double oneLeg = player.getAttributeValue(Attributes.MOVEMENT_SPEED);
-        if (Math.abs(oneLeg - walk * 0.6) > 1.0E-4 || player.getAttributeValue(Attributes.JUMP_STRENGTH) >= jump) {
-            helper.fail("One leg should walk at 60% and jump lower: " + oneLeg + " of " + walk);
+        player.setSprinting(true);
+        BodyEffects.onTick(new net.neoforged.neoforge.event.tick.PlayerTickEvent.Post(player));
+        if (player.isSprinting() || Math.abs(player.getAttributeValue(Attributes.MOVEMENT_SPEED) - walk) > 1.0E-6) {
+            helper.fail("A leg gone should stop sprinting and leave the walk as it was");
             return;
         }
         body.fit(BodyPart.LEFT_LEG, new ItemStack(BBItems.PEG_LEG.get()));
         BodyEffects.changed(player);
-        if (Math.abs(player.getAttributeValue(Attributes.MOVEMENT_SPEED) - walk * 0.95) > 1.0E-4) {
-            helper.fail("A peg leg should walk at 90%, so 95% on the two: " + player.getAttributeValue(Attributes.MOVEMENT_SPEED));
-            return;
-        }
-        body.restore(BodyPart.LEFT_LEG);
-        BodyEffects.changed(player);
-        if (Math.abs(player.getAttributeValue(Attributes.MOVEMENT_SPEED) - walk) > 1.0E-6 || Math.abs(player.getAttributeValue(Attributes.JUMP_STRENGTH) - jump) > 1.0E-6) {
-            helper.fail("Whole again, the walk and jump should be as they were");
+        if (!BodyEffects.legs(body, player) || Math.abs(player.getAttributeValue(Attributes.MOVEMENT_SPEED) - walk) > 1.0E-6) {
+            helper.fail("A Peg Leg should give the leg back exactly, no more and no less");
             return;
         }
         helper.succeed();
     }
 
-    /** A hand with no arm uses nothing; a Hook Hand works, breaking blocks slower. */
+    /** An arm gone means no off-hand and slower swings; the main hand always works; a Hook Hand gives it all back. */
     @GameTest(template = "empty", timeoutTicks = 20)
     public static void armsSetTheHands(GameTestHelper helper) {
         Player player = helper.makeMockPlayer(GameType.SURVIVAL);
+        double speed = player.getAttributeValue(Attributes.ATTACK_SPEED);
         BodyPart main = BodyEffects.armFor(player, InteractionHand.MAIN_HAND);
         Body body = BodyEffects.body(player);
         body.lose(main);
-        if (BodyEffects.handWorks(player, InteractionHand.MAIN_HAND) || !BodyEffects.handWorks(player, InteractionHand.OFF_HAND)
-                || BodyEffects.work(player) != BodyEffects.MISSING_WORK) {
-            helper.fail("With the main arm gone, the main hand should not work, the other should, and blocks break slowly");
+        BodyEffects.changed(player);
+        if (!BodyEffects.handWorks(player, InteractionHand.MAIN_HAND) || BodyEffects.handWorks(player, InteractionHand.OFF_HAND)
+                || Math.abs(BodyEffects.work(player) - 0.75F) > 1.0E-6F || Math.abs(player.getAttributeValue(Attributes.ATTACK_SPEED) - speed * 0.75) > 1.0E-6) {
+            helper.fail("With an arm gone the main hand should work, the off-hand not, and swings be a quarter slower");
             return;
         }
         body.fit(main, new ItemStack(BBItems.HOOK_HAND.get()));
-        if (!BodyEffects.handWorks(player, InteractionHand.MAIN_HAND) || Math.abs(BodyEffects.work(player) - 0.7F) > 1.0E-6F) {
-            helper.fail("A Hook Hand should work the hand and break blocks at 70%");
+        BodyEffects.changed(player);
+        if (!BodyEffects.handWorks(player, InteractionHand.OFF_HAND) || BodyEffects.work(player) != 1.0F
+                || Math.abs(player.getAttributeValue(Attributes.ATTACK_SPEED) - speed) > 1.0E-6) {
+            helper.fail("A Hook Hand should give back the off-hand and full-speed swings");
+            return;
+        }
+        helper.succeed();
+    }
+
+    /** The heart is never taken out alone: a blade does nothing to it, an implant swaps in, and an implant only swaps out. */
+    @GameTest(template = "empty", timeoutTicks = 20)
+    public static void heartOnlySwaps(GameTestHelper helper) {
+        ServerLevel level = helper.getLevel();
+        SurgeryTableBlockEntity table = table(helper, new BlockPos(3, 2, 3));
+        Player player = helper.makeMockPlayer(GameType.SURVIVAL);
+        table.put(new ItemStack(BBItems.CLEAVER.get()));
+        if (Surgery.operate(level, player, table, BodyPart.HEART) != Surgery.Action.NONE) {
+            helper.fail("A blade should do nothing to a heart");
+            return;
+        }
+        table.take();
+        table.put(new ItemStack(BBItems.CRUDE_HEART.get()));
+        if (Surgery.operate(level, player, table, BodyPart.HEART) != Surgery.Action.REPLACE || count(player, BBItems.HEART.get()) != 1) {
+            helper.fail("A Crude Heart should swap in, the heart coming out");
+            return;
+        }
+        if (Surgery.operate(level, player, table, BodyPart.HEART) != Surgery.Action.NONE) {
+            helper.fail("With nothing on the table the Crude Heart should stay: a heart is never left empty");
+            return;
+        }
+        table.put(new ItemStack(BBItems.PUMP_HEART.get()));
+        if (Surgery.operate(level, player, table, BodyPart.HEART) != Surgery.Action.SWAP || count(player, BBItems.CRUDE_HEART.get()) != 1
+                || !BodyEffects.body(player).implant(BodyPart.HEART).is(BBItems.PUMP_HEART.get())) {
+            helper.fail("A Pump Heart should swap for the Crude Heart, which comes back");
             return;
         }
         helper.succeed();

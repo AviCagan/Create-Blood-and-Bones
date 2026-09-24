@@ -18,7 +18,8 @@ import org.jetbrains.annotations.Nullable;
  * @param fuel     what it runs on: null (nothing), "blood", "soul_blood", or "any" (whatever is in the tank, used only as it goes)
  * @param drain    mB of its fuel a second while working
  * @param ability  what else it does
- * @param texture  drawn in the part's place on the player, laid out like a skin; null for an organ inside
+ * @param texture  drawn in the part's place on the player, laid out like a skin; for an eye, the base of a
+ *                 _left and a _right texture drawn on the face; null for an organ inside
  */
 public record ImplantSpec(BodyPart.Kind kind, float walk, float jump, float work, float attack, float reach, float safeFall,
                           @Nullable String fuel, int drain, Ability ability, @Nullable ResourceLocation texture) {
@@ -38,7 +39,7 @@ public record ImplantSpec(BodyPart.Kind kind, float walk, float jump, float work
         IRON_GUT
     }
 
-    public static ImplantSpec basic(BodyPart.Kind kind, float walk, float work, ResourceLocation texture) {
+    public static ImplantSpec basic(BodyPart.Kind kind, float walk, float work, @Nullable ResourceLocation texture) {
         return new ImplantSpec(kind, walk, walk, work, 0, 0, 0, null, 0, Ability.NONE, texture);
     }
 

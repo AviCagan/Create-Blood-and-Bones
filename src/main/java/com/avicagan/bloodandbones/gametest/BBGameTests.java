@@ -1433,7 +1433,7 @@ public class BBGameTests {
                 "surgery_table", "peg_leg", "hook_hand", "copper_fluid_backtank", "gold_fluid_backtank", "iron_fluid_backtank", "diamond_fluid_backtank",
                 "blood_steel_fluid_backtank", "blood_diamond_fluid_backtank", "soul_netherite_fluid_backtank", "soul_netherite_ingot",
                 "flesh_arm", "sinew_leg", "hydraulic_arm", "piston_leg", "vent_arm", "port_arm", "optic_eye", "pump_heart", "bellows_lungs", "furnace_stomach",
-                "backtank_port"}) {
+                "backtank_port", "glass_eye", "crude_heart", "crude_lungs", "crude_stomach"}) {
             if (helper.getLevel().getRecipeManager().byKey(com.avicagan.bloodandbones.BloodAndBones.asResource(name)).isEmpty()) {
                 helper.fail("Recipe " + name + " did not load");
             }

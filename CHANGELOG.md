@@ -63,9 +63,12 @@ Everything below is in development builds only; the art is placeholder (see the 
   takes one off, and you keep it ("Steve's Arm"); a Peg Leg, a Hook Hand or a severed limb laid on it
   goes where one is missing; a prosthetic unclips. Limbs are only ever lost by choice, and nothing
   can go wrong.
-- A missing arm uses, places and swings nothing, and blocks break slowly without the main arm. A
-  missing leg slows you (60% walking on one) and weakens the jump. A Peg Leg walks at 90%; a Hook Hand
-  works the hand and breaks blocks at 70%.
+- Missing parts follow the design brief: an arm gone means no off-hand and swings a quarter slower
+  (the main hand always works); a leg gone means no sprinting; an eye gone closes the view in with fog
+  (to a few blocks with none); the heart is only ever swapped, never taken out alone.
+- Crude prosthetics are the safety floor, of iron, leather and bone: Peg Leg, Hook Hand, Glass Eye,
+  Crude Heart, Crude Lungs and Crude Stomach give back normal working and nothing more. An implant on
+  the table swaps for one that fits.
 - Drawn on the player for everyone: missing limbs gone, prosthetics in their place, in third and
   first person. The body is saved and kept through death.
 - Eyes and organs too: a heart, lungs and stomach can be taken out and put back, or swapped straight

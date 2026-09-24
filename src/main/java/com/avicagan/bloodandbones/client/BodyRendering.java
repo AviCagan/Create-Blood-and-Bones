@@ -124,6 +124,29 @@ public final class BodyRendering {
         }
     }
 
+    /**
+     * An eye gone is reduced vision: fog closes in, to half the view with one working eye, to a few blocks
+     * with none.
+     */
+    @SubscribeEvent
+    public static void onFog(net.neoforged.neoforge.client.event.ViewportEvent.RenderFog event) {
+        var player = Minecraft.getInstance().player;
+        if (player == null || event.getCamera().getEntity() != player || !BodyEffects.altered(player)) {
+            return;
+        }
+        Body body = BodyEffects.body(player);
+        int eyes = (body.works(BodyPart.LEFT_EYE, player) ? 1 : 0) + (body.works(BodyPart.RIGHT_EYE, player) ? 1 : 0);
+        if (eyes == 2) {
+            return;
+        }
+        float far = eyes == 1 ? event.getFarPlaneDistance() * 0.5F : 6.0F;
+        if (far < event.getFarPlaneDistance()) {
+            event.setNearPlaneDistance(Math.min(event.getNearPlaneDistance(), far * 0.25F));
+            event.setFarPlaneDistance(far);
+            event.setCanceled(true);
+        }
+    }
+
     /** Nothing is held, in first person, by an arm that is not there. */
     @SubscribeEvent
     public static void onRenderHand(RenderHandEvent event) {
@@ -136,10 +159,9 @@ public final class BodyRendering {
 
     private static final net.minecraft.resources.ResourceLocation[] SOCKETS = {
             BloodAndBones.asResource("textures/entity/implant/eye_socket_left.png"), BloodAndBones.asResource("textures/entity/implant/eye_socket_right.png")};
-    private static final net.minecraft.resources.ResourceLocation[] OPTICS = {
-            BloodAndBones.asResource("textures/entity/implant/optic_eye_left.png"), BloodAndBones.asResource("textures/entity/implant/optic_eye_right.png")};
+    private static final String[] SIDES = {"_left.png", "_right.png"};
 
-    /** An empty socket where an eye is gone, a red lens where an Optic Eye is, glowing while it works. */
+    /** An empty socket where an eye is gone; an implant's own eye where one is fitted, glowing if it sees in the dark and works. */
     static void eyes(PoseStack poseStack, MultiBufferSource buffers, int packedLight, net.minecraft.world.entity.LivingEntity player, Body body, ModelPart head) {
         BodyPart[] eyes = {BodyPart.LEFT_EYE, BodyPart.RIGHT_EYE};
         for (int i = 0; i < 2; i++) {
@@ -147,9 +169,16 @@ public final class BodyRendering {
             if (state == Body.State.NATURAL) {
                 continue;
             }
-            boolean glowing = state == Body.State.IMPLANT && body.works(eyes[i], player);
-            RenderType type = state == Body.State.MISSING ? RenderType.entityCutoutNoCull(SOCKETS[i])
-                    : glowing ? RenderType.eyes(OPTICS[i]) : RenderType.entityCutoutNoCull(OPTICS[i]);
+            ImplantItem implant = state == Body.State.IMPLANT && body.implant(eyes[i]).getItem() instanceof ImplantItem item ? item : null;
+            if (state == Body.State.IMPLANT && (implant == null || implant.texture() == null)) {
+                continue;
+            }
+            boolean glowing = implant != null && implant.spec().ability() == com.avicagan.bloodandbones.body.ImplantSpec.Ability.NIGHT_VISION
+                    && body.works(eyes[i], player);
+            String side = SIDES[i];
+            net.minecraft.resources.ResourceLocation texture = implant == null ? SOCKETS[i] : implant.texture().withPath(
+                    p -> p.substring(0, p.length() - ".png".length()) + side);
+            RenderType type = glowing ? RenderType.eyes(texture) : RenderType.entityCutoutNoCull(texture);
             // a hair out from the face, so it is not lost in it; the head turns about the neck, the origin
             poseStack.pushPose();
             poseStack.scale(1.02F, 1.02F, 1.02F);

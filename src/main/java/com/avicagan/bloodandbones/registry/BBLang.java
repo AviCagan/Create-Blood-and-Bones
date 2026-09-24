@@ -102,11 +102,23 @@ public class BBLang {
                 "With a Carcass Piece on It", "R-Click with a _Cleaver_ to take its _organs_ out, one a cut: a body's heart, lungs and stomach, a head's eyes.",
                 "Building a Minion", "A carcass _body_ on the table is a minion in the making. R-Click with a carcass _head_, severed limbs, organs or implants to add them; with a bucket of _soul blood_ to wake it once it has a head and a heart.");
         item("peg_leg",
-                "A wooden leg for a leg that is _gone_. Needs nothing to run.",
-                "When Fitted", "You walk almost as well as on flesh (_90%_).");
+                "A _crude prosthetic_ leg of iron, leather and bone. Needs nothing to run.",
+                "When Fitted", "The leg works as it did: you can _sprint_ again. Nothing more.");
         item("hook_hand",
-                "An iron hook on a leather cuff, for an arm that is _gone_. Needs nothing to run.",
-                "When Fitted", "The hand can _hold_ and _use_ things again. Blocks break a little slower (_70%_).");
+                "A _crude prosthetic_ arm: an iron hook on a leather cuff. Needs nothing to run.",
+                "When Fitted", "The arm works as it did: the _off-hand_ and full-speed swings come back. Nothing more.");
+        item("glass_eye",
+                "A _crude prosthetic_ eye of glass and iron. Needs nothing to run.",
+                "When Fitted", "You _see_ as you did. Nothing more.");
+        item("crude_heart",
+                "A _crude prosthetic_ heart: a leather pump on an iron frame. Needs nothing to run.",
+                "When Fitted", "It beats like your own. A heart is only ever _swapped_, never taken out, so keep one of these by the table.");
+        item("crude_lungs",
+                "_Crude prosthetic_ lungs: two leather bags on a bone frame. Need nothing to run.",
+                "When Fitted", "You breathe, and _sprint_, as you did.");
+        item("crude_stomach",
+                "A _crude prosthetic_ stomach: a leather sack in an iron cage. Needs nothing to run.",
+                "When Fitted", "You can _eat_ as you did.");
         item("severed_arm",
                 "Somebody's _arm_, taken off on a Surgery Table.",
                 "On a Surgery Table", "Goes back on where an arm is _missing_, anyone's, either side. It is flesh again.");
@@ -145,10 +157,10 @@ public class BBLang {
                 "While It Has Blood", "Nothing you eat makes you _sick_: no hunger, no poison. Dry, you cannot eat (but you do not starve).");
         item("eye",
                 "Somebody's _eye_.",
-                "On a Surgery Table", "Goes back in where an eye is _missing_. With no working eye you are _blind_.");
+                "On a Surgery Table", "Goes back in where an eye is _missing_. An eye gone closes in your _view_; with none you see only a few blocks.");
         item("heart",
                 "Somebody's _heart_. It is still warm.",
-                "On a Surgery Table", "Goes back in where a heart is _missing_. Without a working heart you are _weak and slow_, but alive.");
+                "On a Surgery Table", "_Swaps_ in for a heart. A heart is never taken out alone; one that stops (a dry Pump Heart) leaves you _weak and slow_, but alive.");
         item("lungs",
                 "Somebody's _lungs_.",
                 "On a Surgery Table", "Go back in where lungs are _missing_. Without working lungs you cannot sprint.");
@@ -166,6 +178,7 @@ public class BBLang {
         BloodAndBones.REGISTRATE.addRawLang("bloodandbones.body.lungs", "Lungs");
         BloodAndBones.REGISTRATE.addRawLang("bloodandbones.body.stomach", "Stomach");
         BloodAndBones.REGISTRATE.addRawLang("bloodandbones.surgery.action.replace", "Swap in what is on the table");
+        BloodAndBones.REGISTRATE.addRawLang("bloodandbones.surgery.action.swap", "Swap it for what is on the table");
         BloodAndBones.REGISTRATE.addRawLang("bloodandbones.surgery.state.dead", "%s (dry)");
         BloodAndBones.REGISTRATE.addRawLang("bloodandbones.minion.job.fighter", "Fighter");
         BloodAndBones.REGISTRATE.addRawLang("bloodandbones.minion.job.farmer", "Farmer");

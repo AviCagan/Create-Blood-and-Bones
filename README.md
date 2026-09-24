@@ -55,8 +55,10 @@ provided by [Sable](https://github.com/ryanhcode/sable).
 - **The body.** Lie on the Surgery Table and choose what to do to each part of you: arms, legs,
   eyes, heart, lungs and stomach. A Cleaver on the table takes one out (you keep it, with your name on
   it); an implant or a part goes where one is missing, or swaps straight in. Nothing takes a part any
-  other way, and surgery cannot go wrong. Missing parts cost you (no arm, no hand; no eyes, blind; no
-  heart, weak and slow). Basic prosthetics (Peg Leg, Hook Hand) run on nothing; organic ones (Flesh
+  other way, and surgery cannot go wrong. As the design brief has it, a missing part is an interesting
+  penalty, not a health shave: an arm gone, no off-hand and slower swings; a leg gone, no sprinting; an
+  eye gone, fog closing in; the heart is only ever swapped. Crude prosthetics (Peg Leg, Hook Hand, Glass
+  Eye, Crude Heart, Lungs and Stomach: iron, leather and bone) give back normal working and nothing more; organic ones (Flesh
   Arm, Sinew Leg, Furnace Stomach) on blood and cybernetics (Hydraulic Arm, Piston Leg, Optic Eye, Pump
   Heart, Bellows Lungs) on soul blood from the backtank, and stop working when it runs dry. The Vent Arm
   sprays whatever the tank holds (lava burns, water douses, experience gives experience); the Port Arm
@@ -94,7 +96,7 @@ incremental. `./gradlew runClient` / `runServer` / `runData` are configured by M
 
 ### Development aids
 
-- `./gradlew runGameTestServer` runs the game tests headless (201: every rigged mob and baby,
+- `./gradlew runGameTestServer` runs the game tests headless (202: every rigged mob and baby,
   butchery, rot, bleeding, machines and their filters, cooking and display, surgery, implants, backtanks, minions, chains, recipes,
   advancements and sounds).
 - `./gradlew runData -Dbloodandbones.dump_layers=minecraft:goat#main,...` writes those vanilla

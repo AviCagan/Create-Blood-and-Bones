@@ -71,9 +71,9 @@ public class ImplantTests {
         BodyEffects.drain(player);
         BodyEffects.drain(player);
         BodyEffects.refresh(player);
-        if (tank(player) != 0 || body.works(BodyPart.LEFT_LEG, player)
-                || Math.abs(player.getAttributeValue(Attributes.MOVEMENT_SPEED) - walk * 0.6) > 1.0E-4) {
-            helper.fail("Two seconds at 2 mB should empty 3 mB, leaving the leg dead as a missing one: " + tank(player));
+        if (tank(player) != 0 || body.works(BodyPart.LEFT_LEG, player) || BodyEffects.legs(body, player)
+                || Math.abs(player.getAttributeValue(Attributes.MOVEMENT_SPEED) - walk) > 1.0E-4) {
+            helper.fail("Two seconds at 2 mB should empty 3 mB, leaving the leg dead as a missing one (no sprint): " + tank(player));
             return;
         }
         helper.succeed();
@@ -130,8 +130,14 @@ public class ImplantTests {
         }
         Surgery.operate(helper.getLevel(), player, table, BodyPart.RIGHT_EYE);
         BodyEffects.second(player);
-        if (!player.hasEffect(MobEffects.BLINDNESS)) {
-            helper.fail("Both eyes out should blind you");
+        if (BodyEffects.sees(BodyEffects.body(player), player) || player.hasEffect(MobEffects.BLINDNESS)) {
+            helper.fail("Both eyes out should leave you not seeing (fog on your own screen), not blinded by an effect");
+            return;
+        }
+        table.take();
+        table.put(new ItemStack(BBItems.GLASS_EYE.get()));
+        if (Surgery.operate(helper.getLevel(), player, table, BodyPart.RIGHT_EYE) != Surgery.Action.FIT || !BodyEffects.sees(BodyEffects.body(player), player)) {
+            helper.fail("A Glass Eye should give sight back");
             return;
         }
         helper.succeed();
@@ -182,7 +188,7 @@ public class ImplantTests {
         helper.succeed();
     }
 
-    /** With no arms at all, anything can still be pushed onto the Surgery Table, so nobody is stuck. */
+    /** With no arms at all the main hand still works, so nobody is stuck; the off-hand does not. */
     @GameTest(template = "empty", timeoutTicks = 20)
     public static void armlessCanStillUseTheTable(GameTestHelper helper) {
         helper.setBlock(new BlockPos(3, 2, 3), BBBlocks.SURGERY_TABLE.getDefaultState());
@@ -198,8 +204,12 @@ public class ImplantTests {
         var elsewhere = new net.neoforged.neoforge.event.entity.player.PlayerInteractEvent.RightClickBlock(player, net.minecraft.world.InteractionHand.MAIN_HAND, floor,
                 new net.minecraft.world.phys.BlockHitResult(net.minecraft.world.phys.Vec3.atCenterOf(floor), net.minecraft.core.Direction.UP, floor, false));
         BodyEffects.onUseOnBlock(elsewhere);
-        if (onTable.isCanceled() || !elsewhere.isCanceled()) {
-            helper.fail("An armless player should still reach the table, and nothing else");
+        player.setItemInHand(net.minecraft.world.InteractionHand.OFF_HAND, new ItemStack(BBItems.HOOK_HAND.get()));
+        var offHand = new net.neoforged.neoforge.event.entity.player.PlayerInteractEvent.RightClickBlock(player, net.minecraft.world.InteractionHand.OFF_HAND, floor,
+                new net.minecraft.world.phys.BlockHitResult(net.minecraft.world.phys.Vec3.atCenterOf(floor), net.minecraft.core.Direction.UP, floor, false));
+        BodyEffects.onUseOnBlock(offHand);
+        if (onTable.isCanceled() || elsewhere.isCanceled() || !offHand.isCanceled()) {
+            helper.fail("An armless player's main hand should still work (slowly) and the off-hand not");
             return;
         }
         helper.succeed();

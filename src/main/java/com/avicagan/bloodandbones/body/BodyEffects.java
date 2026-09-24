@@ -18,17 +18,19 @@ import net.neoforged.neoforge.event.entity.player.PlayerInteractEvent;
 import net.neoforged.neoforge.event.tick.PlayerTickEvent;
 
 /**
- * What a body's missing and fitted parts do to its player. A hand without a working arm uses, places and
- * swings nothing (its empty hand still works the Surgery Table, so help is always within reach), and with
- * the main arm gone blocks break slowly. A leg without a working foot under it slows walking and weakens
- * the jump; with neither there is no sprinting.
+ * What a body's missing and fitted parts do. For a player, as the design brief puts it, an empty slot is
+ * an interesting penalty, never a health shave: an arm gone means no off-hand and slower swings (the main
+ * hand always works, so nobody is ever stuck); a leg gone means no sprinting; an eye gone means reduced
+ * vision (drawn as fog on the client); the heart is only ever swapped, never taken out. A mob loses walking
+ * speed and hitting power instead, having no off-hand or sprint to lose.
  */
 public final class BodyEffects {
     private static final ResourceLocation LEGS = BloodAndBones.asResource("legs");
-    /** How well a leg that is not there walks and jumps, and how fast a missing arm breaks blocks. */
+    /** How well a mob's leg that is not there walks and jumps. */
     public static final float MISSING_WALK = 0.2F;
     public static final float MISSING_JUMP = 0.4F;
-    public static final float MISSING_WORK = 0.2F;
+    /** How much slower a player swings (hitting and mining) for each arm that is gone or dead. */
+    public static final float SWING_PER_ARM = 0.25F;
 
     private BodyEffects() {
     }
@@ -50,7 +52,18 @@ public final class BodyEffects {
             ImplantSpec spec = ((ImplantItem) body.implant(part).getItem()).spec();
             return jump ? spec.jump() : spec.walk();
         }
-        return jump ? MISSING_JUMP : MISSING_WALK;
+        // a player without the leg cannot sprint but walks on; a mob just goes slower
+        return wearer instanceof Player ? 1.0F : jump ? MISSING_JUMP : MISSING_WALK;
+    }
+
+    /** Whether both legs work: without that a player cannot sprint. */
+    public static boolean legs(Body body, LivingEntity wearer) {
+        return body.works(BodyPart.LEFT_LEG, wearer) && body.works(BodyPart.RIGHT_LEG, wearer);
+    }
+
+    /** How many arms are gone or dead. */
+    public static int armsOut(Body body, LivingEntity wearer) {
+        return (body.works(BodyPart.LEFT_ARM, wearer) ? 0 : 1) + (body.works(BodyPart.RIGHT_ARM, wearer) ? 0 : 1);
     }
 
     /** The working implant's spec in a part, if there is one. */
@@ -74,18 +87,20 @@ public final class BodyEffects {
         return BodyPart.arm(hand == InteractionHand.MAIN_HAND ? main : main.getOpposite());
     }
 
+    /**
+     * The main hand always works (with one arm left, that arm is the main one; with none, the swings are just
+     * very slow); the off-hand needs both arms.
+     */
     public static boolean handWorks(Player player, InteractionHand hand) {
-        return body(player).works(armFor(player, hand), player);
+        return hand == InteractionHand.MAIN_HAND || armsOut(body(player), player) == 0;
     }
 
-    /** How fast the main arm breaks blocks, flesh being 1. */
+    /** How fast the main arm breaks blocks, flesh being 1: its implant's figure, slower for each arm out. */
     public static float work(Player player) {
         Body body = body(player);
         BodyPart arm = armFor(player, InteractionHand.MAIN_HAND);
-        if (!body.works(arm, player)) {
-            return MISSING_WORK;
-        }
-        return body.state(arm) == Body.State.IMPLANT ? ((ImplantItem) body.implant(arm).getItem()).work() : 1.0F;
+        float implant = body.state(arm) == Body.State.IMPLANT && body.works(arm, player) ? ((ImplantItem) body.implant(arm).getItem()).work() : 1.0F;
+        return implant * (1.0F - SWING_PER_ARM * armsOut(body, player));
     }
 
     private static final ResourceLocation ARMS = BloodAndBones.asResource("arms");
@@ -107,6 +122,7 @@ public final class BodyEffects {
         ImplantSpec main = working(body, armFor(player, InteractionHand.MAIN_HAND), player);
         if (player instanceof Player) {
             apply(player.getAttribute(Attributes.ATTACK_DAMAGE), ARMS, main == null ? 0.0F : main.attack(), AttributeModifier.Operation.ADD_VALUE);
+            apply(player.getAttribute(Attributes.ATTACK_SPEED), ARMS, -SWING_PER_ARM * armsOut(body, player), AttributeModifier.Operation.ADD_MULTIPLIED_TOTAL);
         } else {
             float arms = ((body.works(BodyPart.LEFT_ARM, player) ? 1 : 0) + (body.works(BodyPart.RIGHT_ARM, player) ? 1 : 0)) / 2.0F;
             apply(player.getAttribute(Attributes.ATTACK_DAMAGE), ARMS, arms - 1.0F, AttributeModifier.Operation.ADD_MULTIPLIED_TOTAL);
@@ -152,7 +168,8 @@ public final class BodyEffects {
             return;
         }
         drain(player);
-        if (!sees(body, player)) {
+        if (!sees(body, player) && !(player instanceof Player)) {
+            // a player's reduced vision is fog on their own screen; a mob with no eyes is blind
             effect(player, net.minecraft.world.effect.MobEffects.BLINDNESS, 0, 60);
         }
         if (!body.works(BodyPart.HEART, player)) {
@@ -244,7 +261,7 @@ public final class BodyEffects {
             second(player);
         }
         Body body = body(player);
-        if (player.isSprinting() && (walk(body, player) <= MISSING_WALK + 1.0E-4F || !body.works(BodyPart.LUNGS, player))) {
+        if (player.isSprinting() && (!legs(body, player) || !body.works(BodyPart.LUNGS, player))) {
             player.setSprinting(false);
         }
     }
