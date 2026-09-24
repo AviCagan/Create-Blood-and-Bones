@@ -602,7 +602,7 @@ public class MinionTests {
     }
 
     /** Hit by its maker (a sweep of the sword, a slip), it does not turn on them; nor would it on its maker's other minions. */
-    @GameTest(template = "empty", timeoutTicks = 60)
+    @GameTest(template = "empty", timeoutTicks = 80)
     public static void neverTurnsOnItsMaker(GameTestHelper helper) {
         Player maker = helper.makeMockPlayer(GameType.SURVIVAL);
         MinionEntity minion = minionOf(helper, new BlockPos(3, 2, 3), wholeCow(), 500.0F, maker);
@@ -611,30 +611,35 @@ public class MinionTests {
             helper.fail("A minion should never take its maker, or its maker's other minions, for a target");
             return;
         }
-        minion.hurt(helper.getLevel().damageSources().playerAttack(maker), 1.0F);
-        helper.runAfterDelay(40, () -> {
-            if (minion.getTarget() == maker) {
-                helper.fail("Hurt by its maker, it should not go for them");
-                return;
-            }
-            helper.succeed();
+        // not on its first tick: a hurt then is stamped with the same tick a goal starts from, and no goal would see it
+        helper.runAfterDelay(5, () -> {
+            minion.hurt(helper.getLevel().damageSources().playerAttack(maker), 1.0F);
+            helper.runAfterDelay(40, () -> {
+                if (minion.getTarget() == maker) {
+                    helper.fail("Hurt by its maker, it should not go for them");
+                    return;
+                }
+                helper.succeed();
+            });
         });
     }
 
     /** A pacifist (a villager's pair of arms) takes no target when hurt: it never attacks, so it neither pays for fighting nor stands its ground. */
-    @GameTest(template = "empty", timeoutTicks = 60)
+    @GameTest(template = "empty", timeoutTicks = 80)
     public static void pacifistTakesNoTarget(GameTestHelper helper) {
         MinionBuild build = MinionBuild.of(ref("villager", "body")).with("head", ref("villager", "head")).with("arms", ref("villager", "arms"));
         MinionEntity minion = minion(helper, new BlockPos(3, 2, 3), build, 500.0F);
         Zombie zombie = helper.spawn(EntityType.ZOMBIE, new BlockPos(7, 2, 7));
         zombie.setNoAi(true);
-        minion.hurt(helper.getLevel().damageSources().mobAttack(zombie), 1.0F);
-        helper.runAfterDelay(40, () -> {
-            if (minion.stats().fights() || minion.getTarget() != null) {
-                helper.fail("A pacifist should take no target: " + minion.getTarget());
-                return;
-            }
-            helper.succeed();
+        helper.runAfterDelay(5, () -> {
+            minion.hurt(helper.getLevel().damageSources().mobAttack(zombie), 1.0F);
+            helper.runAfterDelay(40, () -> {
+                if (minion.stats().fights() || minion.getTarget() != null) {
+                    helper.fail("A pacifist should take no target: " + minion.getTarget());
+                    return;
+                }
+                helper.succeed();
+            });
         });
     }
 
