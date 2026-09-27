@@ -356,8 +356,10 @@ public final class CarcassRest {
     private static final Map<ServerLevel, java.util.Set<UUID>> PENDING_SPLIT = new java.util.WeakHashMap<>();
 
     /**
-     * Something solid within a fifth of a block under the lowest corner of the body or its rest cells.
-     * (A carcass propped up on folded legs rests on its leg cells, so those count.)
+     * Something solid within a fifth of a block under any corner of the body or of its folded limbs. (A carcass propped
+     * up on folded legs rests on them, so those count; one lying over a Bleeding Rack rests on its torso with its legs
+     * hanging clear of the floor, which is why it is any corner and not only the lowest: judged by its dangling legs alone
+     * it was found unsupported the moment it folded, and so never rested or bled into the rack.)
      */
     static boolean isSupported(ServerLevel level, CarcassSavedData.Carcass carcass, ServerSubLevel torso) {
         Optional<Rig> maybeRig = RigManager.forCarcass(carcass);
@@ -386,14 +388,7 @@ public final class CarcassRest {
                 corners.add(pose.transformPosition(c, new Vector3d()));
             }
         }
-        double lowest = Double.MAX_VALUE;
         for (Vector3d corner : corners) {
-            lowest = Math.min(lowest, corner.y);
-        }
-        for (Vector3d corner : corners) {
-            if (corner.y > lowest + 0.25) {
-                continue;
-            }
             BlockPos below = BlockPos.containing(corner.x, corner.y - 0.2, corner.z);
             if (!level.getBlockState(below).getCollisionShape(level, below).isEmpty()) {
                 return true;
