@@ -41,7 +41,35 @@ sapper.
 - **The data:** how each part states its aptitude for tasks, so it stays data-driven (brief rule 3) and modded mobs
   work on day one (rule 2).
 
-## 2. Already on the list
+## 2. Rig source B, the Sable Ragdolls way (built and judged 27 September 2026; waiting on the owner)
+
+Every mob was also rigged the way Sable Ragdolls does it, behind a switch. Both versions were measured against the
+brief's physics. The branch `bb-rig-b` has the code and the full page, `docs/RIG-COMPARISON.md`; it is kept locally and
+not on main.
+
+**Verdict:** it does not work better overall. Our rigs win 7 checks, theirs 4, and the rest are ties.
+
+**Theirs is better at:**
+- turning rear-first when hooked by a hind leg;
+- falling away from a blow to the flank;
+- heads and limbs hanging looser;
+- costing about a quarter less to simulate while it falls.
+
+**Ours is better at:**
+- weight;
+- being dragged up a step by a hind leg;
+- looking dead rather than posed;
+- staying where it fell;
+- drawing every part.
+
+**The owner is to choose:**
+1. Copy B's wins into our rigs one at a time (recommended).
+2. Put B on main behind the switch.
+3. Drop it.
+
+**Found along the way, to fix either way:** a wolf hung on a Shackle Hook hangs from its right hind hip, and by the same
+code a ravager would hang from its right front shoulder (docs/ARCHITECTURE-PROPOSAL.md 15.18 on that branch).
+
 
 - **Open questions answered with the design's defaults** (docs/ARCHITECTURE-PROPOSAL.md 15.1). All fourteen are still
   open for the owner to confirm or overturn.
