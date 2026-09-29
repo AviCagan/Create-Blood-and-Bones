@@ -473,6 +473,9 @@ public final class DevShowcase {
                             if (m == 2) {
                                 // the zombie's torso burns by day: a carved pumpkin on its pig's head keeps the sun off
                                 minion.setItemSlot(net.minecraft.world.entity.EquipmentSlot.HEAD, new ItemStack(net.minecraft.world.item.Items.CARVED_PUMPKIN));
+                            } else if (m == 1) {
+                                // and the whole cow in a zombie's head, as a skull is worn
+                                minion.setItemSlot(net.minecraft.world.entity.EquipmentSlot.HEAD, new ItemStack(net.minecraft.world.item.Items.ZOMBIE_HEAD));
                             }
                             player.serverLevel().addFreshEntity(minion);
                             if (m == 3) {
@@ -595,6 +598,14 @@ public final class DevShowcase {
                 } else if (t == 265) {
                     Screenshot.grab(mc.gameDirectory, PREFIX + "minions_4.png", mc.getMainRenderTarget(), message -> {
                     });
+                    // then the whole cow beside it in its zombie's head, from in front the same way
+                    server.execute(() -> {
+                        ServerPlayer player = server.getPlayerList().getPlayers().get(0);
+                        player.teleportTo(player.serverLevel(), player.getX() - 3.0, player.getY(), player.getZ(), 160.0F, 5.0F);
+                    });
+                } else if (t == 275) {
+                    Screenshot.grab(mc.gameDirectory, PREFIX + "minions_5.png", mc.getMainRenderTarget(), message -> {
+                    });
                     // stumps: a ragged one where a surgeon hacked the left arm off, a clean one for the right leg
                     server.execute(() -> {
                         ServerPlayer player = server.getPlayerList().getPlayers().get(0);
@@ -603,7 +614,7 @@ public final class DevShowcase {
                         body.lose(com.avicagan.bloodandbones.body.BodyPart.RIGHT_LEG, false);
                         com.avicagan.bloodandbones.body.BodyEffects.changed(player);
                         // back where the view from behind was taken, clear of the minions, for this and the night's effects
-                        player.teleportTo(player.serverLevel(), player.getX() - 9.0, player.getY(), player.getZ() + 2.3, 150.0F, 15.0F);
+                        player.teleportTo(player.serverLevel(), player.getX() - 6.0, player.getY(), player.getZ() + 2.3, 150.0F, 15.0F);
                     });
                     mc.options.setCameraType(net.minecraft.client.CameraType.THIRD_PERSON_FRONT);
                 } else if (t == 285) {

@@ -38,13 +38,18 @@ public class StitchedMinionRenderer extends EntityRenderer<MinionEntity> {
      * it all round): a snout flush with that pixel (a pig's) stays inside rather than flickering through the front.
      */
     private static final float ROOM = 1.04F;
+    /** How much bigger than the head it sits on a worn skull or mob head is, as vanilla's CustomHeadLayer draws one. */
+    private static final float SKULL = 1.1875F;
     /** A humanoid's helmet, stretched over whatever head it is put on. */
     private final HumanoidArmorModel<MinionEntity> helmet;
+    /** The skulls and mob heads, by type, as a skull block or a humanoid wearing one draws them. */
+    private final java.util.Map<net.minecraft.world.level.block.SkullBlock.Type, net.minecraft.client.model.SkullModelBase> skulls;
 
     public StitchedMinionRenderer(EntityRendererProvider.Context context) {
         super(context);
         shadowRadius = 0.5F;
         helmet = new HumanoidArmorModel<>(context.bakeLayer(ModelLayers.PLAYER_OUTER_ARMOR));
+        skulls = net.minecraft.client.renderer.blockentity.SkullBlockRenderer.createSkullRenderers(context.getModelSet());
     }
 
     @Override
@@ -79,7 +84,7 @@ public class StitchedMinionRenderer extends EntityRenderer<MinionEntity> {
                 drawHeld(minion, held, anchors, placement, pose, buffers, shine);
             }
             if (piece == anchors.head() && !worn.isEmpty()) {
-                drawWorn(minion, worn, placement, pose, buffers, shine);
+                drawWorn(minion, worn, placement, pose, buffers, shine, partialTicks);
             }
         });
         ms.popPose();
@@ -134,10 +139,13 @@ public class StitchedMinionRenderer extends EntityRenderer<MinionEntity> {
 
     /**
      * What it wears on its head, over the head's box: a helmet is a humanoid's helmet stretched to fit the head (a cow's
-     * long skull gets a long helmet), in its material's layers, dyed and glinting as worn armour is; anything else (a
-     * carved pumpkin, a skull) is the item's own head look, sized to the head as vanilla sizes it to a humanoid's.
+     * long skull gets a long helmet), in its material's layers, dyed and glinting as worn armour is; a skull or mob head is
+     * the skull model, a little bigger than the head and sitting on its bottom, as vanilla's CustomHeadLayer draws one on a
+     * humanoid (a dragon's head working its jaw as it walks); anything else (a carved pumpkin) is the item's own head look,
+     * sized to the head as vanilla sizes it to a humanoid's.
      */
-    private void drawWorn(MinionEntity minion, ItemStack worn, MinionBody.Placement placement, PoseStack ms, MultiBufferSource buffers, int light) {
+    private void drawWorn(MinionEntity minion, ItemStack worn, MinionBody.Placement placement, PoseStack ms, MultiBufferSource buffers, int light,
+                          float partialTicks) {
         Vector3f lo = placement.bone().boxMin();
         Vector3f hi = placement.bone().boxMax();
         float sx = (hi.x - lo.x) / 8.0F * ROOM;
@@ -172,6 +180,17 @@ public class StitchedMinionRenderer extends EntityRenderer<MinionEntity> {
                     part.render(ms, buffers.getBuffer(RenderType.armorEntityGlint()), light, OverlayTexture.NO_OVERLAY);
                 }
             }
+        } else if (worn.getItem() instanceof net.minecraft.world.item.BlockItem block
+                && block.getBlock() instanceof net.minecraft.world.level.block.AbstractSkullBlock skull && skulls.get(skull.getType()) != null) {
+            net.minecraft.world.level.block.SkullBlock.Type type = skull.getType();
+            ms.scale(sx, sy, sz);
+            // from the bottom of the head, as a humanoid's is worn from its neck
+            ms.translate(0.0F, 4.0F / 16.0F, 0.0F);
+            ms.scale(SKULL, -SKULL, -SKULL);
+            ms.translate(-0.5F, 0.0F, -0.5F);
+            net.minecraft.client.renderer.blockentity.SkullBlockRenderer.renderSkull(null, 180.0F, minion.walkAnimation.position(partialTicks), ms, buffers, light,
+                    skulls.get(type), net.minecraft.client.renderer.blockentity.SkullBlockRenderer.getRenderType(type,
+                            worn.get(net.minecraft.core.component.DataComponents.PROFILE)));
         } else {
             ms.mulPose(Axis.YP.rotationDegrees(180.0F));
             ms.scale(0.625F * sx, -0.625F * sy, -0.625F * sz);
