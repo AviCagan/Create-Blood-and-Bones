@@ -3332,4 +3332,11 @@ different errand. Its Tender is 32% fit (3 slots of 9 × the square root of pace
 average, and five random gaps of 126 run past the 1600-tick budget with their walks about 2% of the time. With the looks
 put right its runs took 239 to 650 ticks (38 runs); the test has 3000.
 
-**Tests** (NUMBER in all):
+**Tests** (498 in all): the twelve new ones are listed in docs/NEXT.md 1.9 under "Added after the review":
+`foldedArmsBiteWithTheHead`, `headlessSapperGoesOffAtATouch`, `pickUpTakesNothingTwice`,
+`courierKeepsWhatItsMakerHasNoRoomFor`, `poorButcherWastesWhatItCuts`, `sentryShootsByItsFitness`,
+`surgeonTendsByItsFitness`, `fisherWaitsByItsFitness`, `surgeonFindsATableWithinItsReach`, `taskFileKindToolAndAnchorsCount`,
+`taskFileKindAndAnchorsInPlay` and `badMinionDataLeftOutAsItLoads`; `headlessFightsOnlyWhatTouchesIt`,
+`sentryWithNoBowHoldsItsPost`, `cannotOnlyWhenTheBodyCannot`, `villagerArmsArePacifist` and
+`partFactsShowKnacksGripsAndDispositions` were strengthened. The new and strengthened tests and `tenderWakesAFallenMinion`
+passed twenty times over, all in one world, and the suite passed three full runs in a row.
