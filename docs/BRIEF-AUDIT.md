@@ -151,7 +151,9 @@ baby shape; weight classes as data (listed in 15.29 for the owner), driving drag
 rot time and butchery by group for every mob, vanilla ones too (a mob's own file says only what it does differently; a
 butchery table file is a datapack's optional override, and the mod ships none); the constants below moved into the server
 config or data at today's figures; naming rules in place of most rig-target overrides; the guide for model authors.
-Found on the way, for package 1: `hindLegHookComesRoundRearFirst` fails about once in 80 runs on main too.
+Found on the way (15.29): `hindLegHookComesRoundRearFirst` failed about once in 60 to 80 runs, on main too (a dragged
+carcass's turn was all but undamped); now about once in 500, a rarer way left open. `grapplingSpoolHandsACarcassToTheDrag`
+failed about once in 80 (the spool handed a carcass over only nearer than the ground let it come); put right.
 Left for the owner: whether a size-2 slime should leave a carcass (4.4 says it splits), the class list and whether a
 class should set the drag penalty itself; not built: the client-sent rigs and export command of 4.1, and families by Java
 class.

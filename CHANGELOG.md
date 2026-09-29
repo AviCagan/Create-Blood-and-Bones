@@ -22,6 +22,8 @@ Everything below is in development builds only; the art is placeholder (see the 
   or a ship's side. Hook the head and it follows head first. Hook a cow by a hind leg and walk off
   and it comes round rear first; about half the animals do so far (a sheep or a pig still goes on
   head first).
+- A carcass dragged along no longer swings on past the way it should trail and rocks there: a cow
+  dragged by a hind leg now and then ended up crosswise.
 - The killing blow lands where it hits: struck in the flank most carcasses go down on their side,
   away from the blow; struck from behind one pitches onto its nose; struck in the face its head
   snaps back without being flung off. Heads loll.
@@ -226,6 +228,8 @@ Everything below is in development builds only; the art is placeholder (see the 
   soul blood by the block) and Barometric Vent (a puff up and a slow hover).
 - The Grappling Spool gives a carcass it reels in time to arrive. One six blocks off often stopped a step short and
   was never handed to the Meat Hook.
+- The Grappling Spool hands a carcass to the Meat Hook as soon as it is within the hook's reach. One that the ground
+  stopped a little further off than arm's length was never handed over.
 - Set bonuses: four or more flesh grafts heal you from what you hit and rot half as fast; four or more
   brass modules make the throttle a quarter cheaper and you hard to shove. Both kinds in one body get
   neither, and nothing worse.

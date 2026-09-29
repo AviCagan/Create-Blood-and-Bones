@@ -4667,9 +4667,32 @@ full run of this work lost `cowDownEachPath` that way, once in four runs: its Su
 Surgical Rig began, and the rig had nothing to cut. Its cows are now built once the arena has stood 20 ticks; it passed
 30 times on its own after, and every full run.
 
-One failure was not this work's: `hindLegHookComesRoundRearFirst` (15.28) failed once in a full run (the cow stayed 66
-degrees off the way it was dragged), and repeated 80 times it failed once here and once on main at 894f097, the same way.
-It is left to the physics work (package 1) and noted in docs/BRIEF-AUDIT.md.
+One failure was not this work's, but is put right here: `hindLegHookComesRoundRearFirst` (15.28) failed once in a
+full run (the cow stayed 66 degrees off the way it was dragged), and repeated 80 times it failed once here and once on
+main at 894f097, the same way. Traced tick by tick over hundreds of runs, the cow did come round, but fast, and swung on
+past rear first by as much again, rocked there, or came to lie crosswise. The aim spring that turns the hooked limb to
+the hand (`CarcassDrag.aim`) is sized by all the mass on the hook, so once the limb is at its joint's limit it swings the
+whole carcass round; its damping was sized by the limb and killed only the limb's own swing, so the carcass's turn was
+all but undamped. Damping sized by the whole carcass cannot go on the limb (it would fling the light limb about while it
+swings free within its joint), so a drag now takes a share of the carcass's turning away each physics step at its torso,
+about the upright only, so it still rolls and tumbles as it is pulled (`CarcassDrag.steadyTurn`, 6 a second, the same
+figure as the limb's damping). Repeated with the head-hook test, 80 runs of each before and after: the hind-leg hook's
+worst run went from 103 degrees off (the middle run 21) to 26 (the middle run 11), the head hook's from 31 to 22.
+Over 1,030 runs since, it failed twice, both the same rarer way: the hind leg short of its joint's limit, the torso
+trailing straight behind the hook but turned some 40 degrees (the hip sits off the spine, so nothing turns it further),
+then a swing the wrong way. That is about once in 500, where it was once in 60 to 80; it is not put right. Two ways
+tried and dropped: judging whether the hooked part touches its dragger by its own box, not Sable's bounds of its body
+(a whole block turned and squared up, which "touch" at arm's length a third of the time): at the start the hook, drawn
+across its dragger's front, then lay in them and was flung out as they walked past, and the cow came round the wrong
+way far more often (23 runs in 80).
+
+Found while checking the drag's other tests over and over: `grapplingSpoolHandsACarcassToTheDrag` failed about once in
+80 runs, the same before the change. The spool hands a carcass it reels in to the Meat Hook's drag once it is at hand,
+and at hand was within three blocks of the player's middle. Its pull along the ground is a nudge of speed each tick,
+less than the ground's friction takes from a carcass at rest, so a carcass comes in on the speed of its first yank, and
+now and then the ground stopped it 3.3 to 3.6 blocks off, where it crept a hundredth of a block a tick until the reel
+ran out. At hand is now within the Meat Hook's own reach of the player's eyes (5 blocks, `CarcassDrag.HOOK_REACH`),
+where a player could hook it with the hook itself; 300 runs, none failed.
 
 The suite is 589 tests and passed three full runs in a row after the last change (the review's findings below
 included).
@@ -4684,7 +4707,9 @@ four deep from above, the chicken floating at the top and the cow sunk on the fl
 fifth of a block under the surface and the cow's a block above the floor). `showcase_groups_2`: a husk and a drowned
 lying face up, their files taken away too, the same generic biped at the same hitbox as the zombie villager drawn before
 them, each in its own model's parts and skin (the husk's sandy hide, the drowned's teal flesh), not the zombie
-villager's. The earlier shots are unchanged.
+villager's. The earlier shots are unchanged. Run again after the review's fixes and the drag's damping, and looked at:
+the same three groups shots (the log puts the chicken's body a fifth of a block under the surface and the cow's a block
+above the tank's floor), the physics yard's dragged and struck cows, and the minions' row.
 
 **The review's findings put right.** The minion, which by its shape passed for a biped, was becoming a fresh carcass
 when killed with the hook (its flesh given twice where minions scatter, a carcass left where they are destroyed, a brass
