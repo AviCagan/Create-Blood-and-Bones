@@ -21,6 +21,13 @@ import com.avicagan.bloodandbones.registry.BBFluids;
 import com.avicagan.bloodandbones.registry.BBItems;
 import com.mojang.authlib.GameProfile;
 import io.netty.buffer.Unpooled;
+import io.netty.channel.embedded.EmbeddedChannel;
+import net.minecraft.network.Connection;
+import net.minecraft.network.PacketSendListener;
+import net.minecraft.network.protocol.Packet;
+import net.minecraft.network.protocol.PacketFlow;
+import net.minecraft.server.network.CommonListenerCookie;
+import net.minecraft.server.network.ServerGamePacketListenerImpl;
 import net.minecraft.core.BlockPos;
 import net.minecraft.gametest.framework.GameTest;
 import net.minecraft.gametest.framework.GameTestHelper;
@@ -41,7 +48,6 @@ import net.minecraft.world.level.GameType;
 import net.minecraft.world.level.block.Blocks;
 import net.minecraft.world.level.material.Fluid;
 import net.minecraft.world.phys.Vec3;
-import net.neoforged.neoforge.common.util.FakePlayerFactory;
 import net.neoforged.neoforge.fluids.FluidStack;
 import net.neoforged.neoforge.gametest.GameTestHolder;
 import net.neoforged.neoforge.gametest.PrefixGameTestTemplate;
@@ -61,15 +67,33 @@ import java.util.UUID;
 public class RitualTests {
     /**
      * A real server player, not the test framework's bare mock: it can lie on the table, break a block the game's own way,
-     * die and be respawned. It is not logged in (no client): its connection is a Deployer stand-in's, which sends nothing.
+     * die and be respawned. It is not logged in (there is no client): its connection is one the test framework's own mock
+     * player would have, which sends nothing anywhere.
      */
     private static ServerPlayer serverPlayer(GameTestHelper helper, BlockPos at) {
         ServerLevel level = helper.getLevel();
         ServerPlayer player = new ServerPlayer(level.getServer(), level, new GameProfile(UUID.randomUUID(), "bb-patient"), ClientInformation.createDefault());
-        player.connection = FakePlayerFactory.getMinecraft(level).connection;
+        new Silent(player);
         Vec3 v = helper.absoluteVec(Vec3.atBottomCenterOf(at));
         player.moveTo(v.x, v.y, v.z, 0.0F, 0.0F);
         return player;
+    }
+
+    /** A connection to no client: a channel of its own, as the test framework's mock player has, and nothing sent down it. */
+    private static final class Silent extends ServerGamePacketListenerImpl {
+        Silent(ServerPlayer player) {
+            super(player.server, channel(), player, CommonListenerCookie.createInitial(player.getGameProfile(), false));
+        }
+
+        private static Connection channel() {
+            Connection connection = new Connection(PacketFlow.SERVERBOUND);
+            new EmbeddedChannel(connection);
+            return connection;
+        }
+
+        @Override
+        public void send(Packet<?> packet, @org.jetbrains.annotations.Nullable PacketSendListener listener) {
+        }
     }
 
     /** Done with a server player: off the server's books (its stats, its advancements), as a player logging out is. */

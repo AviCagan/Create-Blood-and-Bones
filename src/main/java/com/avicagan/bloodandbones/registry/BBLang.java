@@ -796,7 +796,7 @@ public class BBLang {
         bloodless("bloodandbones.minion.organ_fitted", "Installed: %s");
         BloodAndBones.REGISTRATE.addRawLang("bloodandbones.set_bonus.flesh", "Flesh set: you heal from what you hit, and rot half as fast");
         BloodAndBones.REGISTRATE.addRawLang("bloodandbones.set_bonus.brass", "Brass set: the throttle costs a quarter less, and you are hard to shove");
-        BloodAndBones.REGISTRATE.addRawLang("bloodandbones.surgery.nothing", "Nothing on the table can do that");
+        BloodAndBones.REGISTRATE.addRawLang("bloodandbones.surgery.nothing", "That cannot be done now");
         BloodAndBones.REGISTRATE.addRawLang("bloodandbones.surgery.occupied", "Someone is already on the table");
 
         // ---- the Fluid Backtank
