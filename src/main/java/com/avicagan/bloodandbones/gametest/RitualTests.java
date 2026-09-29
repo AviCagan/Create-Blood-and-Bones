@@ -322,6 +322,7 @@ public class RitualTests {
         int[] t = {0};
         int[] walked = {-1};
         double[] distance = {0, 0};
+        int[] grounded = {0};
         helper.onEachTick(() -> {
             int now = t[0]++;
             boolean sprint = now >= 60;
@@ -330,8 +331,11 @@ public class RitualTests {
             }
             if (now == 120) {
                 int ran = rot(body) - walked[0];
-                BloodAndBones.LOGGER.info("[ritual] walked {} blocks for {} rot, sprinted {} for {}", String.format("%.1f", distance[0]), walked[0],
+                BloodAndBones.LOGGER.info("[ritual] walked {} blocks ({} ticks on the ground) for {} rot, sprinted {} for {}", String.format("%.1f", distance[0]), grounded[0], walked[0],
                         String.format("%.1f", distance[1]), ran);
+                // the walk must have been one, on the ground and some way, or no rot from it would prove nothing
+                helper.assertTrue(distance[0] > 8.0 && grounded[0] >= 55, "the player should have walked on the ground, but went "
+                        + String.format("%.1f", distance[0]) + " blocks and was on the ground " + grounded[0] + " ticks of 60");
                 helper.assertTrue(walked[0] == 0, "walking " + String.format("%.1f", distance[0]) + " blocks should not rot the legs, but it did by " + walked[0]);
                 helper.assertTrue(distance[1] > 10.0 && ran >= 4, "sprinting " + String.format("%.1f", distance[1])
                         + " blocks should rot both legs (a point each every 2.7 blocks), but they rotted by " + ran);
@@ -349,6 +353,9 @@ public class RitualTests {
             player.tickCount = 1;
             player.tick();
             distance[sprint ? 1 : 0] += Math.hypot(player.getX() - was.x, player.getZ() - was.z);
+            if (!sprint && player.onGround() && !player.isSprinting()) {
+                grounded[0]++;
+            }
         });
     }
 
@@ -390,7 +397,10 @@ public class RitualTests {
     /**
      * The surgery screen offers what you carry: for each slot, unclipping with nothing (an implant, not the heart), then
      * what lies on the table, then each implant, prosthetic, limb and module carried (inventory, armour or off-hand) that the
-     * slot takes, each kind once; nothing that does not fit (a Peg Leg for an arm, dirt).
+     * slot takes, each kind once; nothing that does not fit (a Peg Leg for an arm, dirt). Its "You carry" row holds each
+     * implant, limb and module that goes into some slot, picking a slot it goes into (an open one first), never an implanted
+     * slot it would only be unclipped from; and its green mark is only where something carried goes in, never for a blade
+     * or a wrench.
      */
     @GameTest(template = "empty", timeoutTicks = 20)
     public static void screenOffersWhatYouCarry(GameTestHelper helper) {
@@ -427,7 +437,51 @@ public class RitualTests {
         List<Surgery.Option> heart = Surgery.options(body, BodyPart.HEART, onTable, player);
         helper.assertTrue(heart.size() == 1 && heart.get(0).source() == 7 && heart.get(0).action() == Surgery.Action.REPLACE,
                 "a heart should offer only a heart swapped in, never a cut, got " + describe(heart));
+
+        // the "You carry" row: each only for a slot it goes into; the Peg Leg and the Crude Heart do not fit the brass arm
+        // (with them in hand it would only be unclipped), and the carried Cleaver is not in the row at all
+        List<Surgery.Carried> row = Surgery.carried(body, player);
+        helper.assertTrue(row.size() == 6 && row.stream().noneMatch(c -> c.stack().is(BBItems.CLEAVER.get()) || c.stack().is(Blocks.DIRT.asItem())),
+                "the row should hold the Hook Hand, the Peg Leg, the arm, the module, the Crude Heart and the Piston Leg, got " + row);
+        for (Surgery.Carried c : row) {
+            helper.assertTrue(Surgery.fits(body, c.stack(), c.part()), c.stack().getItem() + " should fit the slot it picks, " + c.part());
+        }
+        helper.assertTrue(pick(row, BBItems.HOOK_HAND.get()) == BodyPart.RIGHT_ARM && pick(row, BBItems.SEVERED_ARM.get()) == BodyPart.RIGHT_ARM,
+                "the Hook Hand and the arm should pick the open arm");
+        helper.assertTrue(pick(row, BBItems.PEG_LEG.get()) == BodyPart.LEFT_LEG && pick(row, BBItems.CRUDE_HEART.get()) == BodyPart.HEART
+                && pick(row, BBItems.PISTON_LEG.get()) == BodyPart.LEFT_LEG, "the Peg Leg and Piston Leg should pick a leg and the Crude Heart the "
+                + "heart, not the brass arm, got " + row);
+        helper.assertTrue(pick(row, BBItems.module(Module.PISTON_RAM)) == BodyPart.LEFT_ARM, "the module should pick the brass arm");
+        helper.assertTrue(!Surgery.fits(body, new ItemStack(BBItems.PEG_LEG.get()), BodyPart.LEFT_ARM)
+                && !Surgery.fits(body, new ItemStack(BBItems.CRUDE_HEART.get()), BodyPart.LEFT_ARM)
+                && Surgery.fits(body, new ItemStack(BBItems.HOOK_HAND.get()), BodyPart.LEFT_ARM), "on the brass arm only an arm should fit");
+
+        // the doll's green mark: only where something carried goes in; a Cleaver and a Wrench carried fit nothing
+        Player butcher = helper.makeMockPlayer(GameType.SURVIVAL);
+        Body butchered = BodyEffects.body(butcher);
+        ItemStack loaded = new ItemStack(BBItems.HYDRAULIC_ARM.get());
+        Modules.set(loaded, List.of(Module.PISTON_RAM));
+        butchered.fit(BodyPart.LEFT_ARM, loaded);
+        butcher.getInventory().setItem(0, new ItemStack(BBItems.CLEAVER.get()));
+        butcher.getInventory().setItem(1, new ItemStack(com.simibubi.create.AllItems.WRENCH.get()));
+        for (BodyPart part : BodyPart.values()) {
+            List<Surgery.Option> offered = Surgery.options(butchered, part, ItemStack.EMPTY, butcher);
+            helper.assertTrue(!Surgery.offersCarried(offered), "a carried Cleaver or Wrench should not mark the " + part.getSerializedName()
+                    + " as fitting, got " + describe(offered));
+        }
+        helper.assertTrue(Surgery.options(butchered, BodyPart.RIGHT_ARM, ItemStack.EMPTY, butcher).stream().anyMatch(o -> o.action() == Surgery.Action.TAKE_OFF)
+                && Surgery.options(butchered, BodyPart.LEFT_ARM, ItemStack.EMPTY, butcher).stream().anyMatch(o -> o.action() == Surgery.Action.TAKE_MODULE),
+                "the Cleaver and the Wrench should still be offered as cards");
+        helper.assertTrue(Surgery.carried(butchered, butcher).isEmpty(), "the row should hold neither the Cleaver nor the Wrench");
+        butcher.getInventory().setItem(2, new ItemStack(BBItems.GLASS_EYE.get()));
+        helper.assertTrue(Surgery.offersCarried(Surgery.options(butchered, BodyPart.LEFT_EYE, ItemStack.EMPTY, butcher))
+                && !Surgery.offersCarried(Surgery.options(butchered, BodyPart.LEFT_LEG, ItemStack.EMPTY, butcher)), "a Glass Eye should mark the eyes only");
         helper.succeed();
+    }
+
+    @org.jetbrains.annotations.Nullable
+    private static BodyPart pick(List<Surgery.Carried> row, net.minecraft.world.item.Item item) {
+        return row.stream().filter(c -> c.stack().is(item)).map(Surgery.Carried::part).findFirst().orElse(null);
     }
 
     private static String describe(List<Surgery.Option> options) {
@@ -443,10 +497,12 @@ public class RitualTests {
 
     /**
      * The real button path: a player lies on the table with a surgeon beside it, and each choice goes as the screen sends it
-     * (the payload, over the wire and back) through {@link Surgery#handle}. The table's Cleaver takes the right arm off; a
-     * Hook Hand carried in the ninth slot goes in, out of that slot; unclipped with bare hands it comes back. A choice
-     * naming a slot that is not there, one from someone neither on nor near the table, and one with the rig taken off the
-     * table do nothing.
+     * (the payload, over the wire and back) through {@link Surgery#handle}. The table's Cleaver takes the right arm off. A
+     * stranger across the room with a Hook Hand in hand cannot fit it; standing by the table, the same choice fits it, and
+     * unclipped it goes back to them. The player's own Hook Hand, carried in the ninth slot, goes in, out of that slot.
+     * Then what must do nothing does nothing: the same click again (the slot now empty, so it would unclip what went in); a
+     * slot that is not there (with nothing in hand an implant would come out); a swap clicked twice, the slot now holding
+     * what the first swap took out; and a choice with the rig taken off the table.
      */
     @GameTest(template = "empty", timeoutTicks = 40)
     public static void buttonPathThroughHandle(GameTestHelper helper) {
@@ -463,45 +519,94 @@ public class RitualTests {
                 return;
             }
             table.put(new ItemStack(BBItems.CLEAVER.get()));
-            Body body = BodyEffects.body(player);
-            click(player, new Surgery.ActionPayload(pos, BodyPart.RIGHT_ARM, Surgery.FROM_TABLE));
-            if (BodyEffects.body(player).state(BodyPart.RIGHT_ARM) != Body.State.MISSING || player.getInventory().countItem(BBItems.SEVERED_ARM.get()) != 1
+            click(player, new Surgery.ActionPayload(pos, BodyPart.RIGHT_ARM, Surgery.FROM_TABLE, Surgery.Action.TAKE_OFF, BBItems.CLEAVER.get()));
+            if (arm(player) != Body.State.MISSING || player.getInventory().countItem(BBItems.SEVERED_ARM.get()) != 1
                     || !table.item().is(BBItems.CLEAVER.get())) {
                 helper.fail("The table's Cleaver should take the arm off, into the player's hands, and stay on the table");
                 return;
             }
+
+            // someone else: from across the room nothing, by the table the same choice works, and what comes out is theirs
+            stranger.getInventory().setItem(8, new ItemStack(BBItems.HOOK_HAND.get()));
+            Surgery.Option theirs = hook(player, table, stranger);
+            if (theirs == null || theirs.source() != 8 || theirs.action() != Surgery.Action.FIT) {
+                helper.fail("The screen should offer the stranger their Hook Hand from its slot");
+                return;
+            }
+            stranger.moveTo(pos.getX() + 20.5, pos.getY(), pos.getZ() + 0.5);
+            click(stranger, Surgery.ActionPayload.of(pos, BodyPart.RIGHT_ARM, theirs));
+            if (arm(player) != Body.State.MISSING || !stranger.getInventory().getItem(8).is(BBItems.HOOK_HAND.get())) {
+                helper.fail("A choice sent from across the room should do nothing");
+                return;
+            }
+            stranger.moveTo(pos.getX() + 1.5, pos.getY(), pos.getZ() + 0.5);
+            click(stranger, Surgery.ActionPayload.of(pos, BodyPart.RIGHT_ARM, theirs));
+            if (arm(player) != Body.State.IMPLANT || !stranger.getInventory().getItem(8).isEmpty()) {
+                helper.fail("By the table, the stranger's Hook Hand should go in, out of their slot");
+                return;
+            }
+            click(stranger, new Surgery.ActionPayload(pos, BodyPart.RIGHT_ARM, Surgery.BARE, Surgery.Action.UNCLIP, Items.AIR));
+            if (arm(player) != Body.State.MISSING || stranger.getInventory().countItem(BBItems.HOOK_HAND.get()) != 1
+                    || player.getInventory().countItem(BBItems.HOOK_HAND.get()) != 0) {
+                helper.fail("Unclipped by the stranger, the Hook Hand should go back to them");
+                return;
+            }
+
+            // the player's own
             player.getInventory().setItem(8, new ItemStack(BBItems.HOOK_HAND.get()));
-            Surgery.Option hook = Surgery.options(BodyEffects.body(player), BodyPart.RIGHT_ARM, table.item(), player).stream()
-                    .filter(o -> o.stack().is(BBItems.HOOK_HAND.get())).findFirst().orElse(null);
+            Surgery.Option hook = hook(player, table, player);
             if (hook == null || hook.source() != 8) {
                 helper.fail("The screen should offer the carried Hook Hand from its slot");
                 return;
             }
-            // not there, or not theirs to send: nothing happens
-            click(player, new Surgery.ActionPayload(pos, BodyPart.RIGHT_ARM, 99));
-            stranger.moveTo(pos.getX() + 20.5, pos.getY(), pos.getZ() + 0.5);
-            click(stranger, Surgery.ActionPayload.of(pos, BodyPart.RIGHT_ARM, hook));
-            if (BodyEffects.body(player).state(BodyPart.RIGHT_ARM) != Body.State.MISSING || !player.getInventory().getItem(8).is(BBItems.HOOK_HAND.get())) {
-                helper.fail("A choice naming no slot, or sent from across the room, should do nothing");
-                return;
-            }
             click(player, Surgery.ActionPayload.of(pos, BodyPart.RIGHT_ARM, hook));
-            body = BodyEffects.body(player);
+            Body body = BodyEffects.body(player);
             if (body.state(BodyPart.RIGHT_ARM) != Body.State.IMPLANT || !body.implant(BodyPart.RIGHT_ARM).is(BBItems.HOOK_HAND.get())
                     || !player.getInventory().getItem(8).isEmpty()) {
                 helper.fail("The carried Hook Hand should go in, out of its slot");
                 return;
             }
-            click(player, new Surgery.ActionPayload(pos, BodyPart.RIGHT_ARM, Surgery.BARE));
-            if (BodyEffects.body(player).state(BodyPart.RIGHT_ARM) != Body.State.MISSING || player.getInventory().countItem(BBItems.HOOK_HAND.get()) != 1) {
-                helper.fail("Unclipped with bare hands, the Hook Hand should come back");
+            // clicked again before the answer came: slot 8 is empty now, and with nothing an implant comes out
+            click(player, Surgery.ActionPayload.of(pos, BodyPart.RIGHT_ARM, hook));
+            // a slot that is not there, which would be nothing in hand (an unclip) if it were let through
+            click(player, new Surgery.ActionPayload(pos, BodyPart.RIGHT_ARM, 99, Surgery.Action.UNCLIP, Items.AIR));
+            click(player, new Surgery.ActionPayload(pos, BodyPart.RIGHT_ARM, -7, Surgery.Action.UNCLIP, Items.AIR));
+            if (!BodyEffects.body(player).implant(BodyPart.RIGHT_ARM).is(BBItems.HOOK_HAND.get()) || player.getInventory().countItem(BBItems.HOOK_HAND.get()) != 0) {
+                helper.fail("The fit clicked twice, or a slot that is not there, should not unclip the Hook Hand");
+                return;
+            }
+
+            // a swap clicked twice: the Hook Hand the first took out lands in the slot the second names
+            for (int slot = 1; slot < 8; slot++) {
+                player.getInventory().setItem(slot, new ItemStack(Blocks.DIRT));
+            }
+            player.getInventory().setItem(8, new ItemStack(BBItems.HYDRAULIC_ARM.get()));
+            Surgery.Option brass = Surgery.options(BodyEffects.body(player), BodyPart.RIGHT_ARM, table.item(), player).stream()
+                    .filter(o -> o.stack().is(BBItems.HYDRAULIC_ARM.get())).findFirst().orElse(null);
+            if (brass == null || brass.source() != 8 || brass.action() != Surgery.Action.SWAP) {
+                helper.fail("The screen should offer the carried Hydraulic Arm swapped in, got " + (brass == null ? "nothing" : brass.action()));
+                return;
+            }
+            click(player, Surgery.ActionPayload.of(pos, BodyPart.RIGHT_ARM, brass));
+            if (!BodyEffects.body(player).implant(BodyPart.RIGHT_ARM).is(BBItems.HYDRAULIC_ARM.get()) || !player.getInventory().getItem(8).is(BBItems.HOOK_HAND.get())) {
+                helper.fail("The Hydraulic Arm should go in and the Hook Hand come out, into the slot it went from");
+                return;
+            }
+            click(player, Surgery.ActionPayload.of(pos, BodyPart.RIGHT_ARM, brass));
+            if (!BodyEffects.body(player).implant(BodyPart.RIGHT_ARM).is(BBItems.HYDRAULIC_ARM.get()) || !player.getInventory().getItem(8).is(BBItems.HOOK_HAND.get())) {
+                helper.fail("The swap clicked twice should not swap the Hook Hand back in");
+                return;
+            }
+
+            click(player, new Surgery.ActionPayload(pos, BodyPart.RIGHT_ARM, Surgery.BARE, Surgery.Action.UNCLIP, Items.AIR));
+            if (arm(player) != Body.State.MISSING || player.getInventory().countItem(BBItems.HYDRAULIC_ARM.get()) != 1) {
+                helper.fail("Unclipped with bare hands, the Hydraulic Arm should come back");
                 return;
             }
             // the rig off the table: it is a bare table, and nothing is done
             level.setBlockAndUpdate(pos, level.getBlockState(pos).setValue(SurgeryTableBlock.ATTACHMENT, TableAttachment.NONE));
-            int slot = player.getInventory().findSlotMatchingItem(new ItemStack(BBItems.HOOK_HAND.get()));
-            click(player, new Surgery.ActionPayload(pos, BodyPart.RIGHT_ARM, slot));
-            if (BodyEffects.body(player).state(BodyPart.RIGHT_ARM) != Body.State.MISSING) {
+            click(player, new Surgery.ActionPayload(pos, BodyPart.RIGHT_ARM, 8, Surgery.Action.FIT, BBItems.HOOK_HAND.get()));
+            if (arm(player) != Body.State.MISSING) {
                 helper.fail("With no Surgical Rig on the table nothing should be done");
                 return;
             }
@@ -510,6 +615,17 @@ public class RitualTests {
             dismiss(stranger);
         }
         helper.succeed();
+    }
+
+    private static Body.State arm(Player patient) {
+        return BodyEffects.body(patient).state(BodyPart.RIGHT_ARM);
+    }
+
+    /** The screen's choice of a carried Hook Hand for the patient's right arm, as this surgeon would see it. */
+    @org.jetbrains.annotations.Nullable
+    private static Surgery.Option hook(Player patient, SurgeryTableBlockEntity table, Player surgeon) {
+        return Surgery.options(BodyEffects.body(patient), BodyPart.RIGHT_ARM, table.item(), surgeon).stream()
+                .filter(o -> o.stack().is(BBItems.HOOK_HAND.get())).findFirst().orElse(null);
     }
 
     // ---------------------------------------------------------------- upkeep

@@ -481,6 +481,64 @@ public final class Surgery {
         return out;
     }
 
+    /**
+     * Whether this puts something into the part: an implant, a prosthetic, a limb or organ back, a module. Not a cut, a
+     * module taken out, or an implant unclipped (which a tool that does not fit the part would do too).
+     */
+    public static boolean putsIn(Action action) {
+        return action == Action.FIT || action == Action.REPLACE || action == Action.SWAP || action == Action.REATTACH || action == Action.FIT_MODULE;
+    }
+
+    /** Whether this goes into this part of this body as it is now (see {@link #putsIn}). The same on both sides, for the screen. */
+    public static boolean fits(Body body, ItemStack stack, BodyPart part) {
+        return putsIn(action(body, stack, part));
+    }
+
+    /**
+     * Whether one of these options puts in something the surgeon carries: the surgery screen's green mark, "something you
+     * carry fits here". A carried blade or wrench fits nothing, so it does not count.
+     */
+    public static boolean offersCarried(java.util.List<Option> options) {
+        for (Option option : options) {
+            if (option.source() >= 0 && putsIn(option.action())) {
+                return true;
+            }
+        }
+        return false;
+    }
+
+    /** Something the surgeon carries that fits a slot of the body, and the slot a click on it picks. */
+    public record Carried(ItemStack stack, BodyPart part) {
+    }
+
+    /**
+     * Every implant, prosthetic, limb and module the surgeon carries (inventory, armour and off-hand) that fits some slot of
+     * this body ({@link #fits}), each kind once, with the slot a click on it picks: an open one first, else the first it
+     * fits. The surgery screen's "You carry" row. The same on both sides.
+     */
+    public static java.util.List<Carried> carried(Body body, Player surgeon) {
+        java.util.List<Carried> out = new java.util.ArrayList<>();
+        var inventory = surgeon.getInventory();
+        for (int i = 0; i < inventory.getContainerSize(); i++) {
+            ItemStack stack = inventory.getItem(i);
+            if (!(stack.getItem() instanceof ImplantItem || stack.getItem() instanceof SeveredLimbItem
+                    || stack.getItem() instanceof com.avicagan.bloodandbones.cyber.ModuleItem)) {
+                continue;
+            }
+            BodyPart first = null;
+            for (BodyPart part : BodyPart.values()) {
+                if (fits(body, stack, part) && (first == null || body.state(first) != Body.State.MISSING && body.state(part) == Body.State.MISSING)) {
+                    first = part;
+                }
+            }
+            if (first == null || out.stream().anyMatch(c -> ItemStack.isSameItemSameComponents(c.stack(), stack))) {
+                continue;
+            }
+            out.add(new Carried(stack, first));
+        }
+        return out;
+    }
+
     /** All the blood (c:blood) this player carries, in mB: in a worn or carried backtank, buckets, anything holding fluid. */
     public static int bloodCarried(Player player) {
         int total = 0;
@@ -766,17 +824,20 @@ public final class Surgery {
 
     /**
      * A choice on the surgery screen: do to this part what can be done with what is at {@code source} (the table, nothing,
-     * or a slot of what the surgeon carries; see {@link #FROM_TABLE}).
+     * or a slot of what the surgeon carries; see {@link #FROM_TABLE}). It names what the card said it would do, and with
+     * what item (air for nothing), so a click sent again before the first one's answer arrives, when the slot has since
+     * been emptied or refilled, does not do something else.
      */
-    public record ActionPayload(BlockPos pos, BodyPart part, int source) implements CustomPacketPayload {
+    public record ActionPayload(BlockPos pos, BodyPart part, int source, Action action, net.minecraft.world.item.Item item) implements CustomPacketPayload {
         public static final Type<ActionPayload> TYPE = new Type<>(BloodAndBones.asResource("surgery_action"));
         public static final StreamCodec<RegistryFriendlyByteBuf, ActionPayload> STREAM_CODEC = StreamCodec.composite(
                 BlockPos.STREAM_CODEC, ActionPayload::pos, NeoForgeStreamCodecs.enumCodec(BodyPart.class), ActionPayload::part,
-                net.minecraft.network.codec.ByteBufCodecs.VAR_INT, ActionPayload::source, ActionPayload::new);
+                net.minecraft.network.codec.ByteBufCodecs.VAR_INT, ActionPayload::source, NeoForgeStreamCodecs.enumCodec(Action.class), ActionPayload::action,
+                net.minecraft.network.codec.ByteBufCodecs.registry(net.minecraft.core.registries.Registries.ITEM), ActionPayload::item, ActionPayload::new);
 
         /** What the screen sends for one of the options it offers. */
         public static ActionPayload of(BlockPos table, BodyPart part, Option option) {
-            return new ActionPayload(table, part, option.source());
+            return new ActionPayload(table, part, option.source(), option.action(), option.stack().getItem());
         }
 
         @Override
@@ -792,7 +853,8 @@ public final class Surgery {
 
     /**
      * From the screen: for whoever lies on that table, by them or by someone standing by it, with what the choice names (the
-     * table, nothing, or a slot of what they carry), checked again here as it is now.
+     * table, nothing, or a slot of what they carry), checked again here as it is now. If that would now do something other
+     * than the card said, or with another item, nothing is done.
      */
     public static void handle(ServerPlayer player, ActionPayload payload) {
         if (!player.level().isLoaded(payload.pos()) || !(player.level().getBlockEntity(payload.pos()) instanceof SurgeryTableBlockEntity table)) {
@@ -806,7 +868,9 @@ public final class Surgery {
         if (payload.source() < BARE || payload.source() >= player.getInventory().getContainerSize()) {
             return;
         }
-        if (operate(player.serverLevel(), patient, player, table, payload.part(), payload.source()) == Action.NONE) {
+        ItemStack tool = tool(table, player, payload.source());
+        if (payload.action() == Action.NONE || action(BodyEffects.body(patient), tool, payload.part()) != payload.action() || !tool.is(payload.item())
+                || operate(player.serverLevel(), patient, player, table, payload.part(), payload.source()) == Action.NONE) {
             player.displayClientMessage(Component.translatable("bloodandbones.surgery.nothing"), true);
         }
     }

@@ -254,14 +254,9 @@ public class SurgeryScreen extends AbstractSimiScreen {
         return Surgery.options(body, part, onTable(), Minecraft.getInstance().player);
     }
 
-    /** Whether something the surgeon carries can be used on the slot (the doll's green mark). */
+    /** Whether something the surgeon carries goes into the slot (the doll's green mark); a carried blade or wrench does not count. */
     private boolean offered(Body body, BodyPart part) {
-        for (Surgery.Option option : options(body, part)) {
-            if (option.source() >= 0) {
-                return true;
-            }
-        }
-        return false;
+        return Surgery.offersCarried(options(body, part));
     }
 
     /** The slot picked when the screen opens: the first where something carried fits, else the first with anything. */
@@ -284,39 +279,10 @@ public class SurgeryScreen extends AbstractSimiScreen {
         return BodyPart.LEFT_ARM;
     }
 
-    /**
-     * Every implant, prosthetic, limb and module the surgeon carries (inventory, armour and off-hand) that fits some slot of
-     * this body, each kind once, with the slot a click on it picks: an open one first.
-     */
-    private List<Carried> carried(Body body) {
-        List<Carried> out = new ArrayList<>();
+    /** What the surgeon carries that fits some slot of this body, and the slot a click on it picks ({@link Surgery#carried}). */
+    private List<Surgery.Carried> carried(Body body) {
         Player operator = Minecraft.getInstance().player;
-        if (operator == null) {
-            return out;
-        }
-        var inventory = operator.getInventory();
-        for (int i = 0; i < inventory.getContainerSize(); i++) {
-            ItemStack stack = inventory.getItem(i);
-            if (!(stack.getItem() instanceof ImplantItem || stack.getItem() instanceof com.avicagan.bloodandbones.body.SeveredLimbItem
-                    || stack.getItem() instanceof com.avicagan.bloodandbones.cyber.ModuleItem)) {
-                continue;
-            }
-            BodyPart first = null;
-            for (BodyPart part : BodyPart.values()) {
-                if (Surgery.action(body, stack, part) != Surgery.Action.NONE
-                        && (first == null || body.state(first) != Body.State.MISSING && body.state(part) == Body.State.MISSING)) {
-                    first = part;
-                }
-            }
-            if (first == null || out.stream().anyMatch(c -> ItemStack.isSameItemSameComponents(c.stack, stack))) {
-                continue;
-            }
-            out.add(new Carried(stack, first));
-        }
-        return out;
-    }
-
-    private record Carried(ItemStack stack, BodyPart part) {
+        return operator == null ? List.of() : Surgery.carried(body, operator);
     }
 
     // ---- ticking
@@ -652,7 +618,7 @@ public class SurgeryScreen extends AbstractSimiScreen {
     private int cardsTop;
     private int cardsBottom;
     private int carriedTop;
-    private final List<Carried> carriedShown = new ArrayList<>();
+    private final List<Surgery.Carried> carriedShown = new ArrayList<>();
     private final List<Surgery.Option> optionsShown = new ArrayList<>();
 
     private void renderChoices(GuiGraphics graphics, LivingEntity patient, Body body, int mouseX, int mouseY) {
@@ -684,10 +650,11 @@ public class SurgeryScreen extends AbstractSimiScreen {
             for (int i = 0; i < Math.min(carriedShown.size(), rows * perRow); i++) {
                 int ix = x + (i % perRow) * ICON;
                 int iy = y + (i / perRow) * ICON;
-                Carried c = carriedShown.get(i);
-                boolean here = c.part == selected || Surgery.action(body, c.stack, selected) != Surgery.Action.NONE;
+                Surgery.Carried c = carriedShown.get(i);
+                // green where it goes into the picked slot
+                boolean here = c.part() == selected || Surgery.fits(body, c.stack(), selected);
                 graphics.fill(ix, iy, ix + ICON - 1, iy + ICON - 1, here ? 0xFF3A4A2A : 0xFF2A2420);
-                graphics.renderItem(c.stack, ix + 1, iy + 1);
+                graphics.renderItem(c.stack(), ix + 1, iy + 1);
             }
             y += rows * ICON + 2;
         }
@@ -807,9 +774,9 @@ public class SurgeryScreen extends AbstractSimiScreen {
                 ty = r[1] + r[3] / 2;
             }
         } else if (carriedAt >= 0) {
-            Carried c = carriedShown.get(carriedAt);
-            lines.add(c.stack.getHoverName());
-            lines.add(Component.translatable("bloodandbones.surgery.fits", Component.translatable(c.part.translationKey())).withStyle(ChatFormatting.GRAY));
+            Surgery.Carried c = carriedShown.get(carriedAt);
+            lines.add(c.stack().getHoverName());
+            lines.add(Component.translatable("bloodandbones.surgery.fits", Component.translatable(c.part().translationKey())).withStyle(ChatFormatting.GRAY));
         }
         if (lines.isEmpty()) {
             return;
@@ -834,7 +801,7 @@ public class SurgeryScreen extends AbstractSimiScreen {
             int carriedAt = hoveredCarried((int) mouseX, (int) mouseY);
             if (carriedAt >= 0) {
                 playUiSound(SoundEvents.UI_BUTTON_CLICK.value());
-                select(carriedShown.get(carriedAt).part);
+                select(carriedShown.get(carriedAt).part());
                 return true;
             }
             int card = hoveredCard((int) mouseX, (int) mouseY);
