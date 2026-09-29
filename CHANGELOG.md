@@ -168,6 +168,15 @@ Everything below is in development builds only; the art is placeholder (see the 
   backtank you carry added together. The surgery screen names the surgeon and its price before you cut.
   Fitting never needs a surgeon, and a crude prosthetic never needs blood, so one can always go on. A
   surgeon keeps to its table and tends whoever lies on it, a fitter one faster.
+- The surgery screen, rebuilt (the brief's "select augments in a new UI"): two panels at the sides of the screen and
+  nothing over your body between them, the HUD hidden while it is up. On the left a paper doll of the patient, each
+  slot drawn as it is (their own; a stump, torn and dripping a drop for each bucket it costs to fit; the implant in
+  it, dimmed if dry), a green mark where something you carry fits, and under it the surgeon, its fitness and its
+  stumps' price. On the right the slot you pick: what is on the table, the blood on you, everything you carry that
+  fits this body, and a card for each thing that can be done, with the table's item, with anything you carry
+  (inventory, armour or off-hand) or with bare hands (unclipping), each saying why when it cannot be done yet.
+  Drawn as Create's value boards and schedule cards are. You no longer have to get off the table to try another
+  augment.
 - Stumps show, a dearer ragged stump raggeder: a limb gone leaves the top of it in your own skin with a raw end; a ragged one is
   longer, torn, with flaps of flesh hanging off.
 - Missing parts follow the design brief: an arm gone means no off-hand and swings a quarter slower
@@ -177,7 +186,8 @@ Everything below is in development builds only; the art is placeholder (see the 
   Crude Heart, Crude Lungs and Crude Stomach give back normal working and nothing more. An implant on
   the table swaps for one that fits.
 - Drawn on the player for everyone: missing limbs gone, prosthetics in their place, in third and
-  first person. The body is saved and kept through death.
+  first person. A missing arm holds nothing and a missing limb wears no armour, in third person too. The body is
+  saved and kept through death (now proven through a real death and respawn).
 - Eyes and organs too: a heart, lungs and stomach can be taken out and put back, or swapped straight
   for an implant. No working eye blinds you; no heart leaves you weak and slow (it does not kill); no
   lungs, no sprinting; no stomach, no eating. An empty socket shows where an eye was.
@@ -185,7 +195,8 @@ Everything below is in development builds only; the art is placeholder (see the 
   (Hydraulic Arm, Piston Leg, Optic Eye with a glowing lens, Pump Heart, Bellows Lungs) draw a mB or two
   a second from the worn Fluid Backtank, and stop working, as if the part were missing, when it runs
   dry.
-- Necrosis, from the brief: organic prosthetics rot from use (swings, running, meals), never from time.
+- Necrosis, from the brief: organic prosthetics rot from use (swings, running, meals), never from time. Walking no
+  longer wears the legs; only a sprint does, as the brief names running.
   Blood in the backtank clears it cheaply as you go; rotted through, the part gives no bonus (a small
   penalty) until perfused. It never falls off and never kills. The part greys and greens as it rots.
 - Vent Arm: hold use empty-handed to spray the tank ahead of you. What it does comes from a data map
@@ -539,9 +550,10 @@ Everything below is in development builds only; the art is placeholder (see the 
   at the one tick they looked). They now judge the middle value over the last second; the whole
   suite has passed every run made with that check (at least eleven), which is encouraging but not
   proof.
-- A patient on the Surgery Table is drawn sitting, not lying. An item held in a missing hand, and
-  armour over a missing limb, still show in third person. Nothing is drawn on mobs that have been
-  operated on.
+- A patient on the Surgery Table is drawn sitting, not lying. Nothing is drawn on mobs that have been
+  operated on. A spyglass raised to the eye still shows in a missing hand.
+- Swapping an implant straight in for flesh leaves no ragged stump, and restoring a rotted limb costs a second of
+  blood; both wait on the owner (docs/BRIEF-AUDIT.md decision 11).
 - Minions: a held bow, crossbow or trident is used only by a sentry at its post, and a held axe hits no harder; a ridden
   minion cannot jump. A hauler with no room to walk on past a hook or rack gives up and tries again later.
 - What each mob's signature still waits for (33 mobs: new mechanisms such as the caravan and homing jobs, the mimic's

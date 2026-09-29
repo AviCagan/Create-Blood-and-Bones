@@ -4475,3 +4475,93 @@ hind leg come round rear first, its head end pointing back west; the three struc
 swinging, one a leg short with the leg on the ground below it), the fitness lines and the task screen (Herder's and
 the Butcher's reasons, the list scrolled to its end, the Tender's reasons), the Surgery Table's line, the stumps by
 price, the minions' row, and the machines.
+
+### 15.29 (numbered at merge) Self-augmentation: the ritual's screen and the proofs (verified)
+
+Closes docs/BRIEF-AUDIT.md package 11, but for the two parts that wait on owner decision 11 (below).
+
+**The surgery screen** (`client/SurgeryScreen`, rewritten). The brief says to "select augments in a new UI". Before
+this, the one item laid on the table decided every button, so trying another augment meant getting off the table, and
+the buttons sat over the body in the outside view (`showcase_body_2.png` on main). Now:
+- Two panels at the sides of the screen, each at most 140 wide, with at least 110 left clear between them, where the
+  outside view puts the body. The HUD is hidden while the screen is up (put back as it was on closing), and nothing is
+  drawn over the world (no dimming, no blur).
+- The left panel is the body: a paper doll laid out as a player skin is (the patient faces you, so their right is on
+  your left), the eyes in the head and the lungs, heart and stomach down the torso, each slot drawn as it is. Their own
+  is skin or the organ's colour. A stump is a dark hole with the limb's root and a raw end; a ragged one is torn, its
+  strips longer and a drop under it for each bucket fitting there costs. An implant is its kind's colour (brass,
+  graft, iron) with its item on it, darkened when it is not working. A green mark sits on each slot where something on
+  the table or carried fits. Under the doll are the slot's name and state, and at the foot of the panel the surgeon,
+  its fitness and its stumps' price, before any cut (the tasks work's lines, kept).
+- The right panel is the slot picked on the doll: its state, what is on the table, the blood on you
+  (`Surgery.bloodCarried`), a row of every implant, prosthetic, limb and module you carry that fits a slot of this
+  body (a click picks that slot, an open one first), and a card for each thing that can be done.
+- The cards come from `Surgery.options`, the same on both sides: unclipping with bare hands, then what lies on the
+  table, then each accepted item carried (inventory, armour and off-hand, as the payment already counted blood across
+  them), each kind once (a second blade or wrench never; a second implant only if it differs). A card that cannot be
+  done yet says why in red (`Surgery.blocked`: no surgeon to cut, not enough blood for a ragged stump).
+- It is drawn as Create's value boards are (dark, in Create's brass frame textures) with Create's schedule cards and
+  confirm button, as `MinionTaskScreen` is.
+- "The worn tank" in the audit's words: implants are never kept in a tank, so the screen reads it as the blood the tank
+  holds, which is shown and pays for a ragged stump. Items worn in the armour slots are offered like any other.
+
+**The payload** (`Surgery.ActionPayload`) now names where the item comes from: `FROM_TABLE` (-1), `BARE` (-2, an
+implant unclipped) or a slot of the surgeon's inventory. `Surgery.operate` takes the source; a carried item is taken
+from its slot (a blade used stays there, bloodied), and `Surgery.handle` refuses a slot that is not there before
+anything else. The old signatures (the table's item) are kept for the tests and the rig.
+
+**Missing limbs hold and wear nothing** (known since 14.5). Two client mixins ask `BodyEffects.shows(entity, part)`:
+`ItemInHandLayerMixin` stops vanilla drawing an item in a missing arm's hand in third person, and
+`HumanoidArmorLayerMixin` hides a missing limb's part of each armour piece just after vanilla sets the piece's parts
+visible. Only a player's: a mob's missing limbs are still drawn, and so is what it holds. A spyglass raised to the eye
+is drawn by its own path and is not covered.
+
+**Walking no longer wears the legs.** The brief names "swinging, mining and running"; a leg that rotted from walking
+about would rot from simply playing. `Necrosis.onTick` counts only ground covered at a sprint, at the rate a sprint
+always wore (a point every 2.7 blocks), and now runs for any player on the server side, not only a `ServerPlayer`.
+
+**The fog's rule** moved to common code, `BodyEffects.sight` (both eyes working: no change; one, half as far; none, six
+blocks), so a test can check it; `BodyRendering.onFog` draws what it gives.
+
+**Tests** (`RitualTests`, 12, all new): `bodyKeptThroughDeath` (a server player killed and respawned by the server's
+player list, stump price, rot and modules kept, and the swing penalty back at once), `amputationLeavesHealthAlone`,
+`crudeOrgansLiftPenalties` (the heart's weakness, the lungs' sprint on a real tick, the stomach's eating as it starts),
+`necrosisFromARealHit` (`Player#attack`), `necrosisFromARealBlockBreak` (the game mode's `destroyBlock`),
+`necrosisFromARunNotAWalk` (the player's own tick, three seconds of each: 12 blocks walked for no rot, 16 sprinted for
+12 points), `fogWithOneEyeOut`, `screenOffersWhatYouCarry`, `buttonPathThroughHandle` (each choice written and read
+through the payload's codec, then handled: the table's Cleaver, a carried Hook Hand from its slot, bare hands, and
+three refusals), `implantDrainsAddUp`, `sixBrassLimbsNeedASeriousFarm`, `missingLimbShowsNothing`. The tests that need a
+real server player make one with a connection to no client (a channel of its own, as the test framework's mock player
+has, sending nothing), and take it off the server's books when done.
+
+**Balance: six brass limbs** (two Hydraulic Arms, two Piston Legs, two Optic Eyes), measured by the test over a minute
+of the game's own drain, with the soul blood line's numbers read from its recipes and a cow's blood from its rig:
+- 10 mB of soul blood a second: 600 a minute, **36 buckets an hour**, before the throttle or any module (a Magnet Coil
+  or an Analytical Lens adds 1 each; `blood_upkeep` scales it all).
+- The full line gives back 200 mB for every 250 of blood set under a Basin Lid, so that is **45 buckets of blood an
+  hour**.
+- A cow bleeds 809 mB, so **about 56 cows an hour**, near one a minute. At five minutes between breedings a pair gives
+  twelve calves an hour, so that is five or so breeding pairs, twenty calves growing, and a line to kill, hang, bleed
+  and pipe them.
+- One Basin Lid sets 250 mB every 200 ticks, 72 buckets of soul blood an hour, so **half a Basin Lid** is enough; the
+  line's limit is the animals, not the machines.
+- The test holds it to "serious" (at least 20 cows an hour, more than a pen fed by hand) and "not impossible" (at most
+  120 an hour, and at most four Basin Lids).
+- The trickle path is cheaper per animal: a hoglin bleeds 2.2 buckets of soul blood straight, so sixteen or so an hour
+  would do.
+
+**Left for the owner (decision 11), not built:**
+- Swapping an implant straight in for flesh (`REPLACE`) needs the surgeon but leaves no ragged stump, so a one-step
+  swap always avoids the stump's price (14.12).
+- A fully rotted limb works again after 1 mB of blood and a second of perfusion; the brief says "Restoring it costs
+  Blood", and how much more it should cost from the maximum is the owner's call.
+
+**Found on the way, not changed:** perfusion clears 2 points a second from each rotting graft while there is blood in
+the tank, and a graft only works with blood in the tank, so in play rot barely builds: a sprint wears a Sinew Leg by
+about 2.1 points a second, and swinging by a point a swing. Whether rot should build faster than blood clears it goes
+with decision 11.
+
+**Showcase.** `showcase_body_2` is the new screen on yourself, the ragged stump the zombie-headed surgeon left picked:
+what fits it, and its price. `showcase_surgery_1` is the same with the brass arm picked (unclip, swap, fit the carried
+module) and a slot hovered. `showcase_body_5` is a player with the left arm and right leg gone, holding a sword and a
+shield in iron armour: the shield and that leg's armour are not drawn.

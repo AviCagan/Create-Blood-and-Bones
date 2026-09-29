@@ -461,7 +461,7 @@ An attribute filter set to a part is asked about the whole body, so it never mat
 
 **Owner first.** No.
 
-### 11. Self-augmentation: the ritual and the proofs
+### 11. Self-augmentation: the ritual and the proofs (built 29 September 2026, `bb-surgery`, but decision 11's two parts)
 
 **Why.** This is the brief's highest-risk system. The safety floor holds and is tested. What is left is the ritual's screen, two rules, and missing proofs.
 
@@ -490,6 +490,17 @@ An attribute filter set to a part is asked about the whole body, so it never mat
 **Touches.** `client/SurgeryScreen`, `body/Surgery`, `Necrosis`, `BodyRendering`, and game tests.
 
 **Owner first.** Partly: decision 11.
+
+**Built** (ARCHITECTURE 15.29, with 12 new tests in `RitualTests`):
+- The surgery screen: a paper doll of the body and the picked slot's choices in two panels at the sides, nothing over
+  the body, every implant, prosthetic, limb and module you carry offered (and what is on the table, and unclipping by
+  hand), the surgeon, its fitness and the stump's price before any cut. The payload names where the item comes from.
+- A missing arm holds nothing and a missing limb wears no armour in third person.
+- Walking no longer wears the legs; only a sprint does.
+- Every proof listed above, and the balance check: six brass limbs cost 36 buckets of soul blood an hour, 45 of blood
+  through the full line, about 56 cows an hour and half a Basin Lid. A serious farm, not an impossible one.
+
+**Left for decision 11:** the one-step swap that avoids the ragged stump, and what restoring a rotted limb should cost.
 
 ### 12. Cybernetics: different from flesh, not better
 
@@ -775,7 +786,8 @@ One line each. Details and test names are in ARCHITECTURE sections 13 to 15.
 - **The body:** a set of slots, with crude prosthetics that give back exactly what flesh does. The safety floor never needs a surgeon or blood.
 - **Amputation:** only at the table, with a surgeon minion (villager or pillager head). A ragged stump costs a bucket of blood to fit; the heart can only be swapped. (Since tasks' stage D: any minion with a hand set to Surgeon may cut by default, the owner's call in docs/NEXT.md 1.5, and its stump costs one to three buckets by its fitness.)
 - **Empty-slot penalties:** a missing arm means no off-hand and slow swings; a missing leg means no sprinting.
-- **Necrosis:** on organic implants, cleared by blood perfusion. At the maximum the limb stops working, but never falls off or kills.
+- **Necrosis:** on organic implants, from swinging, mining and sprinting (not walking), cleared by blood perfusion. At the maximum the limb stops working, but never falls off or kills.
+- **The surgery screen:** a paper doll of the body and every augment you carry that fits, with nothing over the body in the outside view (package 11).
 - **Cybernetics:** the throttle (gauge, pitch, glow), all seven modules, no redstone-link module, and both set bonuses.
 - **Minions from carcass parts:**
   - the torso sets size and health;
