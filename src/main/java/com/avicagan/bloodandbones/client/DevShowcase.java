@@ -1157,7 +1157,7 @@ public final class DevShowcase {
                 if (rideShip != null && !rideShip.isRemoved()) {
                     com.avicagan.bloodandbones.gametest.ContraptionTests.cruise(rideShip, new org.joml.Vector3d(0.6, 0.0, 0.0));
                     org.joml.Vector3d over = rideShip.logicalPose().transformPosition(rideDrop, new org.joml.Vector3d()).add(0.0, 1.5, 0.0);
-                    rideDropped = carcass(server.overworld(), EntityType.COW, BlockPos.containing(over.x, over.y, over.z), false, false, 90.0F);
+                    rideDropped = carcass(server.overworld(), EntityType.COW, BlockPos.containing(over.x, over.y, over.z), false, false, 0.0F);
                 }
             });
         } else if (rideStep == 5 && age < 620) {
@@ -1247,8 +1247,8 @@ public final class DevShowcase {
             return;
         }
         CarcassAssembler.bindColliders(level, rideShip);
-        // the deck's front right, where the cow dropped as it flies lands
-        rideDrop = rideShip.logicalPose().transformPositionInverse(new org.joml.Vector3d(y.getX() + 3.5, y.getY() + 1.0, y.getZ() + z0 + 5.0), new org.joml.Vector3d());
+        // the free part of the deck, beside the lying cow, where the cow dropped as it flies lands
+        rideDrop = rideShip.logicalPose().transformPositionInverse(new org.joml.Vector3d(y.getX() + 3.5, y.getY() + 1.0, y.getZ() + z0 + 3.5), new org.joml.Vector3d());
         carcass(level, EntityType.COW, y.offset(5, 2, z0 + 3), false);
         CarcassSavedData.Carcass onShip = carcass(level, EntityType.COW, y.offset(4, 2, z0 + 1), false);
         ShackleHookBlockEntity shackle = null;

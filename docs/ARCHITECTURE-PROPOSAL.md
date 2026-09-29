@@ -4648,9 +4648,9 @@ into the ship's plot first, and no chain longer than a hook hoists from is drawn
 a Mechanical Piston half way through pushing a stone block with a Shackle Hook under it, the cow drawn hanging from the
 hook while it rides in the hook's data (the log says one contraption and no cow in the world at that moment).
 `contraption_hook_set_down.png`: two blocks on, set down, the cow hanging there again as a body, as it hung before.
-`ship_moving_carcasses.png`: a spruce ship, a deck with a gallows, lifted a quarter block off the ground and flown east
+`ship_moving_carcasses.png`: a spruce ship, a deck with a gallows, lifted just clear of the ground and flown east
 with a cow hung from the gallows' hook and a cow resting on the deck, the camera following it. `ship_dropped_cow_rests.png`:
-flying on, more slowly, with a third cow dropped on the front of its deck as it went, seen once it has come to rest
+flying on, more slowly, with a third cow dropped on its deck beside the lying one as it went, seen once it has come to rest
 there (the log says resting and pinned to the ship, the ship still going). In bloodless mode (`bloodless_contraption_hook_moving.png`) the
 cow on the moving hook is drawn as the plated wreck every carcass is there, and no blood lies under it.
 
