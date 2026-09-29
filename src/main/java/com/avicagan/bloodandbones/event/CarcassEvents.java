@@ -159,10 +159,17 @@ public class CarcassEvents {
 
     @SubscribeEvent
     public static void onPrePhysicsTick(ForgeSablePrePhysicsTickEvent event) {
+        com.avicagan.bloodandbones.carcass.CarcassFloat.giveBack(event.getPhysicsSystem().getLevel(), event.getPhysicsSystem());
         CarcassDrag.physicsTick(event.getPhysicsSystem().getLevel(), event.getPhysicsSystem().getPartialPhysicsTick(), event.getTimeStep());
         ShackleHookBlockEntity.physicsTick(event.getPhysicsSystem().getLevel(), event.getTimeStep());
         com.avicagan.bloodandbones.carcass.CarcassFloat.physicsTick(event.getPhysicsSystem().getLevel(), event.getTimeStep());
         com.avicagan.bloodandbones.carcass.trolley.ShackleTrolleyEntity.physicsTick(event.getPhysicsSystem().getLevel(), event.getPhysicsSystem().getPartialPhysicsTick(), event.getTimeStep());
+    }
+
+    /** After a physics step: a carcass in water hides its speed from Sable's water drag between ticks (CarcassFloat). */
+    @SubscribeEvent
+    public static void onPostPhysicsTick(dev.ryanhcode.sable.neoforge.event.ForgeSablePostPhysicsTickEvent event) {
+        com.avicagan.bloodandbones.carcass.CarcassFloat.postPhysicsTick(event.getPhysicsSystem().getLevel(), event.getPhysicsSystem());
     }
 
     /** Trolleys move before Sable steps physics, so the carcass keeps up with the chain instead of trailing a tick. */

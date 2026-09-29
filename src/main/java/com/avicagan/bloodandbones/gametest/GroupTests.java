@@ -394,7 +394,7 @@ public class GroupTests {
      * up to the top; a cow (large, 0.9) built with its back at the surface goes down to the floor. Sable's own lift, which
      * floated every carcass alike, is off for carcass blocks.
      */
-    @GameTest(template = "empty", timeoutTicks = 320)
+    @GameTest(template = "empty", timeoutTicks = 340)
     public static void lightCarcassFloatsHeavyOneSinks(GameTestHelper helper) {
         pool(helper);
         ServerLevel level = helper.getLevel();
@@ -402,23 +402,33 @@ public class GroupTests {
         Mob cow = helper.spawn(EntityType.COW, new BlockPos(7, 4, 5));
         chicken.setNoAi(true);
         cow.setNoAi(true);
-        CarcassSavedData.Carcass light = CarcassAssembler.assemble(chicken, null);
-        CarcassSavedData.Carcass heavy = CarcassAssembler.assemble(cow, null);
-        chicken.discard();
-        cow.discard();
-        if (light == null || heavy == null) {
-            helper.fail("Both carcasses should build in water");
-            return;
-        }
-        if (CarcassBody.weightClass(light).buoyancy() <= 1.0F || CarcassBody.weightClass(heavy).buoyancy() >= 1.0F) {
-            helper.fail("A chicken's class should float and a cow's sink");
-            return;
-        }
         double floor = helper.absolutePos(new BlockPos(0, 2, 0)).getY();
-        helper.runAfterDelay(260, () -> {
+        CarcassSavedData.Carcass[] built = new CarcassSavedData.Carcass[2];
+        // the floor's and the water's colliders exist only once the arena has stood a moment; and a test's delayed steps
+        // are all set out here, since one set from inside another may run twice
+        helper.runAfterDelay(SETTLE_TICKS, () -> {
+            built[0] = CarcassAssembler.assemble(chicken, null);
+            built[1] = CarcassAssembler.assemble(cow, null);
+            chicken.discard();
+            cow.discard();
+            if (built[0] == null || built[1] == null) {
+                helper.fail("Both carcasses should build in water");
+                return;
+            }
+            if (CarcassBody.weightClass(built[0]).buoyancy() <= 1.0F || CarcassBody.weightClass(built[1]).buoyancy() >= 1.0F) {
+                helper.fail("A chicken's class should float and a cow's sink");
+            }
+        });
+        helper.runAfterDelay(SETTLE_TICKS + 240, () -> {
+            CarcassSavedData.Carcass light = built[0];
+            CarcassSavedData.Carcass heavy = built[1];
             ServerSubLevelContainer container = SubLevelContainer.getContainer(level);
-            ServerSubLevel up = (ServerSubLevel) container.getSubLevel(light.bones.get(light.rootBone));
-            ServerSubLevel down = (ServerSubLevel) container.getSubLevel(heavy.bones.get(heavy.rootBone));
+            ServerSubLevel up = light == null ? null : (ServerSubLevel) container.getSubLevel(light.bones.get(light.rootBone));
+            ServerSubLevel down = heavy == null ? null : (ServerSubLevel) container.getSubLevel(heavy.bones.get(heavy.rootBone));
+            if (up == null || down == null) {
+                helper.fail("Both carcasses should still be in the pool");
+                return;
+            }
             double chickenAt = up.logicalPose().position().y - floor;
             double cowAt = down.logicalPose().position().y - floor;
             if (chickenAt < 3.2) {

@@ -8,7 +8,6 @@ import dev.ryanhcode.sable.api.physics.PhysicsPipeline;
 import dev.ryanhcode.sable.api.physics.constraint.ConstraintJointAxis;
 import dev.ryanhcode.sable.api.physics.constraint.GenericConstraintConfiguration;
 import dev.ryanhcode.sable.api.physics.constraint.PhysicsConstraintHandle;
-import dev.ryanhcode.sable.api.physics.handle.RigidBodyHandle;
 import dev.ryanhcode.sable.api.sublevel.ServerSubLevelContainer;
 import dev.ryanhcode.sable.api.sublevel.SubLevelContainer;
 import dev.ryanhcode.sable.companion.math.Pose3d;
@@ -77,9 +76,8 @@ public final class CarcassRest {
                 carcass.stillTicks = 0;
                 return;
             }
-            RigidBodyHandle handle = physics.getPhysicsHandle(serverSubLevel);
-            handle.getLinearVelocity(linear);
-            handle.getAngularVelocity(angular);
+            // as it really moves: in water its speed is put aside between ticks (CarcassFloat)
+            CarcassFloat.velocity(level, physics, serverSubLevel, linear, angular);
             if (linear.length() > STILL_LINEAR || angular.length() > STILL_ANGULAR) {
                 still = false;
             }

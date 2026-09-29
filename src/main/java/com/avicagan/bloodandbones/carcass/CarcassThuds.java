@@ -79,7 +79,7 @@ public final class CarcassThuds {
             if (!(container.getSubLevel(entry.getValue()) instanceof ServerSubLevel body) || body.isRemoved()) {
                 continue;
             }
-            physics.getPhysicsHandle(body).getLinearVelocity(velocity);
+            CarcassFloat.velocity(level, physics, body, velocity, new Vector3d());
             Double before = carcass.fallSpeeds.put(entry.getKey(), velocity.y);
             if (before == null || before > -FALLING || carcass.quietTicks > 0) {
                 continue;

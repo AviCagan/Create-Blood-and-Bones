@@ -2300,7 +2300,8 @@ public final class MinionTasks {
             Vector3d linear = new Vector3d();
             Vector3d angular = new Vector3d();
             for (UUID id : c.bones.values()) {
-                if (server.getSubLevel(id) instanceof dev.ryanhcode.sable.sublevel.ServerSubLevel bone && !bone.isRemoved()) {
+                if (server.getSubLevel(id) instanceof dev.ryanhcode.sable.sublevel.ServerSubLevel bone && !bone.isRemoved()
+                        && !com.avicagan.bloodandbones.carcass.CarcassFloat.scaleAside(level, id, STEADY)) {
                     pipeline.getLinearVelocity(bone, linear).mul(STEADY - 1.0);
                     pipeline.getAngularVelocity(bone, angular).mul(STEADY - 1.0);
                     pipeline.addLinearAndAngularVelocity(bone, linear, angular);
