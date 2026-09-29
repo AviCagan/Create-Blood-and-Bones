@@ -213,6 +213,7 @@ public class TrolleyTests {
         ShackleTrolleyEntity[] trolleys = new ShackleTrolleyEntity[2];
         double[] closest = {Double.MAX_VALUE};
         double[][] range = {{Double.MAX_VALUE, -Double.MAX_VALUE}, {Double.MAX_VALUE, -Double.MAX_VALUE}};
+        int[] upAt = {-1};
 
         helper.runAfterDelay(5, () -> {
             ChainConveyorBlockEntity aBe = (ChainConveyorBlockEntity) level.getBlockEntity(a);
@@ -250,7 +251,12 @@ public class TrolleyTests {
                     range[i][1] = Math.max(range[i][1], trolleys[i].getX());
                 }
                 double gap = trolleys[0].position().distanceTo(trolleys[1].position());
-                if (tick > 60) {
+                // each waits where it was put on until its carcass is hoisted up to the chain; the queue is judged
+                // from a second after both are up
+                if (upAt[0] < 0 && !trolleys[0].hoisting() && !trolleys[1].hoisting()) {
+                    upAt[0] = tick;
+                }
+                if (upAt[0] >= 0 && tick > upAt[0] + 20) {
                     closest[0] = Math.min(closest[0], gap);
                 }
                 if (tick % 40 == 0) {
@@ -259,7 +265,10 @@ public class TrolleyTests {
             });
         }
         helper.runAfterDelay(510, () -> {
-            BloodAndBones.LOGGER.info("[queue] closest={} ranges={}..{} / {}..{}", closest[0], range[0][0], range[0][1], range[1][0], range[1][1]);
+            BloodAndBones.LOGGER.info("[queue] both up at t={} closest={} ranges={}..{} / {}..{}", upAt[0], closest[0], range[0][0], range[0][1], range[1][0], range[1][1]);
+            if (upAt[0] < 0 || upAt[0] > 200) {
+                helper.fail("Both carcasses should be hoisted up to the chain within a few seconds, were up at tick " + upAt[0]);
+            }
             if (closest[0] < 1.2) {
                 helper.fail("The trolleys came within " + closest[0] + " blocks of each other");
             }

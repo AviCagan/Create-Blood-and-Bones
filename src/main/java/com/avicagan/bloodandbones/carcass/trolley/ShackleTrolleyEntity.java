@@ -3,6 +3,7 @@ package com.avicagan.bloodandbones.carcass.trolley;
 import com.avicagan.bloodandbones.BloodAndBones;
 import com.avicagan.bloodandbones.carcass.CarcassJoints;
 import com.avicagan.bloodandbones.carcass.CarcassSavedData;
+import com.avicagan.bloodandbones.carcass.ShackleHookBlockEntity;
 import com.simibubi.create.content.kinetics.chainConveyor.ChainConveyorBlockEntity;
 import dev.ryanhcode.sable.api.physics.constraint.ConstraintJointAxis;
 import dev.ryanhcode.sable.api.physics.constraint.GenericConstraintConfiguration;
@@ -73,6 +74,12 @@ public class ShackleTrolleyEntity extends Entity {
     // transient: rebuilt after load / chunk reload
     @Nullable
     private GenericConstraintHandle joint;
+    /**
+     * Ticks since the trolley began hoisting its carcass up to the chain, or -1 once it holds it (or holds nothing).
+     * The trolley waits where it is on the chain meanwhile. Not saved: a body found off the chain after a load is
+     * hoisted again.
+     */
+    private int hoisting = -1;
     @Nullable
     private Vec3 prevAnchor;
     @Nullable
@@ -97,6 +104,10 @@ public class ShackleTrolleyEntity extends Entity {
         if (start != null) {
             trolley.setPos(start);
             trolley.anchor = trolley.prevAnchor = start.subtract(0, HANG, 0);
+            // a body lying below is hoisted up to the chain before it is held (tick), as a Shackle Hook does
+            if (trolley.gap(level) > ShackleHookBlockEntity.HOIST_REACH) {
+                trolley.hoisting = 0;
+            }
         }
         trolley.syncCarcass();
         return trolley;
@@ -151,7 +162,7 @@ public class ShackleTrolleyEntity extends Entity {
         if (cursor == null) {
             return;
         }
-        switch (cursor.advance(level, parked || blockedAhead(level))) {
+        switch (cursor.advance(level, parked || hoisting >= 0 || blockedAhead(level))) {
             case DERAILED -> {
                 dropCarcass(level); // conveyor broken or chain removed
                 return;
@@ -227,10 +238,48 @@ public class ShackleTrolleyEntity extends Entity {
             dropCarcass(level);
             return;
         }
-        if (level() instanceof ServerLevel level && (joint == null || !joint.isValid())) {
-            joint = null;
-            attach(level); // the joint is memory-only: (re)build it after spawn, load, or the carcass reloading
+        if (!(level() instanceof ServerLevel level)) {
+            return;
         }
+        if (hoisting >= 0) {
+            double gap = gap(level);
+            if (gap < 0.0) {
+                return; // its body or the chain is not loaded: wait
+            }
+            if (gap <= ShackleHookBlockEntity.HOIST_REACH) {
+                hoisting = -1;
+                attach(level);
+            } else if (++hoisting > ShackleHookBlockEntity.HOIST_TICKS) {
+                // caught under something: the trolley cannot carry a body it cannot lift to the chain, so it lets it go
+                dropCarcass(level);
+            }
+            return;
+        }
+        if (joint == null || !joint.isValid()) {
+            joint = null;
+            // the joint is memory-only: (re)build it after spawn, load, or the carcass reloading; a body that has come
+            // away from the chain meanwhile is hoisted back up, not snapped there
+            if (gap(level) > ShackleHookBlockEntity.HOIST_REACH) {
+                hoisting = 0;
+            } else {
+                attach(level);
+            }
+        }
+    }
+
+    /** How far the hooked point is from where it hangs on the chain, or -1 while the body or the chain point is not loaded. */
+    private double gap(ServerLevel level) {
+        ServerSubLevelContainer container = SubLevelContainer.getContainer(level);
+        if (container == null || subLevelId == null || anchor == null
+                || !(container.getSubLevel(subLevelId) instanceof ServerSubLevel body) || body.isRemoved()) {
+            return -1.0;
+        }
+        return body.logicalPose().transformPosition(new Vector3d(anchorPlot), new Vector3d()).distance(anchor.x, anchor.y, anchor.z);
+    }
+
+    /** Whether the trolley is still hoisting its carcass up to the chain (it waits where it is until it has). */
+    public boolean hoisting() {
+        return hoisting >= 0;
     }
 
     @Nullable
@@ -270,11 +319,21 @@ public class ShackleTrolleyEntity extends Entity {
             return;
         }
         for (ShackleTrolleyEntity trolley : trolleys.toArray(new ShackleTrolleyEntity[0])) {
-            if (trolley.isRemoved() || trolley.joint == null || !trolley.joint.isValid() || trolley.anchor == null) {
+            if (trolley.isRemoved() || trolley.anchor == null || trolley.subLevelId == null) {
                 continue;
             }
             SubLevel subLevel = container.getSubLevel(trolley.subLevelId);
             if (!(subLevel instanceof ServerSubLevel body) || body.isRemoved()) {
+                continue;
+            }
+            if (trolley.hoisting >= 0) {
+                // the trolley waits while it hoists, so its chain point stands still
+                ShackleHookBlockEntity.hoist(level, body, trolley.anchorPlot, new Vector3d(trolley.anchor.x, trolley.anchor.y, trolley.anchor.z),
+                        ShackleHookBlockEntity.hoistedMass(level, trolley.carcassId, body), physics, timeStep);
+                trolley.turn(body, physics, timeStep);
+                continue;
+            }
+            if (trolley.joint == null || !trolley.joint.isValid()) {
                 continue;
             }
             // advanceAll ran in LevelTickEvent.Pre, so this slides from last tick's point to this tick's.
@@ -308,7 +367,7 @@ public class ShackleTrolleyEntity extends Entity {
         }
         RigidBodyHandle handle = physics.getPhysicsHandle(body);
         Vector3d angular = handle.getAngularVelocity(new Vector3d());
-        double mass = Math.max(0.05, body.getMassTracker().getMass());
+        double mass = Math.max(ShackleHookBlockEntity.MIN_MASS, body.getMassTracker().getMass());
         Vector3d torque = new Vector3d(axis).mul(angle * TURN_STIFFNESS * mass).sub(new Vector3d(angular).mul(TURN_DAMPING * mass));
         Vector3d impulse = torque.mul(timeStep);
         current.invert().transform(impulse);
@@ -374,7 +433,7 @@ public class ShackleTrolleyEntity extends Entity {
             return false;
         }
         for (ShackleTrolleyEntity trolley : trolleys) {
-            if (!trolley.isRemoved() && trolley.joint != null && carcassId.equals(trolley.carcassId)) {
+            if (!trolley.isRemoved() && (trolley.joint != null || trolley.hoisting >= 0) && carcassId.equals(trolley.carcassId)) {
                 return true;
             }
         }

@@ -2852,18 +2852,21 @@ multiplayer". Each check is now built and has been run, and each turned somethin
     of the rack's blood and of the stains.
 - **Where it ran.** The server and both clients on one four-core machine with no graphics card (xvfb, software
   drawing, 854×480). There were seven runs. The numbers below are from the fifth, the first with the fixes below; the
-  seventh, the same again, found the cut leg falling through the ground (item 4).
+  sixth never started (item 3), and the seventh, the same as the fifth, found the cut leg falling through the ground
+  (item 4).
 
-What the Watcher's pictures show (four from the seventh run are in `docs/screenshots/multiplayer_*.png`):
+What the Watcher's pictures show. Four from the seventh run are in `docs/screenshots/multiplayer_*.png`: `_drag`
+(enlarged), `_hung`, `_cut` and `_skinned`. The fifth run's pictures were written over by a later run and not kept.
 
 - after the kill, the cow falls and lies where the server has it;
 - the drag: the Butcher steps back and sideways, the cow hooked by a front leg. The Meat Hook is stuck in the leg with a
   line to the Butcher's hand, and a trail of drops and stains is left behind;
 - the cow hangs head-up from the hook by the neck, and blood drops into the rack below. The tray's blood rises;
-- after the cut, the front leg lies on the ground by the rack with its wound, blood splashed and stained around it, and
-  the Butcher holds a bloody Cleaver;
-- after skinning, the hanging body is bare flesh, the raw hide lies on the ground, and the cut leg still has its hide;
-- from the side at the end: the rack, the stains and the leg.
+- after the cut, the Butcher holds a bloody Cleaver and fresh blood lies under the cow and by the rack. The cut leg is
+  not in the picture: in the seventh run it fell through the ground (item 4). In the fifth run both the server and the
+  Watcher had it lying on the grass by the rack;
+- after skinning, the hanging body is bare flesh and the raw hide lies on the ground by the rack;
+- from the side at the end: the rack, the stains and the hide.
 
 What the numbers show:
 
@@ -2871,8 +2874,10 @@ What the numbers show:
   (its interpolation delay). That is 12 cm over the drag, 3 cm while hanging, and under a millimetre once still.
 - **Nothing went missing.** Every tick of the handover, either the frozen cow or its carcass was on the Watcher's
   screen. Every body the server had, the Watcher had, except in the first ticks of the carcass while the frozen cow still
-  stood. Its count of the rack's blood and of the stains matched the server's every second (at twenty seconds: 132 mB
-  and 8 stains on both sides).
+  stood. Its count of the rack's blood and of the stains, taken each whole second, matched the server's 38 times in 39
+  in the fifth run and 37 times in 39 in the seventh (at twenty seconds: 132 mB and 8 stains on both sides). Each miss
+  was a change the two logged a few ticks apart (the two clocks are a few ticks off each other; for example 231 mB on
+  the Watcher at 24 seconds, which the server logged three ticks later), and the next second they agreed again.
 - **Smoothness.** The Watcher drew about 20 frames a second over the drag. On most ticks it moved the carcass at the
   server's speed (2 to 9 blocks a second), with no frame jumping back. A few times its drawing stood still for one to
   three ticks (once about seven, at the start of the drag) and then caught up exactly. These match the Watcher's own
@@ -2881,17 +2886,43 @@ What the numbers show:
 
 What it turned up:
 
-1. **Hanging a carcass threw the player standing by it** (fixed).
+1. **Hanging a carcass threw the player standing by it** (the throw is fixed; a player against the body is still
+   jostled).
    - The Shackle Hook held its body with a ball joint made at once. A body lying a few blocks off went up to the tip in
      one tick, at about 80 blocks a second.
    - Sable gives a player the motion of any moving body that pushes them. The Butcher, standing beside the body, was
      thrown about 110 blocks up and 220 along. A single-player game does the same, because the push happens on the
      client.
    - The hook now hoists the body up at 3 blocks a second (`ShackleHookBlockEntity.hoist`: a push at the hooked point
-     that carries the whole carcass's weight). It makes the joint once the hooked point is within 0.3 blocks of the tip,
-     or after four seconds. A hook on a ship still holds at once.
-   - `shackleHookHoistsWithoutFlinging`: a cow hung from four blocks away rises at no more than 3.6 blocks a second and
-     hangs from the tip. With the old snap it fails, at 89 blocks a second.
+     that carries the whole carcass's weight). It makes the joint once the hooked point is within 0.3 blocks of the tip.
+     A body still short of the tip after four seconds (caught under something) is held where it got to: the joint is
+     made at the hooked point's own place, not at the tip.
+   - Whether it is hoisting is not saved. A hook read back with its body more than 0.3 blocks off the tip (saved or
+     unloaded part way up, or held where it got to) hoists it again rather than snapping it up; as before, a body more
+     than 8 blocks off is let go.
+   - The Shackle Trolley made the same snap: a Meat Hook click on a chain strand made its joint at once, on the
+     trolley's first tick. It now hoists the same way, with the same push, and waits where it is on the chain until the
+     body is up. A body it cannot bring up in four seconds it lets fall, since it could not carry it along the chain from
+     where it got to. A body that came away from the chain while unloaded is hoisted back too.
+   - A hook on a ship is not changed: it still makes its joint at once. (Reading Sable's constraint checks, a joint to the
+     world may not be anchored inside a ship's plot, so it may not hold a body at all. Nothing tests hooks on ships, and
+     this was not run.)
+   - Tests, each failing without its fix (old code, eight runs each):
+     - `shackleHookHoistsWithoutFlinging`: a cow hung from four blocks away rises at no more than 3.6 blocks a second and
+       hangs from the tip (89 blocks a second without the hoist);
+     - `shackleHookReloadedPartWayUpKeepsHoisting`: the hook is read back from what it saved when the cow is 4.6 blocks
+       short of the tip, and the cow still rises at the hoist's pace to the tip (88 to 90 blocks a second before);
+     - `shackleHookHoldsACaughtBodyWhereItGotTo`: a cow in a roofed stone pen stays in it, held where it got to (dragged
+       out through the stone at 95 to 104 blocks a second before);
+     - `shackleTrolleyHoistsWithoutFlinging`: a cow under a chain rises to the trolley at the hoist's pace, and the
+       trolley then carries it on (69 to 71 blocks a second before).
+   - **Not fixed: a player right against the body is still jostled.** In the seventh run the Butcher stood against the
+     cow as it rose. It lifted him about a block and a half, from where it had pressed him into the ground, and carried
+     him about two blocks sideways, once at 22 blocks a second in a single tick; he was off the ground for about 14 ticks
+     (`run/mp-watcher/screenshots/mp_watcher_04_hanging.png` shows him in the air, tangled with the rising cow). In the
+     fifth run he stood clear and nothing happened. So the hoist ends the throw across the world, not the jostle. The drag
+     already stops pulling a body that touches its player; the hoist could wait the same way, but then a body would hang
+     low for as long as a player stands by it. Left for package 1, with the drag.
 2. **Walking forward while dragging carries you off** (not fixed; for package 1).
    - The drag pulls the hooked point to 1.1 blocks in front of where the player looks. Walking forward, facing where
      you go, pulls the carcass into your path. You walk into it and it pushes you, which moves the point it is pulled
@@ -2906,8 +2937,8 @@ What it turned up:
    - In the seventh run the front leg, cut off the hanging cow, fell four blocks, touched the grass, and went on
      falling through it into the void as if there were no ground at all (it fell at the rate of gravity, 250 blocks
      down within eight seconds). Both the server and the Watcher had it so: the Watcher's picture after the cut shows the
-     blood but no leg (`docs/screenshots/multiplayer_cut.png`). In the fifth run the same cut left the leg lying on the
-     grass.
+     blood but no leg (`docs/screenshots/multiplayer_cut.png`). The leg was cut off in three of the seven runs (the
+     fourth, fifth and seventh); in the other two it lay on the grass by the rack.
    - Game tests of the same thing did not reproduce it in 42 runs, over a hundred legs: a hung cow's leg cut off over
      stone and over grass, legs dropped from four blocks onto chunk borders, and legs with blood stains put down under
      them. Every leg stayed on the floor.
@@ -2917,30 +2948,47 @@ What it turned up:
 
 **A dozen carcasses at once.**
 
-- **The test.** `dozenCarcassesAtOnce` (`CostTests`) drops twelve fresh carcasses of every size from up to three
+- **The tests** (`CostTests`). `dozenCarcassesAtOnce` drops twelve fresh carcasses of every size from up to three
   blocks: chicken, rabbit, pig, sheep, cow, wolf, villager, zombie, spider, horse, llama and polar bear, 79 bodies in
-  all. Each is knocked over as a kill knocks it. The test times every server tick: with none, awake (the first five
-  seconds), settling, and all resting.
-- **Measuring.** It was run on its own (`-Dbloodandbones.debug.only=dozenCarcasses`; `-Dbloodandbones.debug.repeat=N`
-  runs N copies side by side), on the same four-core machine. In the full suite it only checks that all twelve come to
-  rest on the floor.
+  all. Each is knocked over as a kill knocks it. `dozenHungCarcasses` hangs the same twelve on twelve Shackle Hooks.
+  Both time every server tick.
+- **Measuring.** Each was run on its own, with `-Dbloodandbones.debug.cost=N`, on the same four-core machine. Then the
+  dozen test makes N dozen in the same tick in its one arena, 33 blocks across. Before anything is timed it makes a
+  dozen and clears it away, so that nothing timed runs for the first time. The hung dozen is timed for a minute. In the
+  full suite the tests only check that all the dropped carcasses come to rest on the floor, and that every hung one is
+  hoisted to its hook's tip without being flung.
+- The first measurement, which the review looked at, is replaced. It never timed the tick the carcasses were made in
+  (the 49 to 58 ms it gave was the first physics step after, with nothing run before it). Its 24 and 48 were copies of
+  the test side by side, made up to a second apart, and it showed the empty-arena time of only one copy (the others
+  were 18 to 27 ms, with spikes of about half a second, from the copies around them).
 
-| Carcasses | Empty arena, mean | Awake, first 5 s: mean / 95th percentile | All resting, mean | All at rest after |
-|---|---|---|---|---|
-| 12 (two runs) | 1.9 and 2.9 ms | 9.3 / 12.6 ms and 10.9 / 18.7 ms | 1.7 and 2.1 ms | 14 s and 9 s |
-| 24 (two side by side) | 2.2 ms | 15.6 to 17.8 / 20.7 to 23.2 ms | 2.0 to 2.2 ms | 9 to 11 s |
-| 48 (four side by side) | 2.5 ms | 29.8 to 34.1 / 36.8 to 41.3 ms | 2.9 to 3.1 ms | 9 to 10 s |
+| Carcasses | Empty arena, mean | The tick they are made in; the next | Awake, the 5 s after: mean / 95th percentile | All resting, mean | All at rest after |
+|---|---|---|---|---|---|
+| 12 (two runs) | 1.1 and 1.3 ms | 143 and 149 ms; 19 and 26 ms | 7.5 / 11.1 and 8.7 / 12.6 ms | 1.6 and 1.6 ms | 11 s and 9 s |
+| 24 | 1.2 ms | 334 ms; 41 ms | 14.7 / 19.5 ms | 2.1 ms | 8.5 s |
+| 48 | 1.4 ms | 571 ms; 70 ms | 26.5 / 32.0 ms | 1.9 ms | 15 s |
+| 12 hung on hooks | 1.4 ms | (hung one by one) | 6.6 / 8.6 ms over the whole minute | none rest | never |
 
 These are milliseconds of a server tick, whose budget is 50.
 
-- The tick in which twelve are made at once costs 49 to 58 ms, because twelve are assembled in one tick. A kill makes
-  one.
-- Awake, a carcass costs about 0.6 ms of server tick. Resting ones cost nothing that could be measured: the 79 bodies
-  become 12.
-- **The per-dimension cap of section 3.4 is not needed, and was not built.** A dozen awake use a fifth of a tick for the
-  ten seconds or so before they rest, and resting ones cost nothing. Even four dozen awake leave a third of the tick
-  free, and only briefly. A cap would matter only if many carcasses were made at once and kept awake. That is what
-  decision 3 (every kill leaving a damaged carcass) would bring, so the cap should be settled together with it.
+- **Making a carcass is the dear part: about 12 ms each**, in the tick of the kill. One kill is a quarter of a tick; a
+  dozen kills in the same tick stall the server for a seventh of a second.
+- Awake, a carcass costs about 0.55 ms of every tick. Resting ones cost little: the 79 bodies of a dozen become 12, and
+  a dozen to four dozen resting add under a millisecond to the empty arena.
+- **A hung carcass never rests.** `CarcassRest.isHeld` keeps a hung, trolleyed or dragged carcass out of its resting
+  form, and the hook's belly-out spring pushes its torso every physics step, which keeps all its bodies awake. A dozen
+  hanging cost about 5 ms of every tick, 0.43 ms each, for as long as they hang: all 79 bodies were still awake after a
+  minute. Trolleys hold their bodies the same way (the same joint and spring) and were not timed apart.
+- **The per-dimension cap of section 3.4 is still open, and was not built.** Carcasses on the ground are cheap: a dozen
+  awake use about a sixth of the tick for the ten seconds or so before they rest, four dozen about half of it for
+  fifteen seconds, and then almost nothing. But a butchery line keeps its carcasses hanging: 48 on hooks or trolleys
+  would cost about 20 ms of every tick, all the time. So a line of hung carcasses needs a cap, or a still, hung carcass
+  that is let sleep (the spring left off once it hangs still), or folded as a resting one is. And many kills in one tick
+  are costly on their own. Decision 3 (every kill leaving a damaged carcass) would bring both, so settle them together.
+- **It found a rabbit spinning on its hook** (fixed). The hook's and the trolley's turn spring used a mass of at least
+  0.05 for a torso. A rabbit's torso is 0.018, so the spring was nearly three times too stiff for it and spun it at about
+  60 radians a second; being hoisted, it never came up to the tip. They now use the body's own mass. Without the fix
+  `dozenHungCarcasses` fails with the rabbit 3 to 6 blocks short of its tip.
 
 **A spider never rested** (fixed; found by the dozen).
 
@@ -2963,16 +3011,18 @@ These are milliseconds of a server tick, whose budget is 50.
 | `guillotineLimbGoesToAMinionAndAWallHook` | a Guillotine takes two legs off a cow, never its head; both are picked up; one hangs on a Butcher's Hook, and the other is fitted to a cow's frame and the minion wakes walking on it | the Guillotine's cut |
 | `killWithoutTheMeatHookLeavesNoCarcass` | pigs killed with a sword, with a bare hand and by plain damage die and drop pork, with no carcass | the Meat Hook check in `CarcassEvents.onDeath` |
 | `pieceRidesABelt` | a leg cut off a cow is picked up and dropped on a running belt; it rides to the end and falls off, the same piece | pieces becoming items (`CarcassButchery.pickUp`) |
-| `magnetCoilAtHighSpoolDrawsInACarcass` | a cow seven blocks off stays put below three quarters of full spool; at full spool it is drawn to 3.9 blocks in two seconds | the coil's carcass pull |
+| `magnetCoilAtHighSpoolDrawsInACarcass` | a cow seven blocks off stays put below three quarters of full spool; at full spool it is drawn to 3.3 to 4 blocks in two seconds | the coil's carcass pull |
 | `grapplingSpoolHandsACarcassToTheDrag` | a cow lying still six blocks ahead is hit by the spool, reeled in, and then held by the Meat Hook's drag | the hand-off to `CarcassDrag.start` |
-| `shackleHookHoistsWithoutFlinging` | see above | the hoist |
+| `shackleHookHoistsWithoutFlinging`, `shackleHookReloadedPartWayUpKeepsHoisting`, `shackleHookHoldsACaughtBodyWhereItGotTo`, `shackleTrolleyHoistsWithoutFlinging` | see item 1 above | the hoist, and each of its three fixes |
+| `dozenHungCarcasses` | see the dozen above | the turn spring's own mass |
 
 The Grappling Spool test turned something up too. Run in the full suite, and then 30 times on its own, it failed 7
-times in 30. The spool gave a carcass it reeled in the time it gives a mob (54 ticks for a spool fired at once), but a
-carcass is dragged along the ground, far slower than a mob is yanked through the air: a cow six blocks off came within
-reach just as the time ran out, or just after, and was then never handed to the Meat Hook's drag. A carcass now has 100
-ticks more (`ModuleActions.CARCASS_HAUL_TICKS`). The cow arrives in about 58 ticks of its 154, and the test passed 30
-times in 30, and the ten new tests 10 times each.
+times in 30. The spool gave a carcass it reeled in only 20 ticks more than a mob (a mob gets 34 ticks for a spool
+fired at once, so a carcass had 54), but a carcass is dragged along the ground, far slower than a mob is yanked
+through the air: a cow six blocks off came within reach just as the time ran out, or just after, and was then never
+handed to the Meat Hook's drag. A carcass now has 100 ticks more than a mob (`ModuleActions.CARCASS_HAUL_TICKS`): 80
+more than before, 134 in all for a spool fired at once. The cow arrives in about 58 ticks of its 134, and the test
+passed 30 times in 30, and the ten new tests 10 times each.
 
 What is not built of these: the Guillotine leaves the limbs it cuts on the floor, as bodies, and nothing but a player
 takes them further. It has no output to a belt or funnel, and nothing puts a piece on a wall hook or a minion frame by
@@ -2984,4 +3034,11 @@ pieces dropped on it. In `showcase_17.png` (enlarged in `docs/screenshots/showca
 Depot at the end the belt runs to, and a cow's head and a cow's leg wait behind it on the belt, each drawn as the part it
 is.
 
-The suite is 462 tests (the 451 on main and the eleven above), and passed three runs in a row.
+The Magnet Coil test reached into the tests beside it (found in review). At full spool the coil reaches 16 blocks, and
+an ordinary test area is 11 blocks across with 5 between: it drew in the carcasses and items of its neighbours, and a
+Grappling Spool test run beside it failed 6 times in 8, its cow pulled away by the coil faster than the spool reeled
+it in. The full suite only passed because of where the tests happened to be placed. It now has an area of its own 33
+blocks across (`empty_wide`) and stands in the middle of it, and fails at once if the coil's reach ever outgrows it.
+Run beside each other eight times, both passed every time.
+
+The suite is 466 tests (the 451 on main and the fifteen above), and passed three runs in a row.

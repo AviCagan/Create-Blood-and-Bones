@@ -47,8 +47,12 @@ Everything below is in development builds only; the art is placeholder (see the 
 - Mangler, Guillotine, Beheader and Deglover kinetic machines, each with a filter slot on its top
   edge: a spawn egg, a carcass piece or a Create filter picks which carcasses it works on.
 - Shackle Hook and Shackle Trolley on Create chain conveyors; trolleys queue a body's length apart.
-- The Shackle Hook hoists a carcass up to its tip at a walking pace. It used to snap it there in a tick, which threw
-  anyone standing beside it a couple of hundred blocks.
+- The Shackle Hook and the Shackle Trolley hoist a carcass up at a walking pace, the trolley waiting on the chain until
+  it is up. They used to snap it there in a tick, which threw anyone standing beside it a couple of hundred blocks. A
+  hook reloaded part way up goes on hoisting, and a body caught under something is held where it got to (a trolley
+  lets it fall).
+- A rabbit, or any carcass with a torso that light, comes up to a hook or trolley and hangs still. The belly-out
+  spring was too stiff for so light a torso and spun it.
 - Carcass pieces in Create's Attribute Filter: sort by mob, by part (head, body, limb, tail), fresh
   or rotting, skinned, or from a baby.
 - Both hooks ride Create contraptions with the block they hang from.
@@ -402,6 +406,9 @@ Everything below is in development builds only; the art is placeholder (see the 
   along; step back or sideways while facing it.
 - Now and then on a server, a cut-off limb falls through the ground and is lost. It has been seen once and not yet
   reproduced.
+- A carcass rising to a hook or a trolley still jostles a player standing right against it, a block or two.
+- A hung carcass never settles into its resting form, so every one hanging costs the server a little all the time
+  (about 5 ms of each tick for a dozen).
 - The drag tests used to miss their mark by a hair about once in thirty runs (a body still swinging
   at the one tick they looked). They now judge the middle value over the last second; the whole
   suite has passed every run made with that check (at least eleven), which is encouraging but not

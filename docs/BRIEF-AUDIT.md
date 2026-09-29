@@ -651,20 +651,27 @@ That comparison belongs in the balance pass (PARTS-AND-TRAITS slice 9).
   `runMpWatcher`). One client kills, drags, hangs, cuts and skins a cow with real clicks; the other photographs it and
   logs where it draws every body.
   - The Watcher sees it right. Bodies are drawn 3.5 cm on average from where the server has them. The rack's blood and
-    the stains match every second, and the handover never leaves a gap.
-  - Hanging a carcass threw the player beside it about 220 blocks. Fixed: the hook now hoists the body up at 3 blocks a
-    second.
+    the stains match the server's within a few ticks, and the handover never leaves a gap.
+  - Hanging a carcass threw the player beside it about 220 blocks. Fixed: the Shackle Hook and the Shackle Trolley now
+    hoist the body up at 3 blocks a second, and neither snaps it up after a reload or when it is caught under something.
+    A player standing right against the rising body is still jostled (a block or two); left for package 1. A hook on a
+    ship is unchanged and untested.
   - Walking forward while dragging, your own carcass pushes you along. Not fixed; left for package 1.
-  - Once in three runs a cut leg fell through the ground into the void. Not fixed: game tests could not reproduce it.
-- **A dozen at once.** Twelve awake cost 9 to 11 ms of the 50 ms server tick for about ten seconds; resting, nothing
-  measurable. Four dozen awake cost about 32 ms. ARCHITECTURE 3.4's cap is not needed, and was not built; settle it with
-  decision 3.
+  - A cut leg fell through the ground into the void in one run of seven (one of the three in which the leg was cut
+    off). Not fixed: game tests could not reproduce it.
+- **A dozen at once.** Twelve awake cost 7.5 to 9 ms of the 50 ms server tick for about ten seconds; resting, under a
+  millisecond. Four dozen awake cost about 27 ms at first, and all rest within fifteen seconds. Making a carcass costs about 12 ms in the tick of
+  the kill. Hung carcasses never rest: a dozen on hooks cost about 5 ms of every tick for as long as they hang, so a line
+  of four dozen would cost about 20 ms all the time. ARCHITECTURE 3.4's cap is still open and was not built; settle it
+  with decision 3.
   - It found that a spider carcass never rested (its legs twitched for ever). Fixed: a carcass that stays where it lies
     for five seconds rests, however it twitches.
-- **Nine tests** for what was built but unproven, and one for the hanging fix. Each was also run with its feature taken
-  out, and failed.
+  - It found that a rabbit spun on its hook and could not be hoisted (the belly-out spring was too stiff for so light a
+    torso). Fixed.
+- **Nine tests** for what was built but unproven, and four for the hanging fix (the hook, a hook read back part way up,
+  a body caught under something, the trolley). Each was also run with its feature or fix taken out, and failed.
   - The Grappling Spool test found that a reeled-in carcass often ran out of time a step short of your hand and was
-    never handed to the drag. Fixed: a carcass has five seconds more to arrive.
+    never handed to the drag. Fixed: a carcass has four seconds more to arrive than it had (five more than a mob).
   - Not built: the Guillotine's limbs reach a minion or a wall hook only through a player's hands (package 4, decision 9).
 
 **Why.**
@@ -754,7 +761,8 @@ One line each. Details and test names are in ARCHITECTURE sections 13 to 15.
 - **Power:** flesh minions drink at a Blood Trough they can reach; brass minions run on Soul Canisters swapped by the Charging Cradle; each kind has something the other lacks.
 - **Never destroyed:** a neglected or beaten minion powers down and lies where it is. The minion cap defaults to none.
 - **Checked by running it:** two clients on a dedicated server see the same carcass, and a dozen carcasses at once cost
-  a fifth of a server tick until they rest (package 18).
+  a sixth of a server tick until they rest (package 18). Hung carcasses do not rest; a line of them needs the cap
+  (package 18, decision 3).
 
 ## Different from the brief by recorded decision (not gaps)
 

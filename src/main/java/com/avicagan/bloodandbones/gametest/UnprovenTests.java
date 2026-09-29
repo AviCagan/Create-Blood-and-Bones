@@ -241,6 +241,227 @@ public class UnprovenTests {
         });
     }
 
+    /** A stand-in player holding a Meat Hook, who hooks this cow by a hind leg and hangs it on the hook here. */
+    private static boolean hang(GameTestHelper helper, CarcassSavedData.Carcass cow, BlockPos hookAt, BlockPos standAt) {
+        ServerLevel level = helper.getLevel();
+        Player player = helper.makeMockPlayer(GameType.SURVIVAL);
+        player.setItemInHand(InteractionHand.MAIN_HAND, new ItemStack(BBItems.MEAT_HOOK.get()));
+        player.setPos(Vec3.atBottomCenterOf(helper.absolutePos(standAt)));
+        player.setOldPosAndRot();
+        ServerSubLevel leg = body(level, cow, "right_hind_leg");
+        if (leg == null || !CarcassDrag.start(level, player, leg.getPlot().getCenterBlock(), null)) {
+            helper.fail("Could not hook the cow");
+            return false;
+        }
+        ((ShackleHookBlockEntity) level.getBlockEntity(helper.absolutePos(hookAt))).toggle(level, player);
+        return true;
+    }
+
+    /** How far the hooked point of the hook's body is from its tip. */
+    private static double gapToTip(GameTestHelper helper, BlockPos hookAt, ServerSubLevel torso) {
+        ShackleHookBlockEntity hook = (ShackleHookBlockEntity) helper.getLevel().getBlockEntity(helper.absolutePos(hookAt));
+        Vec3 tip = ShackleHookBlock.tip(helper.absolutePos(hookAt), hook.getBlockState());
+        return torso.logicalPose().transformPosition(hook.hookedAnchor(), new Vector3d()).distance(tip.x, tip.y, tip.z);
+    }
+
+    /**
+     * A hook saved part way through its hoist (the world closed, or its chunk unloaded) comes back knowing what it holds
+     * but not that it was hoisting. It must hoist the body the rest of the way, not snap it up to the tip from where it
+     * is.
+     */
+    @GameTest(template = "empty", timeoutTicks = 260)
+    public static void shackleHookReloadedPartWayUpKeepsHoisting(GameTestHelper helper) {
+        ServerLevel level = helper.getLevel();
+        CarcassSavedData.Carcass cow = carcass(helper, EntityType.COW, new BlockPos(2, 2, 5));
+        BlockPos hookAt = new BlockPos(7, 6, 5);
+        net.minecraft.world.level.block.state.BlockState hookState = BBBlocks.SHACKLE_HOOK.get().defaultBlockState().setValue(ShackleHookBlock.FACING, Direction.UP);
+        helper.setBlock(hookAt.above(), Blocks.STONE);
+        helper.setBlock(hookAt, hookState);
+        double[] fastest = {0.0};
+        double[] reloadedAt = {-1.0};
+        Vector3d[] last = {null};
+        int[] hungAt = {-1};
+        helper.runAfterDelay(40, () -> {
+            if (hang(helper, cow, hookAt, new BlockPos(2, 2, 3))) {
+                hungAt[0] = (int) helper.getTick();
+            }
+        });
+        helper.onEachTick(() -> {
+            ServerSubLevel torso = body(level, cow, cow.rootBone);
+            if (hungAt[0] < 0 || torso == null) {
+                return;
+            }
+            long since = helper.getTick() - hungAt[0];
+            if (since == 8) {
+                // what a save and load does to the hook: a new block entity read back from what the old one saved
+                reloadedAt[0] = gapToTip(helper, hookAt, torso);
+                BlockPos at = helper.absolutePos(hookAt);
+                net.minecraft.nbt.CompoundTag saved = level.getBlockEntity(at).saveWithFullMetadata(level.registryAccess());
+                level.removeBlockEntity(at);
+                level.setBlockEntity(net.minecraft.world.level.block.entity.BlockEntity.loadStatic(at, hookState, saved, level.registryAccess()));
+            }
+            Vector3d now = new Vector3d(torso.logicalPose().position());
+            if (last[0] != null && since > 8) {
+                fastest[0] = Math.max(fastest[0], now.distance(last[0]) * 20.0);
+            }
+            last[0] = now;
+            if (since == 130) {
+                ShackleHookBlockEntity hook = (ShackleHookBlockEntity) level.getBlockEntity(helper.absolutePos(hookAt));
+                double gap = gapToTip(helper, hookAt, torso);
+                BloodAndBones.LOGGER.info("[unproven] reloaded hoist: {} from the tip when reloaded, fastest {} blocks a second after, {} from the tip at the end",
+                        reloadedAt[0], fastest[0], gap);
+                if (reloadedAt[0] < 1.0) {
+                    helper.fail("The test should reload the hook while the cow is still well short of the tip, it was " + reloadedAt[0] + " blocks off");
+                    return;
+                }
+                if (fastest[0] > 10.0) {
+                    helper.fail("A reloaded hook should go on hoisting, not snap the cow up: its torso moved at " + fastest[0] + " blocks a second");
+                    return;
+                }
+                if (!hook.isOccupied() || gap > 0.35) {
+                    helper.fail("The cow should hang from the reloaded hook's tip, it is " + gap + " blocks off");
+                    return;
+                }
+                helper.succeed();
+            }
+        });
+    }
+
+    /**
+     * A body the hook cannot bring up to its tip (here it lies in a stone pen) is held where it got to once the hoist's
+     * time is up, not yanked up to the tip through whatever holds it.
+     */
+    @GameTest(template = "empty", timeoutTicks = 300)
+    public static void shackleHookHoldsACaughtBodyWhereItGotTo(GameTestHelper helper) {
+        ServerLevel level = helper.getLevel();
+        // a pen two blocks high with a stone roof, the hook outside it and up
+        for (int x = 0; x <= 6; x++) {
+            for (int z = 2; z <= 8; z++) {
+                helper.setBlock(new BlockPos(x, 4, z), Blocks.STONE);
+                if (x == 0 || x == 6 || z == 2 || z == 8) {
+                    helper.setBlock(new BlockPos(x, 2, z), Blocks.STONE);
+                    helper.setBlock(new BlockPos(x, 3, z), Blocks.STONE);
+                }
+            }
+        }
+        CarcassSavedData.Carcass cow = carcass(helper, EntityType.COW, new BlockPos(3, 2, 5));
+        BlockPos hookAt = new BlockPos(9, 6, 5);
+        helper.setBlock(hookAt.above(), Blocks.STONE);
+        helper.setBlock(hookAt, BBBlocks.SHACKLE_HOOK.get().defaultBlockState().setValue(ShackleHookBlock.FACING, Direction.UP));
+        AABB pen = new AABB(Vec3.atLowerCornerOf(helper.absolutePos(new BlockPos(1, 2, 3))), Vec3.atLowerCornerOf(helper.absolutePos(new BlockPos(6, 4, 8))));
+        double[] fastest = {0.0};
+        Vector3d[] last = {null};
+        int[] hungAt = {-1};
+        helper.runAfterDelay(40, () -> {
+            if (hang(helper, cow, hookAt, new BlockPos(3, 2, 1))) {
+                hungAt[0] = (int) helper.getTick();
+            }
+        });
+        helper.onEachTick(() -> {
+            ServerSubLevel torso = body(level, cow, cow.rootBone);
+            if (hungAt[0] < 0 || torso == null) {
+                return;
+            }
+            Vector3d now = new Vector3d(torso.logicalPose().position());
+            if (last[0] != null) {
+                fastest[0] = Math.max(fastest[0], now.distance(last[0]) * 20.0);
+            }
+            last[0] = now;
+            if (helper.getTick() == hungAt[0] + ShackleHookBlockEntity.HOIST_TICKS + 60) {
+                ShackleHookBlockEntity hook = (ShackleHookBlockEntity) level.getBlockEntity(helper.absolutePos(hookAt));
+                BloodAndBones.LOGGER.info("[unproven] caught hoist: fastest {} blocks a second, torso at {}, {} from the tip", fastest[0], now, gapToTip(helper, hookAt, torso));
+                if (fastest[0] > 10.0) {
+                    helper.fail("The hook should not yank a body it cannot lift: its torso moved at " + fastest[0] + " blocks a second");
+                    return;
+                }
+                if (!pen.contains(now.x, now.y, now.z)) {
+                    helper.fail("The cow should still be in its pen, it is at " + now);
+                    return;
+                }
+                if (!hook.isOccupied()) {
+                    helper.fail("The hook should still hold the cow where it got to");
+                    return;
+                }
+                helper.succeed();
+            }
+        });
+    }
+
+    /**
+     * Hung on a Shackle Trolley, a cow lying under the chain is hoisted up to it at the hook's pace, and the trolley
+     * carries it on once it is up. Held at once, it flew up to the chain in a tick, as it did on the hook.
+     */
+    @GameTest(template = "empty", timeoutTicks = 300)
+    public static void shackleTrolleyHoistsWithoutFlinging(GameTestHelper helper) {
+        ServerLevel level = helper.getLevel();
+        BlockPos aRel = new BlockPos(1, 6, 5);
+        BlockPos bRel = new BlockPos(9, 6, 5);
+        helper.setBlock(aRel, AllBlocks.CHAIN_CONVEYOR.getDefaultState());
+        helper.setBlock(bRel, AllBlocks.CHAIN_CONVEYOR.getDefaultState());
+        helper.setBlock(aRel.above(), AllBlocks.CREATIVE_MOTOR.getDefaultState().setValue(com.simibubi.create.content.kinetics.motor.CreativeMotorBlock.FACING, Direction.DOWN));
+        BlockPos a = helper.absolutePos(aRel);
+        BlockPos b = helper.absolutePos(bRel);
+        CarcassSavedData.Carcass cow = carcass(helper, EntityType.COW, new BlockPos(5, 2, 5));
+        com.avicagan.bloodandbones.carcass.trolley.ShackleTrolleyEntity[] trolley = new com.avicagan.bloodandbones.carcass.trolley.ShackleTrolleyEntity[1];
+        double[] fastest = {0.0};
+        Vector3d[] last = {null};
+        Vec3[] startedAt = {null};
+        helper.runAfterDelay(5, () -> {
+            var aBe = (com.simibubi.create.content.kinetics.chainConveyor.ChainConveyorBlockEntity) level.getBlockEntity(a);
+            var bBe = (com.simibubi.create.content.kinetics.chainConveyor.ChainConveyorBlockEntity) level.getBlockEntity(b);
+            if (!bBe.addConnectionTo(a) || !aBe.addConnectionTo(b)) {
+                helper.fail("Could not connect the chain conveyors");
+            }
+            // slow, so what moves the body fast can only be the hoist
+            ((CreativeMotorBlockEntity) level.getBlockEntity(a.above())).generatedSpeed.setValue(16);
+        });
+        helper.runAfterDelay(30, () -> {
+            var aBe = (com.simibubi.create.content.kinetics.chainConveyor.ChainConveyorBlockEntity) level.getBlockEntity(a);
+            ServerSubLevel torso = body(level, cow, cow.rootBone);
+            if (torso == null) {
+                helper.fail("No torso");
+                return;
+            }
+            aBe.prepareStats();
+            var cursor = new com.avicagan.bloodandbones.carcass.trolley.ChainCursor(a, b.subtract(a), 0.5f, aBe.reversed);
+            trolley[0] = com.avicagan.bloodandbones.carcass.trolley.ShackleTrolleyEntity.create(com.avicagan.bloodandbones.registry.BBEntities.SHACKLE_TROLLEY.get(),
+                    level, cursor, cow, torso);
+            level.addFreshEntity(trolley[0]);
+            startedAt[0] = trolley[0].position();
+        });
+        helper.onEachTick(() -> {
+            ServerSubLevel torso = body(level, cow, cow.rootBone);
+            if (trolley[0] == null || torso == null) {
+                return;
+            }
+            Vector3d now = new Vector3d(torso.logicalPose().position());
+            if (last[0] != null) {
+                fastest[0] = Math.max(fastest[0], now.distance(last[0]) * 20.0);
+            }
+            last[0] = now;
+            if (helper.getTick() == 30 + 160) {
+                Vec3 anchor = trolley[0].anchor();
+                double gap = anchor == null ? Double.NaN : torso.logicalPose().transformPosition(trolley[0].anchorPlot(), new Vector3d()).distance(anchor.x, anchor.y, anchor.z);
+                double moved = trolley[0].position().distanceTo(startedAt[0]);
+                BloodAndBones.LOGGER.info("[unproven] trolley hoist: fastest {} blocks a second, {} from the chain point, the trolley {} along", fastest[0], gap, moved);
+                if (fastest[0] > 10.0) {
+                    helper.fail("The trolley should hoist the cow up, not fling it: its torso moved at " + fastest[0] + " blocks a second");
+                    return;
+                }
+                if (trolley[0].isRemoved() || !(gap <= 0.35)) {
+                    helper.fail("The cow should hang from the trolley, it is " + gap + " blocks off");
+                    return;
+                }
+                if (moved < 0.5) {
+                    helper.fail("The trolley should carry the cow on along the chain once it is up, it went " + moved);
+                    return;
+                }
+                trolley[0].dropCarcass(level);
+                helper.succeed();
+            }
+        });
+    }
+
     // ---- a skeleton cannot be skinned (brief: "A skeleton has no blood and no hide")
 
     /** Flensing Knife strokes on a skeleton do nothing: no hide, no bare flesh, not skinned. */
@@ -618,14 +839,22 @@ public class UnprovenTests {
     /**
      * A cow lying seven blocks off. The Magnet Coil held low leaves it where it is; held past three quarters of full
      * spool it draws the carcass in.
+     * <p>
+     * At full spool the coil reaches 16 blocks, further than an ordinary test area and the gap to the next: in one it
+     * drew in the carcasses and items of the tests beside it. So this test has an area 33 blocks across and stands in
+     * the middle of it, where all it reaches is its own.
      */
-    @GameTest(template = "empty", timeoutTicks = 300)
+    @GameTest(template = "empty_wide", timeoutTicks = 300)
     public static void magnetCoilAtHighSpoolDrawsInACarcass(GameTestHelper helper) {
         ServerLevel level = helper.getLevel();
+        if (ModuleActions.MAGNET_RADIUS + ModuleActions.MAGNET_RAMP > 16.0) {
+            helper.fail("The coil now reaches past this test's own area: widen the area, or it pulls on the tests beside it");
+            return;
+        }
         Player player = helper.makeMockPlayer(GameType.SURVIVAL);
-        player.moveTo(helper.absoluteVec(new Vec3(1.5, 2.0, 5.5)));
+        player.moveTo(helper.absoluteVec(new Vec3(16.5, 2.0, 16.5)));
         wearBrass(player, Module.MAGNET_COIL);
-        CarcassSavedData.Carcass cow = carcass(helper, EntityType.COW, new BlockPos(8, 2, 5));
+        CarcassSavedData.Carcass cow = carcass(helper, EntityType.COW, new BlockPos(23, 2, 16));
         double[] distance = new double[3];
         int[] held = {-1};
         java.util.function.DoubleSupplier away = () -> {
