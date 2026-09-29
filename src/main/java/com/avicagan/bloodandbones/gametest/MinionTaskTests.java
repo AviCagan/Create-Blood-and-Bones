@@ -1918,7 +1918,7 @@ public class MinionTaskTests {
     /**
      * {@code /bloodandbones minion fitness} (docs/NEXT.md 1.4): the minion its maker looks at, and not when they look away;
      * for it, what it is doing, then every task's full breakdown in the screen's order, with the number before it was held
-     * where the cap took some off (a cow on rabbit legs herds at 200%, 214% before).
+     * where the cap took some off (a cow on rabbit legs herds at 200%, 213% before: pace 1.37 × knack 1.25 × docile 1.25).
      */
     @GameTest(template = "empty", timeoutTicks = 20)
     public static void fitnessCommandShowsEveryTask(GameTestHelper helper) {
@@ -1949,10 +1949,11 @@ public class MinionTaskTests {
                 return;
             }
         }
-        if (lines.stream().noneMatch(line -> names(line, MinionTask.HERDER.nameKey()) && names(line, "bloodandbones.command.minion.raw"))
+        if (lines.stream().noneMatch(line -> names(line, MinionTask.HERDER.nameKey()) && line.getSiblings().stream().anyMatch(sibling -> sibling.getContents()
+                instanceof TranslatableContents raw && raw.getKey().equals("bloodandbones.command.minion.raw") && "213%".equals(raw.getArgs()[0])))
                 || lines.stream().noneMatch(line -> names(line, "bloodandbones.minion.cannot.hand"))
                 || lines.stream().noneMatch(line -> names(line, "bloodandbones.minion.factor"))) {
-            helper.fail("Herder should show what the cap took off, Surgeon why it cannot, and the stats each reads: " + lines.size() + " lines");
+            helper.fail("Herder should show what the cap took off (213%), Surgeon why it cannot, and the stats each reads: " + lines.size() + " lines");
             return;
         }
         minion.discard();

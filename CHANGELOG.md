@@ -185,7 +185,20 @@ Everything below is in development builds only; the art is placeholder (see the 
   wakes to the task it is fittest for ("Woke as a Surgeon (200%)"). A missing tool makes it wait, and its status line
   says so; it never changes task by itself. A minion with no head strikes only what touches it; a sentry with no bow
   strikes what comes within reach of its post. A fitter minion uses less blood at work. Old minions' jobs become the
-  same tasks (a companion or bodyguard guards you, a scavenger is a courier). The Tender's work comes later.
+  same tasks (a companion or bodyguard guards you, a scavenger is a courier).
+- The Tender, the sixteenth task: it keeps the Blood Troughs and Charging Cradles near home stocked from the chests,
+  barrels, shulker boxes and item vaults there. Buckets of blood go into the troughs, and empty buckets it fills at a
+  Create Fluid Tank or a Bleeding Rack's tray; full Soul Canisters and brass sheets go into the cradles, and the cradles'
+  empties back out. Any of your minions lying powered down near home gets a bucket of blood or a canister and gets up.
+  Nothing it carries is lost: what a fallen minion cannot hold of a bucket the Tender drinks, or pours into a trough.
+  The empties go back into a container. A bigger torso carries more at a trip, and a fitter Tender looks round sooner.
+- A butcher minion with a Cleaver chops the pieces laid on a Butcher's Table near home, as a Deployer does, and keeps
+  what comes off. A minion storing its takings passes over a container that takes none of them (a Butcher's Table) for
+  the chest beyond it.
+- Where a minion's fitness shows: the Surgery Table's line while building names its best two tasks; JEI's Body Parts
+  page and a carcass piece's tooltip (hold Ctrl) show what each part brings to a minion's tasks: its knacks, what it
+  holds things with and a head's disposition; `/bloodandbones minion fitness` gives the full breakdown for the minion
+  you look at, every task.
 - How fit a minion is at its task changes its work: a fitter butcher strokes faster and wastes nothing (a poor one
   wastes part of each cut), a fitter sentry shoots sooner and truer, a fitter medic throws sooner and truer, a fitter
   fisher, digger, barterer, courier or farmer works or looks round sooner, a fitter herder keeps after a stray longer;

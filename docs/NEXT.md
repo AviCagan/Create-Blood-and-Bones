@@ -5,7 +5,7 @@ The whole brief was also audited against the code on 29 September 2026: docs/BRI
 The owner's list of what to take up next, newest decisions first. Each item says what was decided, what it replaces,
 and what is still to be settled together before any code is written.
 
-## 1. Tasks instead of jobs (decided 24 September 2026; designed 29 September 2026; stages A to D built 29 September 2026)
+## 1. Tasks instead of jobs (decided 24 September 2026; designed 29 September 2026; built 29 September 2026)
 
 **The decision.** There are to be no jobs. Any task, from a list we draw up together, can be given to any minion. Some minions do a task better than others because of their own stats, and those stats come from what they are built of.
 
@@ -56,13 +56,13 @@ and what is still to be settled together before any code is written.
 
   Old datapacks' `jobs` lists are read as knacks.
 
-**Where it stands.** Stages A (the numbers), B (tasks in the jobs' place, the screen, the wake rule, the status line and old saves), C (the levers: what fitness makes of the work in play) and D (the surgeon: the fittest cuts, and its fitness prices the stump) are built; the Tender and the Butcher's Table (E) and the rest of what is shown (F) follow (1.10). What each stage does differently from the design, and why, is under "As built" in 1.3, 1.5, 1.9 and 1.10.
+**Where it stands: built.** All six stages of 1.10 are built: A (the numbers), B (tasks in the jobs' place, the screen, the wake rule, the status line and old saves), C (the levers: what fitness makes of the work in play), D (the surgeon: the fittest cuts, and its fitness prices the stump), E (the Tender, and the butcher at the Butcher's Table) and F (what is shown elsewhere: the Surgery Table's line, JEI and piece tooltips, `/bloodandbones minion fitness`, and the docs). What each stage does differently from the design, and why, is under "As built" in 1.1, 1.3, 1.4, 1.5, 1.9 and 1.10, and in docs/ARCHITECTURE-PROPOSAL.md 15.18 to 15.21. Only the surgeon question below is left, for the owner.
 
 **The one question the owner must answer: the surgeon (1.5).** There are two choices:
 - any minion with a hand may do the ritual's cutting, badly unless it has a surgeon's head (recommended, and the default as built);
 - only villager, illager and witch heads may cut, as the brief's words say.
 
-Either is one data switch: the surgeon task's file says `"needs_surgeon_head": false` (the default) or `true` (the brief's letter). Both are built and tested at the table (stage D). This is the owner's call; until the owner answers, the default stands.
+Either is one data switch: the surgeon task's file says `"needs_surgeon_head": false` (the default, as shipped) or `true` (the brief's letter). To flip it, a datapack puts `{"needs_surgeon_head": true}` in `data/bloodandbones/minion_task/surgeon.json` (a task file is read over the code's defaults field by field, so that one line is enough), or the shipped file's `false` is changed to `true`. Both are built and tested at the table (stage D). This is the owner's call; until the owner answers, the default (any minion with a hand may cut) stands.
 
 ### 1.1 The task list
 
@@ -101,6 +101,16 @@ Either is one data switch: the surgeon task's file says `"needs_surgeon_head": f
 - **Turning a Create Hand Crank** (for the Spit Roast). It would give flesh minions the kinetic power only brass has, through the Rotational Coupler. That goes against the brief's rule that each kind has what the other lacks.
 - **Mining and building.** Minions never break or place blocks, apart from the sapper's blast (spec 6.9).
 - **Signature jobs in spec 8.2** (caravan, trader's guard, homing, brute guard, lazy sentry). These become knacks or stay as signature work.
+
+**As built in stage E** (docs/ARCHITECTURE-PROPOSAL.md 15.21), where the Tender and the butcher differ from the table:
+- **"The containers there"** are the chests, barrels, shulker boxes and Create Item Vaults within the Tender's reach of home. Never a machine's slots (a Deployer's, a depot's), a trough, a cradle, a table or a furnace: it would take what a Deployer holds or put an empty bucket in a furnace's fuel slot.
+- **"A tank"** is a Create Fluid Tank or a Bleeding Rack's tray with a whole bucket of blood in it, as the table says. Never a basin (its blood waits for a recipe) or a trough (it would pour from one trough into another).
+- **Brass sheets** go into a cradle up to 16, a new number in the Tender's task file (`"sheets"`). A cradle's sheet slot holds 64, and filling it would take every sheet for one cradle.
+- **A fallen minion's bucket spills nothing.** Most flesh minions hold less than a bucket (250 + 1000 × torso volume mB: a zombie's torso 344, a cow's 780), so a bucket poured in whole, as a hand pours one, would spill the rest. The fallen one takes what it holds; the Tender drinks the rest if it is flesh with room, and pours what is left into troughs by home, the nearest to the fallen one first. With nowhere for it all, it does not pour, and its status line says so. A fallen brass minion takes a canister only with room for all of it (brass holds one or two whole, so a fallen one always has).
+- **What it carries** it takes as many at a trip as it has room for, so a bigger torso makes fewer trips (carry already counts in its number). What it no longer needs (the empties, what is left over) it puts back into a container.
+- **The wake rule takes the Tender** now (stage B skipped it until its goals were built). A whole cow and the cow on rabbit legs wake as Tenders: their best task, Herder, waits for food, and Tender and Courier tie at 146%, Tender first in the list.
+- **At the Butcher's Table** the butcher chops only with a Cleaver (the table takes no knife), a stroke a piece at its strokes' pace, and keeps what comes off, at its yield share. Of a carcass and a table, the one nearer home goes first. It goes to a table only with a free slot for each kind of thing the piece gives, else it takes what it carries to the container first; carrying nothing, it chops whatever its room, and what does not fit falls on the table top, as a Deployer's chop leaves it.
+- **Found on the way:** a task that stores its takings put them in the container nearest home, even one that takes none of them, and a Butcher's Table (it takes only a piece) by home stood between a butcher and its chest for good. It is now the nearest container that takes some of what it carries.
 
 ### 1.2 What makes a minion good or bad at a task
 
@@ -262,7 +272,7 @@ It **wakes** to its fittest task that waits on nothing it lacks, never Hunter or
 
 **As built in stage B** (docs/ARCHITECTURE-PROPOSAL.md 15.19):
 - **The screen** is drawn in Create's own schedule frame (`AllGuiTextures.SCHEDULE`), with its cards, brass strip and pointer for the task now, Create's icon buttons and its scroll input for the reach. Sixteen rows and four headings are taller than the frame's list, so the list scrolls, as the schedule's does; it opens scrolled to the task now. A task it cannot do shows "Cannot" and its reason in small print on the row. A task that would wait for something shows a small amber mark, and its reasons say for what. The rows are worked out at the anchor it works at now, where the task allows it (a loyal head's "with me" 1.25 shows when "With me" is on). A reach scrolled to is sent once it has been left alone half a second, or when the screen closes. Clicking a row sets that task at the anchor it works at now if the task allows it (else at home), with the task's own reach. After every request the server sends the rows again, and an open screen is brought up to date; a screen closed meanwhile stays closed.
-- **The wake rule skips the Tender** until its goals are built (stage E). Given now, it keeps home. A whole cow wakes as a Courier: its best task, Herder, waits for food.
+- **The wake rule skips the Tender** until its goals are built (stage E). Given now, it keeps home. A whole cow wakes as a Courier: its best task, Herder, waits for food. (Since stage E it takes the Tender too, and a whole cow wakes as a Tender: see 1.1, "As built in stage E".)
 - **A missing tool** stops the goal as well: a butcher with no blade in hand waits, and so does a herder with nothing in its mouth and a medic with no healing potions.
 - **What its work waits on in the world** is said by five goals, for the status line's next five seconds: the fisher (no still water within its reach), the digger (nothing to sniff), the barterer (no gold), the hauler (no free hook or rack) and any task that stores (no container by home).
 - **The status line** reads "Farmer 120% at home, blood 300 of 780 mB", with "at its post" for a sentry, "at its table" for a surgeon, "with its maker", or "at home, its maker away"; then what it waits for, or "it can no longer be a Surgeon: No hand to hold a surgeon's blade" after a data reload.
@@ -287,6 +297,12 @@ It **wakes** to its fittest task that waits on nothing it lacks, never Hunter or
 - On the minion, beside `Home`: `Task` (its id), `Anchor` (home or maker) and `Reach` (0 means the task's default). A Dormant Minion item keeps them with the rest.
 - Fitness is never saved. It is worked out from the build and data together with the stats, so a datapack retune reaches every minion (15.1 item 4's rule). The time of day and the held item are applied when it is read.
 - The screen's rows come from the server, so task and disposition files never need to go to clients. The knacks and grips JEI shows are in the mob data clients already have.
+
+**As built in stage F** (docs/ARCHITECTURE-PROPOSAL.md 15.21):
+- **The Surgery Table's line** (built in stage B) reads, for the whole cow on rabbit legs, "15 health, speed 0.32; best: Herder 200%, Tender 146%; 5 of 5 sockets filled" (a cow's torso has five sockets: its head and four legs; its speed is 0.325, shown to two places). Tender, not Courier: the two tie at 146% and ties go to the list's order. The example above had 146% for the Courier once stage A put the numbers right (143% before), 0.33 rounded up, and "4 of 6" for a build of another shape.
+- **What a part brings** (`TaskWords.partFacts`): its knacks, those of 1 left out ("Knacks: Surgeon ×1.5, Farmer ×1.25"); what an arm holds with ("Holds with: hand", a villager's folded pair "hand, 2 of them"); what a leg holds with, where its data names a grip ("Holds with: paw, on a body with 4 legs or more"); a head's disposition ("Disposition: Meek"), and "A surgeon's head: it may always do the ritual's cutting" for the heads the switch in 1.5 reads. JEI's Body Parts page shows them under each part, as the mob has them: the page is one per mob, so a villager's profession (which a carcass keeps) does not show there. A piece's tooltip shows its own, the profession's knack with them, under "In a minion:" while Ctrl is held, and says "Hold Ctrl for what it brings to a minion's tasks" otherwise.
+- **`/bloodandbones minion fitness`** is its own command class (`minion/MinionCommand`), not `parts/TraitsCommand`'s as 1.7 has it: it reads a live minion, not a mob's data. It takes the minion under the crosshair within 16 blocks (a wall stops the look), for its maker or an operator, and gives the task screen's hover lines for every task, each with the number before it was held where the cap took some off ("(213% before it was held)").
+- **A "Minion Tasks" page per task in JEI** is not built: as above, it can come later.
 
 ### 1.5 The surgeon
 
@@ -525,9 +541,11 @@ Every missing knack and disposition counts as 1. Archetypes carry knacks and leg
 - `courierWithMeFillsTheMakersHands` (built in B) — it picks up round the maker and hands the items over; holding an apple, it takes only apples.
 - `hunterWithMeHuntsBesideTheMaker` (built in B) — it hunts prey near the maker, not near home; with a Meat Hook the carcass is intact. As built, its reach is set to 4 so the two cows' hunting grounds are apart in a 10-block pen, and the cows are still, since a cow hit flees beyond so short a reach and a hunter lets prey go that leaves its ground.
 - `medicWithMeHealsOnTheMove` (built in B) — it follows and throws at its hurt maker. As built, its maker is hurt once it has followed them some way: a medic stops to throw where it stands, and within its following distance of 6 blocks has no need to come nearer.
-- `tenderFillsTroughsAndCradles` — blood buckets from a chest go into a trough and the empties come back; a Create tank of blood fills its buckets; canisters go from a chest into a cradle and the empties come back.
-- `tenderWakesAFallenMinion` — a flesh minion lying powered down within reach gets blood and gets up; a brass one gets a canister.
-- `butcherChopsAtTheTable` — pieces on a Butcher's Table by home are chopped.
+- `tenderFillsTroughsAndCradles` (built in E) — blood buckets from a chest go into a trough and the empties come back; a Create tank of blood fills its buckets; canisters go from a chest into a cradle and the empties come back. As built: a whole cow tends a chest of two buckets of blood and two empties, a barrel of three canisters and five brass sheets, a trough, a Create Fluid Tank of 2000 mB and a cradle holding two empties; at the end the trough holds 4000 mB and the tank none, the cradle three canisters and five sheets and no empties, the containers the four empty buckets and two empty canisters and nothing else, and nothing is on the ground or left in its hands.
+- `tenderWakesAFallenMinion` (built in E) — a flesh minion lying powered down within reach gets blood and gets up; a brass one gets a canister. As built: the Tender is brass, which drinks no blood, and the flesh one a zombie's torso holding 344 mB, so the rest of the bucket goes into the trough by home, to the drop; the empty bucket and canister go back into the chest. It first checks how a bucket is shared out (the fallen one, the Tender, then the troughs; all of it or none).
+- `butcherChopsAtTheTable` (built in E) — pieces on a Butcher's Table by home are chopped. As built: a butcher's head over a spider's torso on four legs with four zombie arms (a slot for each of the four things a cow's body gives) chops a cow's body, then a second laid on through the table's slot as a funnel would; what they give ends in the chest beyond the table, none on the ground, and the Cleaver comes away bloody.
+- `partFactsShowKnacksGripsAndDispositions` (added in F; `gametest/MinionFitnessTests`) — a farmer villager's head has Surgeon, Farmer and Courier knacks and none shown for Guard (1), is meek and a surgeon's head; a nitwit's is dim; a cow's head has Herder and Courier and is docile; a zombie's arm holds with a hand, a villager's pair with two, a wolf's front leg with a paw; a carried piece's tooltip reads the same facts.
+- `fitnessCommandShowsEveryTask` (added in F) — the command's minion is the one its maker looks at, and none when they look away; its lines say what it is doing, then every task, with Herder's 213% before it was held and Surgeon's reason it cannot.
 - `headlessFightsOnlyWhatTouchesIt` (built in B) — a headless Guard ignores a zombie 4 blocks off and hits one beside it.
 - `sentryWithNoBowHoldsItsPost` (built in B) — it strikes within reach and never moves.
 - `reloadTakesAnImpossibleTask` (added in B) — a data reload that leaves a Farmer's body with no hand sets it to Idle at home, and the status line says why.
@@ -574,8 +592,8 @@ Start after bb-organs is on main (it is, since 40dfb66). This change touches its
   - The task screen's hover says what the fitness makes of each task's work, in the task's own numbers: "A stroke every 3 s, keeping 25% of each cut", "Keeps after a stray for 60 s", "Towing, slowed 2.74 times as much as a player, to at most 90%", "Strikes every 0.65 s".
   - Found by `fitterButcherIsFasterAndCleaner`: a butcher measured its reach to the piece from its feet, and a resting body's torso lies a block up, so a butcher standing against the body where its path ended was out of reach, stood there five seconds and gave the body up for half a minute. It now reaches as far across as it did, and two and a half blocks over or under its feet, as a hauler's reach is measured across.
 - **D. The surgeon (small). Built 29 September 2026** (docs/ARCHITECTURE-PROPOSAL.md 15.20), as recommended and as the default, with the brief's letter one data switch away (1.5, "As built in stage D"); the owner's answer is still open.
-- **E. Tender and the Butcher's Table (medium).**
-- **F. Shown elsewhere (small):** JEI, tooltips, the command and the docs.
+- **E. Tender and the Butcher's Table (medium). Built 29 September 2026** (docs/ARCHITECTURE-PROPOSAL.md 15.21). `MinionTender` (its goal, one errand a look), the butcher's chop at the table (`ButcherTableBlockEntity.chop` handing what it gives to the butcher), the wake rule taking the Tender, with their tests. Where it differs from 1.1: see 1.1, "As built in stage E".
+- **F. Shown elsewhere (small). Built 29 September 2026** (docs/ARCHITECTURE-PROPOSAL.md 15.21): the Surgery Table's line (stage B's, photographed), JEI's Body Parts page and piece tooltips with each part's knacks, grip and disposition, `/bloodandbones minion fitness`, and the docs (spec 6.3, 6.4, 6.5, 6.7, 6.8, 6.9 and 8.2). Where it differs from 1.4: see 1.4, "As built in stage F".
 
 ### 1.11 Found while reading (not part of this change)
 

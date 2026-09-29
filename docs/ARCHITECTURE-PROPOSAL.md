@@ -451,11 +451,13 @@ slot and has armour variants. The plan for building it is §14.
 
 **Decided after the jobs were built (24 September 2026)**: no jobs. Any task, from a list drawn up with the owner,
 can be given to any minion. Some minions do a task better than others because of the stats they get from what they are
-built of. This replaces heads offering jobs (spec 6.4 and 6.9). It is built in stages (docs/NEXT.md 1.10): the numbers
-(§15.18) and tasks in the jobs' place, with the task screen (§15.19); the levers and the surgeon's stump price
-(§15.20); the Tender and the rest follow. The surgeon (docs/NEXT.md 1.5) is still the owner's call: by default any minion
-with a hand may cut, its fitness pricing the stump, and the surgeon task file's `"needs_surgeon_head": true` limits it to
-surgeons' heads. Both are built.
+built of. This replaces heads offering jobs (spec 6.4 and 6.9). It was built in six stages (docs/NEXT.md 1.10), all
+done: the numbers (§15.18) and tasks in the jobs' place, with the task screen (§15.19); the levers and the surgeon's
+stump price (§15.20); the Tender, the butcher at the Butcher's Table, and the fitness shown on the Surgery Table, in JEI,
+on piece tooltips and by `/bloodandbones minion fitness` (§15.21). The surgeon (docs/NEXT.md 1.5) is still the owner's
+call: by default any minion with a hand may cut, its fitness pricing the stump, and a datapack's surgeon task file with
+`"needs_surgeon_head": true` limits the cutting to surgeons' heads (the villager and illager families', the witch's
+among them), the brief's letter. Both are built and tested.
 
 **Still open** (as of the latest build): everything up to and including machines, materials,
 cooking, display and decoration is built and tested (§13). What remains needs design decisions
@@ -3152,3 +3154,106 @@ call, and the recommendation is the default until they answer.
   shots are as they were.
 - The suite is 481 tests (473 and the eight new above), and passed two full runs in a row; the new and changed tests passed
   five times over, and `fitterButcherIsFasterAndCleaner` (after the reach fix) 34 times.
+
+
+### 15.21 Tasks, stages E and F as built: the Tender, the Butcher's Table, and the fitness shown elsewhere (verified)
+
+docs/NEXT.md item 1 is the design. Stage E (1.10) builds the sixteenth task, the Tender, and puts the butcher to work at the
+Butcher's Table; stage F shows a minion's fitness where the design says, outside the task screen. With them all six stages
+are built. The surgeon (docs/NEXT.md 1.5) is still the owner's call: by default any minion with a hand may cut, its fitness
+pricing the stump, and a datapack's `data/bloodandbones/minion_task/surgeon.json` with `{"needs_surgeon_head": true}`
+limits the cutting to surgeons' heads (the villager and illager families', the witch's among them), the brief's letter.
+Both ways are built and tested (`surgeonHeadFlagDecidesWhoCuts`, `surgeonHeadIsTheOwnersCall`).
+
+**Stage E: the Tender** (`minion/MinionTender`, its goal `Tend`):
+- **One errand a look.** Every second or so at 100% (its task file's `look_every`, a fitter Tender sooner), it looks over
+  its reach of home (8, up to 12) from the loaded chunks' block entities (`survey`): its maker's minions lying powered
+  down, the Blood Troughs with room, the Charging Cradles wanting canisters or sheets or holding empties, the tanks with a
+  bucket of blood to give (a Create Fluid Tank or a Bleeding Rack's tray), and the containers (chests, barrels, shulker
+  boxes, Create Item Vaults: `store`). It then picks the most pressing errand it can run now (`plan`), walks there and
+  does it: a bucket or canister to a fallen minion first; buckets of blood into a trough; canisters and sheets into a
+  cradle; then fetching what they want out of a container (buckets of blood, or empty buckets to fill at a tank when none
+  are to be had, canisters, sheets), filling empty buckets at a tank, taking a cradle's empties out, and last putting back
+  what it no longer wants. It takes as many at a trip as it has room for. A place or a fallen minion it cannot get to, or
+  that turns out not to do what it looked like doing, is left alone half a minute.
+- **Nothing is made or lost.** Every move is tried first and made only whole: a bucket pours into a trough only with room
+  for all of it (NeoForge's `FluidUtil.tryEmptyContainer`, simulated then done), fills at a tank only from a whole bucket
+  of blood (`tryFillContainer` the same way), items come out of a container only as many as it has room for, and what a
+  cradle or container does not take stays in its hands (the insert's remainder). A fallen flesh minion mostly holds less
+  than a bucket: it takes what it holds, the Tender drinks the rest if it is flesh with room, and the troughs by home take
+  what is left, nearest the fallen one first (`MinionTender.share`); with nowhere for it all it does not pour, and its
+  status line says so. A fallen brass minion takes a canister only with room for all of it.
+- **Stocked:** troughs to the full; cradles to eight canisters and up to 16 brass sheets (a new number in the Tender's task
+  file, `"sheets"`); the cradles' empty canisters out to a container.
+- **Its status line** says what it lacks when something is wanted and nothing is to be had: "no blood to be had by the
+  bucket within 8 of home", "no full Soul Canister in a container within 8 of home", "nowhere by home for the rest of a
+  bucket that a fallen minion cannot hold".
+- **The wake rule takes it now** (`MinionTasks.wakes`): stage B skipped it until its goals were built. A whole cow and the
+  cow on rabbit legs wake as Tenders: their best, Herder, waits for food, and Tender and Courier tie at 146% (Tender first
+  in the list).
+
+**Stage E: the butcher at the Butcher's Table:**
+- With a Cleaver, a butcher chops the pieces laid on a Butcher's Table within its reach of home, a stroke a piece at its
+  strokes' pace, as a Deployer does (`ButcherTableBlockEntity.chop`, which now hands what it gives to the butcher, and what
+  it has no room for falls on the table top as a Deployer's chop leaves it). It keeps what comes off, at its yield share,
+  and the Cleaver comes away bloody. Of a carcass and a table the one nearer home goes first. It goes to a table only with
+  a free slot for each kind of thing the piece gives (`yieldKinds`), else it empties itself into the container first.
+- **Found on the way:** a task that stores its takings (`MinionGoals.Deposit`) took them to the block with slots nearest
+  home, even one that takes none of them: a Butcher's Table by home, which takes only a piece, stood for good between a
+  butcher and its chest. It is now the nearest container that takes some of what it carries.
+
+**Stage F: shown elsewhere:**
+- **The Surgery Table's line while building** (stage B's `MinionAssembly.status`): "15 health, speed 0.32; best: Herder
+  200%, Tender 146%; 5 of 5 sockets filled" for the cow on rabbit legs.
+- **What a part brings** (`TaskWords.partFacts`, from the mob data clients already have): its knacks, those of 1 left out;
+  what an arm holds with (a villager's folded pair "hand, 2 of them"), and a leg whose data names a grip ("paw, on a body
+  with 4 legs or more"); a head's disposition, and whether it is a surgeon's head. JEI's Body Parts page shows them under
+  each part (`BodyPartsCategory`), as the mob has them; a carcass piece's tooltip shows its own (a villager's profession
+  with them) under "In a minion:" while Ctrl is held, and "Hold Ctrl for what it brings to a minion's tasks" otherwise
+  (`CarcassPieceItem.facts`).
+- **`/bloodandbones minion fitness`** (`minion/MinionCommand`): the minion under its maker's (or an operator's) crosshair
+  within 16 blocks, a wall stopping the look; what it is doing, then every task's lines as the task screen's hover has
+  them, with the number before it was held where the cap took some off ("(213% before it was held)").
+- **Words** (`BBLang`): the Tender's waits, the part facts, the command's lines; `taskWordsReadBloodless` reads them all in
+  bloodless mode.
+- **Docs:** spec 6.3, 6.4, 6.5, 6.7, 6.8, 6.9 and 8.2 ("a knack for X" throughout); §12; docs/NEXT.md item 1 marked built;
+  the changelog and the README.
+
+**Changed from the design, and why** (each recorded where the design says it, in docs/NEXT.md 1.1, 1.4, 1.9 and 1.10):
+- "The containers there" are chests, barrels, shulker boxes and item vaults, never a machine's slots, a trough, a cradle, a
+  table or a furnace: it would take what a Deployer holds or put an empty bucket in a furnace's fuel slot. "A tank" is a
+  Create Fluid Tank or a Bleeding Rack's tray, never a basin (whose blood waits for a recipe) or a trough (it would pour one
+  trough into another).
+- A fallen flesh minion's bucket is shared out (above) rather than poured in whole as a hand pours one, which would spill
+  what it cannot hold.
+- A cradle is kept to 16 brass sheets, a number the design did not give.
+- The butcher goes to a table only with room for what the piece gives, so what it chops ends in its hands and not on the
+  table top.
+- The Surgery Table's line names the Tender where 1.4's example named the Courier: the two tie, and ties go to the list's
+  order. Its example's numbers were for another build.
+- The command is its own class, not `TraitsCommand`'s, as it reads a live minion rather than a mob's data.
+- A JEI "Minion Tasks" page per task is not built; the design left it for later.
+- The JEI page is one per mob, so it shows a head's knacks as the mob has them; what the carcass kept (a villager's
+  profession) shows on the piece's own tooltip.
+
+**Tests** (five new): in `gametest/MinionTaskTests` `tenderFillsTroughsAndCradles` (a whole cow tends a chest of two buckets
+of blood and two empties, a barrel of three canisters and five sheets, a trough, a Create Fluid Tank of 2000 mB and a cradle
+holding two empties: at the end the trough holds 4000 mB and the tank none, the cradle three canisters and five sheets and
+no empties, the containers the four empty buckets and two empty canisters and nothing else, nothing on the ground or left in
+its hands), `tenderWakesAFallenMinion` (a brass Tender, which drinks no blood, wakes a zombie-torsoed flesh minion holding
+344 mB with the chest's bucket, the other 656 into the trough to the drop, and a brass one with the chest's canister, the
+empties back in the chest; it checks `share` first), `butcherChopsAtTheTable` (a butcher's head over a spider's torso on
+four legs with four zombie arms chops a cow's body and a second laid on through the table's slot; what they give ends in
+the chest beyond the table, none on the ground, the Cleaver bloody) and `fitnessCommandShowsEveryTask`; in
+`gametest/MinionFitnessTests` `partFactsShowKnacksGripsAndDispositions`. `taskWordsReadBloodless` reads the new words.
+- **On screen:** `showcase_tasks_4.png` (new) hovers on the cow on rabbit legs' Tender row, now its task (the brass strip
+  and the pointer): "Tender: 146%, Good", what it does, "Carry ×1: 9 slots, Cow torso, Beast of Burden", "Pace ×1.17, at
+  half weight: speed 0.34, Rabbit leg, Swift I", "Disposition ×1.25: Docile", "Looks round every 0.7 s" and "At work: 17.12
+  mB of blood a minute"; bloodless, it "carries essence to fallen constructs" and the butcher's row is the Dismantler's.
+  `showcase_tasks_2.png` now has the Tender as its task and its own reach, 8. `showcase_jei_knacks.png` (new) is the
+  villager's Body Parts page scrolled to its head: "Knacks: Courier ×1.25, Surgeon ×1.5, Farmer ×1.25", "Disposition:
+  Meek", "A surgeon's head: it may always do the ritual's cutting" (bloodless, "the ritual's work"), then its armour;
+  `showcase_jei_organs.png`, the creeper's page, gains "Knacks: Courier ×1.25, Sapper ×1.5, Guard ×1.25" under its head.
+  `showcase_table_line.png` (new) looks down at the Surgery Table with the cow on rabbit legs being built on it, its line on
+  the action bar: "15 health, speed 0.32; best: Herder 200%, Tender 146%; 5 of 5 sockets filled". The other shots are as
+  they were.

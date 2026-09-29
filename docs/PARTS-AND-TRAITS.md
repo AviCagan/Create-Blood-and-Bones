@@ -1334,7 +1334,12 @@ Saved old minions get a one-time conversion that drops their parts. `MinionTests
 7. **Cap.** Server config `max_minions_per_player` = −1 (no cap).
 
 ### 6.3 The build and `MinionStats`
-`MinionStats.of(build, resolvedData)` is a pure function, unit-testable without a world. It returns: health, armour, knockback resistance, hitbox, carry slots, reservoir or canisters, movement (mode, speed, step, jump, climb, swim, lava_walk, rideable, flight), the strikes list, ranged attacks, senses and the `ActiveTraits` list. Since tasks took the place of jobs (docs/NEXT.md 1) it also returns what the build holds things with (each arm's grip, a pair of arms as two hands, the mouth, and on four legs or more the legs' grips), the torso's weight, the merged knacks and the head's disposition, from which `MinionFitness`, also pure, works out its fitness at every task. The server and client share one geometry helper for sockets, lift and hitbox, so they always agree.
+`MinionStats.of(build, resolvedData)` is a pure function, unit-testable without a world. It returns: health, armour, knockback resistance, hitbox, carry slots, reservoir or canisters, movement (mode, speed, step, jump, climb, swim, lava_walk, rideable, flight), the strikes list, ranged attacks, senses and the `ActiveTraits` list. Since tasks took the place of jobs (docs/NEXT.md 1) it also returns what the build holds things with (each arm's grip, a pair of arms as two hands, the mouth, and on four legs or more the legs' grips), the torso's weight, the merged knacks and the head's disposition, from which `MinionFitness`, also pure, works out its fitness at every task. It shows (docs/NEXT.md 1.4):
+- on the task screen (every task, with its reasons) and in the status line (its task now);
+- in the Surgery Table's line while building, its best two tasks: "15 health, speed 0.32; best: Herder 200%, Tender 146%; 5 of 5 sockets filled" for the cow on rabbit legs, so the maker sees each part's effect as it goes on;
+- in full for the minion looked at, with `/bloodandbones minion fitness` (its maker or an operator), for balancing.
+
+What each part brings on its own (its knacks, what it holds things with, a head's disposition and whether it is a surgeon's head) shows on JEI's Body Parts page and, with Ctrl, on a carcass piece's tooltip; a fitness needs a whole build. The server and client share one geometry helper for sockets, lift and hitbox, so they always agree.
 
 ### 6.4 What each part decides
 
@@ -1354,7 +1359,7 @@ Saved old minions get a one-time conversion that drops their parts. `MinionTests
 
 **Head: behaviour**
 - **Any task** from one list can be given to any minion (docs/NEXT.md 1.1); the maker crouches and uses an empty hand on the woken minion for its task screen. The head makes it better or worse at each, through its sight, its knacks and its disposition.
-- **Knacks** from data (docs/NEXT.md 1.6): how much better or worse than usual the head makes a minion at each task. Villager heads have a surgeon's knack and one for their profession's task:
+- **Knacks** from data (docs/NEXT.md 1.6): how much better or worse than usual the head makes a minion at each task, shown on JEI's Body Parts page and on a head's tooltip with Ctrl. Villager heads have a surgeon's knack and one for their profession's task:
   - farmer → farmer
   - fisherman → fisher
   - butcher → butcher
@@ -1366,6 +1371,7 @@ Saved old minions get a one-time conversion that drops their parts. `MinionTests
   - others → courier
   - a nitwit's head is dim, and has no surgeon's knack
 - Pillager heads have knacks for surgery and sentry.
+- **Surgeon's heads:** the villager and illager families' heads (the witch's among them) are surgeons' heads (`"surgeon": true`). By default any minion with a hand may do the amputation ritual's cutting, its fitness pricing the stump; the surgeon task file's `"needs_surgeon_head": true` limits it to these heads, the brief's letter (docs/NEXT.md 1.5, still the owner's call).
 - **Follow range** from FOLLOW_RANGE, and what the build's traits add to it (Keen Eye, Relentless). **Disposition** and **senses** from data.
 - **Bite:** used when it has no arms, and as an extra attack. Damage 1 + 0.25 × the head mob's attack damage, or the data value. Horned heads (goat, hoglin, zoglin, ravager) ram.
 - **Eyes taken out:** a head whose two eyes were taken out at the Surgical Rig is blind: follow range 4, whatever its traits add, so it does every task that reads sight worse (docs/NEXT.md 1.2); an echolocate or tremor sense (the head's data's, or a trait's) finds its way 12.
@@ -1410,9 +1416,9 @@ Saved old minions get a one-time conversion that drops their parts. `MinionTests
 - produce effects do nothing on a cybernetic minion.
 
 ### 6.5 Examples
-- **Cow torso on four rabbit legs, cow head:** 15 HP, 9 slots, about 780 mB, hops at 0.325, bash bite 1. Best at herding (200%); it cannot be a surgeon or a sapper (docs/NEXT.md 1.2). It looks exactly as wrong as the brief wants.
-- **Spider thorax with 8 zombie arms, villager head:** a born surgeon (200%) and farmer. 16 HP. Eight grabbing hands at +60% attack speed. No legs, so it crawls at 0.05.
-- **Blaze torso with a villager head and 2 horse legs:** hovers (the torso wins), the legs dangle, a surgeon's knack, fireball organ if fitted.
+- **Cow torso on four rabbit legs, cow head:** 15 HP, 9 slots, about 780 mB, hops at 0.325, bash bite 1. Best at herding (200%), then tending and carrying (146% each); it cannot be a surgeon or a sapper (docs/NEXT.md 1.2). Its herding waits for food, so it wakes a Tender, the first of those two in the list. It looks exactly as wrong as the brief wants.
+- **Spider thorax with 8 zombie arms, villager head:** a born surgeon (200%, its stumps a bucket) and farmer. 16 HP. Eight grabbing hands at +60% attack speed. No legs, so it crawls at 0.05.
+- **Blaze torso with a villager head and 2 horse legs:** hovers (the torso wins), the legs dangle, a surgeon's knack but no hand to cut with (a hoof holds no blade), fireball organ if fitted.
 - **Ravager torso claimed whole from the table:** 50 HP, its own legs rideable with a saddle, roar head. The brief's "ravager-torso creature".
 
 ### 6.6 Organic and cybernetic: each has what the other lacks, neither is stronger
@@ -1444,7 +1450,8 @@ Cybernetic drain is ×0.25 of this. `blood_upkeep` and power traits scale both.
 - The trough is a new block with a 4,000 mB tank that accepts only `#c:blood`, filled by pipes and spouts (`Capabilities.FluidHandler.BLOCK`).
 - Troughs register in a per-level set on onLoad and setRemoved, so the search is cheap.
 - It moves on contraptions with its contents in its block entity data, and is not a drinking point while assembled (rule 5).
-- **Hand feeding:** a blood bucket or bottle, or the maker crouch-using an empty hand to give 250 mB from their worn backtank.
+- **Hand feeding:** a bucket of blood, poured in only when half of it fits (or half of all it holds). The maker's crouching empty hand opens its task screen (docs/NEXT.md 1.3).
+- **The Tender** (docs/NEXT.md 1.1) keeps the troughs within its reach of home (8 blocks) stocked by the bucket, from the chests, barrels, shulker boxes and Create Item Vaults there: buckets of blood from them, or empty buckets it fills at a Create Fluid Tank or a Bleeding Rack's tray holding blood. A bucket pours only into a trough with room for all of it, and the empties go back into a container.
 
 **Cybernetic: the Soul Canister and the Charging Cradle.**
 - **Soul Canister:** `empty_soul_canister` plus 1000 mB of soul blood through a plain `create:filling` recipe (a Spout) makes a `soul_canister`. `create:emptying` (an Item Drain) reverses it. So JEI shows it and stock Create automates it. The minion holds its current charge internally; partial canisters never exist as items.
@@ -1454,6 +1461,7 @@ Cybernetic drain is ×0.25 of this. `blood_upkeep` and power traits scale both.
   - It is a Mechanical Arm interaction point through `CreateRegistries.ARM_INTERACTION_POINT_TYPE` (✓).
   - It swaps a canister into any cybernetic minion within 2 blocks that is below 25% or powered down, and outputs the empty one for re-spouting.
   - It moves on contraptions with its inventory and is inert while assembled.
+- **The Tender** keeps the cradles within its reach of home stocked too: full canisters into every empty slot for one, brass sheets up to 16 (its task file's `"sheets"`), and the cradles' empty canisters back into a container.
 - The shared `SeekRechargeGoal` serves both kinds through a `RechargePoint` interface.
 
 ### 6.8 Powered down, dormant, combat death (never destroyed by neglect)
@@ -1465,7 +1473,7 @@ Cybernetic drain is ×0.25 of this. `blood_upkeep` and power traits scale both.
   - `isInvulnerableTo` is true for every source except a Player and `#minecraft:bypasses_invulnerability` (/kill, the void);
   - `canBeSeenAsEnemy` is false, so mobs ignore it;
   - it can be pushed, so it cannot be used as an indestructible wall.
-- **Waking** happens on any power: blood, a canister, or a trough or cradle within 2 blocks. So a guard that collapses beside its trough recovers by itself.
+- **Waking** happens on any power: blood, a canister, or a trough or cradle within 2 blocks. So a guard that collapses beside its trough recovers by itself. A Tender carries a bucket of blood or a canister to any of its maker's minions lying powered down within its reach of home (docs/NEXT.md 1.1). None of a bucket is spilled: what the fallen one cannot hold, the Tender drinks (flesh) or pours into a trough by home, and with nowhere for it, it does not pour.
 - **Dormant Minion.** The maker crouch-holds an empty hand for 3 s on a powered-down minion. It folds into a `dormant_minion` item keeping its build, inventory, name and maker. Used on a block, it unfolds, powered down.
 - **Combat death,** config `minion_death`:
   - `collapse` (default; confirm with the user): a lethal hit while powered leaves it at 1 HP with 0 power, powered down;
@@ -1479,7 +1487,9 @@ Cybernetic drain is ×0.25 of this. `blood_upkeep` and power traits scale both.
 > fitness). The table below is the old list the tasks came from: companion and bodyguard became Guard and Idle done with
 > the maker, and the scavenger a Courier with a sample in hand. What a minion's fitness makes of its work in play (1.2's
 > levers) and the surgeon's stump, one to three buckets by its fitness (1.5), are built too (stages C and D, 29 September
-> 2026).
+> 2026), and so are the sixteenth task, the Tender (it keeps troughs and cradles stocked and wakes fallen minions), the
+> butcher chopping at a Butcher's Table, and the fitness shown on the Surgery Table, in JEI, on piece tooltips and by
+> `/bloodandbones minion fitness` (stages E and F). Which way the surgeon goes (1.5) is still the owner's call.
 
 | Job | What it does | Needs | Cost |
 |---|---|---|---|
@@ -1863,7 +1873,7 @@ Each row is what that mob's own file adds on top of its layers. Every mob has at
 |---|---|
 | allay | Head: a knack for couriering (2): as a courier it fetches items matching what it holds, from as far as 32 blocks. Organ Harmonic Gland: M item_magnet 2, A item_magnet 1. |
 | armadillo | Torso: roll_up (both). Hide (scute): Scute Plating (tough 1, durability ×1.5). Organ Scute Gland: M sheds scutes, A thick_hide 1. |
-| axolotl | Torso: play_dead (both). Head: hunter of `#minecraft:axolotl_hunt_targets`. Organ Regrowth Gland: M regen ×2 when wet, A regen 1 HP every 3 s when wet. |
+| axolotl | Torso: play_dead (both). Head: a knack for hunting (1.25), and it hunts `#minecraft:axolotl_hunt_targets`. Organ Regrowth Gland: M regen ×2 when wet, A regen 1 HP every 3 s when wet. |
 | bat | Head: echolocation (M targets through walls within 16; helmet outlines mobs within 16 every 5 s, client only). Organ Echo Ear: echo_sense 2. |
 | bee | Organ Stinger: M sting (Poison II, then the limb is spent 60 s), A 25% Poison II on hit (10 s). Organ Honey Stomach: M fills bottles with honey and bonemeals a crop within 4 each minute, A honey (activate, 30 mB, 120 s). |
 | blaze | See §8.1. |
@@ -1873,7 +1883,7 @@ Each row is what that mob's own file adds on top of its layers. Every mob has at
 | cat | Organ Purr Box: M morning_gift at dawn, A regen 1 HP every 4 s while sneaking still. (Head cat_ward comes from the family.) |
 | cave_spider | Organ Venom Sac: M venomous 2, A venomous 1. Its tiny torso fits 1-block gaps. |
 | chicken | See §8.1. |
-| cod | Head: fishes with its mouth (fisher with no rod). |
+| cod | Head: a knack for fishing (1.5), with its mouth as well as with a rod. |
 | cow | See §8.1. |
 | creeper | See §8.1. |
 | dolphin | Tail: dolphin_kick (M aura Dolphin's Grace for players within 8; hips Dolphin's Grace while swimming). Organ Melon: M targets underwater without line of sight within 32, helmet outlines mobs underwater within 32. Hide: slick. |
@@ -1905,12 +1915,12 @@ Each row is what that mob's own file adds on top of its layers. Every mob has at
 | pig | Head: carrot steering (a rideable minion with a pig head is steered with a carrot on a stick). Organ Bacon Fat: M power capacity +25%, A hardy 1 and frost_guard 1. |
 | piglin | Head: a knack for bartering (2). Arm: crossbow. Organ Gold Gizzard: A lucky 1; the M barterer rolls twice 10% of the time. |
 | piglin_brute | Head: brute guard (a knack for guarding; +50% damage with an axe). Torso: 50 HP. Organ Rage Gland: adrenaline 2. |
-| pillager | Head: surgeon or sentry. Arm: quick_draw (both). |
+| pillager | Head: a knack for surgery and one for sentry (1.5 each), brave. Arm: quick_draw (both). |
 | polar_bear | Hide: Polar Fur (insulated; boots powder_walker). Head: maul bite 3 with swipe. Organ: Brown Fat (family). |
 | pufferfish | Organ Toxin Sac: M toxin_puff (poison aura when a target is within 2), A toxic_skin. |
 | rabbit | See §8.1. |
 | ravager | Head: roar (both, 20 s). Legs: trample. Torso: 50 HP, rideable, 2 seats. Organ War Heart: steady 3 and hardy 2. |
-| salmon | Tail: upstream (M swims up water columns and waterfalls; hips waterborn 1). Head: fisher. |
+| salmon | Tail: upstream (M swims up water columns and waterfalls; hips waterborn 1). Head: a knack for fishing (1.5), with its mouth as well as with a rod. |
 | sheep | Torso: wool_regrowth in its captured colour (organic, unskinned). Hide: Fleece (frost_guard 2, fall_guard 1). Organ Lanolin Gland: A the piece mends 1 durability every 30 s, M wool twice as fast. |
 | shulker | Lid (arm, by override): Shell Clamp (M clamp strike; shoulders 30% frontal deflect). Organ Levitation Gland: shulker_bolt (both; A 40 mB, 5 s). Hide (shell): shell_guard 2. |
 | silverfish | Organ Burrow Gland: A burrower 2. Head: swarm (horde_call for silverfish-headed minions within 8). |
@@ -1931,7 +1941,7 @@ Each row is what that mob's own file adds on top of its layers. Every mob has at
 | vindicator | Arm: axeman (+100% damage with an axe). Head variant: a head named "Johnny" is berserk. |
 | wandering_trader | Organ Trader's Draught: targeted at night gives Invisibility for 20 s (5 minutes; both). |
 | warden | Head: vibration sense (tremor: targets moving things through walls, not still or sneaking ones; helmet shows moving mobs within 16). Organ Sonic Core: sonic_boom (10 damage ignoring armour, 30 s, 100 mB). Legs: silent_steps. Hide: Muffled (silent_steps). Gated by `boss_parts`. |
-| witch | Arms (pair): potion thrower (throws the splash potions it carries). Head: medic. Organ Alchemical Gland: below 50% health, Regeneration I for 5 s plus Fire Resistance if burning (30 s). |
+| witch | Arms (pair): potion thrower (throws the splash potions it carries). Head: a knack for surgery and one for medic (1.5 each). Organ Alchemical Gland: below 50% health, Regeneration I for 5 s plus Fire Resistance if burning (30 s). |
 | wither | Heads: 3 sockets, each firing wither skulls. Organ Wither Core: M wither_aura within 4, A withering 1 on hit. Set: Decay Lord (wither_proof, withering) / golems_hostile and frail 3. Gated. |
 | wither_skeleton | Arm: withering on hit. Organ Wither Marrow: wither_proof. |
 | wolf | Head: pack_hunter. Tail: mood tail (its angle shows the minion's health; hips steady 1). |
