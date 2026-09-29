@@ -325,6 +325,10 @@ public final class RigComparison {
             new Bar("Behind: 20 degrees nose down at some moment", "4b_blow_behind", "pitch_peak_deg", v -> v >= 20.0, false),
             new Bar("Behind: 20 degrees nose down at rest", "4b_blow_behind", "pitch_rest_deg", v -> v >= 20.0, false),
             new Bar("Behind: head on the ground at rest", "4b_blow_behind", "head_ground_rest", v -> v == 1, false),
+            new Bar("Flank: down, not left standing", "4a_blow_flank", "stood", v -> v == 0, false),
+            new Bar("Behind: down, not left standing", "4b_blow_behind", "stood", v -> v == 0, false),
+            new Bar("Face: down, not left standing", "4c_blow_face", "stood", v -> v == 0, false),
+            new Bar("Face: within 1.5 blocks of where it stood", "4c_blow_face", "travel", v -> v <= 1.5, false),
             new Bar("Held on its side: legs within 60 degrees of straight down", "2a_legs_hang", "leg_hang_deg", v -> v < 60.0, false),
             new Bar("Held upright: head droops 5 degrees or more", "2b_head_droops", "head_droop_deg", v -> v >= 5.0, false),
             new Bar("Hind-leg hook: rear first within 45 degrees", "3a_hind_leg_hook", "rear_first_deg", v -> v <= 45.0, true),
@@ -754,12 +758,18 @@ public final class RigComparison {
      * (which comes as the dead mob goes, a few ticks on).
      */
     static void killed(GameTestHelper helper, EntityType<? extends Mob> type, Vec3 at, float yaw, Vec3 attackerAt, Consumer<Subject> then) {
+        killed(helper, type, at, yaw, attackerAt, mob -> mob.getBoundingBox().getCenter(), then);
+    }
+
+    /** As above, looking at the point {@code aim} names on the standing mob. */
+    static void killed(GameTestHelper helper, EntityType<? extends Mob> type, Vec3 at, float yaw, Vec3 attackerAt,
+                       java.util.function.Function<Mob, Vec3> aim, Consumer<Subject> then) {
         Mob mob = standing(helper, type, at, yaw);
         Player player = helper.makeMockPlayer(GameType.SURVIVAL);
         player.setItemInHand(InteractionHand.MAIN_HAND, new ItemStack(BBItems.MEAT_HOOK.get()));
         Vec3 from = helper.absoluteVec(attackerAt);
         player.setPos(from);
-        Vec3 target = mob.getBoundingBox().getCenter();
+        Vec3 target = aim.apply(mob);
         lookAt(player, target);
         Set<UUID> before = new java.util.HashSet<>();
         CarcassSavedData.get(helper.getLevel()).all().forEach(c -> before.add(c.id));
@@ -780,6 +790,27 @@ public final class RigComparison {
             return;
         }
         then.accept(s);
+    }
+
+    /**
+     * "Killed" by a blow aimed at one part: the stand-in player looks at the middle of that part as the mob stands (where
+     * the carcass will put it), not at the middle of the mob.
+     */
+    static void killedAt(GameTestHelper helper, EntityType<? extends Mob> type, Vec3 at, float yaw, Vec3 attackerAt, String part, Consumer<Subject> then) {
+        killed(helper, type, at, yaw, attackerAt, mob -> partMiddle(mob, part), then);
+    }
+
+    /** Where the middle of one part of a standing mob is, in the world, as its carcass will be built. */
+    static Vec3 partMiddle(Mob mob, String part) {
+        Rig rig = RigManager.forEntity(BuiltInRegistries.ENTITY_TYPE.getKey(mob.getType())).orElseThrow();
+        Bone bone = rig.bone(part).orElseThrow();
+        Vec3 feet = mob.position();
+        Vector3d base = new Vector3d(feet.x, feet.y + 1.501 * rig.scale(), feet.z);
+        Quaterniond g = new Quaterniond().rotationY(Math.toRadians(180.0 - mob.yBodyRot)).rotateZ(Math.PI);
+        Vector3d origin = g.transform(new Vector3d(bone.offset()).div(16.0)).add(base);
+        Vector3d middle = new Vector3d(bone.boxMin()).add(new Vector3d(bone.boxMax())).div(32.0);
+        new Quaterniond(g).mul(new Quaterniond(bone.rotation())).transform(middle).add(origin);
+        return new Vec3(middle.x, middle.y, middle.z);
     }
 
     static void lookAt(Player player, Vec3 target) {

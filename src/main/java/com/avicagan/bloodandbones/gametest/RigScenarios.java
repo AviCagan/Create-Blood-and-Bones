@@ -57,6 +57,8 @@ final class RigScenarios {
             Vector3d blow = new Vector3d(1, 0, 0);
             Vector3d start = s.torsoCentre();
             Vector3d upAtStart = s.up();
+            double floor = helper.absolutePos(new BlockPos(0, RigComparison.FLOOR, 0)).getY();
+            double standing = belly(s, floor);
             int[] t = {0};
             int[] motionStart = {-1};
             int[] stillRun = {0};
@@ -112,6 +114,7 @@ final class RigScenarios {
                             .put("down_away", tilt >= 45.0 && away <= 60.0 ? 1 : 0, "yes/no")
                             .put("travel_along_blow", new Vector3d(end).sub(start).dot(blow), "blocks")
                             .put("start_tilt_deg", RigComparison.angleDeg(upAtStart, new Vector3d(0, 1, 0)), "degrees");
+                    down(four, s, standing, floor);
                     ragdoll.accept(one);
                     flank.accept(four);
                 }
@@ -137,6 +140,7 @@ final class RigScenarios {
             int[] stillRun = {0};
             boolean[] finished = {false};
             double floor = helper.absolutePos(new BlockPos(0, RigComparison.FLOOR, 0)).getY();
+            double standing = belly(s, floor);
             helper.onEachTick(() -> {
                 if (finished[0] || s.torso() == null) {
                     return;
@@ -152,17 +156,81 @@ final class RigScenarios {
                 if (stillRun[0] >= RigComparison.SETTLE_RUN || now >= RigComparison.SETTLE_CAP) {
                     finished[0] = true;
                     Vector3d end = s.torsoCentre();
-                    done.accept(new Numbers().put("pitch_peak_deg", pitch[0], "degrees")
+                    done.accept(down(new Numbers().put("pitch_peak_deg", pitch[0], "degrees")
                             .put("head_ground_tick", headDown[0] < 0 ? 200 : headDown[0], "ticks")
                             .put("settle_ticks", now, "ticks")
                             .put("pitch_rest_deg", pitchOf(s), "degrees")
                             .put("tilt_rest_deg", RigComparison.angleDeg(s.up(), new Vector3d(0, 1, 0)), "degrees")
                             .put("roll_rest_deg", rollOf(s), "degrees")
                             .put("head_ground_rest", headOnTheGround(s, headBody, floor) ? 1 : 0, "yes/no")
-                            .put("travel", Math.hypot(end.x - start.x, end.z - start.z), "blocks"));
+                            .put("travel", Math.hypot(end.x - start.x, end.z - start.z), "blocks"), s, standing, floor));
                 }
             });
         });
+    }
+
+    /**
+     * Killed by a blow in the face: the stand-in player two and a half blocks in front of it, looking at its head (the
+     * usual kill, walking up to an animal), on open ground. Does it go down, or is it left standing on its legs, and how
+     * far does it go from where it stood? A body with no head is struck at its middle.
+     */
+    static void killedInTheFace(GameTestHelper helper, EntityType<? extends Mob> type, Consumer<Numbers> done) {
+        String head = RigComparison.generatedHead(type);
+        Vec3 killer = KILLED_AT.add(0, 0, KILLER_OFF + 0.5);
+        Consumer<Subject> then = s -> {
+            double floor = helper.absolutePos(new BlockPos(0, RigComparison.FLOOR, 0)).getY();
+            double standing = belly(s, floor);
+            Vector3d start = s.torsoCentre();
+            int[] t = {0};
+            int[] stillRun = {0};
+            boolean[] finished = {false};
+            helper.onEachTick(() -> {
+                if (finished[0] || s.torso() == null) {
+                    return;
+                }
+                int now = ++t[0];
+                stillRun[0] = now > 5 && s.still() ? stillRun[0] + 1 : 0;
+                if (stillRun[0] >= RigComparison.SETTLE_RUN || now >= RigComparison.SETTLE_CAP) {
+                    finished[0] = true;
+                    Vector3d end = s.torsoCentre();
+                    done.accept(down(new Numbers().put("struck_head", head != null && head.equals(s.carcass().hitBone) ? 1 : 0, "yes/no")
+                            .put("settle_ticks", now, "ticks")
+                            .put("travel", Math.hypot(end.x - start.x, end.z - start.z), "blocks"), s, standing, floor));
+                }
+            });
+        };
+        if (head == null) {
+            RigComparison.killed(helper, type, KILLED_AT, SOUTH, killer, then);
+        } else {
+            RigComparison.killedAt(helper, type, KILLED_AT, SOUTH, killer, head, then);
+        }
+    }
+
+    /**
+     * How a struck carcass lies once settled: tipped how far from upright, its torso how high off the ground, and whether
+     * it was left standing on its legs (upright within 45 degrees, its torso still more than half as high as it stood and
+     * more than an eighth of a block up), which a dead animal never is.
+     *
+     * @param standing how high its torso was off the ground as it stood
+     */
+    static Numbers down(Numbers n, Subject s, double standing, double floor) {
+        double tilt = RigComparison.angleDeg(s.up(), new Vector3d(0, 1, 0));
+        double belly = belly(s, floor);
+        return n.put("tilt_rest_deg", tilt, "degrees")
+                .put("belly_stand", standing, "blocks")
+                .put("belly_rest", belly, "blocks")
+                .put("stood", standing(tilt, belly, standing) ? 1 : 0, "yes/no");
+    }
+
+    /** Whether a carcass tipped so far and its torso so high off the ground, having stood {@code standing} high, stands. */
+    static boolean standing(double tilt, double belly, double standing) {
+        return tilt < 45.0 && belly > Math.max(0.5 * standing, 0.125);
+    }
+
+    /** How high the lowest corner of the torso's drawn box is off the floor, blocks. */
+    static double belly(Subject s, double floor) {
+        ServerSubLevel torso = s.torso();
+        return torso == null ? Double.NaN : lowest(torso, s.bone(s.torsoBody())) - floor;
     }
 
     /** How far the torso's forward points below the horizon, degrees (negative above it). */

@@ -54,6 +54,8 @@ public class RigComparisonTests {
                 (h, type, r) -> RigScenarios.killedFromTheFlank(h, type, r.apply("1_ragdoll"), r.apply("4a_blow_flank"))));
         plays.put("4b_blow_behind", new Play(1, 300, RigComparison.OPEN_GROUND,
                 (h, type, r) -> RigScenarios.killedFromBehind(h, type, r.apply("4b_blow_behind"))));
+        plays.put("4c_blow_face", new Play(1, 300, RigComparison.OPEN_GROUND,
+                (h, type, r) -> RigScenarios.killedInTheFace(h, type, r.apply("4c_blow_face"))));
         plays.put("8_rest", new Play(1, 800, RigComparison.OPEN_GROUND,
                 (h, type, r) -> RigScenarios.comesToRest(h, type, r.apply("8_rest"))));
         plays.put("2a_legs_hang", new Play(1, 300, RigComparison.ARENA, (h, type, r) -> RigScenarios.heldUp(h, type, true, r.apply("2a_legs_hang"))));
