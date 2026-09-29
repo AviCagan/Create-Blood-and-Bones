@@ -239,7 +239,7 @@ public final class MinionFitness {
         List<MinionStats.Strike> strikes = stats.strikes();
         for (int i = 0; i < strikes.size(); i++) {
             MinionStats.Strike strike = strikes.get(i);
-            if (!"pacifist".equals(strike.style()) && strike.damage() > 0.0F) {
+            if (strike.hurts()) {
                 striking++;
                 if (strike.damage() > hardest) {
                     hardest = strike.damage();
@@ -266,7 +266,7 @@ public final class MinionFitness {
                 hardestFrom.add(Source.trait(found.trait(), found.level()));
             }
         }
-        boolean canStrike = strikes.stream().anyMatch(s -> !"pacifist".equals(s.style())) || head != null;
+        boolean canStrike = stats.fights();
         // a held bow, crossbow or trident needs a hand that fights to draw or throw it
         boolean handWeapon = strikes.stream().anyMatch(s -> "hand".equals(s.grip()) && !"pacifist".equals(s.style()));
         Optional<Source> innate = Optional.empty();

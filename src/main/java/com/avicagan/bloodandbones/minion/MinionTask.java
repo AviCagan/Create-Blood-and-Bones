@@ -196,13 +196,10 @@ public enum MinionTask {
             return new Tool(Optional.empty(), required, carried, Optional.ofNullable(grips));
         }
 
+        /** As a task file writes it: whether it is required, and carried, are the code's (see {@link MinionTask#checked}), so not written. */
         JsonObject toJson() {
             JsonObject o = new JsonObject();
             items.ifPresent(i -> o.addProperty("items", i));
-            o.addProperty("required", required);
-            if (carried) {
-                o.addProperty("carried", true);
-            }
             grips.ifPresent(g -> o.add("grips", gripsJson(g)));
             return o;
         }
@@ -368,9 +365,27 @@ public enum MinionTask {
     /**
      * A task file's data as the goals can do it (docs/NEXT.md 1.6): its anchors only those the task's goals work from, since
      * a file can take an anchor away but not teach a goal a new one (only Idle, Guard, Hunter, Medic and Courier work round
-     * their maker). One it cannot do is left out, and logged; with none left, the task's own stand.
+     * their maker). One it cannot do is left out, and logged; with none left, the task's own stand. Its tool likewise: a file
+     * can narrow the items and change the grips, but whether the task waits for its tool and whether it carries rather than
+     * holds it are its goals' own (a butcher cannot cut without a blade, a fisher fishes by hand), so a file's word on those
+     * is logged and left out, and a tool for a task that works with none is left out.
      */
     public Data checked(Data data, ResourceLocation file) {
+        Optional<Tool> tool = data.tool();
+        Optional<Tool> own = defaults().tool();
+        if (tool.isPresent() && own.isEmpty()) {
+            BloodAndBones.LOGGER.warn("Minion task file {}: {} works with no tool; its tool is left out", file, id);
+            tool = Optional.empty();
+        } else if (tool.isPresent() && (tool.get().required() != own.get().required() || tool.get().carried() != own.get().carried())) {
+            // its goals wait for the tool, and look for it in hand or among what it carries, as their code does
+            BloodAndBones.LOGGER.warn("Minion task file {}: whether {}'s tool is required ({}) and carried ({}) is fixed; left as they are", file, id,
+                    own.get().required(), own.get().carried());
+            tool = Optional.of(new Tool(tool.get().items(), own.get().required(), own.get().carried(), tool.get().grips()));
+        }
+        if (!tool.equals(data.tool())) {
+            data = new Data(data.kind(), data.anchors(), data.reach(), data.maxReach(), data.main(), data.second(), data.grips(), tool, data.stores(),
+                    data.numbers(), data.needsSurgeonHead());
+        }
         List<Anchor> allowed = defaults().anchors();
         List<Anchor> kept = data.anchors().stream().filter(allowed::contains).toList();
         if (kept.size() < data.anchors().size()) {

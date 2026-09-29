@@ -69,9 +69,15 @@ public final class TaskWords {
         }
         return Component.translatable(switch (minion.task()) {
             case SENTRY -> "bloodandbones.minion.where.post";
-            case SURGEON -> "bloodandbones.minion.where.table";
+            case SURGEON -> atTable(minion) ? "bloodandbones.minion.where.table" : "bloodandbones.minion.where.home";
             default -> "bloodandbones.minion.where.home";
         });
+    }
+
+    /** Whether its home is a Surgery Table (a home unloaded, far off, is not looked at). */
+    private static boolean atTable(MinionEntity minion) {
+        return minion.level().isLoaded(minion.home())
+                && minion.level().getBlockState(minion.home()).getBlock() instanceof com.avicagan.bloodandbones.body.SurgeryTableBlock;
     }
 
     /** What it is doing, for its status line: "Farmer 120% at home", "Idle with its maker". */
@@ -98,10 +104,42 @@ public final class TaskWords {
         if (task.rated()) {
             MinionFitness.Row row = minion.row(task, minion.anchor());
             if (row.waitsFor().isPresent()) {
-                return Component.translatable(row.waitsFor().get());
+                return waits(PartsData.of(minion.level()), task, row.waitsFor().get());
             }
         }
         return minion.idleReason();
+    }
+
+    /**
+     * What a row waits for, in words: its task's tool as the task file names it where the file narrows it ("waiting for a
+     * Flensing Knife"), the task's own words otherwise.
+     */
+    public static Component waits(PartsData.Store store, MinionTask task, String key) {
+        if (key.equals("bloodandbones.minion.wants." + task.id.getPath())) {
+            java.util.Optional<String> items = store.task(task).tool().flatMap(MinionTask.Tool::items);
+            if (items.isPresent()) {
+                return Component.translatable("bloodandbones.minion.wants.items", items(items.get()));
+            }
+        }
+        return Component.translatable(key);
+    }
+
+    /** Its task's tool in words: the task file's items where it names them, the task's own words otherwise ("a fishing rod"). */
+    public static Component tool(PartsData.Store store, MinionTask task) {
+        return store.task(task).tool().flatMap(MinionTask.Tool::items).map(TaskWords::items)
+                .orElseGet(() -> Component.translatable("bloodandbones.minion.tool." + task.id.getPath()));
+    }
+
+    /** An item id's name, or a "#tag"'s (its conventional name where it has one, the tag itself otherwise). */
+    static Component items(String items) {
+        if (items.startsWith("#")) {
+            net.minecraft.resources.ResourceLocation tag = net.minecraft.resources.ResourceLocation.tryParse(items.substring(1));
+            return tag == null ? Component.literal(items) : Component.translatableWithFallback(net.neoforged.neoforge.common.Tags.getTagTranslationKey(
+                    net.minecraft.tags.TagKey.create(net.minecraft.core.registries.Registries.ITEM, tag)), items);
+        }
+        net.minecraft.resources.ResourceLocation id = net.minecraft.resources.ResourceLocation.tryParse(items);
+        return id == null ? Component.literal(items) : BuiltInRegistries.ITEM.getOptional(id).map(item -> item.getDescription())
+                .orElse(Component.literal(items));
     }
 
     // ---- what a part brings, for JEI's Body Parts page and a piece's tooltip (docs/NEXT.md 1.4)
@@ -215,9 +253,9 @@ public final class TaskWords {
         if (!task.rated() || !row.can()) {
             return out;
         }
-        row.waitsFor().ifPresent(key -> out.add(Component.translatable(key).withStyle(ChatFormatting.GOLD)));
-        row.withTool().ifPresent(with -> out.add(Component.translatable("bloodandbones.minion.with_tool",
-                Component.translatable("bloodandbones.minion.tool." + task.id.getPath()), percent(with)).withStyle(ChatFormatting.GOLD)));
+        row.waitsFor().ifPresent(key -> out.add(waits(store, task, key).copy().withStyle(ChatFormatting.GOLD)));
+        row.withTool().ifPresent(with -> out.add(Component.translatable("bloodandbones.minion.with_tool", tool(store, task), percent(with))
+                .withStyle(ChatFormatting.GOLD)));
         row.main().ifPresent(f -> out.add(factor(store, f, false)));
         row.second().ifPresent(f -> out.add(factor(store, f, true)));
         if (Math.abs(row.knack() - 1.0F) > 1.0E-3F) {

@@ -179,7 +179,8 @@ public final class MinionGoals {
      * A guard with its maker goes for what hurts its maker ({@code hit} false) or what its maker hits ({@code hit} true),
      * each time anew, as a tamed wolf does (vanilla's OwnerHurtByTargetGoal and OwnerHurtTargetGoal): never its own side,
      * someone's tamed animal or horse, a player its maker may not hurt, a creeper or an armour stand. It needs a head to
-     * see it by.
+     * see it by. Its reach is how far from its maker it goes: nothing further off than that from them, and it gives up one
+     * that gets further.
      */
     static class DefendMaker extends TargetGoal {
         /** A blow older than this is past: it is not taken up late, when the task was only just given. */
@@ -208,8 +209,20 @@ public final class MinionGoals {
             }
             enemy = hit ? maker.getLastHurtMob() : maker.getLastHurtByMob();
             int when = hit ? maker.getLastHurtMobTimestamp() : maker.getLastHurtByMobTimestamp();
-            return enemy != null && when != timestamp && maker.tickCount - when < FRESH && wantsToAttack(enemy, maker)
+            return enemy != null && when != timestamp && maker.tickCount - when < FRESH && wantsToAttack(enemy, maker) && withinReach(enemy, maker)
                     && canAttack(enemy, TargetingConditions.DEFAULT);
+        }
+
+        @Override
+        public boolean canContinueToUse() {
+            Player maker = minion.workingMaker();
+            LivingEntity target = mob.getTarget();
+            return maker != null && target != null && withinReach(target, maker) && super.canContinueToUse();
+        }
+
+        private boolean withinReach(LivingEntity target, Player maker) {
+            double reach = minion.reach();
+            return target.distanceToSqr(maker) <= reach * reach;
         }
 
         @Override
@@ -722,7 +735,9 @@ public final class MinionGoals {
     /**
      * On a task done with its maker, it keeps near them while they are in the same world within 64 blocks
      * ({@link MinionEntity#workingMaker}), as a tamed wolf follows its owner (vanilla's FollowOwnerGoal): it sets off once
-     * they are six blocks off and stops three short, looking at them, its path worked out again every half second.
+     * they are six blocks off and stops three short, looking at them, its path worked out again every half second. Idle's
+     * reach is how far it keeps from them, as it is from home: it sets off two blocks past its reach and stops one short of
+     * it, never nearer than three (6 and 3 at its own 4).
      */
     public static class FollowMaker extends Goal {
         private static final double START = 6.0;
@@ -740,13 +755,25 @@ public final class MinionGoals {
         @Override
         public boolean canUse() {
             maker = minion.workingMaker();
-            return maker != null && minion.distanceToSqr(maker) > START * START && minion.getTarget() == null && canPath(minion);
+            double start = setOff();
+            return maker != null && minion.distanceToSqr(maker) > start * start && minion.getTarget() == null && canPath(minion);
         }
 
         @Override
         public boolean canContinueToUse() {
-            return maker != null && maker == minion.workingMaker() && minion.distanceToSqr(maker) > STOP * STOP && minion.getTarget() == null
+            double stop = stopAt();
+            return maker != null && maker == minion.workingMaker() && minion.distanceToSqr(maker) > stop * stop && minion.getTarget() == null
                     && !minion.getNavigation().isDone();
+        }
+
+        /** How far off its maker must be for it to set off after them. */
+        double setOff() {
+            return minion.hasTask(MinionTask.IDLE) ? minion.reach() + 2.0 : START;
+        }
+
+        /** How near it comes before it stops. */
+        double stopAt() {
+            return minion.hasTask(MinionTask.IDLE) ? Math.max(STOP, minion.reach() - 1.0) : STOP;
         }
 
         @Override
@@ -847,6 +874,9 @@ public final class MinionGoals {
             }
             if (best != null) {
                 minion.setHome(best);
+            } else {
+                // it says why until it next looks: a reach set too short, or set down too far off
+                minion.idle(net.minecraft.network.chat.Component.translatable("bloodandbones.minion.idle.surgeon", reach));
             }
             return best;
         }
@@ -1158,17 +1188,27 @@ public final class MinionGoals {
     }
 
     /**
-     * The most blocks a farmer reads a tick when it looks for ripe crops, on average: today's farmer's, its 17 by 17 by 5 box
-     * once a second. A fitter farmer looks more often and a far-reaching one over a bigger box, so each look reads a band of
-     * the box, as wide as this allows.
+     * The most blocks a 100% farmer reads a tick when it looks for ripe crops, on average: today's farmer's, its 17 by 17 by
+     * 5 box once a second. A far-reaching farmer's box is bigger, so each look reads a band of the box, as wide as this
+     * allows.
      */
     static final float FARM_SCAN = 17 * 17 * 5 / 20.0F;
 
     /**
+     * How many columns of its box (each its width long and 5 high) a farmer reads a look: as many as a 100% farmer at this
+     * reach reads, so a fitter farmer, looking more often, goes over its whole box sooner, never later (at its own reach, the
+     * whole box every look); a poorer one, looking less often, reads as many more a look as keeps it to FARM_SCAN a tick.
+     * So a farmer reads more blocks a second than today's only by as much as its looks are quicker, twice at most.
+     */
+    static int farmColumns(int width, int lookTicks, int baseLookTicks) {
+        return Mth.clamp(Math.round(FARM_SCAN * Math.max(lookTicks, baseLookTicks)) / (width * 5), 1, width);
+    }
+
+    /**
      * A farmer harvests ripe crops within its reach of home (brass: those its filter passes) and plants them again from what
      * it reaped. It looks for ripe ones every second or so at 100%, a fitter farmer more often (docs/NEXT.md 1.2). A look
-     * reads a band of the box within its reach (all of it at its own reach and 100%), so it never reads more blocks a second
-     * than today's farmer did: it works one band until it finds no ripe crop there, then looks along the next.
+     * reads a band of the box within its reach (all of it at its own reach), as wide as a 100% farmer's look
+     * ({@link #farmColumns}): it works one band until it finds no ripe crop there, then looks along the next.
      */
     public static class Farm extends Goal {
         private final MinionEntity minion;
@@ -1193,8 +1233,8 @@ public final class MinionGoals {
                 return null;
             }
             int width = reach * 2 + 1;
-            int look = MinionFitness.lookTicks(com.avicagan.bloodandbones.parts.PartsData.of(minion.level()).task(MinionTask.FARMER), minion.taskFitness());
-            int columns = Mth.clamp(Math.round(FARM_SCAN * look) / (width * 5), 1, width);
+            MinionTask.Data data = com.avicagan.bloodandbones.parts.PartsData.of(minion.level()).task(MinionTask.FARMER);
+            int columns = farmColumns(width, MinionFitness.lookTicks(data, minion.taskFitness()), MinionFitness.lookTicks(data, 1.0F));
             int bands = Mth.positiveCeilDiv(width, columns);
             band = Math.floorMod(band, bands);
             int x = home.getX() - reach + band * columns;

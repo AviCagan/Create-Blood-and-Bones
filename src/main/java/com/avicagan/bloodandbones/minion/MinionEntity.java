@@ -558,18 +558,21 @@ public class MinionEntity extends PathfinderMob implements net.minecraft.world.e
     /**
      * One blow at its target, in the style of the arm whose turn it is (docs/PARTS-AND-TRAITS.md section 5.6): a
      * punch, a kick that throws them back, a fling that throws them up, a grab that holds them, a sting that
-     * poisons, a slam that hits everything round them, a claw or hook that tears. With no arm, the head bites.
+     * poisons, a slam that hits everything round them, a claw or hook that tears. With no arm that hurts (folded arms,
+     * wings), the head bites, as the task screen's Blow reads it, and wings buffet them as it does. With no head either, the
+     * wings only buffet: such a body has nothing to fight with ({@link MinionStats#fights}), and its fight goals never ask.
      */
     @Override
     public boolean doHurtTarget(net.minecraft.world.entity.Entity target) {
         MinionStats s = stats();
-        List<MinionStats.Strike> strikes = s.strikes().stream().filter(k -> !"pacifist".equals(k.style())).toList();
-        MinionStats.Strike strike = strikes.isEmpty() ? new MinionStats.Strike("bite", s.biteDamage()) : strikes.get(Math.floorMod(nextStrike++, strikes.size()));
+        List<MinionStats.Strike> strikes = s.strikes().stream().filter(MinionStats.Strike::hurts).toList();
         swing(InteractionHand.MAIN_HAND);
-        if ("flap".equals(strike.style())) {
-            knock(target, 0.8F);
-            return true;
+        boolean buffets = strikes.isEmpty() && s.flaps();
+        if (strikes.isEmpty() && s.mindless()) {
+            knock(target, buffets ? FLAP_KNOCKBACK : 0.0F);
+            return buffets;
         }
+        MinionStats.Strike strike = strikes.isEmpty() ? new MinionStats.Strike("bite", s.biteDamage()) : strikes.get(Math.floorMod(nextStrike++, strikes.size()));
         DamageSource source = damageSources().mobAttack(this);
         // a berserk head's blows land half again as hard
         float damage = strike.damage() * (s.berserk() ? MinionStats.BERSERK_DAMAGE : 1.0F);
@@ -609,11 +612,17 @@ public class MinionEntity extends PathfinderMob implements net.minecraft.world.e
             }
             default -> knock(target, s.biteKnockback());
         }
+        if (buffets) {
+            knock(target, FLAP_KNOCKBACK);
+        }
         if (module() == com.avicagan.bloodandbones.cyber.Module.PISTON_RAM) {
             knock(target, MinionModules.RAM_KNOCKBACK);
         }
         return true;
     }
+
+    /** How hard its wings' flap throws back what it bites. */
+    private static final float FLAP_KNOCKBACK = 0.8F;
 
     /** A ranged shot from its arms or organ, when vanilla's ranged goal fires (the Ranged group's trait effects). */
     @Override

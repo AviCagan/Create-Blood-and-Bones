@@ -270,6 +270,8 @@ public class BBLang {
                 {"medic", "waiting for splash potions of healing"}, {"griefing", "waiting for the mobGriefing rule, which is off"}}) {
             BloodAndBones.REGISTRATE.addRawLang("bloodandbones.minion.wants." + wants[0], wants[1]);
         }
+        // a tool its task file narrows, named from the file
+        BloodAndBones.REGISTRATE.addRawLang("bloodandbones.minion.wants.items", "waiting for %s");
         // what a tool it lacks would make of it
         BloodAndBones.REGISTRATE.addRawLang("bloodandbones.minion.with_tool", "With %s: %s");
         for (String[] tool : new String[][]{{"sentry", "a bow, crossbow or trident"}, {"fisher", "a fishing rod"}, {"courier", "a sample to fetch the like of"},
@@ -283,7 +285,8 @@ public class BBLang {
                 {"tender_blood", "no blood to be had by the bucket within %s of home"},
                 {"tender_canister", "no full Soul Canister in a container within %s of home"},
                 {"tender_rest", "nowhere by home for the rest of a bucket that a fallen minion cannot hold"},
-                {"maker_full", "its maker has no room for what it brings"}}) {
+                {"maker_full", "its maker has no room for what it brings"},
+                {"surgeon", "no Surgery Table within %s of where it stands"}}) {
             BloodAndBones.REGISTRATE.addRawLang("bloodandbones.minion.idle." + idle[0], idle[1]);
         }
         // how fit it is, in a word (docs/NEXT.md 1.3)

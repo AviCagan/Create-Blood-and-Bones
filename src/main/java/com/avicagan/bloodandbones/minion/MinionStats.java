@@ -65,6 +65,14 @@ public record MinionStats(float health, float knockbackResistance, int slots, in
         public Strike(String style, float damage) {
             this(style, damage, "none");
         }
+
+        /**
+         * Whether it hurts what it hits: folded (pacifist) arms never strike, and a wing's flap only buffets, whatever its
+         * data's damage. The fight goals, the task screen's Blow and the blows themselves all ask this.
+         */
+        public boolean hurts() {
+            return !"pacifist".equals(style) && !"flap".equals(style) && damage > 0.0F;
+        }
     }
 
     /**
@@ -457,12 +465,17 @@ public record MinionStats(float health, float knockbackResistance, int slots, in
     }
 
     /**
-     * Whether it has anything to fight with: an arm that hits, or a head to bite with (docs/NEXT.md 1.7). Folded (pacifist)
-     * arms never strike, but a head over them still bites, as the task screen's Blow reads it; a body with neither has nothing
-     * to fight with.
+     * Whether it has anything to fight with: an arm that hurts, or a head to bite with (docs/NEXT.md 1.7). Folded (pacifist)
+     * arms never strike and wings only buffet, but a head over them still bites, as the task screen's Blow reads it; a body
+     * with neither has nothing to fight with.
      */
     public boolean fights() {
-        return !mindless || strikes.stream().anyMatch(s -> !"pacifist".equals(s.style()));
+        return !mindless || strikes.stream().anyMatch(Strike::hurts);
+    }
+
+    /** Whether it has wings that buffet what it fights (a flap knocks back and hurts nothing). */
+    public boolean flaps() {
+        return strikes.stream().anyMatch(s -> "flap".equals(s.style()));
     }
 
     private static float volume(Optional<Bone> bone) {
