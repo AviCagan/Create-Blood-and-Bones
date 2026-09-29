@@ -250,7 +250,8 @@ public class MinionFitnessTests {
      * A stand-in body with every stat at its reference scores 100% at every task, and every lever gives today's constant:
      * catches 600 to 1200 ticks, strokes 15, looking gold over 120, tending a heart every 100, 25 mB a minute at work, and
      * stage C's: a sentry's shots and spread, a medic's throws and spread, a herder's wait, a courier's, farmer's and
-     * tender's looks, a hauler's towing, a butcher's yield, a digger's finds and a blow a second; each moves with the fitness within its bounds. The shipped task and disposition files are the code's defaults, so a
+     * tender's looks, a hauler's towing, a butcher's yield, a digger's finds, a blow a second and a surgeon's stump prices;
+     * each moves with the fitness within its bounds. The shipped task and disposition files are the code's defaults, so a
      * missing one changes nothing.
      */
     @GameTest(template = "empty", timeoutTicks = 20)
@@ -287,7 +288,7 @@ public class MinionFitnessTests {
         // one to two, a trident's two) and its spread (14 less 4 a step of difficulty), a medic's throw every 3 s at a witch's
         // spread, a herder's 30 s after a stray, a courier's and farmer's look every half second and a tender's every second,
         // a hauler towing at a player's slowdown, a butcher's whole yield, a digger's minute or two, the fisher's floor, a
-        // blow a second
+        // blow a second, and a surgeon's stump a bucket at 150% and over, two from 75%, three below
         MinionTask.Data sentry = store.task(MinionTask.SENTRY);
         MinionTask.Data medic = store.task(MinionTask.MEDIC);
         MinionTask.Data surgeon = store.task(MinionTask.SURGEON);
@@ -300,7 +301,8 @@ public class MinionFitnessTests {
                 || MinionFitness.lookTicks(store.task(MinionTask.FARMER), 1.0F) != 10 || MinionFitness.lookTicks(store.task(MinionTask.TENDER), 1.0F) != 20
                 || MinionFitness.towing(store.task(MinionTask.HAULER), 0.3F, 1.0F) != 0.3F || MinionFitness.yieldShare(1.0F) != 1.0F
                 || digs[0] != 1200 || digs[1] != 2400 || MinionFitness.catchLeast(store.task(MinionTask.FISHER)) != 100
-                || com.avicagan.bloodandbones.minion.MinionGoals.BLOW_EVERY != 20) {
+                || com.avicagan.bloodandbones.minion.MinionGoals.BLOW_EVERY != 20 || MinionFitness.stumpBuckets(surgeon, 2.0F) != 1
+                || MinionFitness.stumpBuckets(surgeon, 1.5F) != 1 || MinionFitness.stumpBuckets(surgeon, 1.0F) != 2 || MinionFitness.stumpBuckets(surgeon, 0.74F) != 3) {
             helper.fail("At 100% every lever should be today's");
             return;
         }

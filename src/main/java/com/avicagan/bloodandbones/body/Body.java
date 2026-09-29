@@ -15,7 +15,8 @@ import java.util.Map;
 /**
  * Which parts of a body are its own, which are gone, and what has been fitted in their place. Kept on a
  * player as a data attachment (see {@link BBAttachments#BODY}): saved, kept through death, sent to clients.
- * A part a surgeon minion cut off leaves a ragged stump, which costs more to fit (see {@link Surgery}).
+ * A part a surgeon minion cut off leaves a ragged stump, which costs more to fit (see {@link Surgery}): one, two or three
+ * buckets of blood, by how fit the surgeon was (docs/NEXT.md 1.5), kept here per part.
  */
 public final class Body {
     public enum State {
@@ -24,12 +25,25 @@ public final class Body {
 
     private final EnumSet<BodyPart> lost = EnumSet.noneOf(BodyPart.class);
     private final EnumMap<BodyPart, ItemStack> implants = new EnumMap<>(BodyPart.class);
-    private final EnumSet<BodyPart> ragged = EnumSet.noneOf(BodyPart.class);
+    /** Each ragged stump's price, in buckets of blood. */
+    private final EnumMap<BodyPart, Integer> ragged = new EnumMap<>(BodyPart.class);
+
+    /**
+     * The ragged stumps, each with its price in buckets. A body saved before stumps had prices kept a list of its ragged
+     * parts: each reads as one bucket, the price every stump had then (docs/NEXT.md 1.8).
+     */
+    private static final Codec<Map<BodyPart, Integer>> RAGGED = Codec.either(BodyPart.CODEC.listOf(),
+            Codec.unboundedMap(BodyPart.CODEC, net.minecraft.util.ExtraCodecs.POSITIVE_INT)).xmap(
+            either -> either.map(old -> {
+                Map<BodyPart, Integer> out = new EnumMap<>(BodyPart.class);
+                old.forEach(part -> out.put(part, 1));
+                return out;
+            }, priced -> priced), com.mojang.datafixers.util.Either::right);
 
     public static final Codec<Body> CODEC = RecordCodecBuilder.create(i -> i.group(
             BodyPart.CODEC.listOf().optionalFieldOf("lost", List.of()).forGetter(b -> List.copyOf(b.lost)),
             Codec.unboundedMap(BodyPart.CODEC, ItemStack.CODEC).optionalFieldOf("implants", Map.of()).forGetter(b -> Map.copyOf(b.implants)),
-            BodyPart.CODEC.listOf().optionalFieldOf("ragged", List.of()).forGetter(b -> List.copyOf(b.ragged))
+            RAGGED.optionalFieldOf("ragged", Map.of()).forGetter(b -> Map.copyOf(b.ragged))
     ).apply(i, Body::of));
 
     public static final StreamCodec<RegistryFriendlyByteBuf, Body> STREAM_CODEC = ByteBufCodecs.fromCodecWithRegistries(CODEC);
@@ -37,10 +51,10 @@ public final class Body {
     public Body() {
     }
 
-    private static Body of(List<BodyPart> lost, Map<BodyPart, ItemStack> implants, List<BodyPart> ragged) {
+    private static Body of(List<BodyPart> lost, Map<BodyPart, ItemStack> implants, Map<BodyPart, Integer> ragged) {
         Body body = new Body();
         body.lost.addAll(lost);
-        body.ragged.addAll(ragged);
+        body.ragged.putAll(ragged);
         implants.forEach((part, stack) -> {
             if (!stack.isEmpty()) {
                 body.lost.add(part);
@@ -51,7 +65,7 @@ public final class Body {
     }
 
     public Body copy() {
-        return of(List.copyOf(lost), implants, List.copyOf(ragged));
+        return of(List.copyOf(lost), implants, ragged);
     }
 
     public State state(BodyPart part) {
@@ -80,12 +94,20 @@ public final class Body {
         lose(part, false);
     }
 
-    /** The part comes off, leaving a ragged stump if a surgeon hacked it off. */
+    /** The part comes off, leaving a ragged stump of a bucket if a surgeon hacked it off (the best surgeon's price). */
     public void lose(BodyPart part, boolean rough) {
+        lose(part, rough ? 1 : 0);
+    }
+
+    /**
+     * The part comes off. A surgeon hacking it off leaves a ragged stump that costs this many buckets of blood to fit
+     * anything but a crude prosthetic into later (docs/NEXT.md 1.5); 0 is a clean cut.
+     */
+    public void lose(BodyPart part, int buckets) {
         lost.add(part);
         implants.remove(part);
-        if (rough) {
-            ragged.add(part);
+        if (buckets > 0) {
+            ragged.put(part, buckets);
         } else {
             ragged.remove(part);
         }
@@ -93,7 +115,12 @@ public final class Body {
 
     /** Whether the part is gone and left a ragged stump: fitting anything there costs more. */
     public boolean ragged(BodyPart part) {
-        return ragged.contains(part) && state(part) == State.MISSING;
+        return ragged.containsKey(part) && state(part) == State.MISSING;
+    }
+
+    /** What a ragged stump costs to fit anything but a crude prosthetic into, in buckets of blood; 0 for none. */
+    public int raggedBuckets(BodyPart part) {
+        return ragged(part) ? ragged.get(part) : 0;
     }
 
     /** Fitted: the stump is dressed, ragged no more. */

@@ -325,8 +325,10 @@ public enum MinionTask {
                     numbers("bow_every", 20, "crossbow_min", 20, "crossbow_max", 40, "trident_every", 40, "spread", 14, "spread_per_difficulty", 4));
             case HUNTER -> data(HOME_OR_MAKER, 12, 24, Stat.BLOW, Stat.PACE, Map.of(), null, false, Map.of());
             case SAPPER -> data(HOME, 16, 32, Stat.PACE, Stat.TOUGHNESS, Map.of(), null, false, Map.of());
-            // it keeps by its table (its home, or the nearest within 6) and tends a heart every 5 s, never faster than every 2
-            case SURGEON -> data(HOME, 6, 12, Stat.HANDS, Stat.SIGHT, TOOL, null, false, numbers("tend_every", 100, "tend_least", 40));
+            // it keeps by its table (its home, or the nearest within 6) and tends a heart every 5 s, never faster than every 2; a
+            // stump it cuts costs a bucket of blood to fit at 150% and over, two from 75%, three below (docs/NEXT.md 1.5)
+            case SURGEON -> data(HOME, 6, 12, Stat.HANDS, Stat.SIGHT, TOOL, null, false, numbers("tend_every", 100, "tend_least", 40,
+                    "one_bucket_from", MinionFitness.CLEAN_CUT, "two_buckets_from", MinionFitness.FAIR_CUT));
             case MEDIC -> data(HOME_OR_MAKER, 16, 32, Stat.HANDS, Stat.SIGHT, PICKING, Tool.of(true, true, null), false,
                     numbers("throw_every", 60, "throw_least", 20, "spread", 8));
             // it keeps its herd within 8 of home, looks out to 20 for strays, and gives up on one after 30 s

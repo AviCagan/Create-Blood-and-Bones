@@ -222,22 +222,29 @@ public final class BodyRendering {
     /** How long a stump is, in model pixels: a clean cut close, a ragged one longer and torn. */
     private static final float CLEAN_STUMP = 3.0F;
     private static final float RAGGED_STUMP = 4.5F;
-    /** How far a ragged stump's torn flaps hang past its end. */
+    /** How far a ragged stump's torn flaps hang past its end, and flare out, at a bucket's price. */
     private static final float FLAP = 2.0F;
+    private static final float FLARE = 0.3F;
 
     /**
      * A stump where a limb was: the top of the limb in its own skin, cut short, its end raw (none of the blood in
-     * bloodless mode). A ragged one is longer, its end torn, with flaps of flesh hanging off it.
+     * bloodless mode). A ragged one is longer, its end torn, with flaps of flesh hanging off it; the dearer it is to fit
+     * (the poorer the surgeon that cut it, docs/NEXT.md 1.5), the longer and more torn: at two buckets its flaps hang
+     * further and flare wider, with more torn at the corners, and at three further still.
+     *
+     * @param buckets what the stump costs to fit: 0 for a clean cut, else 1 to 3
      */
     static void stump(PoseStack poseStack, MultiBufferSource buffers, int packedLight, int overlay, PlayerModel<?> model, BodyPart part,
-                      boolean ragged, net.minecraft.resources.ResourceLocation skin) {
+                      int buckets, net.minecraft.resources.ResourceLocation skin) {
         ModelPart limb = part(model, part);
         if (limb == null || limb.isEmpty()) {
             return;
         }
+        boolean ragged = buckets > 0;
+        int worse = Math.max(0, Math.min(2, buckets - 1));
         // a player's limb is one box: any pick is it
         ModelPart.Cube box = limb.getRandomCube(PICK);
-        float length = ragged ? RAGGED_STUMP : CLEAN_STUMP;
+        float length = ragged ? RAGGED_STUMP + 0.5F * worse : CLEAN_STUMP;
         float end = box.minY + length;
         poseStack.pushPose();
         limb.translateAndRotate(poseStack);
@@ -251,14 +258,28 @@ public final class BodyRendering {
             var wound = buffers.getBuffer(RenderType.entityCutoutNoCull(ragged ? RAGGED : WOUND));
             quad(wound, pose, packedLight, overlay, x0, y, z0, x1, y, z0, x1, y, z1, x0, y, z1, 0, 1, 0);
             if (ragged) {
-                // torn flesh hanging off each side, flaring a little
+                // torn flesh hanging off each side, flaring a little (more, and longer, the dearer the stump)
                 var flaps = buffers.getBuffer(RenderType.entityCutoutNoCull(FLAPS));
-                float f = 0.3F;
-                float low = y + FLAP;
+                float f = FLARE * (1 + worse);
+                float low = y + FLAP * (1.0F + 0.5F * worse);
                 quad(flaps, pose, packedLight, overlay, x0, y, z0, x1, y, z0, x1 + f, low, z0 - f, x0 - f, low, z0 - f, 0, 0, -1);
                 quad(flaps, pose, packedLight, overlay, x1, y, z1, x0, y, z1, x0 - f, low, z1 + f, x1 + f, low, z1 + f, 0, 0, 1);
                 quad(flaps, pose, packedLight, overlay, x0, y, z1, x0, y, z0, x0 - f, low, z0 - f, x0 - f, low, z1 + f, -1, 0, 0);
                 quad(flaps, pose, packedLight, overlay, x1, y, z0, x1, y, z1, x1 + f, low, z1 + f, x1 + f, low, z0 - f, 1, 0, 0);
+                if (worse > 0) {
+                    // a hacked stump is torn at its corners too: a strip hanging from each, splayed out
+                    float w = Math.min(x1 - x0, z1 - z0) * 0.35F;
+                    float hang = low + FLAP * 0.5F * worse;
+                    float out = f * 1.5F;
+                    for (int corner = 0; corner < 4; corner++) {
+                        float cx = corner % 2 == 0 ? x0 : x1;
+                        float cz = corner < 2 ? z0 : z1;
+                        float dx = corner % 2 == 0 ? 1.0F : -1.0F;
+                        float dz = corner < 2 ? 1.0F : -1.0F;
+                        quad(flaps, pose, packedLight, overlay, cx + dx * w, y, cz, cx, y, cz + dz * w, cx - dx * out, hang, cz + dz * w - dz * out,
+                                cx + dx * w - dx * out, hang, cz - dz * out, -dx * 0.7F, 0, -dz * 0.7F);
+                    }
+                }
             }
         }
         poseStack.popPose();
@@ -327,7 +348,7 @@ public final class BodyRendering {
             for (BodyPart part : new BodyPart[]{BodyPart.LEFT_ARM, BodyPart.RIGHT_ARM, BodyPart.LEFT_LEG, BodyPart.RIGHT_LEG}) {
                 if (body.state(part) == Body.State.MISSING) {
                     stump(poseStack, buffers, packedLight, net.minecraft.client.renderer.entity.LivingEntityRenderer.getOverlayCoords(player, 0.0F),
-                            getParentModel(), part, body.ragged(part), getTextureLocation(player));
+                            getParentModel(), part, body.raggedBuckets(part), getTextureLocation(player));
                 }
             }
             for (BodyPart part : BodyPart.values()) {

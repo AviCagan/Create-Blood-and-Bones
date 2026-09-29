@@ -329,12 +329,15 @@ public class BBLang {
         BloodAndBones.REGISTRATE.addRawLang("bloodandbones.minion.disposition_line", "Disposition ×%s: %s");
         // what its fitness makes of its work (docs/NEXT.md 1.2)
         for (String[] lever : new String[][]{{"strike", "Strikes every %s s"}, {"sentry", "Shoots every %s s with a bow, spread %s"},
-                {"surgeon", "Tends a heart every %s s"}, {"medic", "Throws every %s s, spread %s"},
+                {"surgeon", "Tends a heart every %s s"}, {"surgeon_stump", "A stump it cuts costs %s of blood to fit"},
+                {"surgeon_no_cut", "It tends, but only a surgeon's head may cut"}, {"medic", "Throws every %s s, spread %s"},
                 {"herder", "Keeps after a stray for %s s"}, {"look", "Looks round every %s s"}, {"hauler", "Towing, slowed %s times as much as a player"},
                 {"farmer", "Looks for ripe crops every %s s"}, {"fisher", "A catch every %s to %s s"}, {"butcher", "A stroke every %s s, keeping %s of each cut"},
                 {"barterer", "Looks gold over for %s s"}, {"digger", "A find every %s to %s s"}}) {
             BloodAndBones.REGISTRATE.addRawLang("bloodandbones.minion.lever." + lever[0], lever[1]);
         }
+        bloodless("bloodandbones.minion.lever.surgeon_stump", "An open socket it leaves costs %s of essence to fit");
+        bloodless("bloodandbones.minion.lever.surgeon_no_cut", "It tends, but only a surgeon's head may do the ritual's work");
         BloodAndBones.REGISTRATE.addRawLang("bloodandbones.minion.at_work", "At work: %s mB of blood a minute");
         BloodAndBones.REGISTRATE.addRawLang("bloodandbones.minion.at_work_brass", "At work: %s mB of soul blood a minute");
         // the task screen (docs/NEXT.md 1.3)
@@ -436,8 +439,22 @@ public class BBLang {
         BloodAndBones.REGISTRATE.addRawLang("bloodandbones.surgery.state.missing", "Missing");
         BloodAndBones.REGISTRATE.addRawLang("bloodandbones.surgery.state.ragged", "Ragged stump");
         bloodless("bloodandbones.surgery.state.ragged", "Open socket");
+        // a ragged stump's price (docs/NEXT.md 1.5): what fitting anything but a crude prosthetic there costs
+        BloodAndBones.REGISTRATE.addRawLang("bloodandbones.surgery.state.ragged_price", "Ragged stump: %s");
+        bloodless("bloodandbones.surgery.state.ragged_price", "Open socket: %s");
+        BloodAndBones.REGISTRATE.addRawLang("bloodandbones.surgery.bucket", "a bucket");
+        BloodAndBones.REGISTRATE.addRawLang("bloodandbones.surgery.buckets", "%s buckets");
         BloodAndBones.REGISTRATE.addRawLang("bloodandbones.surgery.needs_surgeon", "Needs a surgeon");
-        BloodAndBones.REGISTRATE.addRawLang("bloodandbones.surgery.needs_blood", "Needs a bucket of blood");
+        BloodAndBones.REGISTRATE.addRawLang("bloodandbones.surgery.needs_blood", "Needs %s of blood");
+        // the surgeon by the table, before any cut: who, how fit, and what its stumps will cost
+        BloodAndBones.REGISTRATE.addRawLang("bloodandbones.surgery.surgeon", "Surgeon: %s, %s");
+        BloodAndBones.REGISTRATE.addRawLang("bloodandbones.surgery.surgeon_price", "Its stumps cost %s of blood to fit");
+        bloodless("bloodandbones.surgery.surgeon_price", "Its open sockets cost %s of essence to fit");
+        BloodAndBones.REGISTRATE.addRawLang("bloodandbones.surgery.surgeon_head", "Minion (%s head)");
+        BloodAndBones.REGISTRATE.addRawLang("bloodandbones.surgery.surgeon_headless", "Minion (no head)");
+        BloodAndBones.REGISTRATE.addRawLang("bloodandbones.surgery.no_surgeon", "No surgeon by the table");
+        BloodAndBones.REGISTRATE.addRawLang("bloodandbones.surgery.no_surgeon.hint", "Set a minion to Surgeon within 4 blocks to cut");
+        bloodless("bloodandbones.surgery.no_surgeon.hint", "Set a construct to Surgeon within 4 blocks for the ritual");
         BloodAndBones.REGISTRATE.addRawLang("bloodandbones.surgery.action.none", "-");
         BloodAndBones.REGISTRATE.addRawLang("bloodandbones.surgery.action.take_off", "Take it off");
         BloodAndBones.REGISTRATE.addRawLang("bloodandbones.surgery.action.fit", "Fit what is on the table");
@@ -834,13 +851,13 @@ public class BBLang {
                 "The Steel Table holds one item, any item, on its top. Tables side by side join into one run, with legs only where the run ends or turns. Funnels and hoppers can load it.",
                 "The Steel Rack has two shelves of two places. Right-click its front with an item on the place you are looking at; an empty hand takes it back. Funnels and hoppers fill it from the lower left.");
         jei("surgery",
-                "Amputation is a ritual: lay a Cleaver on the Surgery Table (with its Surgical Rig), have a surgeon minion (one with a villager's or a pillager's head, and an arm) awake beside it, and lie on the table (right-click with an empty hand) to have one of your own limbs, eyes or organs taken out. You get it back, with your name on it. Nothing takes a part any other way, and nothing can go wrong.",
-                "The surgeon hacks: what it takes off leaves a ragged stump, and fitting anything but a crude prosthetic there later takes a bucket of blood as well (from a bucket or a Fluid Backtank you carry). Swap an implant straight in for a part of flesh and there is no stump at all.",
+                "Amputation is a ritual: lay a Cleaver on the Surgery Table (with its Surgical Rig), have a minion with a hand awake beside it and set to Surgeon, and lie on the table (right-click with an empty hand) to have one of your own limbs, eyes or organs taken out. You get it back, with your name on it. Nothing takes a part any other way, and nothing can go wrong.",
+                "The surgeon hacks: what it takes off leaves a ragged stump, and fitting anything but a crude prosthetic there later takes blood as well (from buckets and a Fluid Backtank you carry, added together): a bucket after a fit surgeon (a villager's or a pillager's head), two or three after a poorer one. The screen shows the price before the cut. Swap an implant straight in for a part of flesh and there is no stump at all.",
                 "A missing arm means no off-hand and slower swings, a missing leg no sprinting, a missing eye less to see by. Lay an implant or a part on the table and lie down again to fit it; an implant unclips with nothing on the table. Fitting never needs a surgeon, and a crude prosthetic never needs blood, so one can always go on.");
         bloodless("bloodandbones.jei.surgery.1",
-                "Replacement is a procedure: lay a Cleaver on the Surgery Table (with its Surgical Rig), have a surgeon construct (one with a villager's or a pillager's head, and an arm) awake beside it, and lie on the table (right-click with an empty hand) to have one of your own limbs, eyes or organs removed. You get it back, with your name on it. Nothing removes a part any other way, and nothing can go wrong.");
+                "Replacement is a procedure: lay a Cleaver on the Surgery Table (with its Surgical Rig), have a construct with a hand awake beside it and set to Surgeon, and lie on the table (right-click with an empty hand) to have one of your own limbs, eyes or organs removed. You get it back, with your name on it. Nothing removes a part any other way, and nothing can go wrong.");
         bloodless("bloodandbones.jei.surgery.2",
-                "The surgeon works roughly: what it removes leaves an open socket, and fitting anything but a crude prosthetic there later takes a bucket of essence as well (from a bucket or a Fluid Backtank you carry). Swap an implant straight in for a part and there is no open socket at all.");
+                "The surgeon works roughly: what it removes leaves an open socket, and fitting anything but a crude prosthetic there later takes essence as well (from buckets and a Fluid Backtank you carry, added together): a bucket after a fit surgeon (a villager's or a pillager's head), two or three after a poorer one. The screen shows the price first. Swap an implant straight in for a part and there is no open socket at all.");
         bloodless("bloodandbones.jei.surgery.3",
                 "A missing arm means no off-hand and slower swings, a missing leg no sprinting, a missing eye less to see by. Lay an implant or a part on the table and lie down again to fit it; an implant unclips with nothing on the table. Fitting never needs a surgeon, and a crude prosthetic never needs essence, so one can always go on.");
         jei("implants",

@@ -8,9 +8,12 @@
   "kind": "tend",
   "main": "hands",
   "max_reach": 12,
+  "needs_surgeon_head": false,
   "numbers": {
+    "one_bucket_from": 1.5,
     "tend_every": 100.0,
-    "tend_least": 40.0
+    "tend_least": 40.0,
+    "two_buckets_from": 0.75
   },
   "reach": 6,
   "second": "sight",

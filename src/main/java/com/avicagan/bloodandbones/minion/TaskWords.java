@@ -168,7 +168,13 @@ public final class TaskWords {
             case GUARD, HUNTER -> out.add(lever("strike", seconds(MinionGoals.blowTicks(minion))));
             case SENTRY -> out.add(lever("sentry", seconds(MinionFitness.shotTicks(data.number("bow_every", 20.0F), f)),
                     number(MinionFitness.shotSpread(data, minion.level().getDifficulty().getId(), f))));
-            case SURGEON -> out.add(lever("surgeon", seconds(MinionFitness.tendTicks(data, f))));
+            case SURGEON -> {
+                out.add(lever("surgeon", seconds(MinionFitness.tendTicks(data, f))));
+                MinionFitness.Body body = minion.fitnessBody();
+                out.add(body != null && MinionFitness.mayCut(data, body)
+                        ? lever("surgeon_stump", com.avicagan.bloodandbones.body.Surgery.buckets(MinionFitness.stumpBuckets(data, f)))
+                        : lever("surgeon_no_cut"));
+            }
             case MEDIC -> out.add(lever("medic", seconds(MinionFitness.throwTicks(data, f)), number(MinionFitness.throwSpread(data, f))));
             case HERDER -> out.add(lever("herder", seconds(MinionFitness.strayTicks(data, f))));
             case TENDER, COURIER -> out.add(lever("look", seconds(MinionFitness.lookTicks(data, f))));

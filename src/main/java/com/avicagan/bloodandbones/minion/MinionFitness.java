@@ -566,6 +566,10 @@ public final class MinionFitness {
         return fitness >= CLEAN_CUT ? 1 : fitness >= FAIR_CUT ? 2 : 3;
     }
 
+    /** The same, from the surgeon task's own numbers ("one_bucket_from", "two_buckets_from"), which a datapack may move. */
+    public static int stumpBuckets(MinionTask.Data surgeon, float fitness) {
+        return fitness >= surgeon.number("one_bucket_from", CLEAN_CUT) ? 1 : fitness >= surgeon.number("two_buckets_from", FAIR_CUT) ? 2 : 3;
+    }
 
     /**
      * Whether a body set to Surgeon may do the ritual's cutting (docs/NEXT.md 1.5; the owner's call). By default any minion

@@ -59,6 +59,13 @@ public class MinionEntity extends PathfinderMob implements net.minecraft.world.e
     private static final EntityDataAccessor<Byte> ANCHOR = SynchedEntityData.defineId(MinionEntity.class, EntityDataSerializers.BYTE);
     /** How far from there it works, as its maker set it; 0 for its task's own reach. */
     private static final EntityDataAccessor<Integer> REACH = SynchedEntityData.defineId(MinionEntity.class, EntityDataSerializers.INT);
+    /**
+     * Its fitness at its task now, and, on the Surgeon task where the surgeon file's switch lets it do the ritual's cutting,
+     * what a stump it cuts costs in buckets (0: it does not cut), worked out on the server once a second for clients: the
+     * surgery screen names the surgeon, its fitness and its stumps' price, and task and disposition files never go to clients.
+     */
+    private static final EntityDataAccessor<Float> TASK_FITNESS = SynchedEntityData.defineId(MinionEntity.class, EntityDataSerializers.FLOAT);
+    private static final EntityDataAccessor<Byte> STUMP = SynchedEntityData.defineId(MinionEntity.class, EntityDataSerializers.BYTE);
     private static final EntityDataAccessor<Boolean> DOWN = SynchedEntityData.defineId(MinionEntity.class, EntityDataSerializers.BOOLEAN);
     private static final EntityDataAccessor<Float> POWER = SynchedEntityData.defineId(MinionEntity.class, EntityDataSerializers.FLOAT);
     private static final EntityDataAccessor<Boolean> SADDLED = SynchedEntityData.defineId(MinionEntity.class, EntityDataSerializers.BOOLEAN);
@@ -163,6 +170,8 @@ public class MinionEntity extends PathfinderMob implements net.minecraft.world.e
         builder.define(TASK, MinionTask.IDLE.id.toString());
         builder.define(ANCHOR, (byte) 0);
         builder.define(REACH, 0);
+        builder.define(TASK_FITNESS, 1.0F);
+        builder.define(STUMP, (byte) 0);
         builder.define(DOWN, false);
         builder.define(POWER, 0.0F);
         builder.define(SADDLED, false);
@@ -813,12 +822,30 @@ public class MinionEntity extends PathfinderMob implements net.minecraft.world.e
         return workFitness;
     }
 
-    /** Its fitness at its task worked out again, for its goals' levers. */
+    /** Its fitness at its task as its clients know it, from the server once a second. */
+    public float shownFitness() {
+        return entityData.get(TASK_FITNESS);
+    }
+
+    /**
+     * What a stump it cuts at a Surgery Table costs, in buckets of blood (docs/NEXT.md 1.5), as its clients know it: 0 when it
+     * does not cut (not a surgeon, or the surgeon file's switch passes its head over).
+     */
+    public int shownStump() {
+        return entityData.get(STUMP);
+    }
+
+    /** Its fitness at its task worked out again, for its goals' levers and for its clients. */
     private void refreshFitness() {
         if (level().isClientSide) {
             return;
         }
         workFitness = fitness(task());
+        entityData.set(TASK_FITNESS, workFitness);
+        MinionFitness.Body body = fitnessBody();
+        MinionTask.Data surgeon = PartsData.of(level()).task(MinionTask.SURGEON);
+        entityData.set(STUMP, (byte) (hasTask(MinionTask.SURGEON) && body != null && MinionFitness.mayCut(surgeon, body)
+                ? MinionFitness.stumpBuckets(surgeon, workFitness) : 0));
     }
 
     /**

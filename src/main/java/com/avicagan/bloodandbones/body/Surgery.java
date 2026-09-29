@@ -24,9 +24,15 @@ import org.joml.Vector3d;
  * <p>
  * The brief's ritual: cutting flesh off a player (taking it off, or swapping it for an implant) needs a
  * surgeon minion awake by the table, and a part it takes off leaves a ragged stump; fitting anything but a
- * crude prosthetic into a ragged stump later takes a bucket of blood as well. Fitting, reattaching, swapping
+ * crude prosthetic into a ragged stump later takes blood as well: a bucket where the surgeon was fit (a villager's or a
+ * pillager's head with a hand), two or three where it was not (docs/NEXT.md 1.5). Fitting, reattaching, swapping
  * implants and modules never need a surgeon, and a crude prosthetic never needs blood: the safety floor is
  * always in reach.
+ * <p>
+ * Who may cut is the owner's call (docs/NEXT.md 1.5), one data switch in the surgeon task's file: by default
+ * ({@code "needs_surgeon_head": false}) any minion on the Surgeon task with a hand may, and its fitness sets the stump's
+ * price; with {@code true}, only a head whose data says {@code "surgeon": true} (the villager and illager families and the
+ * witch), as the brief's words have it.
  */
 public final class Surgery {
     public enum Action {
@@ -42,26 +48,57 @@ public final class Surgery {
 
     /** How near the table a surgeon minion must stand. */
     public static final double SURGEON_REACH = 4.0;
-    /** What fitting into a ragged stump costs on top, in mB of blood. */
+    /** A bucket of blood, in mB: what each bucket of a ragged stump's price is. */
     public static final int RAGGED_BLOOD = 1000;
 
     /**
-     * An awake minion on the Surgeon task by this table that may do the ritual's cutting, if there is one (docs/NEXT.md 1.5:
-     * by default any with a hand; with the surgeon task's {@code "needs_surgeon_head"}, only a surgeon's head). A minion by
-     * the table on any other task does not count.
+     * The fittest awake minion on the Surgeon task by this table that may do the ritual's cutting, if there is one
+     * (docs/NEXT.md 1.5: by default any with a hand; with the surgeon task's {@code "needs_surgeon_head"}, only a surgeon's
+     * head). A minion by the table on any other task does not count. On the server it is worked out from the data; on a
+     * client (the surgery screen) from what the server tells it of each minion once a second.
      */
     @org.jetbrains.annotations.Nullable
     public static com.avicagan.bloodandbones.minion.MinionEntity surgeonAt(net.minecraft.world.level.Level level, BlockPos table) {
         var surgeon = com.avicagan.bloodandbones.parts.PartsData.of(level).task(com.avicagan.bloodandbones.minion.MinionTask.SURGEON);
+        com.avicagan.bloodandbones.minion.MinionEntity best = null;
+        float fittest = -1.0F;
         for (com.avicagan.bloodandbones.minion.MinionEntity minion : level.getEntitiesOfClass(com.avicagan.bloodandbones.minion.MinionEntity.class,
                 new net.minecraft.world.phys.AABB(table).inflate(SURGEON_REACH))) {
-            var body = minion.fitnessBody();
-            if (minion.isAlive() && !minion.poweredDown() && minion.hasTask(com.avicagan.bloodandbones.minion.MinionTask.SURGEON) && body != null
-                    && com.avicagan.bloodandbones.minion.MinionFitness.mayCut(surgeon, body)) {
-                return minion;
+            if (!minion.isAlive() || minion.poweredDown() || !minion.hasTask(com.avicagan.bloodandbones.minion.MinionTask.SURGEON)) {
+                continue;
+            }
+            float fitness;
+            if (level.isClientSide) {
+                if (minion.shownStump() <= 0) {
+                    continue;
+                }
+                fitness = minion.shownFitness();
+            } else {
+                var body = minion.fitnessBody();
+                if (body == null || !com.avicagan.bloodandbones.minion.MinionFitness.mayCut(surgeon, body)) {
+                    continue;
+                }
+                fitness = minion.fitness(com.avicagan.bloodandbones.minion.MinionTask.SURGEON);
+            }
+            if (fitness > fittest) {
+                best = minion;
+                fittest = fitness;
             }
         }
-        return null;
+        return best;
+    }
+
+    /**
+     * How many buckets of blood a stump this surgeon cuts will cost to fit anything but a crude prosthetic into later: one at
+     * 150% and over, two from 75%, three below (docs/NEXT.md 1.5; the surgeon task's numbers). On a client, as the server
+     * worked it out.
+     */
+    public static int stumpBuckets(com.avicagan.bloodandbones.minion.MinionEntity surgeon) {
+        if (surgeon.level().isClientSide) {
+            return Math.max(1, surgeon.shownStump());
+        }
+        var data = com.avicagan.bloodandbones.parts.PartsData.of(surgeon.level()).task(com.avicagan.bloodandbones.minion.MinionTask.SURGEON);
+        return com.avicagan.bloodandbones.minion.MinionFitness.stumpBuckets(data, surgeon.fitness(com.avicagan.bloodandbones.minion.MinionTask.SURGEON));
     }
 
     /** Whether this cuts flesh away. */
@@ -70,16 +107,20 @@ public final class Surgery {
     }
 
     /**
-     * Whether this costs a bucket of blood as well: fitting into a ragged stump (the limb back, or an implant), except a
-     * crude prosthetic, which always goes on for nothing, so no stump is ever left with no way back to baseline.
+     * What this costs in blood as well, in mB: fitting into a ragged stump (the limb back, or an implant) costs the stump's
+     * price, a bucket for each of its buckets (docs/NEXT.md 1.5); a crude prosthetic always goes on for nothing, so no stump
+     * is ever left with no way back to baseline. 0 for nothing.
      */
-    public static boolean costsBlood(Body body, Action action, BodyPart part, ItemStack tool) {
-        return (action == Action.FIT || action == Action.REATTACH) && body.ragged(part) && !(tool.getItem() instanceof ImplantItem implant && implant.crude());
+    public static int raggedCost(Body body, Action action, BodyPart part, ItemStack tool) {
+        if (action != Action.FIT && action != Action.REATTACH || tool.getItem() instanceof ImplantItem implant && implant.crude()) {
+            return 0;
+        }
+        return body.raggedBuckets(part) * RAGGED_BLOOD;
     }
 
     /**
      * Why this cannot be done right now, or null if it can: cutting a player needs a surgeon at the table;
-     * fitting into a ragged stump (a crude prosthetic excepted) needs a bucket of blood on whoever is operating.
+     * fitting into a ragged stump (a crude prosthetic excepted) needs the stump's price in blood on whoever is operating.
      * The same on both sides, for the screen.
      */
     @org.jetbrains.annotations.Nullable
@@ -88,55 +129,109 @@ public final class Surgery {
         if (cuts(action) && patient instanceof Player && surgeonAt(level, table) == null) {
             return Component.translatable("bloodandbones.surgery.needs_surgeon");
         }
-        if (costsBlood(body, action, part, tool) && (operator == null || !payBlood(operator, false))) {
-            return Component.translatable("bloodandbones.surgery.needs_blood");
+        int cost = raggedCost(body, action, part, tool);
+        if (cost > 0 && (operator == null || !payBlood(operator, cost, false))) {
+            return Component.translatable("bloodandbones.surgery.needs_blood", buckets(cost / RAGGED_BLOOD));
         }
         return null;
     }
 
+    /** "1 bucket", "2 buckets": a stump's price in words. */
+    public static Component buckets(int buckets) {
+        return buckets == 1 ? Component.translatable("bloodandbones.surgery.bucket") : Component.translatable("bloodandbones.surgery.buckets", buckets);
+    }
+
     /**
-     * A bucket's worth of blood (any fluid tagged c:blood) from what this player carries: a bucket, a worn or
-     * carried Fluid Backtank, anything holding fluid. Only looks when {@code take} is false.
+     * This much blood (any fluid tagged c:blood), in mB, from what this player carries, added up across it all: buckets, a
+     * worn or carried Fluid Backtank, anything holding fluid. Nothing is taken unless all of it is there, and only when
+     * {@code take} is true (else it only looks). What gives only all it holds or nothing (a bucket) goes first, in the order
+     * it is carried, while it is no more than is owed; then the rest comes out of what gives any part (a backtank).
      *
      * @return whether they had it
      */
-    public static boolean payBlood(Player player, boolean take) {
+    public static boolean payBlood(Player player, int mB, boolean take) {
+        if (mB <= 0) {
+            return true;
+        }
         var inventory = player.getInventory();
-        for (int slot = 0; slot < inventory.getContainerSize(); slot++) {
-            ItemStack stack = inventory.getItem(slot);
-            if (stack.isEmpty()) {
-                continue;
-            }
-            ItemStack one = stack.copyWithCount(1);
-            var handler = net.neoforged.neoforge.fluids.FluidUtil.getFluidHandler(one).orElse(null);
-            if (handler == null) {
-                continue;
-            }
-            for (int tank = 0; tank < handler.getTanks(); tank++) {
-                net.neoforged.neoforge.fluids.FluidStack in = handler.getFluidInTank(tank);
-                if (!in.getFluid().is(com.avicagan.bloodandbones.minion.BloodTroughBlockEntity.BLOOD) || in.getAmount() < RAGGED_BLOOD) {
+        // what each container would give: first those that give all or nothing, then a part of those that give any
+        java.util.Map<Integer, Integer> plan = new java.util.LinkedHashMap<>();
+        int owed = mB;
+        for (int pass = 0; pass < 2 && owed > 0; pass++) {
+            for (int slot = 0; slot < inventory.getContainerSize() && owed > 0; slot++) {
+                var handler = bloodHandler(inventory.getItem(slot));
+                int held = handler == null ? 0 : blood(handler);
+                if (held <= 0 || plan.containsKey(slot)) {
                     continue;
                 }
-                net.neoforged.neoforge.fluids.FluidStack want = in.copyWithAmount(RAGGED_BLOOD);
-                if (handler.drain(want, net.neoforged.neoforge.fluids.capability.IFluidHandler.FluidAction.SIMULATE).getAmount() < RAGGED_BLOOD) {
+                boolean whole = held > 1 && drainBlood(handler, held - 1, false) < held - 1;
+                if (pass == 0 ? !whole || held > owed : whole) {
                     continue;
                 }
-                if (take && !player.hasInfiniteMaterials()) {
-                    handler.drain(want, net.neoforged.neoforge.fluids.capability.IFluidHandler.FluidAction.EXECUTE);
-                    ItemStack after = handler.getContainer();
-                    if (stack.getCount() == 1) {
-                        inventory.setItem(slot, after);
-                    } else {
-                        stack.shrink(1);
-                        if (!inventory.add(after)) {
-                            player.drop(after, false);
-                        }
-                    }
+                int give = Math.min(held, owed);
+                if (drainBlood(handler, give, false) < give) {
+                    continue;
                 }
-                return true;
+                plan.put(slot, give);
+                owed -= give;
             }
         }
-        return false;
+        if (owed > 0) {
+            return false;
+        }
+        if (take && !player.hasInfiniteMaterials()) {
+            plan.forEach((slot, give) -> {
+                ItemStack stack = inventory.getItem(slot);
+                var handler = bloodHandler(stack);
+                if (handler == null) {
+                    return;
+                }
+                drainBlood(handler, give, true);
+                ItemStack after = handler.getContainer();
+                if (stack.getCount() == 1) {
+                    inventory.setItem(slot, after);
+                } else {
+                    stack.shrink(1);
+                    if (!inventory.add(after)) {
+                        player.drop(after, false);
+                    }
+                }
+            });
+        }
+        return true;
+    }
+
+    /** The fluid handler of one of this stack's items (a stack of several gives from one of them), or null. */
+    @org.jetbrains.annotations.Nullable
+    private static net.neoforged.neoforge.fluids.capability.IFluidHandlerItem bloodHandler(ItemStack stack) {
+        return stack.isEmpty() ? null : net.neoforged.neoforge.fluids.FluidUtil.getFluidHandler(stack.copyWithCount(1)).orElse(null);
+    }
+
+    /** The blood in all of a handler's tanks. */
+    private static int blood(net.neoforged.neoforge.fluids.capability.IFluidHandler handler) {
+        int total = 0;
+        for (int tank = 0; tank < handler.getTanks(); tank++) {
+            net.neoforged.neoforge.fluids.FluidStack in = handler.getFluidInTank(tank);
+            if (in.getFluid().is(com.avicagan.bloodandbones.minion.BloodTroughBlockEntity.BLOOD)) {
+                total += in.getAmount();
+            }
+        }
+        return total;
+    }
+
+    /** Drain this much blood from a handler's tanks in turn, or only see how much would come ({@code execute} false). */
+    private static int drainBlood(net.neoforged.neoforge.fluids.capability.IFluidHandler handler, int amount, boolean execute) {
+        var action = execute ? net.neoforged.neoforge.fluids.capability.IFluidHandler.FluidAction.EXECUTE
+                : net.neoforged.neoforge.fluids.capability.IFluidHandler.FluidAction.SIMULATE;
+        int got = 0;
+        for (int tank = 0; tank < handler.getTanks() && got < amount; tank++) {
+            net.neoforged.neoforge.fluids.FluidStack in = handler.getFluidInTank(tank);
+            if (!in.getFluid().is(com.avicagan.bloodandbones.minion.BloodTroughBlockEntity.BLOOD) || in.isEmpty()) {
+                continue;
+            }
+            got += handler.drain(in.copyWithAmount(Math.min(in.getAmount(), amount - got)), action).getAmount();
+        }
+        return got;
     }
 
     public static boolean isBlade(ItemStack stack) {
@@ -203,21 +298,22 @@ public final class Surgery {
             }
             return Action.NONE;
         }
-        // on a player the surgeon minion does the cutting, and leaves the stump ragged
+        // on a player the fittest surgeon minion does the cutting, and leaves the stump ragged: the less fit, the dearer
         com.avicagan.bloodandbones.minion.MinionEntity cutter = cuts(action) && patient instanceof Player ? surgeonAt(level, pos) : null;
         if (cutter != null) {
             cutter.getLookControl().setLookAt(patient);
             cutter.swing(net.minecraft.world.InteractionHand.MAIN_HAND);
         }
-        if (costsBlood(body, action, part, table.item()) && surgeon != null) {
-            payBlood(surgeon, true);
+        int cost = raggedCost(body, action, part, table.item());
+        if (cost > 0 && surgeon != null) {
+            payBlood(surgeon, cost, true);
         }
         switch (action) {
             case NONE -> {
                 return action;
             }
             case TAKE_OFF -> {
-                body.lose(part, cutter != null);
+                body.lose(part, cutter != null ? stumpBuckets(cutter) : 0);
                 ItemStack blade = table.item();
                 com.avicagan.bloodandbones.carcass.Blood.bloody(blade, level);
                 table.setChanged();

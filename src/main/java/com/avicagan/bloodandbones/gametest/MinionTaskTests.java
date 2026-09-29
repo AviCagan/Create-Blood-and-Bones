@@ -1448,9 +1448,10 @@ public class MinionTaskTests {
     }
 
     /**
-     * Every word of the tasks, the screen (what each task's fitness makes of its work too) and the status line reads right
-     * in bloodless mode (rule 4): its own bloodless wording where it has one (the butcher a Dismantler), else the usual
-     * rewording; none of it says blood, carcass, butcher, flesh, organ, gore or minion.
+     * Every word of the tasks, the screen (what each task's fitness makes of its work too) and the status line, and the
+     * surgery screen's surgeon and stump prices, reads right in bloodless mode (rule 4): its own bloodless wording where it
+     * has one (the butcher a Dismantler), else the usual rewording; none of it says blood, carcass, butcher, flesh, organ,
+     * gore or minion.
      */
     @GameTest(template = "empty", timeoutTicks = 20)
     public static void taskWordsReadBloodless(GameTestHelper helper) {
@@ -1458,11 +1459,14 @@ public class MinionTaskTests {
                 "(?i)(?<![a-z])(carcass(es)?|blood|bleed\\w*|butcher\\w*|flesh|organs?|gore|guts?|minions?)(?![a-z])");
         List<String> prefixes = List.of("task.", "screen.", "fit.", "where.", "idle.", "factor", "stat.", "value.", "rule.", "at_work", "woke", "lost",
                 "wants.", "cannot.", "tool.", "with_tool", "grip.", "part", "knack", "disposition", "doing", "status", "source.", "frame_stats", "lever.");
+        // the surgery screen's words for the surgeon and a stump's price (docs/NEXT.md 1.5)
+        List<String> surgery = List.of("surgeon", "no_surgeon", "bucket", "needs_blood", "state.ragged");
         int checked = 0;
         try (var in = BloodAndBones.class.getResourceAsStream("/assets/bloodandbones/lang/en_us.json")) {
             var json = com.google.gson.JsonParser.parseReader(new java.io.InputStreamReader(in)).getAsJsonObject();
             for (String key : json.keySet()) {
-                if (!key.startsWith("bloodandbones.minion.") || prefixes.stream().noneMatch(p -> key.startsWith("bloodandbones.minion." + p))) {
+                if (!(key.startsWith("bloodandbones.minion.") && prefixes.stream().anyMatch(p -> key.startsWith("bloodandbones.minion." + p))
+                        || surgery.stream().anyMatch(p -> key.startsWith("bloodandbones.surgery." + p)))) {
                     continue;
                 }
                 String reads = json.has("bloodless." + key) ? json.get("bloodless." + key).getAsString()

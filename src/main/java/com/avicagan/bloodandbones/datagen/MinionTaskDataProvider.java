@@ -30,7 +30,13 @@ public class MinionTaskDataProvider implements DataProvider {
         Path root = output.getOutputFolder(PackOutput.Target.DATA_PACK).resolve(BloodAndBones.MOD_ID);
         List<CompletableFuture<?>> futures = new ArrayList<>();
         for (MinionTask task : MinionTask.values()) {
-            futures.add(DataProvider.saveStable(cache, task.defaults().toJson(), root.resolve("minion_task").resolve(task.id.getPath() + ".json")));
+            com.google.gson.JsonObject json = task.defaults().toJson();
+            if (task == MinionTask.SURGEON) {
+                // the owner's call (docs/NEXT.md 1.5), written out so a datapack sees the switch: false (the default) lets any
+                // minion with a hand cut, true only a head whose data says "surgeon": true, as the brief's words have it
+                json.addProperty("needs_surgeon_head", task.defaults().needsSurgeonHead());
+            }
+            futures.add(DataProvider.saveStable(cache, json, root.resolve("minion_task").resolve(task.id.getPath() + ".json")));
         }
         for (Map.Entry<String, MinionDisposition> e : MinionDisposition.DEFAULTS.entrySet()) {
             futures.add(DataProvider.saveStable(cache, e.getValue().toJson(), root.resolve("minion_disposition").resolve(e.getKey() + ".json")));
