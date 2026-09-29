@@ -150,6 +150,7 @@ hitbox and wearing its own model's parts and skin on the client; the archetypes'
 baby shape; weight classes as data (listed in 15.29 for the owner), driving drag, blood, floating or sinking and rot time;
 rot time and butchery by group, a mob's own file or table as the override; the constants below moved into the server
 config or data at today's figures; naming rules in place of most rig-target overrides; the guide for model authors.
+Found on the way, for package 1: `hindLegHookComesRoundRearFirst` fails about once in 80 runs on main too.
 Left for the owner: whether a size-2 slime should leave a carcass (4.4 says it splits), the class list and whether a
 class should set the drag penalty itself; not built: the client-sent rigs and export command of 4.1, and families by Java
 class.

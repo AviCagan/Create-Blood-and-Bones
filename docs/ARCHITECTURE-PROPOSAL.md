@@ -4639,6 +4639,12 @@ full run of this work lost `cowDownEachPath` that way, once in four runs: its Su
 Surgical Rig began, and the rig had nothing to cut. Its cows are now built once the arena has stood 20 ticks; it passed
 30 times on its own after, and every full run.
 
+One failure was not this work's: `hindLegHookComesRoundRearFirst` (15.28) failed once in a full run (the cow stayed 66
+degrees off the way it was dragged), and repeated 80 times it failed once here and once on main at 894f097, the same way.
+It is left to the physics work (package 1) and noted in docs/BRIEF-AUDIT.md.
+
+The suite is 588 tests and passed three full runs in a row after the last change.
+
 **The showcase** (`DevShowcase`, a groups yard after the physics yard). `showcase_groups_0`: a row of carcasses with no
 rig file of their own, knocked down as a kill knocks them: a polar bear, a zombie villager, a cave spider and a bat
 (whose files are taken away for the rest of the run; none of them is in another shot), a tropical fish, and a baby
