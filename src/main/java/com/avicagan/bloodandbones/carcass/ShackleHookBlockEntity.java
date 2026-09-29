@@ -225,10 +225,10 @@ public class ShackleHookBlockEntity extends BlockEntity {
      * A spring of {@code stiffness} about the upright through {@code yaw}, a drag of {@code upDamping} on turning about the
      * upright and of {@code swingDamping} on every other turn, all per unit of the body's mass, as an angular impulse over
      * this substep. The drag never does more in a substep than stop the turn, nor the spring more than turn it half the way
-     * back: with a small body the gains per unit of mass are large for how little it takes to turn it (a rabbit's torso
-     * turns about its length some ten times as readily as a cow's, for its mass), and a physics substep (a fortieth of
-     * a second) is long, so both overshot, back and forth. A hung rabbit jittered at up to 6 radians a second, and
-     * `dozenHungCarcasses`, which asks every hung torso to hang still, caught it doing so now and then.
+     * back: the gains go by mass, a small body turns far more readily for its mass than a big one (a rabbit's torso about
+     * its length some ten times as readily as a cow's), and a physics substep is a fortieth of a second, so on a small body
+     * they could otherwise overshoot, back and forth. (The spin a hung rabbit showed was the hook's joint jerking it up
+     * its last 0.3 blocks, HOLD_REACH; this is a guard, not that fix.)
      */
     private static void turn(ServerSubLevel body, dev.ryanhcode.sable.sublevel.system.SubLevelPhysicsSystem physics, double timeStep, Quaterniond current,
                              double yaw, double stiffness, double upDamping, double swingDamping) {
