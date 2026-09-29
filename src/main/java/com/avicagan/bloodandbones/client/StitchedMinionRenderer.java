@@ -33,6 +33,11 @@ import org.joml.Vector3f;
 public class StitchedMinionRenderer extends EntityRenderer<MinionEntity> {
     private static final ResourceLocation NONE = ResourceLocation.withDefaultNamespace("textures/misc/white.png");
     private static final net.minecraft.world.item.ItemStack SADDLE = new net.minecraft.world.item.ItemStack(net.minecraft.world.item.Items.SADDLE);
+    /**
+     * A touch more room than vanilla gives a humanoid's head under what it wears (a helmet or a pumpkin a pixel proud of
+     * it all round): a snout flush with that pixel (a pig's) stays inside rather than flickering through the front.
+     */
+    private static final float ROOM = 1.04F;
     /** A humanoid's helmet, stretched over whatever head it is put on. */
     private final HumanoidArmorModel<MinionEntity> helmet;
 
@@ -135,9 +140,9 @@ public class StitchedMinionRenderer extends EntityRenderer<MinionEntity> {
     private void drawWorn(MinionEntity minion, ItemStack worn, MinionBody.Placement placement, PoseStack ms, MultiBufferSource buffers, int light) {
         Vector3f lo = placement.bone().boxMin();
         Vector3f hi = placement.bone().boxMax();
-        float sx = (hi.x - lo.x) / 8.0F;
-        float sy = (hi.y - lo.y) / 8.0F;
-        float sz = (hi.z - lo.z) / 8.0F;
+        float sx = (hi.x - lo.x) / 8.0F * ROOM;
+        float sy = (hi.y - lo.y) / 8.0F * ROOM;
+        float sz = (hi.z - lo.z) / 8.0F * ROOM;
         ms.pushPose();
         ms.translate((lo.x + hi.x) / 32.0F, (lo.y + hi.y) / 32.0F, (lo.z + hi.z) / 32.0F);
         if (worn.getItem() instanceof ArmorItem armour && armour.getEquipmentSlot() == EquipmentSlot.HEAD) {

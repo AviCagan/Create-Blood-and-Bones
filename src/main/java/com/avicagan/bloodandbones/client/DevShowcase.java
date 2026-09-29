@@ -412,6 +412,8 @@ public final class DevShowcase {
                         player.getInventory().setItem(8, com.avicagan.bloodandbones.parts.Organs.stack(store, BloodAndBones.asResource("powder_sac"),
                                 net.minecraft.resources.ResourceLocation.withDefaultNamespace("creeper"), false));
                         player.getInventory().selected = 8;
+                        // the client keeps its own hotbar slot: told, it holds the sac
+                        player.connection.send(new net.minecraft.network.protocol.game.ClientboundSetCarriedItemPacket(8));
                         player.teleportTo(player.serverLevel(), player.getX(), player.getY(), player.getZ(), 180.0F, 10.0F);
                     });
                     mc.options.setCameraType(net.minecraft.client.CameraType.THIRD_PERSON_FRONT);
@@ -569,6 +571,30 @@ public final class DevShowcase {
                 } else if (t == 220) {
                     Screenshot.grab(mc.gameDirectory, PREFIX + "minions_1.png", mc.getMainRenderTarget(), message -> {
                     });
+                    // and near, from in front: the bowman's bow and helmet
+                    server.execute(() -> {
+                        ServerPlayer player = server.getPlayerList().getPlayers().get(0);
+                        player.teleportTo(player.serverLevel(), player.getX() + 2.0, player.getY(), player.getZ() - 3.8, -20.0F, 10.0F);
+                    });
+                } else if (t == 235) {
+                    Screenshot.grab(mc.gameDirectory, PREFIX + "minions_2.png", mc.getMainRenderTarget(), message -> {
+                    });
+                    // then the flier's wings, from below and in front
+                    server.execute(() -> {
+                        ServerPlayer player = server.getPlayerList().getPlayers().get(0);
+                        player.teleportTo(player.serverLevel(), player.getX() + 7.0, player.getY(), player.getZ(), 0.0F, -20.0F);
+                    });
+                } else if (t == 250) {
+                    Screenshot.grab(mc.gameDirectory, PREFIX + "minions_3.png", mc.getMainRenderTarget(), message -> {
+                    });
+                    // then the pig's head in its carved pumpkin, from in front (the row faces away from where it was made)
+                    server.execute(() -> {
+                        ServerPlayer player = server.getPlayerList().getPlayers().get(0);
+                        player.teleportTo(player.serverLevel(), player.getX(), player.getY(), player.getZ() + 1.5, 160.0F, 5.0F);
+                    });
+                } else if (t == 265) {
+                    Screenshot.grab(mc.gameDirectory, PREFIX + "minions_4.png", mc.getMainRenderTarget(), message -> {
+                    });
                     // stumps: a ragged one where a surgeon hacked the left arm off, a clean one for the right leg
                     server.execute(() -> {
                         ServerPlayer player = server.getPlayerList().getPlayers().get(0);
@@ -576,10 +602,11 @@ public final class DevShowcase {
                         body.lose(com.avicagan.bloodandbones.body.BodyPart.LEFT_ARM, true);
                         body.lose(com.avicagan.bloodandbones.body.BodyPart.RIGHT_LEG, false);
                         com.avicagan.bloodandbones.body.BodyEffects.changed(player);
-                        player.teleportTo(player.serverLevel(), player.getX(), player.getY(), player.getZ(), 150.0F, 15.0F);
+                        // back where the view from behind was taken, clear of the minions, for this and the night's effects
+                        player.teleportTo(player.serverLevel(), player.getX() - 9.0, player.getY(), player.getZ() + 2.3, 150.0F, 15.0F);
                     });
                     mc.options.setCameraType(net.minecraft.client.CameraType.THIRD_PERSON_FRONT);
-                } else if (t == 240) {
+                } else if (t == 285) {
                     Screenshot.grab(mc.gameDirectory, PREFIX + "stumps.png", mc.getMainRenderTarget(), message -> {
                     });
                     server.execute(() -> {
@@ -615,15 +642,15 @@ public final class DevShowcase {
                     });
                     mc.options.setCameraType(net.minecraft.client.CameraType.THIRD_PERSON_FRONT);
                     mc.options.hideGui = true;
-                } else if (t == 250) {
+                } else if (t == 295) {
                     com.avicagan.bloodandbones.client.effect.RangedClient.receive(new com.avicagan.bloodandbones.parts.effect.BeamPayload(effectHost, effectTarget, 400, 16.0F, "guardian_beam"));
                     com.avicagan.bloodandbones.client.effect.SocialClient.receive(new com.avicagan.bloodandbones.parts.effect.SensePayload("reveal",
                             java.util.List.of(effectHost, effectTarget), 400));
-                } else if (t == 262) {
+                } else if (t == 307) {
                     Screenshot.grab(mc.gameDirectory, PREFIX + "effects_0.png", mc.getMainRenderTarget(), message -> {
                     });
                     mc.options.setCameraType(net.minecraft.client.CameraType.FIRST_PERSON);
-                } else if (t == 278) {
+                } else if (t == 323) {
                     Screenshot.grab(mc.gameDirectory, PREFIX + "effects_1.png", mc.getMainRenderTarget(), message -> {
                     });
                     server.execute(() -> {
