@@ -897,12 +897,23 @@ public class ContraptionTests {
      * so the ship goes smoothly and what lies on its deck is not jolted (driven once a tick while it slid on the floor,
      * it jerked, and a cow lying on it crept back along it).
      */
-    private static void cruise(ServerSubLevel ship, Vector3d velocity) {
+    public static void cruise(ServerSubLevel ship, Vector3d velocity) {
+        cruise(ship, velocity, 0.0);
+    }
+
+    /** As above, lifted {@code rise} blocks first (a ship lying on the ground hovers clear of it; the showcase's). */
+    public static void cruise(ServerSubLevel ship, Vector3d velocity, double rise) {
         if (!cruiseListening) {
             cruiseListening = true;
             net.neoforged.neoforge.common.NeoForge.EVENT_BUS.addListener(ContraptionTests::cruiseStep);
         }
-        CRUISING.put(ship, new Vector3d(velocity.x, ship.logicalPose().position().y(), velocity.z));
+        Vector3d before = CRUISING.get(ship);
+        CRUISING.put(ship, new Vector3d(velocity.x, before != null ? before.y : ship.logicalPose().position().y() + rise, velocity.z));
+    }
+
+    /** Let a cruising ship go (it falls, or lies where it is). */
+    public static void stopCruising(ServerSubLevel ship) {
+        CRUISING.remove(ship);
     }
 
     private static void cruiseStep(dev.ryanhcode.sable.neoforge.event.ForgeSablePrePhysicsTickEvent event) {

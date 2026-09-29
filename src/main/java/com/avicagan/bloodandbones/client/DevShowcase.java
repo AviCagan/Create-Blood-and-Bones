@@ -1071,12 +1071,16 @@ public final class DevShowcase {
     private static int rideStep;
     private static dev.ryanhcode.sable.sublevel.ServerSubLevel rideShip;
     private static boolean rideShipShot;
+    /** Where on the ship's deck (in its plot) a cow is dropped while it flies, and that cow. */
+    private static org.joml.Vector3d rideDrop;
+    private static CarcassSavedData.Carcass rideDropped;
 
     /**
      * Rule 5, photographed: a cow hung on a Shackle Hook under a stone block that a Mechanical Piston pushes, seen while it
      * moves (the cow rides in the hook's data and the hook's actor draws it hanging there) and once set down (hung again,
      * a body); and a Sable ship, a deck with a gallows, carrying a cow resting on its deck and one hung from its hook, seen
-     * as it is driven along. Timed on the server's clock.
+     * as it lifts off the ground and flies along; then, flying on more slowly, a third cow dropped on its deck, seen once
+     * it has come to rest there, pinned to the moving deck. Timed on the server's clock.
      */
     private static void contraptions(Minecraft mc) {
         MinecraftServer server = mc.getSingleplayerServer();
@@ -1129,17 +1133,17 @@ public final class DevShowcase {
             // the ship from the south
             rideView(server, 5.0, 2.0, 23.0, 180.0F, 12.0F);
         } else if (rideStep == 4 && age < 440) {
-            // drive it east, kept level, and follow it
+            // it lifts clear of the ground and flies east, kept level, set before every physics substep so it goes
+            // smoothly; follow it
             double dx = (age - 380) * 0.07;
             rideView(server, 5.0 + dx, 2.0, 23.0, 180.0F, 12.0F);
-            server.execute(() -> {
-                if (rideShip != null && !rideShip.isRemoved()) {
-                    var handle = dev.ryanhcode.sable.api.physics.handle.RigidBodyHandle.of(rideShip);
-                    org.joml.Vector3d v = handle.getLinearVelocity(new org.joml.Vector3d());
-                    org.joml.Vector3d w = handle.getAngularVelocity(new org.joml.Vector3d());
-                    handle.addLinearAndAngularVelocity(new org.joml.Vector3d(1.4 - v.x, 0.0, -v.z), w.negate());
-                }
-            });
+            if (age == 380) {
+                server.execute(() -> {
+                    if (rideShip != null && !rideShip.isRemoved()) {
+                        com.avicagan.bloodandbones.gametest.ContraptionTests.cruise(rideShip, new org.joml.Vector3d(1.4, 0.0, 0.0), 0.25);
+                    }
+                });
+            }
             if (age >= 430 && !rideShipShot) {
                 rideShipShot = true;
                 Screenshot.grab(mc.gameDirectory, PREFIX + "contraption_2.png", mc.getMainRenderTarget(), message -> {
@@ -1147,8 +1151,30 @@ public final class DevShowcase {
                 server.execute(() -> BloodAndBones.LOGGER.info("[showcase] ship at {}", rideShip == null ? null : rideShip.logicalPose().position()));
             }
         } else if (rideStep == 4) {
+            // slower now, and a cow dropped on its deck as it goes: it comes to rest on the moving deck, pinned to it
             rideStep = 5;
             server.execute(() -> {
+                if (rideShip != null && !rideShip.isRemoved()) {
+                    com.avicagan.bloodandbones.gametest.ContraptionTests.cruise(rideShip, new org.joml.Vector3d(0.6, 0.0, 0.0));
+                    org.joml.Vector3d over = rideShip.logicalPose().transformPosition(rideDrop, new org.joml.Vector3d()).add(0.0, 1.5, 0.0);
+                    rideDropped = carcass(server.overworld(), EntityType.COW, BlockPos.containing(over.x, over.y, over.z), false, false, 90.0F);
+                }
+            });
+        } else if (rideStep == 5 && age < 620) {
+            rideView(server, 5.0 + 4.2 + (age - 440) * 0.03, 2.0, 23.0, 180.0F, 12.0F);
+        } else if (rideStep == 5) {
+            rideStep = 6;
+            Screenshot.grab(mc.gameDirectory, PREFIX + "contraption_3.png", mc.getMainRenderTarget(), message -> {
+            });
+            server.execute(() -> BloodAndBones.LOGGER.info("[showcase] cow dropped on the flying ship: resting {}, pinned to the ship {}, ship going {}",
+                    rideDropped != null && rideDropped.resting, rideDropped != null && rideShip != null && rideShip.getUniqueId().equals(rideDropped.restDeck),
+                    rideShip == null ? null : dev.ryanhcode.sable.api.physics.handle.RigidBodyHandle.of(rideShip).getLinearVelocity(new org.joml.Vector3d())));
+        } else if (rideStep == 6) {
+            rideStep = 7;
+            server.execute(() -> {
+                if (rideShip != null) {
+                    com.avicagan.bloodandbones.gametest.ContraptionTests.stopCruising(rideShip);
+                }
                 ServerPlayer player = server.getPlayerList().getPlayers().get(0);
                 player.teleportTo(player.serverLevel(), origin.getX() + 0.5, origin.getY(), origin.getZ() + 0.5, 0.0F, 0.0F);
             });
@@ -1221,6 +1247,8 @@ public final class DevShowcase {
             return;
         }
         CarcassAssembler.bindColliders(level, rideShip);
+        // the deck's front right, where the cow dropped as it flies lands
+        rideDrop = rideShip.logicalPose().transformPositionInverse(new org.joml.Vector3d(y.getX() + 3.5, y.getY() + 1.0, y.getZ() + z0 + 5.0), new org.joml.Vector3d());
         carcass(level, EntityType.COW, y.offset(5, 2, z0 + 3), false);
         CarcassSavedData.Carcass onShip = carcass(level, EntityType.COW, y.offset(4, 2, z0 + 1), false);
         ShackleHookBlockEntity shackle = null;
