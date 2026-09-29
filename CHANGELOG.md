@@ -201,6 +201,13 @@ Everything below is in development builds only; the art is placeholder (see the 
 - A minion with a head wears a helmet (or a pumpkin) its maker puts on it; a zombie's torso in one does not burn by day,
   the helmet wearing for it instead.
 - Fixed: a lava-walking minion standing on lava hung the server as soon as it set off anywhere.
+- Fixed: a minion closing the last few blocks on what it fought could walk straight into lava, fire or off a drop; a
+  lava walker walked over fire and magma as if it were fire-proof; one strider leg (or one spider leg) under a cow was
+  enough to walk on lava (or cling to walls), where half the legs are needed; a guard with a creeper's sac in it blew
+  itself up on the first monster (only a sapper does now); a cow on drowned or iron golem legs drowned on the bottom (it
+  now goes up for air); when a mount's maker got off, the rider behind could ride it away (they get off too); a mount
+  steered with a stick counted as standing still. A skull or mob head worn by a minion sits on its head as on a
+  zombie's, not inside it. An aggressive panda's head brawls.
 - Fixed: a carcass lying on the floor beside a Bleeding Rack sometimes did not bleed into it; a hauler lays bodies on a
   rack gently and makes sure they stay in the tray.
 - Rebuilt from carcass pieces: fit an Assembly Frame to the Surgery Table, lay a carcass torso on it
@@ -349,10 +356,12 @@ Everything below is in development builds only; the art is placeholder (see the 
   A Cleaver at the Surgical Rig takes a piece's organs out one a cut, in order: a torso's heart, lungs, stomach and
   special organ, a head's eyes, a rabbit's hind leg its foot. Some bring more with them (a powder sac spills gunpowder,
   a blaze core blaze powder, marrow bone meal). Mobs with no blood give their core instead of nothing (a skeleton its
-  marrow). A carcass too heavy to carry gives up its organs lying over the table. Each organ fits only the armour
+  marrow). A carcass too heavy to carry gives up its organs lying over the table (its limbs' too once it has lain still and
+  folded; with nothing left in it, a Cleaver clicked on the table is laid there). Each organ fits only the armour
   pieces it says (a powder sac a chestplate, a rabbit's foot leggings or boots), and a minion's organ slot; the one it
   replaces comes back. Rabbit's feet, ink sacs, glow ink sacs and spider eyes that mobs drop count as their mobs'
-  organs. Tooltips say what an organ gives in armour and in a minion, and what is still inside a carcass piece.
+  organs, and a spider's eyes come out as spider eyes. Tooltips say what an organ gives in armour and in a minion, and
+  what is still inside a carcass piece.
 - JEI: a Body Parts page per mob (what each part, its hide and each organ gives, on a minion and in armour, and its
   full set), and each organ's fitting shown as a crafting recipe. `/bloodandbones traits explain <mob>` says the same
   in chat, and `/bloodandbones traits dump` writes every mob's traits to a CSV file for balancing.

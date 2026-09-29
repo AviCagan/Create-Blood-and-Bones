@@ -2590,7 +2590,7 @@ now reach.
   goes for the nearest banner of that colour standing within 16 of home (block entities of loaded chunks only), as a sapper
   goes for the flag its side planted; the maker takes the banner back to stop it. It never wakes a sapper
   (`MinionJobs.wakeJob`, as with hunting: it would spend its blast on the first monster to wander by); its maker puts it
-  to sapping with a click. `sapperDetonatesAndPowersDown` (offered only with the sac in; it walks to a husk, blows, hurts
+  to sapping with a click. Only a sapper sets its organ off: the organ goal leaves detonations out (15.17b). `sapperDetonatesAndPowersDown` (offered only with the sac in; it walks to a husk, blows, hurts
   it, lies down unhurt, the floor whole), `sapperGoesForItsBanner` (the red banner, not the blue; both still stand).
 - **Held things and helmets drawn** (spec 6.10; `MinionBody.anchors`, the same layout both sides use, and
   `StitchedBody.Attach`, a hook that draws on a piece in its own frame as it is turned that frame): what a minion holds is at
@@ -2600,15 +2600,16 @@ now reach.
   does; a head with no hand holds it across its mouth, as `FoxHeldItemLayer` does. What it wears on its head sits over the
   head it has (`MinionStats.head`): a helmet is the humanoid helmet (the outer armour model's head and hat) stretched to the
   head's box, a cow's long skull getting a long helmet, in its material's layers, tinted and glinting through NeoForge's
-  armour hooks (so dyed leather and carcass helmets draw right); anything else worn (a carved pumpkin, a skull) is the
+  armour hooks (so dyed leather and carcass helmets draw right); a skull or mob head is the skull model sitting on the
+  head's bottom, 1.1875 times it, as `CustomHeadLayer` draws one (15.17b); anything else worn (a carved pumpkin) is the
   item's own head look sized to the head, as `CustomHeadLayer` sizes it to a humanoid's. Wings beat in the air, a flier
   bobs (a floater slower and deeper), and a mood tail (a wolf's, `"mood": true`) is held up by its health and hangs as it is
   hurt. `heldItemAnchors`. On screen: the showcase's zombie with a cow's head holds a bow, an iron helmet stretched over
   the cow's skull, a pig's head wears a carved pumpkin, and a cow hangs in the air on a phantom's wings.
 - **Walking across lava** (15.15's "not fixed yet"): a lava walker's navigation is a strider's
-  (`MinionMoves.LavaNavigation`: lava a stable destination, lava and fire no bar to a path) and, while it has lava_walk, its
-  path costs for lava, fire and the edge of fire are 0 (vanilla's own are put back when it loses it), so it goes straight
-  over a pool rather than round it or nowhere; the path is still worked out inside `MinionEntity.pathing`. It is never set
+  (`MinionMoves.LavaNavigation`: lava a stable destination and no bar to a path) and, while it has lava_walk (from at
+  least half its legs, 15.17b), its path cost for lava is 0 (vanilla's own is put back when it loses it; fire keeps
+  vanilla's costs, 15.17b), so it goes straight over a pool rather than round it or nowhere; the path is still worked out inside `MinionEntity.pathing`. It is never set
   alight nor burnt by the lava it walks in (`lavaHurt`, through a synced flag so its client does not show it burning), so
   it steps off the far side unhurt, and one that walks in from a bank lower than the surface steps up onto the lava as onto
   a slab rather than wading (`MotionFlags.floatOnLava`). `lavaWalkerCrossesLava` (a cow on strider legs follows its maker
@@ -2621,7 +2622,8 @@ now reach.
   float goal leaves it be, its `water_movement_efficiency` is 1 (so on the bottom it walks at its land speed, vanilla's own
   attribute) and it drops through water rather than drifting; ground navigation paths along the bottom. Only a sinker's
   rider stays on under water (`canBeRiddenUnderFluidType`), the undead steeds' signature; the others throw theirs off as a
-  horse does. Legs whose own mode keeps it up (float, hover, fly: a ghast's tentacles float) fly it as a flying torso does.
+  horse does. A sinker short of breath goes up for air (15.17b). Legs whose own mode keeps it up (float, hover, fly: a
+  ghast's tentacles float) fly it as a flying torso does.
   `sinkWalksSeabed` (eight blocks along a channel's bottom within six seconds, never more than 0.6 off it),
   `floatStaysUp`.
 - **Mounts** (spec 5.4 type 25, as part data rather than a trait: the legs say rideable, the head and legs what steers,
@@ -2632,7 +2634,7 @@ now reach.
   `FoodOnAStickItem` boosts only its own mob type, so `MinionMoves.onUseStick` (`PlayerInteractEvent.RightClickItem`)
   does it for a minion, wearing the stick as vanilla does (`hurtAndConvertOnBreak` back to a fishing rod). The torso's
   `"seats"` (the camel's, the behemoth family's for the ravager) let its maker ride in front and anyone else, with an
-  empty hand, behind, spread along the torso's back (`MinionBody.seats`). The rideable torso share is now against the torso
+  empty hand, behind, spread along the torso's back (`MinionBody.seats`); those behind get off with the maker (15.17b). The rideable torso share is now against the torso
   and its legs only, as spec 6.4's rabbit example means, so a whole ravager (whose great head and neck outweighed it) takes
   a saddle as spec 6.5 says. `pigHeadSteersWithCarrot`, `striderLegsSteerWithFungus`, `camelCarriesTwo`.
 - **Variant capture** (spec 9, slice 3): `CarcassLook.traits` now keeps a mob's `variant` (any `VariantHolder`: its
@@ -2729,7 +2731,8 @@ the merge was saved unbuilt and untested. It was then gone over, main's own haul
   - `hunterWithMeatHookLeavesCarcass` (15.16's finding, what the debug log was chasing): a body a block wide is pathed as
     two blocks wide, so by a wall or in a corner, where a hurt cow runs, the bite goal's path stops a block or two short,
     and vanilla's melee goal paths again only once the target moves, each new path ending where it stood. With its path
-    done and what it goes for within 4 blocks and in sight, a minion now walks straight at it (`MinionGoals.Bite`).
+    done and what it goes for within 4 blocks and in sight, a minion now walks straight at it (`MinionGoals.Bite`), over
+    safe ground only (15.17b).
   - On screen: a carved pumpkin on a pig's head flickered where the snout, a pixel proud of the head, met the pumpkin's
     front; what a minion wears on its head now has 4% more room than vanilla gives a humanoid's (`ROOM`), and the snout
     stays inside. The showcase's hand shot now holds the powder sac (the client is told the hotbar slot).
@@ -2740,3 +2743,75 @@ the merge was saved unbuilt and untested. It was then gone over, main's own haul
   space the arm's top left, as `WoundCaps` draws a carcass's), which from behind reads as a thin plate sticking out; it
   is on docs/NEXT.md. docs/NEXT.md lost its "Already on the list" heading on main, and has it back.
 - The suite is 443 tests (431, eleven from 15.16, and `chargedSacKeepsItsCharge`), and passed three runs in a row.
+
+### 15.17b The review of 15.17 and 15.17a, and its fixes (verified)
+
+A review of the merged tree listed seventeen problems, some of them twice. Each was checked against the code and all
+were real. Each is fixed, and a test now shows it: every new or strengthened test was also run against the code with its
+fix undone, and failed there.
+
+- **The last stretch walked into lava** (15.17a's hunter fix): `MinionGoals.Bite` walked straight at what it went for
+  whenever its path ran out within 4 blocks of it, in sight. The move control looks at nothing on the way, and a path
+  stops short because the way on is lava, fire or a drop as often as because of a wall, so a guard by a lava river walked
+  into it. The last stretch is now taken over safe ground only (`MinionGoals.clearWay`: every block its body would pass
+  over, as wide as it is, each half block along, is one its own path finding costs nothing, with footing no more than a
+  step down or up). `lastStretchStopsAtLava` (a husk three blocks off across a lava channel two wide: it stays at the
+  bank, unhurt).
+- **A lava walker went straight over fire and magma**: its path costs for fire and the edge of fire were 0, as a
+  strider's are, but strider legs do not make a cow fire-proof (the trait spares it fire only in lava). Only lava costs
+  it nothing now, and lava is the only thing added to what its navigation may cross (`MinionMoves.lavaMalus`,
+  `LavaNavigation`). `lavaWalkerKeepsOffMagma` (it goes round a strip of magma by the gap at its end), and
+  `lavaWalkerCrossesLava` checks that fire keeps vanilla's costs.
+- **One strider leg made a lava walker**, against spec 6.4 (a capability needs at least half the fitted legs): the
+  lava_walk flag came from any piece. A leg's trait that carries a leg capability flag (lava_walk, and climb: one spider
+  leg also made a cow cling to walls) now counts only when at least half the fitted legs carry it
+  (`MinionData.LEG_CAPABILITIES`, applied in `MinionData.traits`, so the flag, the navigation, standing on lava and the
+  fire immunity in lava all follow). From anything else (an organ) it counts as before. `legCapabilitiesNeedHalfTheLegs`.
+- **A resting carcass kept its limbs' organs**: harvesting a heavy carcass walked its live bones, but a carcass lying
+  still folds its limbs into rest poses (`CarcassRest.rest`), so a cow left over the table gave up only its torso's.
+  `Surgery.nextOrgan` walks the folded limbs too (and leaves out a limb cut through). `restingCarcassOrgansOnRig`
+  (harvested once it has folded; `heavyCarcassOrgansOnRig` still clicks before it does).
+- **A spent carcass over the table kept the Cleaver off it**: a Cleaver click on an empty rig went into any carcass over
+  it, even one with nothing left in it, so the blade could not be laid down for surgery. It goes into the carcass only
+  while an organ is left; `heavyCarcassOrgansOnRig` then lays it on the table.
+- **A guard with a creeper's sac blew itself up**: the sapper is not woken to so that it does not spend its blast on the
+  first monster (15.17), but the organ goal fired any ready activate effect, the sac's Self-Destruct included, so a guard
+  did exactly that. The organ goal now leaves detonations out (`Activation.readyFor`); only the sapper's own goal sets
+  one off, once it has walked up (spec 6.4 now says so). `guardKeepsItsBlast` (it wakes a guard, bites a husk from
+  beside it, and never lights its fuse). Two older tests had a non-sapper blow up and now put theirs to sapping:
+  `creeperSacPowersDownNotDestroyed` (walled in glass now, since a sapper's targets are a guard's) and
+  `chargedCreeperSacIsStronger` (walled in too, the charged one held still until the plain one has blown, as its
+  comment always meant).
+- **A rider behind kept the maker's mount**: with the maker off, the rider behind became the front rider and steered it,
+  and the maker could not get back on. When the maker gets off, whoever rode behind gets off too
+  (`MinionEntity.removePassenger`). Steering is not limited to the maker instead, because the client does not know who
+  the maker is and both sides must agree on who steers. `camelCarriesTwo` (the maker gets off, the friend with them, and
+  the maker climbs back on).
+- **A sinker drowned**: sink legs held a cow's torso on the bottom with no way up for air. A sinker short of breath
+  (under a third of its air) now paddles up as any minion does, and goes back down once it has its fill
+  (`MinionEntity.sinking`, its `surfacing` set in `baseTick` on both sides, since a rider's client moves its mount). With
+  gills (a drowned's lungs, the undead horses' legs) or of brass it never runs short. Sink legs were not given gills: the
+  design gives those to the Drowned Lungs. `sinkerSurfacesForAir` (a cow on iron golem legs, nearly out of breath: up,
+  filled, back down, never hurt).
+- **A stick-steered mount counted as standing still**: it goes on by itself while its rider holds the stick, but
+  `steered()` read only the rider's keys, so it paid the idle rate and a brass one could couple to a shaft it walked
+  past. For a stick-steered mount it is now true while its rider holds the stick. `pigHeadSteersWithCarrot`, and
+  `camelCarriesTwo` (a saddle-only mount only while its rider presses on).
+- **A fitted Spider Eye came back as the mod's Eye**: the organ_sources map makes a Spider Eye a spider's eye, but the
+  eye's file names the mod's Eye, so one given back (by the armour fitting or the Assembly Frame) was a stamped Eye.
+  `Organs.stack` now makes an organ as the vanilla item the map gives to that very organ of that mob, so a spider's eye is
+  a plain Spider Eye both cut out of a spider's head and given back; a cave spider's is still the mod's Eye, stamped.
+  `organSourcesInkSacIsSquid`.
+- **A datapack's organ on a heart or eye item read as the plain one**: which organ a heart, lungs, stomach or eye was
+  depended on the first organ file naming the item. `PartsData.organFor` prefers the file of the item's own id, and
+  `Organs.stack` stamps the organ's id on such an item whenever it is some other organ (plain hearts stay unstamped and
+  stack as before). `datapackOrganOnAHeartKeepsItsId` (`PartsData.addTestOrgan`, looked up like `addTestTrait`).
+- **A worn skull was drawn inside the head**: skulls and mob heads went through the item's head look, which a skull's
+  item model does not have, so it came out small and inside the head. They are now drawn as `CustomHeadLayer` draws them
+  on a humanoid (the skull model, 1.1875 times the head, sitting on its bottom, a dragon's head working its jaw as it
+  walks). On screen (`showcase_minions_5.png`, new): the whole cow in the row wears a zombie's head, a full-sized head over
+  its own, face forward, one of the cow's horns poking through its side.
+- **The waiting list** (`signatureLint`'s report): the piglin's note had lost "a held crossbow outside a sentry's post (its
+  head offers no sentry)", which nothing had built, and has it back. The aggressive panda's head lacked spec 8.2's
+  Brawler II; its variant now gives it (`carcassKeepsVariants` checks it), so "the other genes are wired" is true.
+- The suite is 450 tests (443 and the seven named above), and passed three runs in a row.

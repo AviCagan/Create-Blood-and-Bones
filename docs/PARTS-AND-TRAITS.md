@@ -1400,7 +1400,7 @@ Saved old minions get a one-time conversion that drops their parts. `MinionTests
 **Tail:** one passive (fly swat, swim +30%, mood tail, steady).
 
 **Organ:** one special. Its minion traits apply. Activate effects are fired by the AI when a target is in range.
-- The creeper's sac self-destructs, and the minion then powers down.
+- The creeper's sac self-destructs, and the minion then powers down. Only a sapper sets off a detonating organ, once it has walked up to its target; the AI of any other job leaves it be.
 - The chicken's egg gland lays eggs.
 - produce effects do nothing on a cybernetic minion.
 
