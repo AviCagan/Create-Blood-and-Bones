@@ -4112,7 +4112,14 @@ The integration branch's organs, checks (15.18), machines (15.19) and materials 
 - **Sounds.** Minion code plays only the mod's own wet sounds (their bloodless twins through `BloodlessSounds`) and
   vanilla sounds that are not wet; the bloodless sound test finds none missing a twin.
 - **The showcase** keeps both runs: the villager's Body Parts page and the task screens, then the Surgery Table's line,
-  then the gauge and diving shots after it (the table's line cleared from the action bar first).
+  then the gauge and diving shots after it (the table's line cleared from the action bar first, and the diving gear's
+  toasts before the diving shot). With the machines and materials scenes the frames come slower than the ticks, and a
+  pin or scroll on the task screen three ticks before its picture was not yet drawn in it (the herder's reasons were
+  missing and two shots came out the same); the task screen's steps are now ten ticks apart. Photographed in both modes:
+  the fitness lines, the task screen with the herder's, butcher's and Tender's reasons (the Dismantler's and "essence"
+  in bloodless mode), the Surgery Table's line, the surgeon's stump price on the surgery screen ("open socket" in
+  bloodless mode), the villager's knacks in JEI, the gauge and the diving gauge, the Guillotine's Ponder scene and the
+  materials' basins and Butcher's Hooks.
 
 **Tests:** `poorButcherWastesWhatItCuts` expected a 50% butcher to keep half the table's beef (2 or 3 of 4.22); by hand
 that is half of 60%, less the botching, too few to weigh in one cut. It now checks that each butcher keeps no more
