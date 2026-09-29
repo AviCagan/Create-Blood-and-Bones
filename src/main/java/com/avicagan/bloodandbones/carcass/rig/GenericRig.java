@@ -95,7 +95,7 @@ public record GenericRig(List<GenericBone> bones) {
                     .orElseGet(() -> new Vector3f(min).add(max).mul(0.5F));
             boxes.put(bone.name(), new float[]{min.x, min.y, min.z, max.x, max.y, max.z});
             Optional<JointSpec> joint = bone.parent().isEmpty() ? Optional.empty()
-                    : Optional.of(JointRules.jointFor(bone.name(), parentBox != null && restsOnTop(pivot, min, max, parentBox)));
+                    : Optional.of(JointRules.jointFor(bone.name(), parentBox != null && restsOnTop(pivot, min, max, parentBox), lyingFlat(min, max)));
             out.add(new Bone(bone.name(), String.join("|", bone.wears()), bone.parent(), pivot, new Quaternionf(),
                     new Vector3f(min).sub(pivot), new Vector3f(max).sub(pivot), joint));
             Vector3f size = new Vector3f(max).sub(min);
@@ -123,6 +123,14 @@ public record GenericRig(List<GenericBone> bones) {
                 max.setComponent(axis, middle + MIN_PIXELS / 2.0F);
             }
         }
+    }
+
+    /** A box much longer along the level than it is thick (an arthropod's leg held out), as the rig derivation judges it. */
+    private static boolean lyingFlat(Vector3f min, Vector3f max) {
+        Vector3f size = new Vector3f(max).sub(min);
+        float longest = Math.max(size.x, Math.max(size.y, size.z));
+        float next = size.x + size.y + size.z - longest - Math.min(size.x, Math.min(size.y, size.z));
+        return size.y < longest && longest > 1.5F * next;
     }
 
     /** A bone that sits on top of its parent (a biped's head): joined at or above the parent's top, and rising from there. */

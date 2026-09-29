@@ -2,12 +2,6 @@
   "entity": "minecraft:ravager",
   "model": "minecraft:ravager",
   "texture": "minecraft:textures/entity/illager/ravager.png",
-  "torso": "body",
-  "merge": [
-    "neck/head/right_horn",
-    "neck/head/left_horn",
-    "neck/head/mouth"
-  ],
   "boxes": {
     "body": {
       "min": [

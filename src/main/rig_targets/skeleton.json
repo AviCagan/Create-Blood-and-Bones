@@ -2,10 +2,6 @@
   "entity": "minecraft:skeleton",
   "model": "minecraft:skeleton",
   "texture": "minecraft:textures/entity/skeleton/skeleton.png",
-  "torso": "body",
-  "attach": {
-    "hat": "head"
-  },
   "joints": {
     "head": {
       "min_degrees": [

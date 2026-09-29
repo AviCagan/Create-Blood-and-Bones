@@ -2,7 +2,6 @@
   "entity": "minecraft:strider",
   "model": "minecraft:strider",
   "texture": "minecraft:textures/entity/strider/strider.png",
-  "torso": "body",
   "butchery": {
     "meat": "none",
     "hide": "none",

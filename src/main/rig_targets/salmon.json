@@ -3,27 +3,6 @@
   "model": "minecraft:salmon",
   "texture": "minecraft:textures/entity/fish/salmon.png",
   "torso": "body_front",
-  "attach": {
-    "left_fin": "body_front",
-    "right_fin": "body_front"
-  },
-  "joints": {
-    "body_back": {
-      "min_degrees": [
-        -45,
-        -45,
-        -45
-      ],
-      "max_degrees": [
-        45,
-        45,
-        45
-      ],
-      "damping": 2.0,
-      "stiffness": 1.0,
-      "contacts": false
-    }
-  },
   "butchery": {
     "meat": "none",
     "hide": "none",

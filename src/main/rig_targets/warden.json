@@ -2,7 +2,6 @@
   "entity": "minecraft:warden",
   "model": "minecraft:warden",
   "texture": "minecraft:textures/entity/warden/warden.png",
-  "torso": "bone/body",
   "joints": {
     "bone/body/head": {
       "min_degrees": [

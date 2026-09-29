@@ -2,12 +2,6 @@
   "entity": "minecraft:goat",
   "model": "minecraft:goat",
   "texture": "minecraft:textures/entity/goat/goat.png",
-  "torso": "body",
-  "merge": [
-    "head/nose",
-    "head/right_horn",
-    "head/left_horn"
-  ],
   "boxes": {
     "head": {
       "min": [

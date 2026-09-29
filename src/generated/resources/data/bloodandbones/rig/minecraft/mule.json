@@ -45,8 +45,8 @@
       ],
       "hide": [
         "tail",
-        "saddle",
         "right_chest",
+        "saddle",
         "left_chest"
       ],
       "name": "body",
@@ -157,11 +157,11 @@
       ],
       "hide": [
         "left_saddle_mouth",
+        "mouth_saddle_wrap",
+        "right_saddle_line",
         "right_saddle_mouth",
         "left_saddle_line",
-        "right_saddle_line",
-        "head_saddle",
-        "mouth_saddle_wrap"
+        "head_saddle"
       ],
       "joint": {
         "damping": 2.5,

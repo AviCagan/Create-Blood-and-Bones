@@ -2,10 +2,6 @@
   "entity": "minecraft:enderman",
   "model": "minecraft:enderman",
   "texture": "minecraft:textures/entity/enderman/enderman.png",
-  "torso": "body",
-  "attach": {
-    "hat": "head"
-  },
   "butchery": {
     "meat": "none",
     "hide": "none",

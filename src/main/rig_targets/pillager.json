@@ -2,13 +2,9 @@
   "entity": "minecraft:pillager",
   "model": "minecraft:pillager",
   "texture": "minecraft:textures/entity/illager/pillager.png",
-  "torso": "body",
   "hidden": [
     "arms",
     "head/hat"
-  ],
-  "merge": [
-    "head/nose"
   ],
   "butchery": {
     "part_extras": {

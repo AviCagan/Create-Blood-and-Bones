@@ -2,14 +2,6 @@
   "entity": "minecraft:zoglin",
   "model": "minecraft:zoglin",
   "texture": "minecraft:textures/entity/hoglin/zoglin.png",
-  "torso": "body",
-  "merge": [
-    "head/right_horn",
-    "head/left_horn",
-    "head/right_ear",
-    "head/left_ear",
-    "body/mane"
-  ],
   "butchery": {
     "meat": "minecraft:rotten_flesh",
     "hide": "none",

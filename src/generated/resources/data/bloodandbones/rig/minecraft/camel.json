@@ -24,9 +24,9 @@
       ],
       "hide": [
         "head",
-        "saddle",
         "head/bridle",
-        "head/reins"
+        "head/reins",
+        "saddle"
       ],
       "name": "body",
       "offset": [

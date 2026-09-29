@@ -15,12 +15,6 @@
       "unless": "no_level"
     }
   ],
-  "torso": "body",
-  "merge": [
-    "head/nose",
-    "head/hat",
-    "body/jacket"
-  ],
   "baby": {
     "head": [
       "head"

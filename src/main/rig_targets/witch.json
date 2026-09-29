@@ -2,12 +2,6 @@
   "entity": "minecraft:witch",
   "model": "minecraft:witch",
   "texture": "minecraft:textures/entity/witch.png",
-  "torso": "body",
-  "merge": [
-    "head/nose",
-    "head/hat",
-    "body/jacket"
-  ],
   "butchery": {
     "part_extras": {
       "body": [

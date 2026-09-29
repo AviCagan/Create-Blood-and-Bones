@@ -2,11 +2,6 @@
   "entity": "minecraft:llama",
   "model": "minecraft:llama",
   "texture": "minecraft:textures/entity/llama/{variant}.png",
-  "torso": "body",
-  "hidden": [
-    "right_chest",
-    "left_chest"
-  ],
   "boxes": {
     "head": {
       "min": [

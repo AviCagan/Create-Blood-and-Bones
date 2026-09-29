@@ -2,7 +2,6 @@
   "entity": "minecraft:iron_golem",
   "model": "minecraft:iron_golem",
   "texture": "minecraft:textures/entity/iron_golem/iron_golem.png",
-  "torso": "body",
   "boxes": {
     "body": {
       "min": [

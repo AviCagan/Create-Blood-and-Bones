@@ -2,14 +2,6 @@
   "entity": "minecraft:cod",
   "model": "minecraft:cod",
   "texture": "minecraft:textures/entity/fish/cod.png",
-  "torso": "body",
-  "attach": {
-    "nose": "head",
-    "left_fin": "body",
-    "right_fin": "body",
-    "top_fin": "body",
-    "tail_fin": "body"
-  },
   "butchery": {
     "meat": "none",
     "hide": "none",

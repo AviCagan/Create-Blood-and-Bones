@@ -2,17 +2,6 @@
   "entity": "minecraft:camel",
   "model": "minecraft:camel",
   "texture": "minecraft:textures/entity/camel/camel.png",
-  "torso": "body",
-  "hidden": [
-    "body/saddle",
-    "body/head/bridle",
-    "body/head/reins"
-  ],
-  "merge": [
-    "body/hump",
-    "body/head/right_ear",
-    "body/head/left_ear"
-  ],
   "boxes": {
     "body/head": {
       "min": [

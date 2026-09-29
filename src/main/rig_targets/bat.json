@@ -2,7 +2,6 @@
   "entity": "minecraft:bat",
   "model": "minecraft:bat",
   "texture": "minecraft:textures/entity/bat.png",
-  "torso": "body",
   "joints": {
     "head": {
       "min_degrees": [

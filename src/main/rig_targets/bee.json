@@ -2,12 +2,6 @@
   "entity": "minecraft:bee",
   "model": "minecraft:bee",
   "texture": "minecraft:textures/entity/bee/bee.png",
-  "torso": "bone/body",
-  "merge": [
-    "bone/body/right_antenna",
-    "bone/body/left_antenna",
-    "bone/body/stinger"
-  ],
   "attach": {
     "bone/front_legs": "bone/body",
     "bone/middle_legs": "bone/body",

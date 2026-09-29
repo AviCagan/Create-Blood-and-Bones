@@ -2,7 +2,6 @@
   "entity": "minecraft:armadillo",
   "model": "minecraft:armadillo",
   "texture": "minecraft:textures/entity/armadillo.png",
-  "torso": "body",
   "hidden": [
     "cube"
   ],

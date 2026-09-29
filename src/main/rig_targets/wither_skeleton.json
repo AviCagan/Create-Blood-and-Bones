@@ -2,10 +2,6 @@
   "entity": "minecraft:wither_skeleton",
   "model": "minecraft:wither_skeleton",
   "texture": "minecraft:textures/entity/skeleton/wither_skeleton.png",
-  "torso": "body",
-  "attach": {
-    "hat": "head"
-  },
   "joints": {
     "head": {
       "min_degrees": [

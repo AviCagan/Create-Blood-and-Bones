@@ -2,14 +2,6 @@
   "entity": "minecraft:hoglin",
   "model": "minecraft:hoglin",
   "texture": "minecraft:textures/entity/hoglin/hoglin.png",
-  "torso": "body",
-  "merge": [
-    "head/right_horn",
-    "head/left_horn",
-    "head/right_ear",
-    "head/left_ear",
-    "body/mane"
-  ],
   "butchery": {
     "meat": "minecraft:porkchop"
   },

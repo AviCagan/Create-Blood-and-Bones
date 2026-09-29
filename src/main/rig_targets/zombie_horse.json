@@ -2,24 +2,8 @@
   "entity": "minecraft:zombie_horse",
   "model": "minecraft:zombie_horse",
   "texture": "minecraft:textures/entity/horse/horse_zombie.png",
-  "torso": "body",
-  "hidden": [
-    "body/saddle",
-    "head_parts/left_saddle_mouth",
-    "head_parts/right_saddle_mouth",
-    "head_parts/left_saddle_line",
-    "head_parts/right_saddle_line",
-    "head_parts/head_saddle",
-    "head_parts/mouth_saddle_wrap",
-    "left_hind_baby_leg",
-    "right_hind_baby_leg",
-    "left_front_baby_leg",
-    "right_front_baby_leg"
-  ],
   "merge": [
-    "head_parts/head",
-    "head_parts/mane",
-    "head_parts/upper_mouth"
+    "head_parts/head"
   ],
   "boxes": {
     "head_parts": {
@@ -64,66 +48,6 @@
       ],
       "damping": 2.0,
       "stiffness": 1.0,
-      "contacts": false
-    },
-    "left_hind_leg": {
-      "min_degrees": [
-        -75,
-        -20,
-        -40
-      ],
-      "max_degrees": [
-        75,
-        20,
-        40
-      ],
-      "damping": 3.0,
-      "stiffness": 0.1,
-      "contacts": false
-    },
-    "right_hind_leg": {
-      "min_degrees": [
-        -75,
-        -20,
-        -40
-      ],
-      "max_degrees": [
-        75,
-        20,
-        40
-      ],
-      "damping": 3.0,
-      "stiffness": 0.1,
-      "contacts": false
-    },
-    "left_front_leg": {
-      "min_degrees": [
-        -75,
-        -20,
-        -40
-      ],
-      "max_degrees": [
-        75,
-        20,
-        40
-      ],
-      "damping": 3.0,
-      "stiffness": 0.1,
-      "contacts": false
-    },
-    "right_front_leg": {
-      "min_degrees": [
-        -75,
-        -20,
-        -40
-      ],
-      "max_degrees": [
-        75,
-        20,
-        40
-      ],
-      "damping": 3.0,
-      "stiffness": 0.1,
       "contacts": false
     }
   },

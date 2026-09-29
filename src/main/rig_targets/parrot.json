@@ -5,11 +5,7 @@
   "variant_names": {
     "gray": "grey"
   },
-  "torso": "body",
   "merge": [
-    "head/beak1",
-    "head/beak2",
-    "head/feather",
     "head/head2"
   ],
   "attach": {

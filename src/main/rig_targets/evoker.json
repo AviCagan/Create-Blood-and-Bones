@@ -2,13 +2,9 @@
   "entity": "minecraft:evoker",
   "model": "minecraft:evoker",
   "texture": "minecraft:textures/entity/illager/evoker.png",
-  "torso": "body",
   "hidden": [
     "arms",
     "head/hat"
-  ],
-  "merge": [
-    "head/nose"
   ],
   "butchery": {
     "part_extras": {

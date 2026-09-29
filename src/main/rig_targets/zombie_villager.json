@@ -15,10 +15,6 @@
       "unless": "no_level"
     }
   ],
-  "torso": "body",
-  "attach": {
-    "hat": "head"
-  },
   "butchery": {
     "meat": "minecraft:rotten_flesh",
     "hide": "none",

@@ -2,22 +2,10 @@
   "entity": "minecraft:piglin",
   "model": "minecraft:piglin",
   "texture": "minecraft:textures/entity/piglin/piglin.png",
-  "torso": "body",
   "hidden": [
     "cloak",
     "ear"
   ],
-  "merge": [
-    "head/right_ear",
-    "head/left_ear"
-  ],
-  "attach": {
-    "jacket": "body",
-    "left_sleeve": "left_arm",
-    "right_sleeve": "right_arm",
-    "left_pants": "left_leg",
-    "right_pants": "right_leg"
-  },
   "butchery": {
     "meat": "minecraft:porkchop",
     "part_extras": {

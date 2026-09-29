@@ -3,11 +3,6 @@
   "model": "minecraft:snow_golem",
   "texture": "minecraft:textures/entity/snow_golem.png",
   "torso": "lower_body",
-  "parents": {
-    "head": "upper_body",
-    "right_arm": "upper_body",
-    "left_arm": "upper_body"
-  },
   "joints": {
     "head": {
       "min_degrees": [
@@ -37,36 +32,6 @@
       ],
       "damping": 3.0,
       "stiffness": 0.5,
-      "contacts": false
-    },
-    "right_arm": {
-      "min_degrees": [
-        -75,
-        -20,
-        -40
-      ],
-      "max_degrees": [
-        75,
-        20,
-        40
-      ],
-      "damping": 3.0,
-      "stiffness": 0.1,
-      "contacts": false
-    },
-    "left_arm": {
-      "min_degrees": [
-        -75,
-        -20,
-        -40
-      ],
-      "max_degrees": [
-        75,
-        20,
-        40
-      ],
-      "damping": 3.0,
-      "stiffness": 0.1,
       "contacts": false
     }
   },

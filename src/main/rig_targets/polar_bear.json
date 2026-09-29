@@ -2,7 +2,6 @@
   "entity": "minecraft:polar_bear",
   "model": "minecraft:polar_bear",
   "texture": "minecraft:textures/entity/bear/polarbear.png",
-  "torso": "body",
   "scale": 1.2,
   "boxes": {
     "head": {

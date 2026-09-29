@@ -2,13 +2,9 @@
   "entity": "minecraft:frog",
   "model": "minecraft:frog",
   "texture": "{frog_texture}",
-  "torso": "root/body",
   "hidden": [
     "root/body/croaking_body",
     "root/body/tongue"
-  ],
-  "merge": [
-    "root/body/head/eyes"
   ],
   "joints": {
     "root/body/head": {
@@ -24,66 +20,6 @@
       ],
       "damping": 2.5,
       "stiffness": 0.8,
-      "contacts": false
-    },
-    "root/left_leg": {
-      "min_degrees": [
-        -75,
-        -20,
-        -40
-      ],
-      "max_degrees": [
-        75,
-        20,
-        40
-      ],
-      "damping": 3.0,
-      "stiffness": 0.1,
-      "contacts": false
-    },
-    "root/right_leg": {
-      "min_degrees": [
-        -75,
-        -20,
-        -40
-      ],
-      "max_degrees": [
-        75,
-        20,
-        40
-      ],
-      "damping": 3.0,
-      "stiffness": 0.1,
-      "contacts": false
-    },
-    "root/body/right_arm": {
-      "min_degrees": [
-        -75,
-        -20,
-        -40
-      ],
-      "max_degrees": [
-        75,
-        20,
-        40
-      ],
-      "damping": 3.0,
-      "stiffness": 0.1,
-      "contacts": false
-    },
-    "root/body/left_arm": {
-      "min_degrees": [
-        -75,
-        -20,
-        -40
-      ],
-      "max_degrees": [
-        75,
-        20,
-        40
-      ],
-      "damping": 3.0,
-      "stiffness": 0.1,
       "contacts": false
     }
   },

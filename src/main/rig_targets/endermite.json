@@ -3,58 +3,6 @@
   "model": "minecraft:endermite",
   "texture": "minecraft:textures/entity/endermite.png",
   "torso": "segment1",
-  "parents": {
-    "segment0": "segment1",
-    "segment2": "segment1",
-    "segment3": "segment2"
-  },
-  "joints": {
-    "segment0": {
-      "min_degrees": [
-        -30,
-        -35,
-        -20
-      ],
-      "max_degrees": [
-        30,
-        35,
-        20
-      ],
-      "damping": 2.0,
-      "stiffness": 0.5,
-      "contacts": false
-    },
-    "segment2": {
-      "min_degrees": [
-        -30,
-        -35,
-        -20
-      ],
-      "max_degrees": [
-        30,
-        35,
-        20
-      ],
-      "damping": 2.0,
-      "stiffness": 0.5,
-      "contacts": false
-    },
-    "segment3": {
-      "min_degrees": [
-        -30,
-        -35,
-        -20
-      ],
-      "max_degrees": [
-        30,
-        35,
-        20
-      ],
-      "damping": 2.0,
-      "stiffness": 0.5,
-      "contacts": false
-    }
-  },
   "butchery": {
     "meat": "none",
     "hide": "none",

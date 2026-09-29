@@ -4,11 +4,6 @@
   "texture": "minecraft:textures/entity/slime/slime.png",
   "torso": "cube",
   "scale": 4.0,
-  "attach": {
-    "right_eye": "cube",
-    "left_eye": "cube",
-    "mouth": "cube"
-  },
   "passes": [
     {
       "layer": "outer",

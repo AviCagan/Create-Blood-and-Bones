@@ -6,12 +6,6 @@
     "red": "fox",
     "snow": "snow_fox"
   },
-  "torso": "body",
-  "merge": [
-    "head/nose",
-    "head/right_ear",
-    "head/left_ear"
-  ],
   "butchery": {
     "hide_per_weight": 5.0
   },

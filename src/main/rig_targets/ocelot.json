@@ -2,26 +2,8 @@
   "entity": "minecraft:ocelot",
   "model": "minecraft:ocelot",
   "texture": "minecraft:textures/entity/cat/ocelot.png",
-  "torso": "body",
   "attach": {
     "tail2": "tail1"
-  },
-  "joints": {
-    "tail1": {
-      "min_degrees": [
-        -45,
-        -45,
-        -45
-      ],
-      "max_degrees": [
-        45,
-        45,
-        45
-      ],
-      "damping": 2.0,
-      "stiffness": 1.0,
-      "contacts": false
-    }
   },
   "butchery": {
     "hide_per_weight": 4.0

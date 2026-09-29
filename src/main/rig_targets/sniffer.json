@@ -2,13 +2,6 @@
   "entity": "minecraft:sniffer",
   "model": "minecraft:sniffer",
   "texture": "minecraft:textures/entity/sniffer/sniffer.png",
-  "torso": "root/bone/body",
-  "merge": [
-    "root/bone/body/head/nose",
-    "root/bone/body/head/lower_beak",
-    "root/bone/body/head/right_ear",
-    "root/bone/body/head/left_ear"
-  ],
   "butchery": {
     "part_extras": {
       "root/bone/body": [

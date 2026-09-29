@@ -2,10 +2,6 @@
   "entity": "minecraft:zombie",
   "model": "minecraft:zombie",
   "texture": "minecraft:textures/entity/zombie/zombie.png",
-  "torso": "body",
-  "attach": {
-    "hat": "head"
-  },
   "joints": {
     "head": {
       "min_degrees": [

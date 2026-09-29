@@ -2,10 +2,6 @@
   "entity": "minecraft:stray",
   "model": "minecraft:stray",
   "texture": "minecraft:textures/entity/skeleton/stray.png",
-  "torso": "body",
-  "attach": {
-    "hat": "head"
-  },
   "joints": {
     "head": {
       "min_degrees": [

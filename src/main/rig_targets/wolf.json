@@ -2,12 +2,6 @@
   "entity": "minecraft:wolf",
   "model": "minecraft:wolf",
   "texture": "{wolf_texture}",
-  "torso": "body",
-  "parents": {
-    "head/real_head": "upper_body",
-    "right_front_leg": "upper_body",
-    "left_front_leg": "upper_body"
-  },
   "joints": {
     "upper_body": {
       "min_degrees": [

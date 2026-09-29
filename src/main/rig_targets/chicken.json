@@ -2,10 +2,6 @@
   "entity": "minecraft:chicken",
   "model": "minecraft:chicken",
   "texture": "minecraft:textures/entity/chicken.png",
-  "attach": {
-    "beak": "head",
-    "red_thing": "head"
-  },
   "joints": {
     "right_wing": {
       "min_degrees": [

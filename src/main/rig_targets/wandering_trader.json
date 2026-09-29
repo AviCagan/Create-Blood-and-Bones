@@ -2,12 +2,6 @@
   "entity": "minecraft:wandering_trader",
   "model": "minecraft:wandering_trader",
   "texture": "minecraft:textures/entity/wandering_trader.png",
-  "torso": "body",
-  "merge": [
-    "head/nose",
-    "head/hat",
-    "body/jacket"
-  ],
   "butchery": {
     "part_extras": {
       "body": [

@@ -5,12 +5,8 @@
   "variant_names": {
     "evil": "caerbannog"
   },
-  "torso": "body",
   "scale": 0.6,
   "attach": {
-    "nose": "head",
-    "right_ear": "head",
-    "left_ear": "head",
     "right_hind_foot": "right_haunch",
     "left_hind_foot": "left_haunch",
     "tail": "body"

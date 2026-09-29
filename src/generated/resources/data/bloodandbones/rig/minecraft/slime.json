@@ -37,7 +37,7 @@
             0.0,
             0.0
           ],
-          "part": "left_eye",
+          "part": "mouth",
           "rotation": [
             0.0,
             0.0,
@@ -51,7 +51,7 @@
             0.0,
             0.0
           ],
-          "part": "mouth",
+          "part": "left_eye",
           "rotation": [
             0.0,
             0.0,
