@@ -1,0 +1,14 @@
+{
+  "item": "bloodandbones:gland",
+  "name": "organ.bloodandbones.lanolin_gland",
+  "bloodless_name": "bloodless.organ.bloodandbones.lanolin_gland",
+  "look": "gland",
+  "tint": "#efe4b8",
+  "armour_pieces": [
+    "helmet",
+    "chestplate",
+    "leggings",
+    "boots"
+  ],
+  "extra_drops": []
+}

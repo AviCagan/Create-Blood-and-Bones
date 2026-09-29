@@ -6,6 +6,7 @@ import com.avicagan.bloodandbones.parts.PartsData;
 import com.avicagan.bloodandbones.parts.ResolvedMob;
 import com.avicagan.bloodandbones.parts.SlotInfo;
 import com.avicagan.bloodandbones.parts.TraitList;
+import com.avicagan.bloodandbones.parts.effect.FlagEffect;
 import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
 import com.mojang.serialization.JsonOps;
@@ -88,25 +89,7 @@ public final class MinionData {
     }
 
     private static boolean matches(@org.jetbrains.annotations.Nullable JsonObject when, Map<String, String> traits) {
-        if (when == null || !when.has("trait")) {
-            return false;
-        }
-        String value = traits.get(when.get("trait").getAsString());
-        if (value == null) {
-            return false;
-        }
-        if (when.has("equals")) {
-            return value.equals(when.get("equals").getAsString());
-        }
-        if (when.has("in") && when.get("in").isJsonArray()) {
-            for (JsonElement e : when.getAsJsonArray("in")) {
-                if (value.equals(e.getAsString())) {
-                    return true;
-                }
-            }
-            return false;
-        }
-        return true;
+        return ResolvedMob.Variant.matches(when, traits);
     }
 
     public static float number(ResolvedMob mob, String key, String field, String inner, float fallback) {
@@ -154,6 +137,14 @@ public final class MinionData {
      * specific one's ("leg.hind"), each adding to or editing what the ones before gave.
      */
     public static List<TraitList.Resolved> traits(ResolvedMob mob, String key) {
+        return traits(mob, Map.of(), key);
+    }
+
+    /**
+     * The same for one particular piece: after each layer's own list, the "traits" of each of that layer's variants the
+     * piece's captured traits match, in order (a warm frog's legs are fireproof, a cold one's frost-guarded).
+     */
+    public static List<TraitList.Resolved> traits(ResolvedMob mob, Map<String, String> captured, String key) {
         List<String> keys = new ArrayList<>();
         int dot = key.indexOf('.');
         if (dot > 0) {
@@ -163,10 +154,16 @@ public final class MinionData {
         List<TraitList.Resolved> out = List.of();
         for (String k : keys) {
             for (JsonElement layer : mob.minion().getOrDefault(k, List.of())) {
-                if (layer.isJsonObject() && layer.getAsJsonObject().has("traits")) {
-                    TraitList list = TraitList.CODEC.parse(JsonOps.INSTANCE, layer.getAsJsonObject().get("traits")).result().orElse(null);
-                    if (list != null) {
-                        out = list.applyTo(out, mob.entity());
+                if (!layer.isJsonObject()) {
+                    continue;
+                }
+                JsonObject o = layer.getAsJsonObject();
+                out = applyTraits(o, out, mob);
+                if (!captured.isEmpty() && o.has("variants") && o.get("variants").isJsonArray()) {
+                    for (JsonElement variant : o.getAsJsonArray("variants")) {
+                        if (variant.isJsonObject() && matches(variant.getAsJsonObject().getAsJsonObject("if"), captured)) {
+                            out = applyTraits(variant.getAsJsonObject(), out, mob);
+                        }
                     }
                 }
             }
@@ -174,16 +171,35 @@ public final class MinionData {
         return out;
     }
 
+    /** An object's "traits" list applied to what came before (nothing if it has none, or it will not read). */
+    private static List<TraitList.Resolved> applyTraits(JsonObject o, List<TraitList.Resolved> before, ResolvedMob mob) {
+        if (!o.has("traits")) {
+            return before;
+        }
+        TraitList list = TraitList.CODEC.parse(JsonOps.INSTANCE, o.get("traits")).result().orElse(null);
+        return list == null ? before : list.applyTo(before, mob.entity());
+    }
+
+    /**
+     * What legs let a minion do only when at least half its fitted legs can (docs/PARTS-AND-TRAITS.md section 6.4,
+     * capabilities): climb walls (spider legs), walk on lava (strider legs). A leg's trait carrying one of these flags
+     * counts only then, so one strider leg under a cow gives it nothing; the same flag from anything else (its organ) does.
+     */
+    public static final List<String> LEG_CAPABILITIES = List.of(FlagEffect.CLIMB, FlagEffect.LAVA_WALK);
+
     /**
      * Every source of a build's minion traits, one list each (docs/PARTS-AND-TRAITS.md section 6.4): the torso's, each
-     * fitted piece's for the slot it is (a rabbit's hind leg its "leg.hind" traits), and the organ's "minion" list. A
-     * piece whose mob has no rig gives nothing. Pure: data in, lists out.
+     * fitted piece's for the slot it is (a rabbit's hind leg its "leg.hind" traits), and the organ's "minion" list, each
+     * with what the variants its mob's captured traits match add. A piece whose mob has no rig gives nothing. The legs'
+     * capabilities are left off unless at least half the legs share them ({@link #LEG_CAPABILITIES}). Pure: data in,
+     * lists out.
      */
     public static List<List<TraitList.Resolved>> traits(PartsData.Store store, MinionBuild build) {
         List<List<TraitList.Resolved>> out = new ArrayList<>();
         List<PieceRef> pieces = new ArrayList<>();
         pieces.add(build.torso());
         build.parts().forEach(f -> pieces.add(f.piece()));
+        List<Integer> legs = new ArrayList<>();
         for (PieceRef piece : pieces) {
             Optional<Rig> rig = store.rig(piece.entity(), piece.baby());
             if (rig.isPresent()) {
@@ -194,16 +210,35 @@ public final class MinionData {
                     case NECK -> "head";
                     default -> slot.key();
                 };
-                out.add(traits(store.resolve(piece.entity(), piece.baby()), key));
+                if (slot.slot() == com.avicagan.bloodandbones.parts.PartSlot.LEG) {
+                    legs.add(out.size());
+                }
+                out.add(traits(store.resolve(piece.entity(), piece.baby()), piece.traits(), key));
+            }
+        }
+        for (String capability : LEG_CAPABILITIES) {
+            long with = legs.stream().filter(i -> out.get(i).stream().anyMatch(t -> carries(store, t, capability))).count();
+            if (with * 2 < legs.size()) {
+                for (int i : legs) {
+                    out.set(i, out.get(i).stream().filter(t -> !carries(store, t, capability)).toList());
+                }
             }
         }
         build.organ().ifPresent(organ -> {
-            ResolvedMob.Organ traits = store.resolve(organ.entity(), organ.baby()).organs().get(organ.organ());
-            if (traits != null) {
-                out.add(traits.minion());
+            ResolvedMob mob = store.resolve(organ.entity(), organ.baby());
+            if (mob.organs().containsKey(organ.organ())) {
+                // with what its variants add for the mob it came out of (a charged creeper's sac)
+                out.add(mob.organMinion(organ.organ(), organ.traits()));
             }
         });
         return out;
+    }
+
+    /** Whether this trait carries a passive flag of this name (lava_walk, climb...). */
+    private static boolean carries(PartsData.Store store, TraitList.Resolved resolved, String flag) {
+        com.avicagan.bloodandbones.parts.Trait trait = store.trait(resolved.id());
+        return trait != null && trait.effects().stream().anyMatch(facet -> facet.trigger() == com.avicagan.bloodandbones.parts.Trigger.PASSIVE
+                && facet.effect() instanceof FlagEffect flagEffect && flagEffect.flag().equals(flag));
     }
 
     /** One of the mob's own attributes as vanilla sets it, or the fallback. */

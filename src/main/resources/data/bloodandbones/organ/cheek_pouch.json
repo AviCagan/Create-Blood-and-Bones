@@ -1,0 +1,11 @@
+{
+  "item": "bloodandbones:gland",
+  "name": "organ.bloodandbones.cheek_pouch",
+  "bloodless_name": "bloodless.organ.bloodandbones.cheek_pouch",
+  "look": "sac",
+  "tint": "#d98a4a",
+  "armour_pieces": [
+    "helmet"
+  ],
+  "extra_drops": []
+}

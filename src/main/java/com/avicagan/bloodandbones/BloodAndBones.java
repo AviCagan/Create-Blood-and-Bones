@@ -40,6 +40,7 @@ public class BloodAndBones {
         BBBlockEntities.register();
         com.avicagan.bloodandbones.registry.BBEntities.register();
         BBLang.register();
+        com.avicagan.bloodandbones.datagen.BBRecipeGen.register();
         com.avicagan.bloodandbones.registry.BBGameRules.register();
         com.avicagan.bloodandbones.registry.BBMovementChecks.register();
 
@@ -55,6 +56,10 @@ public class BloodAndBones {
         NeoForge.EVENT_BUS.register(com.avicagan.bloodandbones.cyber.SetBonus.class);
         NeoForge.EVENT_BUS.register(com.avicagan.bloodandbones.parts.TraitEvents.class);
         NeoForge.EVENT_BUS.register(com.avicagan.bloodandbones.minion.MinionJobs.class);
+        NeoForge.EVENT_BUS.register(com.avicagan.bloodandbones.minion.MinionMoves.class);
+        // organs as items: their words on every organ item and carcass piece; the traits commands
+        NeoForge.EVENT_BUS.register(com.avicagan.bloodandbones.parts.Organs.class);
+        NeoForge.EVENT_BUS.addListener(com.avicagan.bloodandbones.parts.TraitsCommand::onRegisterCommands);
         // the four groups of trait effects, each with its own handlers (docs/ARCHITECTURE-PROPOSAL.md section 15.8)
         NeoForge.EVENT_BUS.register(com.avicagan.bloodandbones.parts.effect.MotionEffects.class);
         NeoForge.EVENT_BUS.register(com.avicagan.bloodandbones.parts.effect.RangedEffects.class);
@@ -78,10 +83,14 @@ public class BloodAndBones {
             // the rig exporter reads client-only model classes; a dedicated server must never link it
             modEventBus.addListener(BBDatagen::gatherData);
             com.avicagan.bloodandbones.client.DevShowcase.init();
+            com.avicagan.bloodandbones.client.MultiplayerShowcase.init();
             com.avicagan.bloodandbones.client.BBClientSetup.registerConfigScreen(modContainer);
             com.avicagan.bloodandbones.client.BBClientSetup.initEffects(modEventBus);
+            // the machines' moving parts are asked for before models load
+            com.avicagan.bloodandbones.client.BBPartialModels.init();
         }
         modEventBus.addListener(BBGameTests::register);
+        com.avicagan.bloodandbones.gametest.MultiplayerCheck.init();
         modEventBus.addListener(BBNetwork::register);
         modEventBus.addListener(BBBlockEntities::registerCapabilities);
         com.avicagan.bloodandbones.registry.BBDataComponents.COMPONENTS.register(modEventBus);
@@ -109,6 +118,7 @@ public class BloodAndBones {
         modEventBus.addListener((net.neoforged.neoforge.registries.datamaps.RegisterDataMapTypesEvent event) -> {
             event.register(com.avicagan.bloodandbones.body.Vent.EFFECTS);
             event.register(com.avicagan.bloodandbones.parts.Hides.SOURCES);
+            event.register(com.avicagan.bloodandbones.parts.Organs.SOURCES);
         });
 
         LOGGER.info("Create: Blood & Bones loaded");

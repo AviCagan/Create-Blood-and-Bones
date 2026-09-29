@@ -65,7 +65,7 @@ import java.util.function.Consumer;
  * (or two) in its test's arena, plays it out and hands back its numbers; the numbers say how well it did, never whether
  * a test passes (that is PhysicsTests' job, with bars of its own). It was written to set this mod's rigs beside rigs
  * made the Sable Ragdolls way (docs/NEXT.md item 2); this copy keeps only this mod's own, so the same scenarios can say
- * how the physics did before and after a change (docs/ARCHITECTURE-PROPOSAL.md 15.19).
+ * how the physics did before and after a change (docs/ARCHITECTURE-PROPOSAL.md 15.21).
  * <p>
  * Directions are read off the torso: forward is where the model's -Z (its head end) points in the world, up where its
  * -Y points; a leg's down is where its own +Y points. "The rearmost leg" is the leg with the largest pivot z (left on a

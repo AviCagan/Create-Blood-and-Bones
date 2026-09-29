@@ -131,7 +131,7 @@ public final class Diet {
                     host.addEffect(diet.mobEffect().map(MobEffectInstance::new).orElseGet(() -> new MobEffectInstance(MobEffects.POISON, POISON_TICKS, 1)));
                     // a sick, wet retch
                     host.level().playSound(null, host.getX(), host.getY(), host.getZ(), SoundEvents.PLAYER_HURT_SWEET_BERRY_BUSH, host.getSoundSource(), 0.6F, 0.5F);
-                    host.level().playSound(null, host.getX(), host.getY(), host.getZ(), SoundEvents.SLIME_SQUISH, host.getSoundSource(), 0.5F, 0.5F);
+                    host.level().playSound(null, host.getX(), host.getY(), host.getZ(), com.avicagan.bloodandbones.registry.BBSounds.FLESH_SQUISH.get(), host.getSoundSource(), 0.5F, 0.5F);
                     continue;
                 }
                 default -> {
@@ -241,7 +241,7 @@ public final class Diet {
         minion.feed(Math.max(0.0F, mb));
         level.playSound(null, minion.getX(), minion.getY(), minion.getZ(), SoundEvents.GENERIC_EAT, minion.getSoundSource(), 0.7F,
                 0.5F + level.random.nextFloat() * 0.2F);
-        level.playSound(null, minion.getX(), minion.getY(), minion.getZ(), SoundEvents.SLIME_SQUISH_SMALL, minion.getSoundSource(), 0.5F, 0.6F);
+        level.playSound(null, minion.getX(), minion.getY(), minion.getZ(), com.avicagan.bloodandbones.registry.BBSounds.FLESH_SQUISH_SMALL.get(), minion.getSoundSource(), 0.5F, 0.6F);
         crumbs(level, minion, food);
         minion.gameEvent(GameEvent.EAT);
     }

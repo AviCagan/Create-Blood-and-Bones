@@ -164,7 +164,7 @@ public final class SocialClient {
         if ("echolocate".equals(payload.kind())) {
             Player player = mc.player;
             // a wet click from the throat, then the nearest few echo back, the further the later
-            mc.level.playLocalSound(player.getX(), player.getEyeY(), player.getZ(), SoundEvents.SLIME_SQUISH_SMALL, SoundSource.PLAYERS, 0.3F, 1.9F, false);
+            mc.level.playLocalSound(player.getX(), player.getEyeY(), player.getZ(), com.avicagan.bloodandbones.registry.BBSounds.FLESH_SQUISH_SMALL.get(), SoundSource.PLAYERS, 0.3F, 1.9F, false);
             mc.level.playLocalSound(player.getX(), player.getEyeY(), player.getZ(), SoundEvents.NOTE_BLOCK_HAT.value(), SoundSource.PLAYERS, 0.35F, 1.7F, false);
             List<Entity> found = new ArrayList<>();
             for (int id : payload.entities()) {
@@ -197,7 +197,7 @@ public final class SocialClient {
         }
         Player player = mc.player;
         mc.level.playLocalSound(player.getX(), player.getEyeY(), player.getZ(), SoundEvents.WARDEN_HEARTBEAT, SoundSource.PLAYERS, 0.9F, 1.35F, false);
-        mc.level.playLocalSound(player.getX(), player.getEyeY(), player.getZ(), SoundEvents.SLIME_SQUISH, SoundSource.PLAYERS, 0.35F, 0.6F, false);
+        mc.level.playLocalSound(player.getX(), player.getEyeY(), player.getZ(), com.avicagan.bloodandbones.registry.BBSounds.FLESH_SQUISH.get(), SoundSource.PLAYERS, 0.35F, 0.6F, false);
     }
 
     // ---- every tick

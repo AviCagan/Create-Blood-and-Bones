@@ -18,6 +18,26 @@
             "trait": "bloodandbones:springy",
             "level": 3
           }
+        ],
+        "variants": [
+          {
+            "if": {
+              "trait": "variant",
+              "equals": "warm"
+            },
+            "traits": [
+              "bloodandbones:fireproof"
+            ]
+          },
+          {
+            "if": {
+              "trait": "variant",
+              "equals": "cold"
+            },
+            "traits": [
+              "bloodandbones:frost_guard"
+            ]
+          }
         ]
       },
       "armour": [

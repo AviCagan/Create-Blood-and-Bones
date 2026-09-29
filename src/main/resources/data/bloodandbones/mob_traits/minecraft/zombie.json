@@ -2,7 +2,8 @@
   "signature": [
     "parts.head",
     "parts.torso",
-    "organs.bloodandbones:heart"
+    "organs.bloodandbones:heart",
+    "parts.arm"
   ],
   "parts": {
     "head": {
@@ -32,6 +33,11 @@
         "shoulders": [
           "bloodandbones:grabbing"
         ]
+      },
+      "minion": {
+        "strike": {
+          "style": "grab"
+        }
       }
     },
     "leg": {

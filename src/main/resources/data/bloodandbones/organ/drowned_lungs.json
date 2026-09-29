@@ -1,0 +1,11 @@
+{
+  "item": "bloodandbones:gland",
+  "name": "organ.bloodandbones.drowned_lungs",
+  "bloodless_name": "bloodless.organ.bloodandbones.drowned_lungs",
+  "look": "bladder",
+  "tint": "#4f8f8a",
+  "armour_pieces": [
+    "chestplate"
+  ],
+  "extra_drops": []
+}

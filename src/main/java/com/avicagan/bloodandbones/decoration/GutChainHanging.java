@@ -5,7 +5,6 @@ import com.avicagan.bloodandbones.carcass.trolley.ChainPicker;
 import com.avicagan.bloodandbones.registry.BBBlocks;
 import com.simibubi.create.content.kinetics.chainConveyor.ChainConveyorBlockEntity;
 import net.minecraft.server.level.ServerLevel;
-import net.minecraft.sounds.SoundEvents;
 import net.minecraft.sounds.SoundSource;
 import net.minecraft.world.InteractionHand;
 import net.minecraft.world.InteractionResult;
@@ -67,7 +66,7 @@ public final class GutChainHanging {
         HangingGutChainEntity chain = HangingGutChainEntity.create(level, cursor, 1);
         level.addFreshEntity(chain);
         stack.consume(1, player);
-        level.playSound(null, chain.getX(), chain.getY() - 0.5, chain.getZ(), SoundEvents.SLIME_BLOCK_PLACE, SoundSource.BLOCKS, 0.8F, 0.9F);
+        level.playSound(null, chain.getX(), chain.getY() - 0.5, chain.getZ(), com.avicagan.bloodandbones.registry.BBSounds.FLESH_PLACE.get(), SoundSource.BLOCKS, 0.8F, 0.9F);
         return true;
     }
 }

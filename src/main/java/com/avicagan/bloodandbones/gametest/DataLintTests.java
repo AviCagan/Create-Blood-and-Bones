@@ -57,7 +57,8 @@ public class DataLintTests {
     private static final Pattern FLESHY = Pattern.compile("(?i)(?<![a-z])(blood\\w*|bleed\\w*|gor[ey]|guts?|organs?|glands?|sacs?|hearts?|lungs"
             + "|stomachs?|bladders?|marrow|flesh)(?![a-z])");
     /** The flags each kind of host reads (spec 5.6): a minion has no worn armour's hooks, a player no minion's legs. */
-    private static final Set<String> MINION_FLAGS = Set.of("climb", "bounce", "ender_mask", "silent_steps", "inverted_healing", "trample", "lava_walk");
+    private static final Set<String> MINION_FLAGS = Set.of("climb", "bounce", "ender_mask", "silent_steps", "inverted_healing", "trample", "lava_walk",
+            "quick_draw");
     private static final Set<String> ARMOUR_FLAGS = Set.of("climb", "glide", "bounce", "powder_snow", "ender_mask", "piglin_neutral", "silent_steps",
             "quick_draw", "inverted_healing");
 
@@ -132,16 +133,33 @@ public class DataLintTests {
             String where = id + " " + part.getKey();
             part.getValue().armour().ifPresent(list -> named(where + " armour", ActiveTraits.ARMOUR, list, out, removed));
             part.getValue().armourPieces().forEach((piece, list) -> named(where + " " + piece, ActiveTraits.ARMOUR, list, out, removed));
-            part.getValue().minion().filter(JsonElement::isJsonObject).map(JsonElement::getAsJsonObject).filter(o -> o.has("traits"))
-                    .ifPresent(o -> TraitList.CODEC.parse(JsonOps.INSTANCE, o.get("traits"))
-                            .resultOrPartial(error -> problems.add(where + " minion traits will not read: " + error))
-                            .ifPresent(list -> named(where + " minion", ActiveTraits.MINION, list, out, removed)));
+            part.getValue().minion().filter(JsonElement::isJsonObject).map(JsonElement::getAsJsonObject).ifPresent(minion -> {
+                List<JsonObject> lists = new ArrayList<>(List.of(minion));
+                // and each of its variants' (a warm frog's legs)
+                if (minion.has("variants")) {
+                    minion.getAsJsonArray("variants").forEach(v -> lists.add(v.getAsJsonObject()));
+                }
+                for (JsonObject o : lists) {
+                    if (o.has("traits")) {
+                        TraitList.CODEC.parse(JsonOps.INSTANCE, o.get("traits")).resultOrPartial(error -> problems.add(where + " minion traits will not read: " + error))
+                                .ifPresent(list -> named(where + " minion", ActiveTraits.MINION, list, out, removed));
+                    }
+                }
+            });
         }
         layer.hide().ifPresent(list -> named(id + " hide", ActiveTraits.ARMOUR, list, out, removed));
         layer.organTraits().forEach((organ, entry) -> {
             entry.minion().ifPresent(list -> named(id + " " + organ + " minion", ActiveTraits.MINION, list, out, removed));
             entry.armour().ifPresent(list -> named(id + " " + organ + " armour", ActiveTraits.ARMOUR, list, out, removed));
         });
+        // what a particular mob of the layer adds (a snow fox's hide, a charged creeper's sac)
+        for (MobGroup.Variant variant : layer.variants()) {
+            variant.hide().ifPresent(list -> named(id + " variant hide", ActiveTraits.ARMOUR, list, out, removed));
+            variant.organTraits().forEach((organ, entry) -> {
+                entry.minion().ifPresent(list -> named(id + " variant " + organ + " minion", ActiveTraits.MINION, list, out, removed));
+                entry.armour().ifPresent(list -> named(id + " variant " + organ + " armour", ActiveTraits.ARMOUR, list, out, removed));
+            });
+        }
         layer.fullSet().ifPresent(set -> {
             named(id + " set bonus", ActiveTraits.ARMOUR, set.bonus(), out, removed);
             named(id + " set drawback", ActiveTraits.ARMOUR, set.drawback(), out, removed);
@@ -294,54 +312,39 @@ public class DataLintTests {
 
     /** What each mob's signature (spec 8.2) still waits for: a job, a movement mode, a variant capture, a mount... */
     private static final Map<String, String> SIGNATURE_WAITS = Map.ofEntries(
-            Map.entry("allay", "the scavenger job (fetching what matches its held item from 32 blocks)"),
             Map.entry("armadillo", "Scute Plating's durability x1.5 (a hide cannot change durability)"),
-            Map.entry("axolotl", "the hunter job for axolotl prey; its Regrowth Gland at twice the family's rate"),
+            Map.entry("axolotl", "its Regrowth Gland at twice the family's rate"),
             Map.entry("bee", "the sting strike that spends the limb for 60 s (the Stinger's on-hit poison stands in)"),
-            Map.entry("bogged", "held bows and poison-tipped arrows (it shoots plain innate arrows)"),
-            Map.entry("camel", "its second seat (the mount type)"),
-            Map.entry("cod", "the fisher job (fishing with its mouth)"),
-            Map.entry("creeper", "the sapper job; a charged creeper's bigger blast (variant capture)"),
+            Map.entry("bogged", "a held bow outside a sentry's post and poison-tipped arrows (it shoots plain innate arrows)"),
             Map.entry("dolphin", "the Melon sensing underwater only, to 32 blocks (Echo Sense II stands in)"),
-            Map.entry("drowned", "a thrown held trident; walking the seabed (sink mode)"),
+            Map.entry("drowned", "throwing a held trident in any fight (only a sentry throws one; its head offers none)"),
             Map.entry("enderman", "carrying blocks; a minion arm's reach; Voidwalker's halved blink cooldowns"),
             Map.entry("evoker", "the row of fangs; the Totem Gland costing a minion half its power"),
-            Map.entry("fox", "the pounce (Leap stands in); the snow fox's insulated hide (variant capture)"),
-            Map.entry("frog", "eating small slimes into froglights; warm and cold legs (variant capture)"),
-            Map.entry("ghast", "float mode for its tentacles; slow falling only while sneaking (Featherfall stands in)"),
-            Map.entry("illusioner", "held bows and blindness arrows"),
-            Map.entry("iron_golem", "sink mode; crusher boots; Hardy V (capped at III)"),
+            Map.entry("fox", "the pounce (Leap stands in)"),
+            Map.entry("frog", "eating small slimes into froglights"),
+            Map.entry("ghast", "slow falling only while sneaking (Featherfall stands in)"),
+            Map.entry("illusioner", "a held bow outside a sentry's post and blindness arrows"),
+            Map.entry("iron_golem", "crusher boots; Hardy V (capped at III)"),
             Map.entry("llama", "the caravan job"),
             Map.entry("magma_cube", "a landing that sets what is within 2 alight (Searing stands in on the minion)"),
-            Map.entry("panda", "temperaments by gene (variant capture)"),
-            Map.entry("parrot", "the mimic alarm; wing lift 0.06 (flight from wings)"),
+            Map.entry("panda", "the playful gene's tumbles and the worried gene's flight from thunder (the other genes are wired)"),
+            Map.entry("parrot", "the mimic alarm"),
             Map.entry("phantom", "the pounce from above (Leap stands in)"),
-            Map.entry("pig", "carrot-on-a-stick steering (the mount type)"),
-            Map.entry("piglin", "the barterer job and its double roll; a held crossbow"),
+            Map.entry("piglin", "the Gold Gizzard's double roll for a barterer; a held crossbow outside a sentry's post (its head offers no sentry)"),
             Map.entry("piglin_brute", "the brute guard (half again with an axe)"),
-            Map.entry("pillager", "a held crossbow on a minion (Quick Draw is the shoulders' alone)"),
-            Map.entry("rabbit", "the killer bunny (variant capture)"),
-            Map.entry("ravager", "the rideable torso and its two seats (the mount type)"),
-            Map.entry("salmon", "swimming up waterfalls; the fisher job"),
-            Map.entry("skeleton", "held bows (it shoots innate arrows)"),
-            Map.entry("skeleton_horse", "the seafloor steed: ridden underwater, sink mode"),
-            Map.entry("sniffer", "the digger job; outlining suspicious sand and gravel (Blood Scent stands in)"),
+            Map.entry("salmon", "swimming up waterfalls"),
+            Map.entry("skeleton", "a held bow outside a sentry's post (it shoots innate arrows)"),
+            Map.entry("sniffer", "outlining suspicious sand and gravel (Blood Scent stands in)"),
             Map.entry("snow_golem", "rolling (roll mode)"),
             Map.entry("squid", "its head's underwater sense"),
-            Map.entry("stray", "held bows and Slowness-tipped arrows (it shoots plain innate arrows)"),
-            Map.entry("strider", "riding with a warped fungus on a stick; the Lava Bladder only while in lava"),
+            Map.entry("stray", "a held bow outside a sentry's post and Slowness-tipped arrows (it shoots plain innate arrows)"),
             Map.entry("tadpole", "being scooped into a bucket"),
             Map.entry("trader_llama", "the trader's guard job"),
             Map.entry("turtle", "the homing job; the helmet's Water Breathing; Thick Hide IV (capped at III); immunity to drying out"),
             Map.entry("vex", "passing through its targets as it dashes"),
-            Map.entry("vindicator", "the axeman (twice the damage with an axe); a head named Johnny (name capture)"),
-            Map.entry("witch", "the medic job"),
+            Map.entry("vindicator", "the axeman (twice the damage with an axe)"),
             Map.entry("wither", "skull-firing heads (a minion's extra mouths)"),
-            Map.entry("wolf", "the mood tail (drawn)"),
-            Map.entry("zoglin", "berserk: attacking every mob, half again as hard"),
-            Map.entry("zombie", "the grab strike, breaking doors"),
-            Map.entry("zombie_horse", "the undead steed walking the seabed (sink mode)"),
-            Map.entry("zombie_villager", "the shaky surgeon"));
+            Map.entry("zombie", "breaking doors"));
 
     /** Facets of the families and overlays (spec 3.3, 3.4) that wait the same way. */
     private static final List<String> GROUP_WAITS = List.of(
@@ -353,12 +356,11 @@ public class DataLintTests {
             "amphibian: drying out after 120 s (dry_out waits 60)",
             "shellback: turtles and shulkers shedding scutes (scute_shed sheds an armadillo's)",
             "vermin: Infestation's kin with arthropods",
-            "spirit: Ethereal's projectiles passing through you",
-            "traits: rideable (the mount type), keen_butcher (the butchery_yield attribute)");
+            "spirit: Ethereal's projectiles passing through you");
 
     /**
      * Spec 8.2, as built: each mob's own file lists its signature ("parts.&lt;key&gt;", "organs.&lt;id&gt;", "hide",
-     * "full_set"), and each of those is in that file. A mob with no signature of its own has its family's, or a note of what
+     * "full_set", "variants"), and each of those is in that file. A mob with no signature of its own has its family's, or a note of what
      * it waits for; the notes, and the families' and overlays', are logged every run as the report of what is missing.
      */
     @GameTest(template = "empty", timeoutTicks = 20)
@@ -379,6 +381,7 @@ public class DataLintTests {
                     case "organs" -> file.organTraits().containsKey(ResourceLocation.parse(facet.substring("organs.".length())));
                     case "hide" -> file.hide().isPresent();
                     case "full_set" -> file.fullSet().isPresent();
+                    case "variants" -> !file.variants().isEmpty();
                     default -> false;
                 };
                 if (!there) {

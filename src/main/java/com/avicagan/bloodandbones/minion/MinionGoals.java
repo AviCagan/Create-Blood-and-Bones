@@ -21,6 +21,9 @@ import net.minecraft.world.level.block.Block;
 import net.minecraft.world.level.block.CropBlock;
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.level.pathfinder.Path;
+import net.minecraft.world.level.pathfinder.PathType;
+import net.minecraft.world.level.pathfinder.PathfindingContext;
+import net.minecraft.world.level.pathfinder.WalkNodeEvaluator;
 import net.minecraft.world.phys.AABB;
 import net.minecraft.world.phys.Vec3;
 import net.neoforged.neoforge.capabilities.Capabilities;
@@ -46,6 +49,7 @@ public final class MinionGoals {
      * home. Never its maker (MinionEntity#canAttack), and a pacifist (no arm that hits) takes no target at all.
      */
     static void targets(MinionEntity minion, GoalSelector targets) {
+        berserk(minion, targets);
         targets.addGoal(1, new HurtByTargetGoal(minion) {
             @Override
             public boolean canUse() {
@@ -56,12 +60,40 @@ public final class MinionGoals {
         targets.addGoal(3, new NearestAttackableTargetGoal<>(minion, Mob.class, 10, true, false,
                 target -> target instanceof Enemy && !(target instanceof MinionEntity) && target.distanceToSqr(Vec3.atCenterOf(minion.home())) < 256.0
                         && minion.filter().allows(minion.level(), target)) {
+            /** A guard's, and a sapper's: what it walks up to and blows up beside. */
             @Override
             public boolean canUse() {
-                return minion.hasJob("guard") && minion.stats().fights() && super.canUse();
+                return (minion.hasJob("guard") || minion.hasJob("sapper")) && minion.stats().fights() && super.canUse();
             }
 
             /** No further than its head notices things (a blind head: 4 blocks); asked first while it is being made. */
+            @Override
+            protected double getFollowDistance() {
+                return minion.build().isEmpty() ? super.getFollowDistance() : Math.min(super.getFollowDistance(), minion.stats().sight());
+            }
+        });
+    }
+
+    /** A number from its head's minion data, for the very head it has (its variants first); the fallback with no head. */
+    static float headScalar(MinionEntity minion, String field, float fallback) {
+        MinionBuild build = minion.build().orElse(null);
+        com.avicagan.bloodandbones.parts.PartsData.Store store = com.avicagan.bloodandbones.parts.PartsData.of(minion.level());
+        PieceRef head = build == null ? null : MinionStats.head(store, build);
+        return head == null ? fallback : MinionData.scalar(store.resolve(head.entity(), head.baby()), head.traits(), "head", field, fallback);
+    }
+
+    /**
+     * A berserk head (docs/PARTS-AND-TRAITS.md section 8.2: the zoglin, the killer bunny, a vindicator named Johnny) goes
+     * for any creature it can see nearby but its own side (MinionEntity#canAttack); players only when they hurt it.
+     */
+    static void berserk(MinionEntity minion, GoalSelector targets) {
+        targets.addGoal(3, new NearestAttackableTargetGoal<>(minion, Mob.class, 10, true, false,
+                target -> !(target instanceof MinionEntity other && other.makerId() != null && other.makerId().equals(minion.makerId()))) {
+            @Override
+            public boolean canUse() {
+                return !minion.build().isEmpty() && minion.stats().berserk() && !minion.stats().mindless() && minion.stats().fights() && super.canUse();
+            }
+
             @Override
             protected double getFollowDistance() {
                 return minion.build().isEmpty() ? super.getFollowDistance() : Math.min(super.getFollowDistance(), minion.stats().sight());
@@ -182,19 +214,87 @@ public final class MinionGoals {
 
     /** It goes for its target with its arms, or its teeth if it has none. */
     public static class Bite extends MeleeAttackGoal {
+        private static final double SPEED = 1.2;
+        /** How near what it goes for must be for it to walk straight at it when its path runs out short. */
+        private static final double LAST_STRETCH = 4.0;
         private final MinionEntity minion;
 
         public Bite(MinionEntity minion) {
-            super(minion, 1.2, true);
+            super(minion, SPEED, true);
             this.minion = minion;
         }
 
         @Override
         public boolean canUse() {
-            // a pacifist (a villager's pair of arms and no bite of its own worth using) never attacks, and a sentry
-            // shoots from where it stands rather than closing in
-            return !minion.stats().mindless() && minion.stats().fights() && !minion.hasJob("sentry") && super.canUse();
+            // a pacifist (a villager's pair of arms and no bite of its own worth using) never attacks, a sentry shoots
+            // from where it stands rather than closing in, and a sapper walks up and blows itself up instead
+            return !minion.stats().mindless() && minion.stats().fights() && !minion.hasJob("sentry") && !minion.hasJob("sapper") && super.canUse();
         }
+
+        /**
+         * Its path ended out of reach of what it goes for (a body a block wide is pathed as two blocks wide, so by a wall
+         * or in a corner its path stops a block or two short, and vanilla's goal paths again only once the target moves):
+         * it walks the last of the way straight at what it can see, if that way is safe ground ({@link #clearWay}). A path
+         * stops short just as often because the way on is lava, fire or a drop, and the move control that walks it
+         * straight there looks at none of it.
+         */
+        @Override
+        public void tick() {
+            super.tick();
+            LivingEntity target = minion.getTarget();
+            if (target != null && minion.getNavigation().isDone() && !minion.isWithinMeleeAttackRange(target)
+                    && minion.distanceToSqr(target) < LAST_STRETCH * LAST_STRETCH && minion.getSensing().hasLineOfSight(target)
+                    && clearWay(minion, target.position())) {
+                minion.getMoveControl().setWantedPosition(target.getX(), target.getY(), target.getZ(), SPEED);
+            }
+        }
+    }
+
+    /**
+     * Whether the straight way from where it stands to there is safe to walk: every block its body would pass over (as
+     * wide as it is, each half block along) is one its own path finding costs nothing, so no lava (bar a lava walker's), fire
+     * or the edge of it, cactus, berry bush, powder snow, water or shut door, with footing under it no more than a step
+     * down or up from where it stands, so never over a drop.
+     */
+    static boolean clearWay(MinionEntity minion, Vec3 to) {
+        PathfindingContext context = new PathfindingContext(minion.level(), minion);
+        BlockPos.MutableBlockPos at = new BlockPos.MutableBlockPos();
+        Vec3 from = minion.position();
+        double dx = to.x - from.x;
+        double dz = to.z - from.z;
+        int steps = Math.max(1, Mth.ceil(Math.sqrt(dx * dx + dz * dz) * 2.0));
+        double half = minion.getBbWidth() / 2.0 - 1.0E-3;
+        int y = minion.getBlockY();
+        for (int i = 1; i <= steps; i++) {
+            double x = from.x + dx * i / steps;
+            double z = from.z + dz * i / steps;
+            for (int bx = Mth.floor(x - half); bx <= Mth.floor(x + half); bx++) {
+                for (int bz = Mth.floor(z - half); bz <= Mth.floor(z + half); bz++) {
+                    if (!footing(minion, context, at, bx, y, bz)) {
+                        return false;
+                    }
+                }
+            }
+        }
+        return true;
+    }
+
+    /** Safe footing in this column: at the height it stands, a step down, or a step up. */
+    private static boolean footing(MinionEntity minion, PathfindingContext context, BlockPos.MutableBlockPos at, int x, int y, int z) {
+        PathType here = WalkNodeEvaluator.getPathTypeStatic(context, at.set(x, y, z));
+        if (here == PathType.OPEN) {
+            // nothing to stand on at this height: a step down is fine, a drop (or water, or lava) is not
+            return safe(minion, WalkNodeEvaluator.getPathTypeStatic(context, at.set(x, y - 1, z)));
+        }
+        if (here == PathType.BLOCKED) {
+            // a block at its feet: a step up onto it
+            return safe(minion, WalkNodeEvaluator.getPathTypeStatic(context, at.set(x, y + 1, z)));
+        }
+        return safe(minion, here);
+    }
+
+    private static boolean safe(MinionEntity minion, PathType type) {
+        return type != PathType.OPEN && type != PathType.BLOCKED && minion.getPathfindingMalus(type) == 0.0F;
     }
 
     /**
@@ -495,6 +595,8 @@ public final class MinionGoals {
         /** Its table out of its reach (a door shut): it tries again after this. */
         private int restUntil;
         private final Approach approach = new Approach();
+        /** Ticks between the hearts it heals: five seconds, longer for a shaky surgeon (a zombie villager's head). */
+        private int every = 100;
 
         public AttendTable(MinionEntity minion) {
             this.minion = minion;
@@ -519,6 +621,8 @@ public final class MinionGoals {
         @Override
         public void start() {
             approach.reset(minion);
+            // its head's pace ("pace", 1 by default): a shaky surgeon's hands are slow
+            every = Math.max(20, Math.round(100.0F / Math.max(0.1F, headScalar(minion, "pace", 1.0F))));
         }
 
         @Nullable
@@ -569,8 +673,8 @@ public final class MinionGoals {
             net.minecraft.world.entity.LivingEntity patient = com.avicagan.bloodandbones.body.Surgery.patientAt(minion.level(), table);
             if (patient != null) {
                 minion.getLookControl().setLookAt(patient);
-                // it tends them: a heart every five seconds while they lie there hurt
-                if (minion.tickCount % 100 == 0 && patient.getHealth() < patient.getMaxHealth()) {
+                // it tends them: a heart every five seconds (a shaky surgeon slower) while they lie there hurt
+                if (minion.tickCount % every == 0 && patient.getHealth() < patient.getMaxHealth()) {
                     patient.heal(1.0F);
                     minion.swing(net.minecraft.world.InteractionHand.MAIN_HAND);
                 }

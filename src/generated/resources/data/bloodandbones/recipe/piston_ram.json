@@ -1,0 +1,23 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "category": "equipment",
+  "key": {
+    "K": {
+      "item": "create:mechanical_piston"
+    },
+    "M": {
+      "item": "create:precision_mechanism"
+    },
+    "P": {
+      "tag": "c:plates/brass"
+    }
+  },
+  "pattern": [
+    "PKP",
+    "PMP"
+  ],
+  "result": {
+    "count": 1,
+    "id": "bloodandbones:piston_ram"
+  }
+}

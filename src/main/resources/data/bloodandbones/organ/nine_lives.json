@@ -1,0 +1,11 @@
+{
+  "item": "bloodandbones:gland",
+  "name": "organ.bloodandbones.nine_lives",
+  "bloodless_name": "bloodless.organ.bloodandbones.nine_lives",
+  "look": "heart",
+  "tint": "#d98a2a",
+  "armour_pieces": [
+    "chestplate"
+  ],
+  "extra_drops": []
+}

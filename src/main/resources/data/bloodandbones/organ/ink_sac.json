@@ -1,0 +1,11 @@
+{
+  "item": "minecraft:ink_sac",
+  "name": "organ.bloodandbones.ink_sac",
+  "bloodless_name": "bloodless.organ.bloodandbones.ink_sac",
+  "look": "sac",
+  "tint": "#2a2a3a",
+  "armour_pieces": [
+    "chestplate"
+  ],
+  "extra_drops": []
+}

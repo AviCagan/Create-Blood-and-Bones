@@ -1,0 +1,12 @@
+{
+  "item": "bloodandbones:gland",
+  "name": "organ.bloodandbones.pack_sinew",
+  "bloodless_name": "bloodless.organ.bloodandbones.pack_sinew",
+  "look": "spinneret",
+  "tint": "#c8a07a",
+  "armour_pieces": [
+    "chestplate",
+    "leggings"
+  ],
+  "extra_drops": []
+}

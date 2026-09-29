@@ -7,7 +7,6 @@ import net.minecraft.core.BlockPos;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.network.chat.Component;
 import net.minecraft.server.level.ServerLevel;
-import net.minecraft.sounds.SoundEvents;
 import net.minecraft.sounds.SoundSource;
 import net.minecraft.world.InteractionResult;
 import net.minecraft.world.entity.player.Player;
@@ -64,7 +63,7 @@ public class DormantMinionItem extends Item {
             stack.set(net.minecraft.core.component.DataComponents.CUSTOM_NAME, minion.getCustomName());
         }
         maker.getInventory().placeItemBackInInventory(stack);
-        minion.level().playSound(null, minion.blockPosition(), SoundEvents.SLIME_BLOCK_BREAK, SoundSource.NEUTRAL, 1.0F, 0.6F);
+        minion.level().playSound(null, minion.blockPosition(), com.avicagan.bloodandbones.registry.BBSounds.FLESH_BREAK.get(), SoundSource.NEUTRAL, 1.0F, 0.6F);
         minion.discard();
     }
 
@@ -86,7 +85,7 @@ public class DormantMinionItem extends Item {
         level.addFreshEntity(minion);
         minion.powerDown();
         context.getItemInHand().shrink(1);
-        level.playSound(null, at, SoundEvents.SLIME_BLOCK_PLACE, SoundSource.NEUTRAL, 1.0F, 0.6F);
+        level.playSound(null, at, com.avicagan.bloodandbones.registry.BBSounds.FLESH_PLACE.get(), SoundSource.NEUTRAL, 1.0F, 0.6F);
         return InteractionResult.CONSUME;
     }
 

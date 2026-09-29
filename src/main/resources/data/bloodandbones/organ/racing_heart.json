@@ -1,0 +1,11 @@
+{
+  "item": "bloodandbones:gland",
+  "name": "organ.bloodandbones.racing_heart",
+  "bloodless_name": "bloodless.organ.bloodandbones.racing_heart",
+  "look": "heart",
+  "tint": "#c43a3a",
+  "armour_pieces": [
+    "chestplate"
+  ],
+  "extra_drops": []
+}

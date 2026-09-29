@@ -1,0 +1,11 @@
+{
+  "item": "bloodandbones:gland",
+  "name": "organ.bloodandbones.olfactory_bulb",
+  "bloodless_name": "bloodless.organ.bloodandbones.olfactory_bulb",
+  "look": "bulb",
+  "tint": "#b8a04a",
+  "armour_pieces": [
+    "helmet"
+  ],
+  "extra_drops": []
+}

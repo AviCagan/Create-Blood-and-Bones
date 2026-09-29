@@ -1,0 +1,11 @@
+{
+  "item": "bloodandbones:gland",
+  "name": "organ.bloodandbones.sticky_tongue",
+  "bloodless_name": "bloodless.organ.bloodandbones.sticky_tongue",
+  "look": "spinneret",
+  "tint": "#e07a8a",
+  "armour_pieces": [
+    "helmet"
+  ],
+  "extra_drops": []
+}

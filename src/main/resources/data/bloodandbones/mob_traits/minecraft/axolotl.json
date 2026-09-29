@@ -1,6 +1,7 @@
 {
   "signature": [
-    "parts.torso"
+    "parts.torso",
+    "parts.head"
   ],
   "parts": {
     "torso": {
@@ -12,6 +13,17 @@
       "armour": [
         "bloodandbones:play_dead"
       ]
+    },
+    "head": {
+      "minion": {
+        "jobs": [
+          "bloodandbones:hunter",
+          "bloodandbones:companion"
+        ],
+        "prey": [
+          "#minecraft:axolotl_hunt_targets"
+        ]
+      }
     }
   }
 }

@@ -584,7 +584,7 @@ Effect types live in a NeoForge custom registry, `bloodandbones:trait_effect_typ
 - **`tissue`** says what a carcass's bodies are made of, which sets what they weigh for their size: `flesh` (the
   default, 1.0 a block), `bone` (1.5: the skeletal overlay) or `plate` (2.0: the golem family). The snow golem's own
   file puts it back to `flesh` (it is snow and a pumpkin, not iron). The masses themselves are Sable's
-  `physics_block_properties`, generated one file per tissue, which a datapack can override (ARCHITECTURE 15.19).
+  `physics_block_properties`, generated one file per tissue, which a datapack can override (ARCHITECTURE 15.21).
 - **Trait lists** add to the inherited list, deduplicated by trait id with the highest level winning. An object `{"add": [...], "remove": [ids]}` edits instead; `{"replace": true, ...}` inside any object replaces its lists.
 - **Numbers left out** come from the mob's `DefaultAttributes`: max_health, attack_damage, movement_speed, follow_range, armor, knockback_resistance, horse jump_strength.
 - **Variants** patch by carcass traits. `CarcassLook` already captures variant, profession, wool and mushroom. The captured traits map is extended with:
@@ -1404,7 +1404,7 @@ Saved old minions get a one-time conversion that drops their parts. `MinionTests
 **Tail:** one passive (fly swat, swim +30%, mood tail, steady).
 
 **Organ:** one special. Its minion traits apply. Activate effects are fired by the AI when a target is in range.
-- The creeper's sac self-destructs, and the minion then powers down.
+- The creeper's sac self-destructs, and the minion then powers down. Only a sapper sets off a detonating organ, once it has walked up to its target; the AI of any other job leaves it be.
 - The chicken's egg gland lays eggs.
 - produce effects do nothing on a cybernetic minion.
 

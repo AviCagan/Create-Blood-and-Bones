@@ -1,0 +1,50 @@
+{
+  "type": "create:sequenced_assembly",
+  "ingredient": {
+    "item": "minecraft:netherite_ingot"
+  },
+  "results": [
+    {
+      "id": "bloodandbones:soul_netherite_ingot"
+    }
+  ],
+  "sequence": [
+    {
+      "type": "create:filling",
+      "ingredients": [
+        {
+          "item": "bloodandbones:incomplete_soul_netherite_ingot"
+        },
+        {
+          "type": "neoforge:tag",
+          "amount": 1000,
+          "tag": "c:soul_blood"
+        }
+      ],
+      "results": [
+        {
+          "id": "bloodandbones:incomplete_soul_netherite_ingot"
+        }
+      ]
+    },
+    {
+      "type": "create:deploying",
+      "ingredients": [
+        {
+          "item": "bloodandbones:incomplete_soul_netherite_ingot"
+        },
+        {
+          "item": "create_enchantment_industry:super_experience_block"
+        }
+      ],
+      "results": [
+        {
+          "id": "bloodandbones:incomplete_soul_netherite_ingot"
+        }
+      ]
+    }
+  ],
+  "transitional_item": {
+    "id": "bloodandbones:incomplete_soul_netherite_ingot"
+  }
+}

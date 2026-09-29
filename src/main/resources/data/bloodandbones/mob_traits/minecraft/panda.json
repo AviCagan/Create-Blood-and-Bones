@@ -1,6 +1,7 @@
 {
   "signature": [
-    "organs.bloodandbones:bamboo_gut"
+    "organs.bloodandbones:bamboo_gut",
+    "parts.head"
   ],
   "organs": {
     "torso": {
@@ -17,6 +18,59 @@
       "armour": [
         "bloodandbones:bamboo_gut"
       ]
+    }
+  },
+  "parts": {
+    "head": {
+      "minion": {
+        "jobs": [
+          "bloodandbones:companion",
+          "bloodandbones:courier"
+        ],
+        "disposition": "docile",
+        "variants": [
+          {
+            "if": {
+              "trait": "gene",
+              "equals": "aggressive"
+            },
+            "jobs": [
+              "bloodandbones:bodyguard",
+              "bloodandbones:guard"
+            ],
+            "disposition": "brave",
+            "bite": {
+              "style": "claw",
+              "damage": 3.0
+            },
+            "traits": [
+              {
+                "trait": "bloodandbones:brawler",
+                "level": 2
+              }
+            ]
+          },
+          {
+            "if": {
+              "trait": "gene",
+              "equals": "lazy"
+            },
+            "jobs": [
+              "bloodandbones:sentry",
+              "bloodandbones:companion"
+            ]
+          },
+          {
+            "if": {
+              "trait": "gene",
+              "equals": "weak"
+            },
+            "traits": [
+              "bloodandbones:sneeze"
+            ]
+          }
+        ]
+      }
     }
   }
 }

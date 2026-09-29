@@ -62,6 +62,31 @@ neoForge {
             // pass -Dbloodandbones.debug.* switches from the gradle command line into the test server
             System.getProperties().each { k, v -> if (k.toString().startsWith('bloodandbones.debug.')) systemProperty k.toString(), v.toString() }
         }
+        // -Dbloodandbones.multiplayer=true adds the two-client check (MultiplayerCheck, MultiplayerShowcase): a dedicated
+        // server and two clients, each in its own folder under run/. Start runMpServer, then runMpButcher and runMpWatcher.
+        if (System.getProperty('bloodandbones.multiplayer') != null) {
+            mpServer {
+                server()
+                gameDirectory = file('run/mp-server')
+                programArgument '--nogui'
+                jvmArgument '-Xmx2500m'
+                systemProperty 'bloodandbones.multiplayer', 'server'
+            }
+            mpButcher {
+                client()
+                gameDirectory = file('run/mp-butcher')
+                jvmArgument '-Xmx2500m'
+                programArguments.addAll '--username', 'Butcher', '--width', '854', '--height', '480'
+                systemProperty 'bloodandbones.multiplayer', 'butcher'
+            }
+            mpWatcher {
+                client()
+                gameDirectory = file('run/mp-watcher')
+                jvmArgument '-Xmx2500m'
+                programArguments.addAll '--username', 'Watcher', '--width', '854', '--height', '480'
+                systemProperty 'bloodandbones.multiplayer', 'watcher'
+            }
+        }
         data {
             data()
             programArguments.addAll '--mod', project.mod_id, '--all', '--output', file('src/generated/resources/').getAbsolutePath(), '--existing', file('src/main/resources/').getAbsolutePath()
@@ -160,4 +185,19 @@ idea {
 // every game test run starts from a fresh world, or carcasses from earlier runs pile up around the arenas
 tasks.named('runGameTestServer').configure {
     doFirst { project.delete(file('run/world')) }
+}
+
+// the two-client check's server: a fresh flat creative world that lets offline dev clients in, every time
+tasks.matching { it.name == 'runMpServer' }.configureEach {
+    doFirst {
+        def dir = file('run/mp-server')
+        dir.mkdirs()
+        project.delete(file('run/mp-server/world'))
+        // a dev server will not start until its EULA is accepted
+        file('run/mp-server/eula.txt').text = 'eula=true\n'
+        file('run/mp-server/server.properties').text = [
+                'online-mode=false', 'enforce-secure-profile=false', 'level-type=minecraft\\:flat', 'generate-structures=false',
+                'gamemode=creative', 'force-gamemode=true', 'difficulty=peaceful', 'spawn-protection=0', 'view-distance=6',
+                'simulation-distance=6'].join('\n') + '\n'
+    }
 }

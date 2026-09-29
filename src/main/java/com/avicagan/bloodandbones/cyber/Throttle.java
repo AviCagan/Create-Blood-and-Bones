@@ -96,7 +96,7 @@ public final class Throttle {
     /** Whether the worn tank has soul blood to pay with. */
     public static boolean fuelled(Player player) {
         var fluid = FluidBacktankItem.fluid(FluidBacktankItem.wornBy(player));
-        return !fluid.isEmpty() && fluid.is(BBFluids.soulBlood()) && fluid.getAmount() > 0;
+        return BBFluids.isSoulBlood(fluid);
     }
 
     /** The key went down, for the module in that limb's slot. */

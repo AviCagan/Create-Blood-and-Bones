@@ -6,7 +6,6 @@ import com.avicagan.bloodandbones.minion.MinionEntity;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.registries.Registries;
 import net.minecraft.server.level.ServerLevel;
-import net.minecraft.sounds.SoundEvents;
 import net.minecraft.tags.FluidTags;
 import net.minecraft.tags.TagKey;
 import net.minecraft.world.entity.LivingEntity;
@@ -76,7 +75,7 @@ public final class MotionFlags {
         host.resetFallDistance();
         if (host.tickCount % 8 == 0) {
             // a wet, sticky pull off the wall; the climber hears it here, everyone else from the server
-            host.level().playSound(host instanceof Player p ? p : null, host.getX(), host.getY(), host.getZ(), SoundEvents.HONEY_BLOCK_STEP,
+            host.level().playSound(host instanceof Player p ? p : null, host.getX(), host.getY(), host.getZ(), com.avicagan.bloodandbones.registry.BBSounds.FLESH_STEP.get(),
                     host.getSoundSource(), 0.4F, 0.7F + host.getRandom().nextFloat() * 0.2F);
         }
         return true;
@@ -109,8 +108,8 @@ public final class MotionFlags {
         Vec3 motion = host.getDeltaMovement();
         host.setDeltaMovement(motion.x, up, motion.z);
         if (host.level() instanceof ServerLevel level) {
-            level.playSound(null, host.getX(), host.getY(), host.getZ(), SoundEvents.SLIME_BLOCK_FALL, host.getSoundSource(), 1.0F, 0.6F);
-            level.playSound(null, host.getX(), host.getY(), host.getZ(), SoundEvents.SLIME_SQUISH, host.getSoundSource(), 0.8F, 0.5F);
+            level.playSound(null, host.getX(), host.getY(), host.getZ(), com.avicagan.bloodandbones.registry.BBSounds.FLESH_FALL.get(), host.getSoundSource(), 1.0F, 0.6F);
+            level.playSound(null, host.getX(), host.getY(), host.getZ(), com.avicagan.bloodandbones.registry.BBSounds.FLESH_SQUISH.get(), host.getSoundSource(), 0.8F, 0.5F);
         }
         return true;
     }
@@ -162,7 +161,7 @@ public final class MotionFlags {
             }
         }
         if (broke > 0) {
-            level.playSound(null, minion.getX(), minion.getY(), minion.getZ(), SoundEvents.SLIME_BLOCK_STEP, minion.getSoundSource(), 0.8F, 0.6F);
+            level.playSound(null, minion.getX(), minion.getY(), minion.getZ(), com.avicagan.bloodandbones.registry.BBSounds.FLESH_STEP.get(), minion.getSoundSource(), 0.8F, 0.6F);
         }
         return broke;
     }
@@ -180,8 +179,9 @@ public final class MotionFlags {
     }
 
     /**
-     * A lava-walking minion after it moves, as a strider floats: on the surface it has its footing; sunk below it (a
-     * drop, a push), it bobs back up.
+     * A lava-walking minion after it moves, as a strider floats: on the surface it has its footing; walked in from a bank
+     * lower than the surface, it steps up onto the lava as onto a slab rather than wading; sunk further below it (a drop,
+     * a push), it bobs back up.
      */
     public static void floatOnLava(MinionEntity minion) {
         if (!minion.isInLava() || MotionEffects.flag(minion, FlagEffect.LAVA_WALK) <= 0) {
@@ -189,9 +189,22 @@ public final class MotionFlags {
         }
         if (onLava(minion)) {
             minion.setOnGround(true);
-        } else {
-            minion.setDeltaMovement(minion.getDeltaMovement().scale(0.5).add(0.0, 0.05, 0.0));
+            return;
         }
+        BlockPos at = minion.blockPosition();
+        var fluid = minion.level().getFluidState(at);
+        if (fluid.is(FluidTags.LAVA) && fluid.isSource() && !minion.level().getFluidState(at.above()).is(FluidTags.LAVA)) {
+            // the top of a lava source's standing shape (LiquidBlock.STABLE_SHAPE)
+            double up = at.getY() + LiquidBlock.STABLE_SHAPE.max(net.minecraft.core.Direction.Axis.Y) - minion.getY();
+            if (up > 0.0 && up <= minion.maxUpStep() && minion.level().noCollision(minion, minion.getBoundingBox().move(0.0, up, 0.0))) {
+                minion.setPos(minion.getX(), minion.getY() + up, minion.getZ());
+                Vec3 motion = minion.getDeltaMovement();
+                minion.setDeltaMovement(motion.x, Math.max(0.0, motion.y), motion.z);
+                minion.setOnGround(true);
+                return;
+            }
+        }
+        minion.setDeltaMovement(minion.getDeltaMovement().scale(0.5).add(0.0, 0.05, 0.0));
     }
 
     /** Forget every bounce and cushion (the server stopped). */

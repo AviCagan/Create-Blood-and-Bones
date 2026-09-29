@@ -1,0 +1,11 @@
+{
+  "item": "bloodandbones:lungs",
+  "name": "organ.bloodandbones.lungs",
+  "bloodless_name": "bloodless.organ.bloodandbones.lungs",
+  "look": "bladder",
+  "tint": "#d9848c",
+  "armour_pieces": [
+    "chestplate"
+  ],
+  "extra_drops": []
+}

@@ -117,12 +117,17 @@ public final class Activation {
         return false;
     }
 
-    /** The first activate effect a minion can fire at this target now (in range, off cooldown, its condition holding, affordable), or null. */
+    /**
+     * The first activate effect a minion can fire at this target now (in range, off cooldown, its condition holding,
+     * affordable), or null. Never a detonation: only a sapper sets its organ off, walking up to its target first
+     * (MinionSapper), so a guard or companion with a creeper's sac in it keeps its blast rather than spending it on the
+     * first monster to come near.
+     */
     @Nullable
     public static Facet readyFor(MinionEntity minion, LivingEntity target) {
         for (Facet facet : facets(ActiveTraits.of(minion))) {
             float range = facet.facet().range();
-            if (minion.distanceToSqr(target) > range * range || TraitEvents.coolingDown(minion, facet.entry(), facet.index())
+            if (facet.facet().effect() instanceof com.avicagan.bloodandbones.parts.effect.DetonateEffect || minion.distanceToSqr(target) > range * range || TraitEvents.coolingDown(minion, facet.entry(), facet.index())
                     || minion.power() - facet.facet().costMb() < 1.0F || !TraitEvents.holds(minion, facet.entry(), facet.facet(), null)) {
                 continue;
             }
@@ -152,7 +157,7 @@ public final class Activation {
         }
         // the organ works with a wet squelch; brass with a hiss
         boolean brass = host instanceof MinionEntity minion && minion.cybernetic();
-        host.level().playSound(null, host.getX(), host.getY(), host.getZ(), brass ? SoundEvents.PISTON_EXTEND : SoundEvents.SLIME_SQUISH,
+        host.level().playSound(null, host.getX(), host.getY(), host.getZ(), brass ? SoundEvents.PISTON_EXTEND : com.avicagan.bloodandbones.registry.BBSounds.FLESH_SQUISH.get(),
                 host.getSoundSource(), 0.6F, (brass ? 1.4F : 0.6F) + host.getRandom().nextFloat() * 0.2F);
         if (entry.chance() >= 1.0F || host.getRandom().nextFloat() < entry.chance()) {
             entry.effect().run(new TraitContext(host, ActiveTraits.of(host), facet.entry(), facet.index(), entry, Trigger.ACTIVATE, target, null, 0.0F));

@@ -1,0 +1,13 @@
+{
+  "type": "create:haunting",
+  "ingredients": [
+    {
+      "item": "bloodandbones:congealed_blood"
+    }
+  ],
+  "results": [
+    {
+      "id": "bloodandbones:soul_clot"
+    }
+  ]
+}

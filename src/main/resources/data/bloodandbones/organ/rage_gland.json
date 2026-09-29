@@ -1,0 +1,11 @@
+{
+  "item": "bloodandbones:gland",
+  "name": "organ.bloodandbones.rage_gland",
+  "bloodless_name": "bloodless.organ.bloodandbones.rage_gland",
+  "look": "gland",
+  "tint": "#c42a2a",
+  "armour_pieces": [
+    "chestplate"
+  ],
+  "extra_drops": []
+}

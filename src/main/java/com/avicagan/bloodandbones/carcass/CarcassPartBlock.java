@@ -206,6 +206,12 @@ public class CarcassPartBlock extends Block implements EntityBlock, BlockSubLeve
             return ItemInteractionResult.sidedSuccess(level.isClientSide());
         }
         if (stack.is(BBItems.FLENSING_KNIFE.get())) {
+            if (!(player instanceof net.neoforged.neoforge.common.util.FakePlayer)) {
+                // held on the part: the knife works the hide loose while it is held (FlensingKnifeItem#onUseTick)
+                player.startUsingItem(hand);
+                return ItemInteractionResult.CONSUME;
+            }
+            // a Deployer's stand-in never ticks its use: each of its pushes is one stroke
             if (level instanceof ServerLevel serverLevel && level.getBlockEntity(pos) instanceof CarcassPartBlockEntity be && be.carcassId() != null) {
                 CarcassSavedData.Carcass carcass = CarcassSavedData.get(serverLevel).carcass(be.carcassId());
                 dev.ryanhcode.sable.sublevel.SubLevel subLevel = dev.ryanhcode.sable.Sable.HELPER.getContaining(level, pos);
@@ -214,8 +220,8 @@ public class CarcassPartBlock extends Block implements EntityBlock, BlockSubLeve
                     net.minecraft.world.phys.Vec3 hit = hitResult.getLocation();
                     hitWorld = subLevel.logicalPose().transformPosition(new org.joml.Vector3d(hit.x, hit.y, hit.z), new org.joml.Vector3d());
                 }
-                if (carcass != null && CarcassButchery.skin(serverLevel, player, carcass, hitWorld)) {
-                    player.getCooldowns().addCooldown(stack.getItem(), 6);
+                if (carcass != null) {
+                    CarcassButchery.skin(serverLevel, player, carcass, hitWorld);
                 }
             }
             return ItemInteractionResult.sidedSuccess(level.isClientSide());

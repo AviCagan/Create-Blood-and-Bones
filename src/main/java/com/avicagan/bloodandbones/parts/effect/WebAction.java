@@ -51,7 +51,7 @@ public record WebAction(LevelBasedValue seconds) implements EnchantmentEntityEff
         // a sticky splat of silk
         level.sendParticles(new BlockParticleOption(ParticleTypes.BLOCK, Blocks.COBWEB.defaultBlockState()), pos.getX() + 0.5, pos.getY() + 0.5, pos.getZ() + 0.5,
                 12, 0.3, 0.3, 0.3, 0.05);
-        level.playSound(null, pos, SoundEvents.SLIME_SQUISH, SoundSource.BLOCKS, 0.8F, 1.3F);
+        level.playSound(null, pos, com.avicagan.bloodandbones.registry.BBSounds.FLESH_SQUISH.get(), SoundSource.BLOCKS, 0.8F, 1.3F);
         level.playSound(null, pos, SoundEvents.SPIDER_AMBIENT, SoundSource.BLOCKS, 0.3F, 1.8F);
     }
 

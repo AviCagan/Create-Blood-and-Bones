@@ -1,0 +1,8 @@
+{
+  "parent": "minecraft:block/slab",
+  "textures": {
+    "bottom": "bloodandbones:block/palettes/bloody_calcite_cut",
+    "side": "bloodandbones:block/palettes/bloody_calcite_cut",
+    "top": "bloodandbones:block/palettes/bloody_calcite_cut"
+  }
+}

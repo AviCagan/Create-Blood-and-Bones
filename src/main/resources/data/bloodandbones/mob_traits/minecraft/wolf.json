@@ -19,6 +19,9 @@
         "hips": [
           "bloodandbones:steady"
         ]
+      },
+      "minion": {
+        "mood": true
       }
     }
   }

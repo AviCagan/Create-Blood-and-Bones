@@ -60,6 +60,7 @@ public final class CarcassRest {
         }
         if (isHeld(level, carcass)) {
             carcass.stillTicks = 0;
+            carcass.settledAt.clear();
             return;
         }
         ServerSubLevelContainer container = SubLevelContainer.getContainer(level);
@@ -69,6 +70,7 @@ public final class CarcassRest {
         SubLevelPhysicsSystem physics = container.physicsSystem();
         Vector3d linear = new Vector3d();
         Vector3d angular = new Vector3d();
+        boolean still = true;
         for (UUID id : carcass.bones.values()) {
             SubLevel subLevel = container.getSubLevel(id);
             if (!(subLevel instanceof ServerSubLevel serverSubLevel) || serverSubLevel.isRemoved()) {
@@ -79,9 +81,15 @@ public final class CarcassRest {
             handle.getLinearVelocity(linear);
             handle.getAngularVelocity(angular);
             if (linear.length() > STILL_LINEAR || angular.length() > STILL_ANGULAR) {
-                carcass.stillTicks = 0;
-                return;
+                still = false;
             }
+        }
+        // thin, light limbs (a spider's legs) can twitch against the ground for ever without going anywhere: a carcass
+        // that has stayed where it lies for a while rests all the same
+        boolean stayedPut = stayedPut(container, carcass);
+        if (!still && !stayedPut) {
+            carcass.stillTicks = 0;
+            return;
         }
         if (carcass.unfoldedUnsupported != null) {
             UUID torsoId = carcass.bones.get(carcass.rootBone);
@@ -93,12 +101,46 @@ public final class CarcassRest {
             }
             carcass.unfoldedUnsupported = null;
         }
-        carcass.stillTicks++;
+        carcass.stillTicks = still ? carcass.stillTicks + 1 : STILL_TICKS;
         if (carcass.stillTicks >= STILL_TICKS) {
             // this runs inside Sable's loop over every sub-level; removing bodies here would mutate that
             // list mid-walk, so the fold itself waits for the end of the level tick
             PENDING.computeIfAbsent(level, l -> new java.util.LinkedHashSet<>()).add(carcass.id);
         }
+    }
+
+    /** How far a body may twitch from where it lay and still count as lying there; the torso must keep closer. */
+    private static final double TWITCH_REACH = 0.25;
+    private static final double TWITCH_TORSO = 0.1;
+    /** Ticks a carcass must have stayed where it lies, however it twitches, before it rests anyway. */
+    public static final int TWITCH_TICKS = 100;
+
+    /**
+     * Whether every body of the carcass has stayed near where it was {@link #TWITCH_TICKS} ago. The count starts
+     * again from where the bodies are now whenever one goes further.
+     */
+    private static boolean stayedPut(ServerSubLevelContainer container, CarcassSavedData.Carcass carcass) {
+        boolean near = carcass.settledAt.keySet().equals(carcass.bones.keySet());
+        for (Map.Entry<String, UUID> entry : carcass.bones.entrySet()) {
+            Vector3d from = carcass.settledAt.get(entry.getKey());
+            double reach = entry.getKey().equals(carcass.rootBone) ? TWITCH_TORSO : TWITCH_REACH;
+            if (!near || from == null || !(container.getSubLevel(entry.getValue()) instanceof ServerSubLevel body)
+                    || body.logicalPose().position().distance(from) > reach) {
+                near = false;
+                break;
+            }
+        }
+        if (!near) {
+            carcass.settledAt.clear();
+            carcass.settledTicks = 0;
+            for (Map.Entry<String, UUID> entry : carcass.bones.entrySet()) {
+                if (container.getSubLevel(entry.getValue()) instanceof ServerSubLevel body) {
+                    carcass.settledAt.put(entry.getKey(), new Vector3d(body.logicalPose().position()));
+                }
+            }
+            return false;
+        }
+        return ++carcass.settledTicks >= TWITCH_TICKS;
     }
 
     /** Carcasses that have earned their rest this tick, folded from the level tick. */
@@ -213,6 +255,7 @@ public final class CarcassRest {
 
         carcass.resting = true;
         carcass.stillTicks = 0;
+        carcass.settledAt.clear();
         lock(level, carcass, torso);
         data.setDirty();
         if (level.getBlockEntity(center) instanceof CarcassPartBlockEntity root) {
@@ -600,6 +643,7 @@ public final class CarcassRest {
         carcass.restPoses.clear();
         carcass.resting = false;
         carcass.stillTicks = 0;
+        carcass.settledAt.clear();
         // the limbs' cells are new: they need the look, freshness and cut ends now, not at the next refresh
         CarcassRot.sync(level, carcass, null);
 

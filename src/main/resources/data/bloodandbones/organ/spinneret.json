@@ -1,0 +1,18 @@
+{
+  "item": "bloodandbones:gland",
+  "name": "organ.bloodandbones.spinneret",
+  "bloodless_name": "bloodless.organ.bloodandbones.spinneret",
+  "look": "spinneret",
+  "tint": "#6a5a5a",
+  "armour_pieces": [
+    "chestplate",
+    "leggings"
+  ],
+  "extra_drops": [
+    {
+      "item": "minecraft:string",
+      "min": 1,
+      "max": 2
+    }
+  ]
+}

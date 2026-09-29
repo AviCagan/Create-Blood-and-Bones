@@ -14,7 +14,14 @@
     "leg": {
       "armour": [
         "bloodandbones:slick"
-      ]
+      ],
+      "minion": {
+        "movement": {
+          "mode": "sink",
+          "speed": 0.23,
+          "gait": "stride"
+        }
+      }
     }
   },
   "organ_traits": {

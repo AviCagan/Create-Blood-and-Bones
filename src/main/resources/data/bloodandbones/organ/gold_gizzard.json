@@ -1,0 +1,18 @@
+{
+  "item": "bloodandbones:gland",
+  "name": "organ.bloodandbones.gold_gizzard",
+  "bloodless_name": "bloodless.organ.bloodandbones.gold_gizzard",
+  "look": "gut",
+  "tint": "#e0b33a",
+  "armour_pieces": [
+    "chestplate",
+    "leggings"
+  ],
+  "extra_drops": [
+    {
+      "item": "minecraft:gold_nugget",
+      "min": 1,
+      "max": 3
+    }
+  ]
+}

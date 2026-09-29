@@ -1,0 +1,11 @@
+{
+  "item": "bloodandbones:gland",
+  "name": "organ.bloodandbones.curable_heart",
+  "bloodless_name": "bloodless.organ.bloodandbones.curable_heart",
+  "look": "heart",
+  "tint": "#6f8f4a",
+  "armour_pieces": [
+    "chestplate"
+  ],
+  "extra_drops": []
+}

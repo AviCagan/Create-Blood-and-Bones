@@ -49,7 +49,8 @@ import java.util.UUID;
  * when it moves, works or fights; low, it walks to a Blood Trough to drink; empty, it powers down where it is and
  * lies on its side, alive, until it gets blood again. Neglect never destroys it.
  */
-public class MinionEntity extends PathfinderMob implements net.minecraft.world.entity.Saddleable, net.minecraft.world.entity.monster.RangedAttackMob {
+public class MinionEntity extends PathfinderMob implements net.minecraft.world.entity.Saddleable, net.minecraft.world.entity.monster.RangedAttackMob,
+        net.minecraft.world.entity.ItemSteerable {
     private static final EntityDataAccessor<Optional<MinionBuild>> BUILD = SynchedEntityData.defineId(MinionEntity.class, MinionSerializers.BUILD.get());
     private static final EntityDataAccessor<String> JOB = SynchedEntityData.defineId(MinionEntity.class, EntityDataSerializers.STRING);
     private static final EntityDataAccessor<Boolean> DOWN = SynchedEntityData.defineId(MinionEntity.class, EntityDataSerializers.BOOLEAN);
@@ -59,6 +60,10 @@ public class MinionEntity extends PathfinderMob implements net.minecraft.world.e
     private static final EntityDataAccessor<String> MODULE = SynchedEntityData.defineId(MinionEntity.class, EntityDataSerializers.STRING);
     /** Up against a wall on climbing legs: synced, as the spider's is, so clients predict the climb. */
     private static final EntityDataAccessor<Boolean> CLIMBING = SynchedEntityData.defineId(MinionEntity.class, EntityDataSerializers.BOOLEAN);
+    /** It walks on lava (the lava_walk flag): synced, so its client does not show it catching alight from the lava either. */
+    private static final EntityDataAccessor<Boolean> LAVA_WALKER = SynchedEntityData.defineId(MinionEntity.class, EntityDataSerializers.BOOLEAN);
+    /** How long a spur from its rider's stick lasts (a pig's carrot, a strider's fungus), as theirs does. */
+    private static final EntityDataAccessor<Integer> BOOST_TIME = SynchedEntityData.defineId(MinionEntity.class, EntityDataSerializers.INT);
     /** How far from home it works. */
     public static final double RANGE = 10.0;
     /** mB of blood a minute: idle, moving, working, fighting (docs/PARTS-AND-TRAITS.md section 6.7). */
@@ -96,6 +101,8 @@ public class MinionEntity extends PathfinderMob implements net.minecraft.world.e
     private int statsGeneration = -1;
     /** Where a rider sits, on its back where the saddle is drawn, before its turn: worked out with its stats. */
     private net.minecraft.world.phys.Vec3 seat = net.minecraft.world.phys.Vec3.ZERO;
+    /** Where each of several riders sits, front first (a camel's two): the same frame. */
+    private List<net.minecraft.world.phys.Vec3> seats = List.of();
     /** Blood not yet taken off a whole mB. */
     private float owed;
     /** A minion saved before minions were built of carcass parts: it falls apart on its first tick. */
@@ -104,11 +111,15 @@ public class MinionEntity extends PathfinderMob implements net.minecraft.world.e
     boolean working;
     /** Which way of getting about its navigation is set up for: ground, climb, swim or fly. */
     private String movedBy = "";
+    /** A sinker short of breath going up for air, until it has its fill again (see {@link #sinking}). */
+    private boolean surfacing;
     /** Which arm strikes next: they take turns. */
     private int nextStrike;
     /** Crouch-held clicks by the maker on it powered down, toward folding it up. */
     private int foldClicks;
     private long lastFoldClick;
+    /** A rider's spur from an item on a stick, as a pig's or a strider's (vanilla's own steering, on its saddle). */
+    private final net.minecraft.world.entity.ItemBasedSteering steering = new net.minecraft.world.entity.ItemBasedSteering(entityData, BOOST_TIME, SADDLED);
 
     public MinionEntity(EntityType<? extends PathfinderMob> type, Level level) {
         super(type, level);
@@ -133,6 +144,8 @@ public class MinionEntity extends PathfinderMob implements net.minecraft.world.e
         builder.define(SADDLED, false);
         builder.define(MODULE, "");
         builder.define(CLIMBING, false);
+        builder.define(BOOST_TIME, 0);
+        builder.define(LAVA_WALKER, false);
     }
 
     /** Just woken: its maker, where it was made, what it is built of, and the blood it was woken with. */
@@ -156,8 +169,10 @@ public class MinionEntity extends PathfinderMob implements net.minecraft.world.e
         stats = null;
         applyStats();
         if (!level().isClientSide) {
-            // its parts' traits, and their attribute changes, go on with it
+            // its parts' traits, and their attribute changes, go on with it; then how it gets about, which they may change
+            // (lava walking)
             com.avicagan.bloodandbones.parts.ActiveTraits.rebuild(this);
+            moveBy(stats());
         }
     }
 
@@ -167,11 +182,14 @@ public class MinionEntity extends PathfinderMob implements net.minecraft.world.e
         if (stats == null || statsGeneration != store.generation()) {
             MinionBuild build = build().orElse(null);
             stats = build == null ? new MinionStats(10, 0, 3, 250, "crawl", 0.12F, 1, 0, List.of(), List.of(MinionStats.COMPANION), true, false, false, false, 0.6F, 0.6F, 0.6F, 0.6F,
-                    MinionStats.MINDLESS_SIGHT)
+                    MinionStats.MINDLESS_SIGHT, 0.0F, MinionStats.Mount.SADDLE, false)
                     : MinionStats.of(store, build);
             // the saddle's place, turned into the frame a passenger's place is given in (the renderer turns it a half turn more)
-            org.joml.Vector3f saddle = build == null ? new org.joml.Vector3f(0.0F, stats.height(), 0.0F) : MinionBody.saddlePoint(MinionBody.layout(store, build));
+            MinionBody.Layout layout = build == null ? null : MinionBody.layout(store, build);
+            org.joml.Vector3f saddle = layout == null ? new org.joml.Vector3f(0.0F, stats.height(), 0.0F) : MinionBody.saddlePoint(layout);
             seat = new net.minecraft.world.phys.Vec3(-saddle.x, saddle.y, -saddle.z);
+            seats = layout == null ? List.of(seat) : MinionBody.seats(layout, stats.mount().seats()).stream()
+                    .map(p -> new net.minecraft.world.phys.Vec3(-p.x, p.y, -p.z)).toList();
             statsGeneration = store.generation();
             refreshDimensions();
         }
@@ -185,6 +203,8 @@ public class MinionEntity extends PathfinderMob implements net.minecraft.world.e
         base(Attributes.MOVEMENT_SPEED, s.speed());
         base(Attributes.KNOCKBACK_RESISTANCE, s.knockbackResistance());
         base(Attributes.FLYING_SPEED, Math.max(0.1, s.speed() * 2.0));
+        // a sinker's legs walk the bottom of water as they walk land
+        base(Attributes.WATER_MOVEMENT_EFFICIENCY, s.sinks() ? 1.0 : 0.0);
         float arm = (float) s.strikes().stream().mapToDouble(MinionStats.Strike::damage).max().orElse(0.0);
         base(Attributes.ATTACK_DAMAGE, Math.max(arm, s.biteDamage()));
         if (getHealth() > getMaxHealth()) {
@@ -204,14 +224,20 @@ public class MinionEntity extends PathfinderMob implements net.minecraft.world.e
 
     /**
      * Set its navigation to the way it gets about (docs/PARTS-AND-TRAITS.md section 5.4, movement): climbing legs
-     * path up walls as a spider does, a flying torso flies, a swimmer takes to water; the rest walk. Changed only
-     * when the build does.
+     * path up walls as a spider does, a flying torso (or wings strong enough, or floating legs) flies, a swimmer takes
+     * to water, a lava walker paths over lava as a strider does; the rest walk (a sinker along the bottom of water).
+     * Changed only when the build or its traits do.
      */
     private void moveBy(MinionStats s) {
-        String kind = s.flies() ? "fly" : s.climbs() ? "climb" : "swim".equals(s.mode()) || "amphibious".equals(s.mode()) ? "swim" : "ground";
+        boolean lava = MinionMoves.lavaWalker(this);
+        String kind = s.flies() ? "fly" : s.climbs() ? "climb" : "swim".equals(s.mode()) || "amphibious".equals(s.mode()) ? "swim" : lava ? "lava" : "ground";
         boolean floats = "fly".equals(kind) && !poweredDown();
         if (isNoGravity() != floats) {
             setNoGravity(floats);
+        }
+        MinionMoves.lavaMalus(this, lava);
+        if (entityData.get(LAVA_WALKER) != lava) {
+            entityData.set(LAVA_WALKER, lava);
         }
         if (kind.equals(movedBy)) {
             return;
@@ -246,6 +272,10 @@ public class MinionEntity extends PathfinderMob implements net.minecraft.world.e
                 };
                 moveControl = new net.minecraft.world.entity.ai.control.MoveControl(this);
             }
+            case "lava" -> {
+                navigation = new MinionMoves.LavaNavigation(this, level());
+                moveControl = new net.minecraft.world.entity.ai.control.MoveControl(this);
+            }
             default -> {
                 navigation = createNavigation(level());
                 moveControl = new net.minecraft.world.entity.ai.control.MoveControl(this);
@@ -275,7 +305,7 @@ public class MinionEntity extends PathfinderMob implements net.minecraft.world.e
      * whatever it can stand on, and the empty fluid over lava that counts for Sable's collisions would have it climb
      * through the air forever.
      */
-    private <T> T pathing(java.util.function.Supplier<T> path) {
+    <T> T pathing(java.util.function.Supplier<T> path) {
         boolean was = findingPath;
         findingPath = true;
         try {
@@ -310,7 +340,65 @@ public class MinionEntity extends PathfinderMob implements net.minecraft.world.e
         if (module == com.avicagan.bloodandbones.cyber.Module.GYROSCOPIC_STABILIZER || module == com.avicagan.bloodandbones.cyber.Module.BAROMETRIC_VENT) {
             return false;
         }
-        return !stats().flies() && super.causeFallDamage(distance, multiplier, source);
+        // wings too weak to fly it still slow its fall, as a chicken's do, and it lands unhurt
+        return !stats().flies() && !stats().slowFalls() && super.causeFallDamage(distance, multiplier, source);
+    }
+
+    /** A lava walker is neither set alight nor burnt by the lava it walks on, as a strider is not. */
+    @Override
+    public void lavaHurt() {
+        if (!entityData.get(LAVA_WALKER)) {
+            super.lavaHurt();
+        }
+    }
+
+    /**
+     * Whether it walks the bottom of water now: it has sink legs (a drowned's, an iron golem's) and breath enough. Sink
+     * legs do not breathe water for the body on them: one that cannot (a cow's torso) goes up for air when it runs short,
+     * paddling as any minion does, and back down once it has its fill; one with gills (a drowned's lungs, the undead
+     * horses' legs) or of brass never runs short.
+     */
+    public boolean sinking() {
+        return stats().sinks() && !surfacing;
+    }
+
+    @Override
+    public void baseTick() {
+        super.baseTick();
+        // (both sides: a rider's own client moves the steed it rides, and its air is synced)
+        if (getAirSupply() < getMaxAirSupply() / 3) {
+            surfacing = true;
+        } else if (getAirSupply() >= getMaxAirSupply()) {
+            surfacing = false;
+        }
+    }
+
+    /** A sinker drops through water to walk its bottom (a drowned's legs, an iron golem's), never paddling up while it has breath. */
+    @Override
+    public void travel(net.minecraft.world.phys.Vec3 input) {
+        if (!poweredDown() && sinking() && isInWater() && !onGround() && !isNoGravity()) {
+            setDeltaMovement(getDeltaMovement().add(0.0, -MinionMoves.SINK, 0.0));
+        }
+        super.travel(input);
+    }
+
+    @Override
+    public void aiStep() {
+        super.aiStep();
+        // wings too weak to fly it: it drifts down as a chicken does
+        net.minecraft.world.phys.Vec3 motion = getDeltaMovement();
+        if (stats().slowFalls() && !onGround() && motion.y < 0.0) {
+            setDeltaMovement(motion.multiply(1.0, 0.6, 1.0));
+        }
+    }
+
+    /** Only a sinker's rider stays on under water (a seafloor steed); the rest throw theirs off, as a horse does. */
+    @Override
+    public boolean canBeRiddenUnderFluidType(net.neoforged.neoforge.fluids.FluidType type, net.minecraft.world.entity.Entity rider) {
+        if (type == net.neoforged.neoforge.common.NeoForgeMod.WATER_TYPE.value()) {
+            return stats().sinks();
+        }
+        return super.canBeRiddenUnderFluidType(type, rider);
     }
 
     // ---- riding (horse legs, a saddle, a torso heavy enough)
@@ -333,11 +421,27 @@ public class MinionEntity extends PathfinderMob implements net.minecraft.world.e
         return entityData.get(SADDLED);
     }
 
-    /** Saddled, whoever rides it steers it. */
+    /**
+     * Saddled, its front rider steers it: with nothing but the saddle, or holding what its head or legs are steered with
+     * (a pig's head a carrot on a stick, strider legs a warped fungus on a stick), as a pig or a strider is.
+     */
     @Nullable
     @Override
     public net.minecraft.world.entity.LivingEntity getControllingPassenger() {
-        return isSaddled() && !poweredDown() && getFirstPassenger() instanceof Player player ? player : super.getControllingPassenger();
+        return isSaddled() && !poweredDown() && getFirstPassenger() instanceof Player player && MinionMoves.steers(this, player) ? player
+                : super.getControllingPassenger();
+    }
+
+    /**
+     * The seats behind are its maker's to share: when the maker gets off, whoever rode behind gets off too, so nobody else
+     * is left in front to steer it away, and its maker can climb back on.
+     */
+    @Override
+    protected void removePassenger(net.minecraft.world.entity.Entity passenger) {
+        super.removePassenger(passenger);
+        if (!level().isClientSide && passenger instanceof Player player && isMaker(player) && isVehicle()) {
+            ejectPassengers();
+        }
     }
 
     @Override
@@ -345,30 +449,67 @@ public class MinionEntity extends PathfinderMob implements net.minecraft.world.e
         super.tickRidden(player, travel);
         setRot(player.getYRot(), player.getXRot() * 0.5F);
         yRotO = yBodyRot = yHeadRot = getYRot();
+        steering.tickBoost();
     }
 
-    /** As a horse: forward and back (back slowly), and half-speed sideways. */
+    /**
+     * As a horse: forward and back (back slowly), and half-speed sideways. Steered with an item on a stick, it goes on
+     * where its rider looks, as a pig or strider does.
+     */
     @Override
     protected net.minecraft.world.phys.Vec3 getRiddenInput(Player player, net.minecraft.world.phys.Vec3 travel) {
+        if (stats().mount().steer().isPresent()) {
+            return new net.minecraft.world.phys.Vec3(0.0, 0.0, 1.0);
+        }
         float forward = player.zza <= 0.0F ? player.zza * 0.25F : player.zza;
         return new net.minecraft.world.phys.Vec3(player.xxa * 0.5F, 0.0, forward);
     }
 
     @Override
     protected float getRiddenSpeed(Player player) {
-        return (float) getAttributeValue(Attributes.MOVEMENT_SPEED);
+        return riddenSpeed();
     }
 
-    /** Its rider sits on its back where the saddle is, not on top of its whole hitbox (a raised head and all). */
+    /** How fast its rider takes it: its legs' speed, spurred on by a stick's boost for a while after each use. */
+    public float riddenSpeed() {
+        return (float) getAttributeValue(Attributes.MOVEMENT_SPEED) * (stats().mount().steer().isPresent() ? steering.boostFactor() : 1.0F);
+    }
+
+    /** A spur from its rider's stick (vanilla's FoodOnAStickItem asks this of pigs and striders; MinionMoves of it). */
+    @Override
+    public boolean boost() {
+        return stats().mount().steer().isPresent() && steering.boost(getRandom());
+    }
+
+    /** As many riders as its torso has seats (a camel's or a ravager's two). */
+    @Override
+    protected boolean canAddPassenger(net.minecraft.world.entity.Entity passenger) {
+        return getPassengers().size() < stats().mount().seats();
+    }
+
+    /**
+     * Its riders sit on its back where the saddle is, not on top of its whole hitbox (a raised head and all): one in the
+     * middle, or two along its back, the first in front.
+     */
     @Override
     protected net.minecraft.world.phys.Vec3 getPassengerAttachmentPoint(net.minecraft.world.entity.Entity passenger, EntityDimensions dimensions, float scale) {
         stats();
-        return seat.yRot(-getYRot() * net.minecraft.util.Mth.DEG_TO_RAD);
+        int seated = getPassengers().size();
+        net.minecraft.world.phys.Vec3 at = seat;
+        if (seated > 1 && seats.size() > 1) {
+            at = seats.get(Math.max(0, Math.min(seats.size() - 1, getPassengers().indexOf(passenger))));
+        }
+        return at.yRot(-getYRot() * net.minecraft.util.Mth.DEG_TO_RAD);
     }
 
-    /** A rider is pressing on it: the server holds a ridden mob's own motion at nothing and moves it from the rider's packets. */
-    boolean steered() {
-        return getControllingPassenger() instanceof Player rider && (rider.zza != 0.0F || rider.xxa != 0.0F);
+    /**
+     * A rider is taking it somewhere: the server holds a ridden mob's own motion at nothing and moves it from the rider's
+     * packets, so it asks the rider. One steered with an item on a stick (a pig's head, strider legs) goes on by itself
+     * while its rider holds the stick, pressing nothing, as a pig does (getRiddenInput); a saddle's alone only while its
+     * rider presses on.
+     */
+    public boolean steered() {
+        return getControllingPassenger() instanceof Player rider && (stats().mount().steer().isPresent() || rider.zza != 0.0F || rider.xxa != 0.0F);
     }
 
     // ---- strikes (its arms take turns; with none, it bites)
@@ -389,7 +530,9 @@ public class MinionEntity extends PathfinderMob implements net.minecraft.world.e
             return true;
         }
         DamageSource source = damageSources().mobAttack(this);
-        if (!target.hurt(source, Math.max(0.5F, strike.damage()))) {
+        // a berserk head's blows land half again as hard
+        float damage = strike.damage() * (s.berserk() ? MinionStats.BERSERK_DAMAGE : 1.0F);
+        if (!target.hurt(source, Math.max(0.5F, damage))) {
             return false;
         }
         setLastHurtMob(target);
@@ -457,6 +600,9 @@ public class MinionEntity extends PathfinderMob implements net.minecraft.world.e
         if (BUILD.equals(key) || DOWN.equals(key)) {
             stats = null;
             refreshDimensions();
+        }
+        if (BOOST_TIME.equals(key) && level().isClientSide) {
+            steering.onSynced();
         }
     }
 
@@ -554,17 +700,25 @@ public class MinionEntity extends PathfinderMob implements net.minecraft.world.e
      * each different mob among its pieces fitted with the hide on, torso first, up to three.
      */
     public List<ResourceLocation> hides() {
+        return hidePieces().stream().map(PieceRef::entity).toList();
+    }
+
+    /**
+     * The first piece of each of those mobs: whose hide it is, and what that mob's carcass kept (a snow fox's white coat
+     * is warmer), for its data's variants.
+     */
+    public List<PieceRef> hidePieces() {
         MinionBuild build = build().orElse(null);
         if (build == null || build.cybernetic()) {
             return List.of();
         }
-        List<ResourceLocation> out = new java.util.ArrayList<>();
+        List<PieceRef> out = new java.util.ArrayList<>();
         List<PieceRef> pieces = new java.util.ArrayList<>();
         pieces.add(build.torso());
         build.parts().forEach(f -> pieces.add(f.piece()));
         for (PieceRef piece : pieces) {
-            if (!piece.skinned() && !out.contains(piece.entity()) && out.size() < HIDES) {
-                out.add(piece.entity());
+            if (!piece.skinned() && out.stream().noneMatch(p -> p.entity().equals(piece.entity())) && out.size() < HIDES) {
+                out.add(piece);
             }
         }
         return out;
@@ -672,7 +826,7 @@ public class MinionEntity extends PathfinderMob implements net.minecraft.world.e
             getNavigation().stop();
             setTarget(null);
             refreshDimensions();
-            level().playSound(null, blockPosition(), SoundEvents.SLIME_BLOCK_FALL, SoundSource.NEUTRAL, 1.0F, 0.6F);
+            level().playSound(null, blockPosition(), com.avicagan.bloodandbones.registry.BBSounds.FLESH_FALL.get(), SoundSource.NEUTRAL, 1.0F, 0.6F);
         }
     }
 
@@ -729,9 +883,10 @@ public class MinionEntity extends PathfinderMob implements net.minecraft.world.e
             return;
         }
         if (tickCount % 20 == 0 || movedBy.isEmpty()) {
-            applyStats();
-            // its traits, built again if its build or the data changed
+            // its traits, built again if its build or the data changed (before its stats, whose way of getting about
+            // they may change: lava walking)
             com.avicagan.bloodandbones.parts.ActiveTraits.of(this);
+            applyStats();
             // a job it can no longer do (its bow broke, a data reload took it from its head) gives way to one it can
             MinionJobs.keepValid(this);
         }
@@ -834,7 +989,13 @@ public class MinionEntity extends PathfinderMob implements net.minecraft.world.e
 
     @Override
     protected void registerGoals() {
-        goalSelector.addGoal(0, new FloatGoal(this));
+        goalSelector.addGoal(0, new FloatGoal(this) {
+            /** A sinker never paddles up while it has breath: it walks the bottom. */
+            @Override
+            public boolean canUse() {
+                return !(sinking() && isInWater()) && super.canUse();
+            }
+        });
         goalSelector.addGoal(1, new MinionGoals.SeekBlood(this));
         goalSelector.addGoal(1, new MinionGoals.SeekCradle(this));
         goalSelector.addGoal(2, new MinionGoals.UseOrgan(this));
@@ -993,7 +1154,7 @@ public class MinionEntity extends PathfinderMob implements net.minecraft.world.e
             }
             return InteractionResult.sidedSuccess(level().isClientSide);
         }
-        if (!cybernetic() && held.is(BBFluids.BLOOD.getBucket().get())) {
+        if (!cybernetic() && held.is(BBFluids.BLOOD_BUCKETS)) {
             // not poured away for a sip: only when half of it fits
             if (!level().isClientSide && stats().reservoir() - power() >= Math.min(HALF_BUCKET, stats().reservoir() * 0.5F)) {
                 feed(1000.0F);
@@ -1051,8 +1212,9 @@ public class MinionEntity extends PathfinderMob implements net.minecraft.world.e
         if (!held.isEmpty()) {
             return super.mobInteract(player, hand);
         }
-        if (isSaddled() && !isVehicle() && !poweredDown() && isMaker(player) && !player.isSecondaryUseActive()) {
-            // saddled: its maker climbs on
+        if (isSaddled() && !poweredDown() && !player.isSecondaryUseActive()
+                && (isMaker(player) ? !isVehicle() : isVehicle() && getPassengers().size() < stats().mount().seats())) {
+            // saddled: its maker climbs on, and, once they are up front, anyone into a seat behind (a camel's)
             if (!level().isClientSide) {
                 player.startRiding(this);
             }

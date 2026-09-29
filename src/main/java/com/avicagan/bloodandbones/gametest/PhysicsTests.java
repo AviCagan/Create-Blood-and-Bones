@@ -55,7 +55,7 @@ import java.util.Map;
  * hung, it swings when knocked, and with a leg off it hangs lower on the side that kept its leg; dragged by a hind leg it
  * gets up a one-block step. Then the parts the physics stands on: a lying carcass is hooked by the part aimed at, the
  * killing blow lands on the part it hits, bone and plate weigh more than flesh, and the drag's slowdown follows the mass
- * actually on the hook (docs/ARCHITECTURE-PROPOSAL.md 15.19).
+ * actually on the hook (docs/ARCHITECTURE-PROPOSAL.md 15.21).
  * <p>
  * The scenarios are the physics measurement's own (RigScenarios), played on a cow; each test only looks at the carcass it
  * made. Each was run many times over with {@code -Dbloodandbones.debug.repeat} to show it holds.

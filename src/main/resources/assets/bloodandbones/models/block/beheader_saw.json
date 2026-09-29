@@ -1,0 +1,43 @@
+{
+ "parent": "block/block",
+ "render_type": "minecraft:cutout",
+ "textures": {
+  "saw": "bloodandbones:block/bloody_saw",
+  "particle": "bloodandbones:block/bloody_saw"
+ },
+ "elements": [
+  {
+   "from": [
+    7.5,
+    10,
+    0
+   ],
+   "to": [
+    8.5,
+    26,
+    16
+   ],
+   "faces": {
+    "east": {
+     "texture": "#saw",
+     "uv": [
+      0,
+      0,
+      16,
+      16
+     ]
+    },
+    "west": {
+     "texture": "#saw",
+     "uv": [
+      0,
+      0,
+      16,
+      16
+     ]
+    }
+   },
+   "name": "saw"
+  }
+ ]
+}

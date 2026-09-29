@@ -22,6 +22,11 @@
         "shoulders": [
           "bloodandbones:quick_draw"
         ]
+      },
+      "minion": {
+        "traits": [
+          "bloodandbones:quick_draw"
+        ]
       }
     }
   }

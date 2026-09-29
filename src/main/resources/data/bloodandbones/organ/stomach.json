@@ -1,0 +1,12 @@
+{
+  "item": "bloodandbones:stomach",
+  "name": "organ.bloodandbones.stomach",
+  "bloodless_name": "bloodless.organ.bloodandbones.stomach",
+  "look": "gut",
+  "tint": "#c7897a",
+  "armour_pieces": [
+    "chestplate",
+    "leggings"
+  ],
+  "extra_drops": []
+}

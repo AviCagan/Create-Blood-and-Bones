@@ -1,0 +1,7 @@
+{
+  "parent": "minecraft:item/generated",
+  "textures": {
+    "layer0": "bloodandbones:item/gland/gland",
+    "layer1": "bloodandbones:item/gland/gland_gore"
+  }
+}

@@ -1,7 +1,8 @@
 {
   "signature": [
     "parts.leg.hind",
-    "organs.bloodandbones:rabbit_foot"
+    "organs.bloodandbones:rabbit_foot",
+    "parts.head"
   ],
   "organs": {
     "leg.hind": {
@@ -32,6 +33,27 @@
             "level": 2
           },
           "bloodandbones:swift"
+        ]
+      }
+    },
+    "head": {
+      "minion": {
+        "variants": [
+          {
+            "if": {
+              "trait": "variant",
+              "equals": "evil"
+            },
+            "jobs": [
+              "bloodandbones:bodyguard",
+              "bloodandbones:guard"
+            ],
+            "bite": {
+              "style": "bite",
+              "damage": 8.0
+            },
+            "disposition": "berserk"
+          }
         ]
       }
     }

@@ -1,0 +1,11 @@
+{
+  "item": "bloodandbones:gland",
+  "name": "organ.bloodandbones.swim_bladder",
+  "bloodless_name": "bloodless.organ.bloodandbones.swim_bladder",
+  "look": "bladder",
+  "tint": "#d8d0c0",
+  "armour_pieces": [
+    "chestplate"
+  ],
+  "extra_drops": []
+}

@@ -50,6 +50,7 @@ public class CarcassEvents {
     public static void onReload(AddReloadListenerEvent event) {
         event.addListener(RigManager.INSTANCE);
         event.addListener(com.avicagan.bloodandbones.carcass.butchery.ButcheryManager.INSTANCE);
+        event.addListener(com.avicagan.bloodandbones.carcass.butchery.ButcheryPaths.INSTANCE);
         for (com.avicagan.bloodandbones.parts.PartsData.Kind kind : com.avicagan.bloodandbones.parts.PartsData.Kind.values()) {
             event.addListener(new com.avicagan.bloodandbones.parts.PartsData.Loader(kind, event.getRegistryAccess()));
         }

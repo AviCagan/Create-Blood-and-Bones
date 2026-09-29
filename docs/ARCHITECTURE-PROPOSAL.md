@@ -770,6 +770,8 @@ dragon and tropical fish, middle-sized (size 2) slimes, and final art.
 - Hand-written JSON recipes: spout-filling iron with blood (Blood Steel), diamond with soul blood (Blood
   Diamond); soul blood by superheated mixing with CEI liquid experience, or by CDG basin fermenting.
   The `recipesLoad` game test checks every recipe file parsed, since a broken one only logs an error.
+  (Since replaced: recipes come from datagen, the Blood Diamond is a sequenced assembly, and soul blood has its
+  full line on Create's machines; see section 15.20.)
 
 ### 13.10 Every vanilla mob (verified; the ender dragon and tropical fish excepted)
 
@@ -1609,7 +1611,7 @@ iron, blood diamonds and soul blood netherite".
     Organ Ability key, cooldowns and blood cost, and the new triggers are (15.8).
   - Which piece takes which organ is in code (`ORGAN_PIECES`) until organ files with `armour_pieces` exist; the
     gland item, `organ_sources` (rabbit's foot, ink sacs, spider eye) and `Surgery.harvest` reading organ lists by slot
-    are slice 3.
+    are slice 3. (All built since: 15.16.)
   - Wool is in no data map and is not stamped, so it stacks with sheared wool and is no hide: a sheep's covering is
     its raw hide.
   - A strapped tank keeps its tier and fluid only; a name or enchantments on it are lost.
@@ -2093,7 +2095,8 @@ its signature. 59 new mob files (69 in all), each listing its signature facets.
   Gizzard"), the goat's Leap Gland (a goat's long jump) and the sniffer's Olfactory Bulb (blood scent, until senses can
   outline blocks). Every special organ has a name and a bloodless one that is a machine part (spec 7.10: Rumen is a
   Fermenter, the Rot Gut an Iron Hopper, the Spleen a Reserve Cell), in `BBLang`. The organs have no item yet (the gland
-  item and harvesting by these lists are slice 3's), so in play only a piece or build given one directly has it.
+  item and harvesting by these lists are slice 3's), so in play only a piece or build given one directly has it. (They
+  have since: 15.16.)
 - **Sets.** The rotting and skeletal overlays' sets (Shambler, Ossuary) are now whole sets, replacing the archetype's and
   family's (spec 7.7: an overlay's set beats them). To let the tag overlays after them still add their drawbacks
   (undead's inverted healing, frozen's heat), rotting and skeletal apply first among overlays: priority 105 and 106 (the
@@ -2139,7 +2142,7 @@ its signature. 59 new mob files (69 in all), each listing its signature facets.
   does not; bacon fat and brown fat hold more blood; villager arms carry nine more; a cow's rumen and a rabbit's foot in
   armour). The cow now has its own file and the rabbit the snow overlay, which `cowAndRabbitResolve` and `allMobsResolve`
   expect.
-- **Section 9 tests still not possible**: `skeletonGivesMarrow` (harvesting organs by these lists), `phantomWingsLiftCow`
+- **Section 9 tests still not possible**: `skeletonGivesMarrow` (harvesting organs by these lists; built in 15.16), `phantomWingsLiftCow`
   and `chickenWingsDoNot` (flight from wing lift), `moddedZombieByTagIsRotting` (a modded entity type to tag).
 
 ### 15.10 Review of the minion work (fixed)
@@ -2474,7 +2477,1050 @@ The effects and the jobs were built apart; together, four things broke that neit
 - **Not fixed yet:** a lava walker stands on lava but cannot walk across it; its path treats lava as a wall and it wades
   in when it moves. It needs a strider's navigation (lava as a stable, walkable node), which is on the next minion list.
 
-### 15.19 Physics and weight: where you hook it, where the blow lands, what dragging costs (verified)
+### 15.16 Organs as items (slice 3's organ half; spec 4.9, 5.7, 7.1 and 7.3)
+
+The brief's Armor section: "An organ adds one special ability. Every mob has at least one; some have several." Every
+mob's data already named its organs and what they do (15.9), but only the heart, lungs, stomach and eyes had items, so
+in survival nobody could cut a rumen or a powder sac out and fit it.
+
+- **Organ files** (`parts/OrganKind`, `data/<ns>/organ/<id>.json`, spec 4.9: item, name, bloodless_name, look, tint,
+  armour_pieces, extra_drops), loaded by `PartsData` as a sixth kind and sent to clients with the others. One for each
+  of the 77 organs the groups and mob files name (`everyOrganHasAFile` lists any that has none). The generic heart,
+  lungs, stomach and eye point at their own items, so self-surgery and the fittings made before work as they did; the
+  rabbit's foot, ink sac and glow sac are the vanilla items; the other 70 are the Gland. An organ with no file (a
+  datapack's) comes out as a plain Gland that fits a chestplate.
+- **Organ lists** (`MobGroup.organs`, `ResolvedMob.organLists`): the "organs" of each layer are now read, by part key,
+  layered as trait lists are (a plain list adds, and organs may come twice: two eyes; `remove` takes every one of that
+  organ; `replace` starts again), so the bloodless overlay's removals and the skeletal overlay's marrow apply.
+- **The Gland** (`parts/GlandItem`, `bloodandbones:gland`): one item carrying the organ's id (`bloodandbones:organ`, a new
+  component) and the `source` stamp (mob, the part it came out of, baby), stacking to 16 with its like. Its name comes from
+  the organ file ("Creeper's Powder Sac"; in bloodless mode its `bloodless_name`, "Creeper's Powder Core"). Every organ
+  item, the heart and a plain rabbit's foot too, says on its tooltip whose it is, which armour pieces take it and what it
+  gives there, and what it gives a minion, from its mob's `organ_traits` (what each does while Ctrl is held); a carcass
+  piece says which organs are still in it (`Organs.onTooltip`). Its look is one of eleven shapes by the file's "look"
+  (gland, sac, bulb, core, bladder, spinneret, fat, marrow, gut, heart, eye), grey flesh tinted with the file's colour
+  through an item colour handler, with a wet overlay on top (a shine, dark veins, a torn vessel, blood running off the
+  bottom); in bloodless mode the same outline as a machined steel core, riveted, the colour glowing through a window
+  (`client/GlandClient`, item properties `look` and `bloodless`). The creative tab lists one of each organ, as the first
+  mob holding it gives it. Placeholder art, drawn by a script, checked on screen in both modes.
+- **Whose an unstamped item is** (`Organs.SOURCES`, `data_maps/item/organ_sources.json`, as `hide_sources`): a rabbit's
+  foot is a rabbit's rabbit_foot, an ink sac a squid's ink_sac, a glow ink sac a glow squid's glow_sac, a spider eye a
+  spider's eye. An organ the map already gives to its own mob comes out plain, so it stacks with the ones mobs drop; one
+  cut out of another mob is stamped (a glow squid's ink sac). `organSourcesInkSacIsSquid`.
+- **Harvesting** (`Surgery.harvest`, the Surgical Rig): the Cleaver takes a piece's organs out in its lists' order, one a
+  cut (`Organs.held`: its slot's list, then its form's and sub-slot's, "leg.hind" for a rabbit's haunch; a body that is
+  its own head, a blaze or a slime, holds its head's organs too; a neck or torso extension holds none). Each comes out as
+  its file says, stamped, with its extra drops (a powder sac 1 to 2 gunpowder, a blaze core blaze powder, marrow bone
+  meal, a golem core iron nuggets...). A mob with no blood is no longer refused: it gives what it has (a skeleton its
+  marrow, a creeper its sac), dry, the blade left clean, a puff of bone dust and a crack instead of the squelch and spray.
+  The piece counts what was taken (`organs_taken`, as before, so a blind head is still two eyes out).
+  `cleaverTakesTorsoOrgansInOrder` (a cow's torso: heart, lungs, stomach, rumen; a creeper's: its sac and gunpowder; a
+  rabbit's hind leg its foot, its front leg nothing), `skeletonGivesMarrow` (`PatientTests.organsFromACarcass` now expects
+  the rumen and the marrow too).
+- **From a heavy carcass** (spec 6.2: "the same work-zone rule lets the Surgical Rig take organs out of a heavy carcass
+  lying over it"): with nothing laid on the table and nobody on it, a Cleaver used on it goes into the nearest carcass
+  lying in the Assembly Frame's work zone (`Surgery.carcassOn`, 0.75 past each edge, 2.5 up, not one being dragged)
+  instead of being laid down: its torso's organs first, then each bone still attached, each bone counting its own
+  (`organs_taken:<bone>` on the carcass, which a piece cut off it reads, and a piece put down again turns its own count
+  into its bone's). `heavyCarcassOrgansOnRig` (a whole cow: its four, then its head's two eyes, the Cleaver kept in hand).
+- **Fitting** (`CarcassArmourFittingRecipe`, `MinionAssembly.fitOrgan` unchanged): `Organs.of` reads any stack as an
+  organ (a stamped Gland, a stamped heart, a mapped vanilla item) and `Organs.stack` makes one again, so the old one comes
+  back exactly as it went in, in armour and on the Assembly Frame. Which pieces take it is the file's `armour_pieces`,
+  no longer a map in code: eyes and head organs a helmet, hearts and most cores a chestplate, guts and fats a chestplate or
+  leggings, a rabbit's foot or a leap gland leggings or boots, a lanolin gland any piece. Its traits then work where
+  15.8 built them: the chestplate's Organ Ability key, a minion's organ slot. `glandFitsOnlyAllowedPieces`,
+  `creeperSacChestplateEndToEnd` (cut out with a Cleaver click, fitted in a grid, worn with a tank of blood, the key
+  pressed below half health: the blast spares the wearer, hurts the zombie beside, costs 50 mB), `glandInMinionGivesTraits`.
+- **JEI** (`compat/jei/BodyPartsCategory`, `BBJeiPlugin`): a Body Parts page per rigged mob ("Parts and Cores" in
+  bloodless mode) beside its Butchery page: its spawn egg, the organ items the Surgical Rig cuts out of it (so JEI finds
+  the page from a Gland), its hide items, and a scrolling list of what each part gives a minion and armour (per piece
+  where the data says), its hide, each organ (which piece holds it, which armour pieces take it, what it gives in each),
+  and its full set. Each organ fitting is shown as a crafting recipe of its own (a piece its file allows and the organ, as
+  the first mob holding it gives it, make the piece with it fitted), and the Gland has an information page. Glands are one
+  JEI entry per organ (a subtype by organ id). Checked on screen in both modes.
+- **Commands** (`parts/TraitsCommand`, spec 4.11): `/bloodandbones traits explain <mob> [baby]` lists its layers (with
+  their kinds), its scrap material, each part key's minion and armour traits, its hide, the organs each part holds, what
+  each organ does (on a minion, and in which pieces of armour) and its full set. `/bloodandbones traits dump` (operators)
+  writes `bloodandbones-traits.csv` in the server's folder: one row per trait of every rigged mob, with its archetype,
+  family, overlays, material, facet (a part key, the hide, an organ, a set) and host (minion, armour, a piece, a set's
+  bonus or drawback), and a row per organ in each part's list, about 2500 rows. `explainCommandRuns`.
+- **Words**: the organ names were already in `BBLang` with bloodless machine-part names (15.9); now the files point at
+  them. New wording for the Gland (a Core in bloodless mode), its tooltip, the Body Parts page, the commands, the Surgery
+  Table's and every armour piece's description (every piece now names organs that fit it), each with bloodless wording.
+  `bloodlessOrganNames` (every organ's bloodless name free of flesh words, the new words, and a clean model and textures
+  for every look).
+- **Shared files touched, and why**: `body/Surgery` (harvest by organ lists, the heavy carcass, the counts),
+  `body/SurgeryTableBlock` (a Cleaver on an empty table over a carcass), `item/CarcassPieceItem` (one line: a piece put
+  down keeps its organ count as its bone's), `parts/CarcassArmourFittingRecipe` (organs by file), `parts/CarcassArmourItem`
+  (the organ's name from its file), `parts/MobGroup`, `ResolvedMob` and `PartsData` (organ lists and files),
+  `registry/BBItems`, `BBDataComponents` and `BBLang`, `BloodAndBones` (the data map, the tooltip handler, the command),
+  `compat/jei/BBJeiPlugin`, `client/DevShowcase` (the Gland in the hotbar, and the creeper's Body Parts and fitting pages
+  photographed), `gametest/PatientTests` (the rumen and the marrow). No file in `minion/` changed: the Assembly Frame's
+  organ slot takes a Gland through `CarcassArmourFittingRecipe.organ`, which it already called.
+- **Found on the way, not fixed here (the minion jobs are another branch's; both fixed since, 15.17 and 15.17a)**: two job tests fail now and then on the
+  starting commit as well, shown by running many copies of each at once there (`haulerLaysCarcassOnRack` once in 50 to
+  100 copies, `hunterWithMeatHookLeavesCarcass` twice in 50); one or the other failed in 2 of the 19 full runs made for
+  this slice. The hauler lets a body down when its torso is within 0.8 of the tray's middle (`Haul.ON_TRAY`), which is
+  past the tray's rim (a rack is a block with 8-pixel rims): let down over the rim, the body tips off onto the floor
+  beside the rack, out of the reach the bleeding looks in; its next passes start from right beside the rack, the tow line
+  too short to bring the torso inside the rims, and it lets it down there again (its lowest point, still by the rim,
+  finds the rack through the tray's catch round it), until after three it gives up. The hunter closes to about two
+  blocks of a cow standing still, its navigation done, and never strikes: vanilla's melee goal paths to the target again
+  only if the target has moved a block (or one tick in twenty), and each path ends where it stands, out of reach.
+- **Left out**: the sounds do not change to clanks in bloodless mode (nothing in the mod swaps sounds by that setting
+  yet). A Deployer holding a Cleaver over a heavy carcass should work as it does over a piece (it clicks as a player
+  does), but is not tested. Organ lists name which part holds an organ, not which bone of it, so both of a rabbit's
+  haunches give a foot. The explain command lists every organ its data gives traits to, the ones a live mob gives up on
+  the table (a creeper's heart) as well as those its carcass holds. The creative tab and JEI take the organ files the
+  client had when they were built; a `/reload` that adds organ files shows in JEI (which restarts) but not in the
+  creative tab until the next world. The spec's powder sac bloodless name is "Charge Cell"; the data's is "Powder Core"
+  (Motion's wording, kept).
+- The suite is 428 tests (417 before, and eleven new in `OrganTests`).
+
+### 15.17 The minion leftovers: the sapper, held things drawn, lava, wings, the seabed, mounts and variants (brief § Minions)
+
+What 15.12 left out, 15.15 had not fixed yet and the signature lint was waiting for, where the built jobs and movement
+now reach.
+
+- **The sapper** (`minion/MinionSapper`, spec 6.9): a head that offers it (the volatile family's, so a creeper's: sapper
+  or guard, spec 8.1) and an organ whose minion traits hold an activate detonate effect (`MinionSapper.hasDetonator`: the
+  creeper's Powder Sac, whose Self-Destruct is Motion's detonate) make a minion that walks up to its target and blows
+  itself up there through its organ (`Activation.fire`, as its UseOrgan goal fires it, paying from its own blood), holding
+  still while the fuse hisses; the detonate effect then powers it down where it stands, whole, never destroyed, and blocks
+  break only where the effect may break them, `minion_block_damage` and mobGriefing all allow it. Its targets are a
+  guard's (monsters near home it can see) and whatever hurts it; it never bites. Its mark is a banner: handed a banner, it
+  goes for the nearest banner of that colour standing within 16 of home (block entities of loaded chunks only), as a sapper
+  goes for the flag its side planted; the maker takes the banner back to stop it. It never wakes a sapper
+  (`MinionJobs.wakeJob`, as with hunting: it would spend its blast on the first monster to wander by); its maker puts it
+  to sapping with a click. Only a sapper sets its organ off: the organ goal leaves detonations out (15.17b). `sapperDetonatesAndPowersDown` (offered only with the sac in; it walks to a husk, blows, hurts
+  it, lies down unhurt, the floor whole), `sapperGoesForItsBanner` (the red banner, not the blue; both still stand).
+- **Held things and helmets drawn** (spec 6.10; `MinionBody.anchors`, the same layout both sides use, and
+  `StitchedBody.Attach`, a hook that draws on a piece in its own frame as it is turned that frame): what a minion holds is at
+  the far end of its first arm of hand grip, at the middle across and the front, which for a humanoid arm is exactly
+  vanilla's hand point (1 pixel in, 10 down, 2 forward), turned and drawn as `ItemInHandLayer` does (a right or left hand's
+  item by the side the arm is on); a pair of folded arms holds it in front of them, upright, as `CrossedArmsItemLayer`
+  does; a head with no hand holds it across its mouth, as `FoxHeldItemLayer` does. What it wears on its head sits over the
+  head it has (`MinionStats.head`): a helmet is the humanoid helmet (the outer armour model's head and hat) stretched to the
+  head's box, a cow's long skull getting a long helmet, in its material's layers, tinted and glinting through NeoForge's
+  armour hooks (so dyed leather and carcass helmets draw right); a skull or mob head is the skull model sitting on the
+  head's bottom, 1.1875 times it, as `CustomHeadLayer` draws one (15.17b); anything else worn (a carved pumpkin) is the
+  item's own head look sized to the head, as `CustomHeadLayer` sizes it to a humanoid's. Wings beat in the air, a flier
+  bobs (a floater slower and deeper), and a mood tail (a wolf's, `"mood": true`) is held up by its health and hangs as it is
+  hurt. `heldItemAnchors`. On screen: the showcase's zombie with a cow's head holds a bow, an iron helmet stretched over
+  the cow's skull, a pig's head wears a carved pumpkin, and a cow hangs in the air on a phantom's wings.
+- **Walking across lava** (15.15's "not fixed yet"): a lava walker's navigation is a strider's
+  (`MinionMoves.LavaNavigation`: lava a stable destination and no bar to a path) and, while it has lava_walk (from at
+  least half its legs, 15.17b), its path cost for lava is 0 (vanilla's own is put back when it loses it; fire keeps
+  vanilla's costs, 15.17b), so it goes straight over a pool rather than round it or nowhere; the path is still worked out inside `MinionEntity.pathing`. It is never set
+  alight nor burnt by the lava it walks in (`lavaHurt`, through a synced flag so its client does not show it burning), so
+  it steps off the far side unhurt, and one that walks in from a bank lower than the surface steps up onto the lava as onto
+  a slab rather than wading (`MotionFlags.floatOnLava`). `lavaWalkerCrossesLava` (a cow on strider legs follows its maker
+  over a wall-to-wall pool: never below the surface, never alight, never hurt).
+- **Wing lift** (spec 6.4): each arm's `"lift"` adds up (phantom wings 0.4, chicken 0.02, parrot 0.06); at least the
+  torso's volume flies it (mode fly, at least a bat's 0.2, flying navigation, no gravity, twice the blood moving), less only
+  slows its fall as a chicken's wings do (`MinionStats.slowFalls`: its fall held to six tenths, and no fall damage).
+  `phantomWingsLiftCow`, `chickenWingsDoNot` (it falls far slower than a wingless cow and lands unhurt).
+- **Sink and float** (spec 5.6): sink legs (drowned, iron golem, skeleton and zombie horse) walk the bottom of water: the
+  float goal leaves it be, its `water_movement_efficiency` is 1 (so on the bottom it walks at its land speed, vanilla's own
+  attribute) and it drops through water rather than drifting; ground navigation paths along the bottom. Only a sinker's
+  rider stays on under water (`canBeRiddenUnderFluidType`), the undead steeds' signature; the others throw theirs off as a
+  horse does. A sinker short of breath goes up for air (15.17b). Legs whose own mode keeps it up (float, hover, fly: a
+  ghast's tentacles float) fly it as a flying torso does.
+  `sinkWalksSeabed` (eight blocks along a channel's bottom within six seconds, never more than 0.6 off it),
+  `floatStaysUp`.
+- **Mounts** (spec 5.4 type 25, as part data rather than a trait: the legs say rideable, the head and legs what steers,
+  the torso how many sit): `MinionStats.Mount` (seats, steer, wear). A head's `"steer"` comes first (the pig's
+  `{"item": "minecraft:carrot_on_a_stick", "wear": 7}`), else the one at least half its rideable legs share (strider legs'
+  warped fungus on a stick, wear 1), else the saddle alone. Steered with a stick, its front rider controls it only while
+  holding one, it goes on where they look, and a use spurs it on for a while by vanilla's own `ItemBasedSteering`; vanilla's
+  `FoodOnAStickItem` boosts only its own mob type, so `MinionMoves.onUseStick` (`PlayerInteractEvent.RightClickItem`)
+  does it for a minion, wearing the stick as vanilla does (`hurtAndConvertOnBreak` back to a fishing rod). The torso's
+  `"seats"` (the camel's, the behemoth family's for the ravager) let its maker ride in front and anyone else, with an
+  empty hand, behind, spread along the torso's back (`MinionBody.seats`); those behind get off with the maker (15.17b). The rideable torso share is now against the torso
+  and its legs only, as spec 6.4's rabbit example means, so a whole ravager (whose great head and neck outweighed it) takes
+  a saddle as spec 6.5 says. `pigHeadSteersWithCarrot`, `striderLegsSteerWithFungus`, `camelCarriesTwo`.
+- **Variant capture** (spec 9, slice 3): `CarcassLook.traits` now keeps a mob's `variant` (any `VariantHolder`: its
+  own name, or its registry id's path for a vanilla one: a snow fox, a warm frog, the killer bunny `evil`), a panda's `gene`
+  (the one it shows), a creeper's `charged` and the `name` it was given. Data uses them three ways: a part's minion object's
+  variants may now carry `"traits"` (added after that layer's own, `MinionData.traits`; a warm frog's legs are fireproof, a
+  weak panda's head sneezes); and a mob file's top-level `"variants"`, each `{"if", "hide", "organ_traits"}`, add hide and
+  organ traits (`MobGroup.Variant`, `ResolvedMob.Variant`, `ResolvedMob.hide(traits)`, `organMinion`, `organArmour`: the
+  snow fox's hide is insulated, a charged creeper's sac self-destructs at level 2, power 4). A flesh minion's hides are read
+  from the first piece of each mob (`MinionEntity.hidePieces`), with its traits; an organ now carries what its carcass
+  kept (`CarcassArmour.Organ.traits`, optional in the codec, the old constructor kept), which organ harvesting (15.16) is to
+  fill. A head's `"disposition": "berserk"` (the zoglin; the killer bunny, as a bodyguard or guard biting for 8; a
+  vindicator named Johnny) goes for any mob it can see but its own side, half again as hard (`MinionStats.berserk`).
+  `chargedCreeperSacIsStronger`, `snowFoxHideInsulates`, `carcassKeepsVariants`.
+- **Signatures wired** (spec 8.2, in the mob files, the lint's `"variants"` facet new): allay (scavenger head), camel (two
+  seats), cod and salmon (fishers with their mouths), creeper (sapper head through its family; the charged sac), fox (a
+  thief's head fetches, and its bite now always snatches; the snow fox's hide), frog (warm and cold legs), ghast (floating
+  tentacles), iron golem and drowned (sink legs), panda (docile, but aggressive a bodyguard or guard, lazy a sentry, weak
+  sneezes the `panda_sneeze` table), parrot (wing lift), pig (carrot steering), pillager (quick-drawing arms: a sentry's
+  bow and crossbow are drawn with use-item ticks, so Quick Draw now works on minions too), rabbit (the killer bunny),
+  ravager (rideable legs), skeleton and zombie horse (seafloor steeds: sink, rideable, gills), strider (fungus-steered
+  legs; its Lava Bladder is now Lava Soak, fire and lava half as harmful only while in lava), vindicator (Johnny), wolf (the
+  mood tail), zoglin (berserk), zombie (arms that grab, spec 8.1), zombie villager (a shaky surgeon: its head's `"pace"` of
+  0.5 tends a patient every ten seconds, not five). New traits: `sneeze`, `lava_soak`. The lint also reads variants' traits.
+  The waiting list went from 48 mobs to 33; what still waits, and why, is logged every run (below).
+- **Tests changed**: `armsTakeTurnsInTheirStyles` now expects the zombie's arm to grab (spec 8.1), and checks the hold's
+  slowness.
+- Found on the way: `haulerLaysCarcassOnRack` failed in two of the six full runs made before the fix (one of them on the
+  starting commit): the hauler let a body down the moment its torso came within 0.8 of the tray's middle (so
+  always just past the rim, the torso arriving from outside), and called it done 40 ticks later if the bleeding's test
+  found the rack then; but the bleeding waits for the body to come to rest (lie still and fold), and a body lying across the
+  rim rocked there without resting, or slid off beyond the tray's reach first (the failures left it 1.1 to 1.7 blocks past
+  the middle, resting, the rack dry). Logged runs showed both. Now it is let down once well inside the rim (0.35) or where
+  it passes nearest the middle (within 0.8), or with its path ended short only with the torso still over the tray's edge
+  (1.2); it is steadied (every piece stilled) each second while it settles; and it is done only once the body has come to
+  rest where the bleeding finds the rack, else it takes another pass. In the logged runs after, every body came to rest in
+  the tray on the first pass, within five to seven seconds. A random blink could land within half a block of where it
+  started (a pick that close in the radius: `teleportRandomStaysOnGround` failed once on the starting commit); a pick
+  within a block of the start is skipped now. A
+  test that posts a stick's use through the whole event bus reaches another mod's handler, which takes a stand-in player
+  (not a server player) for a client and loads client classes on the server; the tests call the minion's handler directly.
+  A client turns a new mob's body to its head's turn, so the showcase sets both.
+- **Shared files touched**: `BloodAndBones` (MinionMoves on the bus, one line), `BBLang` (the sapper's name, two traits'
+  words), `ActiveTraits` (a flesh minion's hides with their traits), `CarcassArmour` (the organ's traits),
+  `MobGroup`, `ResolvedMob`, `PartsData` (variants), `CarcassLook` (the captures), `MotionFlags` (stepping up onto lava),
+  `TeleportEffect` (the blink fix), `RangedEffects` (the thief's words), `MinionJobs` (the sapper's hooks, the hauler's
+  lay-down), `DataLintTests`, `MinionBodyTests`, `DevShowcase`, `README`, `CHANGELOG`.
+- **Left out, and why**: a held weapon outside a sentry's post (a bow in a skeleton-armed fight, a drowned's thrown trident,
+  the axeman's and brute's axe damage: a minion's blows still come from its build, not its held item); a ridden minion's
+  jump (`PlayerRideableJumping`, and so Centaur's Jump Boost for your mount); armour trims and other mods' custom armour
+  models on a helmet (the vanilla helmet shape is stretched instead); dispositions other than berserk (still only data);
+  armour-side variants (a hide or scraps carry no traits of their mob, so a snow fox hide fitted to armour is a plain fox's)
+  and organs cut out in play carrying their carcass's traits (organ harvesting's, 15.16, to fill `Organ.traits`: done in 15.17a); the
+  playful panda's tumbles and the worried one's flight from thunder; and the other waits the signature lint logs (the sting
+  that spends a limb, carrying blocks, the row of fangs, the caravan, trader's guard and homing jobs, the mimic alarm,
+  skull-firing heads, rolling, being scooped into a bucket, froglights, the Gold Gizzard's double roll, and the rest), each a
+  mechanism of its own rather than wiring.
+- The suite is 431 tests (417 before, and fourteen new: `MinionMovementTests`, 8, and `MinionVariantTests`, 6), and passed
+  three runs in a row.
+
+### 15.17a Organs and the minion leftovers together, with main's hauler fix (verified)
+
+15.16 and 15.17 were built apart from the same starting point and merged; the session doing it restarted part way, so
+the merge was saved unbuilt and untested. It was then gone over, main's own hauler fix merged in, and all of it run.
+
+- **What the merge joined** (both halves' intent kept): a mob file's layers carry both organ lists and variants
+  (`MobGroup`, `ResolvedMob`, `PartsData`). An organ cut out now keeps what its carcass kept, the gap 15.17 left for
+  15.16: `Surgery.harvest` passes the piece's or the heavy carcass's traits to `Organs.stack`, which keeps only those a
+  variant of that organ reads and that match (`ResolvedMob.organTraitsKept`: a charged creeper's sac keeps
+  `{charged: true}`; its name, or a plain creeper, keeps nothing), in a new component, `bloodandbones:organ_traits`, set
+  only when there is something, so plain sacs still stack. `Organs.of` reads it back, the tooltip and the fitting use the
+  variant's traits, and the fitting and the Assembly Frame give it back as it went in (`Organs.stack(store, organ)`).
+  `/bloodandbones traits explain` lists each variant ("One whose carcass kept charged = true adds: ..."), and the dump
+  gives its rows the facet `variant[charged = true]:organ:...`. `chargedSacKeepsItsCharge` (cut out of a charged torso,
+  it blasts at 2 in a chestplate and self-destructs at 2 in a minion, and comes back out of each still charged).
+- **Left half-done by the interruption, and cleared**: a test class that ran the hunter's and the hauler's tests 140
+  times over (`TmpMergeRepro`), and a debug log in the bite goal. No conflict markers were left, nothing is registered
+  twice, and no method is there in both halves' versions. (13.5 is numbered twice, as it already was on main.)
+- **Main merged in** (the hauler fix, `-Dbloodandbones.debug.only` and `.repeat` for the test server, docs/NEXT.md): main
+  and 15.17 had each fixed the hauler dropping a body off a rack, in the same lines. Both are kept: from main, standing
+  still counts as having got there only once it has walked a moment since taking hold, a body let down short keeps its
+  pass's line, it is let down once past the middle along the line it is towed, it stands still while the body settles,
+  and a body over a rack is supported by any corner (`CarcassRest`); from 15.17, it is let down where it passes nearest
+  the middle, steadied every second while it settles, and done only once the body has come to rest in the tray. Its
+  settling time is main's two waits added up.
+- **Found running it, and fixed**:
+  - `haulerLaysCarcassOnRack` failed twice in a hundred copies run at once, both the same way (every decision logged): the
+    cow lies off to the side of the line the hauler walks, cuts the corner as it is towed and passed the tray 1.2 to 1.5
+    wide of the middle; the merged rule let a body down at a pass's end only within 1.2, so it took another pass, and
+    standing past the rack by the pen's wall, with the body between it and the rack, it walked into the body, stalled
+    and gave up, over and over. At a pass's end it now lets the body down wherever the bleeding finds this rack under
+    it (main's rule; the tray catches a little wide), and does the same when it stalls over the rack. 150 copies passed
+    after, none taking a second pass.
+  - `hunterWithMeatHookLeavesCarcass` (15.16's finding, what the debug log was chasing): a body a block wide is pathed as
+    two blocks wide, so by a wall or in a corner, where a hurt cow runs, the bite goal's path stops a block or two short,
+    and vanilla's melee goal paths again only once the target moves, each new path ending where it stood. With its path
+    done and what it goes for within 4 blocks and in sight, a minion now walks straight at it (`MinionGoals.Bite`), over
+    safe ground only (15.17b).
+  - On screen: a carved pumpkin on a pig's head flickered where the snout, a pixel proud of the head, met the pumpkin's
+    front; what a minion wears on its head now has 4% more room than vanilla gives a humanoid's (`ROOM`), and the snout
+    stays inside. The showcase's hand shot now holds the powder sac (the client is told the hotbar slot).
+- **The showcase** photographs the new things close: the bowman from in front (a cow's head in an iron helmet stretched
+  to it, its horns poking through the top, a bow in its right hand at its side), the cow on phantom wings from below
+  (wings raised, raw stitched shoulders, hind legs dangling), and the pig's head in its pumpkin (`minions_2` to `4`).
+- **Not done**: a torso's empty arm socket shows its raw stump as a flat square beside the shoulder (the face of the
+  space the arm's top left, as `WoundCaps` draws a carcass's), which from behind reads as a thin plate sticking out; it
+  is on docs/NEXT.md. docs/NEXT.md lost its "Already on the list" heading on main, and has it back.
+- The suite is 443 tests (431, eleven from 15.16, and `chargedSacKeepsItsCharge`), and passed three runs in a row.
+
+### 15.17b The review of 15.17 and 15.17a, and its fixes (verified)
+
+A review of the merged tree listed seventeen problems, some of them twice. Each was checked against the code and all
+were real. Each is fixed, and a test now shows it: every new or strengthened test was also run against the code with its
+fix undone, and failed there.
+
+- **The last stretch walked into lava** (15.17a's hunter fix): `MinionGoals.Bite` walked straight at what it went for
+  whenever its path ran out within 4 blocks of it, in sight. The move control looks at nothing on the way, and a path
+  stops short because the way on is lava, fire or a drop as often as because of a wall, so a guard by a lava river walked
+  into it. The last stretch is now taken over safe ground only (`MinionGoals.clearWay`: every block its body would pass
+  over, as wide as it is, each half block along, is one its own path finding costs nothing, with footing no more than a
+  step down or up). `lastStretchStopsAtLava` (a husk three blocks off across a lava channel two wide: it stays at the
+  bank, unhurt).
+- **A lava walker went straight over fire and magma**: its path costs for fire and the edge of fire were 0, as a
+  strider's are, but strider legs do not make a cow fire-proof (the trait spares it fire only in lava). Only lava costs
+  it nothing now, and lava is the only thing added to what its navigation may cross (`MinionMoves.lavaMalus`,
+  `LavaNavigation`). `lavaWalkerKeepsOffMagma` (it goes round a strip of magma by the gap at its end), and
+  `lavaWalkerCrossesLava` checks that fire keeps vanilla's costs.
+- **One strider leg made a lava walker**, against spec 6.4 (a capability needs at least half the fitted legs): the
+  lava_walk flag came from any piece. A leg's trait that carries a leg capability flag (lava_walk, and climb: one spider
+  leg also made a cow cling to walls) now counts only when at least half the fitted legs carry it
+  (`MinionData.LEG_CAPABILITIES`, applied in `MinionData.traits`, so the flag, the navigation, standing on lava and the
+  fire immunity in lava all follow). From anything else (an organ) it counts as before. `legCapabilitiesNeedHalfTheLegs`.
+- **A resting carcass kept its limbs' organs**: harvesting a heavy carcass walked its live bones, but a carcass lying
+  still folds its limbs into rest poses (`CarcassRest.rest`), so a cow left over the table gave up only its torso's.
+  `Surgery.nextOrgan` walks the folded limbs too (and leaves out a limb cut through). `restingCarcassOrgansOnRig`
+  (harvested once it has folded; `heavyCarcassOrgansOnRig` still clicks before it does).
+- **A spent carcass over the table kept the Cleaver off it**: a Cleaver click on an empty rig went into any carcass over
+  it, even one with nothing left in it, so the blade could not be laid down for surgery. It goes into the carcass only
+  while an organ is left; `heavyCarcassOrgansOnRig` then lays it on the table.
+- **A guard with a creeper's sac blew itself up**: the sapper is not woken to so that it does not spend its blast on the
+  first monster (15.17), but the organ goal fired any ready activate effect, the sac's Self-Destruct included, so a guard
+  did exactly that. The organ goal now leaves detonations out (`Activation.readyFor`); only the sapper's own goal sets
+  one off, once it has walked up (spec 6.4 now says so). `guardKeepsItsBlast` (it wakes a guard, bites a husk from
+  beside it, and never lights its fuse). Two older tests had a non-sapper blow up and now put theirs to sapping:
+  `creeperSacPowersDownNotDestroyed` (walled in glass now, since a sapper's targets are a guard's) and
+  `chargedCreeperSacIsStronger` (walled in too, the charged one held still until the plain one has blown, as its
+  comment always meant).
+- **A rider behind kept the maker's mount**: with the maker off, the rider behind became the front rider and steered it,
+  and the maker could not get back on. When the maker gets off, whoever rode behind gets off too
+  (`MinionEntity.removePassenger`). Steering is not limited to the maker instead, because the client does not know who
+  the maker is and both sides must agree on who steers. `camelCarriesTwo` (the maker gets off, the friend with them, and
+  the maker climbs back on).
+- **A sinker drowned**: sink legs held a cow's torso on the bottom with no way up for air. A sinker short of breath
+  (under a third of its air) now paddles up as any minion does, and goes back down once it has its fill
+  (`MinionEntity.sinking`, its `surfacing` set in `baseTick` on both sides, since a rider's client moves its mount). With
+  gills (a drowned's lungs, the undead horses' legs) or of brass it never runs short. Sink legs were not given gills: the
+  design gives those to the Drowned Lungs. `sinkerSurfacesForAir` (a cow on iron golem legs, nearly out of breath: up,
+  filled, back down, never hurt).
+- **A stick-steered mount counted as standing still**: it goes on by itself while its rider holds the stick, but
+  `steered()` read only the rider's keys, so it paid the idle rate and a brass one could couple to a shaft it walked
+  past. For a stick-steered mount it is now true while its rider holds the stick. `pigHeadSteersWithCarrot`, and
+  `camelCarriesTwo` (a saddle-only mount only while its rider presses on).
+- **A fitted Spider Eye came back as the mod's Eye**: the organ_sources map makes a Spider Eye a spider's eye, but the
+  eye's file names the mod's Eye, so one given back (by the armour fitting or the Assembly Frame) was a stamped Eye.
+  `Organs.stack` now makes an organ as the vanilla item the map gives to that very organ of that mob, so a spider's eye is
+  a plain Spider Eye both cut out of a spider's head and given back; a cave spider's is still the mod's Eye, stamped.
+  `organSourcesInkSacIsSquid`.
+- **A datapack's organ on a heart or eye item read as the plain one**: which organ a heart, lungs, stomach or eye was
+  depended on the first organ file naming the item. `PartsData.organFor` prefers the file of the item's own id, and
+  `Organs.stack` stamps the organ's id on such an item whenever it is some other organ (plain hearts stay unstamped and
+  stack as before). `datapackOrganOnAHeartKeepsItsId` (`PartsData.addTestOrgan`, looked up like `addTestTrait`).
+- **A worn skull was drawn inside the head**: skulls and mob heads went through the item's head look, which a skull's
+  item model does not have, so it came out small and inside the head. They are now drawn as `CustomHeadLayer` draws them
+  on a humanoid (the skull model, 1.1875 times the head, sitting on its bottom, a dragon's head working its jaw as it
+  walks). On screen (`showcase_minions_5.png`, new): the whole cow in the row wears a zombie's head, a full-sized head over
+  its own, face forward, one of the cow's horns poking through its side.
+- **The waiting list** (`signatureLint`'s report): the piglin's note had lost "a held crossbow outside a sentry's post (its
+  head offers no sentry)", which nothing had built, and has it back. The aggressive panda's head lacked spec 8.2's
+  Brawler II; its variant now gives it (`carcassKeepsVariants` checks it), so "the other genes are wired" is true.
+- The suite is 450 tests (443 and the seven named above), and passed three runs in a row.
+
+### 15.18 Checks nobody had run (verified)
+
+Brief audit package 18. Three things the brief asks for had never been run: "verify things by running them … actually
+look at anything visual on screen", "cheap enough that a dozen at once is fine", and "it has to look right in
+multiplayer". Each check is now built and has been run, and each turned something up.
+
+**Two clients on a dedicated server** (section 11, slice 1's "looks right with two clients", never recorded as done):
+
+- **How to run it.** `-Dbloodandbones.multiplayer=true` adds three Gradle runs, each in its own folder under `run/`:
+  - `runMpServer`: a dedicated server. Every start makes a fresh flat creative world, lets offline development clients
+    in, and accepts the game's EULA in that folder (a development server will not start until it is accepted).
+  - `runMpButcher` and `runMpWatcher`: two clients called Butcher and Watcher. Each joins `localhost:25565` (or the
+    address in `-Dbloodandbones.multiplayer.server`), retrying until the server is up.
+
+  Start the server, then the two clients, each in its own terminal (`gradlew.bat` on Windows). All three stop by
+  themselves after about forty seconds of play.
+- **What happens.** Once both players are in, the server (`gametest/MultiplayerCheck`) waits twenty seconds more, since
+  a client drawing in software is slow to load. Then it:
+  - clears a patch of the flat world;
+  - puts a cow three blocks in front of the Butcher;
+  - puts a Shackle Hook four blocks up and six to the side, with a Bleeding Rack under it;
+  - gives the Butcher a Meat Hook, a Cleaver and a Flensing Knife;
+  - tells both clients when the clock starts.
+
+  The Butcher's client (`client/MultiplayerShowcase`) then plays with real clicks, each aimed at what its own client
+  draws: two blows of the Meat Hook, a click on a leg, a walk of six blocks facing the carcass, a click on the hook,
+  three Cleaver strokes through a front leg, and four Flensing Knife strokes down the body. The Watcher hovers and takes
+  29 pictures (`run/mp-watcher/screenshots/mp_watcher_*.png`); 21 of them are a film of the drag, one every six ticks.
+  The Butcher takes three of its own.
+- **What is compared.** The `[mp]` lines in each `logs/latest.log`:
+  - the server writes, every tick, where every carcass body is, where the Butcher stands, the rack's blood and the
+    stains on the ground;
+  - the Watcher writes where it draws every body, every tick and every frame, whether it sees the cow, and its own count
+    of the rack's blood and of the stains.
+- **Where it ran.** The server and both clients on one four-core machine with no graphics card (xvfb, software
+  drawing, 854×480). There were seven runs. The numbers below are from the fifth, the first with the fixes below; the
+  sixth never started (item 3), and the seventh, the same as the fifth, found the cut leg falling through the ground
+  (item 4).
+
+What the Watcher's pictures show. Four from the seventh run are in `docs/screenshots/multiplayer_*.png`: `_drag`
+(enlarged), `_hung`, `_cut` and `_skinned`. The fifth run's pictures were written over by a later run and not kept.
+
+- after the kill, the cow falls and lies where the server has it;
+- the drag: the Butcher steps back and sideways, the cow hooked by a front leg. The Meat Hook is stuck in the leg with a
+  line to the Butcher's hand, and a trail of drops and stains is left behind;
+- the cow hangs head-up from the hook by the neck, and blood drops into the rack below. The tray's blood rises;
+- after the cut, the Butcher holds a bloody Cleaver and fresh blood lies under the cow and by the rack. The cut leg is
+  not in the picture: in the seventh run it fell through the ground (item 4). In the fifth run both the server and the
+  Watcher had it lying on the grass by the rack;
+- after skinning, the hanging body is bare flesh and the raw hide lies on the ground by the rack;
+- from the side at the end: the rack, the stains and the hide.
+
+What the numbers show:
+
+- **Where bodies are drawn.** The Watcher draws each body 3.5 cm on average from where the server had it a tick earlier
+  (its interpolation delay). That is 12 cm over the drag, 3 cm while hanging, and under a millimetre once still.
+- **Nothing went missing.** Every tick of the handover, either the frozen cow or its carcass was on the Watcher's
+  screen. Every body the server had, the Watcher had, except in the first ticks of the carcass while the frozen cow still
+  stood. Its count of the rack's blood and of the stains, taken each whole second, matched the server's 38 times in 39
+  in the fifth run and 37 times in 39 in the seventh (at twenty seconds: 132 mB and 8 stains on both sides). Each miss
+  was a change the two logged a few ticks apart (the two clocks are a few ticks off each other; for example 231 mB on
+  the Watcher at 24 seconds, which the server logged three ticks later), and the next second they agreed again.
+- **Smoothness.** The Watcher drew about 20 frames a second over the drag. On most ticks it moved the carcass at the
+  server's speed (2 to 9 blocks a second), with no frame jumping back. A few times its drawing stood still for one to
+  three ticks (once about seven, at the start of the drag) and then caught up exactly. These match the Watcher's own
+  frame stalls of up to 0.3 seconds (software drawing, three games on four cores, screenshots being written). They are
+  not something the mod sends: the server kept 20 ticks a second throughout.
+
+What it turned up:
+
+1. **Hanging a carcass threw the player standing by it** (the throw is fixed; a player against the body is still
+   jostled).
+   - The Shackle Hook held its body with a ball joint made at once. A body lying a few blocks off went up to the tip in
+     one tick, at about 80 blocks a second.
+   - Sable gives a player the motion of any moving body that pushes them. The Butcher, standing beside the body, was
+     thrown about 110 blocks up and 220 along. A single-player game does the same, because the push happens on the
+     client.
+   - The hook now hoists the body up at 3 blocks a second (`ShackleHookBlockEntity.hoist`: a push at the hooked point
+     that carries the whole carcass's weight). It makes the joint once the hooked point is within 0.3 blocks of the tip.
+     A body still short of the tip after four seconds (caught under something) is held where it got to: the joint is
+     made at the hooked point's own place, not at the tip.
+   - Whether it is hoisting is not saved. A hook read back with its body more than 0.3 blocks off the tip (saved or
+     unloaded part way up, or held where it got to) hoists it again rather than snapping it up; as before, a body more
+     than 8 blocks off is let go.
+   - The Shackle Trolley made the same snap: a Meat Hook click on a chain strand made its joint at once, on the
+     trolley's first tick. It now hoists the same way, with the same push, and waits where it is on the chain until the
+     body is up. A body it cannot bring up in four seconds it lets fall, since it could not carry it along the chain from
+     where it got to. A body that came away from the chain while unloaded is hoisted back too.
+   - A hook on a ship is not changed: it still makes its joint at once. (Reading Sable's constraint checks, a joint to the
+     world may not be anchored inside a ship's plot, so it may not hold a body at all. Nothing tests hooks on ships, and
+     this was not run.)
+   - Tests, each failing without its fix (old code, eight runs each):
+     - `shackleHookHoistsWithoutFlinging`: a cow hung from four blocks away rises at no more than 3.6 blocks a second and
+       hangs from the tip (89 blocks a second without the hoist);
+     - `shackleHookReloadedPartWayUpKeepsHoisting`: the hook is read back from what it saved when the cow is 4.6 blocks
+       short of the tip, and the cow still rises at the hoist's pace to the tip (88 to 90 blocks a second before);
+     - `shackleHookHoldsACaughtBodyWhereItGotTo`: a cow in a roofed stone pen stays in it, held where it got to (dragged
+       out through the stone at 95 to 104 blocks a second before);
+     - `shackleTrolleyHoistsWithoutFlinging`: a cow under a chain rises to the trolley at the hoist's pace, and the
+       trolley then carries it on (69 to 71 blocks a second before).
+   - **Not fixed: a player right against the body is still jostled.** In the seventh run the Butcher stood against the
+     cow as it rose. It lifted him about a block and a half, from where it had pressed him into the ground, and carried
+     him about two blocks sideways, once at 22 blocks a second in a single tick; he was off the ground for about 14 ticks
+     (`run/mp-watcher/screenshots/mp_watcher_04_hanging.png` shows him in the air, tangled with the rising cow). In the
+     fifth run he stood clear and nothing happened. So the hoist ends the throw across the world, not the jostle. The drag
+     already stops pulling a body that touches its player; the hoist could wait the same way, but then a body would hang
+     low for as long as a player stands by it. Left for package 1, with the drag.
+2. **Walking forward while dragging carries you off** (not fixed here; for package 1. Fixed since: 15.21, "What you drag
+   never pushes you").
+   - The drag pulls the hooked point to 1.1 blocks in front of where the player looks. Walking forward, facing where
+     you go, pulls the carcass into your path. You walk into it and it pushes you, which moves the point it is pulled
+     to, and so on.
+   - In the second run the Butcher stopped walking and was still carried about 20 blocks over four and a half seconds,
+     the drag holding throughout.
+   - Walking backwards and sideways facing the carcass, as the later runs do, works. A hauler holds its carcass
+     behind it; whether a player's drag should too is a question for package 1.
+3. **A client failed to start once** in fourteen starts, with Registrate's "Found unused register callbacks" while
+   loading mods. It did not happen again.
+4. **A cut leg fell through the ground** (not fixed; not reproduced).
+   - In the seventh run the front leg, cut off the hanging cow, fell four blocks, touched the grass, and went on
+     falling through it into the void as if there were no ground at all (it fell at the rate of gravity, 250 blocks
+     down within eight seconds). Both the server and the Watcher had it so: the Watcher's picture after the cut shows the
+     blood but no leg (`docs/screenshots/multiplayer_cut.png`). The leg was cut off in three of the seven runs (the
+     fourth, fifth and seventh); in the other two it lay on the grass by the rack.
+   - Game tests of the same thing did not reproduce it in 42 runs, over a hundred legs: a hung cow's leg cut off over
+     stone and over grass, legs dropped from four blocks onto chunk borders, and legs with blood stains put down under
+     them. Every leg stayed on the floor.
+   - So it happens on a dedicated server, sometimes. Sable only builds the ground a body can hit in the chunk sections
+     near a body (`PhysicsChunkTicketManager`), so that is where to look first. Until it is found, a cut limb can be
+     lost now and then.
+
+**A dozen carcasses at once.**
+
+- **The tests** (`CostTests`). `dozenCarcassesAtOnce` drops twelve fresh carcasses of every size from up to three
+  blocks: chicken, rabbit, pig, sheep, cow, wolf, villager, zombie, spider, horse, llama and polar bear, 79 bodies in
+  all. Each is knocked over as a kill knocks it. `dozenHungCarcasses` hangs the same twelve on twelve Shackle Hooks.
+  Both time every server tick.
+- **Measuring.** Each was run on its own, with `-Dbloodandbones.debug.cost=N`, on the same four-core machine. Then the
+  dozen test makes N dozen in the same tick in its one arena, 33 blocks across. Before anything is timed it makes a
+  dozen and clears it away, so that nothing timed runs for the first time. The hung dozen is timed for a minute. In the
+  full suite the tests only check that all the dropped carcasses come to rest on the floor, and that every hung one is
+  hoisted to its hook's tip without being flung.
+- The first measurement, which the review looked at, is replaced. It never timed the tick the carcasses were made in
+  (the 49 to 58 ms it gave was the first physics step after, with nothing run before it). Its 24 and 48 were copies of
+  the test side by side, made up to a second apart, and it showed the empty-arena time of only one copy (the others
+  were 18 to 27 ms, with spikes of about half a second, from the copies around them).
+
+| Carcasses | Empty arena, mean | The tick they are made in; the next | Awake, the 5 s after: mean / 95th percentile | All resting, mean | All at rest after |
+|---|---|---|---|---|---|
+| 12 (two runs) | 1.1 and 1.3 ms | 143 and 149 ms; 19 and 26 ms | 7.5 / 11.1 and 8.7 / 12.6 ms | 1.6 and 1.6 ms | 11 s and 9 s |
+| 24 | 1.2 ms | 334 ms; 41 ms | 14.7 / 19.5 ms | 2.1 ms | 8.5 s |
+| 48 | 1.4 ms | 571 ms; 70 ms | 26.5 / 32.0 ms | 1.9 ms | 15 s |
+| 12 hung on hooks | 1.4 ms | (hung one by one) | 6.6 / 8.6 ms over the whole minute | none rest | never |
+
+These are milliseconds of a server tick, whose budget is 50.
+
+- **Making a carcass is the dear part: about 12 ms each**, in the tick of the kill. One kill is a quarter of a tick; a
+  dozen kills in the same tick stall the server for a seventh of a second.
+- Awake, a carcass costs about 0.55 ms of every tick. Resting ones cost little: the 79 bodies of a dozen become 12, and
+  a dozen to four dozen resting add under a millisecond to the empty arena.
+- **A hung carcass never rests.** `CarcassRest.isHeld` keeps a hung, trolleyed or dragged carcass out of its resting
+  form, and the hook's belly-out spring pushes its torso every physics step, which keeps all its bodies awake. A dozen
+  hanging cost about 5 ms of every tick, 0.43 ms each, for as long as they hang: all 79 bodies were still awake after a
+  minute. Trolleys hold their bodies the same way (the same joint and spring) and were not timed apart.
+- **The per-dimension cap of section 3.4 is still open, and was not built.** Carcasses on the ground are cheap: a dozen
+  awake use about a sixth of the tick for the ten seconds or so before they rest, four dozen about half of it for
+  fifteen seconds, and then almost nothing. But a butchery line keeps its carcasses hanging: 48 on hooks or trolleys
+  would cost about 20 ms of every tick, all the time. So a line of hung carcasses needs a cap, or a still, hung carcass
+  that is let sleep (the spring left off once it hangs still), or folded as a resting one is. And many kills in one tick
+  are costly on their own. Decision 3 (every kill leaving a damaged carcass) would bring both, so settle them together.
+- **It found a rabbit spinning on its hook** (fixed). The hook's and the trolley's turn spring used a mass of at least
+  0.05 for a torso. A rabbit's torso is 0.018, so the spring was nearly three times too stiff for it and spun it at about
+  60 radians a second; being hoisted, it never came up to the tip. They now use the body's own mass. Without the fix
+  `dozenHungCarcasses` fails with the rabbit 3 to 6 blocks short of its tip.
+
+**A spider never rested** (fixed; found by the dozen).
+
+- Its eight thin, light legs twitched against the ground for ever: 0.1 to 1.5 radians a second, a leg's tip wandering
+  up to a tenth of a block in three seconds. That is above the stillness bar, so a dead spider kept eleven bodies of
+  physics running for good, and the whole dozen never all came to rest.
+- A carcass now also rests once all its bodies have stayed where they lie for five seconds, however they twitch: each
+  within a quarter of a block, the torso within a tenth (`CarcassRest.stayedPut`).
+- Spiders and cave spiders now rest in under six seconds, and the dozen in 9 to 14. Without this, `dozenCarcassesAtOnce`
+  fails with the spider still awake.
+
+**Tests for what was built but unproven** (`UnprovenTests`). Each was also run with its feature taken out, and failed:
+
+| Test | What it shows | Taken out to prove it |
+|---|---|---|
+| `fanSpeedsUpBleeding` | a hung cow bleeds 110 mB in five seconds with no fan, and 310 mB with a fan at 128 RPM under it | the fan's boost in `CarcassBleeding.tick` |
+| `skeletonCannotBeSkinned` | eight Flensing Knife strokes do nothing to a skeleton: no hide, no bare flesh | the no-hide check in `CarcassButchery.skin` |
+| `bloodNeverMakesASourceBlock` | a gap between two sources of blood (and of Soul Blood) fills with flowing blood, never a new source | blood and Soul Blood made able to form sources |
+| `degloverSkinsASingleLimb` | a cow's leg put down on its own on a turning Deglover comes off skinned | the Deglover limited to whole carcasses |
+| `guillotineLimbGoesToAMinionAndAWallHook` | a Guillotine takes two legs off a cow, never its head; both are picked up; one hangs on a Butcher's Hook, and the other is fitted to a cow's frame and the minion wakes walking on it | the Guillotine's cut |
+| `killWithoutTheMeatHookLeavesNoCarcass` | pigs killed with a sword, with a bare hand and by plain damage die and drop pork, with no carcass | the Meat Hook check in `CarcassEvents.onDeath` |
+| `pieceRidesABelt` | a leg cut off a cow is picked up and dropped on a running belt; it rides to the end and falls off, the same piece | pieces becoming items (`CarcassButchery.pickUp`) |
+| `magnetCoilAtHighSpoolDrawsInACarcass` | a cow seven blocks off stays put below three quarters of full spool; at full spool it is drawn to 3.3 to 4 blocks in two seconds | the coil's carcass pull |
+| `grapplingSpoolHandsACarcassToTheDrag` | a cow lying still six blocks ahead is hit by the spool, reeled in, and then held by the Meat Hook's drag | the hand-off to `CarcassDrag.start` |
+| `shackleHookHoistsWithoutFlinging`, `shackleHookReloadedPartWayUpKeepsHoisting`, `shackleHookHoldsACaughtBodyWhereItGotTo`, `shackleTrolleyHoistsWithoutFlinging` | see item 1 above | the hoist, and each of its three fixes |
+| `dozenHungCarcasses` | see the dozen above | the turn spring's own mass |
+
+The Grappling Spool test turned something up too. Run in the full suite, and then 30 times on its own, it failed 7
+times in 30. The spool gave a carcass it reeled in only 20 ticks more than a mob (a mob gets 34 ticks for a spool
+fired at once, so a carcass had 54), but a carcass is dragged along the ground, far slower than a mob is yanked
+through the air: a cow six blocks off came within reach just as the time ran out, or just after, and was then never
+handed to the Meat Hook's drag. A carcass now has 100 ticks more than a mob (`ModuleActions.CARCASS_HAUL_TICKS`): 80
+more than before, 134 in all for a spool fired at once. The cow arrives in about 58 ticks of its 134, and the test
+passed 30 times in 30, and the ten new tests 10 times each.
+
+What is not built of these: the Guillotine leaves the limbs it cuts on the floor, as bodies, and nothing but a player
+takes them further. It has no output to a belt or funnel, and nothing puts a piece on a wall hook or a minion frame by
+itself (package 4 and decision 9). Nor does it "wind up and drop on a redstone edge": it cuts on a timer while it turns
+(package 15).
+
+**On screen.** The showcase gains a slow belt east of the decoration row, with a Depot at each end and three carcass
+pieces dropped on it. In `showcase_17.png` (enlarged in `docs/screenshots/showcase_belt.png`) a pig's leg stands on the
+Depot at the end the belt runs to, and a cow's head and a cow's leg wait behind it on the belt, each drawn as the part it
+is.
+
+The Magnet Coil test reached into the tests beside it (found in review). At full spool the coil reaches 16 blocks, and
+an ordinary test area is 11 blocks across with 5 between: it drew in the carcasses and items of its neighbours, and a
+Grappling Spool test run beside it failed 6 times in 8, its cow pulled away by the coil faster than the spool reeled
+it in. The full suite only passed because of where the tests happened to be placed. It now has an area of its own 33
+blocks across (`empty_wide`) and stands in the middle of it, and fails at once if the coil's reach ever outgrows it.
+Run beside each other eight times, both passed every time.
+
+The suite is 466 tests (the 451 on main and the fifteen above), and passed three runs in a row.
+
+### 15.19 The machines, the three paths and the filters (docs/BRIEF-AUDIT.md packages 5, 10, 15 and 16)
+
+Built on 054cdfd. This closes audit package 16, and 15 except the Spit Roast's effects, which wait for the owner's
+decision 8. Packages 5 and 10 are partly built; what is left of them is listed at the end of 15.19.1 and 15.19.2. Decision 6
+is open, so the Flensing Knife and the Cleaver stay two tools. Main has since taken `bb-organs` (bfd6e0d), whose organs
+come from data (`Organs.held`) and whose `Surgery.harvest` also takes organs out of a carcass lying over the table.
+This branch counts organs under main's key and with main's functions (`organsTaken(traits, bone, root)`, `putDown`,
+15.19.5), so the two never keep two counts; when they meet, the rig's organ step (`SurgicalRig`, the three of a body and a
+head's two eyes from `Surgery#organs`) should give way to main's harvest, with the rig's filter asked as here.
+
+#### 15.19.1 The yield gap and three paths that stay apart (package 5)
+
+- **Paths are data.** `data/<ns>/butchery_path/<id>.json` (`ButcheryPath`: `scale`, a share per kind in `kinds`,
+  `loss`, `loot_table`, `scraps`), loaded by `ButcheryPaths`. `CarcassButchery.dropYields` multiplies each yield by
+  the path's share for its kind and by the hand's butchery yield, rolls the fraction as before, then rolls the loss once
+  for every whole item. The path is set around the work: `onPath(path, yield, action)`, or `byHand(who, action)`, where
+  a player's own hand or a minion's is the hand path at its `butchery_yield`, and a Deployer's stand-in or no one is a
+  station. A real player's `cut` or `skin` with no path set is by hand. Rot's crumbling keeps its own half, outside any
+  path. A path with no file takes everything.
+
+  | Path | Meat, bone | Offal, fat | Hide | Other | Loss | Also |
+  |---|---|---|---|---|---|---|
+  | `hand` | 0.6 | 0.6 | 0.6 | 0.6 | 15% | |
+  | `station` | 1 | 1 | 1 | 1 | none | |
+  | `mangler` | 0.25 | 0 | 0 | 0.25 | none | the mob's loot table with its torso, less what its table gives; scraps for every piece |
+  | `surgery` | 1 | 1 | 1 | 1 | none | the organs, from the rig |
+
+  By hand is 0.6 × 0.85, about half. A Flensing Knife or Cleaver in a player's hand, a Cleaver at the Butcher's Table or
+  the Surgical Rig in a player's hand and a butcher minion's blade are by hand. The Deglover, a Deployer's Cleaver at the
+  Butcher's Table and the Spit Roast's cooking are a station. The Mangler and a Deployer at the Surgical Rig have their
+  own. Every share is read somewhere: the hide share by the knife, the Deglover and the rig when they flay, and by the
+  Mangler for an unskinned piece it grinds (`CarcassButchery.groundHide`; its 0 grinds the hide away, and a datapack
+  that raises it gets hide back).
+- **`butchery_yield`** (PARTS-AND-TRAITS 5.7): an attribute from 0 to 4, 1 on players and minions. The trait
+  `keen_butcher` (+10% a level) is now data on it; no mob carries it yet.
+- **The Mangler** takes one stroke a piece. An attached limb is severed and ground in the same stroke
+  (`CarcassButchery.sever` now returns the piece's own record); a loose piece or a bare body is ground where it lies.
+  Grinding the rig's torso rolls the mob's own loot table (`CarcassButchery.rollLoot`: a fresh instance of the mob, never
+  added to the world, a generic damage source; a baby drops nothing and `doMobLoot` is obeyed, as vanilla's
+  `shouldDropLoot`). The mob is set as the carcass was where its loot reads it: a sheep's colour from its `wool` trait
+  and sheared once skinned or if it was sheared, a slime or magma cube at its size (the rig's baby is the smallest, else
+  the biggest). Any item the mob's butchery table also gives is left out of the roll: the table's quarter already
+  stands for it. Without that the drop came on top, and an iron golem's 3 to 5 ingots, a chicken's one raw chicken and a
+  cow's beef gave the "wasteful" Mangler as much as or more than a station. What is left is what no table gives: a
+  cow's leather, a zombie's rare iron, a skeleton's arrows. New sound `machine.grind` (slime, honey, bone and berry
+  bush), with a clean twin (15.19.3).
+- **Costs** (`MachineKind`: stress per RPM, stroke as a share of 80 ticks at 16 RPM, top speed):
+
+  | Machine | Stress/RPM | Stroke | Works faster up to |
+  |---|---|---|---|
+  | Mangler | 8 | 0.5 | 256 RPM |
+  | Guillotine | 4 | 1.0 (its wind-up) | 256 RPM |
+  | Beheader | 2 | 0.25 | 256 RPM |
+  | Deglover | 16 | 0.5 | 32 RPM |
+
+  The Beheader is the cheapest and quickest. The Deglover costs the most and gains nothing past 32 RPM (its goggles say
+  so), so a slow shaft is the sensible one.
+- **The Flensing Knife is held on a part.** `UseAnim.BRUSH`, a use of 72000 ticks. A right-click on a carcass part
+  starts the hold (`CarcassPartBlock`). `onUseTick` finds the part under the crosshair the way `BrushItem` does (Sable's
+  `clip` reaches into sub-levels), strokes every 10 ticks, and lets go when the hide is off after four strokes or when
+  the look leaves the carcass. A Deployer's stand-in never ticks a use, so each of its pushes is one stroke.
+- **The Surgical Rig is a whole path** (`SurgicalRig`). Each Cleaver cut takes one thing: first an organ, then the
+  hide if it is still on (all of it at once, `CarcassButchery.flay`; a carried piece its share, `pieceHide`), then a
+  limb at its joint (the end of a chain first), then the piece's whole table. It works a carried piece laid on the table
+  (once its organs and hide are out, the piece comes apart on the top), or, with nothing laid on it, a carcass lying on
+  its top (not one hanging over it from a hook or a trolley: `lyingOn` leaves those out). A Deployer's Cleaver works it
+  as a station, on the surgery path; a player's own hand gets the organs whole but the hide and meat on the hand path,
+  about half. Whoever cuts, a cut starts `SurgicalRig.PAUSE` (30 ticks) before the next may (`SurgicalRig.click`, kept
+  on the table so a Deployer is held to it too, and shown on a player's Cleaver as its cooldown), so the rig is the
+  slowest path at any speed. A carcass in the world counts each part's organs in its traits under main's key
+  (`organs_taken:<bone>`), which a piece picked up off it keeps; a carried piece counts under the plain key, and set down
+  (`CarcassPieceItem.useOn`, or off the Spit Roast) that becomes its bone's own (`Surgery.putDown`). A click that finds
+  nothing it may take lays the Cleaver on the table, as before; one the filter turned away says so.
+- **The Butcher's Table** also chops a loose piece lying on its top (`CarcassButchery.lyingOn`), so a torso too heavy
+  to carry can be dragged there. That is the full-yield end of the filtered path.
+- **Tests.** `cowDownEachPath` sends a cow down each path at 32 RPM. By hand: the knife held, then the Cleaver on each
+  joint and piece. The Mangler: until nothing is left. The stations: a Deglover, a Beheader and a Guillotine swapped in
+  under the body in turn, then a Deployer's Cleaver at a Butcher's Table swapped in under the body, with the light pieces
+  laid on it. The Surgical Rig: a Deployer's Cleaver, with the pieces that fall off laid back on, each cut the longer of
+  the Deployer's push and the rig's pause. One run:
+
+  | Path | Time at 32 RPM | At 256 RPM | What came out |
+  |---|---|---|---|
+  | By hand | 436 ticks | | 2 beef, 3 bone, 1 hide, 1 offal |
+  | Mangler | 126 ticks | 30 ticks | 2 beef, 1 bone, 1 leather (its drop), 19 scraps |
+  | Stations | 490 ticks | 135 ticks | 5 beef, 6 bone, 2 hide, 2 offal, 1 fat |
+  | Surgical Rig | 680 ticks | 510 ticks (510 by hand) | 5 beef, 2 bone, 3 hide, 1 offal, 1 fat, a heart, lungs, a stomach, 2 eyes |
+
+  It asserts that the Mangler is quickest and the Surgical Rig slowest at both speeds and by hand, that the Deglover's
+  hide is whole and so is the rig's, that the Mangler gives the cow's own drop and scraps but no hide or offal, and that
+  only the rig gives organs. It then rolls 300 cows down each path through the same code, the Mangler's with its loot.
+  By hand came to 0.51 of a station's meat and bone, the Mangler's to a quarter, and the Surgical Rig to all of it.
+  `handYieldIsAboutHalfWithRealLoss` shows the loss is real, apart from rounding: four beef exactly, by a hand whose
+  butchery yield makes up the share, still comes out short now and then, while a Deployer always gets four. It also shows
+  that a butchery yield of 2 gives about twice as much. `manglerGrindsInTheMobsOwnDrops` grinds an iron golem: no more
+  iron than its quarter of the table; a cow's loot gives leather and never beef; a black sheep's gives no wool, skinned
+  or not; a calf's nothing; a ground piece's hide goes at the path's share. `manglerKeepsTheLeastOfAnyMob` rolls 300 cows,
+  chickens and iron golems down the Mangler (loot and all) and by hand: the Mangler gets no more of any item the table
+  gives, and about half a hand's in all. `surgicalRigIsPacedWhoeverCuts` puts a real Deployer at 256 RPM over a rig
+  (three organs take at least two pauses) and a player clicking every tick at another (in three pauses, two eyes and the
+  hide, and the head still there). `surgicalRigByHandGetsAHandsShare`: a hundred cow bodies cut up at the rig by a
+  player's hand give 0.52 of a Deployer's meat and bone, and the Deployer's come to the bodies' whole table. (One cow's
+  rolls can give the rig as little as the whole numbers of its table, so `cowDownEachPath` asks no more of the one cow;
+  it asked for two bones, and one run in about seventy came up with one.) `machinesCostAsTheBriefSays` checks the costs.
+  `flensingKnifeIsHeldOnAPart` checks that a click starts the hold, three strokes are not enough, four are, and it lets
+  go. `rigTakesEachOrganOnce` (`SurgicalRigTests`) takes a cow's head's eyes as a carried piece, sets it down on the rig
+  and gets no more eyes; and takes a cow's five organs lying on the rig, cuts off its head, picks it up, lays it on the
+  rig and gets its hide, not an eye. `rigTakesTheHideAndLeavesAHungBodyAlone`: a leg's first cut flays it, a cow's sixth
+  (after its five organs) flays it whole, and a Cleaver clicked on a rig with only a hung cow over it is laid down.
+- **Not built:** nothing in survival carries `keen_butcher` yet, so `butchery_yield` is 1 on every player and minion;
+  which mobs' parts or which minion build gives it is for the balance pass (PARTS-AND-TRAITS slice 9).
+
+#### 15.19.2 Filters that pick one part (package 10)
+
+- `PartFilter` and `PartFilteringBehaviour` are taken out of the machine and shared. The filter is asked about each part
+  as the item that part would be (`CarcassPieceItem.of(carcass, bone)`, an organ as its organ item). A spawn egg or a
+  carcass piece means that mob; a list filter asks each entry, as a whitelist or a blacklist; an attribute filter asks as
+  Create would. The machine asks about every part it could take (`accepts(carcass, bone)`), and only unfolds a resting
+  carcass when one of its parts would be taken.
+- **A finer part attribute**, `piece_slot` (`BBItemAttributes.PieceSlot`), is "is a carcass hind leg / front leg /
+  middle leg / leg / tentacle / arm / wing / pair of arms / neck / back half". It comes from `PartSlots`, the slot rules
+  that are data, so a rabbit's haunch is a hind leg and a modded mob's legs sort by the same rules. Any slot key the
+  rules or a mob file give is one (a datapack's `arm.fin` too), worded from the lang file where it has words
+  (`bloodandbones.piece_slot.<key>`) and from the key's own parts where it has not ("fin arm"). It is offered for limbs
+  only: heads, bodies, tails and decoration are `piece_part`'s.
+- **The Butcher's Table and the Surgical Rig** carry the filter on the edge of their tops, on whichever side you look
+  from (`TableFilterSlot`, the Basin's pattern); the Surgery Table shows it only with the rig fitted. The table's item
+  handler takes only pieces its filter passes, so a funnel over a mixed belt pulls those and lets the rest go by. Its
+  Cleaver chops only those. The rig works only the parts its filter passes (an organ is asked about as the part it is
+  in, the hide as the body it comes off). A Create filter in the slot is the player's own item: both tables call
+  `IBE.onRemove`, as Create's blocks do, so breaking one drops it, and taking the rig off (or fitting the Assembly Frame
+  over it) hands it back and clears the slot (`SurgeryTableBlockEntity.takeFilter`).
+- **Cheap to wait.** A machine ready and idle looks every 2 ticks at first, and each look that finds nothing doubles the
+  wait, up to 10 ticks; a stroke resets it. A look passes over a record whose root lies more than 6 blocks from its zone
+  before touching the rest of it, and makes no map for a record with nothing in reach. The part filter asks the filter
+  the slot already read (`FilteringBehaviour`'s own `FilterItemStack`) rather than reading the item again each time.
+  The Mangler's `hasWork` now matches what it can take: a body counts only once nothing hangs off it, so a Mangler set
+  to bodies no longer unfolds a resting cow with its head on every stroke, for nothing.
+- **Not built, for the tasks work (decision 12):** the butchering minion's filter. The butcher job would read a filter
+  through `PartFilter.takes` the same way; which slot it lives in belongs with how a task is given (the audit says
+  package 10 needs no owner decision, but a minion's job is now a task, and how a task is given is decision 12).
+- **Not built:** a filter for single organs at the rig (take only hearts). The rig asks about the part an organ is in,
+  so the brief's "every station that removes parts carries a filter" holds for parts but not yet for organs. Organs
+  come from main's data now; the filter belongs with main's harvest when the two meet.
+- **Tests.** `partFilterAsksAboutEachPart` checks cow, pig and rabbit parts against hind-leg, head, egg and blacklist
+  filters, and what the Attribute Filter offers. `guillotineTakesOnlyHindLegs`: a Guillotine set to hind legs takes a
+  cow's two and then passes the rest over through a hundred more ticks of drops. `mixedLineSortsAtTheTables`: a
+  head-only table takes two heads out of a line of four pieces and turns the legs away; a head-only rig passes a body
+  over and takes a head's eyes.
+
+#### 15.19.3 The machines move (package 15)
+
+- **The Guillotine** keeps `wind`, `falling` and `powered`, all saved. While it turns it winds at one stroke's length
+  (80 ticks at 16 RPM, 40 at 32), on both sides (the client draws it), with a ratchet click (`machine.wind`), and holds
+  at the top, armed, with a clack. `CarcassMachineBlock.neighborChanged` hands `hasNeighborSignal` to `redstone()`: a
+  rising edge drops an armed blade (the Sequenced Gearshift's way), it falls for 4 ticks and cuts one limb at the bottom,
+  and it winds up again. A pulse while it winds is wasted, and a signal held on is not an edge. Its goggles show
+  "Winding up: N%" or "Armed".
+- **Strike when ready.** The Mangler, Beheader and Deglover count up to a stroke and then wait ready, looking every 2
+  ticks and striking as soon as something they take is in reach. A Beheader under a chain takes the head off a passing
+  trolley (`beheaderTakesHeadsOffAPassingTrolley`).
+- **Moving parts.** `CarcassMachineRenderer` follows Create's own kinetic renderers (`MechanicalMixerRenderer`): a
+  partial model per part, turned by render time and speed. The Mangler has two toothed grinders turning into each other
+  in an open pit (a new block model and a `mangler_grinder` texture). The Deglover has two rollers turning against each
+  other, the Beheader a saw at four times the shaft, and the Guillotine its blade and weight, with a rope stretched to a
+  drum on the crossbar. `BBPartialModels` has a clean twin of each bloody part, drawn in bloodless mode. The block models
+  lost their moving parts; the items keep them, standing still (`block/<kind>_item`). Every face of the machines' models
+  above the block now has its own UV; before, the Guillotine's posts and crossbar, the Mangler's rim and the Beheader's
+  slots sampled their neighbours on the texture atlas.
+- **The Spit Roast takes whole carcasses.** Right-click it with the Meat Hook while dragging one (within 3 blocks), or
+  with one lying over it. Every piece goes on and the bodies leave the world (`CarcassButchery.takeAway`). The cook time
+  goes by all its meat, up to 4800 ticks. Cooked, it gives every piece's yields cooked; raw, it is set down on the spit
+  whole again (`CarcassAssembler.assembleWhole`: its root piece laid as a carried piece is, every other piece at its place
+  on the living mob round it, joined to its parent, the whole lifted clear of the ground, built folded and unfolded at
+  once, as `CarcassRest` unfolds a still body). The spit remembers that it holds a carcass from the world (`Carcass`,
+  saved), not a count of pieces, so a torso with every limb cut off is still one: it never goes into a hand, however
+  it comes off, and cooks to the whole carcass's cap. It is drawn whole at its rest pose, head to tail along the spit,
+  turning. It now cooks
+  |RPM| / 32 times the campfire pace, up to 8 at 256 RPM (it was 1 + RPM/64, at most 2): a Hand Crank at 1, a fast shaft
+  eight times that (`shaftCooksFarFasterThanACrank`, `spitRoastTakesAWholeCarcass`).
+- **Not built, for decision 8:** effects on cooked results.
+- **Sounds in bloodless mode.** A server plays the same sound for everyone, so each client picks: `BloodlessSounds`
+  swaps a gory sound for its clean twin on `PlaySoundEvent`. Only `machine.grind` has a twin so far; the other sounds are
+  audit package 9's.
+- Ponder: the four machines' scenes say what each takes and add a line on the filter; the Spit Roast's and the Butcher's
+  Table's scenes cover whole carcasses, the crank, the hand's half and the filter. The line on the shaft is each
+  machine's own (`BBScenes.speedLine`): the Guillotine only winds faster, the Deglover is no faster past 32 RPM. The
+  Guillotine's scene puts a lever beside it, says that only a redstone pulse drops the armed blade, and drops it.
+- Showcase: row F, west of the machines, has the four machines bare with their parts turning, a Guillotine armed and one
+  stopped part-wound, and the Butcher's Table and Surgical Rig with filters set. There is also a whole cow on a spit, the
+  row B Mangler set to limbs (it grinds a cow's legs and leaves the body), an observer clock dropping row B's Guillotine,
+  and the knife held on a carcass in the second hand shot.
+  Pictures: `docs/screenshots/machines_moving.png`, `guillotine_armed_and_winding.png`, `whole_cow_roast.png`,
+  `table_filters.png`, `mangler_limb_filter.png`, `bloodless_machines_moving.png`. Since the review (15.19.5): a third spit
+  whose cow was taken off raw, standing whole over it (`spit_raw_set_down_whole.png`); a cow's hind leg flayed on the rig
+  in row F (`rig_flayed_leg.png`); and the Guillotine's Ponder with its lever (`guillotine_ponder_lever.png`).
+
+#### 15.19.4 Cold air and other addons' freezing (package 16)
+
+- `FanAirflow.processingAt` gives every fan current through a block and its processing there, not only the fastest.
+  `CarcassRot.rateAround` asks at the torso's block and the one under it (a body lies low in air along the floor). A
+  processing type tagged `#bloodandbones:preserves` stops rot; `#bloodandbones:chills` quarters it. These are tags on
+  Create's `fan_processing_type` registry. `create_dragons_plus:freezing` is in `preserves` (optional). `chills` is
+  empty, for other addons.
+- Tests. `freezingFanKeepsACarcass` uses a real encased fan blowing through powder snow, Dragons Plus's own bulk-freezing
+  set-up: a cow four blocks past the snow does not rot, and one in a plain fan's air beside it does.
+  `dragonsPlusFreezersKeepACarcass`: Dragons Plus rates ice a passive freezer, which quarters rot, and a block another
+  addon registers in Dragons Plus's `BlockFreezer` registry as freezing stops rot outright, though none of our own tags
+  name it.
+
+#### 15.19.5 What the review found
+
+A review of this section's work made 19 findings about 15 things: three were made twice, and the two about the organ
+count are one. Each was checked in the code and found real before it was fixed, and each fix has a test that fails
+without it (or, for what only a client decides, a test of the server's half).
+
+- **An organ could come out twice.** A carried piece counted its organs under `organs_taken`, a carcass lying on the rig
+  under `organs_taken.<bone>`, and neither read the other, so a head carried, cut and set down on the rig gave its eyes
+  again. Now one count, main's (`organs_taken:<bone>`, `Surgery.organsTaken(traits, bone, root)` and `putDown`, the same
+  code as main's): a piece set down turns its own count into its bone's. The dot key never left this branch, so nothing
+  reads it. `rigTakesEachOrganOnce`.
+- **Table filters were lost** when a Butcher's Table or a Surgery Table was broken, and stranded in a slot that was no
+  longer there when the rig came off. 15.19.2. `tableFiltersAreNeverLost`.
+- **The Mangler unfolded a body it could not grind**, stroke after stroke. 15.19.2. `manglerLeavesABodyItCannotGrind`.
+- **The rig by hand was full yield and unpaced**, quicker than a Mangler and richer than any station. 15.19.1: by hand is
+  the hand path, and every cut waits `SurgicalRig.PAUSE`. `surgicalRigIsPacedWhoeverCuts`, `surgicalRigByHandGetsAHandsShare`,
+  and `cowDownEachPath` at 256 RPM and by hand.
+- **Idle machines looked for work at many times the old cost.** 15.19.2.
+- **The other hand lost its turn** with a Cleaver at an empty Butcher's Table or the Meat Hook at an empty spit: the
+  client consumed the click. Both sides now decide alike from what both can see: at an empty table, a Cleaver lets a
+  piece the table would take in the other hand go on first; the hook swings only at an empty spit, while dragging or
+  with no piece in the other hand to skewer. `theOtherHandHasItsTurn` checks the server's half.
+- **A body could be carried off the spit** once only its torso was left. 15.19.3. `spitRoastKeepsAHeavyBodyABody`.
+- **The rig destroyed the hide.** It flays now, as one of its cuts (15.19.1); the Mangler's hide share is read too.
+  `rigTakesTheHideAndLeavesAHungBodyAlone`, and the rig's hide in `cowDownEachPath`.
+- **The Mangler's loot came on top of its share**, so it could beat a station. 15.19.1. `manglerKeepsTheLeastOfAnyMob`.
+- **Package 10 was claimed closed.** It and package 5 are marked partly built here and in the audit, with what is left.
+- **The loot was rolled for a mob in its default state** (a black sheep dropped white wool). 15.19.1.
+  `manglerGrindsInTheMobsOwnDrops`.
+- **`piece_slot` knew only the shipped keys.** 15.19.2. `pieceSlotTakesAnySlotTheDataGives`.
+- **The Ponder said every machine works faster the faster it turns**, and never showed the Guillotine's redstone. 15.19.3.
+- **A Cleaver on the rig did nothing and said nothing** when only a hung body or a filtered one was over it. A hung body
+  is not lying on it now; a click with nothing to take lays the blade down, and one the filter turned away says so.
+- **A raw carcass came off the spit as six pieces heaped at one spot.** It comes off whole (15.19.3), looked at in the
+  showcase. `spitRoastTakesAWholeCarcass` now checks one body, six pieces, five joints, the head off the body and the
+  legs apart.
+
+- The suite is 442 tests.
+
+#### 15.19.6 Merged with the organs and the checks (verified)
+
+The branch met main's organs (15.16 to 15.17b) and checks (15.18) on the integration branch, as the start of 15.19 said
+it should.
+
+- **One organ system.** The rig's organ step is main's harvest now. `SurgicalRig` asks `Surgery.organsLeft` (main's
+  `Organs.held`, less what was taken) and hands the cut to `Surgery.harvest`: for a piece laid on the table the four-argument
+  one, as before; for a carcass lying on its top a new `Surgery.harvest(level, surgeon, table, blade, carcass, bone)`, the
+  body of main's carcass branch, which counts under `organs_taken:<bone>`. The rig walks main's order (`Surgery.organBones`:
+  the torso, then what is still attached, and a resting carcass's rest poses) and asks its filter about each bone before
+  cutting. `Surgery.organs(kind)` (the machines' fixed heart, lungs, stomach and two eyes) is gone, and so is the rig's own
+  organ item and count. So a cow gives its rumen at the rig too, a skeleton its marrow (dry, the blade left clean), and an
+  organ never comes out twice whichever way the part reached the table. The organ step runs before the rig unfolds a
+  resting carcass, so organs come out of one folded to rest where it lies, as main's did; the hide, limbs and meat after
+  them unfold it first, as the machines' did.
+- **Which carcass.** A click with the blade on an empty table goes to the rig whenever a carcass lies on its top
+  (`CarcassButchery.lyingOn`: not one hanging over it). Main's wider zone (`Surgery.carcassOn`, the Assembly Frame's) is
+  still what the four-argument `Surgery.harvest` uses when it is called with nothing laid on the table.
+- **Tests changed to fit.** The machines' rig tests count six organs for a cow (four in the body, two eyes) and flay on
+  the seventh cut; `cowDownEachPath` also expects the rumen, and no Gland from any other path;
+  `surgicalRigByHandGetsAHandsShare` marks the body's organs out by the organ data's count. Main's
+  `heavyCarcassOrgansOnRig` and `restingCarcassOrgansOnRig` click once each of the rig's pauses (they clicked six times in
+  one tick), expect the rig's next cut after the organs to be the hide rather than the Cleaver laid down, and the resting
+  one checks the carcass is still folded when its organs are out. `guillotineLimbGoesToAMinionAndAWallHook` (15.18) now
+  drops the Guillotine with a redstone pulse, as 15.19.3 has it.
+- **Showcase.** The debris shot is found by its view, not a fixed index, now that both sides added views.
+
+### 15.20 Materials, bloodless mode and the decoration leftovers (audit packages 14, 9 and 17)
+
+What docs/BRIEF-AUDIT.md packages 14 (blood, Soul Blood and the materials as written), 9 (finish bloodless mode)
+and 17 (decoration leftovers) asked for, built on main after 054cdfd. Package 14 and package 9 are closed (package
+14 leaves the owner one question, in 15.20.2: a press as a second way to congeal); package 17 is closed except the part
+that waits on decision 9 (below). Package 2's line about hand-written recipes is closed too.
+
+#### 15.20.1 Recipes come from datagen
+
+- All 78 hand-written recipe files are now written by `datagen/BBRecipeGen`, run through Registrate's recipe
+  provider, as section 8 decided ("never hand-written"). Create's processing recipes use Create's own builders
+  (`StandardProcessingRecipe.Builder`, `SequencedAssemblyRecipeBuilder`), so they come out in whatever format Create
+  reads, in a folder named for their type as Create's do (`filling/blood_steel_ingot`); the CDG basin fermenting
+  recipe goes through the same builder with CDG's own recipe class. Crafting recipes are the game's own recipe
+  objects written with their own codecs; the palette's stairs and slabs use Registrate's helpers.
+- The generated files were checked against the hand-written ones before anything changed: all 78 matched, apart
+  from the new ids of the 11 processing recipes (and a `loops: 1` Create leaves out as its default).
+
+#### 15.20.2 Soul Blood, the Blood Diamond and the tags (package 14)
+
+- **Tags.** Soul blood has its own tag, `c:soul_blood` (and `c:buckets/soul_blood`), apart from `c:blood`. Liquid
+  experience is our own tag, `bloodandbones:liquid_experience`, holding Create Enchantment Industry's fluid: a point
+  of experience a millibucket, as Enchantment Industry counts it. It is not `c:experience`, which NeoForge counts at
+  20 mB a point: with both in one tag, a recipe by the millibucket costs twenty times less in one mod's fluid than
+  another's (Enchantment Industry keeps its fluid out of the common tag too, and converts other mods' by its own
+  unit data map). The Blood Diamond and the mixing shortcut ask for our tag; the Vent Arm pays any liquid
+  experience at its own rate (`Vent.mbPerPoint`: Enchantment Industry's unit for its own fluid and those in its
+  data map, a point a millibucket for our tag, 20 mB for the rest of `c:experience`).
+- **Every consumer matches the tags**, not our fluid: every recipe's fluid ingredient is a tag ingredient (Create
+  reads NeoForge's `SizedFluidIngredient`, which takes tags; Create's own honey compacting does the same); organic
+  implants run on `c:blood` and cybernetics on `c:soul_blood` (`ImplantItem.fuelTag`); perfusion takes any
+  `c:blood` (`Necrosis.perfuse`); the throttle, its gauge and the Vent Arm's spill read the tags
+  (`BBFluids.isBlood`, `isSoulBlood`); a minion is fed and woken, and the Surgery Table takes, any bucket in
+  `c:buckets/blood`; the Blood Trough was already on `c:blood`.
+- **The soul blood line** (section 8's decided chain): a Diesel Generators Basin Lid on a basin sets 250 mB of
+  blood into **Congealed Blood** in ten seconds (`createdieselgenerators:basin_fermenting`); an Encased Fan blowing
+  through soul fire haunts it into a **Soul Clot** (`create:haunting`); a Mechanical Mixer over a superheated basin
+  melts the clot back into 200 mB of soul blood (`create:mixing`). Four fifths of the blood comes back as soul blood.
+  For a while the congealing was a Mechanical Press over a heated basin (the brief names "pressing"); a review
+  found that overrode section 8 and 12's decision, so it is the Basin Lid again. **For the owner:** whether the
+  press should come back as a second way to congeal.
+- **The shortcuts, much weaker.** Superheated mixing of a bucket of blood, soul sand and 100 mB of liquid experience,
+  and CDG fermenting of a bucket of blood with soul soil and two nether wart, each give 100 mB: a tenth, against the
+  full line's four fifths. Under the same lid a basin tries the recipe with the most items first (Create's
+  `BasinOperatingBlockEntity`), so wart and soul soil in with the blood go the shortcut way, and blood alone sets.
+  The trickle path (nether mobs bleeding soul blood) is unchanged.
+- **The Blood Diamond** is a sequenced assembly, as the brief and section 8 have it: a diamond through a Spout of
+  1000 mB of blood (`c:blood`), then a Spout of 1000 mB of liquid experience (`bloodandbones:liquid_experience`), one pass, through an
+  **Incomplete Blood Diamond**. The one-fill recipe of soul blood is gone. Soul netherite keeps section 8's decided
+  form (a Spout of 1000 mB of soul blood, then a Deployer with a super experience block), now on `c:soul_blood`.
+  The Blood Diamond's advancement now follows Blood Steel, not Soul Blood.
+- **The gauge** (`client/BacktankGauge`), styled as Create's air gauge (`RemainingAirOverlay`) and in its place, to
+  the right of the hotbar's top, drawn with Create's `GuiGameElement`: the worn tank, what it holds in buckets to a
+  tenth, and a bar of the fluid's own texture in its own tint, as far along as the tank is full. Unlike Create's it
+  is always up while a tank is worn, and while any powered implant is fitted (with no tank, a faded copper tank and
+  0.0 B). Under the bar sit the powered implants, half size on a dark strip, dimmed when the tank does not feed them, so a blood-fed
+  Flesh Arm reads as running and a Hydraulic Arm on the same tank as not. With implants and under a tenth full, the
+  reading flashes red as Create's does. While Create's own air gauge is up (a Create backtank's air breathed under
+  water or in lava, checked as `RemainingAirOverlay` checks it), this one moves up a row, clear of Create's even
+  where Create draws a netherite tank lower. The backtank's item bar is the fluid's colour too (its texture's average,
+  tinted), no longer always red.
+- Items: Congealed Blood, Soul Clot and the Incomplete Blood Diamond, each with a clean copy of its texture for
+  bloodless mode (essence brown, the item model's `bloodandbones:bloodless` override); descriptions, the JEI soul
+  blood pages (on the bucket, the clot and the congealed blood) and the implants page on the gauge.
+- Tests (`MaterialsTests`): `soulBloodTaggedApart`; `fillingRecipesTakeTheTags`, `soulBloodLineRecipes` and
+  `sequencedMaterialsRecipes` read each recipe back from the loaded recipes (type, item ingredients, fluid tag and
+  amount, heat, outputs and amounts, the full line at least five times either shortcut, the old one-fill diamond
+  gone, the press's congealing gone); `spoutsMakeABloodDiamond` runs a real Spout over a Depot (blood, then
+  experience makes the diamond; a Spout of experience first leaves a diamond alone); `basinLidSetsBlood` (and a
+  basin with no lid does not), `fanHauntsCongealedBlood` and `mixerMeltsSoulClot` run the line on the machines;
+  `ventPaysLiquidExperienceAtItsOwnRate` (Enchantment Industry's a point a millibucket, the rest 20 mB, and a real
+  shot); `implantsRunOnTheTags` (a Flesh Arm on blood and not soul blood, a Hydraulic Arm the other way, perfusion
+  only with blood, water runs neither). `soulBloodTaggedApart` checks Enchantment Industry's fluid is in our tag
+  and not in `c:experience`.
+
+#### 15.20.3 Bloodless mode finished (package 9)
+
+- **Words** (`BloodlessWords`): a carcass is a wreck ("constructs not corpses": a working body is a construct, a
+  dead one a wreck), carcass armour plated armour, severed detached, amputation replacement, a stump a socket, flesh
+  plated, necrosis wear; vanilla's Rotten Flesh keeps its name. Own bloodless text where the rewording would read
+  badly: the Plated Arm (Flesh Arm), Cabled Leg (Sinew Leg) and Furnace Hopper (Furnace Stomach) and what they say,
+  the four carcass armour pieces as Plated Helmet and so on, a piece's keeping as Sound, Worn and Corroded and a
+  skinned one as Stripped, the flesh set bonus, the implants JEI page. Organs already had theirs (Lens, Pump,
+  Bellows, Hopper).
+- **Looks.** A carcass is drawn as a wreck of a construct (`client/ConstructPlating`): each mob texture's plated
+  copy, made once on the client and kept (reloaded with resources), in three tones of cold steel taken from the
+  texture's own light and dark, with a dark seam wherever the tone drops and rivets every few pixels, so a cow's
+  patches read as a cow's plates. A skinned one is the darker frame under the plating. Coats (wool, a llama's decor)
+  are plated too, and so are minions, which are drawn the same way. The Plated Arm and Cabled Leg, the severed limbs
+  and the organs have plated icons, and the two implants a plated look on the body (`BodyRendering.worn`). The bits
+  that come off a carcass when it lands, rolls or is struck (the carcass block's own particles, red specks of meat)
+  come off as steel, and a blood stain scuffed away (drawn as nothing) leaves specks of mud, not blood: the
+  showcase caught both as red on the ground beside the plated wrecks.
+- **Sounds.** Every wet sound the mod plays is its own event (`BBSounds`), with a metal twin
+  `bloodless.<name>`: vanilla anvil, chain, iron and grindstone sounds pitched in sounds.json, and a chain rattle
+  laid over the heavy ones (thud, sever, crumble), for real files to replace later. The mod no longer plays
+  vanilla slime and honey sounds itself: those calls, and the Gut Chain's and blood stains' sound types, now play
+  `flesh.*` and `stain.*` events (squelch, squish, slide, tear, step, slap), the trait effects' shoves play
+  `flesh.lunge` (a lunge), `flesh.fling` (the launch action) and `flesh.slap` (an area shove, a thud on the other),
+  and Bleeding's drip is `blood.drip` (bloodless, oil dripping). The game always plays the wet one;
+  a client in bloodless mode hears the twin, where the wet one was, as loud and at its pitch
+  (`client/BloodlessSounds` on NeoForge's `PlaySoundEvent`, reading the asked volume and pitch through a client
+  mixin accessor). Twins have their own subtitles ("Wreck clanks", "Plating is cut").
+- **The rule, tested.** `BloodlessTests.onlyPresentationReadsBloodless` reads every class of the mod with ASM (from
+  the mod file's scan data) and lists each method that reads the client setting or the game rule. It fails if any
+  is outside presentation code: the client package, the setting and the game rule themselves, the tests, and four
+  named methods elsewhere (the fluid's tint and fog, Create's description cache, the carcass armour's texture, and
+  the Gut Chain's renderer). It also fails if the mod reads any vanilla sound event or block sound type whose name
+  starts with `SLIME_` or `HONEY_`, or the water drip, and checks it really found the known readers and a known
+  vanilla sound (Bleeding's hiss), so an empty scan cannot pass. `bloodlessTextIsClean` reads the language file and fails on any
+  reworded line that still shows blood, gore, guts, a carcass, flesh, severing, a stump, necrosis, sinew, maggots
+  or stitches, and checks the names above. `everyWetSoundHasATwin` checks every twin is registered, in sounds.json
+  with metal under it and a subtitle, and that the Gut Chain and stains sound through them.
+
+#### 15.20.4 Decoration leftovers (package 17)
+
+- **The Butcher's Hook takes every body part** (brief: "accepts any carcass or body part as a rendered
+  attachment"): whatever is in the item tag `bloodandbones:hangs_on_hooks` (data): carcass pieces, severed limbs,
+  organs, scraps, the mod's meat, offal, fat, hide and clots, vanilla meat and fish, heads, rotten flesh, bones,
+  leather, hides, rabbit's feet, spider eyes, ink sacs, feathers, membranes, slime balls, ghast tears, blaze rods
+  and scutes. A carcass piece is drawn as the body part it is, as before; anything else as its item, speared through
+  its top on the hook's point, swaying and twisting a little. What is in `bloodandbones:drips_on_hooks` (severed
+  parts, organs, scraps, raw meat, offal, hide) drips for a minute once hung, soul blood from a nether mob's parts,
+  nothing from a skeleton's. Where it came from is read from the item's source stamp, whatever the item (severed
+  parts and organs, scraps, raw hides all carry one). A player hangs anything in the tag by using it on the hook.
+- **Not built, decision 9:** heavy whole carcasses on the wall hook. They are bodies, never items (section 15.1
+  #5), and whether the hook should take them is the owner's call.
+- **Bloody Train Casing:** Create's train casing (`railway_casing`) filled with 250 mB of blood, joined up top and
+  sides as Create's is (`BuilderTransformers.layeredCasing`, two connected sheets); Create's four sheets with blood
+  painted over. Bloodless: Create's own (`BloodlessSwap.RAILWAY`).
+- **The small stained palette** (section 7): Create's cut calcite, polished cut calcite, cut calcite bricks and
+  small calcite bricks, white as a slaughterhouse wall, spout-filled with 100 mB of blood each, blood run into the
+  joints; a stonecutter turns the stained cut calcite into the other three, and each has stairs and a slab (crafted
+  or cut). Bloodless: Create's plain calcite (`BloodlessSwap.PALETTE`), named Stained.
+- **The grazers' scrap material is Brawn**, not Hide (grazers, horses and pigs): cow boots of scraps alone read
+  "Cow Brawn Boots", and "Hide:" on the tooltip means a hide really is fitted. The data id `hide_plate` is unchanged.
+- Tests: `butcherHookTakesEveryBodyPart` (a player hangs a heart by using it; the hook takes a severed arm, scraps,
+  beef, a zombie head, a bone, a skeleton's heart and scraps, a piglin's scraps and a hoglin's raw hide, and refuses
+  a diamond, stone and a Cleaver; the cow's heart leaves a red stain, the bone and the skeleton's heart and scraps
+  none, the piglin's scraps and the hoglin's hide soul blood); `decorationRidesAContraption` now pushes the train
+  casing with a stained stair on it; `craftCowBoots` checks the name; the new recipes are read by
+  `fillingRecipesTakeTheTags` and loaded in `recipesLoad`.
+
+#### 15.20.5 Looked at in the showcase
+
+Row F (normal and bloodless): the soul blood line (a Basin Lid on a basin of blood, a basin of what it set beside
+it, the fan and the mixer), the Blood Diamond on its depot, the train casing beside Create's and the stained palette
+with its stairs and slabs, and a wall of hooks hung with a severed arm, a heart, a piglin's scraps dripping soul
+blood, a zombie head, cow scraps, a pig's leg and an eye; `showcase_gauge.png`, the gauge over a copper tank of
+blood running a Flesh Arm and a Sinew Leg beside a dimmed Hydraulic Arm; `showcase_gauge_diving.png`, diving on
+Create's copper backtank with a Hydraulic Arm fitted: Create's air gauge in its place, this one a row above it. In
+the bloodless run the carcass shots show the plated wrecks, and the debris shot what comes off a carcass and a
+scuffed stain: steel and mud.
+
+- The suite is 432 tests (14 new: ten in `MaterialsTests`, three in `BloodlessTests`, one in `DecorationTests`).
+
+#### 15.20.6 Review (fixed)
+
+- The Butcher's Hook found where a hung part came from only on severed parts and organs, so scraps and raw hides
+  counted as bleeding red: a skeleton's scraps dripped blood and a piglin's red, not soul blood. It reads the
+  source stamp from any item now; the test hangs a skeleton's scraps (no drip, no stain), a piglin's scraps and a
+  hoglin's hide (soul stains).
+- Create Enchantment Industry's liquid experience had been put in `c:experience`, which counts 20 mB a point where
+  Enchantment Industry's is a point a millibucket: the Blood Diamond would have cost twenty times less in another
+  mod's experience, and the Vent Arm paid a twentieth of a tank of Enchantment Industry's. Our own tag and each
+  fluid's own rate now (15.20.2).
+- The trait effects still played vanilla slime sounds (a lunge, the launch action, a shove and its thud) and
+  Bleeding a water drip, none with a metal twin; the rule 4 test listed only some slime and honey sounds. Own
+  twinned events now, and the test takes every slime and honey sound (15.20.3).
+- The plated texture cache built a string key on every lookup, for every bone of every carcass each frame in
+  bloodless mode; two maps keyed by the texture now, so a lookup builds nothing.
+- The congealing had moved to a heated press, against section 8's decided Basin Lid (15.20.2).
+- The gauge sat exactly where Create's air gauge is and stayed up with only an implant fitted, so diving on
+  Create's backtank drew the two over each other; it moves up a row while Create's is up (15.20.2).
+
+#### 15.20.7 Merged with the machines, the organs and the checks (verified)
+
+- **Recipes.** Nothing on the integration branch had added or changed a recipe file since 054cdfd, and the machines
+  added none, so nothing had to move into `BBRecipeGen`. After datagen every one of the 78 recipe files main had is in
+  the generated set: 27 the same, 49 changed only as 15.20.1 and 15.20.2 meant (fluids asked for by tag, the shortcut
+  yields cut to 100 mB, Create-style ids), and two replaced on purpose (the one-fill Blood Diamond by
+  `sequenced_assembly/blood_diamond`, the old soul blood mixing by `mixing/soul_blood_from_soul_sand`). The three
+  generated cooked meat recipes are there too: 108 in all.
+- **Create Diesel Generators is a required dependency** (`neoforge.mods.toml`, both sides, as Dragons Plus and
+  Enchantment Industry are), so the Basin Lid recipe needs no `mod_loaded` condition.
+- **Bloodless mode over the others' work.** The Mangler's grind (15.19.1) is a wet sound with a twin like the rest,
+  `bloodless.machine.grind`, the grindstone and chain the machines had given `machine.grind_clean`, which it replaces:
+  `BloodlessSounds` is this section's, for every twin. Main's organ harvest played vanilla slime and honey sounds, and a
+  minion's steering slap a slime squish: they play `flesh.squish_small`, `flesh.slide` and `flesh.slap` now.
+  `Organs#name` reads the setting to give an organ its file's `bloodless_name`, which is words, so it is on
+  `onlyPresentationReadsBloodless`'s list. The machines' bloodless text for the Surgical Rig said "carcass": "wreck".
+- **The Butcher's Hook takes a Gland** (main's organ item) and it drips: `bloodandbones:gland` is in both hook tags, and
+  `butcherHookTakesEveryBodyPart` hangs a cow's rumen and looks for its red stain.
+- **Showcase.** This section's row is row G, north of the decoration, beside the machines' row F to the west; its four
+  views come after the machines'. The gauge shots come after main's longer minion and effects timeline (ticks 345 and
+  395 of that stage).
+- The suite is 504 tests.
+
+### 15.21 Physics and weight: where you hook it, where the blow lands, what dragging costs (verified)
 
 This partly closes docs/BRIEF-AUDIT.md package 1 (physics: where you hook it and where the blow lands) and closes
 package 3 (weight and the drag penalty). Package 1 is only partly done because the physics does not yet hold for most
@@ -2522,7 +3568,7 @@ measured with it before it was kept.
   within 1.25 blocks of where it is pulled to.
 
 **What you drag never pushes you.**
-- **Walking on into it carried you off** (found on main by the multiplayer check, 15.18 item 2 there). Sable moves an
+- **Walking on into it carried you off** (found by the multiplayer check, 15.18 item 2). Sable moves an
   entity out of any body it walks into and carries it along with that body as the body moves. Walking on into a
   carcass held in front, a player was pushed along by it, which moved the point it was pulled to on, which pulled it on:
   it carried the player about twenty blocks after they stopped. With the trailing target, walking off away from a

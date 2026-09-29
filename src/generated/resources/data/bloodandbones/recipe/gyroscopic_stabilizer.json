@@ -1,0 +1,23 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "category": "equipment",
+  "key": {
+    "F": {
+      "item": "create:flywheel"
+    },
+    "M": {
+      "item": "create:precision_mechanism"
+    },
+    "P": {
+      "tag": "c:plates/brass"
+    }
+  },
+  "pattern": [
+    "PFP",
+    "PMP"
+  ],
+  "result": {
+    "count": 1,
+    "id": "bloodandbones:gyroscopic_stabilizer"
+  }
+}

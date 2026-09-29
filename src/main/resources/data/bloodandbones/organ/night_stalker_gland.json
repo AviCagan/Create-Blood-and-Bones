@@ -1,0 +1,12 @@
+{
+  "item": "bloodandbones:gland",
+  "name": "organ.bloodandbones.night_stalker_gland",
+  "bloodless_name": "bloodless.organ.bloodandbones.night_stalker_gland",
+  "look": "gland",
+  "tint": "#4a5aa8",
+  "armour_pieces": [
+    "helmet",
+    "chestplate"
+  ],
+  "extra_drops": []
+}

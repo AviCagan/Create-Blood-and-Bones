@@ -1,0 +1,12 @@
+{
+  "item": "bloodandbones:gland",
+  "name": "organ.bloodandbones.rumen",
+  "bloodless_name": "bloodless.organ.bloodandbones.rumen",
+  "look": "sac",
+  "tint": "#8b9a46",
+  "armour_pieces": [
+    "chestplate",
+    "leggings"
+  ],
+  "extra_drops": []
+}

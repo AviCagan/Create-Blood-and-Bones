@@ -1,0 +1,11 @@
+{
+  "item": "bloodandbones:gland",
+  "name": "organ.bloodandbones.purr_box",
+  "bloodless_name": "bloodless.organ.bloodandbones.purr_box",
+  "look": "bulb",
+  "tint": "#d9a07a",
+  "armour_pieces": [
+    "chestplate"
+  ],
+  "extra_drops": []
+}

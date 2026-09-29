@@ -167,6 +167,117 @@ public final class MinionBody {
         return new Vector3f(0.0F, layout.height(), 0.0F);
     }
 
+    /**
+     * Where each of its riders sits, front first, in the frame {@link #saddlePoint} gives: one on the saddle, or several
+     * spread along the torso's back (a camel's two), each in the middle of its share of the torso's length.
+     */
+    public static List<Vector3f> seats(Layout layout, int count) {
+        Vector3f saddle = saddlePoint(layout);
+        if (count <= 1) {
+            return List.of(saddle);
+        }
+        float length = 0.0F;
+        for (Placement placement : layout.pieces()) {
+            if (placement.socket() == null) {
+                float min = Float.MAX_VALUE;
+                float max = -Float.MAX_VALUE;
+                for (Vector3f c : corners(placement.pose(), placement.bone())) {
+                    min = Math.min(min, c.z);
+                    max = Math.max(max, c.z);
+                }
+                length = (max - min) / 16.0F;
+            }
+        }
+        List<Vector3f> out = new ArrayList<>();
+        for (int i = 0; i < count; i++) {
+            // model space's front is towards -z, as the saddle point's frame keeps it
+            out.add(new Vector3f(saddle.x, saddle.y, saddle.z + length * ((i + 0.5F) / count - 0.5F)));
+        }
+        return List.copyOf(out);
+    }
+
+    /**
+     * Where it holds and wears things, as the layout's pieces go (the same on both sides): the piece that holds what is
+     * in its hand and the point it holds it at, in that piece's own frame in pixels (the far end of its first arm of hand
+     * grip, as a zombie holds a sword; the middle front of a pair of arms, as a villager holds its wares; else the mouth
+     * of its head, as a fox holds what it finds), and the head that wears a helmet. -1 for none.
+     *
+     * @param right whether the holding arm is on its right side (drawn as a right hand's item)
+     * @param how   "hand", "pair" or "mouth"
+     */
+    public record Anchors(int hold, Vector3f holdAt, boolean right, String how, int head) {
+        public static final Anchors NONE = new Anchors(-1, new Vector3f(), true, "hand", -1);
+    }
+
+    /** Where this build holds and wears things (see {@link Anchors}). */
+    public static Anchors anchors(PartsData.Store store, MinionBuild build, Layout layout) {
+        PieceRef headPiece = MinionStats.head(store, build);
+        int head = -1;
+        int hand = -1;
+        String how = "hand";
+        for (int i = 0; i < layout.pieces().size(); i++) {
+            Placement placement = layout.pieces().get(i);
+            if (placement.socket() == null) {
+                continue;
+            }
+            if (head < 0 && placement.piece() == headPiece) {
+                head = i;
+            }
+            if (hand < 0 && placement.slot().slot() == PartSlot.ARM) {
+                var mob = store.resolve(placement.piece().entity(), placement.piece().baby());
+                String grip = MinionData.field(mob, placement.slot().key(), "grip").filter(com.google.gson.JsonElement::isJsonPrimitive)
+                        .map(com.google.gson.JsonElement::getAsString).orElse("hand");
+                if ("hand".equals(grip)) {
+                    hand = i;
+                    how = "pair".equals(placement.slot().form()) ? "pair" : "hand";
+                }
+            }
+        }
+        if (hand >= 0) {
+            Placement arm = layout.pieces().get(hand);
+            boolean right = arm.pose().getTranslation(new Vector3f()).x < 0.0F;
+            return new Anchors(hand, "pair".equals(how) ? front(arm.bone()) : grip(arm.bone()), right, how, head);
+        }
+        if (head >= 0) {
+            return new Anchors(head, mouth(layout.pieces().get(head).bone()), true, "mouth", head);
+        }
+        return Anchors.NONE;
+    }
+
+    /**
+     * Where a hand grips, in its bone's own frame: the far end of its box along its length (from the joint), at the
+     * middle across and at its front, as a humanoid arm's hand is 10 pixels down it and 2 forward.
+     */
+    static Vector3f grip(Bone bone) {
+        Vector3f lo = bone.boxMin();
+        Vector3f hi = bone.boxMax();
+        Vector3f size = new Vector3f(hi).sub(lo);
+        Vector3f at = new Vector3f(lo).add(hi).mul(0.5F);
+        if (size.y >= size.x && size.y >= size.z) {
+            at.y = Math.abs(hi.y) >= Math.abs(lo.y) ? hi.y : lo.y;
+            at.z = lo.z;
+        } else if (size.x >= size.z) {
+            at.x = Math.abs(hi.x) >= Math.abs(lo.x) ? hi.x : lo.x;
+        } else {
+            at.z = Math.abs(hi.z) >= Math.abs(lo.z) ? hi.z : lo.z;
+        }
+        return at;
+    }
+
+    /** The middle of a box's front face, where a pair of folded arms holds something. */
+    static Vector3f front(Bone bone) {
+        Vector3f lo = bone.boxMin();
+        Vector3f hi = bone.boxMax();
+        return new Vector3f((lo.x + hi.x) / 2.0F, (lo.y + hi.y) / 2.0F, lo.z);
+    }
+
+    /** A head's mouth: low on its front face, a pixel out from it. */
+    static Vector3f mouth(Bone bone) {
+        Vector3f lo = bone.boxMin();
+        Vector3f hi = bone.boxMax();
+        return new Vector3f((lo.x + hi.x) / 2.0F, lo.y + (hi.y - lo.y) * 0.85F, lo.z - 1.0F);
+    }
+
     /** The eight corners of a bone's box, placed. */
     public static Vector3f[] corners(Matrix4f pose, Bone bone) {
         Vector3f lo = bone.boxMin();

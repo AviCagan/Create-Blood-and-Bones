@@ -26,17 +26,28 @@ import java.util.concurrent.ConcurrentHashMap;
  * built on the Surgery Table. Everything here is in entity model space: pixels, y down, the ground at y = 24.
  */
 public final class StitchedBody {
-    /** How it is moving this frame: the walk cycle, where its head looks, how it gets about. */
-    public record Motion(float walkPosition, float walkSpeed, float headYaw, float headPitch, String mode, float age) {
-        public static final Motion STILL = new Motion(0, 0, 0, 0, "walk", 0);
+    /** How it is moving this frame: the walk cycle, where its head looks, how it gets about, and how whole it is (0 to 1). */
+    public record Motion(float walkPosition, float walkSpeed, float headYaw, float headPitch, String mode, float age, float health) {
+        public static final Motion STILL = new Motion(0, 0, 0, 0, "walk", 0, 1);
     }
 
-    /** What drawing a piece needs that never changes: its coats, whether it bleeds, its raw cut ends, the socket's slot it moves as. */
-    private record Look(List<CarcassLook.Coat> coats, boolean bloody, List<String> cuts, PartSlot slot) {
+    /**
+     * What drawing a piece needs that never changes: its coats, whether it bleeds, its raw cut ends, the socket's slot it
+     * moves as, and whether it is a mood tail (a wolf's: held up by its health).
+     */
+    private record Look(List<CarcassLook.Coat> coats, boolean bloody, List<String> cuts, PartSlot slot, boolean mood) {
     }
 
-    /** A build laid out, with each piece's look (in the layout's order) and the torso's middle, front to back. */
-    private record Cached(int generation, MinionBody.Layout layout, List<Look> looks, float torsoZ) {
+    /** A build laid out, with each piece's look (in the layout's order), the torso's middle, front to back, and where it holds and wears things. */
+    private record Cached(int generation, MinionBody.Layout layout, List<Look> looks, float torsoZ, MinionBody.Anchors anchors) {
+    }
+
+    /**
+     * Something drawn on a piece in its own frame after the piece itself (what a minion holds, the helmet it wears): the
+     * pose stack is at the piece's joint, turned as the piece is this frame, in blocks.
+     */
+    public interface Attach {
+        void attach(int piece, MinionBody.Placement placement, PoseStack ms);
     }
 
     private static final Map<MinionBuild, Cached> LAYOUTS = new ConcurrentHashMap<>();
@@ -61,10 +72,15 @@ public final class StitchedBody {
             for (MinionBody.Placement placement : layout.pieces()) {
                 looks.add(look(layout, placement));
             }
-            cached = new Cached(store.generation(), layout, List.copyOf(looks), torsoCentreZ(layout));
+            cached = new Cached(store.generation(), layout, List.copyOf(looks), torsoCentreZ(layout), MinionBody.anchors(store, build, layout));
             LAYOUTS.put(build, cached);
         }
         return cached;
+    }
+
+    /** Where a build holds and wears things, by the same layout it is drawn with. */
+    public static MinionBody.Anchors anchors(MinionBuild build) {
+        return cached(build).anchors();
     }
 
     /**
@@ -74,6 +90,12 @@ public final class StitchedBody {
      * @param tint ARGB laid over every piece (a hurt flash), -1 for none
      */
     public static void draw(MinionBuild build, Motion motion, boolean lying, int tint, PoseStack ms, MultiBufferSource buffers, int light) {
+        draw(build, motion, lying, tint, ms, buffers, light, null);
+    }
+
+    /** The same, with things drawn on its pieces as they go (see {@link Attach}). */
+    public static void draw(MinionBuild build, Motion motion, boolean lying, int tint, PoseStack ms, MultiBufferSource buffers, int light,
+                            @org.jetbrains.annotations.Nullable Attach attach) {
         Cached cached = cached(build);
         MinionBody.Layout layout = cached.layout();
         ms.pushPose();
@@ -92,22 +114,31 @@ public final class StitchedBody {
             } else if ("crawl".equals(motion.mode())) {
                 // something with no legs drags itself, rocking
                 ms.mulPose(com.mojang.math.Axis.ZP.rotation(Mth.sin(motion.walkPosition() * 0.6F) * 0.12F * Math.min(1.0F, motion.walkSpeed() * 2.0F)));
+            } else if (AIRBORNE.contains(motion.mode())) {
+                // kept up in the air it bobs, a float slower and deeper than wings
+                bob = "float".equals(motion.mode()) ? Mth.sin(motion.age() * 0.06F) * 1.5F : Mth.sin(motion.age() * 0.25F) * 0.8F;
             }
             ms.translate(-centreX / 16.0F, (layout.lift() + bob) / 16.0F, -centreZ / 16.0F);
         }
         for (int i = 0; i < layout.pieces().size(); i++) {
             MinionBody.Placement placement = layout.pieces().get(i);
             Look look = cached.looks().get(i);
-            Matrix4f pose = animate(placement, look.slot(), motion, lying, cached.torsoZ());
+            Matrix4f pose = animate(placement, look, motion, lying, cached.torsoZ());
             ms.pushPose();
             ms.scale(1 / 16.0F, 1 / 16.0F, 1 / 16.0F);
             ms.mulPose(pose);
             ms.scale(16.0F, 16.0F, 16.0F);
             drawPiece(placement, look, tint, ms, buffers, light);
+            if (attach != null) {
+                attach.attach(i, placement, ms);
+            }
             ms.popPose();
         }
         ms.popPose();
     }
+
+    /** Ways of getting about that keep it up in the air, where its wings beat and it bobs. */
+    private static final List<String> AIRBORNE = List.of("fly", "hover", "float");
 
     /** Where the torso's middle is, front to back: legs in front of it are front legs. */
     private static float torsoCentreZ(MinionBody.Layout layout) {
@@ -125,14 +156,19 @@ public final class StitchedBody {
      * A piece's pose this frame: limbs swing about their socket as a walking animal's do (legs on one side
      * against the other, front against hind, arms against legs; a hopper's all together), a head turns to look.
      */
-    private static Matrix4f animate(MinionBody.Placement placement, PartSlot slot, Motion motion, boolean lying, float centreZ) {
+    private static Matrix4f animate(MinionBody.Placement placement, Look look, Motion motion, boolean lying, float centreZ) {
         if (placement.socket() == null || lying) {
             return placement.pose();
         }
+        PartSlot slot = look.slot();
         Vector3f pivot = placement.pose().getTranslation(new Vector3f());
         Matrix4f turn = new Matrix4f();
         if (slot == PartSlot.HEAD || slot == PartSlot.NECK) {
             turn.rotateY(Mth.clamp(motion.headYaw(), -60.0F, 60.0F) * Mth.DEG_TO_RAD).rotateX(Mth.clamp(motion.headPitch(), -40.0F, 40.0F) * Mth.DEG_TO_RAD);
+        } else if ("wing".equals(placement.slot().form()) && AIRBORNE.contains(motion.mode())) {
+            // a wing in the air beats up and down about its joint, whichever socket it was stitched into
+            boolean right = pivot.x < 0.0F;
+            turn.rotateZ(Mth.sin(motion.age() * 0.9F) * 0.7F * (right ? 1.0F : -1.0F));
         } else if (slot == PartSlot.LEG || slot == PartSlot.ARM) {
             boolean right = pivot.x < 0.0F;
             boolean front = pivot.z < centreZ;
@@ -153,6 +189,10 @@ public final class StitchedBody {
             turn.rotateX(swing);
         } else if (slot == PartSlot.TAIL) {
             turn.rotateY(Mth.sin(motion.age() * 0.15F) * 0.25F);
+            if (look.mood()) {
+                // a mood tail, as a wolf's: held high while it is whole, hanging as it is hurt
+                turn.rotateX(motion.health() * 1.1F - 0.3F);
+            }
         } else {
             return placement.pose();
         }
@@ -202,6 +242,9 @@ public final class StitchedBody {
                 }
             }
         }
-        return new Look(coats, bloody, List.copyOf(cuts), slot);
+        var mob = PartsData.CLIENT.resolve(piece.entity(), piece.baby());
+        boolean mood = com.avicagan.bloodandbones.minion.MinionData.field(mob, placement.slot().key(), "mood")
+                .filter(com.google.gson.JsonElement::isJsonPrimitive).map(com.google.gson.JsonElement::getAsBoolean).orElse(false);
+        return new Look(coats, bloody, List.copyOf(cuts), slot, mood);
     }
 }

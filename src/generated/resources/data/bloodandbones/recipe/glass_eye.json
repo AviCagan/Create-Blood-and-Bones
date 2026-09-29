@@ -1,0 +1,23 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "category": "equipment",
+  "key": {
+    "B": {
+      "item": "minecraft:bone_meal"
+    },
+    "G": {
+      "tag": "c:glass_blocks"
+    },
+    "N": {
+      "item": "minecraft:iron_nugget"
+    }
+  },
+  "pattern": [
+    " G ",
+    "NBN"
+  ],
+  "result": {
+    "count": 1,
+    "id": "bloodandbones:glass_eye"
+  }
+}

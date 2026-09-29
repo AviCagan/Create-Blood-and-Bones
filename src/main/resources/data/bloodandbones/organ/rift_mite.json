@@ -1,0 +1,11 @@
+{
+  "item": "bloodandbones:gland",
+  "name": "organ.bloodandbones.rift_mite",
+  "bloodless_name": "bloodless.organ.bloodandbones.rift_mite",
+  "look": "core",
+  "tint": "#6a2a8a",
+  "armour_pieces": [
+    "chestplate"
+  ],
+  "extra_drops": []
+}

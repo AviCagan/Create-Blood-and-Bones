@@ -1,0 +1,11 @@
+{
+  "item": "bloodandbones:gland",
+  "name": "organ.bloodandbones.echo_ear",
+  "bloodless_name": "bloodless.organ.bloodandbones.echo_ear",
+  "look": "bulb",
+  "tint": "#5a4a3e",
+  "armour_pieces": [
+    "helmet"
+  ],
+  "extra_drops": []
+}

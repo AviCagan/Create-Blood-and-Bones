@@ -42,9 +42,10 @@ provided by [Sable](https://github.com/ryanhcode/sable).
   grinds it down; the Guillotine takes limbs off; the Beheader takes heads (sometimes the skull);
   the Deglover strips hides. Each works whatever carcass lies on or hangs over it, and a filter slot
   on its top edge can limit it to one kind of mob.
-- **Materials.** Blood Steel (spout-fill iron with blood), Soul Blood (superheated mix with liquid
-  experience, or a Diesel Generators fermenting basin), the Blood Diamond (spout-fill a diamond
-  with soul blood), and the Blood Steel Cleaver (twice as deep a chop).
+- **Materials.** Blood Steel (spout-fill iron with blood), Soul Blood (blood set under a Diesel
+  Generators Basin Lid, haunted by a fan through soul fire, melted back in a superheated mixer; or a
+  tenth as much in one step), the Blood Diamond (a sequenced assembly: a Spout of a bucket of blood,
+  then one of liquid experience), and the Blood Steel Cleaver (twice as deep a chop).
 - **Sorting.** Create's Attribute Filter knows carcass pieces: which mob, which part (head, body,
   limb, tail), fresh or rotting, skinned, or from a baby, so funnels and frogports can sort meat. The
   machines have a filter slot too: a spawn egg, a piece or a filter picks the carcasses they work on.
@@ -70,13 +71,19 @@ provided by [Sable](https://github.com/ryanhcode/sable).
   sprays whatever the tank holds (lava burns, water douses, experience gives experience); the Port Arm
   plugs the tank into pipes at a Backtank Port. Everyone sees what you are missing and what is fitted.
   The table takes other patients too: another player, a mob led onto it on a lead, or a carcass piece
-  whose organs a Cleaver (or a Deployer holding one) takes out one a cut.
+  (or a carcass too heavy to carry, lying over it) whose organs a Cleaver (or a Deployer holding one)
+  takes out one a cut: its heart, lungs and stomach, its eyes, and its own special organs, a creeper's
+  powder sac, a cow's rumen, a sniffer's olfactory bulb, a skeleton's marrow. Each fits carcass armour or
+  a minion for that mob's ability.
 - **Minions.** Stitched together from carcass pieces on the Surgery Table (with its Assembly Frame): a
   torso, then the heads, legs, arms and tails of any mob. Every piece does its own thing: the torso sets
   size and health, the head the job and bite, the legs speed and how it moves, so a cow on rabbit legs
-  hops, spider legs climb, horse legs can be saddled and ridden, and arms hit in their own styles. The
-  head decides the jobs on offer (a villager's by its trade): sentry, scavenger, herder, fisher, hunter,
-  hauler, butcher, medic, barterer, digger and the rest, worked with whatever you hand it. Woken
+  hops, spider legs climb, strider legs walk across lava, drowned legs walk the seabed, horse legs can be
+  saddled and ridden (a pig's head steered with a carrot on a stick, a camel carrying two), wings strong
+  enough fly it, and arms hit in their own styles. The head decides the jobs on offer (a villager's by
+  its trade): sentry, scavenger, herder, fisher, hunter, hauler, butcher, medic, barterer, digger,
+  sapper (a creeper's head and powder sac: it walks up to a monster and blows itself up, then lies
+  powered down) and the rest, worked with whatever you hand it and drawn holding it. Woken
   with a bucket of blood, it runs on blood and drinks from a Blood Trough; run dry, it lies down alive
   until it gets more, and is never destroyed by neglect. Built of skinned pieces under Brass Sheathing,
   it is a brass minion instead: woken and kept going on Soul Canisters that a Charging Cradle swaps in
@@ -94,7 +101,9 @@ provided by [Sable](https://github.com/ryanhcode/sable).
   on for everyone with `/gamerule bloodandbonesBloodless true`. Nothing about how the game plays
   changes.
 - Tooltips (hold Shift), JEI pages (including a Butchery page per mob showing what its carcass
-  gives), Ponder scenes and an advancement tab explain it all in game.
+  gives and a Body Parts page showing what its parts and organs do), Ponder scenes and an
+  advancement tab explain it all in game. `/bloodandbones traits explain <mob>` says what a mob's
+  parts do; `/bloodandbones traits dump` writes them all to a CSV file.
 
 ## Building
 
@@ -107,20 +116,27 @@ incremental. `./gradlew runClient` / `runServer` / `runData` are configured by M
 
 ### Development aids
 
-- `./gradlew runGameTestServer` runs the game tests headless (439: every rigged mob and baby,
-  butchery, rot, bleeding, machines and their filters, cooking and display, decoration, surgery, implants, backtanks, carcass armour and its traits, trait effects, minions and their jobs, chains, recipes,
-  advancements and sounds, and the carcass physics: which way a hooked carcass turns and a struck one falls).
-- `./gradlew runGameTestServer -Dbloodandbones.debug.rig_compare=true -Dbloodandbones.debug.only=rigcompare,rigcost`
-  measures the carcass physics against the design brief instead of testing (twelve mobs killed from
-  the flank and from behind, hooked, hung, knocked, dragged up a step, cut, and what they cost) and
-  writes `run/rig-comparison/summary.txt`, to compare before and after a change
-  (`-Dbloodandbones.debug.rig_compare_runs=8` plays each scenario eight times).
+- `./gradlew runGameTestServer` runs the game tests headless (504: every rigged mob and baby,
+  butchery and its three yield paths, rot, cold air, bleeding, machines, their motion and their part filters, cooking and display, decoration, surgery, organs, implants, backtanks, carcass armour and its traits, trait effects, minions and their jobs, movement and mounts, chains, recipes
+  and the soul blood line on Create's machines, bloodless mode (no game logic reads it; no gory word or wet sound
+  left), advancements and sounds, what a dozen carcasses at once cost the server, and the carcass physics: which way a
+  hooked carcass turns and a struck one falls).
+  `-Dbloodandbones.debug.only=name,name` runs only those tests, and `-Dbloodandbones.debug.repeat=N` runs them N times.
+  To time what carcasses cost, run one of these on its own with `-Dbloodandbones.debug.cost=N`:
+  `-Dbloodandbones.debug.only=dozenCarcasses` prints the server's tick times with N dozen carcasses (one to four) made
+  in the same tick, awake and then resting; `-Dbloodandbones.debug.only=dozenHung` with a dozen hanging on hooks, for a
+  minute.
+- The two-client check: with `-Dbloodandbones.multiplayer=true`, run `runMpServer`, then `runMpButcher` and
+  `runMpWatcher`, each in its own terminal. The server makes a fresh flat world in `run/mp-server`; the Butcher kills,
+  drags, hangs, cuts and skins a cow with real clicks while the Watcher photographs it into
+  `run/mp-watcher/screenshots/mp_watcher_*.png`. Both clients log where they draw every carcass body, and the server
+  where it really is (the `[mp]` lines of each `logs/latest.log`). All three quit after about forty seconds of play.
 - `./gradlew runData -Dbloodandbones.dump_layers=minecraft:goat#main,...` writes those vanilla
   models' part trees to `run/build/layer-dump.txt`, for writing new rig targets in
   `src/main/rig_targets`.
 - `./gradlew runClient -Dbloodandbones.showcase=true` makes a flat world, builds a scene of
-  carcasses, machines and the rest, screenshots it (and five Ponder scenes and the cow's JEI
-  page) into `run/screenshots/showcase_*.png`, and quits. It runs without a screen under
+  carcasses, machines and the rest, screenshots it (and five Ponder scenes, the cow's JEI
+  page and a creeper's powder sac's) into `run/screenshots/showcase_*.png`, and quits. It runs without a screen under
   `xvfb-run`. `-Dbloodandbones.showcase=bloodless` does the same with bloodless mode forced on.
 
 ## Licence

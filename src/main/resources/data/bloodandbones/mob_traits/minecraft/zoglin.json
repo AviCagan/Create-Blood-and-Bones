@@ -8,7 +8,8 @@
         "bite": {
           "style": "ram",
           "damage": 2.0
-        }
+        },
+        "disposition": "berserk"
       }
     }
   }

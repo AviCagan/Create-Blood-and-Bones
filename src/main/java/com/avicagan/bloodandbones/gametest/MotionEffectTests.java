@@ -297,15 +297,32 @@ public class MotionEffectTests {
     }
 
     /**
-     * A minion with a creeper's powder sac, its target in reach: it hisses, blows up (the pig next to it hurt, itself not),
-     * and powers down where it stands, alive and in the world, never destroyed. No block breaks by default.
+     * A sapper with a creeper's powder sac, its target in reach: it hisses, blows up (the pig next to it hurt, itself not),
+     * and powers down where it stands, alive and in the world, never destroyed. No block breaks by default. (Only a
+     * sapper sets its organ off: MinionVariantTests#guardKeepsItsBlast.)
      */
     @GameTest(template = "empty", timeoutTicks = 120)
     public static void creeperSacPowersDownNotDestroyed(GameTestHelper helper) {
-        // a head, or it would be mindless and never take aim at anything
-        MinionBuild build = MinionBuild.of(cow("body")).with("head", cow("head"))
+        // a head, or it would be mindless and never take aim at anything: a creeper's, which offers the sapper
+        MinionBuild build = MinionBuild.of(cow("body")).with("head", new PieceRef(CREEPER, "head",
+                        ResourceLocation.withDefaultNamespace("textures/entity/creeper/creeper.png"), List.of(), 1.0F, false, Map.of(), false))
                 .withOrgan(Optional.of(new CarcassArmour.Organ(bb("powder_sac"), CREEPER, false)));
+        // walled in glass: a sapper's targets are a guard's, and it must not see another test's monsters
+        for (int x = 0; x <= 10; x++) {
+            for (int z = 0; z <= 10; z++) {
+                if (x == 0 || z == 0 || x == 10 || z == 10) {
+                    for (int y = 2; y <= 4; y++) {
+                        helper.setBlock(new BlockPos(x, y, z), Blocks.GLASS);
+                    }
+                }
+            }
+        }
         MinionEntity minion = minion(helper, new BlockPos(4, 2, 5), build);
+        if (!minion.setJob(com.avicagan.bloodandbones.minion.MinionJobs.SAPPER)) {
+            minion.discard();
+            helper.fail("A creeper's head with the sac in should take the sapper's job");
+            return;
+        }
         Pig pig = helper.spawn(EntityType.PIG, new BlockPos(6, 2, 5));
         pig.setNoAi(true);
         float pigHealth = pig.getHealth();

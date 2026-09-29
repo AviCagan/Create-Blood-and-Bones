@@ -1,0 +1,20 @@
+{
+  "values": {
+    "minecraft:rabbit_foot": {
+      "entity": "minecraft:rabbit",
+      "organ": "bloodandbones:rabbit_foot"
+    },
+    "minecraft:ink_sac": {
+      "entity": "minecraft:squid",
+      "organ": "bloodandbones:ink_sac"
+    },
+    "minecraft:glow_ink_sac": {
+      "entity": "minecraft:glow_squid",
+      "organ": "bloodandbones:glow_sac"
+    },
+    "minecraft:spider_eye": {
+      "entity": "minecraft:spider",
+      "organ": "bloodandbones:eye"
+    }
+  }
+}

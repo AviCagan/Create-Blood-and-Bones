@@ -1,0 +1,18 @@
+{
+  "type": "create:filling",
+  "ingredients": [
+    {
+      "item": "create:cut_calcite"
+    },
+    {
+      "type": "neoforge:tag",
+      "amount": 100,
+      "tag": "c:blood"
+    }
+  ],
+  "results": [
+    {
+      "id": "bloodandbones:bloody_cut_calcite"
+    }
+  ]
+}

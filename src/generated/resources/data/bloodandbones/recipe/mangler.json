@@ -1,0 +1,27 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "category": "misc",
+  "key": {
+    "C": {
+      "item": "create:andesite_casing"
+    },
+    "I": {
+      "tag": "c:ingots/iron"
+    },
+    "S": {
+      "item": "create:shaft"
+    },
+    "T": {
+      "item": "minecraft:iron_bars"
+    }
+  },
+  "pattern": [
+    "TTT",
+    "ICI",
+    " S "
+  ],
+  "result": {
+    "count": 1,
+    "id": "bloodandbones:mangler"
+  }
+}

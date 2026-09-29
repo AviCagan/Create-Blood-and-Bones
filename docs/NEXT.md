@@ -523,7 +523,7 @@ Every missing knack and disposition counts as 1. Archetypes carry knacks and leg
 
 ### 1.10 Order of work
 
-Start after bb-organs is on main. This change touches its sapper, variants, `pace`, `MinionStats` and `MinionJobs`.
+Start after bb-organs is on main (it is, since 40dfb66). This change touches its sapper, variants, `pace`, `MinionStats` and `MinionJobs`.
 - **A. The fitness, worked out without a world (medium).** `MinionFitness`, knacks, leg grips, the disposition and task files, and the migrated data, with the tests worked out without a world. Nothing in play changes yet.
 - **B. Tasks replace jobs (large).** `MinionTask`, the renames, anchor and reach, the screen, the wake rule, the status lines and the save conversion, with their tests.
 - **C. The levers and blood at work (medium).**
@@ -533,7 +533,7 @@ Start after bb-organs is on main. This change touches its sapper, variants, `pac
 
 ### 1.11 Found while reading (not part of this change)
 
-- **Debugging left on bb-organs.** `MinionGoals.Bite.tick` logs "[tmpbite]" every 2 s, and there is a `gametest/TmpMergeRepro.java`. Both should go before bb-organs is merged.
+- **Debugging left on bb-organs.** `MinionGoals.Bite.tick` logged "[tmpbite]" every 2 s, and there was a `gametest/TmpMergeRepro.java`. Both were gone before bb-organs was merged (40dfb66).
 - **`MINDLESS_SIGHT` (8) is more than `BLIND_SIGHT` (4).** A body with no head notices more than a blind head does. The design sets it to 2.
 - **Keen Eye and Relentless do nothing on a minion.** They raise its follow-range attribute, but `MinionStats.sight` never reads it and every search takes the smaller of the two. The design's sight counts them.
 - **`MinionStats.fights()` is true for a body with no arms and no head.** It would bite with no mouth. This is harmless today, because a mindless minion never fights.
@@ -569,17 +569,19 @@ not on main.
 code a ravager would hang from its right front shoulder (docs/ARCHITECTURE-PROPOSAL.md 15.18 on that branch). Fixed on
 main since (255d386: hung by the neck, through an upper body or a neck).
 
-**Since then** (docs/ARCHITECTURE-PROPOSAL.md 15.19) our own rigs went after B's first three wins and measured level with
+**Since then** (docs/ARCHITECTURE-PROPOSAL.md 15.21) our own rigs went after B's first three wins and measured level with
 B on turning rear first, nearly level on falling away from a flank blow, and as loose in the head and limbs; B's fourth,
 costing less while falling, is not matched. Nothing on main uses B. That work (the looser necks and the loose hang) is
 built as option 1, the recommended one, and one revert undoes it; the choice above is still the owner's to confirm.
 
+## 3. Already on the list
 
 - **Open questions answered with the design's defaults** (docs/ARCHITECTURE-PROPOSAL.md 15.1). All fourteen are still
   open for the owner to confirm or overturn.
 - **Known gaps:**
-  - A lava-walking minion stands on lava but cannot walk across it. This is being built now.
-  - Held items and helmets are not drawn on minions yet. This is also being built now.
+  - A torso's empty arm socket shows its raw stump as a flat square beside the shoulder (the space the arm's top left,
+    as a carcass's cut arm shows it), which from behind reads as a thin plate sticking out.
+  - `meatHookDragsByLeg` failed once in more than 50 runs (the drag physics under load); it is being watched.
 - **Later slices** (docs/PARTS-AND-TRAITS.md section 9):
   - the balance pass and Ponder scenes (slice 9);
   - the Deployer route for fitting armour;

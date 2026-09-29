@@ -97,6 +97,8 @@ public final class ModuleActions {
      */
     public static final double LIGHT_VOLUME = 1.5;
     public static final float LIGHT_CARCASS = 1.5F;
+    /** Ticks a reeled-in carcass has to come within reach, beyond what a mob would have. */
+    public static final int CARCASS_HAUL_TICKS = 100;
     /** Reel speed above which hitting a wall hurts. */
     public static final double SLAM_SPEED = 0.8;
 
@@ -420,8 +422,10 @@ public final class ModuleActions {
             CarcassSavedData.Carcass carcass = CarcassSavedData.get(world).carcass(part.carcassId());
             float weight = carcass == null ? Float.MAX_VALUE : RigManager.forCarcass(carcass).map(Rig::weight).orElse(Float.MAX_VALUE);
             if (carcass != null && weight <= LIGHT_CARCASS) {
-                HAULS.put(player, new Haul(null, carcass.id, block.getBlockPos(), speed * 0.5, until + 20));
-                tether(player, null, blockAt, until + 20);
+                // a carcass is dragged along the ground, far slower than a mob is yanked through the air: it has the time
+                // a mob would have and CARCASS_HAUL_TICKS more to come within reach, or it stops short and is never handed over
+                HAULS.put(player, new Haul(null, carcass.id, block.getBlockPos(), speed * 0.5, until + CARCASS_HAUL_TICKS));
+                tether(player, null, blockAt, until + CARCASS_HAUL_TICKS);
                 world.playSound(null, BlockPos.containing(blockAt), BBSounds.CARCASS_CUT.get(), SoundSource.PLAYERS, 1.0F, 1.0F);
                 return;
             }

@@ -1,11 +1,8 @@
 package com.avicagan.bloodandbones.parts;
 
-import com.avicagan.bloodandbones.body.BodyPart;
-import com.avicagan.bloodandbones.body.SeveredLimbItem;
 import com.avicagan.bloodandbones.registry.BBRecipes;
 import net.minecraft.core.HolderLookup;
 import net.minecraft.core.NonNullList;
-import net.minecraft.core.registries.BuiltInRegistries;
 import net.minecraft.world.item.Item;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.crafting.CraftingBookCategory;
@@ -17,9 +14,7 @@ import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Map;
 import java.util.Optional;
-import java.util.Set;
 
 /**
  * Fitting a piece of carcass armour (docs/PARTS-AND-TRAITS.md section 7.3): the piece and one kind of thing,
@@ -28,8 +23,9 @@ import java.util.Set;
  *     <li>Hides of one mob, as many as the piece needs (one for a helmet or boots, two leggings, three a
  *     chestplate), of any items that mob's hide comes as (two leather and a raw cow hide): its covering, with
  *     that mob's hide traits. They take the place of any hides it had, which come back as they went in.</li>
- *     <li>An organ cut out of a mob, into the piece that takes it: eyes a helmet, a heart or lungs a
- *     chestplate, a stomach a chestplate or leggings. It takes the place of any organ it had, which comes back.</li>
+ *     <li>An organ cut out of a mob, into a piece its file's "armour_pieces" name: eyes a helmet, a heart or lungs a
+ *     chestplate, a stomach a chestplate or leggings, a creeper's powder sac a chestplate, a rabbit's foot leggings or
+ *     boots. It takes the place of any organ it had, which comes back as it went in.</li>
  *     <li>The next tier's ingot or gem: blood steel, then blood diamond, then soul netherite.</li>
  * </ul>
  * Create's Mechanical Crafters call {@link #assemble} as a crafting grid does, so they fit hides, organs and
@@ -37,13 +33,6 @@ import java.util.Set;
  * in them a fitting that would take something out is refused rather than losing it: that swap is by hand.
  */
 public class CarcassArmourFittingRecipe extends CustomRecipe {
-    /** Which pieces take each organ (until organs have files of their own, with their "armour_pieces"). */
-    private static final Map<BodyPart.Kind, Set<String>> ORGAN_PIECES = Map.of(
-            BodyPart.Kind.EYE, Set.of("helmet"),
-            BodyPart.Kind.HEART, Set.of("chestplate"),
-            BodyPart.Kind.LUNGS, Set.of("chestplate"),
-            BodyPart.Kind.STOMACH, Set.of("chestplate", "leggings"));
-
     public CarcassArmourFittingRecipe(CraftingBookCategory category) {
         super(category);
     }
@@ -128,12 +117,13 @@ public class CarcassArmourFittingRecipe extends CustomRecipe {
         if (modifiers.size() != 1) {
             return null;
         }
-        CarcassArmour.Organ organ = organ(first);
+        CarcassArmour.Organ organ = Organs.of(first, store);
         if (organ != null) {
-            if (!ORGAN_PIECES.getOrDefault(((SeveredLimbItem) first.getItem()).kind(), Set.of()).contains(armour.piece())) {
+            if (!Organs.fits(store, organ.organ(), armour.piece())) {
                 return null;
             }
-            List<ItemStack> giveBack = armour.organ().map(CarcassArmourFittingRecipe::organItem).filter(back -> !back.isEmpty()).map(List::of).orElse(List.of());
+            List<ItemStack> giveBack = armour.organ().map(old -> Organs.stack(store, old)).filter(back -> !back.isEmpty())
+                    .map(List::of).orElse(List.of());
             return new Fit(remake(piece, armour.withOrgan(Optional.of(organ)), store), pieceSlot, giveBack);
         }
         ArmourTier tier = store.tierFor(first.getItem());
@@ -148,20 +138,18 @@ public class CarcassArmourFittingRecipe extends CustomRecipe {
         return CarcassArmourItem.make(piece.copyWithCount(1), armour, store);
     }
 
-    /** An organ cut out of a mob, as armour takes it; null for anything else, or an organ with no mob stamped on it (a player's own). */
+    /**
+     * An organ cut out of a mob, as armour and minions take it ({@link Organs#of}); null for anything else, or an organ
+     * with no mob on it (a player's own heart).
+     */
     @Nullable
     public static CarcassArmour.Organ organ(ItemStack stack) {
-        Source source = SeveredLimbItem.source(stack);
-        if (source == null || !ORGAN_PIECES.containsKey(((SeveredLimbItem) stack.getItem()).kind())) {
-            return null;
-        }
-        return new CarcassArmour.Organ(BuiltInRegistries.ITEM.getKey(stack.getItem()), source.entity(), source.baby());
+        return Organs.of(stack, CarcassArmourItem.store());
     }
 
     /** A fitted organ as an item again, named and stamped as it was when cut out. */
     public static ItemStack organItem(CarcassArmour.Organ organ) {
-        return BuiltInRegistries.ITEM.getOptional(organ.organ()).filter(item -> item instanceof SeveredLimbItem)
-                .map(item -> ((SeveredLimbItem) item).of(organ.entity(), organ.baby())).orElse(ItemStack.EMPTY);
+        return Organs.stack(CarcassArmourItem.store(), organ);
     }
 
     /** Whether Create's Mechanical Crafters are asking: they give back nothing a recipe returns. */

@@ -104,8 +104,8 @@ import java.util.UUID;
  * with what it carries. What a scavenger fetches and what a herder leads by is whatever it holds. A brass minion's
  * filter ({@link MinionFilter}) narrows what the scavenger, herder, hunter and sentry take.
  * <p>
- * None of them breaks or places a block. The sapper waits for the detonate effect of the Motion group. The two game
- * events here are the sentry's: its arrows pass through its own side, and a crossbow's can be picked up.
+ * None of them breaks or places a block, but for the sapper's blast where the server allows it ({@link MinionSapper}).
+ * The two game events here are the sentry's: its arrows pass through its own side, and a crossbow's can be picked up.
  */
 public final class MinionJobs {
     public static final ResourceLocation SENTRY = BloodAndBones.asResource("sentry");
@@ -118,10 +118,11 @@ public final class MinionJobs {
     public static final ResourceLocation MEDIC = BloodAndBones.asResource("medic");
     public static final ResourceLocation BARTERER = BloodAndBones.asResource("barterer");
     public static final ResourceLocation DIGGER = BloodAndBones.asResource("digger");
+    public static final ResourceLocation SAPPER = MinionSapper.SAPPER;
 
     /** Jobs worked from home: idle, it goes back there (a sentry to its post). */
     public static final List<ResourceLocation> HOMEBODIES = List.of(BloodAndBones.asResource("farmer"), BloodAndBones.asResource("courier"),
-            BloodAndBones.asResource("guard"), SENTRY, SCAVENGER, HERDER, FISHER, HUNTER, HAULER, BUTCHER, MEDIC, BARTERER, DIGGER);
+            BloodAndBones.asResource("guard"), SENTRY, SCAVENGER, HERDER, FISHER, HUNTER, HAULER, BUTCHER, MEDIC, BARTERER, DIGGER, SAPPER);
     /** Jobs whose takings go into the nearest container by home. */
     public static final List<ResourceLocation> STORERS = List.of(BloodAndBones.asResource("courier"), BloodAndBones.asResource("farmer"),
             FISHER, BUTCHER, DIGGER, BARTERER);
@@ -162,6 +163,7 @@ public final class MinionJobs {
     /** Every job's goals, given to every minion; each works only while the minion has its job. */
     static void goals(MinionEntity minion, GoalSelector goals, GoalSelector targets) {
         goals.addGoal(2, new Sentry(minion));
+        goals.addGoal(2, new MinionSapper.Sap(minion));
         goals.addGoal(3, new Fish(minion));
         goals.addGoal(3, new Dig(minion));
         goals.addGoal(3, new Barter(minion));
@@ -213,10 +215,16 @@ public final class MinionJobs {
         return out;
     }
 
-    /** A job's needs beyond the build: a ranged attack for a sentry, a rod or a fish's mouth for a fisher, a blade for a butcher. */
+    /**
+     * A job's needs beyond the build: a ranged attack for a sentry, a rod or a fish's mouth for a fisher, a blade for a
+     * butcher, an organ that detonates for a sapper.
+     */
     static boolean needsMet(PartsData.Store store, MinionBuild build, MinionStats stats, ItemStack held, boolean ranged, ResourceLocation job) {
         if (job.equals(SENTRY)) {
             return ranged;
+        }
+        if (job.equals(SAPPER)) {
+            return MinionSapper.hasDetonator(store, build);
         }
         if (job.equals(FISHER)) {
             return !stats.strikes().isEmpty() && held.getItem() instanceof FishingRodItem || ownTool(store, build, FISHER);
@@ -235,11 +243,11 @@ public final class MinionJobs {
 
     /**
      * The job it wakes to, of those it is offered with nothing in hand: the first but hunting, which would go straight
-     * for the animals kept round the table it was made at (unless it is offered nothing else). Its maker puts it to
-     * hunting with a click.
+     * for the animals kept round the table it was made at, and sapping, which would spend its blast on the first monster
+     * to wander by (unless it is offered nothing else). Its maker puts it to either with a click.
      */
     public static ResourceLocation wakeJob(List<ResourceLocation> offered) {
-        return offered.stream().filter(job -> !job.equals(HUNTER)).findFirst().orElse(offered.get(0));
+        return offered.stream().filter(job -> !job.equals(HUNTER) && !job.equals(SAPPER)).findFirst().orElse(offered.get(0));
     }
 
     /** A job it has that it can no longer do (its bow broke, its rod was taken) gives way to the first it can. */
@@ -1631,9 +1639,10 @@ public final class MinionJobs {
             ItemStack blade = minion.getMainHandItem();
             boolean skinning = blade.getItem() instanceof FlensingKnifeItem;
             boolean bloody = com.avicagan.bloodandbones.carcass.Blood.bloody(c);
-            // what comes off goes into its hands, as a machine's yields go to the machine
-            boolean did = CarcassButchery.capturing(stack -> keep(minion, stack),
-                    () -> skinning ? CarcassButchery.skin(level, null, c, at) : CarcassButchery.cut(level, null, c, bone, at));
+            // what comes off goes into its hands, as a machine's yields go to the machine; a blade in its hand gets what
+            // a player's would (the hand path, by its butchery yield)
+            boolean did = CarcassButchery.capturing(stack -> keep(minion, stack), () -> CarcassButchery.byHand(minion,
+                    () -> skinning ? CarcassButchery.skin(level, null, c, at) : CarcassButchery.cut(level, null, c, bone, at)));
             minion.swing(InteractionHand.MAIN_HAND);
             if (did && bloody) {
                 com.avicagan.bloodandbones.carcass.Blood.bloody(blade, level);

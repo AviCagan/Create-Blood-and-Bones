@@ -86,7 +86,7 @@ public class BBBlocks {
                     .noLootTable()
                     .randomTicks()
                     .pushReaction(PushReaction.DESTROY)
-                    .sound(net.minecraft.world.level.block.SoundType.SLIME_BLOCK))
+                    .sound(BBSounds.STAIN))
             .blockstate((c, p) -> p.getVariantBuilder(c.get()).forAllStatesExcept(state -> {
                 var model = p.models().getExistingFile(p.modLoc((state.getValue(com.avicagan.bloodandbones.bleeding.BloodStainBlock.SOUL) ? "block/soul_blood_stain_" : "block/blood_stain_")
                         + state.getValue(com.avicagan.bloodandbones.bleeding.BloodStainBlock.SIZE)));
@@ -127,7 +127,8 @@ public class BBBlocks {
                 .blockstate((c, p) -> p.simpleBlock(c.get(), p.models().getExistingFile(p.modLoc("block/" + kind.id))))
                 .onRegister(block -> com.simibubi.create.api.stress.BlockStressValues.IMPACTS.register(block, () -> kind.stress))
                 .lang(name)
-                .simpleItem()
+                // the block's own model has no moving parts (the renderer turns them); the item shows them standing still
+                .item().model((c, p) -> p.withExistingParent(c.getName(), p.modLoc("block/" + kind.id + "_item"))).build()
                 .register();
     }
 
@@ -193,6 +194,76 @@ public class BBBlocks {
             .lang("Bloody Copper Casing")
             .register();
 
+    /** Create's train casing splashed with blood, joined up top and sides as Create's is. */
+    public static final BlockEntry<com.simibubi.create.content.decoration.encasing.CasingBlock> BLOODY_RAILWAY_CASING = BloodAndBones.REGISTRATE
+            .block("bloody_railway_casing", com.simibubi.create.content.decoration.encasing.CasingBlock::new)
+            .transform(com.simibubi.create.foundation.data.BuilderTransformers.layeredCasing(() -> BBSpriteShifts.BLOODY_RAILWAY_CASING_SIDE,
+                    () -> BBSpriteShifts.BLOODY_RAILWAY_CASING))
+            .properties(p -> p.mapColor(MapColor.CRIMSON_NYLIUM).sound(net.minecraft.world.level.block.SoundType.NETHERITE_BLOCK))
+            .lang("Bloody Train Casing")
+            .register();
+
+    // ---- a small blood-stained palette (docs/ARCHITECTURE-PROPOSAL.md section 7): Create's cut calcite, the white of a
+    // slaughterhouse's tiles, with blood over it and in the joints; each with its stairs and slab
+    public static final BlockEntry<net.minecraft.world.level.block.Block> BLOODY_CUT_CALCITE = palette("bloody_cut_calcite", "Bloody Cut Calcite", "cut/calcite_cut");
+    public static final BlockEntry<net.minecraft.world.level.block.Block> BLOODY_POLISHED_CUT_CALCITE = palette("bloody_polished_cut_calcite", "Bloody Polished Cut Calcite", "polished/calcite_cut_polished");
+    public static final BlockEntry<net.minecraft.world.level.block.Block> BLOODY_CUT_CALCITE_BRICKS = palette("bloody_cut_calcite_bricks", "Bloody Cut Calcite Bricks", "brick/calcite_cut_brick");
+    public static final BlockEntry<net.minecraft.world.level.block.Block> BLOODY_SMALL_CALCITE_BRICKS = palette("bloody_small_calcite_bricks", "Bloody Small Calcite Bricks", "small_brick/calcite_cut_small_brick");
+    public static final BlockEntry<net.minecraft.world.level.block.StairBlock> BLOODY_CUT_CALCITE_STAIRS = stairs("bloody_cut_calcite_stairs", "Bloody Cut Calcite Stairs", BLOODY_CUT_CALCITE, "cut/calcite_cut");
+    public static final BlockEntry<net.minecraft.world.level.block.StairBlock> BLOODY_POLISHED_CUT_CALCITE_STAIRS = stairs("bloody_polished_cut_calcite_stairs", "Bloody Polished Cut Calcite Stairs", BLOODY_POLISHED_CUT_CALCITE, "polished/calcite_cut_polished");
+    public static final BlockEntry<net.minecraft.world.level.block.StairBlock> BLOODY_CUT_CALCITE_BRICK_STAIRS = stairs("bloody_cut_calcite_brick_stairs", "Bloody Cut Calcite Brick Stairs", BLOODY_CUT_CALCITE_BRICKS, "brick/calcite_cut_brick");
+    public static final BlockEntry<net.minecraft.world.level.block.StairBlock> BLOODY_SMALL_CALCITE_BRICK_STAIRS = stairs("bloody_small_calcite_brick_stairs", "Bloody Small Calcite Brick Stairs", BLOODY_SMALL_CALCITE_BRICKS, "small_brick/calcite_cut_small_brick");
+    public static final BlockEntry<net.minecraft.world.level.block.SlabBlock> BLOODY_CUT_CALCITE_SLAB = slab("bloody_cut_calcite_slab", "Bloody Cut Calcite Slab", BLOODY_CUT_CALCITE, "cut/calcite_cut");
+    public static final BlockEntry<net.minecraft.world.level.block.SlabBlock> BLOODY_POLISHED_CUT_CALCITE_SLAB = slab("bloody_polished_cut_calcite_slab", "Bloody Polished Cut Calcite Slab", BLOODY_POLISHED_CUT_CALCITE, "polished/calcite_cut_polished");
+    public static final BlockEntry<net.minecraft.world.level.block.SlabBlock> BLOODY_CUT_CALCITE_BRICK_SLAB = slab("bloody_cut_calcite_brick_slab", "Bloody Cut Calcite Brick Slab", BLOODY_CUT_CALCITE_BRICKS, "brick/calcite_cut_brick");
+    public static final BlockEntry<net.minecraft.world.level.block.SlabBlock> BLOODY_SMALL_CALCITE_BRICK_SLAB = slab("bloody_small_calcite_brick_slab", "Bloody Small Calcite Brick Slab", BLOODY_SMALL_CALCITE_BRICKS, "small_brick/calcite_cut_small_brick");
+
+    /** The whole stained palette, full blocks first, then stairs, then slabs. */
+    public static java.util.List<BlockEntry<?>> stainedPalette() {
+        return java.util.List.of(BLOODY_CUT_CALCITE, BLOODY_POLISHED_CUT_CALCITE, BLOODY_CUT_CALCITE_BRICKS, BLOODY_SMALL_CALCITE_BRICKS,
+                BLOODY_CUT_CALCITE_STAIRS, BLOODY_POLISHED_CUT_CALCITE_STAIRS, BLOODY_CUT_CALCITE_BRICK_STAIRS, BLOODY_SMALL_CALCITE_BRICK_STAIRS,
+                BLOODY_CUT_CALCITE_SLAB, BLOODY_POLISHED_CUT_CALCITE_SLAB, BLOODY_CUT_CALCITE_BRICK_SLAB, BLOODY_SMALL_CALCITE_BRICK_SLAB);
+    }
+
+    /** Our copy of one of Create's calcite textures ({@code palettes/stone_types/<path>}), stained. */
+    private static net.minecraft.resources.ResourceLocation stained(String path) {
+        return BloodAndBones.asResource("block/palettes/bloody_" + path.substring(path.indexOf('/') + 1));
+    }
+
+    private static BlockEntry<net.minecraft.world.level.block.Block> palette(String id, String name, String texture) {
+        return BloodAndBones.REGISTRATE.block(id, net.minecraft.world.level.block.Block::new)
+                .initialProperties(() -> net.minecraft.world.level.block.Blocks.CALCITE)
+                .properties(p -> p.mapColor(MapColor.TERRACOTTA_WHITE).requiresCorrectToolForDrops())
+                .blockstate((c, p) -> p.simpleBlock(c.get(), p.models().cubeAll(c.getName(), stained(texture))))
+                .tag(net.minecraft.tags.BlockTags.MINEABLE_WITH_PICKAXE)
+                .lang(name)
+                .simpleItem()
+                .register();
+    }
+
+    private static BlockEntry<net.minecraft.world.level.block.StairBlock> stairs(String id, String name, BlockEntry<?> base, String texture) {
+        return BloodAndBones.REGISTRATE.block(id, p -> new net.minecraft.world.level.block.StairBlock(base.getDefaultState(), p))
+                .initialProperties(() -> net.minecraft.world.level.block.Blocks.CALCITE)
+                .properties(p -> p.mapColor(MapColor.TERRACOTTA_WHITE).requiresCorrectToolForDrops())
+                .blockstate((c, p) -> p.stairsBlock(c.get(), stained(texture)))
+                .tag(net.minecraft.tags.BlockTags.MINEABLE_WITH_PICKAXE, net.minecraft.tags.BlockTags.STAIRS)
+                .lang(name)
+                .item().tag(net.minecraft.tags.ItemTags.STAIRS).build()
+                .register();
+    }
+
+    private static BlockEntry<net.minecraft.world.level.block.SlabBlock> slab(String id, String name, BlockEntry<?> base, String texture) {
+        return BloodAndBones.REGISTRATE.block(id, net.minecraft.world.level.block.SlabBlock::new)
+                .initialProperties(() -> net.minecraft.world.level.block.Blocks.CALCITE)
+                .properties(p -> p.mapColor(MapColor.TERRACOTTA_WHITE).requiresCorrectToolForDrops())
+                .blockstate((c, p) -> p.slabBlock(c.get(), p.modLoc("block/" + base.getId().getPath()), stained(texture)))
+                .loot((loot, block) -> loot.add(block, loot.createSlabItemTable(block)))
+                .tag(net.minecraft.tags.BlockTags.MINEABLE_WITH_PICKAXE, net.minecraft.tags.BlockTags.SLABS)
+                .lang(name)
+                .item().tag(net.minecraft.tags.ItemTags.SLABS).build()
+                .register();
+    }
+
     /** A steel table to lay a piece on and chop it up with a Cleaver. */
     public static final BlockEntry<com.avicagan.bloodandbones.cooking.ButcherTableBlock> BUTCHER_TABLE = BloodAndBones.REGISTRATE
             .block("butcher_table", com.avicagan.bloodandbones.cooking.ButcherTableBlock::new)
@@ -218,7 +289,7 @@ public class BBBlocks {
     public static final BlockEntry<net.minecraft.world.level.block.ChainBlock> GUT_CHAIN = BloodAndBones.REGISTRATE
             .block("gut_chain", net.minecraft.world.level.block.ChainBlock::new)
             .properties(p -> p.mapColor(MapColor.COLOR_PINK).forceSolidOn().strength(0.5F).noOcclusion()
-                    .sound(net.minecraft.world.level.block.SoundType.SLIME_BLOCK))
+                    .sound(BBSounds.FLESH))
             .blockstate((c, p) -> p.axisBlock(c.get(), p.models().getExistingFile(p.modLoc("block/gut_chain")),
                     p.models().getExistingFile(p.modLoc("block/gut_chain"))))
             .tag(net.minecraft.tags.BlockTags.MINEABLE_WITH_HOE)

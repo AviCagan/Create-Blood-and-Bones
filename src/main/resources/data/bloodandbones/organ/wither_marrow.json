@@ -1,0 +1,18 @@
+{
+  "item": "bloodandbones:gland",
+  "name": "organ.bloodandbones.wither_marrow",
+  "bloodless_name": "bloodless.organ.bloodandbones.wither_marrow",
+  "look": "marrow",
+  "tint": "#4a4a4a",
+  "armour_pieces": [
+    "chestplate",
+    "leggings"
+  ],
+  "extra_drops": [
+    {
+      "item": "minecraft:bone_meal",
+      "min": 1,
+      "max": 2
+    }
+  ]
+}

@@ -1,0 +1,21 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "category": "misc",
+  "key": {
+    "B": {
+      "tag": "c:plates/brass"
+    },
+    "G": {
+      "tag": "c:glass_blocks"
+    }
+  },
+  "pattern": [
+    " B ",
+    "BGB",
+    " B "
+  ],
+  "result": {
+    "count": 2,
+    "id": "bloodandbones:empty_soul_canister"
+  }
+}

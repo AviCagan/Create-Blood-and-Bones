@@ -1,5 +1,6 @@
 package com.avicagan.bloodandbones.cooking;
 
+import com.avicagan.bloodandbones.carcass.CarcassLook;
 import com.avicagan.bloodandbones.carcass.rig.Bone;
 import com.avicagan.bloodandbones.carcass.rig.Rig;
 import com.avicagan.bloodandbones.carcass.rig.RigManager;
@@ -14,10 +15,18 @@ import net.minecraft.client.renderer.blockentity.BlockEntityRendererProvider;
 import net.minecraft.core.Direction;
 import net.minecraft.util.FastColor;
 import net.minecraft.util.Mth;
+import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.level.block.state.BlockState;
+import org.joml.Vector3f;
 
-/** The spit's shaft (without Flywheel) and the piece on it, turning with the shaft and browning as it cooks. */
+/**
+ * The spit's shaft (without Flywheel) and what is on it, turning with the shaft and browning as it cooks: a carried
+ * piece, or a whole carcass laid along the spit as it stood, every piece it still had in place.
+ */
 public class SpitRoastRenderer extends KineticBlockEntityRenderer<SpitRoastBlockEntity> {
+    /** How long a whole carcass is drawn along the spit, in blocks, at most. */
+    private static final float WHOLE_LENGTH = 1.7F;
+
     public SpitRoastRenderer(BlockEntityRendererProvider.Context context) {
         super(context);
     }
@@ -27,27 +36,96 @@ public class SpitRoastRenderer extends KineticBlockEntityRenderer<SpitRoastBlock
         return shaft(getRotationAxisOf(be));
     }
 
+    /** A whole carcass sticks out past the block. */
+    @Override
+    public net.minecraft.world.phys.AABB getRenderBoundingBox(SpitRoastBlockEntity be) {
+        return new net.minecraft.world.phys.AABB(be.getBlockPos()).inflate(1.0);
+    }
+
     @Override
     protected void renderSafe(SpitRoastBlockEntity be, float partialTicks, PoseStack ms, MultiBufferSource buffer, int light, int overlay) {
-        CarcassPieceItem.Piece piece = CarcassPieceItem.piece(be.piece());
-        Rig rig = piece == null ? null : RigManager.clientRig(piece.entity(), piece.baby()).orElse(null);
-        Bone bone = rig == null ? null : rig.bone(piece.bone()).orElse(null);
-        if (bone != null) {
+        CarcassPieceItem.Piece first = CarcassPieceItem.piece(be.piece());
+        Rig rig = first == null ? null : RigManager.clientRig(first.entity(), first.baby()).orElse(null);
+        if (rig != null) {
             Direction.Axis axis = be.getBlockState().getValue(HorizontalAxisKineticBlock.HORIZONTAL_AXIS);
             float angle = getAngleForBe(be, be.getBlockPos(), axis);
             ms.pushPose();
             ms.translate(0.5F, 0.5F, 0.5F);
             ms.mulPose(axis == Direction.Axis.X ? Axis.XP.rotation(angle) : Axis.ZP.rotation(angle));
-            // lay the piece along the spit
-            if (axis == Direction.Axis.X) {
-                ms.mulPose(Axis.ZP.rotationDegrees(90));
+            if (be.whole()) {
+                drawWhole(be, rig, axis, ms, buffer, light);
             } else {
-                ms.mulPose(Axis.XP.rotationDegrees(90));
+                Bone bone = rig.bone(first.bone()).orElse(null);
+                if (bone != null) {
+                    // lay the piece along the spit
+                    if (axis == Direction.Axis.X) {
+                        ms.mulPose(Axis.ZP.rotationDegrees(90));
+                    } else {
+                        ms.mulPose(Axis.XP.rotationDegrees(90));
+                    }
+                    CarcassModels.drawPiece(first, rig, bone, 0.85F, browning(be.doneness()), ms, buffer, light);
+                }
             }
-            CarcassModels.drawPiece(piece, rig, bone, 0.85F, browning(be.doneness()), ms, buffer, light);
             ms.popPose();
         }
         super.renderSafe(be, partialTicks, ms, buffer, light, overlay);
+    }
+
+    /**
+     * Every piece at its place in the standing mob, the whole turned so it runs head to tail along the spit and centred
+     * on it, shrunk to fit if it is long.
+     */
+    private static void drawWhole(SpitRoastBlockEntity be, Rig rig, Direction.Axis axis, PoseStack ms, MultiBufferSource buffer, int light) {
+        Vector3f min = new Vector3f(Float.MAX_VALUE);
+        Vector3f max = new Vector3f(-Float.MAX_VALUE);
+        for (ItemStack stack : be.pieces()) {
+            CarcassPieceItem.Piece piece = CarcassPieceItem.piece(stack);
+            Bone bone = piece == null ? null : rig.bone(piece.bone()).orElse(null);
+            if (bone == null) {
+                continue;
+            }
+            for (int i = 0; i < 8; i++) {
+                Vector3f corner = new Vector3f((i & 1) == 0 ? bone.boxMin().x : bone.boxMax().x, (i & 2) == 0 ? bone.boxMin().y : bone.boxMax().y,
+                        (i & 4) == 0 ? bone.boxMin().z : bone.boxMax().z);
+                bone.rotation().transform(corner).add(bone.offset()).div(16.0F);
+                min.min(corner);
+                max.max(corner);
+            }
+        }
+        if (min.x > max.x) {
+            return;
+        }
+        Vector3f size = new Vector3f(max).sub(min);
+        // the mob's own length runs along its Z; its long way goes along the spit
+        float length = Math.max(size.z, Math.max(size.x, size.y));
+        float fit = Math.min(1.0F, WHOLE_LENGTH / Math.max(length, 0.1F));
+        int tint = browning(be.doneness());
+        ms.pushPose();
+        if (axis == Direction.Axis.X) {
+            ms.mulPose(Axis.YP.rotationDegrees(90));
+        }
+        ms.scale(fit, fit, fit);
+        // entity models are drawn upside down in their own space
+        ms.mulPose(Axis.ZP.rotationDegrees(180.0F));
+        ms.translate(-(min.x + max.x) / 2.0F, -(min.y + max.y) / 2.0F, -(min.z + max.z) / 2.0F);
+        for (ItemStack stack : be.pieces()) {
+            CarcassPieceItem.Piece piece = CarcassPieceItem.piece(stack);
+            Bone bone = piece == null ? null : rig.bone(piece.bone()).orElse(null);
+            if (bone == null) {
+                continue;
+            }
+            ms.pushPose();
+            ms.translate(bone.offset().x / 16.0F, bone.offset().y / 16.0F, bone.offset().z / 16.0F);
+            ms.mulPose(bone.rotation());
+            int color = CarcassModels.rotColor(piece.freshness());
+            if (tint != -1) {
+                color = FastColor.ARGB32.multiply(color, tint);
+            }
+            java.util.List<CarcassLook.Coat> coats = piece.coats().stream().map(c -> new CarcassLook.Coat(c.layer(), c.texture(), c.tint())).toList();
+            CarcassModels.drawBone(rig, bone, piece.texture(), coats, color, ms, buffer, light);
+            ms.popPose();
+        }
+        ms.popPose();
     }
 
     /** Raw meat is untinted; cooked goes a rich brown; burnt goes black. */
