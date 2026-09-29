@@ -1706,6 +1706,12 @@ public final class MinionJobs {
         private final List<Vec3> round = new ArrayList<>();
         /** Whether the way round the body is still to be worked out, for a pass about to begin. */
         private boolean plan;
+        /**
+         * Whether it has got to where it takes hold from for this pass: from there it only steps nearer the body, if the
+         * body lies out of reach. Heading back to the spot each time a step took it off, it paced to and fro between the
+         * two for as long as it had, never taking hold of a body lying more than a couple of blocks from the rack.
+         */
+        private boolean placed;
         /** When it set out for the next place on its way to take hold again. */
         private int wayFrom;
         /** How near the middle of the tray the body has come on this pass. */
@@ -1866,6 +1872,7 @@ public final class MinionJobs {
             stuckSince = -1;
             tries = 0;
             plan = false;
+            placed = false;
             round.clear();
             approach.reset(minion);
         }
@@ -2009,6 +2016,7 @@ public final class MinionJobs {
             }
             dragging = false;
             plan = true;
+            placed = false;
             wayFrom = minion.tickCount;
             approach.reset(minion);
         }
@@ -2068,7 +2076,7 @@ public final class MinionJobs {
                 boolean rack = level.getBlockEntity(to) instanceof BleedingRackBlockEntity;
                 Vec3 end = level.getBlockEntity(to) instanceof ShackleHookBlockEntity hook ? ShackleHookBlock.tip(to, hook.getBlockState()) : Vec3.atCenterOf(to);
                 Vec3 spot = rack && tries > 0 ? holdSpot(level, torso, end) : null;
-                if (spot != null) {
+                if (spot != null && !placed) {
                     // another pass: first to where it takes hold from, round the body if it lies in the way
                     if (plan) {
                         plan = false;
@@ -2099,6 +2107,9 @@ public final class MinionJobs {
                         }
                         return;
                     }
+                    // there: from here on only nearer the body
+                    placed = true;
+                    approach.reset(minion);
                 }
                 if (Math.hypot(minion.getX() - torso.x, minion.getZ() - torso.z) > reach || Math.abs(minion.getY() - torso.y) > 3.0) {
                     if (!approach.step(minion, BlockPos.containing(torso), 2, 1.0)) {
