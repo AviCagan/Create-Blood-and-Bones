@@ -19,21 +19,6 @@
       "damping": 3.0,
       "stiffness": 0.5,
       "contacts": false
-    },
-    "head": {
-      "min_degrees": [
-        -30,
-        -45,
-        -15
-      ],
-      "max_degrees": [
-        60,
-        45,
-        15
-      ],
-      "damping": 2.5,
-      "stiffness": 0.8,
-      "contacts": false
     }
   },
   "butchery": {

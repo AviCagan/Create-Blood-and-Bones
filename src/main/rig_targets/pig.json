@@ -3,23 +3,6 @@
   "model": "minecraft:pig",
   "texture": "minecraft:textures/entity/pig/pig.png",
   "rot_time": 20000,
-  "joints": {
-    "head": {
-      "min_degrees": [
-        -30,
-        -45,
-        -15
-      ],
-      "max_degrees": [
-        60,
-        45,
-        15
-      ],
-      "damping": 2.5,
-      "stiffness": 0.8,
-      "contacts": false
-    }
-  },
   "butchery": {
     "meat": "minecraft:porkchop"
   },

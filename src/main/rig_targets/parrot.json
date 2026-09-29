@@ -18,23 +18,6 @@
     "right_leg": "body",
     "tail": "body"
   },
-  "joints": {
-    "head": {
-      "min_degrees": [
-        -30,
-        -45,
-        -15
-      ],
-      "max_degrees": [
-        60,
-        45,
-        15
-      ],
-      "damping": 2.5,
-      "stiffness": 0.8,
-      "contacts": false
-    }
-  },
   "butchery": {
     "hide": "minecraft:feather",
     "hide_per_weight": 40.0,

@@ -12,21 +12,6 @@
     "body/tail/tail_fin"
   ],
   "joints": {
-    "body/head": {
-      "min_degrees": [
-        -30,
-        -45,
-        -15
-      ],
-      "max_degrees": [
-        60,
-        45,
-        15
-      ],
-      "damping": 2.5,
-      "stiffness": 0.8,
-      "contacts": false
-    },
     "body/tail": {
       "min_degrees": [
         -45,

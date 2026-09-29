@@ -13,23 +13,6 @@
     "head/right_ear",
     "head/left_ear"
   ],
-  "joints": {
-    "head": {
-      "min_degrees": [
-        -30,
-        -45,
-        -15
-      ],
-      "max_degrees": [
-        60,
-        45,
-        15
-      ],
-      "damping": 2.5,
-      "stiffness": 0.8,
-      "contacts": false
-    }
-  },
   "butchery": {
     "hide_per_weight": 5.0
   },
