@@ -999,7 +999,8 @@ public final class MinionGoals {
 
     /**
      * A task whose takings are stored (its data's "stores": the courier, farmer, fisher, butcher, digger and barterer)
-     * carries what it has to the container nearest home, working at home.
+     * carries what it has to the container nearest home that takes any of it, working at home (a Butcher's Table by home,
+     * which takes only a carcass piece, is passed over for the chest beyond it).
      */
     public static class Deposit extends Goal {
         private final MinionEntity minion;
@@ -1022,7 +1023,8 @@ public final class MinionGoals {
                 return null;
             }
             for (BlockPos pos : BlockPos.betweenClosed(home.offset(-6, -2, -6), home.offset(6, 2, 6))) {
-                if (!unreachable.contains(minion, pos) && minion.level().getCapability(Capabilities.ItemHandler.BLOCK, pos, null) != null
+                IItemHandler handler = unreachable.contains(minion, pos) ? null : minion.level().getCapability(Capabilities.ItemHandler.BLOCK, pos, null);
+                if (handler != null && takesAny(handler)
                         && !(minion.level().getBlockState(pos).getBlock() instanceof com.avicagan.bloodandbones.body.SurgeryTableBlock)
                         && !(minion.level().getBlockState(pos).getBlock() instanceof BloodTroughBlock)) {
                     double d = pos.distSqr(home);
@@ -1033,6 +1035,17 @@ public final class MinionGoals {
                 }
             }
             return best;
+        }
+
+        /** Whether this container would take any of what it carries (tried, not done). */
+        private boolean takesAny(IItemHandler handler) {
+            for (int i = 0; i < minion.inventory.getContainerSize(); i++) {
+                ItemStack stack = minion.inventory.getItem(i);
+                if (!stack.isEmpty() && ItemHandlerHelper.insertItemStacked(handler, stack.copy(), true).getCount() < stack.getCount()) {
+                    return true;
+                }
+            }
+            return false;
         }
 
         /** Its tick counts game ticks (a drink a second, a fresh path now and then), so it must run on every one. */

@@ -334,7 +334,8 @@ public enum MinionTask {
             // it keeps its herd within 8 of home, looks out to 20 for strays, and gives up on one after 30 s
             case HERDER -> data(HOME, 8, 16, Stat.PACE, Stat.SIGHT, HOLDING, Tool.of(true, false, null), false,
                     numbers("search", 20, "wait", 600));
-            case TENDER -> data(HOME, 8, 12, Stat.CARRY, Stat.PACE, CARRYING, null, false, numbers("look_every", 20));
+            // it looks round every second, and keeps a cradle stocked with up to 16 brass sheets
+            case TENDER -> data(HOME, 8, 12, Stat.CARRY, Stat.PACE, CARRYING, null, false, numbers("look_every", 20, "sheets", 16));
             // a sample in hand narrows what it fetches, held as anything holds one
             case COURIER -> data(HOME_OR_MAKER, 10, 32, Stat.CARRY, Stat.PACE, CARRYING, Tool.of(false, false, HOLDING), true,
                     numbers("look_every", 10));

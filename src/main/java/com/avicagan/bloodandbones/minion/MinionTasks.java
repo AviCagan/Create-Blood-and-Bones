@@ -11,6 +11,7 @@ import com.avicagan.bloodandbones.carcass.CarcassSavedData;
 import com.avicagan.bloodandbones.carcass.ShackleHookBlock;
 import com.avicagan.bloodandbones.carcass.ShackleHookBlockEntity;
 import com.avicagan.bloodandbones.carcass.rig.RigManager;
+import com.avicagan.bloodandbones.cooking.ButcherTableBlockEntity;
 import com.avicagan.bloodandbones.item.FlensingKnifeItem;
 import com.avicagan.bloodandbones.network.MinionTaskPayload;
 import com.avicagan.bloodandbones.parts.PartsData;
@@ -105,9 +106,8 @@ import java.util.UUID;
  * its body unable to do its task, the task screen's rows and the requests it sends back (docs/NEXT.md 1.3), and what its
  * maker hands it to hold. The work: the guard, sentry, hunter, sapper ({@link MinionSapper}), surgeon (at its table,
  * {@link MinionGoals.AttendTable}), medic, herder, courier, hauler, farmer ({@link MinionGoals.Farm}), fisher, butcher,
- * barterer and digger; Idle only stays at home or follows its maker. Five tasks can be done "with me", round the maker:
- * Idle, Guard, Hunter, Medic and Courier. The Tender's goals come later (docs/NEXT.md 1.10, stage E): given now, it keeps
- * home.
+ * barterer, digger and Tender ({@link MinionTender}); Idle only stays at home or follows its maker. Five tasks can be done
+ * "with me", round the maker: Idle, Guard, Hunter, Medic and Courier.
  * <p>
  * What it holds its maker hands it: one of whatever they use on it (the old one comes back), and an empty hand takes it
  * back; arrows for its bow and a medic's healing potions go in with what it carries. A missing tool never moves it to
@@ -142,6 +142,7 @@ public final class MinionTasks {
         goals.addGoal(3, new Haul(minion));
         goals.addGoal(3, new Medic(minion));
         goals.addGoal(3, new Herd(minion));
+        goals.addGoal(3, new MinionTender.Tend(minion));
         goals.addGoal(5, new Fetch(minion));
         // a sentry takes as its target a monster it can see within its range of its post, or with no ranged attack, one it
         // can strike from where it stands; a hunter the prey near where it hunts
@@ -175,8 +176,7 @@ public final class MinionTasks {
      * The task it wakes to: its fittest at home that waits on nothing it lacks, holding nothing (a villager-headed body made
      * at the table is ready to operate), ties going to the list's order; with none, Idle. Never Hunter, which would go
      * straight for the animals kept round the table it was made at, nor Sapper, which would spend its blast on the first
-     * monster to wander by: its maker puts it to either. Nor, until its goals are built, the Tender (docs/NEXT.md 1.10,
-     * stage E).
+     * monster to wander by: its maker puts it to either.
      */
     public static MinionTask wakeTask(MinionEntity minion) {
         MinionTask best = MinionTask.IDLE;
@@ -196,7 +196,7 @@ public final class MinionTasks {
 
     /** Whether it may wake to this task (see {@link #wakeTask}). */
     public static boolean wakes(MinionTask task) {
-        return task.rated() && task != MinionTask.HUNTER && task != MinionTask.SAPPER && task != MinionTask.TENDER;
+        return task.rated() && task != MinionTask.HUNTER && task != MinionTask.SAPPER;
     }
 
     /** Its maker's action bar as it wakes: "Woke as a Surgeon (200%)". */
@@ -1692,9 +1692,11 @@ public final class MinionTasks {
      * A butcher takes carcasses within its reach of home apart by hand (docs/PARTS-AND-TRAITS.md section 6.9), a stroke every
      * 0.75 s at 100%, through the same CarcassButchery a player's Cleaver or Flensing Knife uses, so the yields are a player's
      * hand yields: with a Cleaver it breaks down loose pieces and cuts limbs off whole bodies; with a Flensing Knife it
-     * skins them. What comes off goes into what it carries. Its fitness (docs/NEXT.md 1.2) sets how often it strokes (a
-     * fitter butcher sooner, never under 0.3 s) and, below 100%, how much of each cut it wastes: its yields times its fitness,
-     * so no butcher beats hand yields.
+     * skins them. With a Cleaver it also chops the pieces laid on a Butcher's Table within its reach of home, a stroke a
+     * piece, as a Deployer holding one does (ButcherTableBlockEntity#chop). Whichever lies nearest home goes first. What
+     * comes off goes into what it carries. Its fitness (docs/NEXT.md 1.2) sets how often it strokes (a fitter butcher sooner,
+     * never under 0.3 s) and, below 100%, how much of each cut it wastes: its yields times its fitness, so no butcher beats
+     * hand yields.
      */
     static class Butcher extends Goal {
         /** How far over or under its feet a piece may lie for it to cut: a resting body's torso lies a block up. */
@@ -1704,9 +1706,13 @@ public final class MinionTasks {
         private UUID carcass;
         @Nullable
         private String bone;
+        /** A Butcher's Table with a piece on it to chop, when that is its work rather than a carcass. */
+        @Nullable
+        private BlockPos table;
         private boolean done;
         private int nextStroke;
         private final List<UUID> unreachable = new ArrayList<>();
+        private final MinionGoals.Unreachable tablesOutOfReach = new MinionGoals.Unreachable();
         private int forgotAt;
         private final MinionGoals.Approach approach = new MinionGoals.Approach();
 
@@ -1733,12 +1739,25 @@ public final class MinionTasks {
             return pick(level);
         }
 
-        /** The nearest carcass by home with work in it for the blade it holds, and the bone to work on. */
+        /**
+         * The nearest work by home for the blade it holds: a carcass and the bone to work on, or, with a Cleaver, a Butcher's
+         * Table with a piece on it.
+         */
         private boolean pick(ServerLevel level) {
             boolean skinning = minion.getMainHandItem().getItem() instanceof FlensingKnifeItem;
             Vec3 home = Vec3.atBottomCenterOf(minion.home());
             double best = Double.MAX_VALUE;
             carcass = null;
+            table = null;
+            if (!skinning) {
+                for (BlockPos at : tables(level)) {
+                    double d = home.distanceToSqr(Vec3.atCenterOf(at));
+                    if (d < best) {
+                        best = d;
+                        table = at;
+                    }
+                }
+            }
             for (CarcassSavedData.Carcass c : CarcassSavedData.get(level).all()) {
                 if (unreachable.contains(c.id) || CarcassDrag.isDraggingCarcass(c.id)
                         || com.avicagan.bloodandbones.carcass.trolley.ShackleTrolleyEntity.isHanging(level, c.id)) {
@@ -1755,9 +1774,47 @@ public final class MinionTasks {
                     best = d;
                     carcass = c.id;
                     bone = work;
+                    table = null;
                 }
             }
-            return carcass != null;
+            return carcass != null || table != null;
+        }
+
+        /**
+         * Whether it has a free slot for each kind of thing the piece on this table comes apart into (or, carrying nothing,
+         * however few slots it has): else it takes what it carries to the container by home first.
+         */
+        private boolean roomToChop(ButcherTableBlockEntity t) {
+            int free = 0;
+            for (int i = 0; i < minion.slots(); i++) {
+                if (minion.inventory.getItem(i).isEmpty()) {
+                    free++;
+                }
+            }
+            return free >= Math.min(t.yieldKinds(), minion.slots());
+        }
+
+        /** Butcher's Tables within its reach of home with a piece on them to chop, from the loaded chunks' block entities. */
+        private List<BlockPos> tables(ServerLevel level) {
+            List<BlockPos> out = new ArrayList<>();
+            BlockPos home = minion.home();
+            double reach = minion.reach();
+            int r = Mth.ceil(reach);
+            for (int cx = (home.getX() - r) >> 4; cx <= (home.getX() + r) >> 4; cx++) {
+                for (int cz = (home.getZ() - r) >> 4; cz <= (home.getZ() + r) >> 4; cz++) {
+                    LevelChunk chunk = level.getChunkSource().getChunkNow(cx, cz);
+                    if (chunk == null) {
+                        continue;
+                    }
+                    for (BlockEntity be : chunk.getBlockEntities().values()) {
+                        if (be instanceof ButcherTableBlockEntity t && be.getBlockPos().distToCenterSqr(Vec3.atBottomCenterOf(home)) < reach * reach
+                                && t.canChop() && roomToChop(t) && !tablesOutOfReach.contains(minion, be.getBlockPos())) {
+                            out.add(be.getBlockPos());
+                        }
+                    }
+                }
+            }
+            return out;
         }
 
         /** Ticks to its next stroke: 0.75 s at 100%, sooner for a fitter butcher, never under 0.3 s. */
@@ -1798,7 +1855,8 @@ public final class MinionTasks {
 
         @Override
         public boolean canContinueToUse() {
-            return carcass != null && !done && minion.hasTask(MinionTask.BUTCHER) && blade(minion.getMainHandItem()) && minion.canCarry(new ItemStack(Items.BEEF));
+            return (carcass != null || table != null) && !done && minion.hasTask(MinionTask.BUTCHER) && blade(minion.getMainHandItem())
+                    && minion.canCarry(new ItemStack(Items.BEEF));
         }
 
         @Override
@@ -1814,10 +1872,15 @@ public final class MinionTasks {
             minion.working = false;
             carcass = null;
             bone = null;
+            table = null;
         }
 
         @Override
         public void tick() {
+            if (table != null && !done && minion.level() instanceof ServerLevel level) {
+                chopAtTable(level);
+                return;
+            }
             if (carcass == null || bone == null || done || !(minion.level() instanceof ServerLevel level)) {
                 return;
             }
@@ -1865,6 +1928,46 @@ public final class MinionTasks {
             if (!did || skinning && c.skinned) {
                 done = true;
             }
+        }
+
+        /**
+         * At a Butcher's Table: it stands at arm's length from the top and, at its stroke, chops the piece there with its
+         * Cleaver as a Deployer does, keeping what comes off (less what a poor butcher wastes), the Cleaver coming away bloody.
+         * It goes to a table only with a free slot for each kind of thing the piece comes apart into, so what it chops stays
+         * in its hands; carrying nothing, it chops whatever its room, and what it has no room for falls on the table top.
+         */
+        private void chopAtTable(ServerLevel level) {
+            if (!(level.getBlockEntity(table) instanceof ButcherTableBlockEntity at) || !at.canChop()) {
+                // chopped or taken off meanwhile (by a player, a Deployer, a funnel)
+                done = true;
+                return;
+            }
+            Vec3 top = Vec3.atCenterOf(table).add(0.0, 0.5, 0.0);
+            minion.getLookControl().setLookAt(top);
+            double reach = 2.0 + minion.getBbWidth() / 2.0;
+            if (Math.hypot(minion.getX() - top.x, minion.getZ() - top.z) > reach || Math.abs(top.y - minion.getY()) > REACH_UP) {
+                if (!approach.step(minion, table, 1, 1.0)) {
+                    tablesOutOfReach.add(table);
+                    table = null;
+                }
+                return;
+            }
+            approach.reset(minion);
+            minion.getNavigation().stop();
+            if (minion.tickCount < nextStroke) {
+                return;
+            }
+            nextStroke = minion.tickCount + stroke();
+            ItemStack blade = minion.getMainHandItem();
+            if (!(blade.getItem() instanceof com.avicagan.bloodandbones.item.CleaverItem)) {
+                done = true;
+                return;
+            }
+            // what it has no room for falls on the table top, as a Deployer's chop leaves it
+            CarcassButchery.yielding(MinionFitness.yieldShare(minion.taskFitness()), () -> at.chop(level, blade, minion::carry));
+            minion.swing(InteractionHand.MAIN_HAND);
+            // one chop takes the whole piece apart
+            done = true;
         }
     }
 

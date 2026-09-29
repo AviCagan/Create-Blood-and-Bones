@@ -279,7 +279,10 @@ public class BBLang {
         // what its task's work waits on in the world, for its status line
         for (String[] idle : new String[][]{{"fisher", "no still water within %s of home"}, {"digger", "no grass, moss or dirt to sniff within %s of home"},
                 {"barterer", "no gold in a container within %s of home"}, {"hauler", "no free Shackle Hook or Bleeding Rack within %s of home"},
-                {"container", "no container within 6 of home to put its takings in"}}) {
+                {"container", "no container within 6 of home to put its takings in"},
+                {"tender_blood", "no blood to be had by the bucket within %s of home"},
+                {"tender_canister", "no full Soul Canister in a container within %s of home"},
+                {"tender_rest", "nowhere by home for the rest of a bucket that a fallen minion cannot hold"}}) {
             BloodAndBones.REGISTRATE.addRawLang("bloodandbones.minion.idle." + idle[0], idle[1]);
         }
         // how fit it is, in a word (docs/NEXT.md 1.3)

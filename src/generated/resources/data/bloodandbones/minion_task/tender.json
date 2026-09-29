@@ -16,7 +16,8 @@
   "main": "carry",
   "max_reach": 12,
   "numbers": {
-    "look_every": 20.0
+    "look_every": 20.0,
+    "sheets": 16.0
   },
   "reach": 8,
   "second": "pace",

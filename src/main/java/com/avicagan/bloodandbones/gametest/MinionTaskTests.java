@@ -1715,4 +1715,202 @@ public class MinionTaskTests {
             near.discard();
         });
     }
+
+    // ---- the Tender and the Butcher's Table (docs/NEXT.md 1.1; stage E)
+
+    private static ItemStack bloodBucket() {
+        return new ItemStack(com.avicagan.bloodandbones.registry.BBFluids.BLOOD.getBucket().get());
+    }
+
+    /** How many of this item the containers here hold between them. */
+    private static int inStores(GameTestHelper helper, net.minecraft.world.item.Item item, BlockPos... at) {
+        int n = 0;
+        for (BlockPos pos : at) {
+            if (helper.getBlockEntity(pos) instanceof net.minecraft.world.Container container) {
+                n += container.countItem(item);
+            }
+        }
+        return n;
+    }
+
+    /** Everything it carries, counted. */
+    private static int carried(MinionEntity minion) {
+        int n = 0;
+        for (int i = 0; i < minion.inventory.getContainerSize(); i++) {
+            n += minion.inventory.getItem(i).getCount();
+        }
+        return n;
+    }
+
+    /**
+     * A Tender keeps the trough and the cradle by home stocked (docs/NEXT.md 1.1): the two buckets of blood in the chest go
+     * into the trough, then it fills the empties at a Create Fluid Tank of blood and pours those in too; the three canisters
+     * and five brass sheets in the barrel go into the cradle, and the two empty canisters in the cradle come back out. Nothing
+     * is made or lost on the way: four buckets and five canisters from first to last, the buckets' 2000 mB and the tank's 2000
+     * all in the trough, the empties back in the containers, and nothing on the ground or left in its hands.
+     */
+    @GameTest(template = "empty", timeoutTicks = 2400)
+    public static void tenderFillsTroughsAndCradles(GameTestHelper helper) {
+        pen(helper);
+        ServerLevel level = helper.getLevel();
+        BlockPos chestAt = new BlockPos(2, 2, 8);
+        BlockPos barrelAt = new BlockPos(8, 2, 8);
+        BlockPos troughAt = new BlockPos(8, 2, 2);
+        BlockPos tankAt = new BlockPos(2, 2, 2);
+        BlockPos cradleAt = new BlockPos(5, 2, 8);
+        helper.setBlock(chestAt, Blocks.CHEST);
+        helper.setBlock(barrelAt, Blocks.BARREL);
+        helper.setBlock(troughAt, BBBlocks.BLOOD_TROUGH.getDefaultState());
+        helper.setBlock(tankAt, com.simibubi.create.AllBlocks.FLUID_TANK.getDefaultState());
+        helper.setBlock(cradleAt, BBBlocks.CHARGING_CRADLE.getDefaultState());
+        ChestBlockEntity chest = (ChestBlockEntity) helper.getBlockEntity(chestAt);
+        chest.setItem(0, bloodBucket());
+        chest.setItem(1, bloodBucket());
+        chest.setItem(2, new ItemStack(Items.BUCKET, 2));
+        var barrel = (net.minecraft.world.level.block.entity.BarrelBlockEntity) helper.getBlockEntity(barrelAt);
+        barrel.setItem(0, new ItemStack(BBItems.SOUL_CANISTER.get(), 3));
+        barrel.setItem(1, new ItemStack(com.simibubi.create.AllItems.BRASS_SHEET.get(), 5));
+        var cradle = (com.avicagan.bloodandbones.minion.ChargingCradleBlockEntity) helper.getBlockEntity(cradleAt);
+        cradle.inventory.setStackInSlot(com.avicagan.bloodandbones.minion.ChargingCradleBlockEntity.FULL, new ItemStack(BBItems.EMPTY_SOUL_CANISTER.get()));
+        cradle.inventory.setStackInSlot(com.avicagan.bloodandbones.minion.ChargingCradleBlockEntity.FULL + 1, new ItemStack(BBItems.EMPTY_SOUL_CANISTER.get()));
+        var trough = (com.avicagan.bloodandbones.minion.BloodTroughBlockEntity) helper.getBlockEntity(troughAt);
+        BlockPos tankAbs = helper.absolutePos(tankAt);
+        helper.runAfterDelay(1, () -> {
+            var tank = level.getCapability(net.neoforged.neoforge.capabilities.Capabilities.FluidHandler.BLOCK, tankAbs, null);
+            if (tank == null || tank.fill(new net.neoforged.neoforge.fluids.FluidStack(com.avicagan.bloodandbones.registry.BBFluids.blood(), 2000),
+                    net.neoforged.neoforge.fluids.capability.IFluidHandler.FluidAction.EXECUTE) != 2000) {
+                helper.fail("The tank should take 2000 mB of blood");
+            }
+        });
+        Maker maker = new Maker(helper, new BlockPos(4, 2, 5));
+        MinionEntity tender = minion(helper, new BlockPos(5, 2, 5), cowWith(ref("cow", "head")), maker);
+        if (!tender.setTask(MinionTask.TENDER)) {
+            helper.fail("Anything can be a Tender");
+            return;
+        }
+        AABB area = area(helper);
+        helper.succeedWhen(() -> {
+            var tank = level.getCapability(net.neoforged.neoforge.capabilities.Capabilities.FluidHandler.BLOCK, tankAbs, null);
+            int inTank = tank == null ? -1 : tank.getFluidInTank(0).getAmount();
+            helper.assertTrue(trough.amount() == 4000 && inTank == 0, "the trough has " + trough.amount() + " of 4000 mB, the tank " + inTank + " left");
+            helper.assertTrue(cradle.fullCanisters() == 3 && cradle.inventory.getStackInSlot(com.avicagan.bloodandbones.minion.ChargingCradleBlockEntity.SHEETS).getCount() == 5,
+                    "the cradle has " + cradle.fullCanisters() + " of the 3 canisters and "
+                            + cradle.inventory.getStackInSlot(com.avicagan.bloodandbones.minion.ChargingCradleBlockEntity.SHEETS).getCount() + " of the 5 sheets");
+            for (int i = com.avicagan.bloodandbones.minion.ChargingCradleBlockEntity.FULL; i < com.avicagan.bloodandbones.minion.ChargingCradleBlockEntity.SHEETS; i++) {
+                helper.assertTrue(cradle.inventory.getStackInSlot(i).isEmpty(), "the cradle's empties should have been taken out");
+            }
+            helper.assertTrue(carried(tender) == 0, "it should have put back all it carried: " + tender.inventory);
+            int blood = inStores(helper, com.avicagan.bloodandbones.registry.BBFluids.BLOOD.getBucket().get(), chestAt, barrelAt);
+            int buckets = inStores(helper, Items.BUCKET, chestAt, barrelAt);
+            int canisters = inStores(helper, BBItems.SOUL_CANISTER.get(), chestAt, barrelAt);
+            int empties = inStores(helper, BBItems.EMPTY_SOUL_CANISTER.get(), chestAt, barrelAt);
+            int sheets = inStores(helper, com.simibubi.create.AllItems.BRASS_SHEET.get(), chestAt, barrelAt);
+            helper.assertTrue(blood == 0 && buckets == 4 && canisters == 0 && empties == 2 && sheets == 0, "the containers should hold the 4 empty buckets and"
+                    + " the 2 empty canisters, and nothing else: " + blood + " of blood, " + buckets + " empty, " + canisters + " canisters, " + empties
+                    + " empties, " + sheets + " sheets");
+            helper.assertTrue(level.getEntitiesOfClass(ItemEntity.class, area).isEmpty(), "nothing should be on the ground");
+        });
+    }
+
+    /**
+     * Its maker's minions lying powered down within its reach get up (docs/NEXT.md 1.1): a brass Tender carries the chest's
+     * bucket of blood to a fallen flesh minion and its canister to a fallen brass one, and puts the empty bucket and canister
+     * back. None of the bucket is spilled: the flesh one holds less than a bucket, a brass Tender drinks no blood, so the rest
+     * goes into the trough by home, to the drop. The sharing out itself is checked first: the fallen one, the Tender, then
+     * the troughs; with nowhere for the rest, no pour.
+     */
+    @GameTest(template = "empty", timeoutTicks = 1600)
+    public static void tenderWakesAFallenMinion(GameTestHelper helper) {
+        int[] one = com.avicagan.bloodandbones.minion.MinionTender.share(344, 0, new int[]{4000});
+        int[] two = com.avicagan.bloodandbones.minion.MinionTender.share(344, 200, new int[]{300, 4000});
+        int[] whole = com.avicagan.bloodandbones.minion.MinionTender.share(2000, 500, new int[0]);
+        if (one == null || one[0] != 344 || one[1] != 0 || one[2] != 656 || two == null || two[0] != 344 || two[1] != 200 || two[2] != 300 || two[3] != 156
+                || whole == null || whole[0] != 1000 || whole[1] != 0 || com.avicagan.bloodandbones.minion.MinionTender.share(344, 0, new int[]{100}) != null
+                || com.avicagan.bloodandbones.minion.MinionTender.share(0, 1000, new int[]{4000}) != null) {
+            helper.fail("A bucket is shared out to the fallen one, the Tender, then the troughs, all of it or none");
+            return;
+        }
+        pen(helper);
+        ServerLevel level = helper.getLevel();
+        BlockPos chestAt = new BlockPos(2, 2, 8);
+        BlockPos troughAt = new BlockPos(8, 2, 8);
+        helper.setBlock(chestAt, Blocks.CHEST);
+        helper.setBlock(troughAt, BBBlocks.BLOOD_TROUGH.getDefaultState());
+        ChestBlockEntity chest = (ChestBlockEntity) helper.getBlockEntity(chestAt);
+        chest.setItem(0, bloodBucket());
+        chest.setItem(1, new ItemStack(BBItems.SOUL_CANISTER.get()));
+        var trough = (com.avicagan.bloodandbones.minion.BloodTroughBlockEntity) helper.getBlockEntity(troughAt);
+        Maker maker = new Maker(helper, new BlockPos(4, 2, 5));
+        MinionEntity flesh = minion(helper, new BlockPos(8, 2, 2), armed(ref("zombie", "head")), maker);
+        MinionEntity brass = minion(helper, new BlockPos(2, 2, 2), brassArmed(ref("zombie", "head")), maker);
+        MinionEntity tender = minion(helper, new BlockPos(5, 2, 5), brassArmed(ref("chicken", "head")), maker);
+        flesh.powerDown();
+        brass.powerDown();
+        int holds = flesh.stats().reservoir();
+        if (!tender.setTask(MinionTask.TENDER) || holds >= 1000) {
+            helper.fail("A brass Tender, and a fallen minion holding less than a bucket: " + tender.task() + ", " + holds);
+            return;
+        }
+        AABB area = area(helper);
+        helper.succeedWhen(() -> {
+            helper.assertTrue(!flesh.poweredDown() && flesh.power() >= holds - 5.0F, "the flesh minion has not been given blood yet (" + flesh.power() + " of " + holds + ")");
+            helper.assertTrue(!brass.poweredDown() && brass.power() >= MinionStats.CANISTER - 5.0F, "the brass minion has not been given a canister yet");
+            helper.assertTrue(trough.amount() == 1000 - holds, "the rest of the bucket should be in the trough: " + trough.amount() + " of " + (1000 - holds));
+            helper.assertTrue(chest.countItem(Items.BUCKET) == 1 && chest.countItem(BBItems.EMPTY_SOUL_CANISTER.get()) == 1 && carried(tender) == 0,
+                    "the empty bucket and canister should be back in the chest: " + chest.countItem(Items.BUCKET) + ", "
+                            + chest.countItem(BBItems.EMPTY_SOUL_CANISTER.get()) + ", carrying " + carried(tender));
+            helper.assertTrue(level.getEntitiesOfClass(ItemEntity.class, area).isEmpty(), "nothing should be on the ground");
+        });
+    }
+
+    /** A cow's body as a carried piece, fresh. */
+    private static ItemStack cowPiece() {
+        ItemStack stack = new ItemStack(BBItems.CARCASS_PIECE.get());
+        stack.set(BBDataComponents.PIECE.get(), new CarcassPieceItem.Piece(mob("cow"), "body", ResourceLocation.withDefaultNamespace("textures/entity/cow/cow.png"),
+                List.of(), 1.0F, false, Map.of(), 0.0F, 0.0F, 0.0F, false));
+        return stack;
+    }
+
+    /**
+     * A butcher chops the pieces laid on a Butcher's Table by home with its Cleaver, as a Deployer does (docs/NEXT.md 1.1):
+     * one piece, then a second put on through the table's slot as a funnel would. What they come apart into goes into what
+     * it carries (a slot for each of the four things a cow's body gives: it empties them into the chest before the second)
+     * and on into the chest by home, none on the ground, and the Cleaver comes away bloody. The table is nearer home than the
+     * chest, and takes only pieces: the butcher passes it over for the chest.
+     */
+    @GameTest(template = "empty", timeoutTicks = 900)
+    public static void butcherChopsAtTheTable(GameTestHelper helper) {
+        pen(helper);
+        ServerLevel level = helper.getLevel();
+        BlockPos tableAt = new BlockPos(4, 2, 7);
+        BlockPos chestAt = new BlockPos(8, 2, 5);
+        helper.setBlock(tableAt, BBBlocks.BUTCHER_TABLE.getDefaultState());
+        helper.setBlock(chestAt, Blocks.CHEST);
+        var table = (com.avicagan.bloodandbones.cooking.ButcherTableBlockEntity) helper.getBlockEntity(tableAt);
+        table.put(cowPiece());
+        Maker maker = new Maker(helper, new BlockPos(4, 2, 4));
+        MinionEntity butcher = minion(helper, new BlockPos(5, 2, 5), spiderOnFour(villagerHead("butcher")), maker);
+        if (!butcher.setTask(MinionTask.BUTCHER) || butcher.slots() < 4) {
+            helper.fail("A butcher's head with hands should take butchery, with a slot for each of the four things a cow's body gives: " + butcher.slots());
+            return;
+        }
+        give(butcher, maker, new ItemStack(BBItems.CLEAVER.get()));
+        int[] laid = {1};
+        helper.onEachTick(() -> {
+            if (laid[0] < 2 && table.specimen().isEmpty()) {
+                laid[0]++;
+                if (!table.inventory.insertItem(0, cowPiece(), false).isEmpty()) {
+                    helper.fail("The empty table should take a piece through its slot");
+                }
+            }
+        });
+        AABB area = area(helper);
+        helper.succeedWhen(() -> {
+            ChestBlockEntity chest = (ChestBlockEntity) helper.getBlockEntity(chestAt);
+            helper.assertTrue(laid[0] == 2 && table.specimen().isEmpty(), "it has not chopped both pieces yet (" + laid[0] + " laid)");
+            helper.assertTrue(chest.countItem(Items.BEEF) > 0, "the beef should be in the chest by home (it carries " + count(butcher, Items.BEEF) + ")");
+            helper.assertTrue(level.getEntitiesOfClass(ItemEntity.class, area).isEmpty(), "what it chopped should never be on the ground");
+            helper.assertTrue(butcher.getMainHandItem().get(BBDataComponents.BLOODIED_AT.get()) != null, "its Cleaver should be bloody");
+        });
+    }
 }
