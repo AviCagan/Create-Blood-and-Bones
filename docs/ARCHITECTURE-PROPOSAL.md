@@ -3294,6 +3294,33 @@ without it (or, for what only a client decides, a test of the server's half).
 
 - The suite is 442 tests.
 
+#### 15.19.6 Merged with the organs and the checks (verified)
+
+The branch met main's organs (15.16 to 15.17b) and checks (15.18) on the integration branch, as the start of 15.19 said
+it should.
+
+- **One organ system.** The rig's organ step is main's harvest now. `SurgicalRig` asks `Surgery.organsLeft` (main's
+  `Organs.held`, less what was taken) and hands the cut to `Surgery.harvest`: for a piece laid on the table the four-argument
+  one, as before; for a carcass lying on its top a new `Surgery.harvest(level, surgeon, table, blade, carcass, bone)`, the
+  body of main's carcass branch, which counts under `organs_taken:<bone>`. The rig walks main's order (`Surgery.organBones`:
+  the torso, then what is still attached, and a resting carcass's rest poses) and asks its filter about each bone before
+  cutting. `Surgery.organs(kind)` (the machines' fixed heart, lungs, stomach and two eyes) is gone, and so is the rig's own
+  organ item and count. So a cow gives its rumen at the rig too, a skeleton its marrow (dry, the blade left clean), and an
+  organ never comes out twice whichever way the part reached the table. The organ step runs before the rig unfolds a
+  resting carcass, so organs come out of one folded to rest where it lies, as main's did; the hide, limbs and meat after
+  them unfold it first, as the machines' did.
+- **Which carcass.** A click with the blade on an empty table goes to the rig whenever a carcass lies on its top
+  (`CarcassButchery.lyingOn`: not one hanging over it). Main's wider zone (`Surgery.carcassOn`, the Assembly Frame's) is
+  still what the four-argument `Surgery.harvest` uses when it is called with nothing laid on the table.
+- **Tests changed to fit.** The machines' rig tests count six organs for a cow (four in the body, two eyes) and flay on
+  the seventh cut; `cowDownEachPath` also expects the rumen, and no Gland from any other path;
+  `surgicalRigByHandGetsAHandsShare` marks the body's organs out by the organ data's count. Main's
+  `heavyCarcassOrgansOnRig` and `restingCarcassOrgansOnRig` click once each of the rig's pauses (they clicked six times in
+  one tick), expect the rig's next cut after the organs to be the hide rather than the Cleaver laid down, and the resting
+  one checks the carcass is still folded when its organs are out. `guillotineLimbGoesToAMinionAndAWallHook` (15.18) now
+  drops the Guillotine with a redstone pulse, as 15.19.3 has it.
+- **Showcase.** The debris shot is found by its view, not a fixed index, now that both sides added views.
+
 ### 15.20 Materials, bloodless mode and the decoration leftovers (audit packages 14, 9 and 17)
 
 What docs/BRIEF-AUDIT.md packages 14 (blood, Soul Blood and the materials as written), 9 (finish bloodless mode)
@@ -3468,3 +3495,26 @@ scuffed stain: steel and mud.
 - The congealing had moved to a heated press, against section 8's decided Basin Lid (15.20.2).
 - The gauge sat exactly where Create's air gauge is and stayed up with only an implant fitted, so diving on
   Create's backtank drew the two over each other; it moves up a row while Create's is up (15.20.2).
+
+#### 15.20.7 Merged with the machines, the organs and the checks (verified)
+
+- **Recipes.** Nothing on the integration branch had added or changed a recipe file since 054cdfd, and the machines
+  added none, so nothing had to move into `BBRecipeGen`. After datagen every one of the 78 recipe files main had is in
+  the generated set: 27 the same, 49 changed only as 15.20.1 and 15.20.2 meant (fluids asked for by tag, the shortcut
+  yields cut to 100 mB, Create-style ids), and two replaced on purpose (the one-fill Blood Diamond by
+  `sequenced_assembly/blood_diamond`, the old soul blood mixing by `mixing/soul_blood_from_soul_sand`). The three
+  generated cooked meat recipes are there too: 108 in all.
+- **Create Diesel Generators is a required dependency** (`neoforge.mods.toml`, both sides, as Dragons Plus and
+  Enchantment Industry are), so the Basin Lid recipe needs no `mod_loaded` condition.
+- **Bloodless mode over the others' work.** The Mangler's grind (15.19.1) is a wet sound with a twin like the rest,
+  `bloodless.machine.grind`, the grindstone and chain the machines had given `machine.grind_clean`, which it replaces:
+  `BloodlessSounds` is this section's, for every twin. Main's organ harvest played vanilla slime and honey sounds, and a
+  minion's steering slap a slime squish: they play `flesh.squish_small`, `flesh.slide` and `flesh.slap` now.
+  `Organs#name` reads the setting to give an organ its file's `bloodless_name`, which is words, so it is on
+  `onlyPresentationReadsBloodless`'s list. The machines' bloodless text for the Surgical Rig said "carcass": "wreck".
+- **The Butcher's Hook takes a Gland** (main's organ item) and it drips: `bloodandbones:gland` is in both hook tags, and
+  `butcherHookTakesEveryBodyPart` hangs a cow's rumen and looks for its red stain.
+- **Showcase.** This section's row is row G, north of the decoration, beside the machines' row F to the west; its four
+  views come after the machines'. The gauge shots come after main's longer minion and effects timeline (ticks 345 and
+  395 of that stage).
+- The suite is 504 tests.

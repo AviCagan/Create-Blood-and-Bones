@@ -48,6 +48,9 @@ Everything below is in development builds only; the art is placeholder (see the 
   is the slowest way: every cut takes a second and a half, by hand or by a Deployer. By hand you get the organs
   but only a hand's share of the rest; a Deployer holding a Cleaver gets all of it. Each organ comes out once,
   however the part got to the table.
+- The Surgical Rig's organs are the organ data's: every organ a mob's part holds comes out at the rig, one a cut,
+  before the hide (a cow's rumen as well as its heart, lungs, stomach and eyes; a skeleton's marrow, dry), and a
+  carcass folded to rest on the table gives them up without being unfolded.
 
 ### Blood
 
@@ -126,7 +129,7 @@ Everything below is in development builds only; the art is placeholder (see the 
   each with stairs and a slab), spout-filled with blood that runs into the joints.
 - The Butcher's Hook takes any body part: carcass pieces, severed limbs, organs, scraps, meat, heads, bones and
   more (an item tag), drawn hanging on the point; fresh parts and meat drip for a while: soul blood from a nether
-  mob's, nothing from a skeleton's.
+  mob's, nothing from a skeleton's. A special organ (a Gland) hangs and drips too.
 - All of these ride Create contraptions, keeping what they hold.
 
 ### The body
