@@ -76,6 +76,8 @@ public final class DevShowcase {
     /** The view whose picture shows bits breaking off the bloody blocks, and where they are thrown. */
     private static int debrisView = -1;
     private static BlockPos debrisAt;
+    /** Where the diving shot's cell of water stands: the player's feet on the ground. */
+    private static BlockPos diveAt;
     /** Server ticks to let the scene play before the first picture, and between pictures. */
     private static final int SETTLE = 400;
     private static final int SHOT_GAP = 40;
@@ -617,9 +619,33 @@ public final class DevShowcase {
                     BloodAndBones.LOGGER.info("[showcase] gauge: {} implants; bar colour {}", BacktankGauge.poweredImplants(mc.player).size(),
                             Integer.toHexString(BacktankGauge.colour(com.avicagan.bloodandbones.backtank.FluidBacktankItem.fluid(
                                     com.avicagan.bloodandbones.backtank.FluidBacktankItem.wornBy(mc.player)))));
+                    // then diving on Create's own backtank, with a Hydraulic Arm fitted and no Fluid Backtank: Create's air
+                    // gauge takes the place, and this mod's (a faded tank, the arm dimmed) moves up a row above it
                     server.execute(() -> {
                         ServerPlayer player = server.getPlayerList().getPlayers().get(0);
+                        player.getInventory().clearContent();
+                        player.setData(com.avicagan.bloodandbones.body.BBAttachments.BODY, new com.avicagan.bloodandbones.body.Body());
+                        com.avicagan.bloodandbones.body.BodyEffects.body(player).fit(com.avicagan.bloodandbones.body.BodyPart.LEFT_ARM,
+                                new ItemStack(BBItems.HYDRAULIC_ARM.get()));
+                        com.avicagan.bloodandbones.body.BodyEffects.changed(player);
+                        ItemStack air = com.simibubi.create.AllItems.COPPER_BACKTANK.asStack();
+                        air.set(com.simibubi.create.AllDataComponents.BACKTANK_AIR, 900);
+                        player.setItemSlot(net.minecraft.world.entity.EquipmentSlot.CHEST, air);
+                        player.setItemSlot(net.minecraft.world.entity.EquipmentSlot.HEAD, com.simibubi.create.AllItems.COPPER_DIVING_HELMET.asStack());
+                        player.setGameMode(GameType.SURVIVAL);
+                        diveAt = dive(player.serverLevel(), player, true);
+                    });
+                } else if (t == 350) {
+                    Screenshot.grab(mc.gameDirectory, PREFIX + "gauge_diving.png", mc.getMainRenderTarget(), message -> {
+                    });
+                    BloodAndBones.LOGGER.info("[showcase] diving: Create's air gauge up {}, this gauge {} implants",
+                            mc.player != null && BacktankGauge.createAirShowing(mc.player), mc.player == null ? 0 : BacktankGauge.poweredImplants(mc.player).size());
+                    server.execute(() -> {
+                        ServerPlayer player = server.getPlayerList().getPlayers().get(0);
+                        dive(player.serverLevel(), player, false);
+                        player.setGameMode(GameType.CREATIVE);
                         player.setItemSlot(net.minecraft.world.entity.EquipmentSlot.CHEST, ItemStack.EMPTY);
+                        player.setItemSlot(net.minecraft.world.entity.EquipmentSlot.HEAD, ItemStack.EMPTY);
                         player.getInventory().clearContent();
                         player.setData(com.avicagan.bloodandbones.body.BBAttachments.BODY, new com.avicagan.bloodandbones.body.Body());
                         com.avicagan.bloodandbones.body.BodyEffects.changed(player);
@@ -631,6 +657,27 @@ public final class DevShowcase {
             default -> {
             }
         }
+    }
+
+    /**
+     * The diving shot's water: two blocks of it where the player stands on the ground, walled in glass so it cannot
+     * run; {@code fill} false takes it all away again.
+     */
+    private static BlockPos dive(ServerLevel level, ServerPlayer player, boolean fill) {
+        BlockPos feet = fill ? level.getHeightmapPos(net.minecraft.world.level.levelgen.Heightmap.Types.MOTION_BLOCKING, player.blockPosition()) : diveAt;
+        if (feet == null) {
+            return null;
+        }
+        for (int dy = 0; dy < 2; dy++) {
+            for (Direction side : Direction.Plane.HORIZONTAL) {
+                level.setBlockAndUpdate(feet.above(dy).relative(side), fill ? Blocks.GLASS.defaultBlockState() : Blocks.AIR.defaultBlockState());
+            }
+            level.setBlockAndUpdate(feet.above(dy), fill ? Blocks.WATER.defaultBlockState() : Blocks.AIR.defaultBlockState());
+        }
+        if (fill) {
+            player.teleportTo(level, feet.getX() + 0.5, feet.getY(), feet.getZ() + 0.5, 0.0F, 10.0F);
+        }
+        return feet;
     }
 
     private static void build(ServerLevel level, ServerPlayer player) {
@@ -833,7 +880,7 @@ public final class DevShowcase {
         views = new java.util.ArrayList<>(views);
         // these four from the ground, where the player lands (it does not fly), looking level or up
         views.addAll(List.of(
-                // the soul blood line: press over a heated basin, fan through soul fire, mixer over a superheated basin
+                // the soul blood line: a Basin Lid on a basin of blood, fan through soul fire, mixer over a superheated basin
                 new View(o.getX() - 3.5, eye, materialsZ - 8.0, 0, 0),
                 // the Blood Diamond on its depot under a spout, and a finished one beside it
                 new View(o.getX() + 6.0, eye, materialsZ - 3.5, 0, -8),
@@ -957,17 +1004,22 @@ public final class DevShowcase {
      */
     private static void materials(ServerLevel level, BlockPos o, int z, CarcassSavedData.Carcass pig, CarcassSavedData.Carcass cow) {
         int y = o.getY();
-        // the press: a lit burner, a basin of blood with the congealed blood it has set, the press turned by a motor
-        BlockPos pressBasin = new BlockPos(o.getX() - 7, y + 1, z);
-        burner(level, pressBasin.below(), com.simibubi.create.content.processing.burner.BlazeBurnerBlock.HeatLevel.KINDLED);
-        level.setBlockAndUpdate(pressBasin, AllBlocks.BASIN.getDefaultState());
-        level.setBlockAndUpdate(pressBasin.above(2), AllBlocks.MECHANICAL_PRESS.getDefaultState()
-                .setValue(com.simibubi.create.content.kinetics.base.HorizontalKineticBlock.HORIZONTAL_FACING, Direction.EAST));
-        motor(level, pressBasin.above(2).east(), Direction.WEST, 32);
-        if (level.getBlockEntity(pressBasin) instanceof com.simibubi.create.content.processing.basin.BasinBlockEntity basin) {
-            basin.getTanks().getFirst().getCapability().fill(new net.neoforged.neoforge.fluids.FluidStack(BBFluids.blood(), 1000),
-                    net.neoforged.neoforge.fluids.capability.IFluidHandler.FluidAction.EXECUTE);
-            basin.getOutputInventory().insertItem(0, new ItemStack(BBItems.CONGEALED_BLOOD.get(), 3), false);
+        // the Basin Lid (section 8's congealing): a basin of blood under a Diesel Generators lid, setting it; a basin
+        // beside it with no lid, holding the congealed blood it set
+        BlockPos lidBasin = new BlockPos(o.getX() - 7, y, z);
+        level.setBlockAndUpdate(lidBasin, AllBlocks.BASIN.getDefaultState());
+        level.setBlockAndUpdate(lidBasin.above(), com.jesz.createdieselgenerators.CDGBlocks.BASIN_LID.getDefaultState()
+                .setValue(com.jesz.createdieselgenerators.content.basin_lid.BasinLidBlock.ON_A_BASIN, true));
+        BlockPos setBasin = lidBasin.west();
+        level.setBlockAndUpdate(setBasin, AllBlocks.BASIN.getDefaultState());
+        for (BlockPos at : List.of(lidBasin, setBasin)) {
+            if (level.getBlockEntity(at) instanceof com.simibubi.create.content.processing.basin.BasinBlockEntity basin) {
+                basin.getTanks().getFirst().getCapability().fill(new net.neoforged.neoforge.fluids.FluidStack(BBFluids.blood(), at.equals(lidBasin) ? 1000 : 500),
+                        net.neoforged.neoforge.fluids.capability.IFluidHandler.FluidAction.EXECUTE);
+                if (at.equals(setBasin)) {
+                    basin.getOutputInventory().insertItem(0, new ItemStack(BBItems.CONGEALED_BLOOD.get(), 3), false);
+                }
+            }
         }
         // the fan: blowing east through a soul campfire onto a depot of congealed blood
         BlockPos fan = new BlockPos(o.getX() - 5, y, z);
@@ -1035,8 +1087,10 @@ public final class DevShowcase {
             level.setBlockAndUpdate(new BlockPos(o.getX() + i, y, wallZ - 2), palette.get(8 + i).getDefaultState());
         }
         ItemStack[] hung = {new ItemStack(BBItems.SEVERED_ARM.get()), BBItems.HEART.get().of(net.minecraft.resources.ResourceLocation.withDefaultNamespace("cow"), false),
+                // a piglin's scraps, dripping soul blood onto the ground in front of the train casing
+                com.avicagan.bloodandbones.parts.ScrapsItem.of(new com.avicagan.bloodandbones.parts.Source(net.minecraft.resources.ResourceLocation.withDefaultNamespace("piglin"), "torso", false), 1),
+                new ItemStack(net.minecraft.world.item.Items.ZOMBIE_HEAD),
                 com.avicagan.bloodandbones.parts.ScrapsItem.of(new com.avicagan.bloodandbones.parts.Source(net.minecraft.resources.ResourceLocation.withDefaultNamespace("cow"), "leg", false), 1),
-                new ItemStack(net.minecraft.world.item.Items.ZOMBIE_HEAD), new ItemStack(net.minecraft.world.item.Items.BEEF),
                 pig == null ? new ItemStack(BBItems.OFFAL.get()) : CarcassPieceItem.of(pig, "left_front_leg"),
                 BBItems.EYE.get().of(net.minecraft.resources.ResourceLocation.withDefaultNamespace("cow"), false)};
         for (int i = 0; i < hung.length; i++) {

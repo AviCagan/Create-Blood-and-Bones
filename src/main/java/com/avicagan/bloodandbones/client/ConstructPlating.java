@@ -9,6 +9,7 @@ import net.minecraft.server.packs.resources.Resource;
 
 import java.io.InputStream;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 
@@ -20,8 +21,12 @@ import java.util.Optional;
  * darker frame under the plating. Like BloodlessSwap's clean textures, it only changes what is drawn.
  */
 public final class ConstructPlating {
-    /** Texture (and whether it is the frame) -> its plated copy, or the texture itself if it could not be read. */
-    private static final Map<String, ResourceLocation> PLATED = new HashMap<>();
+    /**
+     * Texture -> its plated copy, or the texture itself if it could not be read; and the same for the frame. Two maps
+     * keyed by the texture, so the lookup every bone of every carcass makes each frame builds nothing.
+     */
+    private static final Map<ResourceLocation, ResourceLocation> PLATED = new HashMap<>();
+    private static final Map<ResourceLocation, ResourceLocation> FRAMES = new HashMap<>();
     /** Pixels between rivets, and where in each cell a rivet sits. */
     private static final int RIVETS = 6;
 
@@ -30,18 +35,26 @@ public final class ConstructPlating {
 
     /** The plated copy of a mob texture, made the first time it is asked for; render thread only. */
     public static ResourceLocation plated(ResourceLocation texture, boolean frame) {
-        return PLATED.computeIfAbsent(texture + (frame ? "|frame" : ""), key -> make(texture, frame));
+        Map<ResourceLocation, ResourceLocation> made = frame ? FRAMES : PLATED;
+        ResourceLocation plated = made.get(texture);
+        if (plated == null) {
+            plated = make(texture, frame);
+            made.put(texture, plated);
+        }
+        return plated;
     }
 
     /** After a resource reload the copies are made again from whatever the textures are now. */
     public static void clear() {
         Minecraft mc = Minecraft.getInstance();
-        PLATED.values().forEach(to -> {
-            if (to.getNamespace().equals(BloodAndBones.MOD_ID) && to.getPath().startsWith("plated/")) {
-                mc.getTextureManager().release(to);
-            }
-        });
-        PLATED.clear();
+        for (Map<ResourceLocation, ResourceLocation> made : List.of(PLATED, FRAMES)) {
+            made.values().forEach(to -> {
+                if (to.getNamespace().equals(BloodAndBones.MOD_ID) && to.getPath().startsWith("plated/")) {
+                    mc.getTextureManager().release(to);
+                }
+            });
+            made.clear();
+        }
     }
 
     private static ResourceLocation make(ResourceLocation texture, boolean frame) {

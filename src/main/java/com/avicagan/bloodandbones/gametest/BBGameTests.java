@@ -1467,7 +1467,7 @@ public class BBGameTests {
     public static void recipesLoad(GameTestHelper helper) {
         for (String name : new String[]{"meat_hook", "cleaver", "flensing_knife", "shackle_hook", "bleeding_rack", "splashing/raw_hide",
                 "cooked_meat_from_raw_meat_smelting", "mangler", "guillotine", "beheader", "deglover", "filling/blood_steel_ingot", "sequenced_assembly/blood_diamond", "mixing/soul_blood",
-                "compacting/congealed_blood", "haunting/soul_clot", "mixing/soul_blood_from_soul_sand", "filling/bloody_railway_casing",
+                "basin_fermenting/congealed_blood", "haunting/soul_clot", "mixing/soul_blood_from_soul_sand", "filling/bloody_railway_casing",
                 "filling/bloody_cut_calcite", "bloody_cut_calcite_stairs", "bloody_small_calcite_brick_slab",
                 "basin_fermenting/soul_blood", "blood_steel_block", "blood_steel_ingot_from_block", "blood_steel_ingot_from_nuggets", "blood_steel_nugget",
                 "blood_steel_cleaver", "spit_roast", "specimen_jar", "butcher_table", "butcher_hook", "gut_chain", "filling/bloody_casing",

@@ -12,11 +12,14 @@ import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.GuiGraphics;
 import net.minecraft.client.renderer.texture.TextureAtlasSprite;
 import net.minecraft.client.player.LocalPlayer;
+import net.minecraft.core.BlockPos;
 import net.minecraft.network.chat.Component;
 import net.minecraft.util.FastColor;
+import net.minecraft.world.effect.MobEffectUtil;
 import net.minecraft.world.inventory.InventoryMenu;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.level.GameType;
+import net.minecraft.world.level.block.Blocks;
 import net.neoforged.neoforge.client.extensions.common.IClientFluidTypeExtensions;
 import net.neoforged.neoforge.fluids.FluidStack;
 
@@ -29,13 +32,19 @@ import java.util.WeakHashMap;
  * The Fluid Backtank's gauge, styled as Create's air gauge ({@code RemainingAirOverlay}) and in its place, to the
  * right of the hotbar's top: the tank worn, what it holds in buckets, and a bar of the fluid itself. Unlike Create's,
  * it is always up while a tank is worn, and while any powered implant is fitted (a dry one shows an empty tank). The
- * implants the tank runs sit under the bar, dimmed when they are not getting their fuel.
+ * implants the tank runs sit under the bar, dimmed when they are not getting their fuel. While Create's own gauge is
+ * up (diving on a Create backtank's air), this one moves up a row, so both read.
  */
 public final class BacktankGauge {
     /** Width of the bar of fluid under the reading. */
     public static final int BAR = 30;
     /** Below this share of a full tank, with implants to run, the reading flashes red, as Create's does when air runs low. */
     public static final float LOW = 0.1F;
+    /**
+     * How far up it moves while Create's air gauge is in its place: past Create's tank icon, which Create draws 9 lower
+     * for a netherite tank in lava, with this gauge's bar and strip of implants clear above it.
+     */
+    public static final int ABOVE_CREATE = 27;
 
     private static final Map<TextureAtlasSprite, Integer> AVERAGES = new WeakHashMap<>();
 
@@ -59,7 +68,7 @@ public final class BacktankGauge {
 
         PoseStack pose = graphics.pose();
         pose.pushPose();
-        pose.translate(graphics.guiWidth() / 2 + 90, graphics.guiHeight() - 53, 0);
+        pose.translate(graphics.guiWidth() / 2 + 90, graphics.guiHeight() - 53 - (createAirShowing(player) ? ABOVE_CREATE : 0), 0);
         // with nothing worn, the plainest tank, faded: the implants have nothing to run on
         ItemStack shown = tank.isEmpty() ? new ItemStack(com.avicagan.bloodandbones.registry.BBItems.backtank(com.avicagan.bloodandbones.backtank.BacktankTier.COPPER)) : tank;
         GuiGameElement.of(shown).at(0, 0).render(graphics);
@@ -104,6 +113,22 @@ public final class BacktankGauge {
         }
         pose.popPose();
         pose.popPose();
+    }
+
+    /**
+     * Whether Create's air gauge is drawn where this one sits: the checks {@code RemainingAirOverlay} makes, in its
+     * order. Create's diving helmet leaves the air it shows in the player's data while a backtank's air is being
+     * breathed, under water or in lava.
+     */
+    public static boolean createAirShowing(LocalPlayer player) {
+        if (player.isCreative() || !player.getPersistentData().contains("VisualBacktankAir")) {
+            return false;
+        }
+        boolean isAir = player.getEyeInFluidType().isAir()
+                || player.level().getBlockState(BlockPos.containing(player.getX(), player.getEyeY(), player.getZ())).is(Blocks.BUBBLE_COLUMN);
+        boolean canBreathe = !player.canDrownInFluidType(player.getEyeInFluidType()) || MobEffectUtil.hasWaterBreathing(player)
+                || player.getAbilities().invulnerable;
+        return !(isAir || canBreathe) || player.isInLava();
     }
 
     /** The amount, in buckets to a tenth, as the gauge reads it. */

@@ -13,7 +13,7 @@
     {
       "type": "neoforge:tag",
       "amount": 100,
-      "tag": "c:experience"
+      "tag": "bloodandbones:liquid_experience"
     }
   ],
   "results": [

@@ -66,6 +66,13 @@ public class BBFluids {
     /** c:soul_blood: Soul Blood, tagged apart from blood (brief § Blood and materials), and what cybernetics run on. */
     public static final TagKey<Fluid> SOUL_BLOOD_TAG = TagKey.create(Registries.FLUID, ResourceLocation.fromNamespaceAndPath("c", "soul_blood"));
     public static final TagKey<Item> SOUL_BLOOD_BUCKETS = TagKey.create(Registries.ITEM, ResourceLocation.fromNamespaceAndPath("c", "buckets/soul_blood"));
+    /**
+     * bloodandbones:liquid_experience: the liquid experience the Blood Diamond and the mixing shortcut take, a point of
+     * experience a millibucket, as Create Enchantment Industry's is. Not c:experience: NeoForge's common tag counts 20 mB
+     * a point, so a recipe asking for it by the millibucket would cost twenty times less with one mod's fluid than
+     * another's. A pack adds another mod's fluid here only if it is a point a millibucket too.
+     */
+    public static final TagKey<Fluid> LIQUID_EXPERIENCE = TagKey.create(Registries.FLUID, BloodAndBones.asResource("liquid_experience"));
 
     /** Empties a bucket into the world like vanilla's water/lava dispenser behaviour (modded buckets have none). */
     private static final DefaultDispenseItemBehavior DISPENSE_BUCKET = new DefaultDispenseItemBehavior() {
@@ -167,9 +174,10 @@ public class BBFluids {
         BloodAndBones.REGISTRATE.addRawLang("tag.item.c.buckets.blood", "Blood Buckets");
         BloodAndBones.REGISTRATE.addRawLang("tag.fluid.c.soul_blood", "Soul Blood");
         BloodAndBones.REGISTRATE.addRawLang("tag.item.c.buckets.soul_blood", "Soul Blood Buckets");
-        // Create Enchantment Industry does not put its liquid experience in the common tag; the Blood Diamond, the
-        // mixing shortcut and the Vent Arm all ask for the tag, so any mod's liquid experience does
-        BloodAndBones.REGISTRATE.addDataGenerator(com.tterrag.registrate.providers.ProviderType.FLUID_TAGS, tags -> tags.addTag(Tags.Fluids.EXPERIENCE)
+        BloodAndBones.REGISTRATE.addRawLang("tag.fluid.bloodandbones.liquid_experience", "Liquid Experience");
+        // Create Enchantment Industry's liquid experience, a point a millibucket. It stays out of c:experience (20 mB a
+        // point); Enchantment Industry leaves it out too, and converts other mods' experience by its own unit data map
+        BloodAndBones.REGISTRATE.addDataGenerator(com.tterrag.registrate.providers.ProviderType.FLUID_TAGS, tags -> tags.addTag(LIQUID_EXPERIENCE)
                 .addOptional(ResourceLocation.fromNamespaceAndPath("create_enchantment_industry", "experience"))
                 .addOptional(ResourceLocation.fromNamespaceAndPath("create_enchantment_industry", "flowing_experience")));
     }

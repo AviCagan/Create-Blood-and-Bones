@@ -646,20 +646,28 @@ public class DecorationTests {
 
     /**
      * The wall hook takes every body part (brief § Decoration: "accepts any carcass or body part"): a severed limb, an
-     * organ, scraps, meat, a head, a bone, by hand or put there; not a diamond, stone or a blade. A fresh heart drips
-     * blood on the floor; a bone does not, nor a skeleton's heart.
+     * organ, scraps, meat, a head, a bone, a raw hide, by hand or put there; not a diamond, stone or a blade. A fresh
+     * heart drips blood on the floor; a bone does not, nor a skeleton's heart or its scraps (a skeleton has no blood);
+     * a piglin's scraps and a hoglin's hide drip soul blood. Scraps and hides say where they came from only by their
+     * stamp, so this is what shows the hook reads it.
      */
     @GameTest(template = "empty", timeoutTicks = 140)
     public static void butcherHookTakesEveryBodyPart(GameTestHelper helper) {
         net.minecraft.resources.ResourceLocation cow = net.minecraft.resources.ResourceLocation.withDefaultNamespace("cow");
         net.minecraft.resources.ResourceLocation skeleton = net.minecraft.resources.ResourceLocation.withDefaultNamespace("skeleton");
+        net.minecraft.resources.ResourceLocation piglin = net.minecraft.resources.ResourceLocation.withDefaultNamespace("piglin");
+        net.minecraft.resources.ResourceLocation hoglin = net.minecraft.resources.ResourceLocation.withDefaultNamespace("hoglin");
         List<ItemStack> parts = List.of(new ItemStack(BBItems.SEVERED_ARM.get()), BBItems.HEART.get().of(cow, false),
                 com.avicagan.bloodandbones.parts.ScrapsItem.of(new com.avicagan.bloodandbones.parts.Source(cow, "leg", false), 1),
-                new ItemStack(Items.BEEF), new ItemStack(Items.ZOMBIE_HEAD), new ItemStack(Items.BONE), BBItems.HEART.get().of(skeleton, false));
+                new ItemStack(Items.BEEF), new ItemStack(Items.ZOMBIE_HEAD), new ItemStack(Items.BONE), BBItems.HEART.get().of(skeleton, false),
+                com.avicagan.bloodandbones.parts.ScrapsItem.of(new com.avicagan.bloodandbones.parts.Source(skeleton, "leg", false), 1),
+                com.avicagan.bloodandbones.parts.ScrapsItem.of(new com.avicagan.bloodandbones.parts.Source(piglin, "torso", false), 1),
+                com.avicagan.bloodandbones.parts.Hides.stamp(new ItemStack(BBItems.RAW_HIDE.get()), hoglin));
         List<ItemStack> refused = List.of(new ItemStack(Items.DIAMOND), new ItemStack(Items.STONE), new ItemStack(BBItems.CLEAVER.get()));
         List<com.avicagan.bloodandbones.cooking.ButcherHookBlockEntity> hooks = new java.util.ArrayList<>();
+        // the parts along one wall, what is refused along another, all inside the test's own ground
         for (int i = 0; i < parts.size() + refused.size(); i++) {
-            BlockPos wall = new BlockPos(1, 3, i);
+            BlockPos wall = i < parts.size() ? new BlockPos(1, 3, i) : new BlockPos(5, 3, i - parts.size());
             helper.setBlock(wall, Blocks.STONE);
             helper.setBlock(wall.east(), BBBlocks.BUTCHER_HOOK.getDefaultState().setValue(HorizontalDirectionalBlock.FACING, Direction.EAST));
             hooks.add((com.avicagan.bloodandbones.cooking.ButcherHookBlockEntity) helper.getLevel().getBlockEntity(helper.absolutePos(wall.east())));
@@ -688,10 +696,21 @@ public class DecorationTests {
             helper.fail("A cow's heart should drip; a bone and a skeleton's heart should not");
             return;
         }
+        if (hooks.get(7).dripping() || !hooks.get(8).dripping() || !hooks.get(9).dripping()) {
+            helper.fail("A skeleton's scraps should not drip; a piglin's scraps and a hoglin's hide should");
+            return;
+        }
         helper.runAfterDelay(125, () -> {
             helper.assertBlockPresent(BBBlocks.BLOOD_STAIN.get(), new BlockPos(2, 2, 1));
-            helper.assertBlockNotPresent(BBBlocks.BLOOD_STAIN.get(), new BlockPos(2, 2, 5));
-            helper.assertBlockNotPresent(BBBlocks.BLOOD_STAIN.get(), new BlockPos(2, 2, 6));
+            helper.assertBlockProperty(new BlockPos(2, 2, 1), com.avicagan.bloodandbones.bleeding.BloodStainBlock.SOUL, false);
+            for (int i : new int[]{5, 6, 7}) {
+                helper.assertBlockNotPresent(BBBlocks.BLOOD_STAIN.get(), new BlockPos(2, 2, i));
+            }
+            // soul blood from a nether mob's scraps and hide, not red
+            for (int i : new int[]{8, 9}) {
+                helper.assertBlockPresent(BBBlocks.BLOOD_STAIN.get(), new BlockPos(2, 2, i));
+                helper.assertBlockProperty(new BlockPos(2, 2, i), com.avicagan.bloodandbones.bleeding.BloodStainBlock.SOUL, true);
+            }
             helper.succeed();
         });
     }

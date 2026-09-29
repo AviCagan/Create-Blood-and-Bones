@@ -56,6 +56,12 @@ public final class BBSounds {
     public static final DeferredHolder<SoundEvent, SoundEvent> FLESH_PLACE = wet("flesh.place", "Flesh slaps down", "Metal is set down", false);
     public static final DeferredHolder<SoundEvent, SoundEvent> FLESH_HIT = wet("flesh.hit", "Flesh is struck", "Metal is struck", false);
     public static final DeferredHolder<SoundEvent, SoundEvent> FLESH_FALL = wet("flesh.fall", "Flesh slaps", "Metal clanks", false);
+    // the trait effects' shoves: a body that lunges, one thrown up in the air, a meaty blow that knocks things back
+    public static final DeferredHolder<SoundEvent, SoundEvent> FLESH_LUNGE = wet("flesh.lunge", "Flesh lunges", "Metal springs", false);
+    public static final DeferredHolder<SoundEvent, SoundEvent> FLESH_FLING = wet("flesh.fling", "Flesh is flung", "Metal is flung", false);
+    public static final DeferredHolder<SoundEvent, SoundEvent> FLESH_SLAP = wet("flesh.slap", "Flesh smacks", "Metal bangs", false);
+    /** A wound dripping (Bleeding); bloodless, a construct leaking oil. */
+    public static final DeferredHolder<SoundEvent, SoundEvent> BLOOD_DRIP = wet("blood.drip", "Blood drips", "Oil drips", false);
     // a blood stain underfoot; bloodless, it is drawn as nothing, so its twin is barely a sound
     public static final DeferredHolder<SoundEvent, SoundEvent> STAIN_STEP = wet("stain.step", "Blood squelches underfoot", "Something damp underfoot", false);
     public static final DeferredHolder<SoundEvent, SoundEvent> STAIN_BREAK = wet("stain.break", "Blood is scuffed away", "Something damp is scuffed", false);

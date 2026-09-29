@@ -63,7 +63,7 @@ public class BleedingMobEffect extends MobEffect {
             }
             level.playSound(null, entity.getX(), entity.getY(), entity.getZ(), com.avicagan.bloodandbones.registry.BBSounds.FLESH_SQUISH_SMALL.get(), entity.getSoundSource(), 0.5F,
                     0.5F + entity.getRandom().nextFloat() * 0.2F);
-            level.playSound(null, entity.getX(), entity.getY(), entity.getZ(), SoundEvents.POINTED_DRIPSTONE_DRIP_WATER, entity.getSoundSource(), 0.6F, 0.6F);
+            level.playSound(null, entity.getX(), entity.getY(), entity.getZ(), com.avicagan.bloodandbones.registry.BBSounds.BLOOD_DRIP.get(), entity.getSoundSource(), 0.6F, 0.6F);
         } else {
             // nothing to bleed: it leaks, a hiss and a spray of grey sparks
             level.sendParticles(RangedContent.LEAK_SPARK.get(), wound.x, wound.y, wound.z, 4 + 2 * amplifier, 0.2, 0.3, 0.2, 0.05);

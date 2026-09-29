@@ -67,14 +67,17 @@ public class ButcherHookBlockEntity extends SpecimenJarBlockEntity {
         return super.take();
     }
 
-    /** The mob a hung thing came from, when it says (a piece, or a part cut out of a mob); null for anything else. */
+    /**
+     * The mob a hung thing came from, when it says: a piece, or anything stamped with where it came from (a part cut
+     * out of a mob, scraps, a raw hide); null for anything else.
+     */
     @org.jetbrains.annotations.Nullable
     private static net.minecraft.resources.ResourceLocation mob(ItemStack stack) {
         CarcassPieceItem.Piece piece = CarcassPieceItem.piece(stack);
         if (piece != null) {
             return piece.entity();
         }
-        com.avicagan.bloodandbones.parts.Source source = com.avicagan.bloodandbones.body.SeveredLimbItem.source(stack);
+        com.avicagan.bloodandbones.parts.Source source = stack.get(BBDataComponents.SOURCE.get());
         return source == null ? null : source.entity();
     }
 

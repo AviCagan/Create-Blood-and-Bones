@@ -44,7 +44,7 @@ public final class Vent {
     /** How far the spray reaches, and how wide its cone is (cosine of the half angle). */
     public static final double RANGE = 8.0;
     private static final double CONE = Math.cos(Math.toRadians(20.0));
-    /** Millibuckets of liquid experience to a point, NeoForge's common rate. */
+    /** Millibuckets of liquid experience to a point, NeoForge's common rate (c:experience). */
     public static final int XP_MB = 20;
     /** Game ticks between shots. */
     private static final int GAP = 3;
@@ -135,9 +135,8 @@ public final class Vent {
                 level.playSound(null, player.blockPosition(), SoundEvents.GENERIC_SPLASH, SoundSource.PLAYERS, 0.6F, 1.4F);
             }
             case EXPERIENCE -> {
-                // the common rate for liquid experience (NeoForge's c:experience tag): 20 mB a point
                 Vec3 at = eye.add(look.scale(2.0));
-                int points = taken / XP_MB + (level.random.nextInt(XP_MB) < taken % XP_MB ? 1 : 0);
+                int points = points(kind, taken, level.random);
                 if (points > 0) {
                     ExperienceOrb.award(level, at, points);
                 }
@@ -162,6 +161,26 @@ public final class Vent {
             }
         }
         return effect;
+    }
+
+    /**
+     * Millibuckets of this liquid experience to a point, each fluid at its own rate, so no fluid pays out more than it
+     * holds: Create Enchantment Industry's unit, which is a point a millibucket for its own fluid and whatever its data
+     * map says for other mods'; else a point a millibucket for what is in bloodandbones:liquid_experience, and
+     * NeoForge's 20 for the rest of c:experience.
+     */
+    public static int mbPerPoint(Fluid fluid) {
+        int unit = plus.dragons.createenchantmentindustry.common.fluids.experience.ExperienceHelper.getExperienceFluidUnit(fluid.builtInRegistryHolder());
+        if (unit > 0) {
+            return unit;
+        }
+        return fluid.is(com.avicagan.bloodandbones.registry.BBFluids.LIQUID_EXPERIENCE) ? 1 : XP_MB;
+    }
+
+    /** The points this much liquid experience is worth; a part of a point left over is a chance of one more. */
+    public static int points(Fluid fluid, int mb, net.minecraft.util.RandomSource random) {
+        int rate = mbPerPoint(fluid);
+        return mb / rate + (mb % rate > 0 && random.nextInt(rate) < mb % rate ? 1 : 0);
     }
 
     private static boolean inCone(Vec3 eye, Vec3 look, Vec3 point) {

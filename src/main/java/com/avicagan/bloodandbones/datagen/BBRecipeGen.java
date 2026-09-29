@@ -13,7 +13,6 @@ import com.simibubi.create.content.fluids.transfer.FillingRecipe;
 import com.simibubi.create.content.kinetics.deployer.DeployerApplicationRecipe;
 import com.simibubi.create.content.kinetics.fan.processing.SplashingRecipe;
 import com.simibubi.create.content.kinetics.fan.processing.HauntingRecipe;
-import com.simibubi.create.content.kinetics.mixer.CompactingRecipe;
 import com.simibubi.create.content.kinetics.mixer.MixingRecipe;
 import com.simibubi.create.content.processing.recipe.HeatCondition;
 import com.simibubi.create.content.processing.recipe.StandardProcessingRecipe;
@@ -208,14 +207,16 @@ public final class BBRecipeGen {
 
     // ---------------------------------------------------------------- Create's processing
 
-    /** Blood, soul blood and liquid experience by their common tags, so other mods' fluids go in too. */
+    /** Blood and soul blood by their common tags, so other mods' fluids go in too; liquid experience by our own (BBFluids#LIQUID_EXPERIENCE). */
     private static final TagKey<Fluid> BLOOD = BBFluids.BLOOD_TAG;
     private static final TagKey<Fluid> SOUL_BLOOD = BBFluids.SOUL_BLOOD_TAG;
-    private static final TagKey<Fluid> EXPERIENCE = Tags.Fluids.EXPERIENCE;
+    private static final TagKey<Fluid> EXPERIENCE = BBFluids.LIQUID_EXPERIENCE;
 
-    /** The soul blood line's amounts: what a Mechanical Press sets in a heated basin, and what one clot melts back to. */
+    /** The soul blood line's amounts: what a Basin Lid sets in a basin, and what one clot melts back to. */
     private static final int CONGEAL_MB = 250;
     private static final int REMELT_MB = 200;
+    /** Ticks blood takes to set under a Basin Lid, as long as Diesel Generators' own fermenting takes. */
+    private static final int CONGEAL_TICKS = 200;
     /** The two one-step shortcuts: a litre of blood for a tenth of it back, where the full line gives four fifths. */
     private static final int SHORTCUT_BLOOD_MB = 1000;
     private static final int SHORTCUT_MB = 100;
@@ -252,11 +253,12 @@ public final class BBRecipeGen {
                 .require(BBItems.RAW_HIDE.get())
                 .output(Items.LEATHER).build(out);
 
-        // Soul Blood, the full line (docs/ARCHITECTURE-PROPOSAL.md section 8): blood pressed in a heated basin sets
-        // into congealed blood; a fan through soul fire haunts it; a superheated mixer melts it back as soul blood
-        new StandardProcessingRecipe.Builder<>(CompactingRecipe::new, asResource("congealed_blood"))
+        // Soul Blood, the full line as section 8 of docs/ARCHITECTURE-PROPOSAL.md decided it: blood in a basin under a
+        // Diesel Generators Basin Lid ferments into congealed blood; a fan through soul fire haunts it; a superheated
+        // mixer melts it back as soul blood
+        new StandardProcessingRecipe.Builder<>(com.jesz.createdieselgenerators.content.basin_lid.BasinFermentingRecipe::new, asResource("congealed_blood"))
                 .require(BLOOD, CONGEAL_MB)
-                .requiresHeat(HeatCondition.HEATED)
+                .duration(CONGEAL_TICKS)
                 .output(BBItems.CONGEALED_BLOOD.get()).build(out);
         new StandardProcessingRecipe.Builder<>(HauntingRecipe::new, asResource("soul_clot"))
                 .require(BBItems.CONGEALED_BLOOD.get())
@@ -270,6 +272,8 @@ public final class BBRecipeGen {
                 .require(Items.SOUL_SAND).require(BLOOD, SHORTCUT_BLOOD_MB).require(EXPERIENCE, 100)
                 .requiresHeat(HeatCondition.SUPERHEATED)
                 .output(BBFluids.soulBlood(), SHORTCUT_MB).build(out);
+        // under the same lid: a basin tries the recipe with the most items first (Create's BasinOperatingBlockEntity),
+        // so wart and soul soil in with a bucket of blood go this way, and blood alone sets
         new StandardProcessingRecipe.Builder<>(com.jesz.createdieselgenerators.content.basin_lid.BasinFermentingRecipe::new, asResource("soul_blood"))
                 .require(Items.SOUL_SOIL).require(Items.NETHER_WART).require(Items.NETHER_WART).require(BLOOD, SHORTCUT_BLOOD_MB)
                 .duration(600)

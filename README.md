@@ -42,9 +42,10 @@ provided by [Sable](https://github.com/ryanhcode/sable).
   grinds it down; the Guillotine takes limbs off; the Beheader takes heads (sometimes the skull);
   the Deglover strips hides. Each works whatever carcass lies on or hangs over it, and a filter slot
   on its top edge can limit it to one kind of mob.
-- **Materials.** Blood Steel (spout-fill iron with blood), Soul Blood (superheated mix with liquid
-  experience, or a Diesel Generators fermenting basin), the Blood Diamond (spout-fill a diamond
-  with soul blood), and the Blood Steel Cleaver (twice as deep a chop).
+- **Materials.** Blood Steel (spout-fill iron with blood), Soul Blood (blood set under a Diesel
+  Generators Basin Lid, haunted by a fan through soul fire, melted back in a superheated mixer; or a
+  tenth as much in one step), the Blood Diamond (a sequenced assembly: a Spout of a bucket of blood,
+  then one of liquid experience), and the Blood Steel Cleaver (twice as deep a chop).
 - **Sorting.** Create's Attribute Filter knows carcass pieces: which mob, which part (head, body,
   limb, tail), fresh or rotting, skinned, or from a baby, so funnels and frogports can sort meat. The
   machines have a filter slot too: a spawn egg, a piece or a filter picks the carcasses they work on.
@@ -107,7 +108,7 @@ incremental. `./gradlew runClient` / `runServer` / `runData` are configured by M
 
 ### Development aids
 
-- `./gradlew runGameTestServer` runs the game tests headless (431: every rigged mob and baby,
+- `./gradlew runGameTestServer` runs the game tests headless (432: every rigged mob and baby,
   butchery, rot, bleeding, machines and their filters, cooking and display, decoration, surgery, implants, backtanks, carcass armour and its traits, trait effects, minions and their jobs, chains, recipes
   and the soul blood line on Create's machines, bloodless mode (no game logic reads it; no gory word or wet sound
   left), advancements and sounds).

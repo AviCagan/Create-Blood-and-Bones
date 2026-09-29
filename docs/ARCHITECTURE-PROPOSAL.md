@@ -2481,9 +2481,9 @@ The effects and the jobs were built apart; together, four things broke that neit
 ## 16. Materials, bloodless mode and the decoration leftovers (audit packages 14, 9 and 17)
 
 What docs/BRIEF-AUDIT.md packages 14 (blood, Soul Blood and the materials as written), 9 (finish bloodless mode)
-and 17 (decoration leftovers) asked for, built on main after 054cdfd. Package 14 and package 9 are closed; package
-17 is closed except the part that waits on decision 9 (below). Package 2's line about hand-written recipes is closed
-too.
+and 17 (decoration leftovers) asked for, built on main after 054cdfd. Package 14 and package 9 are closed (package
+14 leaves the owner one question, in 16.2: a press as a second way to congeal); package 17 is closed except the part
+that waits on decision 9 (below). Package 2's line about hand-written recipes is closed too.
 
 ### 16.1 Recipes come from datagen
 
@@ -2498,26 +2498,34 @@ too.
 
 ### 16.2 Soul Blood, the Blood Diamond and the tags (package 14)
 
-- **Tags.** Soul blood has its own tag, `c:soul_blood` (and `c:buckets/soul_blood`), apart from `c:blood`. Create
-  Enchantment Industry does not put its liquid experience in `c:experience`, so our fluid tags add it (optionally):
-  the Blood Diamond, the mixing shortcut and the Vent Arm all ask for the tag.
+- **Tags.** Soul blood has its own tag, `c:soul_blood` (and `c:buckets/soul_blood`), apart from `c:blood`. Liquid
+  experience is our own tag, `bloodandbones:liquid_experience`, holding Create Enchantment Industry's fluid: a point
+  of experience a millibucket, as Enchantment Industry counts it. It is not `c:experience`, which NeoForge counts at
+  20 mB a point: with both in one tag, a recipe by the millibucket costs twenty times less in one mod's fluid than
+  another's (Enchantment Industry keeps its fluid out of the common tag too, and converts other mods' by its own
+  unit data map). The Blood Diamond and the mixing shortcut ask for our tag; the Vent Arm pays any liquid
+  experience at its own rate (`Vent.mbPerPoint`: Enchantment Industry's unit for its own fluid and those in its
+  data map, a point a millibucket for our tag, 20 mB for the rest of `c:experience`).
 - **Every consumer matches the tags**, not our fluid: every recipe's fluid ingredient is a tag ingredient (Create
   reads NeoForge's `SizedFluidIngredient`, which takes tags; Create's own honey compacting does the same); organic
   implants run on `c:blood` and cybernetics on `c:soul_blood` (`ImplantItem.fuelTag`); perfusion takes any
   `c:blood` (`Necrosis.perfuse`); the throttle, its gauge and the Vent Arm's spill read the tags
   (`BBFluids.isBlood`, `isSoulBlood`); a minion is fed and woken, and the Surgery Table takes, any bucket in
   `c:buckets/blood`; the Blood Trough was already on `c:blood`.
-- **The soul blood line** (section 8's chain, on Create's heating, pressing, haunting and mixing, and nothing new):
-  a Mechanical Press over a heated basin sets 250 mB of blood into **Congealed Blood** (`create:compacting`, heated);
-  an Encased Fan blowing through soul fire haunts it into a **Soul Clot** (`create:haunting`); a Mechanical Mixer
-  over a superheated basin melts the clot back into 200 mB of soul blood (`create:mixing`). Four fifths of the blood
-  comes back as soul blood. Section 8 set the congealing in a CDG Basin Lid; the brief names Create's heating and
-  pressing, and a heated press is exactly that, so the line needs no other mod.
+- **The soul blood line** (section 8's decided chain): a Diesel Generators Basin Lid on a basin sets 250 mB of
+  blood into **Congealed Blood** in ten seconds (`createdieselgenerators:basin_fermenting`); an Encased Fan blowing
+  through soul fire haunts it into a **Soul Clot** (`create:haunting`); a Mechanical Mixer over a superheated basin
+  melts the clot back into 200 mB of soul blood (`create:mixing`). Four fifths of the blood comes back as soul blood.
+  For a while the congealing was a Mechanical Press over a heated basin (the brief names "pressing"); a review
+  found that overrode section 8 and 12's decision, so it is the Basin Lid again. **For the owner:** whether the
+  press should come back as a second way to congeal.
 - **The shortcuts, much weaker.** Superheated mixing of a bucket of blood, soul sand and 100 mB of liquid experience,
   and CDG fermenting of a bucket of blood with soul soil and two nether wart, each give 100 mB: a tenth, against the
-  full line's four fifths. The trickle path (nether mobs bleeding soul blood) is unchanged.
+  full line's four fifths. Under the same lid a basin tries the recipe with the most items first (Create's
+  `BasinOperatingBlockEntity`), so wart and soul soil in with the blood go the shortcut way, and blood alone sets.
+  The trickle path (nether mobs bleeding soul blood) is unchanged.
 - **The Blood Diamond** is a sequenced assembly, as the brief and section 8 have it: a diamond through a Spout of
-  1000 mB of blood (`c:blood`), then a Spout of 1000 mB of liquid experience (`c:experience`), one pass, through an
+  1000 mB of blood (`c:blood`), then a Spout of 1000 mB of liquid experience (`bloodandbones:liquid_experience`), one pass, through an
   **Incomplete Blood Diamond**. The one-fill recipe of soul blood is gone. Soul netherite keeps section 8's decided
   form (a Spout of 1000 mB of soul blood, then a Deployer with a super experience block), now on `c:soul_blood`.
   The Blood Diamond's advancement now follows Blood Steel, not Soul Blood.
@@ -2527,7 +2535,9 @@ too.
   is always up while a tank is worn, and while any powered implant is fitted (with no tank, a faded copper tank and
   0.0 B). Under the bar sit the powered implants, half size on a dark strip, dimmed when the tank does not feed them, so a blood-fed
   Flesh Arm reads as running and a Hydraulic Arm on the same tank as not. With implants and under a tenth full, the
-  reading flashes red as Create's does. The backtank's item bar is the fluid's colour too (its texture's average,
+  reading flashes red as Create's does. While Create's own air gauge is up (a Create backtank's air breathed under
+  water or in lava, checked as `RemainingAirOverlay` checks it), this one moves up a row, clear of Create's even
+  where Create draws a netherite tank lower. The backtank's item bar is the fluid's colour too (its texture's average,
   tinted), no longer always red.
 - Items: Congealed Blood, Soul Clot and the Incomplete Blood Diamond, each with a clean copy of its texture for
   bloodless mode (essence brown, the item model's `bloodandbones:bloodless` override); descriptions, the JEI soul
@@ -2535,11 +2545,13 @@ too.
 - Tests (`MaterialsTests`): `soulBloodTaggedApart`; `fillingRecipesTakeTheTags`, `soulBloodLineRecipes` and
   `sequencedMaterialsRecipes` read each recipe back from the loaded recipes (type, item ingredients, fluid tag and
   amount, heat, outputs and amounts, the full line at least five times either shortcut, the old one-fill diamond
-  gone); `spoutsMakeABloodDiamond` runs a real Spout over a Depot (blood, then experience makes the diamond; a Spout
-  of experience first leaves a diamond alone); `pressSetsBloodInAHeatedBasin` (and an unheated one does not),
-  `fanHauntsCongealedBlood` and `mixerMeltsSoulClot` run the line on Create's machines; `implantsRunOnTheTags`
-  (a Flesh Arm on blood and not soul blood, a Hydraulic Arm the other way, perfusion only with blood, water runs
-  neither).
+  gone, the press's congealing gone); `spoutsMakeABloodDiamond` runs a real Spout over a Depot (blood, then
+  experience makes the diamond; a Spout of experience first leaves a diamond alone); `basinLidSetsBlood` (and a
+  basin with no lid does not), `fanHauntsCongealedBlood` and `mixerMeltsSoulClot` run the line on the machines;
+  `ventPaysLiquidExperienceAtItsOwnRate` (Enchantment Industry's a point a millibucket, the rest 20 mB, and a real
+  shot); `implantsRunOnTheTags` (a Flesh Arm on blood and not soul blood, a Hydraulic Arm the other way, perfusion
+  only with blood, water runs neither). `soulBloodTaggedApart` checks Enchantment Industry's fluid is in our tag
+  and not in `c:experience`.
 
 ### 16.3 Bloodless mode finished (package 9)
 
@@ -2563,7 +2575,9 @@ too.
   `bloodless.<name>`: vanilla anvil, chain, iron and grindstone sounds pitched in sounds.json, and a chain rattle
   laid over the heavy ones (thud, sever, crumble), for real files to replace later. The mod no longer plays
   vanilla slime and honey sounds itself: those calls, and the Gut Chain's and blood stains' sound types, now play
-  `flesh.*` and `stain.*` events (squelch, squish, slide, tear, step, slap). The game always plays the wet one;
+  `flesh.*` and `stain.*` events (squelch, squish, slide, tear, step, slap), the trait effects' shoves play
+  `flesh.lunge` (a lunge), `flesh.fling` (the launch action) and `flesh.slap` (an area shove, a thud on the other),
+  and Bleeding's drip is `blood.drip` (bloodless, oil dripping). The game always plays the wet one;
   a client in bloodless mode hears the twin, where the wet one was, as loud and at its pitch
   (`client/BloodlessSounds` on NeoForge's `PlaySoundEvent`, reading the asked volume and pitch through a client
   mixin accessor). Twins have their own subtitles ("Wreck clanks", "Plating is cut").
@@ -2571,8 +2585,9 @@ too.
   the mod file's scan data) and lists each method that reads the client setting or the game rule. It fails if any
   is outside presentation code: the client package, the setting and the game rule themselves, the tests, and four
   named methods elsewhere (the fluid's tint and fog, Create's description cache, the carcass armour's texture, and
-  the Gut Chain's renderer). It also fails if the mod plays a wet vanilla sound itself, and checks it really found
-  the known readers, so an empty scan cannot pass. `bloodlessTextIsClean` reads the language file and fails on any
+  the Gut Chain's renderer). It also fails if the mod reads any vanilla sound event or block sound type whose name
+  starts with `SLIME_` or `HONEY_`, or the water drip, and checks it really found the known readers and a known
+  vanilla sound (Bleeding's hiss), so an empty scan cannot pass. `bloodlessTextIsClean` reads the language file and fails on any
   reworded line that still shows blood, gore, guts, a carcass, flesh, severing, a stump, necrosis, sinew, maggots
   or stitches, and checks the names above. `everyWetSoundHasATwin` checks every twin is registered, in sounds.json
   with metal under it and a subtitle, and that the Gut Chain and stains sound through them.
@@ -2586,7 +2601,8 @@ too.
   and scutes. A carcass piece is drawn as the body part it is, as before; anything else as its item, speared through
   its top on the hook's point, swaying and twisting a little. What is in `bloodandbones:drips_on_hooks` (severed
   parts, organs, scraps, raw meat, offal, hide) drips for a minute once hung, soul blood from a nether mob's parts,
-  nothing from a skeleton's. A player hangs anything in the tag by using it on the hook.
+  nothing from a skeleton's. Where it came from is read from the item's source stamp, whatever the item (severed
+  parts and organs, scraps, raw hides all carry one). A player hangs anything in the tag by using it on the hook.
 - **Not built, decision 9:** heavy whole carcasses on the wall hook. They are bodies, never items (section 15.1
   #5), and whether the hook should take them is the owner's call.
 - **Bloody Train Casing:** Create's train casing (`railway_casing`) filled with 250 mB of blood, joined up top and
@@ -2599,17 +2615,40 @@ too.
 - **The grazers' scrap material is Brawn**, not Hide (grazers, horses and pigs): cow boots of scraps alone read
   "Cow Brawn Boots", and "Hide:" on the tooltip means a hide really is fitted. The data id `hide_plate` is unchanged.
 - Tests: `butcherHookTakesEveryBodyPart` (a player hangs a heart by using it; the hook takes a severed arm, scraps,
-  beef, a zombie head, a bone and a skeleton's heart and refuses a diamond, stone and a Cleaver; the cow's heart
-  stains the floor, the bone and the skeleton's heart do not); `decorationRidesAContraption` now pushes the train
+  beef, a zombie head, a bone, a skeleton's heart and scraps, a piglin's scraps and a hoglin's raw hide, and refuses
+  a diamond, stone and a Cleaver; the cow's heart leaves a red stain, the bone and the skeleton's heart and scraps
+  none, the piglin's scraps and the hoglin's hide soul blood); `decorationRidesAContraption` now pushes the train
   casing with a stained stair on it; `craftCowBoots` checks the name; the new recipes are read by
   `fillingRecipesTakeTheTags` and loaded in `recipesLoad`.
 
 ### 16.5 Looked at in the showcase
 
-Row F (normal and bloodless): the soul blood line on Create's machines, the Blood Diamond on its depot, the train
-casing beside Create's and the stained palette with its stairs and slabs, and a wall of hooks hung with a severed
-arm, a heart, scraps, a zombie head, beef, a pig's leg and an eye; `showcase_gauge.png`, the gauge over a copper
-tank of blood running a Flesh Arm and a Sinew Leg beside a dimmed Hydraulic Arm. In the bloodless run the carcass
-shots show the plated wrecks, and the debris shot what comes off a carcass and a scuffed stain: steel and mud.
+Row F (normal and bloodless): the soul blood line (a Basin Lid on a basin of blood, a basin of what it set beside
+it, the fan and the mixer), the Blood Diamond on its depot, the train casing beside Create's and the stained palette
+with its stairs and slabs, and a wall of hooks hung with a severed arm, a heart, a piglin's scraps dripping soul
+blood, a zombie head, cow scraps, a pig's leg and an eye; `showcase_gauge.png`, the gauge over a copper tank of
+blood running a Flesh Arm and a Sinew Leg beside a dimmed Hydraulic Arm; `showcase_gauge_diving.png`, diving on
+Create's copper backtank with a Hydraulic Arm fitted: Create's air gauge in its place, this one a row above it. In
+the bloodless run the carcass shots show the plated wrecks, and the debris shot what comes off a carcass and a
+scuffed stain: steel and mud.
 
-- The suite is 431 tests (13 new: nine in `MaterialsTests`, three in `BloodlessTests`, one in `DecorationTests`).
+- The suite is 432 tests (14 new: ten in `MaterialsTests`, three in `BloodlessTests`, one in `DecorationTests`).
+
+### 16.6 Review (fixed)
+
+- The Butcher's Hook found where a hung part came from only on severed parts and organs, so scraps and raw hides
+  counted as bleeding red: a skeleton's scraps dripped blood and a piglin's red, not soul blood. It reads the
+  source stamp from any item now; the test hangs a skeleton's scraps (no drip, no stain), a piglin's scraps and a
+  hoglin's hide (soul stains).
+- Create Enchantment Industry's liquid experience had been put in `c:experience`, which counts 20 mB a point where
+  Enchantment Industry's is a point a millibucket: the Blood Diamond would have cost twenty times less in another
+  mod's experience, and the Vent Arm paid a twentieth of a tank of Enchantment Industry's. Our own tag and each
+  fluid's own rate now (16.2).
+- The trait effects still played vanilla slime sounds (a lunge, the launch action, a shove and its thud) and
+  Bleeding a water drip, none with a metal twin; the rule 4 test listed only some slime and honey sounds. Own
+  twinned events now, and the test takes every slime and honey sound (16.3).
+- The plated texture cache built a string key on every lookup, for every bone of every carcass each frame in
+  bloodless mode; two maps keyed by the texture now, so a lookup builds nothing.
+- The congealing had moved to a heated press, against section 8's decided Basin Lid (16.2).
+- The gauge sat exactly where Create's air gauge is and stayed up with only an implant fitted, so diving on
+  Create's backtank drew the two over each other; it moves up a row while Create's is up (16.2).

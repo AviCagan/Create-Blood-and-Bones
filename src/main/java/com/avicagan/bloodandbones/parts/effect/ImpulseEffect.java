@@ -2,6 +2,7 @@ package com.avicagan.bloodandbones.parts.effect;
 
 import com.avicagan.bloodandbones.parts.TraitContext;
 import com.avicagan.bloodandbones.parts.TraitEffect;
+import com.avicagan.bloodandbones.registry.BBSounds;
 import com.mojang.serialization.Codec;
 import com.mojang.serialization.MapCodec;
 import com.mojang.serialization.codecs.RecordCodecBuilder;
@@ -69,7 +70,7 @@ public record ImpulseEffect(String target, LevelBasedValue forward, LevelBasedVa
                         shove(host, near, Vec3.ZERO, 0.0, a, 0.35 * Math.abs(a));
                     }
                 }
-                ctx.level().playSound(null, host.getX(), host.getY(), host.getZ(), SoundEvents.SLIME_JUMP, host.getSoundSource(), 0.8F,
+                ctx.level().playSound(null, host.getX(), host.getY(), host.getZ(), BBSounds.FLESH_LUNGE.get(), host.getSoundSource(), 0.8F,
                         0.5F + ctx.random().nextFloat() * 0.2F);
             }
             case "other" -> {
@@ -82,7 +83,7 @@ public record ImpulseEffect(String target, LevelBasedValue forward, LevelBasedVa
                 for (LivingEntity near : MotionEffects.around(host, radius)) {
                     shove(host, near, facing, f, a, u);
                 }
-                ctx.level().playSound(null, host.getX(), host.getY(), host.getZ(), SoundEvents.SLIME_ATTACK, host.getSoundSource(), 1.0F, 0.5F);
+                ctx.level().playSound(null, host.getX(), host.getY(), host.getZ(), BBSounds.FLESH_SLAP.get(), host.getSoundSource(), 1.0F, 0.5F);
             }
             default -> {
             }
@@ -107,7 +108,7 @@ public record ImpulseEffect(String target, LevelBasedValue forward, LevelBasedVa
 
     private static void thud(TraitContext ctx, LivingEntity who) {
         ctx.level().playSound(null, who.getX(), who.getY(), who.getZ(), SoundEvents.PLAYER_ATTACK_KNOCKBACK, who.getSoundSource(), 0.8F, 0.7F);
-        ctx.level().playSound(null, who.getX(), who.getY(), who.getZ(), SoundEvents.SLIME_ATTACK, who.getSoundSource(), 0.6F, 0.6F);
+        ctx.level().playSound(null, who.getX(), who.getY(), who.getZ(), BBSounds.FLESH_SLAP.get(), who.getSoundSource(), 0.6F, 0.6F);
     }
 
     /**

@@ -68,10 +68,10 @@ public class BBLang {
                 "Iron _quenched in blood_. Fill an iron ingot with _250 mB_ of blood in a Spout.");
         item("blood_diamond",
                 "A diamond steeped in _blood_ and _experience_, one after the other, as a sequenced assembly.",
-                "When Made", "Put a diamond through a _Spout_ of _1000 mB_ of blood, then a Spout of _1000 mB_ of liquid experience. Any mod's blood or experience will do.");
+                "When Made", "Put a diamond through a _Spout_ of _1000 mB_ of blood, then a Spout of _1000 mB_ of Enchantment Industry's liquid experience. Any mod's blood will do.");
         item("congealed_blood",
-                "Blood pressed until it _sets_: a dark, wobbling slab. The first step of the _soul blood_ line.",
-                "When Made", "A _Mechanical Press_ over a _heated_ Basin sets _250 mB_ of blood into one.",
+                "Blood left to _set_ under a lid: a dark, wobbling slab. The first step of the _soul blood_ line.",
+                "When Made", "A Diesel Generators _Basin Lid_ on a Basin of blood sets _250 mB_ of it into one.",
                 "Next", "_Haunt_ it: an _Encased Fan_ blowing through _soul fire_ turns it into a Soul Clot.");
         item("soul_clot",
                 "Congealed blood with a _soul_ caught in it, faintly glowing.",
@@ -789,8 +789,8 @@ public class BBLang {
                 "Every part does its own thing. The torso sets its size, health and how much it carries; the head its jobs and its bite; the legs how fast and how it moves; arms its blows. Crouch and R-Click it with an empty hand to change its job.",
                 "It runs on blood: a little all the time, more moving, working and fighting. Low, it walks to a Blood Trough to drink. Empty, it lies down where it is, alive, and nothing but a player can hurt it; give it blood and it gets up. Crouch-R-Click one lying down a few times to fold it up and carry it; set down, it works from there. Its maker's Cleaver on one lying down on an Assembly Frame table takes it back apart into a frame there.");
         jei("soul_blood",
-                "Soul Blood is blood with a soul in it, and it takes Create's own machines to make in bulk. First a Mechanical Press over a heated Basin sets 250 mB of blood into Congealed Blood. Then an Encased Fan blowing through soul fire haunts it into a Soul Clot. Last, a Mechanical Mixer over a superheated Basin melts the clot back into 200 mB of Soul Blood.",
-                "There are two quicker ways, both far poorer: mix a bucket of blood with soul sand and 100 mB of liquid experience over a superheated Blaze Burner, or ferment it with nether wart and soul soil under a Basin Lid. Each gives back only 100 mB. Nether mobs hung over a Bleeding Rack bleed a little Soul Blood straight away.");
+                "Soul Blood is blood with a soul in it, and it takes a line of machines to make in bulk. First a Basin Lid on a Basin of blood sets 250 mB of it into Congealed Blood. Then an Encased Fan blowing through soul fire haunts it into a Soul Clot. Last, a Mechanical Mixer over a superheated Basin melts the clot back into 200 mB of Soul Blood.",
+                "There are two quicker ways, both far poorer: mix a bucket of blood with soul sand and 100 mB of liquid experience over a superheated Blaze Burner, or put nether wart and soul soil in with the blood under the Basin Lid. Each gives back only 100 mB. Nether mobs hung over a Bleeding Rack bleed a little Soul Blood straight away.");
     }
 
     private static void config(String key, String name, String tooltip) {

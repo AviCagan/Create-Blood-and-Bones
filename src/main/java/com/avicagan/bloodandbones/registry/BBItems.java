@@ -68,8 +68,8 @@ public class BBItems {
             .lang("Incomplete Blood Diamond")
             .register();
 
-    // ---- the soul blood line (brief § Blood and materials: congeal, haunt, re-melt, with Create's own machines)
-    /** Blood pressed in a heated basin until it sets: the first step to soul blood. */
+    // ---- the soul blood line (brief § Blood and materials: congeal, haunt, re-melt; the congealing under a Basin Lid, section 8)
+    /** Blood set under a Basin Lid: the first step to soul blood. */
     public static final ItemEntry<net.minecraft.world.item.Item> CONGEALED_BLOOD = BloodAndBones.REGISTRATE
             .item("congealed_blood", net.minecraft.world.item.Item::new)
             .model(bloodlessModel())

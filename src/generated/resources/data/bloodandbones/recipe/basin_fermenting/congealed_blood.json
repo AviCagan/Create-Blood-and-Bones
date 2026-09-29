@@ -1,6 +1,5 @@
 {
-  "type": "create:compacting",
-  "heat_requirement": "heated",
+  "type": "createdieselgenerators:basin_fermenting",
   "ingredients": [
     {
       "type": "neoforge:tag",
@@ -8,6 +7,7 @@
       "tag": "c:blood"
     }
   ],
+  "processing_time": 200,
   "results": [
     {
       "id": "bloodandbones:congealed_blood"

@@ -13,7 +13,6 @@ import com.simibubi.create.AllBlocks;
 import com.simibubi.create.AllItems;
 import com.simibubi.create.AllRecipeTypes;
 import com.simibubi.create.content.kinetics.base.DirectionalKineticBlock;
-import com.simibubi.create.content.kinetics.base.HorizontalKineticBlock;
 import com.simibubi.create.content.kinetics.motor.CreativeMotorBlockEntity;
 import com.simibubi.create.content.processing.basin.BasinBlockEntity;
 import com.simibubi.create.content.processing.burner.BlazeBurnerBlock;
@@ -60,7 +59,11 @@ import java.util.List;
 public class MaterialsTests {
     private static final ResourceLocation EXPERIENCE = ResourceLocation.fromNamespaceAndPath("create_enchantment_industry", "experience");
 
-    /** Soul blood has a tag of its own, apart from blood; liquid experience is in the common tag the recipes ask for. */
+    /**
+     * Soul blood has a tag of its own, apart from blood. Enchantment Industry's liquid experience (a point a millibucket)
+     * is in our own tag the recipes ask for, and kept out of c:experience (20 mB a point), where a recipe by the
+     * millibucket would cost twenty times less in one mod's fluid than another's.
+     */
     @GameTest(template = "empty", timeoutTicks = 20)
     public static void soulBloodTaggedApart(GameTestHelper helper) {
         if (!BBFluids.soulBlood().is(BBFluids.SOUL_BLOOD_TAG) || BBFluids.soulBlood().is(BBFluids.BLOOD_TAG)) {
@@ -74,8 +77,8 @@ public class MaterialsTests {
                 || new ItemStack(BBFluids.SOUL_BLOOD.getBucket().get()).is(BBFluids.BLOOD_BUCKETS)) {
             helper.fail("Each bucket should be in its own fluid's bucket tag only");
         }
-        if (!BuiltInRegistries.FLUID.get(EXPERIENCE).is(Tags.Fluids.EXPERIENCE)) {
-            helper.fail("Create Enchantment Industry's liquid experience should be in c:experience");
+        if (!BuiltInRegistries.FLUID.get(EXPERIENCE).is(BBFluids.LIQUID_EXPERIENCE) || BuiltInRegistries.FLUID.get(EXPERIENCE).is(Tags.Fluids.EXPERIENCE)) {
+            helper.fail("Create Enchantment Industry's liquid experience should be in bloodandbones:liquid_experience and not in c:experience");
         }
         helper.succeed();
     }
@@ -114,25 +117,28 @@ public class MaterialsTests {
     }
 
     /**
-     * The soul blood line (brief § Blood and materials: "congeal, haunt, re-melt ... heating, pressing, haunting and
-     * mixing"): a press over a heated basin sets 250 mB of blood, a fan through soul fire haunts it, a superheated mixer
-     * melts it back into 200 mB; the two one-step shortcuts give a tenth, far poorer.
+     * The soul blood line (brief § Blood and materials: "congeal, haunt, re-melt"), as section 8 decided it: a Basin
+     * Lid sets 250 mB of blood in a basin, a fan through soul fire haunts it, a superheated mixer melts it back into
+     * 200 mB; the two one-step shortcuts give a tenth, far poorer. The press that set it for a while is gone.
      */
     @GameTest(template = "empty", timeoutTicks = 20)
     public static void soulBloodLineRecipes(GameTestHelper helper) {
-        ProcessingRecipe<?, ?> congeal = processing(helper, "compacting/congealed_blood", AllRecipeTypes.COMPACTING.getType());
+        RecipeType<?> fermenting = BuiltInRegistries.RECIPE_TYPE.get(ResourceLocation.fromNamespaceAndPath("createdieselgenerators", "basin_fermenting"));
+        ProcessingRecipe<?, ?> congeal = processing(helper, "basin_fermenting/congealed_blood", fermenting);
         ProcessingRecipe<?, ?> haunt = processing(helper, "haunting/soul_clot", AllRecipeTypes.HAUNTING.getType());
         ProcessingRecipe<?, ?> melt = processing(helper, "mixing/soul_blood", AllRecipeTypes.MIXING.getType());
         ProcessingRecipe<?, ?> mixShortcut = processing(helper, "mixing/soul_blood_from_soul_sand", AllRecipeTypes.MIXING.getType());
-        ProcessingRecipe<?, ?> fermentShortcut = processing(helper, "basin_fermenting/soul_blood",
-                BuiltInRegistries.RECIPE_TYPE.get(ResourceLocation.fromNamespaceAndPath("createdieselgenerators", "basin_fermenting")));
+        ProcessingRecipe<?, ?> fermentShortcut = processing(helper, "basin_fermenting/soul_blood", fermenting);
         if (congeal == null || haunt == null || melt == null || mixShortcut == null || fermentShortcut == null) {
             return;
         }
         requireItems(helper, congeal, "Congealing");
         requireFluid(helper, congeal, "Congealing", BBFluids.BLOOD_TAG, 250);
-        requireHeat(helper, congeal, "Congealing", HeatCondition.HEATED);
+        requireHeat(helper, congeal, "Congealing", HeatCondition.NONE);
         requireOutput(helper, congeal, "Congealing", BBItems.CONGEALED_BLOOD.get(), 1);
+        if (helper.getLevel().getRecipeManager().byKey(BloodAndBones.asResource("compacting/congealed_blood")).isPresent()) {
+            helper.fail("Blood should set under a Basin Lid, as section 8 decided, not in a press");
+        }
 
         requireItems(helper, haunt, "Haunting", new ItemStack(BBItems.CONGEALED_BLOOD.get()));
         requireOutput(helper, haunt, "Haunting", BBItems.SOUL_CLOT.get(), 1);
@@ -143,7 +149,7 @@ public class MaterialsTests {
 
         requireItems(helper, mixShortcut, "The mixing shortcut", new ItemStack(Items.SOUL_SAND));
         requireFluid(helper, mixShortcut, "The mixing shortcut", BBFluids.BLOOD_TAG, 1000);
-        requireFluid(helper, mixShortcut, "The mixing shortcut", Tags.Fluids.EXPERIENCE, 100);
+        requireFluid(helper, mixShortcut, "The mixing shortcut", BBFluids.LIQUID_EXPERIENCE, 100);
         requireHeat(helper, mixShortcut, "The mixing shortcut", HeatCondition.SUPERHEATED);
         int mixed = requireFluidOutput(helper, mixShortcut, "The mixing shortcut", 100);
 
@@ -187,7 +193,7 @@ public class MaterialsTests {
             helper.fail("Both of the Blood Diamond's steps should be a spout's");
         }
         requireFluid(helper, blood, "The Blood Diamond's first step", BBFluids.BLOOD_TAG, 1000);
-        requireFluid(helper, experience, "The Blood Diamond's second step", Tags.Fluids.EXPERIENCE, 1000);
+        requireFluid(helper, experience, "The Blood Diamond's second step", BBFluids.LIQUID_EXPERIENCE, 1000);
         if (helper.getLevel().getRecipeManager().byKey(BloodAndBones.asResource("filling/blood_diamond")).isPresent()) {
             helper.fail("The old one-fill Blood Diamond should be gone");
         }
@@ -250,31 +256,39 @@ public class MaterialsTests {
         });
     }
 
-    /** A Mechanical Press over a basin on a lit Blaze Burner sets 250 mB of blood into Congealed Blood; unheated, it does not. */
+    /**
+     * A Diesel Generators Basin Lid on a basin of blood sets 250 mB of it into Congealed Blood (section 8's congealing);
+     * the same basin with no lid beside it does not.
+     */
     @GameTest(template = "empty", timeoutTicks = 400)
-    public static void pressSetsBloodInAHeatedBasin(GameTestHelper helper) {
-        BasinBlockEntity hot = basin(helper, new BlockPos(3, 3, 3), HeatCondition.HEATED);
-        BasinBlockEntity cold = basin(helper, new BlockPos(7, 3, 3), HeatCondition.NONE);
-        for (BlockPos basin : List.of(new BlockPos(3, 3, 3), new BlockPos(7, 3, 3))) {
-            BlockPos press = basin.above(2);
-            helper.setBlock(press, AllBlocks.MECHANICAL_PRESS.getDefaultState().setValue(HorizontalKineticBlock.HORIZONTAL_FACING, Direction.EAST));
-            motor(helper, press.east(), Direction.WEST);
-        }
-        if (hot == null || cold == null) {
+    public static void basinLidSetsBlood(GameTestHelper helper) {
+        BasinBlockEntity lidded = basin(helper, new BlockPos(3, 2, 3), HeatCondition.NONE);
+        BasinBlockEntity open = basin(helper, new BlockPos(7, 2, 3), HeatCondition.NONE);
+        if (lidded == null || open == null) {
             return;
         }
-        for (BasinBlockEntity basin : List.of(hot, cold)) {
+        // placed as a player places it, already sitting on the basin (the lid's own onPlace sets that too late for its
+        // block entity, which then never sees the basin)
+        helper.setBlock(new BlockPos(3, 3, 3), com.jesz.createdieselgenerators.CDGBlocks.BASIN_LID.getDefaultState()
+                .setValue(com.jesz.createdieselgenerators.content.basin_lid.BasinLidBlock.ON_A_BASIN, true));
+        if (!(helper.getLevel().getBlockEntity(helper.absolutePos(new BlockPos(3, 3, 3))) instanceof com.jesz.createdieselgenerators.content.basin_lid.BasinLidBlockEntity lid)
+                || !lid.getBlockState().getValue(com.jesz.createdieselgenerators.content.basin_lid.BasinLidBlock.ON_A_BASIN)) {
+            helper.fail("The Basin Lid should sit on the basin");
+            return;
+        }
+        for (BasinBlockEntity basin : List.of(lidded, open)) {
             basin.getTanks().getFirst().getCapability().fill(new FluidStack(BBFluids.blood(), 250), IFluidHandler.FluidAction.EXECUTE);
         }
         helper.runAtTickTime(300, () -> {
-            if (count(cold.getOutputInventory(), BBItems.CONGEALED_BLOOD.get()) + count(cold.getInputInventory(), BBItems.CONGEALED_BLOOD.get()) > 0) {
-                helper.fail("An unheated basin should not set blood");
+            if (count(open.getOutputInventory(), BBItems.CONGEALED_BLOOD.get()) + count(open.getInputInventory(), BBItems.CONGEALED_BLOOD.get()) > 0) {
+                helper.fail("A basin with no lid should not set blood");
             }
         });
         helper.succeedWhen(() -> {
-            helper.assertTrue(count(hot.getOutputInventory(), BBItems.CONGEALED_BLOOD.get()) == 1,
-                    "no Congealed Blood in the heated basin yet; blood left " + hot.getTanks().getFirst().getPrimaryHandler().getFluidAmount());
-            helper.assertTrue(helper.getTick() >= 300, "waiting on the cold basin");
+            helper.assertTrue(count(lidded.getOutputInventory(), BBItems.CONGEALED_BLOOD.get()) == 1
+                            && lidded.getTanks().getFirst().getPrimaryHandler().getFluidAmount() == 0,
+                    "no Congealed Blood under the lid yet; blood left " + lidded.getTanks().getFirst().getPrimaryHandler().getFluidAmount());
+            helper.assertTrue(helper.getTick() >= 300, "waiting on the basin with no lid");
         });
     }
 
@@ -320,6 +334,45 @@ public class MaterialsTests {
             FluidStack out = basin.getTanks().getSecond().getCapability().getFluidInTank(0);
             helper.assertTrue(out.is(BBFluids.soulBlood()) && out.getAmount() == 200, "no soul blood yet: " + out.getAmount() + " mB of " + out.getHoverName().getString());
         });
+    }
+
+    /**
+     * The Vent Arm pays each liquid experience at its own rate, so no tank pays out more or less than it holds: a 50 mB
+     * shot of Enchantment Industry's is 50 points (its own rate, a point a millibucket), where the common c:experience
+     * rate is 20 mB a point. And the shot really gives experience, taking its 50 mB.
+     */
+    @GameTest(template = "empty", timeoutTicks = 20)
+    public static void ventPaysLiquidExperienceAtItsOwnRate(GameTestHelper helper) {
+        Fluid experience = BuiltInRegistries.FLUID.get(EXPERIENCE);
+        net.minecraft.util.RandomSource random = helper.getLevel().random;
+        if (com.avicagan.bloodandbones.body.Vent.mbPerPoint(experience) != 1 || com.avicagan.bloodandbones.body.Vent.points(experience, 50, random) != 50) {
+            helper.fail("Enchantment Industry's liquid experience should be a point a millibucket, 50 points a shot; it is "
+                    + com.avicagan.bloodandbones.body.Vent.mbPerPoint(experience) + " mB a point");
+            return;
+        }
+        // a fluid neither Enchantment Industry nor our tag knows goes at NeoForge's common rate
+        if (com.avicagan.bloodandbones.body.Vent.mbPerPoint(Fluids.WATER) != com.avicagan.bloodandbones.body.Vent.XP_MB
+                || com.avicagan.bloodandbones.body.Vent.points(Fluids.WATER, 60, random) != 3) {
+            helper.fail("Anything else in c:experience should be 20 mB a point");
+            return;
+        }
+        Player player = helper.makeMockPlayer(net.minecraft.world.level.GameType.SURVIVAL);
+        BlockPos from = helper.absolutePos(new BlockPos(1, 2, 4));
+        player.moveTo(from.getX() + 0.5, from.getY(), from.getZ() + 0.5, -90.0F, 0.0F);
+        BodyEffects.body(player).fit(BodyEffects.armFor(player, net.minecraft.world.InteractionHand.MAIN_HAND), new ItemStack(BBItems.VENT_ARM.get()));
+        ItemStack tank = new ItemStack(BBItems.backtank(BacktankTier.IRON));
+        FluidBacktankItem.setFluid(tank, new FluidStack(experience, 1000));
+        player.setItemSlot(net.minecraft.world.entity.EquipmentSlot.CHEST, tank);
+        if (com.avicagan.bloodandbones.body.Vent.spray(player) != com.avicagan.bloodandbones.body.Vent.Effect.EXPERIENCE
+                || FluidBacktankItem.fluid(FluidBacktankItem.wornBy(player)).getAmount() != 950) {
+            helper.fail("A shot of liquid experience should give experience and take 50 mB");
+            return;
+        }
+        if (helper.getLevel().getEntitiesOfClass(net.minecraft.world.entity.ExperienceOrb.class, helper.getBounds()).isEmpty()) {
+            helper.fail("The shot should have left experience orbs ahead");
+            return;
+        }
+        helper.succeed();
     }
 
     /**

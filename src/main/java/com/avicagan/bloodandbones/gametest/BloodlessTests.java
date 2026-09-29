@@ -63,10 +63,20 @@ public class BloodlessTests {
             // a renderer that lives beside its entity
             "com/avicagan/bloodandbones/decoration/HangingGutChainRenderer");
 
-    /** Wet vanilla sounds the mod must not play itself: it plays its own, which have metal twins (BBSounds). */
-    private static final Set<String> WET_VANILLA = Set.of("SLIME_SQUISH", "SLIME_SQUISH_SMALL", "SLIME_BLOCK_BREAK", "SLIME_BLOCK_FALL", "SLIME_BLOCK_HIT",
-            "SLIME_BLOCK_PLACE", "SLIME_BLOCK_STEP", "HONEY_BLOCK_BREAK", "HONEY_BLOCK_FALL", "HONEY_BLOCK_HIT", "HONEY_BLOCK_PLACE", "HONEY_BLOCK_SLIDE",
-            "HONEY_BLOCK_STEP");
+    private static final String SOUND_EVENTS = "net/minecraft/sounds/SoundEvents";
+    private static final String SOUND_TYPE = "net/minecraft/world/level/block/SoundType";
+    /** Wet vanilla sounds named one by one; every slime and honey sound is wet too (see {@link #wetVanilla}). */
+    private static final Set<String> WET_VANILLA = Set.of("POINTED_DRIPSTONE_DRIP_WATER");
+
+    /**
+     * A wet vanilla sound the mod must not play itself: it plays its own, which have metal twins (BBSounds). Every slime
+     * and honey sound, or block sound type, whatever it is (a jump, an attack, a squish, a block's step), and the drip of
+     * water that stood in for blood dripping.
+     */
+    private static boolean wetVanilla(String fieldOwner, String name) {
+        return (fieldOwner.equals(SOUND_EVENTS) || fieldOwner.equals(SOUND_TYPE))
+                && (name.startsWith("SLIME_") || name.startsWith("HONEY_") || WET_VANILLA.contains(name));
+    }
 
     /**
      * Nothing outside presentation code reads the bloodless setting (the client toggle, or the game rule): every
@@ -76,6 +86,7 @@ public class BloodlessTests {
     public static void onlyPresentationReadsBloodless(GameTestHelper helper) {
         List<String> readers = new ArrayList<>();
         List<String> wetSounds = new ArrayList<>();
+        List<String> vanillaSounds = new ArrayList<>();
         int classes = scan((owner, method, name, fieldOwner, isField) -> {
             boolean setting = !isField && fieldOwner.equals(CONFIG) && name.equals("bloodless")
                     || isField && fieldOwner.equals(CONFIG) && name.equals("BLOODLESS_MODE")
@@ -83,7 +94,10 @@ public class BloodlessTests {
             if (setting) {
                 readers.add(owner + "#" + method);
             }
-            if (isField && fieldOwner.equals("net/minecraft/sounds/SoundEvents") && WET_VANILLA.contains(name)) {
+            if (isField && fieldOwner.equals(SOUND_EVENTS)) {
+                vanillaSounds.add(owner + "#" + method + " plays " + name);
+            }
+            if (isField && wetVanilla(fieldOwner, name)) {
                 wetSounds.add(owner + "#" + method + " plays " + name);
             }
         });
@@ -103,6 +117,12 @@ public class BloodlessTests {
                 helper.fail("The scan should have found " + known + " reading the setting; it found " + readers.size() + " readers");
                 return;
             }
+        }
+        // the scan sees the vanilla sounds the mod does play (bleeding's hiss where nothing bleeds), so an empty list of
+        // wet ones means there are none, not that sounds went unseen
+        if (vanillaSounds.stream().noneMatch(sound -> sound.startsWith("com/avicagan/bloodandbones/parts/effect/BleedingMobEffect#") && sound.endsWith(" FIRE_EXTINGUISH"))) {
+            helper.fail("The scan should have seen Bleeding play FIRE_EXTINGUISH; it saw " + vanillaSounds.size() + " vanilla sounds");
+            return;
         }
         if (!wetSounds.isEmpty()) {
             helper.fail("The mod plays wet vanilla sounds with no bloodless twin; play BBSounds' own instead: " + wetSounds);
