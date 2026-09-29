@@ -3,7 +3,6 @@ package com.avicagan.bloodandbones.body;
 import com.avicagan.bloodandbones.backtank.FluidBacktankItem;
 import com.avicagan.bloodandbones.registry.BBDataComponents;
 import com.avicagan.bloodandbones.registry.BBFluids;
-import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.InteractionHand;
 import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.entity.player.Player;
@@ -20,7 +19,7 @@ import java.util.WeakHashMap;
 
 /**
  * Necrosis, from the brief: organic prosthetics rot from use (swinging and mining with a Flesh Arm, running
- * on a Sinew Leg, eating with a Furnace Stomach), never from time passing. Blood from the worn backtank
+ * on a Sinew Leg, not walking on it, eating with a Furnace Stomach), never from time passing. Blood from the worn backtank
  * perfuses them, clearing it cheaply and routinely. At the most it stops the part giving its bonus (it works
  * as a missing part, a small penalty); it never falls off and never kills. It is kept on the fitted implant.
  */
@@ -29,6 +28,8 @@ public final class Necrosis {
     /** Rot from one swing (a hit or a block broken), from one block run, from one meal. */
     public static final int SWING = 1;
     public static final double BLOCKS_PER_POINT = 4.0;
+    /** How much a block run counts towards that: a point every 2.7 blocks sprinted, as a sprint always wore. */
+    private static final double SPRINT = 1.5;
     public static final int MEAL = 3;
     /** Each second a rotting part takes this much blood from the tank and clears this much rot. */
     public static final int PERFUSE_MB = 1;
@@ -111,20 +112,23 @@ public final class Necrosis {
         }
     }
 
-    /** Running wears the legs: distance covered on the ground, sprinting or walking. */
+    /**
+     * Running wears the legs: distance covered on the ground at a sprint. Walking does not: the brief names swinging, mining
+     * and running, and a leg that rotted from walking about would rot from simply playing.
+     */
     @SubscribeEvent
     public static void onTick(PlayerTickEvent.Post event) {
         Player player = event.getEntity();
-        if (!(player instanceof ServerPlayer) || !BodyEffects.altered(player)) {
+        if (player.level().isClientSide || !BodyEffects.altered(player)) {
             return;
         }
         Vec3 now = player.position();
         Vec3 last = LAST.put(player, now);
-        if (last == null || !player.onGround() || player.isPassenger()) {
+        if (last == null || !player.onGround() || player.isPassenger() || !player.isSprinting()) {
             return;
         }
         double moved = Math.min(1.0, Math.sqrt((now.x - last.x) * (now.x - last.x) + (now.z - last.z) * (now.z - last.z)));
-        double run = RUN.getOrDefault(player, 0.0) + moved * (player.isSprinting() ? 1.5 : 1.0);
+        double run = RUN.getOrDefault(player, 0.0) + moved * SPRINT;
         while (run >= BLOCKS_PER_POINT) {
             run -= BLOCKS_PER_POINT;
             use(player, BodyPart.LEFT_LEG, 1);

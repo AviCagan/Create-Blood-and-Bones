@@ -263,8 +263,6 @@ public class BBLang {
         bloodless("bloodandbones.body.heart", "Pump");
         bloodless("bloodandbones.body.lungs", "Bellows");
         bloodless("bloodandbones.body.stomach", "Hopper");
-        BloodAndBones.REGISTRATE.addRawLang("bloodandbones.surgery.action.replace", "Swap in what is on the table");
-        BloodAndBones.REGISTRATE.addRawLang("bloodandbones.surgery.action.swap", "Swap it for what is on the table");
         BloodAndBones.REGISTRATE.addRawLang("bloodandbones.surgery.state.dead", "%s (dry)");
         // ---- minions (docs/PARTS-AND-TRAITS.md section 6)
         // the tasks (docs/NEXT.md 1.1), what each does, why a body cannot do one, what one waits for, and the heads'
@@ -498,7 +496,6 @@ public class BBLang {
                 "When Used on a Block", "Sets it down there, still out of blood. Give it _blood_ to wake it.");
         BloodAndBones.REGISTRATE.addRawLang("bloodandbones.surgery.no_organs", "Nothing more to take out of it");
         BloodAndBones.REGISTRATE.addRawLang("bloodandbones.surgery.filtered", "The rig's filter passes this over");
-        BloodAndBones.REGISTRATE.addRawLang("bloodandbones.surgery.empty", "Nothing on the table: lay a Cleaver, a prosthetic or a limb on it");
         BloodAndBones.REGISTRATE.addRawLang("bloodandbones.surgery.on_table", "On the table: %s");
         BloodAndBones.REGISTRATE.addRawLang("bloodandbones.surgery.state.natural", "Your own");
         BloodAndBones.REGISTRATE.addRawLang("bloodandbones.surgery.state.missing", "Missing");
@@ -520,14 +517,33 @@ public class BBLang {
         BloodAndBones.REGISTRATE.addRawLang("bloodandbones.surgery.no_surgeon", "No surgeon by the table");
         BloodAndBones.REGISTRATE.addRawLang("bloodandbones.surgery.no_surgeon.hint", "Set a minion to Surgeon within 4 blocks to cut");
         bloodless("bloodandbones.surgery.no_surgeon.hint", "Set a construct to Surgeon within 4 blocks for the ritual");
-        BloodAndBones.REGISTRATE.addRawLang("bloodandbones.surgery.action.none", "-");
-        BloodAndBones.REGISTRATE.addRawLang("bloodandbones.surgery.action.take_off", "Take it off");
-        BloodAndBones.REGISTRATE.addRawLang("bloodandbones.surgery.action.fit", "Fit what is on the table");
-        BloodAndBones.REGISTRATE.addRawLang("bloodandbones.surgery.action.reattach", "Put the limb back on");
-        BloodAndBones.REGISTRATE.addRawLang("bloodandbones.surgery.action.unclip", "Unclip it");
         BloodAndBones.REGISTRATE.addRawLang("bloodandbones.surgery.done", "Done");
-        BloodAndBones.REGISTRATE.addRawLang("bloodandbones.surgery.action.fit_module", "Fit the module");
-        BloodAndBones.REGISTRATE.addRawLang("bloodandbones.surgery.action.take_module", "Take a module out");
+        // the surgery screen (package 11): the doll's key, the right panel's lines and what each card does
+        BloodAndBones.REGISTRATE.addRawLang("bloodandbones.surgery.state.ragged_fit", "Ragged stump: %s of blood to fit");
+        bloodless("bloodandbones.surgery.state.ragged_fit", "Open socket: %s of essence to fit");
+        BloodAndBones.REGISTRATE.addRawLang("bloodandbones.surgery.fits_key", "Something you carry fits here");
+        BloodAndBones.REGISTRATE.addRawLang("bloodandbones.surgery.surgeon_short", "Surgeon: %s, %s fit");
+        BloodAndBones.REGISTRATE.addRawLang("bloodandbones.surgery.table_empty", "Nothing on the table");
+        BloodAndBones.REGISTRATE.addRawLang("bloodandbones.surgery.blood_carried", "Blood on you: %s");
+        BloodAndBones.REGISTRATE.addRawLang("bloodandbones.surgery.mb", "%s mB");
+        BloodAndBones.REGISTRATE.addRawLang("bloodandbones.surgery.carried", "You carry");
+        BloodAndBones.REGISTRATE.addRawLang("bloodandbones.surgery.carried_none", "Nothing you carry fits this body");
+        BloodAndBones.REGISTRATE.addRawLang("bloodandbones.surgery.choices", "What can be done");
+        BloodAndBones.REGISTRATE.addRawLang("bloodandbones.surgery.nothing_here", "Nothing on the table or on you can be used here");
+        BloodAndBones.REGISTRATE.addRawLang("bloodandbones.surgery.pick", "Click to pick");
+        BloodAndBones.REGISTRATE.addRawLang("bloodandbones.surgery.fits", "Goes in: %s");
+        BloodAndBones.REGISTRATE.addRawLang("bloodandbones.surgery.from.bare", "Back into your hands");
+        BloodAndBones.REGISTRATE.addRawLang("bloodandbones.surgery.from.table", "%s, on the table");
+        BloodAndBones.REGISTRATE.addRawLang("bloodandbones.surgery.from.carried", "%s, carried");
+        BloodAndBones.REGISTRATE.addRawLang("bloodandbones.surgery.do.none", "-");
+        BloodAndBones.REGISTRATE.addRawLang("bloodandbones.surgery.do.take_off", "Take it off");
+        BloodAndBones.REGISTRATE.addRawLang("bloodandbones.surgery.do.replace", "Take it off, fit this");
+        BloodAndBones.REGISTRATE.addRawLang("bloodandbones.surgery.do.swap", "Swap it for this");
+        BloodAndBones.REGISTRATE.addRawLang("bloodandbones.surgery.do.fit", "Fit this");
+        BloodAndBones.REGISTRATE.addRawLang("bloodandbones.surgery.do.reattach", "Put it back on");
+        BloodAndBones.REGISTRATE.addRawLang("bloodandbones.surgery.do.unclip", "Unclip it");
+        BloodAndBones.REGISTRATE.addRawLang("bloodandbones.surgery.do.fit_module", "Fit this module");
+        BloodAndBones.REGISTRATE.addRawLang("bloodandbones.surgery.do.take_module", "Take a module out");
 
         // ---- cybernetic modules and the throttle
         item("grappling_spool",
