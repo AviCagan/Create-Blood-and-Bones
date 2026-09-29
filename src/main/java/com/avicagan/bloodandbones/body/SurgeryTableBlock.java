@@ -308,7 +308,9 @@ public class SurgeryTableBlock extends Block implements IBE<SurgeryTableBlockEnt
                         .ifPresent(organ -> Block.popResource(level, pos, organ));
             });
         }
-        if (!state.is(newState.getBlock()) && itemOf(state.getValue(ATTACHMENT)) != null) {
+        // the attachment is in the block itself, so a table moved whole (a Create contraption, a Sable ship built round it)
+        // takes it along: it drops only when the table is broken
+        if (!state.is(newState.getBlock()) && !movedByPiston && itemOf(state.getValue(ATTACHMENT)) != null) {
             Block.popResource(level, pos, new ItemStack(itemOf(state.getValue(ATTACHMENT))));
         }
         // as Create's own blocks do: the block entity's behaviours are destroyed too, so the rig's filter drops

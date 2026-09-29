@@ -412,6 +412,11 @@ public class ShackleHookBlockEntity extends BlockEntity implements com.simibubi.
         return subLevelId != null;
     }
 
+    /** Whether the hook holds its carcass fast by a joint (not hoisting it, not waiting for its body to load). */
+    public boolean holdsFast() {
+        return joint != null && joint.isValid();
+    }
+
     /** The carcass on the hook, or null. */
     @Nullable
     public UUID hookedCarcass() {
