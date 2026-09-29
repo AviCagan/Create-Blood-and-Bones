@@ -494,7 +494,9 @@ An attribute filter set to a part is asked about the whole body, so it never mat
 **Built** (ARCHITECTURE 15.29, with 12 new tests in `RitualTests`):
 - The surgery screen: a paper doll of the body and the picked slot's choices in two panels at the sides, nothing over
   the body, every implant, prosthetic, limb and module you carry offered (and what is on the table, and unclipping by
-  hand), the surgeon, its fitness and the stump's price before any cut. The payload names where the item comes from.
+  hand), the surgeon, its fitness and the stump's price before any cut. The payload names where the item comes from,
+  what the card said it would do and with what, so a stale second click is refused. The green mark and the carried row
+  count only what goes in, never a blade or a wrench.
 - A missing arm holds nothing and a missing limb wears no armour in third person.
 - Walking no longer wears the legs; only a sprint does.
 - Every proof listed above, and the balance check: six brass limbs cost 36 buckets of soul blood an hour, 45 of blood

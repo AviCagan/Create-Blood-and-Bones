@@ -176,7 +176,9 @@ Everything below is in development builds only; the art is placeholder (see the 
   fits this body, and a card for each thing that can be done, with the table's item, with anything you carry
   (inventory, armour or off-hand) or with bare hands (unclipping), each saying why when it cannot be done yet.
   Drawn as Create's value boards and schedule cards are. You no longer have to get off the table to try another
-  augment.
+  augment. A carried Cleaver or Wrench puts no green mark anywhere, and nothing is shown as fitting a slot it would
+  only unclip. A card clicked twice before the first click is answered does nothing the second time, rather than
+  undoing it.
 - Stumps show, a dearer ragged stump raggeder: a limb gone leaves the top of it in your own skin with a raw end; a ragged one is
   longer, torn, with flaps of flesh hanging off.
 - Missing parts follow the design brief: an arm gone means no off-hand and swings a quarter slower

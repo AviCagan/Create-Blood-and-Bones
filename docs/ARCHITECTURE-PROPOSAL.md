@@ -4491,11 +4491,15 @@ the buttons sat over the body in the outside view (`showcase_body_2.png` on main
   is skin or the organ's colour. A stump is a dark hole with the limb's root and a raw end; a ragged one is torn, its
   strips longer and a drop under it for each bucket fitting there costs. An implant is its kind's colour (brass,
   graft, iron) with its item on it, darkened when it is not working. A green mark sits on each slot where something
-  carried fits. Under the doll are the slot's name and state, and at the foot of the panel the surgeon,
+  carried goes in (`Surgery.offersCarried`: an implant, limb or module; a carried blade or wrench marks nothing, as it
+  fits nothing), and the screen opens on the first such slot. Under the doll are the slot's name and state, and at the foot of the panel the surgeon,
   its fitness and its stumps' price, before any cut (the tasks work's lines, kept).
 - The right panel is the slot picked on the doll: its state, what is on the table, the blood on you
   (`Surgery.bloodCarried`), a row of every implant, prosthetic, limb and module you carry that fits a slot of this
-  body (a click picks that slot, an open one first), and a card for each thing that can be done.
+  body (`Surgery.carried`; a click picks that slot, an open one first; tinted green where it goes into the picked slot),
+  and a card for each thing that can be done. "Fits" is one rule on both sides, `Surgery.fits`: what it would do puts
+  it in (fit, replace, swap, reattach, a module). An item that fits nothing only unclips an implant it is used on, so
+  "does something" is not "fits".
 - The cards come from `Surgery.options`, the same on both sides: unclipping with bare hands, then what lies on the
   table, then each accepted item carried (inventory, armour and off-hand, as the payment already counted blood across
   them), each kind once (a second blade or wrench never; a second implant only if it differs). A card that cannot be
@@ -4508,7 +4512,10 @@ the buttons sat over the body in the outside view (`showcase_body_2.png` on main
 **The payload** (`Surgery.ActionPayload`) now names where the item comes from: `FROM_TABLE` (-1), `BARE` (-2, an
 implant unclipped) or a slot of the surgeon's inventory. `Surgery.operate` takes the source; a carried item is taken
 from its slot (a blade used stays there, bloodied), and `Surgery.handle` refuses a slot that is not there before
-anything else. The old signatures (the table's item) are kept for the tests and the rig.
+anything else. The payload also names what the card said it would do and with what item (air for bare hands), and
+`handle` refuses it ("That cannot be done now") if that is no longer so. A slot index is reused as soon as it empties,
+so without this a second click sent before the first one's answer arrived did something else: a fit clicked twice
+unclipped what had just gone in, and a swap clicked twice swapped straight back. The old signatures (the table's item) are kept for the tests and the rig.
 
 **Missing limbs hold and wear nothing** (known since 14.5). Two client mixins ask `BodyEffects.shows(entity, part)`:
 `ItemInHandLayerMixin` stops vanilla drawing an item in a missing arm's hand in third person, and
@@ -4527,10 +4534,13 @@ blocks), so a test can check it; `BodyRendering.onFog` draws what it gives.
 player list, stump price, rot and modules kept, and the swing penalty back at once), `amputationLeavesHealthAlone`,
 `crudeOrgansLiftPenalties` (the heart's weakness, the lungs' sprint on a real tick, the stomach's eating as it starts),
 `necrosisFromARealHit` (`Player#attack`), `necrosisFromARealBlockBreak` (the game mode's `destroyBlock`),
-`necrosisFromARunNotAWalk` (the player's own tick, three seconds of each: 12 blocks walked for no rot, 16 sprinted for
-12 points), `fogWithOneEyeOut`, `screenOffersWhatYouCarry`, `buttonPathThroughHandle` (each choice written and read
-through the payload's codec, then handled: the table's Cleaver, a carried Hook Hand from its slot, bare hands, and
-three refusals), `implantDrainsAddUp`, `sixBrassLimbsNeedASeriousFarm`, `missingLimbShowsNothing`. The tests that need a
+`necrosisFromARunNotAWalk` (the player's own tick, three seconds of each: 12 blocks walked on the ground for no rot,
+checked to be a real walk, 16 sprinted for 12 points), `fogWithOneEyeOut`, `screenOffersWhatYouCarry` (the cards, the
+carried row never pointing a Peg Leg or a Crude Heart at a brass arm, and no green mark from a carried Cleaver or
+Wrench), `buttonPathThroughHandle` (each choice written and read through the payload's codec, then handled: the table's
+Cleaver; a stranger's own Hook Hand refused from across the room and fitted from beside the table, and unclipped back
+to them; a carried Hook Hand from its slot; and refused, the fit clicked twice, slots that are not there, a swap
+clicked twice and the rig taken off; each refusal was checked to fail the test when its check is removed), `implantDrainsAddUp`, `sixBrassLimbsNeedASeriousFarm`, `missingLimbShowsNothing`. The tests that need a
 real server player make one with a connection to no client (a channel of its own, as the test framework's mock player
 has, sending nothing), and take it off the server's books when done.
 
@@ -4566,7 +4576,8 @@ after the new lines. The showcase was run in both modes and looked at.
 
 **Showcase.** `showcase_body_2` is the new screen on yourself, the ragged stump the zombie-headed surgeon left picked:
 what fits it, and its price. `showcase_surgery_1` is the same with the brass arm picked (unclip, swap, fit the carried
-module) and a slot hovered. `showcase_body_5` is a player with the left arm and right leg gone, holding a sword and a
+module) and a slot hovered: the Hook Hand, Flesh Arm, module and arm are tinted as going into it, the Peg Leg, Crude
+Heart and Glass Eye are not. The player carries a Cleaver too, and the lungs and stomach have no green mark. `showcase_body_5` is a player with the left arm and right leg gone, holding a sword and a
 shield in iron armour: the shield, the chestplate's left sleeve and that leg's armour are not drawn, the sword and
 the rest are. In bloodless mode the doll's stumps are grey sockets with grey studs for the price, the organs a pump,
 bellows and a hopper, and every line says essence and socket.
