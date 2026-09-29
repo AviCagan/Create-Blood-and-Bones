@@ -995,6 +995,92 @@ public class PhysicsTests {
         });
     }
 
+    // ---------------------------------------------------------------- the dragger
+
+    /**
+     * Walking forward while dragging never carries the dragger off: a player hooks a lying cow's body and walks straight
+     * on, as a player holding forward does, facing where they go, for two and a half seconds, then stands. Walking off
+     * away from it, the cow trails behind them. Walking on into it (it lies in their way, so it is held in front of them
+     * and they catch it up), they must not be pushed along by it: once, walking into it and being pushed by it moved the
+     * point it was pulled to, which pulled it on, and it carried a player about twenty blocks after they stopped. Either
+     * way no step of theirs is longer than a walk's, and once they stand they stay where they stopped, still dragging it.
+     */
+    @GameTest(template = "empty", timeoutTicks = 300)
+    public static void walkingOffWhileDraggingNeverCarriesTheDragger(GameTestHelper helper) {
+        walkForwardDragging(helper, false);
+    }
+
+    @GameTest(template = "empty", timeoutTicks = 300)
+    public static void walkingIntoWhatYouDragNeverCarriesYou(GameTestHelper helper) {
+        walkForwardDragging(helper, true);
+    }
+
+    /** How long the stand-in walks, then stands, in ticks. */
+    private static final int WALK = 50;
+    private static final int STAND = 40;
+
+    private static void walkForwardDragging(GameTestHelper helper, boolean into) {
+        // a cow lying with its head east; the player walks east, from its west side into it, or from its east side away from it
+        Subject s = RigComparison.assembled(helper, COW, new Vec3(into ? 4.5 : 2.5, 2, 5.5), RigScenarios.EAST);
+        if (s == null) {
+            helper.fail("no carcass");
+            return;
+        }
+        Player player = helper.makeMockPlayer(GameType.SURVIVAL);
+        player.setItemInHand(InteractionHand.MAIN_HAND, new ItemStack(BBItems.MEAT_HOOK.get()));
+        double floor = helper.absolutePos(new BlockPos(0, 2, 0)).getY();
+        int[] t = {0};
+        double[] longest = {0.0};
+        double[] highest = {0.0};
+        Vec3[] stoppedAt = {null};
+        double[] drift = {0.0};
+        helper.onEachTick(() -> {
+            int now = ++t[0];
+            if (now < 20) {
+                return;
+            }
+            if (now == 20) {
+                Vector3d torso = s.torsoCentre();
+                player.setPos(torso.x + (into ? -2.0 : 1.5), floor, torso.z);
+                player.setYRot(RigScenarios.EAST);
+                player.setYHeadRot(RigScenarios.EAST);
+                player.setXRot(into ? 30.0F : 0.0F);
+                player.setOldPosAndRot();
+                helper.assertTrue(s.hook(player, s.torsoBody()), "could not hook the cow");
+                return;
+            }
+            player.setOldPosAndRot();
+            boolean walking = now <= 20 + WALK;
+            // holding forward, then nothing: the game's own walk, with the drag's slowdown, and Sable's collisions
+            player.travel(walking ? new Vec3(0.0, 0.0, 1.0) : Vec3.ZERO);
+            CarcassDrag.tick(s.level, player);
+            longest[0] = Math.max(longest[0], Math.hypot(player.getX() - player.xo, player.getZ() - player.zo));
+            highest[0] = Math.max(highest[0], player.getY() - floor);
+            if (now == 20 + WALK + 5) {
+                stoppedAt[0] = player.position();
+            } else if (stoppedAt[0] != null) {
+                drift[0] = Math.max(drift[0], Math.hypot(player.getX() - stoppedAt[0].x, player.getZ() - stoppedAt[0].z));
+            }
+            if (now == 20 + WALK + STAND) {
+                boolean held = CarcassDrag.isDragging(player);
+                CarcassDrag.stop(s.level, player);
+                BloodAndBones.LOGGER.info("[physics] walking {} what it drags: longest step {} blocks, highest {} over the floor, then drifted {} standing",
+                        into ? "into" : "away from", fmt(longest[0]), fmt(highest[0]), fmt(drift[0]));
+                helper.assertTrue(held, "the drag let go");
+                helper.assertTrue(longest[0] <= WALK_STEP, "walking " + (into ? "into" : "away from") + " what they drag, a player should step no further "
+                        + "than a walk takes them (" + fmt(WALK_STEP) + " a tick), but went " + fmt(longest[0]) + " in one tick");
+                helper.assertTrue(highest[0] <= 0.6, "walking " + (into ? "into" : "away from") + " what they drag, a player was lifted " + fmt(highest[0])
+                        + " blocks off the floor");
+                helper.assertTrue(drift[0] <= 0.1, "standing still after walking " + (into ? "into" : "away from") + " what they drag, a player should stay "
+                        + "where they stopped, but was carried " + fmt(drift[0]) + " blocks");
+                helper.succeed();
+            }
+        });
+    }
+
+    /** The furthest a player walking on flat ground goes in a tick, in blocks: a little over a free walk's 0.216. */
+    private static final double WALK_STEP = 0.25;
+
     // ---------------------------------------------------------------- helpers
 
     private static void require(GameTestHelper helper, Numbers n) {

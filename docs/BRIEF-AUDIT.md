@@ -70,6 +70,9 @@ Each decision unblocks one or more work packages below; the package numbers are 
    - drop it.
 
    Rig B is on the local branch `bb-rig-b`. [1]
+
+   Package 1 built the first option, the recommended one, for the owner to confirm: rig B's looser necks and loose hang
+   copied into our rigs (ARCHITECTURE 15.19; one revert takes them back).
 5. **Where a Shackle Hook holds a carcass.** The brief says "held by one shoulder". The code holds it at the neck on purpose (255d386), and docs/NEXT.md treats a shoulder hang as a bug. Which is wanted? [1]
 6. **The Flensing Knife and the Cleaver.** The brief names one hand tool. The build has two: the knife skins, and the Cleaver severs and butchers. No decision records the split. Keep it? [5]
 7. **Loading a chain.** In the brief, the Shackle Hook "loads it onto a chain conveyor". Today a player does it by right-clicking a chain with the Meat Hook while dragging. Should the hook block do it itself? [4]

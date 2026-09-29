@@ -571,7 +571,8 @@ main since (255d386: hung by the neck, through an upper body or a neck).
 
 **Since then** (docs/ARCHITECTURE-PROPOSAL.md 15.19) our own rigs went after B's first three wins and measured level with
 B on turning rear first, nearly level on falling away from a flank blow, and as loose in the head and limbs; B's fourth,
-costing less while falling, is not matched. Nothing on main uses B, and the choice above is still the owner's.
+costing less while falling, is not matched. Nothing on main uses B. That work (the looser necks and the loose hang) is
+built as option 1, the recommended one, and one revert undoes it; the choice above is still the owner's to confirm.
 
 
 - **Open questions answered with the design's defaults** (docs/ARCHITECTURE-PROPOSAL.md 15.1). All fourteen are still

@@ -2476,8 +2476,11 @@ The effects and the jobs were built apart; together, four things broke that neit
 
 ### 15.19 Physics and weight: where you hook it, where the blow lands, what dragging costs (verified)
 
-This closes docs/BRIEF-AUDIT.md packages 1 (physics: where you hook it and where the blow lands) and 3 (weight and the
-drag penalty), except the parts that wait on the owner (below). The physics measurement that `bb-rig-b` used to set our
+This partly closes docs/BRIEF-AUDIT.md package 1 (physics: where you hook it and where the blow lands) and closes
+package 3 (weight and the drag penalty). Package 1 is only partly done because the physics does not yet hold for most
+mobs (see "What got worse" below: a cow comes round rear first, but six mobs of twelve do not), and because the hang
+point waits on the owner's decision 5. The looser necks and the loose hang are built as the recommended answer to
+decision 4, and can be undone (below). The physics measurement that `bb-rig-b` used to set our
 rigs beside rig B's (docs/NEXT.md item 2) is kept for our rigs only (`gametest/RigComparison`, `RigScenarios`,
 `RigComparisonTests`; off unless `-Dbloodandbones.debug.rig_compare=true`, see the README), and every change here was
 measured with it before it was kept.
@@ -2488,8 +2491,17 @@ measured with it before it was kept.
   (`CarcassAim.resting`, the same on both sides), the carcass unfolds, and the hook goes into that part where the look
   met it (`CarcassDrag.startResting`, blood welling there). A look at a drawn leg passes through it to the floor behind,
   or to the air, so the Meat Hook's use on a block or in the air is caught first (`CarcassEvents.onUseOnBlock`,
-  `onUseInAir`) and hooks the part if it is nearer than the block (`CarcassDrag.useOnDrawn`); a click on the carcass's
-  own cells judges the same way. A hauler still takes the torso. `lyingCarcassHooksThePartAimedAt`.
+  `onUseInAir`) and hooks the part if it is nearer than any block (`CarcassDrag.useOnDrawn`); a click on the carcass's
+  own cells judges the same way. A hauler still takes the torso. `lyingCarcassHooksThePartAimedAt` now clicks as the
+  game does, through NeoForge's events.
+- **Not through a wall.** What blocks the look is the player's own ray cast (`CarcassDrag.hookReach`, the same on both
+  sides), not the block the use names. A use in the air names no block; a stone wall has no use of its own, so the
+  game sends the item's use after the block's, and that reached through the wall with the hook's full five blocks; and a
+  block of a Sable ship is named in the ship's plot, far from the player, so nothing ever blocked the look. The ray cast
+  meets ships' blocks too, and a hit on one is brought out of its plot before it is measured. The same reach decides
+  whether a click while dragging lets go. `meatHookDoesNotHookThroughAWall`: a stone wall, then the same wall made a
+  sub-level, between a player and a lying cow's drawn leg, clicked at by the block event and then the item event; the
+  cow stays folded, a drag of another cow is kept, and with the wall gone the same click hooks the leg.
 - **The hooked part leads.** The aim spring on the hooked limb (`CarcassDrag.aim`) is sized by all the mass on the hook,
   not the limb's own, so once the limb reaches its joint's limit the turn carries on into the body and swings it round
   behind the limb (sized by the limb it could only swing itself, and a cow dragged by a hind leg went on head first). A
@@ -2503,8 +2515,28 @@ measured with it before it was kept.
   its dragger (`isAgainstPlayer`, so it never shoves them), and the test's player, facing away, stood between the cow
   and the point in front of their feet it was pulled to: the leg came to rest against their back 2.1 to 2.35 blocks from
   that point, either side of the test's 2.25. The trailing target takes the cause away (nothing pulls the leg through
-  its dragger any more), and the test now asks for what the drag promises: the leg within 1.25 blocks of where it is
-  pulled to, or resting against its dragger.
+  its dragger any more). A second cause turned up once the test's player walked off rather than jumping there: a leg
+  that slid on into a dragger who had stopped was let go the moment it touched them and lay against their back up to
+  1.4 blocks short (5 runs in 60). While it touches them the drag now keeps its damping (it stops the leg closing on
+  them) and only drops the pull. The test no longer lets a leg resting against its dragger pass: the leg must reach
+  within 1.25 blocks of where it is pulled to.
+
+**What you drag never pushes you.**
+- **Walking on into it carried you off** (found on main by the multiplayer check, 15.18 item 2 there). Sable moves an
+  entity out of any body it walks into and carries it along with that body as the body moves. Walking on into a
+  carcass held in front, a player was pushed along by it, which moved the point it was pulled to on, which pulled it on:
+  it carried the player about twenty blocks after they stopped. With the trailing target, walking off away from a
+  carcass was already safe, but walking into one still did it: in `walkingIntoWhatYouDragNeverCarriesYou` the player
+  was lifted 1.25 blocks onto the cow, stepped half a block in a tick, and after stopping was carried on up to 1.2
+  blocks, in 3 runs of 3.
+- **The fix.** The carcass someone drags is left out of Sable's collisions for that one entity
+  (`mixin/SubLevelEntityCollisionMixin`, `CarcassDrag.isDraggedBy`): they walk through it. On the server that goes by the
+  drag; on a client, which moves its own player, by the carcass the hooked body's cells belong to. Everyone else still
+  bumps into it, and it lies on the ground and on other bodies as before. A hauler walks through what it drags too.
+- `walkingIntoWhatYouDragNeverCarriesYou` and `walkingOffWhileDraggingNeverCarriesTheDragger`: a stand-in player,
+  moved by the game's own walk and Sable's collisions (not placed), hooks a lying cow's body and walks straight on for
+  two and a half seconds, into it or away from it, then stands for two. No step is longer than a walk's (0.156 blocks a
+  tick, with the cow's slowdown), they are never lifted, and they stay where they stopped, still dragging.
 
 **Where the blow lands.**
 - **The kill is a blow, not a shove.** `CarcassAssembler.blow` replaces `shove` (1.0 on the bone nearest the look, 0.5
@@ -2522,18 +2554,43 @@ measured with it before it was kept.
   not move. `killingBlowLandsOnThePartItHits`, `flankBlowLandsItOnItsSide`, `blowFromBehindLandsItNoseDown`.
 - **A punch lands where it hits, on any carcass.** `CarcassPartBlock.attack` no longer ignores a carcass that is awake.
   On one lying still it unfolds it and knocks the part aimed at, drawn or not (`CarcassRest.disturb`); on one lying,
-  dragged or hung it knocks it (`CarcassRest.knock`): one impulse at the point on the part struck, sized to set the
-  whole carcass moving at 1.5 blocks a second times the swing's strength (a player's swing is weaker until it recharges,
-  as it is against a mob). `hungCarcassSwingsWhenKnocked`.
+  dragged or hung it knocks it (`CarcassRest.knock`): one impulse at the point on the part struck, times the swing's
+  strength (a player's swing is weaker until it recharges, as it is against a mob). `hungCarcassSwingsWhenKnocked`.
+- **A punch is one push, so weight tells.** It was first sized by the whole carcass's mass, which set every carcass off
+  at the same 1.5 blocks a second, a ravager as fast as a chicken. It is now the same push whatever it lands on
+  (`CarcassRest.PUNCH`, what sets a cow off at 1.5): a ravager barely moves and a chicken is knocked away.
+  `punchMovesALightCarcassMoreThanAHeavyOne`.
+- **Neither a punch nor a blow flings the part it lands on.** Sized for the whole carcass and put on one light part,
+  a blow to a cow's face set its head off at 22 blocks a second, and a punch on a hung cow's leg set the leg off at 26
+  (about 100 turns of a radian a second about the hip), yanking the body after it. `CarcassAssembler.impulseAt` now
+  makes an impulse smaller if it would set the spot it lands on moving faster than a limit, worked out from the part's
+  mass and its turn about its middle: 7 blocks a second for a blow (`BLOW_MAX_STRUCK`), 3 for a punch
+  (`PUNCH_MAX_STRUCK`). A blow to the torso, which carries most of the weight, is not held back. The blow's speed now
+  goes by what the bodies really weigh, so a golem of plate is knocked slower than flesh its size.
+  `blowToTheHeadSnapsItBackWithoutFlingingIt` (a Meat Hook kill from in front, at the head: the head's fastest point
+  stays under 7.5 blocks a second, the joints hold, the cow goes down within 1.5 blocks of where it stood; it slid 1.7
+  before) and `punchOnAHungLegSwingsItWithoutFlingingIt` (the leg's fastest point under 4.5, the joints hold, the cow
+  stays on its hook).
 
-**Limbs hang, the head lolls.**
+**Limbs hang, the head lolls.** These two are the recommended answer to the owner's decision 4 (docs/BRIEF-AUDIT.md;
+docs/NEXT.md item 2: copy rig B's wins into our rigs one at a time), and the brief asks for them ("the head lolls";
+hung, it swings and hangs differently with a leg off; dead animals look dead, limp and heavy). A review asked for them to
+wait on the owner, and for a while they did (226422a); they are back (964a91d), for the owner to confirm. Undoing
+them is one revert of that commit: the neck's default in `RigDerivation.jointFor`, the rig targets, and the
+hang in `ShackleHookBlockEntity.hangTurn` and `liftOnto`, with their tests (`lyingHeadRestsBelowItsNeck`,
+`legOffHangsLowerOnThatSide`, and the size of the swing in `hungCarcassSwingsWhenKnocked`). The hang point is not part of
+it: that is decision 5, and it stays at the neck.
 - **A dead neck.** The default head and neck joint (`RigDerivation.jointFor`) goes from a nod of −15 to 25 degrees, a
   turn of 30 and a tip of 6, stiffness 2 and damping 4, to −30 to 60, 45 and 15, stiffness 0.8 and damping 2.5: the head
   lolls well past level with only a faint pull toward its pose, so a long neck does not fold flat at once. A head
   sitting on top of its body (a biped's, read from the model: `restsOnTop`) still collides with it so it cannot sink
   into the chest; one held out in front (a cow's) no longer does, since its throat met its chest at the first nod and
   held the head level. The 47 rig targets that spell out their own head or neck joints were loosened the same way (a
-  biped's nod to 50, the ravager's long neck a little stiffer); the wither's three heads are left as they were.
+  biped's nod to 50, the ravager's long neck a little stiffer); the wither's three heads are left as they were. Of
+  those, 29 only spelled out the joint `jointFor` derives and now take it from there (a2bf47e), so a later retune of the
+  neck reaches them; the ones kept are deliberate: the horse family's and the bipeds' necks, the ravager's long neck, the
+  wither's heads, and seven heads that sit on top of their bodies but must not collide with them (allay, bat, frog,
+  sheep, snow golem, vex, warden), which a target can only say by spelling out the whole joint.
   `lyingHeadRestsBelowItsNeck`.
 - **A hung carcass hangs by its weight.** The spring that held a hung torso belly-out and head-up on every axis
   (stiffness 30, damping 7) is replaced by `ShackleHookBlockEntity.hangTurn`, which only turns it belly-out about the
@@ -2557,11 +2614,20 @@ measured with it before it was kept.
   every state of a block against every override of its file, for each world as it loads and for each joining client, so
   tripling the states made it nine times the work, some twenty seconds more for each world (the game tests' server took
   a minute longer to start), and one file of all 12,288 states was more than the 2 MB a client takes in one packet (it
-  disconnected). As three blocks it is three times what the one file cost on main: about six seconds a world instead of
-  two, and a client joining applies the same. `boneAndPlateWeighMoreThanFlesh`, `cellMassesAreCheapToLoad` (each file
-  under 1.5 MB, and within one block's 4,096 states by 4,096 sizes to apply).
+  disconnected). As three blocks each weighing all 4,096 sizes it was three times what the one file cost on main, and
+  that is paid more often than once: Sable applies every file for every world (dimension) as it loads, and again on
+  each client, on its own thread, as it joins and at each /reload. So bone and plate now weigh only the cell sizes the
+  rigs make (254 of the 4,096, every rig grown and baby, so a datapack may make any rigged mob bone or plate), and flesh,
+  which any mob may be, keeps every size. A cell of a size no rig makes is built of flesh, weighed by its size, rather
+  than weighing as a whole block of bone (`CarcassAssembler.cellState`). Applying all three takes 18.9 million matches,
+  about 1.7 seconds on the test machine (1.6 of them flesh), where the one carcass block took 16.8 million: about a
+  tenth more than main, for each world and each joining client, not three times. `boneAndPlateWeighMoreThanFlesh`,
+  `cellMassesAreCheapToLoad` (each file under 1.5 MB to send; all the carcass blocks together within a quarter over the
+  one block's matches; every size a rig makes weighed in every tissue; an odd size built of flesh; the time logged).
 - A rig's `weight` stays its size as flesh (blood and yields go by how much animal there is), and a piece is light
-  enough to carry by its size, not its weight, so a skeleton's skull is carried as a zombie's head is.
+  enough to carry by its size, not its weight, so a skeleton's skull is carried as a zombie's head is. The size is the
+  bone's box in the rig (`Bone.volume`, as a minion judges a piece), not its mass divided by its tissue's density in
+  code, so a datapack that makes bone heavier does not stop skulls being carried.
 
 **The drag penalty (package 3).**
 - **From the mass on the hook.** `CarcassDrag.penaltyFor` takes the mass of the bodies actually hooked, and the drag
@@ -2571,21 +2637,27 @@ measured with it before it was kept.
   each doubling costing the same few points; below a chicken it falls in proportion to the mass; nothing costs more than
   a ravager. Measured: chicken 5.0%, rabbit about 1%, cow 29.0% (as before), horse 37%, iron golem (plate) about 47%,
   ravager 55.0%; a cow less a hind leg 28.3%, the leg alone 1.8%. `drag_strength` still eases it.
-- **Tested at both ends and on the move.** `dragPenaltyRunsFromChickenToRavager`, `severedLegCostsWhatALegWeighs`, and
+- **Tested at both ends and on the move.** `dragPenaltyRunsFromChickenToRavager`, `severedLegCostsWhatALegWeighs` (which
+  now also asks that the drag still holds the body after the cut, and costs exactly what is left on it: a drag that let
+  go would cost nothing and passed before), and
   `draggingSlowsThePlayerByThePenalty`: three stand-in players walk side by side for 25 ticks, one free (5.51 blocks),
   one dragging a chicken (5.23, 5.0% less) and one a ravager (2.48, 55.0% less).
 - It moves onto weight classes when package 2 brings them.
 
-**Tests.** `gametest/PhysicsTests`, 15 tests: one per physics sentence of the brief, each held to a direction or an
-amount (not only that something moved), and the weight and penalty tests above. The scenarios are the measurement's own,
-played on a cow. On the finished code all 15 passed 20 runs in a row with `-Dbloodandbones.debug.repeat` (and 10 before
-that), and `meatHookDragsByLeg` and `meatHookDragsByBody` 100 each. The suite is 433 tests.
+**Tests.** `gametest/PhysicsTests`, 22 tests: one per physics sentence of the brief, each held to a direction or an
+amount (not only that something moved), the wall, the blows and punches, the walk into what you drag, and the weight and
+penalty tests above. The scenarios are the measurement's own, played on a cow; no other mob is held to them yet (see
+below). The first version's tests passed 20 runs in a row with `-Dbloodandbones.debug.repeat`, and
+`meatHookDragsByLeg` and `meatHookDragsByBody` 100 each; the finished code passed the whole suite three times in a row.
+The suite is 439 tests.
 
 **The showcase** (`DevShowcase`, after the Ponder shots) gets a physics yard 60 blocks west: `showcase_physics_0`, a cow
 dragged by its right hind leg seen from in front of its dragger, its rear leading, the hook in its leg and its blood
-trail behind; `physics_1`, two cows struck as they stood, one from the flank (on its side) and one from behind (on its
-front, nose down); `physics_2`, three cows hung under a beam by the neck, legs and heads hanging loose, the right one
-knocked a moment before and swinging, the middle one with its right hind leg cut off, lying under it.
+trail behind; `physics_1`, three cows struck as they stood, one from the flank (on its side, on the left), one from
+behind (nose down, on the right) and one in the face from in front (in the middle: down within a block of where it
+stood, its front end tipped up, not flung); `physics_2`, three cows hung under a beam by the neck, legs and heads hanging
+loose, the one on the left knocked a moment before and swinging, the middle one with its right hind leg cut off and the
+leg lying in the blood under it. The dragged cow of `physics_0` is mostly behind its dragger, only its hind legs showing.
 
 **Physics, before and after.** The measurement (`-Dbloodandbones.debug.rig_compare=true`, eight runs of every scenario
 on its twelve mobs, and what twelve at once cost) run on main and on this work. Mobs meeting the brief's bar in most
@@ -2623,7 +2695,7 @@ where it was 1.5 (B's throw sent them 9.6). The cow, which the tests use: hind l
 head first), 32 after; its head from 34 to 17; its head rests 0.07 blocks below its neck where it rested level with it;
 hung, it swings 0.22 blocks where it swung 0.07.
 
-What got worse, or did not come right:
+What got worse, or did not come right (the tests hold only the cow, one of the mobs that got better; these are open):
 - **At rest after a blow from behind** fewer end nose down (8 to 6), though they pitch further onto the nose as they
   fall (11 of 12, 53 degrees). Not traced; most likely the looser neck, whose head now folds under instead of propping
   the front down.
@@ -2642,9 +2714,14 @@ What got worse, or did not come right:
 **Left open, for the owner.**
 - **Decision 5, where a hook holds a carcass.** Still by the neck junction (255d386), not by one shoulder as the brief
   says. Hanging by a shoulder would change how a cut changes the hang the most.
-- **Decision 4, rig B.** Not brought over; its first three wins were aimed at in our own rigs instead (above), its
-  fourth (cost while falling) not. Nothing here depends on the choice.
+- **Decision 4, rig B.** Not brought over. Its first three wins were aimed at in our own rigs instead (the looser necks
+  and the loose hang, above), which is the audit's recommended answer; its fourth (cost while falling) not. For the
+  owner to confirm; one revert takes the necks and the hang back to main's.
+- **Most mobs.** Rear first holds for six of twelve, a swing for six, a flank fall for eight, and a cut leg changes the
+  hang by 5 degrees or more for three (a cow's by under two degrees, which a player cannot see). The sheep and the pig
+  are the ones to take next: both come round worse by a hind leg than before.
 - **Weight classes** (package 2): the penalty and the densities are by mass and tissue until groups give classes.
-- **The load cost of the carcass blocks' masses** (about two seconds a world on main, six now) grows as a block's states
-  times its sizes; splitting each tissue's block further by size would cut it for all of them, but that is a change to
-  how every cell is made, not this package's.
+- **The load cost of the carcass blocks' masses** (about 1.6 seconds for each world and each joining client on main,
+  1.7 now) is almost all flesh's 4,096 sizes; weighing flesh only at the sizes the rigs make too would cut it to a sixth,
+  but a datapack's own rig of a new mob could then make cells that weigh as whole blocks, so it waits on package 2's
+  groups, which say what a mob is made of.

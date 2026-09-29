@@ -432,6 +432,65 @@ public final class CarcassDrag {
         }
     }
 
+    /**
+     * Whether a body belongs to the carcass this entity drags. Such a body never pushes its own dragger: Sable leaves it
+     * out when it moves them (SubLevelEntityCollisionMixin), so they walk through it as through tall grass. Pushed by it,
+     * a player walking on into what they held in front of them was carried along by it, each step it carried them moved
+     * the point it was pulled to on, and it carried them some twenty blocks after they had stopped (and could climb onto
+     * them and lift them). On the server it goes by the drag itself; on a client, where only the hooked body is known,
+     * by the carcass its cells say they belong to.
+     */
+    public static boolean isDraggedBy(net.minecraft.world.entity.Entity entity, SubLevel body) {
+        if (!(entity instanceof LivingEntity)) {
+            return false;
+        }
+        net.minecraft.world.level.Level level = entity.level();
+        if (level instanceof ServerLevel server) {
+            Drag drag = DRAGS.get(entity.getUUID());
+            if (drag == null) {
+                return false;
+            }
+            if (drag.subLevel.equals(body.getUniqueId())) {
+                return true;
+            }
+            CarcassSavedData.Carcass carcass = CarcassSavedData.get(server).carcassOfSubLevel(body.getUniqueId());
+            return carcass != null && carcass.id.equals(drag.carcass);
+        }
+        com.avicagan.bloodandbones.client.ClientDragState.Drag drag = com.avicagan.bloodandbones.client.ClientDragState.all().get(entity.getUUID());
+        if (drag == null) {
+            return false;
+        }
+        if (drag.subLevel().equals(body.getUniqueId())) {
+            return true;
+        }
+        SubLevelContainer container = SubLevelContainer.getContainer(level);
+        SubLevel hooked = container == null ? null : container.getSubLevel(drag.subLevel());
+        UUID dragged = hooked == null ? null : carcassOf(level, hooked);
+        return dragged != null && dragged.equals(carcassOf(level, body));
+    }
+
+    /** The bodies given, less any of the carcass this entity drags (all of them, as given, when it drags nothing). */
+    public static Iterable<SubLevel> withoutWhatTheyDrag(net.minecraft.world.entity.Entity entity, Iterable<SubLevel> bodies) {
+        boolean drags = entity.level().isClientSide ? com.avicagan.bloodandbones.client.ClientDragState.all().containsKey(entity.getUUID())
+                : DRAGS.containsKey(entity.getUUID());
+        if (!drags) {
+            return bodies;
+        }
+        List<SubLevel> kept = new java.util.ArrayList<>();
+        for (SubLevel body : bodies) {
+            if (!isDraggedBy(entity, body)) {
+                kept.add(body);
+            }
+        }
+        return kept;
+    }
+
+    /** The carcass a body's cells say they belong to (its root cell, at the middle of its plot), on either side. */
+    @Nullable
+    private static UUID carcassOf(net.minecraft.world.level.Level level, SubLevel body) {
+        return level.getBlockEntity(body.getPlot().getCenterBlock()) instanceof CarcassPartBlockEntity cell ? cell.carcassId() : null;
+    }
+
     /** The hooked body is already touching the player: pulling any harder would only shove them. */
     private static boolean isAgainstPlayer(ServerSubLevel subLevel, LivingEntity player) {
         return subLevel.boundingBox().intersects(player.getBoundingBox().inflate(0.15));

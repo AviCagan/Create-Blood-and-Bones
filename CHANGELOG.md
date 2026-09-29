@@ -18,11 +18,18 @@ Everything below is in development builds only; the art is placeholder (see the 
   ship's deck; a hard landing splats blood.
 - Flies gather over rotting carcasses, and maggots squirm over ones nearly gone. Rotten carcasses
   fall apart after a day.
-- The Meat Hook takes the part you aim at, on a carcass lying still too: hook a hind leg and walk
-  off and it comes round rear first; hook the head and it follows head first.
-- The killing blow lands where it hits: struck in the flank a carcass goes down on its side, away
-  from the blow; struck from behind it pitches onto its nose. Heads loll.
-- Hit a hung carcass and it swings; cut a leg off and it hangs differently.
+- The Meat Hook takes the part you aim at, on a carcass lying still too, but never through a wall
+  or a ship's side. Hook the head and it follows head first. Hook a cow by a hind leg and walk off
+  and it comes round rear first; about half the animals do so far (a sheep or a pig still goes on
+  head first).
+- The killing blow lands where it hits: struck in the flank most carcasses go down on their side,
+  away from the blow; struck from behind one pitches onto its nose; struck in the face its head
+  snaps back without being flung off. Heads loll.
+- Hit a hung carcass and it swings. A punch is the same push whatever it hits, so a chicken is
+  knocked flying and a ravager barely moves. Cut a leg off a hung carcass and it hangs a little
+  differently (on most animals only a little, so far).
+- What you drag never pushes you: walk into it and you pass through it, where it used to carry
+  you off.
 - Skeletons weigh as bone and golems as iron plate, heavier than flesh for their size.
 - Dragging slows you by what is actually on the hook, from about 5% for a chicken to 55% for a
   ravager; a severed leg costs what a leg weighs, not what its whole animal did.
