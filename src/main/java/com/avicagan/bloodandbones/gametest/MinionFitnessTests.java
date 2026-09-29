@@ -248,8 +248,10 @@ public class MinionFitnessTests {
 
     /**
      * A stand-in body with every stat at its reference scores 100% at every task, and every lever gives today's constant:
-     * catches 600 to 1200 ticks, strokes 15, looking gold over 120, tending a heart every 100, 25 mB a minute at work. The
-     * shipped task and disposition files are the code's defaults, so a missing one changes nothing.
+     * catches 600 to 1200 ticks, strokes 15, looking gold over 120, tending a heart every 100, 25 mB a minute at work, and
+     * stage C's: a sentry's shots and spread, a medic's throws and spread, a herder's wait, a courier's, farmer's and
+     * tender's looks, a hauler's towing, a butcher's yield, a digger's finds and a blow a second; each moves with the fitness within its bounds. The shipped task and disposition files are the code's defaults, so a
+     * missing one changes nothing.
      */
     @GameTest(template = "empty", timeoutTicks = 20)
     public static void oneHundredIsToday(GameTestHelper helper) {
@@ -281,9 +283,41 @@ public class MinionFitnessTests {
                     + ", tend " + MinionFitness.tendTicks(store.task(MinionTask.SURGEON), 1.0F) + ", " + MinionFitness.workingDrain(1.0F) + " mB");
             return;
         }
-        // and the levers move as the design says: a stroke never under 0.3 s, a catch never under a sixth, blood 12.5 to 50
-        if (MinionFitness.strokeTicks(store.task(MinionTask.BUTCHER), 5.0F) != 8 || MinionFitness.catchTicks(store.task(MinionTask.FISHER), 2.0F)[0] != 300
-                || MinionFitness.workingDrain(4.0F) != 12.5F || MinionFitness.workingDrain(0.1F) != 50.0F || MinionFitness.tendTicks(store.task(MinionTask.SURGEON), 2.0F) != 50) {
+        // stage C's levers, each today's constant at 100% (docs/NEXT.md 1.2): a sentry's shots (a bow's second, a crossbow's
+        // one to two, a trident's two) and its spread (14 less 4 a step of difficulty), a medic's throw every 3 s at a witch's
+        // spread, a herder's 30 s after a stray, a courier's and farmer's look every half second and a tender's every second,
+        // a hauler towing at a player's slowdown, a butcher's whole yield, a digger's minute or two, the fisher's floor, a
+        // blow a second
+        MinionTask.Data sentry = store.task(MinionTask.SENTRY);
+        MinionTask.Data medic = store.task(MinionTask.MEDIC);
+        MinionTask.Data surgeon = store.task(MinionTask.SURGEON);
+        int[] digs = MinionFitness.digTicks(store.task(MinionTask.DIGGER), 1.0F);
+        if (MinionFitness.shotTicks(sentry.number("bow_every", 0.0F), 1.0F) != 20 || MinionFitness.shotTicks(sentry.number("crossbow_min", 0.0F), 1.0F) != 20
+                || MinionFitness.shotTicks(sentry.number("crossbow_max", 0.0F), 1.0F) != 40 || MinionFitness.shotTicks(sentry.number("trident_every", 0.0F), 1.0F) != 40
+                || MinionFitness.shotSpread(sentry, 2, 1.0F) != 6.0F || MinionFitness.shotSpread(sentry, 0, 1.0F) != 14.0F
+                || MinionFitness.throwTicks(medic, 1.0F) != 60 || MinionFitness.throwSpread(medic, 1.0F) != 8.0F
+                || MinionFitness.strayTicks(store.task(MinionTask.HERDER), 1.0F) != 600 || MinionFitness.lookTicks(store.task(MinionTask.COURIER), 1.0F) != 10
+                || MinionFitness.lookTicks(store.task(MinionTask.FARMER), 1.0F) != 10 || MinionFitness.lookTicks(store.task(MinionTask.TENDER), 1.0F) != 20
+                || MinionFitness.towing(store.task(MinionTask.HAULER), 0.3F, 1.0F) != 0.3F || MinionFitness.yieldShare(1.0F) != 1.0F
+                || digs[0] != 1200 || digs[1] != 2400 || MinionFitness.catchLeast(store.task(MinionTask.FISHER)) != 100
+                || com.avicagan.bloodandbones.minion.MinionGoals.BLOW_EVERY != 20) {
+            helper.fail("At 100% every lever should be today's");
+            return;
+        }
+        // and the levers move as the design says, within their bounds: the lever's fitness held 25% to 200% (never more than
+        // four times slower), a stroke never under 0.3 s, a catch never under a sixth, a shot never under half, a throw never
+        // under a second, tending never under 2 s, a poor butcher's yield its fitness, a poor hauler slowed a player's ÷ its
+        // fitness to at most 90% and a fit one no less than a player, blood 12.5 to 50
+        MinionTask.Data hauler = store.task(MinionTask.HAULER);
+        if (MinionFitness.strokeTicks(store.task(MinionTask.BUTCHER), 5.0F) != 8 || MinionFitness.strokeTicks(store.task(MinionTask.BUTCHER), 0.1F) != 60
+                || MinionFitness.catchTicks(store.task(MinionTask.FISHER), 2.0F)[0] != 300 || MinionFitness.shotTicks(20.0F, 5.0F) != 10
+                || MinionFitness.shotSpread(sentry, 2, 2.0F) != 3.0F || MinionFitness.throwTicks(medic, 5.0F) < 20 || MinionFitness.throwTicks(medic, 2.0F) != 30
+                || MinionFitness.strayTicks(store.task(MinionTask.HERDER), 2.0F) != 1200 || MinionFitness.lookTicks(store.task(MinionTask.COURIER), 2.0F) != 5
+                || MinionFitness.yieldShare(0.5F) != 0.5F || MinionFitness.yieldShare(2.0F) != 1.0F || MinionFitness.yieldShare(0.1F) != 0.25F
+                || Math.abs(MinionFitness.towing(hauler, 0.2F, 0.5F) - 0.4F) > 1.0E-6F || MinionFitness.towing(hauler, 0.3F, 0.1F) != 0.9F
+                || MinionFitness.towing(hauler, 0.3F, 2.0F) != 0.3F || MinionFitness.workingDrain(4.0F) != 12.5F || MinionFitness.workingDrain(0.1F) != 50.0F
+                || MinionFitness.tendTicks(surgeon, 2.0F) != 50 || MinionFitness.tendTicks(surgeon.read(JsonParser.parseString(
+                        "{\"numbers\": {\"tend_every\": 60}}").getAsJsonObject()), 2.0F) != 40) {
             helper.fail("The levers should follow the fitness within their bounds");
             return;
         }

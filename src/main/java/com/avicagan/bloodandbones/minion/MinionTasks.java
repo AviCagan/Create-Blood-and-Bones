@@ -518,21 +518,25 @@ public final class MinionTasks {
         minion.getPersistentData().putInt(WORK_LEFT, 0);
     }
 
-    /** A tick of work toward a catch or find: true when it comes, and the next wait starts. */
-    private static boolean worked(MinionEntity minion, int min, int max, int less) {
+    /**
+     * A tick of work toward a catch or find: true when it comes, and the next wait starts. The wait is somewhere between
+     * {@code times}' two (its fitness's), less what Lure takes off, never under {@code least}.
+     */
+    private static boolean worked(MinionEntity minion, int[] times, int less, int least) {
         CompoundTag data = minion.getPersistentData();
-        int left = data.contains(WORK_LEFT) ? data.getInt(WORK_LEFT) : nextWait(minion, min, max, less);
+        int left = data.contains(WORK_LEFT) ? data.getInt(WORK_LEFT) : nextWait(minion, times, less, least);
         if (left <= 0) {
-            data.putInt(WORK_LEFT, nextWait(minion, min, max, less));
+            data.putInt(WORK_LEFT, nextWait(minion, times, less, least));
             return true;
         }
         data.putInt(WORK_LEFT, left - 1);
         return false;
     }
 
-    /** Ticks to the next catch or find: somewhere between the two, less what Lure takes off, never under a sixth of the least. */
-    private static int nextWait(MinionEntity minion, int min, int max, int less) {
-        return Math.max(min / 6, min + minion.getRandom().nextInt(max - min + 1) - less);
+    private static int nextWait(MinionEntity minion, int[] times, int less, int least) {
+        int min = times[0];
+        int max = Math.max(min, times[1]);
+        return Math.max(least, min + minion.getRandom().nextInt(max - min + 1) - less);
     }
 
     // ---- sentry
@@ -541,7 +545,8 @@ public final class MinionTasks {
      * A sentry never moves from its post: it turns to what it has for a target and shoots it with the bow, crossbow or
      * trident in its hand, in the way of vanilla's ranged goals (RangedBowAttackGoal, RangedCrossbowAttackGoal, the
      * drowned's throw) but standing still. Arrows come from what it carries; a trident is thrown as the drowned throws
-     * one, and wears the one in hand.
+     * one, and wears the one in hand. Its fitness (docs/NEXT.md 1.2) sets the time between its shots (a bow's second, a
+     * crossbow's one to two, a trident's two at 100%, never under half) and how true they fly (vanilla's spread at 100%).
      */
     static class Sentry extends Goal {
         private final MinionEntity minion;
@@ -596,6 +601,9 @@ public final class MinionTasks {
             // its range is its reach from its post (16 blocks unless its maker set it otherwise)
             double range = minion.reach();
             boolean near = minion.distanceToSqr(target) <= range * range;
+            MinionTask.Data data = PartsData.of(level).task(MinionTask.SENTRY);
+            float fitness = minion.taskFitness();
+            float spread = MinionFitness.shotSpread(data, level.getDifficulty().getId(), fitness);
             cooldown--;
             if (weapon.getItem() instanceof BowItem) {
                 if (minion.isUsingItem()) {
@@ -604,8 +612,8 @@ public final class MinionTasks {
                     } else if (sees && minion.getTicksUsingItem() >= 20) {
                         int drawn = minion.getTicksUsingItem();
                         minion.stopUsingItem();
-                        shootBow(level, minion, weapon, target, BowItem.getPowerForTime(drawn));
-                        cooldown = 20;
+                        shootBow(level, minion, weapon, target, BowItem.getPowerForTime(drawn), spread);
+                        cooldown = MinionFitness.shotTicks(data.number("bow_every", 20.0F), fitness);
                     }
                 } else if (cooldown <= 0 && sees && near && !minion.getProjectile(weapon).isEmpty()) {
                     minion.startUsingItem(InteractionHand.MAIN_HAND);
@@ -615,35 +623,36 @@ public final class MinionTasks {
                     if (cooldown <= 0 && sees && near) {
                         loosing = minion;
                         try {
-                            crossbow.performShooting(level, minion, InteractionHand.MAIN_HAND, weapon, 1.6F, 14 - level.getDifficulty().getId() * 4, target);
+                            crossbow.performShooting(level, minion, InteractionHand.MAIN_HAND, weapon, 1.6F, spread, target);
                         } finally {
                             loosing = null;
                         }
-                        cooldown = 20 + minion.getRandom().nextInt(20);
+                        int least = Math.round(data.number("crossbow_min", 20.0F));
+                        int most = Math.max(least, Math.round(data.number("crossbow_max", 40.0F)));
+                        cooldown = MinionFitness.shotTicks(least + minion.getRandom().nextInt(most - least + 1), fitness);
                     }
                 } else if (minion.isUsingItem()) {
                     if (minion.getTicksUsingItem() >= CrossbowItem.getChargeDuration(weapon, minion)) {
                         // loaded from what it carries (MinionEntity#getProjectile)
                         minion.releaseUsingItem();
-                        cooldown = 20;
+                        cooldown = MinionFitness.shotTicks(data.number("crossbow_min", 20.0F), fitness);
                     }
                 } else if (sees && near && !minion.getProjectile(weapon).isEmpty()) {
                     minion.startUsingItem(InteractionHand.MAIN_HAND);
                 }
             } else if (cooldown <= 0 && sees && near) {
-                throwTrident(level, minion, weapon, target);
-                cooldown = 40;
+                throwTrident(level, minion, weapon, target, spread);
+                cooldown = MinionFitness.shotTicks(data.number("trident_every", 40.0F), fitness);
             }
         }
     }
 
     /**
      * A sentry with no ranged attack still never leaves its post: it strikes only what comes within its reach where it
-     * stands, a blow as often as a melee goal lands one (vanilla's MeleeAttackGoal), turning to it and taking no step.
+     * stands, a blow as often as a melee goal lands one (vanilla's MeleeAttackGoal; sooner with more arms that strike,
+     * {@link MinionGoals#blowTicks}), turning to it and taking no step.
      */
     static class SentryStrike extends Goal {
-        /** Ticks between its blows, as a melee goal's. */
-        private static final int EVERY = 20;
         private final MinionEntity minion;
         private int cooldown;
 
@@ -689,14 +698,17 @@ public final class MinionTasks {
             minion.getLookControl().setLookAt(target, 30.0F, 30.0F);
             cooldown = Math.max(0, cooldown - 1);
             if (cooldown == 0 && minion.isWithinMeleeAttackRange(target) && minion.getSensing().hasLineOfSight(target)) {
-                cooldown = EVERY;
+                cooldown = MinionGoals.blowTicks(minion);
                 minion.doHurtTarget(target);
             }
         }
     }
 
-    /** A bow shot as a skeleton looses one, the arrow taken from what it carries (one that lands can be picked up). */
-    static void shootBow(ServerLevel level, MinionEntity minion, ItemStack bow, LivingEntity target, float power) {
+    /**
+     * A bow shot as a skeleton looses one, the arrow taken from what it carries (one that lands can be picked up), with this
+     * spread (a skeleton's is 14 less 4 a step of difficulty).
+     */
+    static void shootBow(ServerLevel level, MinionEntity minion, ItemStack bow, LivingEntity target, float power, float spread) {
         ItemStack ammo = minion.getProjectile(bow);
         if (ammo.isEmpty()) {
             return;
@@ -711,15 +723,15 @@ public final class MinionTasks {
         double dy = target.getY(1.0 / 3.0) - arrow.getY();
         double dz = target.getZ() - minion.getZ();
         double flat = Math.sqrt(dx * dx + dz * dz);
-        arrow.shoot(dx, dy + flat * 0.2F, dz, 1.6F, 14 - level.getDifficulty().getId() * 4);
+        arrow.shoot(dx, dy + flat * 0.2F, dz, 1.6F, spread);
         arrow.pickup = free ? AbstractArrow.Pickup.CREATIVE_ONLY : AbstractArrow.Pickup.ALLOWED;
         minion.playSound(SoundEvents.ARROW_SHOOT, 1.0F, 1.0F / (minion.getRandom().nextFloat() * 0.4F + 0.8F));
         level.addFreshEntity(arrow);
         bow.hurtAndBreak(1, minion, EquipmentSlot.MAINHAND);
     }
 
-    /** A trident thrown as the drowned throws one (a copy that cannot be picked up, loyal to nobody); the one in hand wears. */
-    static void throwTrident(ServerLevel level, MinionEntity minion, ItemStack trident, LivingEntity target) {
+    /** A trident thrown as the drowned throws one (a copy that cannot be picked up, loyal to nobody), with this spread; the one in hand wears. */
+    static void throwTrident(ServerLevel level, MinionEntity minion, ItemStack trident, LivingEntity target, float spread) {
         ItemStack copy = trident.copyWithCount(1);
         EnchantmentHelper.updateEnchantments(copy, enchantments -> enchantments.removeIf(e -> e.is(Enchantments.LOYALTY) || e.is(Enchantments.RIPTIDE)));
         ThrownTrident thrown = new ThrownTrident(level, minion, copy);
@@ -727,7 +739,7 @@ public final class MinionTasks {
         double dy = target.getY(1.0 / 3.0) - thrown.getY();
         double dz = target.getZ() - minion.getZ();
         double flat = Math.sqrt(dx * dx + dz * dz);
-        thrown.shoot(dx, dy + flat * 0.2F, dz, 1.6F, 14 - level.getDifficulty().getId() * 4);
+        thrown.shoot(dx, dy + flat * 0.2F, dz, 1.6F, spread);
         minion.playSound(SoundEvents.DROWNED_SHOOT, 1.0F, 1.0F / (minion.getRandom().nextFloat() * 0.4F + 0.8F));
         level.addFreshEntity(thrown);
         minion.swing(InteractionHand.MAIN_HAND);
@@ -775,7 +787,8 @@ public final class MinionTasks {
      * A courier picks up loose items within its reach (as far as its head sees them), as an allay does: holding one, only
      * items like it (its sample), and brass with a filter only what the filter passes too. At home it leaves them for the
      * container by home ({@link MinionGoals.Deposit}); with its maker, it brings them to its maker's hands, as an allay
-     * brings its player what it found. It takes only what it has room for.
+     * brings its player what it found. It takes only what it has room for. It looks round every half second or so at 100%, a
+     * fitter courier more often (docs/NEXT.md 1.2).
      */
     static class Fetch extends Goal {
         private final MinionEntity minion;
@@ -799,7 +812,8 @@ public final class MinionTasks {
 
         @Override
         public boolean canUse() {
-            if (!minion.hasTask(MinionTask.COURIER) || minion.getRandom().nextInt(10) != 0) {
+            if (!minion.hasTask(MinionTask.COURIER) || minion.getRandom().nextInt(MinionFitness.lookTicks(PartsData.of(minion.level()).task(MinionTask.COURIER),
+                    minion.taskFitness())) != 0) {
                 return false;
             }
             if (minion.tickCount - forgotAt > 600) {
@@ -1033,17 +1047,18 @@ public final class MinionTasks {
         return data.number("search", 20.0F) * minion.reach() / Math.max(1, data.reach());
     }
 
-    /** How long a herder keeps after one stray before it gives up on it: its task's "wait", 30 s. */
+    /** How long a herder keeps after one stray before it gives up on it: its task's "wait", 30 s at 100%, a fitter herder longer. */
     private static int giveUp(MinionEntity minion) {
-        return Math.round(PartsData.of(minion.level()).task(MinionTask.HERDER).number("wait", 600.0F));
+        return MinionFitness.strayTicks(PartsData.of(minion.level()).task(MinionTask.HERDER), minion.taskFitness());
     }
 
     // ---- fisher
 
     /**
      * A fisher by still water within its reach of home rolls the fishing loot table every 30 to 60 seconds it spends there
-     * (less with Lure; no treasure, which needs a bobber in open water), into what it carries: with a rod in hand as a
-     * player's rod does, a point off it a catch; without one, by hand, paw or mouth (a fish's mouth as well as a rod).
+     * at 100% (a fitter fisher sooner; less with Lure; never under a sixth of 30 s, Lure's own floor; no treasure, which needs
+     * a bobber in open water), into what it carries: with a rod in hand as a player's rod does, a point off it a catch;
+     * without one, by hand, paw or mouth (a fish's mouth as well as a rod).
      */
     static class Fish extends Goal {
         private final MinionEntity minion;
@@ -1138,7 +1153,7 @@ public final class MinionTasks {
             boolean byRod = rod.getItem() instanceof FishingRodItem && !minion.stats().strikes().isEmpty();
             int lure = byRod ? Math.round(EnchantmentHelper.getFishingTimeReduction(level, rod, minion) * 20.0F) : 0;
             MinionTask.Data data = PartsData.of(level).task(MinionTask.FISHER);
-            if (worked(minion, Math.round(data.number("catch_min", 600.0F)), Math.round(data.number("catch_max", 1200.0F)), lure)) {
+            if (worked(minion, MinionFitness.catchTicks(data, minion.taskFitness()), lure, MinionFitness.catchLeast(data))) {
                 LootParams params = new LootParams.Builder(level)
                         .withParameter(LootContextParams.ORIGIN, at)
                         .withParameter(LootContextParams.TOOL, byRod ? rod : ItemStack.EMPTY)
@@ -1163,8 +1178,8 @@ public final class MinionTasks {
 
     /**
      * A digger sniffs the grass, moss and dirt within its reach of home (vanilla's sniffer_diggable_block tag), and every
-     * minute or two it spends at it turns up what a sniffer digs (the sniffer_digging loot table), into what it carries.
-     * It leaves the ground as it was.
+     * minute or two it spends at it (at 100%; a fitter digger sooner) turns up what a sniffer digs (the sniffer_digging loot
+     * table), into what it carries. It leaves the ground as it was.
      */
     static class Dig extends Goal {
         private final MinionEntity minion;
@@ -1261,7 +1276,7 @@ public final class MinionTasks {
                 level.playSound(null, spot, SoundEvents.SNIFFER_SNIFFING, SoundSource.NEUTRAL, 0.6F, 1.1F);
             }
             MinionTask.Data data = PartsData.of(level).task(MinionTask.DIGGER);
-            if (worked(minion, Math.round(data.number("dig_min", 1200.0F)), Math.round(data.number("dig_max", 2400.0F)), 0)) {
+            if (worked(minion, MinionFitness.digTicks(data, minion.taskFitness()), 0, 1)) {
                 LootParams params = new LootParams.Builder(level)
                         .withParameter(LootContextParams.ORIGIN, top)
                         .withParameter(LootContextParams.THIS_ENTITY, minion)
@@ -1284,7 +1299,8 @@ public final class MinionTasks {
     // ---- barterer
 
     /**
-     * A barterer takes a gold ingot from a container within its reach of home, looks it over as a piglin does (six seconds), and
+     * A barterer takes a gold ingot from a container within its reach of home, looks it over as a piglin does (six seconds at
+     * 100%, a fitter barterer sooner), and
      * rolls the piglin_bartering loot table, putting what it got back into that container (what does not fit it keeps,
      * for the next trip to it). It trades only while it has a slot free for what it gets, so a full chest never has its
      * gold turned into litter; and the ingot it looks over is in what it carries, so it is saved, folded and dropped
@@ -1411,7 +1427,7 @@ public final class MinionTasks {
                 level.playSound(null, minion.blockPosition(), SoundEvents.PIGLIN_ADMIRING_ITEM, SoundSource.NEUTRAL, 1.0F, 1.0F);
                 return;
             }
-            if (++admired < Math.round(PartsData.of(level).task(MinionTask.BARTERER).number("admire", 120.0F))) {
+            if (++admired < MinionFitness.admireTicks(PartsData.of(level).task(MinionTask.BARTERER), minion.taskFitness())) {
                 return;
             }
             admiring = false;
@@ -1528,7 +1544,8 @@ public final class MinionTasks {
      * A medic throws a splash potion of healing (or regeneration) from what it carries at an ally two hearts or more down
      * within its reach of where it works (home, or its maker while it goes with them): its maker, its maker's other flesh
      * minions, a villager. Brass it leaves to its brass sheets and cradle, which are what mend brass (spec 6.6). It closes
-     * to throwing range, then throws as a witch does. With no healing potions it waits for some.
+     * to throwing range, then throws as a witch does. With no healing potions it waits for some. Its fitness (docs/NEXT.md
+     * 1.2) sets the time between throws (3 s at 100%, never under 1 s) and how true they fly (a witch's spread at 100%).
      */
     static class Medic extends Goal {
         private final MinionEntity minion;
@@ -1630,12 +1647,13 @@ public final class MinionTasks {
             ThrownPotion potion = new ThrownPotion(level, minion);
             potion.setItem(stack);
             potion.setXRot(potion.getXRot() + 20.0F);
-            potion.shoot(dx, dy + flat * 0.2, dz, 0.75F, 8.0F);
+            MinionTask.Data data = PartsData.of(level).task(MinionTask.MEDIC);
+            potion.shoot(dx, dy + flat * 0.2, dz, 0.75F, MinionFitness.throwSpread(data, minion.taskFitness()));
             level.playSound(null, minion.getX(), minion.getY(), minion.getZ(), SoundEvents.WITCH_THROW, SoundSource.NEUTRAL, 1.0F,
                     0.8F + minion.getRandom().nextFloat() * 0.4F);
             level.addFreshEntity(potion);
             minion.swing(InteractionHand.MAIN_HAND);
-            cooldown = minion.tickCount + 60;
+            cooldown = minion.tickCount + MinionFitness.throwTicks(data, minion.taskFitness());
             thrown = true;
         }
     }
@@ -1671,13 +1689,16 @@ public final class MinionTasks {
     }
 
     /**
-     * A butcher takes carcasses within its reach of home apart by hand (docs/PARTS-AND-TRAITS.md section 6.9), a blow a little under a
-     * second, through the same CarcassButchery a player's Cleaver or Flensing Knife uses, so the yields are a player's
+     * A butcher takes carcasses within its reach of home apart by hand (docs/PARTS-AND-TRAITS.md section 6.9), a stroke every
+     * 0.75 s at 100%, through the same CarcassButchery a player's Cleaver or Flensing Knife uses, so the yields are a player's
      * hand yields: with a Cleaver it breaks down loose pieces and cuts limbs off whole bodies; with a Flensing Knife it
-     * skins them. What comes off goes into what it carries.
+     * skins them. What comes off goes into what it carries. Its fitness (docs/NEXT.md 1.2) sets how often it strokes (a
+     * fitter butcher sooner, never under 0.3 s) and, below 100%, how much of each cut it wastes: its yields times its fitness,
+     * so no butcher beats hand yields.
      */
     static class Butcher extends Goal {
-        private static final int STROKE = 15;
+        /** How far over or under its feet a piece may lie for it to cut: a resting body's torso lies a block up. */
+        private static final double REACH_UP = 2.5;
         private final MinionEntity minion;
         @Nullable
         private UUID carcass;
@@ -1739,6 +1760,11 @@ public final class MinionTasks {
             return carcass != null;
         }
 
+        /** Ticks to its next stroke: 0.75 s at 100%, sooner for a fitter butcher, never under 0.3 s. */
+        private int stroke() {
+            return MinionFitness.strokeTicks(PartsData.of(minion.level()).task(MinionTask.BUTCHER), minion.taskFitness());
+        }
+
         /** A Flensing Knife's work: the torso of a carcass not yet skinned that has a hide to give. */
         @Nullable
         private static String skinnable(CarcassSavedData.Carcass c) {
@@ -1779,7 +1805,7 @@ public final class MinionTasks {
         public void start() {
             minion.working = true;
             done = false;
-            nextStroke = minion.tickCount + STROKE;
+            nextStroke = minion.tickCount + stroke();
             approach.reset(minion);
         }
 
@@ -1809,8 +1835,11 @@ public final class MinionTasks {
             }
             Vec3 point = new Vec3(at.x, at.y, at.z);
             minion.getLookControl().setLookAt(point);
+            // within its arm's length across, and a little over or under its feet: a resting body's torso lies a block up,
+            // and a butcher standing against it where its path ends is as near as it gets (measured from its feet, it stood
+            // there out of reach until it gave the body up)
             double reach = 2.0 + minion.getBbWidth() / 2.0;
-            if (minion.distanceToSqr(point) > reach * reach) {
+            if (Math.hypot(minion.getX() - point.x, minion.getZ() - point.z) > reach || Math.abs(point.y - minion.getY()) > REACH_UP) {
                 if (!approach.step(minion, BlockPos.containing(point), 2, 1.0)) {
                     unreachable.add(carcass);
                     carcass = null;
@@ -1822,13 +1851,13 @@ public final class MinionTasks {
             if (minion.tickCount < nextStroke) {
                 return;
             }
-            nextStroke = minion.tickCount + STROKE;
+            nextStroke = minion.tickCount + stroke();
             ItemStack blade = minion.getMainHandItem();
             boolean skinning = blade.getItem() instanceof FlensingKnifeItem;
             boolean bloody = com.avicagan.bloodandbones.carcass.Blood.bloody(c);
-            // what comes off goes into its hands, as a machine's yields go to the machine
-            boolean did = CarcassButchery.capturing(stack -> keep(minion, stack),
-                    () -> skinning ? CarcassButchery.skin(level, null, c, at) : CarcassButchery.cut(level, null, c, bone, at));
+            // what comes off goes into its hands, as a machine's yields go to the machine, less what a poor butcher wastes
+            boolean did = CarcassButchery.yielding(MinionFitness.yieldShare(minion.taskFitness()), () -> CarcassButchery.capturing(stack -> keep(minion, stack),
+                    () -> skinning ? CarcassButchery.skin(level, null, c, at) : CarcassButchery.cut(level, null, c, bone, at)));
             minion.swing(InteractionHand.MAIN_HAND);
             if (did && bloody) {
                 com.avicagan.bloodandbones.carcass.Blood.bloody(blade, level);
@@ -2417,7 +2446,7 @@ public final class MinionTasks {
 
     /** A cell of a carcass's torso to hook, in its body's plot (as a player's hook takes one), or null if it has none. */
     @Nullable
-    static BlockPos torsoCell(ServerLevel level, CarcassSavedData.Carcass carcass) {
+    public static BlockPos torsoCell(ServerLevel level, CarcassSavedData.Carcass carcass) {
         var container = dev.ryanhcode.sable.api.sublevel.SubLevelContainer.getContainer(level);
         UUID id = carcass.bones.get(carcass.rootBone);
         if (container == null || id == null || !(container.getSubLevel(id) instanceof dev.ryanhcode.sable.sublevel.ServerSubLevel body) || body.isRemoved()) {

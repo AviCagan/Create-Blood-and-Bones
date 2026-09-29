@@ -302,12 +302,23 @@ public final class MinionGoals {
         }
     }
 
+    /** Ticks between blows a melee goal lands: vanilla's second, less for each arm that strikes past two (docs/NEXT.md 1.2). */
+    public static final int BLOW_EVERY = 20;
+
+    /**
+     * Ticks between its blows: a second, as vanilla's melee goal lands them, 15% sooner for each arm that strikes past two, up
+     * to 60% (spec 6.4; the strike rate its Blow counts).
+     */
+    public static int blowTicks(MinionEntity minion) {
+        MinionFitness.Body body = minion.fitnessBody();
+        return body == null ? BLOW_EVERY : Math.max(1, Math.round(BLOW_EVERY / body.strikeRate()));
+    }
+
     /**
      * A body with no head strikes what it holds for its target while that touches it, a blow as often as a melee goal lands
      * one, and never goes after it.
      */
     public static class Feel extends Goal {
-        private static final int EVERY = 20;
         private final MinionEntity minion;
         private int cooldown;
 
@@ -342,22 +353,45 @@ public final class MinionGoals {
             minion.getLookControl().setLookAt(target, 30.0F, 30.0F);
             cooldown = Math.max(0, cooldown - 1);
             if (cooldown == 0) {
-                cooldown = EVERY;
+                cooldown = blowTicks(minion);
                 minion.doHurtTarget(target);
             }
         }
     }
 
-    /** It goes for its target with its arms, or its teeth if it has none. */
+    /**
+     * It goes for its target with its arms, or its teeth if it has none: a blow a second, as vanilla's melee goal lands them,
+     * more often with more arms that strike ({@link #blowTicks}).
+     */
     public static class Bite extends MeleeAttackGoal {
         private static final double SPEED = 1.2;
         /** How near what it goes for must be for it to walk straight at it when its path runs out short. */
         private static final double LAST_STRETCH = 4.0;
         private final MinionEntity minion;
 
+        /** When it may land its next blow. */
+        private int nextBlow;
+
         public Bite(MinionEntity minion) {
             super(minion, SPEED, true);
             this.minion = minion;
+        }
+
+        @Override
+        public void start() {
+            super.start();
+            // its first blow at once, as vanilla's goal lands it
+            nextBlow = minion.tickCount;
+        }
+
+        /** Vanilla's blow, at its own rate: a second, sooner with more arms that strike. */
+        @Override
+        protected void checkAndPerformAttack(LivingEntity target) {
+            if (minion.tickCount >= nextBlow && minion.isWithinMeleeAttackRange(target) && minion.getSensing().hasLineOfSight(target)) {
+                nextBlow = minion.tickCount + blowTicks(minion);
+                minion.swing(net.minecraft.world.InteractionHand.MAIN_HAND);
+                minion.doHurtTarget(target);
+            }
         }
 
         @Override
@@ -1063,7 +1097,7 @@ public final class MinionGoals {
 
     /**
      * A farmer harvests ripe crops within its reach of home (brass: those its filter passes) and plants them again from what
-     * it reaped.
+     * it reaped. It looks for ripe ones every half second or so at 100%, a fitter farmer more often (docs/NEXT.md 1.2).
      */
     public static class Farm extends Goal {
         private final MinionEntity minion;
@@ -1108,7 +1142,8 @@ public final class MinionGoals {
 
         @Override
         public boolean canUse() {
-            if (!minion.hasTask(MinionTask.FARMER) || minion.getRandom().nextInt(10) != 0) {
+            if (!minion.hasTask(MinionTask.FARMER) || minion.getRandom().nextInt(MinionFitness.lookTicks(
+                    com.avicagan.bloodandbones.parts.PartsData.of(minion.level()).task(MinionTask.FARMER), minion.taskFitness())) != 0) {
                 return false;
             }
             crop = findRipe();

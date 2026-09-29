@@ -327,6 +327,14 @@ public class BBLang {
         BloodAndBones.REGISTRATE.addRawLang("bloodandbones.minion.knack", "Knack ×%s: %s");
         BloodAndBones.REGISTRATE.addRawLang("bloodandbones.minion.knack_part", "%s %s");
         BloodAndBones.REGISTRATE.addRawLang("bloodandbones.minion.disposition_line", "Disposition ×%s: %s");
+        // what its fitness makes of its work (docs/NEXT.md 1.2)
+        for (String[] lever : new String[][]{{"strike", "Strikes every %s s"}, {"sentry", "Shoots every %s s with a bow, spread %s"},
+                {"surgeon", "Tends a heart every %s s"}, {"medic", "Throws every %s s, spread %s"},
+                {"herder", "Keeps after a stray for %s s"}, {"look", "Looks round every %s s"}, {"hauler", "Towing, slowed %s times as much as a player"},
+                {"farmer", "Looks for ripe crops every %s s"}, {"fisher", "A catch every %s to %s s"}, {"butcher", "A stroke every %s s, keeping %s of each cut"},
+                {"barterer", "Looks gold over for %s s"}, {"digger", "A find every %s to %s s"}}) {
+            BloodAndBones.REGISTRATE.addRawLang("bloodandbones.minion.lever." + lever[0], lever[1]);
+        }
         BloodAndBones.REGISTRATE.addRawLang("bloodandbones.minion.at_work", "At work: %s mB of blood a minute");
         BloodAndBones.REGISTRATE.addRawLang("bloodandbones.minion.at_work_brass", "At work: %s mB of soul blood a minute");
         // the task screen (docs/NEXT.md 1.3)

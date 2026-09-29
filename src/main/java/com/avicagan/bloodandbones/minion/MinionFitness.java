@@ -566,6 +566,7 @@ public final class MinionFitness {
         return fitness >= CLEAN_CUT ? 1 : fitness >= FAIR_CUT ? 2 : 3;
     }
 
+
     /**
      * Whether a body set to Surgeon may do the ritual's cutting (docs/NEXT.md 1.5; the owner's call). By default any minion
      * that can be a surgeon at all (it has a hand) may, and its fitness sets the stump's price. With the surgeon task's
@@ -611,6 +612,11 @@ public final class MinionFitness {
         return fitness >= 1.0F ? playerSlowdown : Math.min(Math.max(most, playerSlowdown), playerSlowdown / lever(fitness));
     }
 
+    /** The same, at most the hauler task's "slowdown_most" (90%). */
+    public static float towing(MinionTask.Data hauler, float playerSlowdown, float fitness) {
+        return towing(playerSlowdown, fitness, hauler.number("slowdown_most", 0.9F));
+    }
+
     /** mB of blood a minute it uses at work: today's 25 ÷ its fitness held between 50% and 200%, so 12.5 to 50. Brass uses a quarter. */
     public static float workingDrain(float fitness) {
         return MinionEntity.WORKING / Math.max(BLOOD_LEAST, Math.min(BLOOD_MOST, fitness));
@@ -622,6 +628,11 @@ public final class MinionFitness {
         float max = fisher.number("catch_max", 1200.0F);
         float floor = min * fisher.number("catch_least", 1.0F / 6.0F);
         return new int[]{quicker(min, fitness, floor), quicker(max, fitness, floor)};
+    }
+
+    /** The least a fisher's catch ever takes, its fitness and Lure together: a sixth of today's least (Lure's own floor). */
+    public static int catchLeast(MinionTask.Data fisher) {
+        return Math.round(fisher.number("catch_min", 600.0F) * fisher.number("catch_least", 1.0F / 6.0F));
     }
 
     /** A digger's ticks between finds, the least and the most. */
@@ -649,8 +660,34 @@ public final class MinionFitness {
         return quicker(medic.number("throw_every", 60.0F), fitness, medic.number("throw_least", 20.0F));
     }
 
+    /** The spread of a medic's throw: a witch's 8 at 100%, a fitter medic's truer. */
+    public static float throwSpread(MinionTask.Data medic, float fitness) {
+        return spread(medic.number("spread", 8.0F), fitness);
+    }
+
     /** How often a task that looks round looks (a farmer, a courier, a tender), in ticks. */
     public static int lookTicks(MinionTask.Data data, float fitness) {
         return quicker(data.number("look_every", 10.0F), fitness, 1.0F);
+    }
+
+    /** How long a herder keeps after one stray before it gives up on it: 30 s at 100%, a fitter one longer. */
+    public static int strayTicks(MinionTask.Data herder, float fitness) {
+        return longer(herder.number("wait", 600.0F), fitness);
+    }
+
+    /**
+     * A sentry's ticks between shots, from one of its task's numbers ("bow_every" 1 s, "crossbow_min" to "crossbow_max" 1 to
+     * 2 s, "trident_every" 2 s): a fitter sentry sooner, never under half.
+     */
+    public static int shotTicks(float ticks, float fitness) {
+        return quicker(ticks, fitness, ticks / 2.0F);
+    }
+
+    /**
+     * The spread of a sentry's shot at this difficulty (0 peaceful to 3 hard): vanilla's 14 less 4 a step at 100% (its task's
+     * "spread" and "spread_per_difficulty"), a fitter sentry's truer.
+     */
+    public static float shotSpread(MinionTask.Data sentry, int difficulty, float fitness) {
+        return spread(Math.max(0.0F, sentry.number("spread", 14.0F) - sentry.number("spread_per_difficulty", 4.0F) * difficulty), fitness);
     }
 }

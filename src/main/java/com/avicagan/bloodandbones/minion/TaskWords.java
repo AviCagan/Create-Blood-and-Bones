@@ -109,7 +109,8 @@ public final class TaskWords {
     /**
      * A row's lines, as the task screen shows them over the row: its name and fitness and word (or why it cannot), what it
      * does, what it waits for and what a tool it lacks would make of it, then each stat it reads with its value and where
-     * that came from, its knack, its disposition, and the blood it uses at work.
+     * that came from, its knack, its disposition, what its fitness makes of its work (its levers), and the blood it uses at
+     * work.
      */
     public static List<Component> lines(PartsData.Store store, MinionEntity minion, MinionFitness.Row row, MinionTask.Anchor at) {
         List<Component> out = new ArrayList<>();
@@ -144,6 +145,7 @@ public final class TaskWords {
             out.add(line("bloodandbones.minion.disposition_line", number(row.disposition()),
                     Component.translatable(MinionDisposition.nameKey(row.dispositionName()))));
         }
+        out.addAll(levers(store, minion, row));
         float drain = MinionFitness.workingDrain(row.fitness()) * (minion.cybernetic() ? MinionEntity.BRASS_DRAIN : 1.0F);
         out.add(Component.translatable(minion.cybernetic() ? "bloodandbones.minion.at_work_brass" : "bloodandbones.minion.at_work", number(drain))
                 .withStyle(ChatFormatting.GRAY));
@@ -151,6 +153,50 @@ public final class TaskWords {
             out.add(Component.translatable("bloodandbones.minion.screen.row_with_me").withStyle(ChatFormatting.DARK_GRAY));
         }
         return out;
+    }
+
+    /**
+     * What its fitness makes of its work (docs/NEXT.md 1.2), each today's at 100%: "A stroke every 0.4 s, keeping all of each
+     * cut", "Looks round every 0.25 s". A guard's or hunter's fights run on its own damage, health and speed; how often it
+     * strikes is its arms'.
+     */
+    static List<Component> levers(PartsData.Store store, MinionEntity minion, MinionFitness.Row row) {
+        MinionTask.Data data = store.task(row.task());
+        float f = row.fitness();
+        List<Component> out = new ArrayList<>();
+        switch (row.task()) {
+            case GUARD, HUNTER -> out.add(lever("strike", seconds(MinionGoals.blowTicks(minion))));
+            case SENTRY -> out.add(lever("sentry", seconds(MinionFitness.shotTicks(data.number("bow_every", 20.0F), f)),
+                    number(MinionFitness.shotSpread(data, minion.level().getDifficulty().getId(), f))));
+            case SURGEON -> out.add(lever("surgeon", seconds(MinionFitness.tendTicks(data, f))));
+            case MEDIC -> out.add(lever("medic", seconds(MinionFitness.throwTicks(data, f)), number(MinionFitness.throwSpread(data, f))));
+            case HERDER -> out.add(lever("herder", seconds(MinionFitness.strayTicks(data, f))));
+            case TENDER, COURIER -> out.add(lever("look", seconds(MinionFitness.lookTicks(data, f))));
+            case HAULER -> out.add(lever("hauler", number(MinionFitness.towing(data, 1.0F, f))));
+            case FARMER -> out.add(lever("farmer", seconds(MinionFitness.lookTicks(data, f))));
+            case FISHER -> {
+                int[] catches = MinionFitness.catchTicks(data, f);
+                out.add(lever("fisher", seconds(catches[0]), seconds(catches[1])));
+            }
+            case BUTCHER -> out.add(lever("butcher", seconds(MinionFitness.strokeTicks(data, f)), percent(MinionFitness.yieldShare(f))));
+            case BARTERER -> out.add(lever("barterer", seconds(MinionFitness.admireTicks(data, f))));
+            case DIGGER -> {
+                int[] finds = MinionFitness.digTicks(data, f);
+                out.add(lever("digger", seconds(finds[0]), seconds(finds[1])));
+            }
+            default -> {
+            }
+        }
+        return out;
+    }
+
+    private static Component lever(String key, Object... args) {
+        return Component.translatable("bloodandbones.minion.lever." + key, args).withStyle(ChatFormatting.GRAY);
+    }
+
+    /** Ticks as seconds: "0.4", "2.5", "30". */
+    private static String seconds(int ticks) {
+        return number(ticks / 20.0F);
     }
 
     private static Component line(String key, String multiplier, Component detail) {

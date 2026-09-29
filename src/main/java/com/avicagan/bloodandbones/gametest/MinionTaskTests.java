@@ -640,6 +640,337 @@ public class MinionTaskTests {
         });
     }
 
+    // ---- the levers: what a minion's fitness makes of its work (docs/NEXT.md 1.2; stage C)
+
+    /** The spec's spider (6.5): its torso with a zombie's arm in each of its eight leg sockets, under this head. */
+    private static MinionBuild spiderOfArms(PieceRef head) {
+        MinionBuild build = MinionBuild.of(ref("spider", "body1")).with("head", head);
+        String[] sockets = {"right_front_leg", "left_front_leg", "right_middle_front_leg", "left_middle_front_leg", "right_middle_hind_leg",
+                "left_middle_hind_leg", "right_hind_leg", "left_hind_leg"};
+        for (int i = 0; i < sockets.length; i++) {
+            build = build.with(sockets[i], ref("zombie", i % 2 == 0 ? "right_arm" : "left_arm"));
+        }
+        return build;
+    }
+
+    /** A spider's torso on four of its own legs, with a zombie's arm in each of its four front sockets, under this head. */
+    private static MinionBuild spiderOnFour(PieceRef head) {
+        MinionBuild build = MinionBuild.of(ref("spider", "body1")).with("head", head);
+        String[] arms = {"right_front_leg", "left_front_leg", "right_middle_front_leg", "left_middle_front_leg"};
+        for (int i = 0; i < arms.length; i++) {
+            build = build.with(arms[i], ref("zombie", i % 2 == 0 ? "right_arm" : "left_arm"));
+        }
+        for (String leg : new String[]{"right_middle_hind_leg", "left_middle_hind_leg", "right_hind_leg", "left_hind_leg"}) {
+            build = build.with(leg, ref("spider", leg));
+        }
+        return build;
+    }
+
+    /** A whole villager with no trade: its folded arms hold a blade but never strike. */
+    private static MinionBuild villager() {
+        return MinionBuild.of(ref("villager", "body")).with("head", villagerHead("none")).with("arms", ref("villager", "arms"))
+                .with("right_leg", ref("villager", "right_leg")).with("left_leg", ref("villager", "left_leg"));
+    }
+
+    /** A whole rabbit: a torso too light to pull much. */
+    private static MinionBuild rabbit() {
+        return MinionBuild.of(ref("rabbit", "body")).with("head", ref("rabbit", "head")).with("right_front_leg", ref("rabbit", "right_front_leg"))
+                .with("left_front_leg", ref("rabbit", "left_front_leg")).with("right_haunch", ref("rabbit", "right_haunch"))
+                .with("left_haunch", ref("rabbit", "left_haunch"));
+    }
+
+    /** The middle one of these ticks' gaps: for strokes on one piece after another, the time between two on the same piece. */
+    private static int medianGap(List<Integer> ticks) {
+        List<Integer> gaps = new ArrayList<>();
+        for (int i = 1; i < ticks.size(); i++) {
+            gaps.add(ticks.get(i) - ticks.get(i - 1));
+        }
+        gaps.sort(Integer::compare);
+        return gaps.isEmpty() ? -1 : gaps.get(gaps.size() / 2);
+    }
+
+    /**
+     * A 200% butcher (a butcher's head over a spider's torso on four of its legs, with four zombie arms) and a 50% one (a whole villager, whose
+     * folded arms hold a Cleaver but never strike), each with a Cleaver and a cow of its own on its side of a glass wall.
+     * Over 20 s the fit one's strokes come every 0.4 s (7.5 ticks, rounded), the poor one's every 1.5 s: about four times as
+     * often at the carcass. The whole 20 s's count is not read: a piece's last stroke takes it off, and each butcher then
+     * looks for its next piece and walks to it, the same for both and at random (about two seconds, now and then six), so
+     * the fit one made from 1.2 to 4 times the poor one's strokes over the runs when this was written, most often about
+     * twice. The poor one wastes half of each cut: a player's beef from a cow's body is 4.22 a cut, the poor butcher's about
+     * half that (the same scale its goal cuts under, over 200 cuts, so the dice of each cut's rounding even out); the fit
+     * one gets no more than a player's.
+     */
+    @GameTest(template = "empty", timeoutTicks = 520)
+    public static void fitterButcherIsFasterAndCleaner(GameTestHelper helper) {
+        pen(helper);
+        ServerLevel level = helper.getLevel();
+        // a glass wall down the middle: each butcher keeps to its own half and its own cow
+        for (int z = 1; z <= 9; z++) {
+            for (int y = 2; y <= 4; y++) {
+                helper.setBlock(new BlockPos(5, y, z), Blocks.GLASS);
+            }
+        }
+        Set<UUID> before = new HashSet<>();
+        CarcassSavedData.get(level).all().forEach(c -> before.add(c.id));
+        for (int x : new int[]{2, 8}) {
+            Cow cow = helper.spawn(EntityType.COW, new BlockPos(x, 2, 6));
+            if (CarcassAssembler.assemble(cow, null) == null) {
+                helper.fail("The cow carcass was not made");
+                return;
+            }
+            cow.discard();
+        }
+        Maker maker = new Maker(helper, new BlockPos(1, 2, 1));
+        MinionEntity fit = minion(helper, new BlockPos(2, 2, 3), spiderOnFour(villagerHead("butcher")), maker);
+        MinionEntity poor = minion(helper, new BlockPos(8, 2, 3), villager(), maker);
+        MinionTask.Data data = PartsData.of(level).task(MinionTask.BUTCHER);
+        for (MinionEntity butcher : new MinionEntity[]{fit, poor}) {
+            give(butcher, maker, new ItemStack(BBItems.CLEAVER.get()));
+            // home by its cow, reaching only its own half
+            butcher.setHome(helper.absolutePos(new BlockPos(butcher == fit ? 2 : 8, 2, 6)));
+            if (!butcher.setTask(MinionTask.BUTCHER, MinionTask.Anchor.HOME, 3)) {
+                helper.fail("Both should take butchery");
+                return;
+            }
+        }
+        float fitness = fit.fitness(MinionTask.BUTCHER);
+        float poorly = poor.fitness(MinionTask.BUTCHER);
+        if (Math.abs(fitness - 2.0F) > 1.0E-3F || Math.abs(poorly - 0.5F) > 1.0E-3F || MinionFitness.strokeTicks(data, fitness) != 8
+                || MinionFitness.strokeTicks(data, poorly) != 30) {
+            helper.fail("The butchers should be 200% and 50%, stroking every 8 and 30 ticks: " + fitness + ", " + poorly);
+            return;
+        }
+        // every stroke, by the cuts on each bone of each side's cow (a piece's last stroke takes it off, or breaks it down)
+        double wall = helper.absoluteVec(new Vec3(5.5, 2.0, 5.0)).x;
+        AABB area = area(helper);
+        Map<String, Integer> last = new java.util.HashMap<>();
+        List<List<Integer>> strokes = List.of(new ArrayList<>(), new ArrayList<>());
+        helper.onEachTick(() -> {
+            Map<String, Integer> now = new java.util.HashMap<>();
+            for (CarcassSavedData.Carcass c : CarcassSavedData.get(level).all()) {
+                Vector3d at = CarcassAssembler.boneWorldPosition(level, c, c.rootBone);
+                if (before.contains(c.id) || !c.entity.equals(mob("cow")) || !inside(area, at)) {
+                    continue;
+                }
+                c.cuts.forEach((bone, cuts) -> now.put((at.x < wall ? "fit:" : "poor:") + bone, cuts));
+            }
+            int tick = (int) helper.getTick();
+            now.forEach((key, cuts) -> {
+                for (int i = last.getOrDefault(key, 0); i < cuts; i++) {
+                    strokes.get(key.startsWith("fit:") ? 0 : 1).add(tick);
+                }
+            });
+            last.forEach((key, cuts) -> {
+                if (!now.containsKey(key)) {
+                    for (int i = cuts; i < com.avicagan.bloodandbones.carcass.CarcassButchery.CUTS_TO_SEVER; i++) {
+                        strokes.get(key.startsWith("fit:") ? 0 : 1).add(tick);
+                    }
+                }
+            });
+            last.clear();
+            last.putAll(now);
+        });
+        helper.runAfterDelay(400, () -> {
+            List<Integer> fast = strokes.get(0);
+            List<Integer> slow = strokes.get(1);
+            int fastGap = medianGap(fast);
+            int slowGap = medianGap(slow);
+            if (Math.abs(fastGap - 8) > 1 || Math.abs(slowGap - 30) > 1) {
+                StringBuilder cows = new StringBuilder();
+                for (CarcassSavedData.Carcass c : CarcassSavedData.get(level).all()) {
+                    Vector3d at = CarcassAssembler.boneWorldPosition(level, c, c.rootBone);
+                    if (!before.contains(c.id) && c.entity.equals(mob("cow")) && inside(area, at)) {
+                        cows.append(c.rootBone).append(c.bones.keySet()).append(c.resting ? " resting" : "").append(" at ").append(helper.relativeVec(new Vec3(at.x, at.y, at.z))).append("; ");
+                    }
+                }
+                helper.fail("At the carcass the fit one should stroke every 8 ticks and the poor one every 30: " + fastGap + ", " + slowGap
+                        + " (strokes at " + fast + " and " + slow + "); the poor one at " + helper.relativeVec(poor.position()) + " holding " + poor.getMainHandItem()
+                        + ", " + MinionTasks.status(poor).getString() + "; the fit one at " + helper.relativeVec(fit.position()) + "; cows: " + cows);
+                return;
+            }
+            BloodAndBones.LOGGER.info("[butchers] over 20 s the 200% butcher struck {} times, the 50% one {}", fast.size(), slow.size());
+            // what each gets of a cut, under the same scale its goal cuts under: the poor one about half a player's
+            var table = com.avicagan.bloodandbones.carcass.butchery.ButcheryManager.forEntity(mob("cow")).orElseThrow();
+            CarcassSavedData.Carcass body = new CarcassSavedData.Carcass(UUID.randomUUID(), mob("cow"), "body");
+            float[] shares = {1.0F, MinionFitness.yieldShare(poorly), MinionFitness.yieldShare(fitness)};
+            int[] beef = new int[shares.length];
+            for (int who = 0; who < shares.length; who++) {
+                int[] got = {0};
+                for (int cut = 0; cut < 200; cut++) {
+                    com.avicagan.bloodandbones.carcass.CarcassButchery.yielding(shares[who], () -> com.avicagan.bloodandbones.carcass.CarcassButchery.capturing(
+                            stack -> got[0] += stack.is(Items.BEEF) ? stack.getCount() : 0, () -> {
+                                com.avicagan.bloodandbones.carcass.CarcassButchery.dropYields(level, body, table.part("body"), 1.0F, new Vector3d());
+                                return true;
+                            }));
+                }
+                beef[who] = got[0];
+            }
+            float half = beef[1] / (float) beef[0];
+            if (half < 0.44F || half > 0.56F || shares[2] != 1.0F) {
+                helper.fail("The poor one should get about half a player's beef a cut, the fit one all of it: " + beef[0] / 200.0F + " a cut for a player, "
+                        + beef[1] / 200.0F + " for the poor one, a share of " + shares[2] + " for the fit one");
+                return;
+            }
+            helper.succeed();
+        });
+    }
+
+    /**
+     * A hauler's slowdown towing a cow carcass (docs/NEXT.md 1.2): a whole rabbit hauls at about 37% (a torso that weighs
+     * next to nothing), so it tows the cow with nearly three times a player's slowdown; a horse hauls at 200%, and its
+     * torso's hauler trait eases a drag, but no minion tows with less slowdown than a player: its slowdown is exactly a
+     * player's.
+     */
+    @GameTest(template = "empty", timeoutTicks = 40)
+    public static void poorHaulerCrawlsFitOneNoBetterThanAPlayer(GameTestHelper helper) {
+        ServerLevel level = helper.getLevel();
+        Cow cow = helper.spawn(EntityType.COW, new BlockPos(5, 2, 5));
+        CarcassSavedData.Carcass carcass = CarcassAssembler.assemble(cow, null);
+        cow.discard();
+        BlockPos cell = carcass == null ? null : MinionTasks.torsoCell(level, carcass);
+        if (cell == null) {
+            helper.fail("The cow carcass was not made");
+            return;
+        }
+        Maker maker = new Maker(helper, new BlockPos(1, 2, 1));
+        MinionEntity weak = minion(helper, new BlockPos(2, 2, 5), rabbit(), maker);
+        MinionEntity strong = minion(helper, new BlockPos(8, 2, 5), horse(), maker);
+        weak.setNoAi(true);
+        strong.setNoAi(true);
+        if (!weak.setTask(MinionTask.HAULER) || !strong.setTask(MinionTask.HAULER)) {
+            helper.fail("Anything can haul");
+            return;
+        }
+        Player player = helper.makeMockPlayer(net.minecraft.world.level.GameType.SURVIVAL);
+        net.minecraft.world.entity.LivingEntity[] draggers = {player, weak, strong};
+        float[] slowed = new float[draggers.length];
+        for (int i = 0; i < draggers.length; i++) {
+            if (!com.avicagan.bloodandbones.carcass.CarcassDrag.start(level, draggers[i], cell, null)) {
+                helper.fail("It should take hold of the cow: " + draggers[i]);
+                return;
+            }
+            var dragging = draggers[i].getAttribute(net.minecraft.world.entity.ai.attributes.Attributes.MOVEMENT_SPEED)
+                    .getModifier(BloodAndBones.asResource("dragging"));
+            slowed[i] = dragging == null ? 0.0F : (float) -dragging.amount();
+            com.avicagan.bloodandbones.carcass.CarcassDrag.stop(level, draggers[i]);
+        }
+        float weakly = weak.fitness(MinionTask.HAULER);
+        float strength = (float) strong.getAttributeValue(com.avicagan.bloodandbones.registry.BBAttributes.DRAG_STRENGTH);
+        if (!(slowed[0] > 0.0F) || weakly > 0.4F || Math.abs(slowed[1] - slowed[0] / weakly) > 1.0E-3F || slowed[1] / slowed[0] < 2.5F || slowed[1] > 0.9F) {
+            helper.fail("The rabbit (" + weakly + ") should be slowed a player's ÷ its fitness, nearly three times: " + slowed[1] + " to a player's " + slowed[0]);
+            return;
+        }
+        if (!(strong.fitness(MinionTask.HAULER) >= 1.0F) || !(strength > 0.0F) || Math.abs(slowed[2] - slowed[0]) > 1.0E-5F) {
+            helper.fail("The horse (" + strong.fitness(MinionTask.HAULER) + ", drag strength " + strength + ") should be slowed exactly as a player is: "
+                    + slowed[2] + " to " + slowed[0]);
+            return;
+        }
+        helper.succeed();
+    }
+
+    /**
+     * Blood at work follows fitness (docs/NEXT.md 1.2): 25 mB a minute at 100%, ÷ its fitness held between 50% and 200%. A
+     * horse couriers at 200% and uses 12.5 mB a minute at work; an all-zombie courier (40%, held at 50%) 50; a brass horse (a
+     * little under 200%: brass keeps no hide, so none of the horse's coat's speed) a quarter of what its fitness would cost
+     * flesh. Each is held at work (standing still, as its goals would have it while they work) for 30 s, each to within 10%.
+     */
+    @GameTest(template = "empty", timeoutTicks = 700)
+    public static void bloodAtWorkFollowsFitness(GameTestHelper helper) {
+        Maker maker = new Maker(helper, new BlockPos(1, 2, 1));
+        MinionBuild horse = horse();
+        MinionEntity fit = minion(helper, new BlockPos(2, 2, 3), horse, maker);
+        MinionEntity poor = minion(helper, new BlockPos(6, 2, 3), armed(ref("zombie", "head")), maker);
+        MinionEntity brass = minion(helper, new BlockPos(4, 2, 7), new MinionBuild(true, horse.torso(), horse.parts(), horse.sheathed()), maker);
+        MinionEntity[] couriers = {fit, poor, brass};
+        float[] expected = {12.5F, 50.0F, 0.0F};
+        float[] from = new float[couriers.length];
+        for (int i = 0; i < couriers.length; i++) {
+            MinionEntity courier = couriers[i];
+            courier.setNoAi(true);
+            if (!courier.setTask(MinionTask.COURIER)) {
+                helper.fail("Anything can carry");
+                return;
+            }
+            courier.setWorking(true);
+            from[i] = courier.power();
+        }
+        expected[2] = MinionFitness.workingDrain(brass.fitness(MinionTask.COURIER)) * MinionEntity.BRASS_DRAIN;
+        if (fit.fitness(MinionTask.COURIER) < 2.0F || poor.fitness(MinionTask.COURIER) > 0.5F || expected[2] > 25.0F * MinionEntity.BRASS_DRAIN) {
+            helper.fail("The horse should courier at 200%, the zombie at no more than 50%, and the brass horse better than 100%: "
+                    + fit.fitness(MinionTask.COURIER) + ", " + poor.fitness(MinionTask.COURIER) + ", " + brass.fitness(MinionTask.COURIER));
+            return;
+        }
+        helper.runAfterDelay(600, () -> {
+            StringBuilder used = new StringBuilder();
+            boolean right = true;
+            for (int i = 0; i < couriers.length; i++) {
+                // mB a minute, over the half minute
+                float perMinute = (from[i] - couriers[i].power()) * 2.0F / com.avicagan.bloodandbones.config.BBServerConfig.powerDrain();
+                used.append(perMinute).append(i + 1 < couriers.length ? ", " : "");
+                right &= Math.abs(perMinute - expected[i]) <= expected[i] * 0.1F;
+            }
+            if (!right) {
+                helper.fail("At work they should use 12.5, 50 and " + expected[2] + " mB a minute: " + used);
+                return;
+            }
+            helper.succeed();
+        });
+    }
+
+    /**
+     * Blows land more often with more arms that strike (spec 6.4, the strike rate its Blow counts; docs/NEXT.md 1.10, stage
+     * C): an all-zombie guard strikes the husk by it every second, as vanilla's melee goal lands blows; a spider's torso with
+     * eight zombie arms 60% more often, every 13 ticks. Each keeps to its side of a glass wall with its husk, which has
+     * health enough to stand the blows.
+     */
+    @GameTest(template = "empty", timeoutTicks = 400)
+    public static void moreArmsStrikeMoreOften(GameTestHelper helper) {
+        pen(helper);
+        for (int z = 1; z <= 9; z++) {
+            for (int y = 2; y <= 4; y++) {
+                helper.setBlock(new BlockPos(5, y, z), Blocks.GLASS);
+            }
+        }
+        Maker maker = new Maker(helper, new BlockPos(1, 2, 1));
+        MinionEntity two = minion(helper, new BlockPos(2, 2, 3), armed(ref("zombie", "head")), maker);
+        MinionEntity eight = minion(helper, new BlockPos(8, 2, 3), spiderOfArms(ref("zombie", "head")), maker);
+        Husk[] husks = new Husk[2];
+        List<List<Integer>> blows = List.of(new ArrayList<>(), new ArrayList<>());
+        int[] lastHurt = {-1, -1};
+        for (int i = 0; i < 2; i++) {
+            Husk husk = helper.spawn(EntityType.HUSK, new BlockPos(i == 0 ? 2 : 8, 2, 5));
+            husk.setNoAi(true);
+            husk.getAttribute(net.minecraft.world.entity.ai.attributes.Attributes.MAX_HEALTH).setBaseValue(1000.0);
+            husk.setHealth(1000.0F);
+            husks[i] = husk;
+        }
+        for (MinionEntity guard : new MinionEntity[]{two, eight}) {
+            if (!guard.setTask(MinionTask.GUARD, MinionTask.Anchor.HOME, 3)) {
+                helper.fail("Both should guard");
+                return;
+            }
+        }
+        helper.onEachTick(() -> {
+            for (int i = 0; i < 2; i++) {
+                int hurt = husks[i].getLastHurtByMobTimestamp();
+                if (hurt != lastHurt[i] && husks[i].getLastHurtByMob() instanceof MinionEntity) {
+                    lastHurt[i] = hurt;
+                    blows.get(i).add((int) helper.getTick());
+                }
+            }
+        });
+        helper.runAfterDelay(300, () -> {
+            int slow = medianGap(blows.get(0));
+            int quick = medianGap(blows.get(1));
+            if (slow != 20 || quick != 13 || blows.get(1).size() <= blows.get(0).size()) {
+                helper.fail("Two arms should strike every 20 ticks and eight every 13: " + slow + " (" + blows.get(0).size() + " blows), " + quick + " ("
+                        + blows.get(1).size() + " blows)");
+                return;
+            }
+            helper.succeed();
+        });
+    }
+
     /**
      * A cleric's head (a medic), handed two splash potions of healing, throws one at its hurt maker, and one at a hurt
      * villager, whom it heals. (The stand-in maker is not in the world, so no splash reaches them; the villager shows the
@@ -1117,16 +1448,16 @@ public class MinionTaskTests {
     }
 
     /**
-     * Every word of the tasks, the screen and the status line reads right in bloodless mode (rule 4): its own bloodless
-     * wording where it has one (the butcher a Dismantler), else the usual rewording; none of it says blood, carcass,
-     * butcher, flesh, organ, gore or minion.
+     * Every word of the tasks, the screen (what each task's fitness makes of its work too) and the status line reads right
+     * in bloodless mode (rule 4): its own bloodless wording where it has one (the butcher a Dismantler), else the usual
+     * rewording; none of it says blood, carcass, butcher, flesh, organ, gore or minion.
      */
     @GameTest(template = "empty", timeoutTicks = 20)
     public static void taskWordsReadBloodless(GameTestHelper helper) {
         java.util.regex.Pattern bloody = java.util.regex.Pattern.compile(
                 "(?i)(?<![a-z])(carcass(es)?|blood|bleed\\w*|butcher\\w*|flesh|organs?|gore|guts?|minions?)(?![a-z])");
         List<String> prefixes = List.of("task.", "screen.", "fit.", "where.", "idle.", "factor", "stat.", "value.", "rule.", "at_work", "woke", "lost",
-                "wants.", "cannot.", "tool.", "with_tool", "grip.", "part", "knack", "disposition", "doing", "status", "source.", "frame_stats");
+                "wants.", "cannot.", "tool.", "with_tool", "grip.", "part", "knack", "disposition", "doing", "status", "source.", "frame_stats", "lever.");
         int checked = 0;
         try (var in = BloodAndBones.class.getResourceAsStream("/assets/bloodandbones/lang/en_us.json")) {
             var json = com.google.gson.JsonParser.parseReader(new java.io.InputStreamReader(in)).getAsJsonObject();

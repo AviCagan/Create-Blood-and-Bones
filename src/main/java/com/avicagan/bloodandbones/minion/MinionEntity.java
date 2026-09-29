@@ -51,7 +51,7 @@ import java.util.UUID;
  * it powers down where it is and lies on its side, alive, until it gets blood again. Neglect never destroys it.
  */
 public class MinionEntity extends PathfinderMob implements net.minecraft.world.entity.Saddleable, net.minecraft.world.entity.monster.RangedAttackMob,
-        net.minecraft.world.entity.ItemSteerable {
+        net.minecraft.world.entity.ItemSteerable, com.avicagan.bloodandbones.carcass.CarcassDrag.Dragger {
     private static final EntityDataAccessor<Optional<MinionBuild>> BUILD = SynchedEntityData.defineId(MinionEntity.class, MinionSerializers.BUILD.get());
     /** Its task, by id (docs/NEXT.md 1.1). */
     private static final EntityDataAccessor<String> TASK = SynchedEntityData.defineId(MinionEntity.class, EntityDataSerializers.STRING);
@@ -185,6 +185,7 @@ public class MinionEntity extends PathfinderMob implements net.minecraft.world.e
         entityData.set(TASK, woke.id.toString());
         entityData.set(ANCHOR, (byte) 0);
         entityData.set(REACH, 0);
+        refreshFitness();
         if (maker != null) {
             maker.displayClientMessage(MinionTasks.woke(this), true);
         }
@@ -203,6 +204,7 @@ public class MinionEntity extends PathfinderMob implements net.minecraft.world.e
             // (lava walking)
             com.avicagan.bloodandbones.parts.ActiveTraits.rebuild(this);
             moveBy(stats());
+            refreshFitness();
         }
     }
 
@@ -707,6 +709,7 @@ public class MinionEntity extends PathfinderMob implements net.minecraft.world.e
         if (post) {
             setHome(blockPosition());
         }
+        refreshFitness();
         return true;
     }
 
@@ -719,6 +722,7 @@ public class MinionEntity extends PathfinderMob implements net.minecraft.world.e
         lostReason = reason;
         setTarget(null);
         getNavigation().stop();
+        refreshFitness();
     }
 
     /** The task a data reload took from it, if it has not been given another since. */
@@ -799,6 +803,36 @@ public class MinionEntity extends PathfinderMob implements net.minecraft.world.e
     /** How well it does a task now: its own at the anchor it works at, any other at home (docs/NEXT.md 1.2). */
     public float fitness(MinionTask task) {
         return row(task, task == task() && withMaker() ? MinionTask.Anchor.MAKER : MinionTask.Anchor.HOME).fitness();
+    }
+
+    /**
+     * Its fitness at its task now, as its task's goals read it for their levers (docs/NEXT.md 1.2): worked out once a second
+     * and when its task is set, not on every tick a goal asks.
+     */
+    public float taskFitness() {
+        return workFitness;
+    }
+
+    /** Its fitness at its task worked out again, for its goals' levers. */
+    private void refreshFitness() {
+        if (level().isClientSide) {
+            return;
+        }
+        workFitness = fitness(task());
+    }
+
+    /**
+     * A hauler towing a carcass (docs/NEXT.md 1.2): a player's slowdown at 100% and over, never less; below, a player's ÷ its
+     * fitness at hauling, at most 90%. Its drag strength counts already, in its pull.
+     */
+    @Override
+    public float dragSlowdown(float playerSlowdown) {
+        return MinionFitness.towing(PartsData.of(level()).task(MinionTask.HAULER), playerSlowdown, fitness(MinionTask.HAULER));
+    }
+
+    /** At work, as a task's goal sets it while it does something (or a test standing in for one): the blood it uses follows its fitness. */
+    public void setWorking(boolean working) {
+        this.working = working;
     }
 
     /** Why its task's work stands still (nothing to do there), said by its goal for its status line, for the next few seconds. */
@@ -1052,7 +1086,7 @@ public class MinionEntity extends PathfinderMob implements net.minecraft.world.e
             applyStats();
             // a task a data reload took from its body gives way to Idle at home (a missing tool never does: it waits)
             MinionTasks.keepPossible(this);
-            workFitness = fitness(task());
+            refreshFitness();
         }
         if ((tickCount + getId()) % 10 == 0) {
             // its traits' tick, staggered as players' are (tick effects wait while it is down)
