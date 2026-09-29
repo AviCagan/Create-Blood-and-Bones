@@ -39,7 +39,7 @@ Sizes:
    - The three processing paths give the same yields as each other.
    - There are no damaged carcasses.
 
-**Quickest win:** merge `bb-organs`. It brings organs as data and items, plus the minion leftovers.
+**Quickest win:** merge `bb-organs`. It brings organs as data and items, plus the minion leftovers. (Done on 29 September, 40dfb66.)
 
 **Missing text in the brief itself:** rule 1 is blank, and the flesh-and-brass table under Cybernetics has only one row.
 
@@ -331,7 +331,9 @@ So the hook is required rather than worth choosing, and the trade-off the brief 
 
 **Owner first.** Yes: decision 3.
 
-### 7. Merge `bb-organs`
+### 7. Merge `bb-organs` (done 29 September 2026, 40dfb66)
+
+**Done.** Main's newer commits were merged into `bb-organs` (the hauler kept main's stress-tested version), the review's 17 findings were fixed, all 451 tests passed three runs in a row, and the branch is now main. The rest of this section is kept as it was written.
 
 **Why.**
 - Armor: "An organ adds one special ability. Every mob has at least one; some have several."

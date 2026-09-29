@@ -523,7 +523,7 @@ Every missing knack and disposition counts as 1. Archetypes carry knacks and leg
 
 ### 1.10 Order of work
 
-Start after bb-organs is on main. This change touches its sapper, variants, `pace`, `MinionStats` and `MinionJobs`.
+Start after bb-organs is on main (it is, since 40dfb66). This change touches its sapper, variants, `pace`, `MinionStats` and `MinionJobs`.
 - **A. The fitness, worked out without a world (medium).** `MinionFitness`, knacks, leg grips, the disposition and task files, and the migrated data, with the tests worked out without a world. Nothing in play changes yet.
 - **B. Tasks replace jobs (large).** `MinionTask`, the renames, anchor and reach, the screen, the wake rule, the status lines and the save conversion, with their tests.
 - **C. The levers and blood at work (medium).**
@@ -533,7 +533,7 @@ Start after bb-organs is on main. This change touches its sapper, variants, `pac
 
 ### 1.11 Found while reading (not part of this change)
 
-- **Debugging left on bb-organs.** `MinionGoals.Bite.tick` logs "[tmpbite]" every 2 s, and there is a `gametest/TmpMergeRepro.java`. Both should go before bb-organs is merged.
+- **Debugging left on bb-organs.** `MinionGoals.Bite.tick` logged "[tmpbite]" every 2 s, and there was a `gametest/TmpMergeRepro.java`. Both were gone before bb-organs was merged (40dfb66).
 - **`MINDLESS_SIGHT` (8) is more than `BLIND_SIGHT` (4).** A body with no head notices more than a blind head does. The design sets it to 2.
 - **Keen Eye and Relentless do nothing on a minion.** They raise its follow-range attribute, but `MinionStats.sight` never reads it and every search takes the smaller of the two. The design's sight counts them.
 - **`MinionStats.fights()` is true for a body with no arms and no head.** It would bite with no mouth. This is harmless today, because a mindless minion never fights.
