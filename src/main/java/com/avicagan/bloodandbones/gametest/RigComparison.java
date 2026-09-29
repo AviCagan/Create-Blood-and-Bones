@@ -482,6 +482,25 @@ public final class RigComparison {
             return torso == null ? new Vector3d(Double.NaN) : modelToWorld(torsoBody(), torso).transform(new Vector3d(0, -1, 0));
         }
 
+        /**
+         * Where the head end of the body points in the world: its forward (the model's -Z) for a four-legged body, its up
+         * (the model's -Y) for one that stands upright (a biped, a chicken), whose head sits on top. Which it is comes from
+         * where the head joins the torso, in the model: in front of its middle, or above it.
+         */
+        Vector3d headEnd() {
+            ServerSubLevel torso = torso();
+            String head = generatedHead(type);
+            Bone headBone = head == null ? null : rig.bone(head).orElse(null);
+            if (torso == null) {
+                return new Vector3d(Double.NaN);
+            }
+            Bone torsoBone = bone(torsoBody());
+            Vector3d middle = new Vector3d(torsoBone.boxMin()).add(new Vector3d(torsoBone.boxMax())).mul(0.5);
+            new Quaterniond(torsoBone.rotation()).transform(middle).add(new Vector3d(torsoBone.offset()));
+            boolean upright = headBone != null && Math.abs(headBone.offset().y - middle.y) > Math.abs(headBone.offset().z - middle.z);
+            return modelToWorld(torsoBody(), torso).transform(upright ? new Vector3d(0, -1, 0) : new Vector3d(0, 0, -1));
+        }
+
         /** Where the torso's own right (the model's -X) points in the world. */
         Vector3d right() {
             ServerSubLevel torso = torso();
@@ -863,22 +882,19 @@ public final class RigComparison {
         return held != null && toward != null && toward.anchorParent(held).distance(hook.hookedAnchor()) < 1.0e-6;
     }
 
-    /** Take a limb off for good: the cuts through its joint, then its body gone. Returns its live mass. */
+    /**
+     * Take a limb off for good: the cuts through its joint, then its body gone. Returns its live mass. The piece is found by
+     * its own body, not by its name: tests share one world, and another test's severed leg of the same name may lie about.
+     */
     static double cutOff(Subject s, String body) {
         ServerSubLevel limb = s.body(body);
         double mass = limb == null ? 0.0 : limb.getMassTracker().getMass();
+        UUID limbId = limb == null ? null : limb.getUniqueId();
         CarcassSavedData.Carcass carcass = s.carcass();
         for (int i = 0; i < CarcassButchery.CUTS_TO_SEVER && CarcassButchery.isAttached(carcass, body); i++) {
             CarcassButchery.cut(s.level, null, carcass, body, null);
         }
-        CarcassSavedData.Carcass piece = null;
-        for (CarcassSavedData.Carcass c : CarcassSavedData.get(s.level).all()) {
-            if (c.bones.containsKey(body) && c.entity.equals(carcass.entity)) {
-                piece = c;
-            }
-        }
-        if (piece != null && piece.bones.get(body) != null
-                && SubLevelContainer.getContainer(s.level).getSubLevel(piece.bones.get(body)) instanceof ServerSubLevel gone && !gone.isRemoved()) {
+        if (limbId != null && SubLevelContainer.getContainer(s.level).getSubLevel(limbId) instanceof ServerSubLevel gone && !gone.isRemoved()) {
             SubLevelContainer.getContainer(s.level).removeSubLevel(gone, SubLevelRemovalReason.REMOVED);
         }
         return mass;

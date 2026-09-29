@@ -104,6 +104,9 @@ final class RigScenarios {
                     double away = flat.length() < 1.0e-3 ? 180.0 : RigComparison.angleDeg(flat, blow);
                     // a carcass still on its feet leans some way or other: it has gone down away from the blow only
                     // when it is on its side too
+                    String head = RigComparison.generatedHead(type);
+                    one.put("head_below_neck", neckMinusHead(s), "blocks")
+                            .put("head_ground", headOnTheGround(s, head, helper.absolutePos(new BlockPos(0, RigComparison.FLOOR, 0)).getY()) ? 1 : 0, "yes/no");
                     four.put("tilt_deg", tilt, "degrees")
                             .put("tilt_dir_err_deg", away, "degrees")
                             .put("down_away", tilt >= 45.0 && away <= 60.0 ? 1 : 0, "yes/no")
@@ -258,33 +261,44 @@ final class RigScenarios {
     }
 
     /**
-     * Criterion 3: hooked by the rearmost leg and dragged away (it must come round rear first), or by the head (it must
-     * follow head first), hooked at the middle of that part. The stand-in player walks seven blocks in seventy ticks;
-     * judged at tick 80.
+     * Criterion 3: hooked by the rearmost leg and dragged away (it must come round rear first, or feet first for a body
+     * that stands upright), or by the head (it must follow head first), hooked at the middle of that part; the way the
+     * body points is its head end (Subject#headEnd). The stand-in player hooks it from beside it, a block and a
+     * half off its middle line on the side of the part, and walks the way the other end points, passing beside the
+     * carcass (not through it: the stand-in is not solid, and a drag holds off while the hooked part touches its dragger,
+     * so a path through the carcass carried it along under the player's feet): seven blocks in seventy ticks. Judged on
+     * the second half of the walk, while it is being dragged (the middle of how far the hooked end is off the way it is
+     * dragged, ticks 36 to 70), and once more at tick 80, stopped.
      */
     static void hooked(GameTestHelper helper, EntityType<? extends Mob> type, boolean byTheHead, Consumer<Numbers> done) {
-        // hind leg: facing east at x 3, dragged east from behind it; head: facing east at x 8, dragged west past it
+        // hind leg: facing east at x 3, dragged east; head: facing east at x 8, dragged west
         Subject s = RigComparison.assembled(helper, type, new Vec3(byTheHead ? 7.5 : 3.5, 2, 5.5), EAST);
         if (s == null) {
             done.accept(new Numbers().broken("no carcass"));
             return;
         }
-        String part = byTheHead ? RigComparison.generatedHead(type) : RigComparison.generatedLegs(type).stream().findFirst().orElse(null);
-        String body = part;
+        String body = byTheHead ? RigComparison.generatedHead(type) : RigComparison.generatedLegs(type).stream().findFirst().orElse(null);
         Vector3d travel = byTheHead ? new Vector3d(-1, 0, 0) : new Vector3d(1, 0, 0);
-        double fromX = byTheHead ? 9.5 : 2.0;
-        double toX = byTheHead ? 2.0 : 9.0;
+        Vector3d partAt = body == null ? null : s.middle(body);
+        Vector3d torsoAt = s.torsoCentre();
+        // beside the part, on its side (the head, on the middle line, from the south)
+        double side = partAt == null || byTheHead || Math.abs(partAt.z - torsoAt.z) < 0.05 ? 1.0 : Math.signum(partAt.z - torsoAt.z);
+        double laneZ = helper.relativeVec(new Vec3(0, 0, torsoAt.z)).z + 1.5 * side;
+        double fromX = partAt == null ? 5.5 : helper.relativeVec(new Vec3(partAt.x, 0, 0)).x;
+        double toX = fromX + 7.0 * travel.x;
         Player player = helper.makeMockPlayer(GameType.SURVIVAL);
         player.setItemInHand(InteractionHand.MAIN_HAND, new ItemStack(BBItems.MEAT_HOOK.get()));
         int[] t = {0};
         int[] turned = {-1};
         double[] gapSum = {0.0};
         int[] gapN = {0};
+        java.util.List<Double> walking = new java.util.ArrayList<>();
         boolean[] finished = {false};
         boolean[] started = {false};
+        float yaw = byTheHead ? RigScenarios.WEST : RigScenarios.EAST;
         // the tick listener is set now: one added from inside another test tick would break the game's own list of them
         helper.runAfterDelay(5, () -> {
-            place(helper, player, fromX, 2, byTheHead ? RigScenarios.WEST : RigScenarios.EAST);
+            place(helper, player, fromX, 2, laneZ, yaw);
             if (body == null || !s.hook(player, body)) {
                 finished[0] = true;
                 done.accept(new Numbers().broken("could not hook the " + (byTheHead ? "head" : "rearmost leg")));
@@ -298,13 +312,16 @@ final class RigScenarios {
             }
             int now = ++t[0];
             double x = fromX + (toX - fromX) * Math.min(1.0, now / 70.0);
-            place(helper, player, x, 2, byTheHead ? RigScenarios.WEST : RigScenarios.EAST);
+            place(helper, player, x, 2, laneZ, yaw);
             CarcassDrag.tick(s.level, player);
-            Vector3d leading = byTheHead ? s.forward() : new Vector3d(s.forward()).negate();
+            Vector3d leading = byTheHead ? s.headEnd() : new Vector3d(s.headEnd()).negate();
             leading.y = 0;
             double angle = RigComparison.angleDeg(leading, travel);
             if (turned[0] < 0 && angle < 45.0) {
                 turned[0] = now;
+            }
+            if (now >= 36 && now <= 70) {
+                walking.add(angle);
             }
             CarcassDrag.Drag drag = CarcassDrag.current(player);
             if (drag != null && SubLevelContainer.getContainer(s.level).getSubLevel(drag.subLevel) instanceof ServerSubLevel held) {
@@ -316,12 +333,24 @@ final class RigScenarios {
                 finished[0] = true;
                 boolean broke = !CarcassDrag.isDragging(player);
                 CarcassDrag.stop(s.level, player);
-                done.accept(new Numbers().put(byTheHead ? "head_first_deg" : "rear_first_deg", angle, "degrees")
+                java.util.List<Double> sorted = walking.stream().sorted().toList();
+                done.accept(new Numbers().put(byTheHead ? "head_first_deg" : "rear_first_deg", sorted.isEmpty() ? Double.NaN : sorted.get(sorted.size() / 2), "degrees")
+                        .put("stopped_deg", angle, "degrees")
                         .put("turn_ticks", turned[0] < 0 ? 200 : turned[0], "ticks")
                         .put("mean_gap", gapN[0] == 0 ? Double.NaN : gapSum[0] / gapN[0], "blocks")
                         .put("drag_broke", broke ? 1 : 0, "yes/no"));
             }
         });
+    }
+
+    /** Move the stand-in player to a spot of the arena, looking along the way it walks, ready for the drag to read it. */
+    static void place(GameTestHelper helper, Player player, double x, double y, double z, float yaw) {
+        Vec3 world = helper.absoluteVec(new Vec3(x, y, z));
+        player.setPos(world);
+        player.setYRot(yaw);
+        player.setYHeadRot(yaw);
+        player.setXRot(0.0F);
+        player.setOldPosAndRot();
     }
 
     /** Move the stand-in player to a spot of the arena, looking along the way it walks, ready for the drag to read it. */
@@ -384,7 +413,8 @@ final class RigScenarios {
                     }
                 }
                 n.put("limb_hang_deg", legs == 0 ? Double.NaN : sum / legs, "degrees")
-                        .put("head_hang_deg", headBody == null ? Double.NaN : s.poseChange(headBody), "degrees");
+                        .put("head_hang_deg", headBody == null ? Double.NaN : s.poseChange(headBody), "degrees")
+                        .put("body_off_upright_deg", RigComparison.angleDeg(s.headEnd(), new Vector3d(0, 1, 0)), "degrees");
                 at80[0] = s.torsoCentre();
                 double[] knocked = RigComparison.knock(s, new Vector3d(1, 0, 0));
                 n.put("knock_impulse", knocked[0], "sable mass x blocks a second").put("knock_speed", knocked[1], "blocks a second");
@@ -524,13 +554,49 @@ final class RigScenarios {
             cut.wake();
             whole.wake();
         });
-        helper.runAfterDelay(120, () -> {
-            if (hung[0]) {
-                done.accept(new Numbers()
-                        .put("tilt_change_deg", RigComparison.angleDeg(whole.up(), cut.up()), "degrees")
-                        .put("mass_lost_pct", total[0] <= 0 ? Double.NaN : 100.0 * lost[0] / total[0], "percent"));
-            }
-        });
+        // how far the side that lost the leg rides up, against the whole one, degrees: the middle of ticks 200 to 240
+        java.util.List<Double> rise = new java.util.ArrayList<>();
+        String cutLeg = RigComparison.generatedLegs(type).stream().findFirst().orElse(null);
+        for (int tick = 200; tick <= 240; tick++) {
+            boolean last = tick == 240;
+            helper.runAfterDelay(tick, () -> {
+                if (!hung[0]) {
+                    return;
+                }
+                if (cutLeg != null) {
+                    rise.add(sideHeightDeg(cut, cutLeg) - sideHeightDeg(whole, cutLeg));
+                }
+                if (last) {
+                    java.util.List<Double> sorted = rise.stream().filter(Double::isFinite).sorted().toList();
+                    done.accept(new Numbers()
+                            .put("tilt_change_deg", RigComparison.angleDeg(whole.up(), cut.up()), "degrees")
+                            .put("cut_side_rise_deg", sorted.isEmpty() ? Double.NaN : sorted.get(sorted.size() / 2), "degrees")
+                            .put("mass_lost_pct", total[0] <= 0 ? Double.NaN : 100.0 * lost[0] / total[0], "percent"));
+                }
+            });
+        }
+    }
+
+    /** How far the torso's side a leg is on points above level, degrees (0 level, above 0 that side higher). */
+    static double sideHeightDeg(Subject s, String leg) {
+        ServerSubLevel torso = s.torso();
+        if (torso == null) {
+            return Double.NaN;
+        }
+        Vector3d side = s.modelToWorld(s.torsoBody(), torso).transform(new Vector3d(Math.signum(s.bone(leg).offset().x), 0, 0));
+        return Math.toDegrees(Math.asin(Math.max(-1.0, Math.min(1.0, side.y))));
+    }
+
+    /** Height of where the neck meets the torso, less the height of the head's middle, in blocks. */
+    static double neckMinusHead(Subject s) {
+        ServerSubLevel torso = s.torso();
+        com.avicagan.bloodandbones.carcass.CarcassJoints.Spec neck = com.avicagan.bloodandbones.carcass.ShackleHookBlockEntity.jointTowardHead(s.carcass());
+        String headBone = RigComparison.generatedHead(s.type);
+        Vector3d head = headBone == null ? null : s.middle(headBone);
+        if (torso == null || neck == null || head == null) {
+            return Double.NaN;
+        }
+        return torso.logicalPose().transformPosition(neck.anchorParent(torso), new Vector3d()).y - head.y;
     }
 
     /**
