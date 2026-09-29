@@ -27,6 +27,9 @@
           "bloodandbones:companion",
           "bloodandbones:courier"
         ],
+        "knacks": {
+          "bloodandbones:courier": 1.25
+        },
         "disposition": "docile",
         "variants": [
           {
@@ -38,6 +41,9 @@
               "bloodandbones:bodyguard",
               "bloodandbones:guard"
             ],
+            "knacks": {
+              "bloodandbones:guard": 1.5
+            },
             "disposition": "brave",
             "bite": {
               "style": "claw",
@@ -58,7 +64,10 @@
             "jobs": [
               "bloodandbones:sentry",
               "bloodandbones:companion"
-            ]
+            ],
+            "knacks": {
+              "bloodandbones:sentry": 1.25
+            }
           },
           {
             "if": {

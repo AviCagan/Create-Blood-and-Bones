@@ -5,7 +5,6 @@
   "parts": {
     "head": {
       "minion": {
-        "disposition": "meek",
         "bite": {
           "style": "punch",
           "damage": 0.5

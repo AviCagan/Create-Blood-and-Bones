@@ -23,6 +23,11 @@
           "bloodandbones:guard",
           "bloodandbones:herder"
         ],
+        "knacks": {
+          "bloodandbones:hunter": 1.5,
+          "bloodandbones:herder": 1.5,
+          "bloodandbones:guard": 1.25
+        },
         "disposition": "brave",
         "bite": {
           "style": "bite",
@@ -59,6 +64,11 @@
         "boots": [
           "bloodandbones:silent_steps"
         ]
+      }
+    },
+    "leg.front": {
+      "minion": {
+        "grip": "paw"
       }
     }
   },

@@ -27,6 +27,10 @@
           "bloodandbones:sentry",
           "bloodandbones:scavenger"
         ],
+        "knacks": {
+          "bloodandbones:courier": 1.25,
+          "bloodandbones:sentry": 1.25
+        },
         "disposition": "nocturnal"
       },
       "armour": [

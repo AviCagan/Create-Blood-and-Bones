@@ -20,6 +20,9 @@
           "bloodandbones:hunter",
           "bloodandbones:companion"
         ],
+        "knacks": {
+          "bloodandbones:hunter": 1.25
+        },
         "prey": [
           "#minecraft:axolotl_hunt_targets"
         ]

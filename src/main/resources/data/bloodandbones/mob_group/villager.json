@@ -25,6 +25,12 @@
           "bloodandbones:farmer",
           "bloodandbones:courier"
         ],
+        "knacks": {
+          "bloodandbones:surgeon": 1.5,
+          "bloodandbones:farmer": 1.25,
+          "bloodandbones:guard": 1.0
+        },
+        "surgeon": true,
         "variants": [
           {
             "if": {
@@ -33,7 +39,24 @@
             "jobs": [
               "bloodandbones:surgeon",
               "bloodandbones:courier"
-            ]
+            ],
+            "knacks": {
+              "bloodandbones:farmer": 1.0
+            }
+          },
+          {
+            "if": {
+              "trait": "profession",
+              "in": [
+                "librarian",
+                "cartographer",
+                "mason",
+                "none"
+              ]
+            },
+            "knacks": {
+              "bloodandbones:courier": 1.5
+            }
           },
           {
             "if": {
@@ -43,7 +66,10 @@
             "jobs": [
               "bloodandbones:surgeon",
               "bloodandbones:farmer"
-            ]
+            ],
+            "knacks": {
+              "bloodandbones:farmer": 1.5
+            }
           },
           {
             "if": {
@@ -53,7 +79,10 @@
             "jobs": [
               "bloodandbones:surgeon",
               "bloodandbones:fisher"
-            ]
+            ],
+            "knacks": {
+              "bloodandbones:fisher": 1.5
+            }
           },
           {
             "if": {
@@ -63,7 +92,10 @@
             "jobs": [
               "bloodandbones:surgeon",
               "bloodandbones:butcher"
-            ]
+            ],
+            "knacks": {
+              "bloodandbones:butcher": 1.5
+            }
           },
           {
             "if": {
@@ -73,7 +105,10 @@
             "jobs": [
               "bloodandbones:surgeon",
               "bloodandbones:medic"
-            ]
+            ],
+            "knacks": {
+              "bloodandbones:medic": 1.5
+            }
           },
           {
             "if": {
@@ -83,7 +118,10 @@
             "jobs": [
               "bloodandbones:surgeon",
               "bloodandbones:herder"
-            ]
+            ],
+            "knacks": {
+              "bloodandbones:herder": 1.5
+            }
           },
           {
             "if": {
@@ -93,7 +131,10 @@
             "jobs": [
               "bloodandbones:surgeon",
               "bloodandbones:sentry"
-            ]
+            ],
+            "knacks": {
+              "bloodandbones:sentry": 1.5
+            }
           },
           {
             "if": {
@@ -103,7 +144,10 @@
             "jobs": [
               "bloodandbones:surgeon",
               "bloodandbones:hauler"
-            ]
+            ],
+            "knacks": {
+              "bloodandbones:hauler": 1.5
+            }
           },
           {
             "if": {
@@ -117,7 +161,10 @@
             "jobs": [
               "bloodandbones:surgeon",
               "bloodandbones:guard"
-            ]
+            ],
+            "knacks": {
+              "bloodandbones:guard": 1.5
+            }
           },
           {
             "if": {
@@ -126,7 +173,11 @@
             },
             "jobs": [
               "bloodandbones:companion"
-            ]
+            ],
+            "knacks": {
+              "bloodandbones:surgeon": 1.0
+            },
+            "disposition": "dim"
           }
         ],
         "disposition": "meek"

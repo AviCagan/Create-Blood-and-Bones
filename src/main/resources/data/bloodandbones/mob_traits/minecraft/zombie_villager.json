@@ -23,7 +23,10 @@
   "parts": {
     "head": {
       "minion": {
-        "pace": 0.5
+        "pace": 0.5,
+        "knacks": {
+          "bloodandbones:surgeon": 0.5
+        }
       }
     }
   }

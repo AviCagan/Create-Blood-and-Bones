@@ -34,6 +34,10 @@
           "bloodandbones:scavenger",
           "bloodandbones:digger"
         ],
+        "knacks": {
+          "bloodandbones:courier": 1.25,
+          "bloodandbones:digger": 1.25
+        },
         "disposition": "skittish",
         "bite": {
           "style": "bite",

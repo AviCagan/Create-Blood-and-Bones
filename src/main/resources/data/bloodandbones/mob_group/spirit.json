@@ -28,7 +28,11 @@
         "jobs": [
           "bloodandbones:scavenger",
           "bloodandbones:bodyguard"
-        ]
+        ],
+        "knacks": {
+          "bloodandbones:courier": 1.5,
+          "bloodandbones:guard": 1.25
+        }
       },
       "armour": [
         "bloodandbones:spectral_sight"

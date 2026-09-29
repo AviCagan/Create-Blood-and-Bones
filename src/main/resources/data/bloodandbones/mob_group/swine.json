@@ -24,6 +24,10 @@
           "bloodandbones:hunter",
           "bloodandbones:courier"
         ],
+        "knacks": {
+          "bloodandbones:hunter": 1.25,
+          "bloodandbones:digger": 1.25
+        },
         "bite": {
           "style": "bite",
           "damage": 1.5

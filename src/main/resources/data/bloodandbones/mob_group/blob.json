@@ -32,6 +32,10 @@
           "bloodandbones:courier",
           "bloodandbones:companion"
         ],
+        "knacks": {
+          "bloodandbones:guard": 1.25,
+          "bloodandbones:courier": 1.25
+        },
         "disposition": "brave",
         "bite": {
           "style": "slam"

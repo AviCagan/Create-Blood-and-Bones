@@ -39,7 +39,11 @@
         "jobs": [
           "bloodandbones:fisher",
           "bloodandbones:courier"
-        ]
+        ],
+        "knacks": {
+          "bloodandbones:fisher": 1.5,
+          "bloodandbones:courier": 1.25
+        }
       },
       "armour": [
         {

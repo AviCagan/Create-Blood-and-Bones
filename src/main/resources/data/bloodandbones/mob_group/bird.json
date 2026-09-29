@@ -38,6 +38,9 @@
           "bloodandbones:companion",
           "bloodandbones:courier"
         ],
+        "knacks": {
+          "bloodandbones:courier": 1.5
+        },
         "disposition": "skittish",
         "bite": {
           "style": "bite"

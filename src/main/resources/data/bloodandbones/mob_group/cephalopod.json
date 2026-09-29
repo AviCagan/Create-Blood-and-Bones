@@ -41,7 +41,8 @@
           "gait": "undulate",
           "swim_speed": 0.35,
           "land_mode": "slither"
-        }
+        },
+        "grip": "tentacle"
       },
       "armour": {
         "leggings": [

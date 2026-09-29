@@ -43,6 +43,10 @@
           "bloodandbones:courier",
           "bloodandbones:companion"
         ],
+        "knacks": {
+          "bloodandbones:fisher": 1.5,
+          "bloodandbones:courier": 1.25
+        },
         "no_tool": [
           "bloodandbones:fisher"
         ],

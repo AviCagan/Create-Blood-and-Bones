@@ -39,6 +39,10 @@
           "bloodandbones:sentry",
           "bloodandbones:companion"
         ],
+        "knacks": {
+          "bloodandbones:courier": 1.5,
+          "bloodandbones:sentry": 1.25
+        },
         "disposition": "loyal",
         "bite": {
           "style": "bite"

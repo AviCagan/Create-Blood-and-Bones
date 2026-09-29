@@ -32,6 +32,10 @@
           "bloodandbones:guard",
           "bloodandbones:hauler"
         ],
+        "knacks": {
+          "bloodandbones:hauler": 1.5,
+          "bloodandbones:guard": 1.25
+        },
         "bite": {
           "style": "ram",
           "damage": 3.0
