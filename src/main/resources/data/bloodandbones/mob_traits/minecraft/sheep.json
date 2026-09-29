@@ -39,5 +39,15 @@
         "bloodandbones:lanolin"
       ]
     }
+  },
+  "butchery": {
+    "meat": "minecraft:mutton",
+    "hide_extras": [
+      {
+        "item": "minecraft:{wool}_wool",
+        "count": 2.0,
+        "kind": "hide"
+      }
+    ]
   }
 }

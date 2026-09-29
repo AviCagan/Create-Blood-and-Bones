@@ -66,5 +66,8 @@
     "drawback": [
       "bloodandbones:screamer"
     ]
+  },
+  "butchery": {
+    "meat": "minecraft:mutton"
   }
 }

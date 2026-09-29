@@ -2,9 +2,6 @@
   "entity": "minecraft:hoglin",
   "model": "minecraft:hoglin",
   "texture": "minecraft:textures/entity/hoglin/hoglin.png",
-  "butchery": {
-    "meat": "minecraft:porkchop"
-  },
   "baby": {
     "head": [
       "head"

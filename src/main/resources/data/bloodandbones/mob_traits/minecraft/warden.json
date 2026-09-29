@@ -46,5 +46,21 @@
         "bloodandbones:sonic_boom"
       ]
     }
+  },
+  "butchery": {
+    "part_extras": {
+      "bone/body": [
+        {
+          "item": "minecraft:sculk_catalyst",
+          "count": 1.0,
+          "kind": "offal"
+        },
+        {
+          "item": "minecraft:echo_shard",
+          "count": 0.25,
+          "kind": "other"
+        }
+      ]
+    }
   }
 }

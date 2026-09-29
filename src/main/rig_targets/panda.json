@@ -25,17 +25,6 @@
       ]
     }
   },
-  "butchery": {
-    "part_extras": {
-      "body": [
-        {
-          "item": "minecraft:bamboo",
-          "count": 3.0,
-          "kind": "offal"
-        }
-      ]
-    }
-  },
   "baby": {
     "head": [
       "head"

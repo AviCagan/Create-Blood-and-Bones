@@ -47,8 +47,7 @@ public final class RigDerivation {
             List<String> hidden = new ArrayList<>(target.hidden());
             hidden.addAll(equipment);
             target = new RigTarget(target.entity(), target.model(), target.layer(), target.texture(), target.variantNames(), target.passes(), target.scale(),
-                    target.rotTime(), target.torso(), List.copyOf(hidden), target.merge(), target.attach(), target.parents(), target.boxes(), target.joints(),
-                    target.butchery());
+                    target.rotTime(), target.torso(), List.copyOf(hidden), target.merge(), target.attach(), target.parents(), target.boxes(), target.joints());
         }
         List<Seen> seen = new ArrayList<>();
         walk(root, "", new Vector3f(), new Quaternionf(), target, seen);
@@ -470,7 +469,7 @@ public final class RigDerivation {
             }
         }
         return new RigTarget(target.entity(), target.model(), target.layer(), target.texture(), target.variantNames(), target.passes(), target.scale(),
-                target.rotTime(), torso, target.hidden(), List.copyOf(merge), attach, parents, target.boxes(), target.joints(), target.butchery());
+                target.rotTime(), torso, target.hidden(), List.copyOf(merge), attach, parents, target.boxes(), target.joints());
     }
 
     /** Joint limits by part name, for bones the target does not spell out (JointRules, shared with the generic bodies). */

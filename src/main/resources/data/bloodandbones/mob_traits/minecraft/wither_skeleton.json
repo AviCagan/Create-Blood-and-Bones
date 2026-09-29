@@ -33,5 +33,15 @@
         "bloodandbones:wither_proof"
       ]
     }
+  },
+  "butchery": {
+    "part_extras": {
+      "body": [
+        {
+          "item": "minecraft:coal",
+          "count": 0.6
+        }
+      ]
+    }
   }
 }

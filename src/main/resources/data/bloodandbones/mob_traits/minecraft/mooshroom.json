@@ -28,5 +28,14 @@
         "bloodandbones:mycelial_gut"
       ]
     }
+  },
+  "butchery": {
+    "hide_extras": [
+      {
+        "item": "minecraft:{mushroom}_mushroom",
+        "count": 2.0,
+        "kind": "other"
+      }
+    ]
   }
 }

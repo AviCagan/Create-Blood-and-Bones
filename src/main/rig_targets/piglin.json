@@ -6,18 +6,6 @@
     "cloak",
     "ear"
   ],
-  "butchery": {
-    "meat": "minecraft:porkchop",
-    "part_extras": {
-      "body": [
-        {
-          "item": "minecraft:gold_nugget",
-          "count": 1.0,
-          "kind": "other"
-        }
-      ]
-    }
-  },
   "baby": {
     "head": [
       "head"

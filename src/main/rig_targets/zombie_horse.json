@@ -52,12 +52,6 @@
     }
   },
   "scale": 1.0,
-  "butchery": {
-    "meat": "minecraft:rotten_flesh",
-    "hide": "none",
-    "offal_per_weight": 0.0,
-    "fat_per_weight": 0.0
-  },
   "baby": {
     "head": [
       "head_parts"

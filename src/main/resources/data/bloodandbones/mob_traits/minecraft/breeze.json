@@ -19,5 +19,16 @@
       ]
     }
   },
-  "rot_time": 1000000
+  "rot_time": 1000000,
+  "butchery": {
+    "part_extras": {
+      "body/head": [
+        {
+          "item": "minecraft:breeze_rod",
+          "count": 1.5,
+          "kind": "other"
+        }
+      ]
+    }
+  }
 }

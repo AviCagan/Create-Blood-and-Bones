@@ -30,5 +30,19 @@
       ]
     }
   },
-  "rot_time": 36000
+  "rot_time": 36000,
+  "butchery": {
+    "part_extras": {
+      "head": [
+        {
+          "item": "minecraft:red_mushroom",
+          "count": 0.5
+        },
+        {
+          "item": "minecraft:brown_mushroom",
+          "count": 0.5
+        }
+      ]
+    }
+  }
 }

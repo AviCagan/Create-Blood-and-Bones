@@ -2,38 +2,5 @@
   "entity": "minecraft:witch",
   "model": "minecraft:witch",
   "texture": "minecraft:textures/entity/witch.png",
-  "butchery": {
-    "part_extras": {
-      "body": [
-        {
-          "item": "minecraft:glowstone_dust",
-          "count": 1.0,
-          "kind": "offal"
-        },
-        {
-          "item": "minecraft:redstone",
-          "count": 1.0,
-          "kind": "offal"
-        },
-        {
-          "item": "minecraft:sugar",
-          "count": 1.0,
-          "kind": "offal"
-        },
-        {
-          "item": "minecraft:glass_bottle",
-          "count": 0.5,
-          "kind": "other"
-        }
-      ],
-      "head": [
-        {
-          "item": "minecraft:spider_eye",
-          "count": 0.5,
-          "kind": "offal"
-        }
-      ]
-    }
-  },
   "scale": 0.9375
 }

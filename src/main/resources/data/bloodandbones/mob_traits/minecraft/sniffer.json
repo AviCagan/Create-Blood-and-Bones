@@ -33,5 +33,21 @@
       }
     }
   },
-  "rot_time": 40000
+  "rot_time": 40000,
+  "butchery": {
+    "part_extras": {
+      "root/bone/body": [
+        {
+          "item": "minecraft:torchflower_seeds",
+          "count": 0.5,
+          "kind": "offal"
+        },
+        {
+          "item": "minecraft:moss_block",
+          "count": 1.0,
+          "kind": "other"
+        }
+      ]
+    }
+  }
 }

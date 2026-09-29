@@ -29,5 +29,16 @@
         ]
       }
     }
+  },
+  "butchery": {
+    "part_extras": {
+      "body": [
+        {
+          "item": "minecraft:arrow",
+          "count": 2.0,
+          "kind": "other"
+        }
+      ]
+    }
   }
 }

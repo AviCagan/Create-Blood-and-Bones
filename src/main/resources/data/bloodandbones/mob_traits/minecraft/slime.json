@@ -19,5 +19,16 @@
       ]
     }
   },
-  "baby_yield": 0.25
+  "baby_yield": 0.25,
+  "butchery": {
+    "part_extras": {
+      "cube": [
+        {
+          "item": "minecraft:slime_ball",
+          "count": 4.0,
+          "kind": "offal"
+        }
+      ]
+    }
+  }
 }

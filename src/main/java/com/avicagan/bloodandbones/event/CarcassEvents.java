@@ -63,6 +63,8 @@ public class CarcassEvents {
         // the channel is optional, so a client without the mod must not be sent any of them
         java.util.List<com.avicagan.bloodandbones.network.RigSyncPayload> payloads = new java.util.ArrayList<>();
         RigManager.all().forEach((id, rig) -> payloads.add(new com.avicagan.bloodandbones.network.RigSyncPayload(java.util.Map.of(id, rig))));
+        java.util.Map<net.minecraft.resources.ResourceLocation, com.avicagan.bloodandbones.carcass.butchery.ButcheryTable> tables =
+                com.avicagan.bloodandbones.carcass.butchery.ButcheryManager.everyTable();
         event.getRelevantPlayers()
                 .filter(player -> player.connection.hasChannel(com.avicagan.bloodandbones.network.RigSyncPayload.TYPE))
                 .forEach(player -> {
@@ -70,9 +72,8 @@ public class CarcassEvents {
                     for (com.avicagan.bloodandbones.network.RigSyncPayload payload : payloads) {
                         net.neoforged.neoforge.network.PacketDistributor.sendToPlayer(player, payload);
                     }
-                    // the butchery tables are small enough to go in one
-                    net.neoforged.neoforge.network.PacketDistributor.sendToPlayer(player,
-                            new com.avicagan.bloodandbones.network.ButcherySyncPayload(com.avicagan.bloodandbones.carcass.butchery.ButcheryManager.all()));
+                    // every mob's butchery table (worked out from its groups, or a datapack's file), small enough to go in one
+                    net.neoforged.neoforge.network.PacketDistributor.sendToPlayer(player, new com.avicagan.bloodandbones.network.ButcherySyncPayload(tables));
                 });
     }
 

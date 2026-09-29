@@ -517,30 +517,112 @@ public class GroupTests {
     }
 
     /**
-     * A mob with no butchery table gets one from its groups (the giant, from the plain defaults: meat by size), a mob with
-     * one keeps its own.
+     * Every vanilla mob's butchery table, as the rig targets' own butchery sections wrote it before they moved into groups
+     * and mob files: a fingerprint of each table's every yield, bone by bone. A change here means a mob now butchers
+     * differently.
+     */
+    private static final Map<String, Integer> OLD_TABLES = Map.ofEntries(
+            Map.entry("allay", -1287331861), Map.entry("armadillo", 1476610694), Map.entry("axolotl", 1861744833), Map.entry("bat", -1842782252),
+            Map.entry("bee", -438996877), Map.entry("blaze", 1205860012), Map.entry("bogged", 284217038), Map.entry("breeze", 862564078),
+            Map.entry("camel", -1006325013), Map.entry("cat", 1936193317), Map.entry("cave_spider", -1158850331), Map.entry("chicken", -1097473371),
+            Map.entry("cod", -1135505453), Map.entry("cow", -60637547), Map.entry("creeper", -514560689), Map.entry("dolphin", 1231583912),
+            Map.entry("donkey", 722747869), Map.entry("drowned", 265721398), Map.entry("elder_guardian", 2063089293), Map.entry("enderman", 454611567),
+            Map.entry("endermite", 1217579934), Map.entry("evoker", -1281747390), Map.entry("fox", 1826460913), Map.entry("frog", -1676841933),
+            Map.entry("ghast", -611809911), Map.entry("glow_squid", 323269522), Map.entry("goat", -1787169288), Map.entry("guardian", -3906941),
+            Map.entry("hoglin", -1132204882), Map.entry("horse", 802021355), Map.entry("husk", -851244227), Map.entry("illusioner", 470160504),
+            Map.entry("iron_golem", -1827941541), Map.entry("llama", 1864820256), Map.entry("magma_cube", -240558180), Map.entry("mooshroom", 1976761893),
+            Map.entry("mule", -1326660280), Map.entry("ocelot", 1135512924), Map.entry("panda", -1149483112), Map.entry("parrot", 1686420305),
+            Map.entry("phantom", -382898846), Map.entry("pig", 1979798010), Map.entry("piglin", -861174795), Map.entry("piglin_brute", 1190090863),
+            Map.entry("pillager", -557817838), Map.entry("polar_bear", 888415520), Map.entry("pufferfish", -1519723779), Map.entry("rabbit", 1991030167),
+            Map.entry("ravager", 413317409), Map.entry("salmon", -1883773617), Map.entry("sheep", -1773195339), Map.entry("shulker", -841160273),
+            Map.entry("silverfish", -1000358861), Map.entry("skeleton", -488785632), Map.entry("skeleton_horse", -390317608), Map.entry("slime", 189502024),
+            Map.entry("sniffer", 637540456), Map.entry("snow_golem", 20158486), Map.entry("spider", 194254379), Map.entry("squid", -907047168),
+            Map.entry("stray", 994445182), Map.entry("strider", -532552688), Map.entry("tadpole", -1757486625), Map.entry("trader_llama", 1624811639),
+            Map.entry("turtle", 2009535757), Map.entry("vex", -357079242), Map.entry("villager", -1455282898), Map.entry("vindicator", 1399925997),
+            Map.entry("wandering_trader", -488287972), Map.entry("warden", 226084657), Map.entry("witch", 690364576), Map.entry("wither", -1735450502),
+            Map.entry("wither_skeleton", -396369769), Map.entry("wolf", 74035547), Map.entry("zoglin", -1466911560), Map.entry("zombie", 610946039),
+            Map.entry("zombie_horse", -102015283), Map.entry("zombie_villager", -211092677), Map.entry("zombified_piglin", 1176189563));
+
+    /**
+     * Butchery by group (rule 2), a mob's own file only where it differs: no mob has a table file (a datapack may give
+     * one), so every vanilla mob's table is worked out from its groups and gives what its own table gave; the giant, which
+     * no group gives butchery, gets the plain defaults (meat by size). Retuning a group retunes its mobs: on a copy of the
+     * server's data, the fowl group's hide doubled gives a chicken twice the feathers, and the grazer group's meat changed
+     * changes a cow's but not a goat's or a llama's (their own files name mutton and plain meat).
      */
     @GameTest(template = "empty", timeoutTicks = 20)
-    public static void butcheryComesFromGroupsWhereAMobHasNoTable(GameTestHelper helper) {
+    public static void butcheryComesFromGroupsAndRetunesByGroup(GameTestHelper helper) {
+        StringBuilder wrong = new StringBuilder();
+        if (OLD_TABLES.size() != RigManager.all().size()) {
+            wrong.append(' ').append(OLD_TABLES.size()).append(" old tables for ").append(RigManager.all().size()).append(" rigs");
+        }
+        for (Map.Entry<String, Integer> e : OLD_TABLES.entrySet()) {
+            ResourceLocation mob = ResourceLocation.withDefaultNamespace(e.getKey());
+            if (ButcheryManager.fileTable(mob).isPresent()) {
+                wrong.append(' ').append(e.getKey()).append(" has a table file");
+            }
+            ButcheryTable table = ButcheryManager.forEntity(mob).orElse(null);
+            int now = table == null ? 0 : ButcheryTable.CODEC.encodeStart(JsonOps.INSTANCE, table).getOrThrow().toString().hashCode();
+            if (now != e.getValue()) {
+                wrong.append(' ').append(e.getKey()).append(" butchers differently: ").append(table == null ? "no table"
+                        : ButcheryTable.CODEC.encodeStart(JsonOps.INSTANCE, table).getOrThrow());
+            }
+        }
         ResourceLocation giant = id(EntityType.GIANT);
         ButcheryTable table = ButcheryManager.forEntity(giant).orElse(null);
         if (table == null || ButcheryManager.fileTable(giant).isPresent()) {
-            helper.fail("A giant has no table of its own and should get one from its groups");
-            return;
+            wrong.append(" a giant has no table of its own and should get one from its groups");
+        } else {
+            Rig rig = RigManager.forEntity(giant).orElseThrow();
+            float meat = table.part("body").stream().filter(y -> y.kind().equals("meat")).map(Yield::count).findFirst().orElse(0.0F);
+            float expected = Math.round(rig.bone("body").orElseThrow().volume() * 8.0F * 100.0F) / 100.0F;
+            if (Math.abs(meat - expected) > 0.011F) {
+                wrong.append(" a giant's body should give meat by its size, ").append(expected).append(", got ").append(meat);
+            }
         }
-        Rig rig = RigManager.forEntity(giant).orElseThrow();
-        float meat = table.part("body").stream().filter(y -> y.kind().equals("meat")).map(Yield::count).findFirst().orElse(0.0F);
-        float expected = Math.round(rig.bone("body").orElseThrow().volume() * 8.0F * 100.0F) / 100.0F;
-        if (Math.abs(meat - expected) > 0.011F) {
-            helper.fail("A giant's body should give meat by its size, " + expected + ", got " + meat);
-            return;
+        // the retune, on a copy of the server's data
+        PartsData.Store store = new PartsData.Store();
+        RegistryOps<com.google.gson.JsonElement> ops = RegistryOps.create(JsonOps.INSTANCE, helper.getLevel().registryAccess());
+        for (PartsData.Kind kind : PartsData.Kind.values()) {
+            Map<ResourceLocation, String> files = new HashMap<>(PartsData.SERVER.raw(kind));
+            if (kind == PartsData.Kind.MOB_GROUP) {
+                for (String group : List.of("fowl", "grazer")) {
+                    ResourceLocation file = BloodAndBones.asResource(group);
+                    JsonObject json = JsonParser.parseString(files.get(file)).getAsJsonObject();
+                    JsonObject butchery = json.getAsJsonObject("butchery");
+                    if (group.equals("fowl")) {
+                        butchery.addProperty("hide_per_weight", 2.0F * butchery.get("hide_per_weight").getAsFloat());
+                    } else {
+                        butchery.addProperty("meat", "minecraft:cooked_beef");
+                    }
+                    files.put(file, json.toString());
+                }
+            }
+            store.load(kind, files, ops);
         }
-        ResourceLocation cow = id(EntityType.COW);
-        if (ButcheryManager.forEntity(cow).orElse(null) != ButcheryManager.fileTable(cow).orElse(null)) {
-            helper.fail("A cow's own table should win over its groups'");
+        float chicken = hide(ButcheryManager.forEntity(id(EntityType.CHICKEN)).orElseThrow());
+        float retuned = hide(ButcheryManager.byGroup(id(EntityType.CHICKEN), RigManager.forEntity(id(EntityType.CHICKEN)).orElseThrow(), store).orElseThrow());
+        if (Math.abs(retuned - Math.max(1.0F, 2.0F * chicken)) > 0.011F) {
+            wrong.append(" the fowl group's hide doubled should double a chicken's feathers: ").append(chicken).append(" then ").append(retuned);
+        }
+        for (EntityType<?> type : List.of(EntityType.COW, EntityType.LLAMA, EntityType.GOAT)) {
+            String meat = ButcheryManager.byGroup(id(type), RigManager.forEntity(id(type)).orElseThrow(), store).orElseThrow().part("body").stream()
+                    .filter(y -> y.kind().equals("meat")).map(Yield::item).findFirst().orElse("none");
+            String expected = type == EntityType.GOAT ? "minecraft:mutton" : type == EntityType.LLAMA ? "bloodandbones:raw_meat" : "minecraft:cooked_beef";
+            if (!meat.equals(expected)) {
+                wrong.append(' ').append(id(type)).append(" should give ").append(expected).append(" with the grazer group's meat changed, not ").append(meat);
+            }
+        }
+        if (!wrong.isEmpty()) {
+            helper.fail("Butchery by group:" + wrong);
             return;
         }
         helper.succeed();
+    }
+
+    /** How much hide skinning the whole of it gives. */
+    private static float hide(ButcheryTable table) {
+        return (float) table.hide().stream().filter(y -> y.kind().equals("hide")).mapToDouble(Yield::count).sum();
     }
 
     /**

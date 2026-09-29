@@ -64,7 +64,7 @@ public class NetworkTests {
     /** The butchery tables, all in one packet, come back whole and fit in a packet with room to spare. */
     @GameTest(template = "empty", timeoutTicks = 20)
     public static void butcheryTablesSurviveTheNetwork(GameTestHelper helper) {
-        Map<ResourceLocation, ButcheryTable> tables = ButcheryManager.all();
+        Map<ResourceLocation, ButcheryTable> tables = ButcheryManager.everyTable();
         if (tables.isEmpty()) {
             helper.fail("No butchery tables loaded");
         }

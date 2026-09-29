@@ -19,5 +19,8 @@
         "bloodandbones:hibernator"
       ]
     }
+  },
+  "butchery": {
+    "hide_per_weight": 4.0
   }
 }

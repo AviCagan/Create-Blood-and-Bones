@@ -43,28 +43,6 @@
       "contacts": false
     }
   },
-  "butchery": {
-    "meat": "minecraft:rabbit",
-    "hide": "minecraft:rabbit_hide",
-    "hide_per_weight": 20.0,
-    "part_extras": {
-      "right_haunch": [
-        {
-          "item": "minecraft:rabbit_foot",
-          "count": 0.1,
-          "kind": "other"
-        }
-      ],
-      "left_haunch": [
-        {
-          "item": "minecraft:rabbit_foot",
-          "count": 0.1,
-          "kind": "other"
-        }
-      ]
-    },
-    "meat_per_block": 40.0
-  },
   "baby": {
     "head": [
       "head"

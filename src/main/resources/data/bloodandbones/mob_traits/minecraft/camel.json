@@ -46,5 +46,17 @@
         "bloodandbones:four_chambers"
       ]
     }
+  },
+  "butchery": {
+    "meat": "bloodandbones:raw_meat",
+    "part_extras": {
+      "body": [
+        {
+          "item": "bloodandbones:animal_fat",
+          "count": 2.0,
+          "kind": "fat"
+        }
+      ]
+    }
   }
 }

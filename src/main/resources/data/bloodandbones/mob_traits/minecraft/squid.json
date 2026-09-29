@@ -8,5 +8,16 @@
         "bloodandbones:ink_gland"
       ]
     }
+  },
+  "butchery": {
+    "part_extras": {
+      "body": [
+        {
+          "item": "minecraft:ink_sac",
+          "count": 1.0,
+          "kind": "offal"
+        }
+      ]
+    }
   }
 }

@@ -24,5 +24,16 @@
         }
       ]
     }
+  },
+  "butchery": {
+    "part_extras": {
+      "body": [
+        {
+          "item": "minecraft:gold_nugget",
+          "count": 2.0,
+          "kind": "other"
+        }
+      ]
+    }
   }
 }

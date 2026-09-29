@@ -22,5 +22,21 @@
   },
   "hide": [
     "bloodandbones:insulated"
-  ]
+  ],
+  "butchery": {
+    "part_extras": {
+      "body": [
+        {
+          "item": "minecraft:cod",
+          "count": 1.5,
+          "kind": "offal"
+        },
+        {
+          "item": "minecraft:salmon",
+          "count": 0.75,
+          "kind": "offal"
+        }
+      ]
+    }
+  }
 }

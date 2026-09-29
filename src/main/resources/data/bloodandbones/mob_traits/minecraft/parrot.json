@@ -15,5 +15,9 @@
       }
     }
   },
-  "rot_time": 16000
+  "rot_time": 16000,
+  "butchery": {
+    "meat_per_block": 30.0,
+    "hide_per_weight": 40.0
+  }
 }

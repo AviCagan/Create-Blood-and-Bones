@@ -18,5 +18,16 @@
         "bloodandbones:dash"
       ]
     }
+  },
+  "butchery": {
+    "part_extras": {
+      "root/body": [
+        {
+          "item": "minecraft:iron_nugget",
+          "count": 1.0,
+          "kind": "other"
+        }
+      ]
+    }
   }
 }

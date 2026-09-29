@@ -92,5 +92,23 @@
       ]
     }
   },
-  "rot_time": 16000
+  "rot_time": 16000,
+  "butchery": {
+    "part_extras": {
+      "right_haunch": [
+        {
+          "item": "minecraft:rabbit_foot",
+          "count": 0.1,
+          "kind": "other"
+        }
+      ],
+      "left_haunch": [
+        {
+          "item": "minecraft:rabbit_foot",
+          "count": 0.1,
+          "kind": "other"
+        }
+      ]
+    }
+  }
 }

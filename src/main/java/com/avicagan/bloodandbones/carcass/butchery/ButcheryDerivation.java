@@ -11,24 +11,17 @@ import java.util.List;
 import java.util.Map;
 
 /**
- * Spreads a target's butchery settings over the rig's bones: meat and bone by each bone's volume, offal
- * and fat from the torso by the whole animal's weight, hide by weight. Counts are expected values; the
- * fraction is rolled as a chance when the carcass is taken apart. Datagen writes each vanilla mob's table with it from
- * its rig target; a mob with no table of its own gets one from it at once, from its groups' settings (ButcheryManager).
+ * Spreads butchery settings over the rig's bones: meat and bone by each bone's volume, offal and fat from the torso by the
+ * whole animal's weight, hide by weight. Counts are expected values; the fraction is rolled as a chance when the carcass
+ * is taken apart. Every mob's table is worked out with it from its groups' settings and its own mob file's
+ * (ButcheryManager), unless a datapack gives it a table file of its own.
  */
 public final class ButcheryDerivation {
     private ButcheryDerivation() {
     }
 
+    /** A part extra naming a bone the rig lacks is left out: a group's settings are shared by many shapes of mob. */
     public static ButcheryTable derive(Rig rig, ButcheryTarget target) {
-        return derive(rig, target, true);
-    }
-
-    /**
-     * @param strict whether a part extra naming a bone the rig lacks is an error (a rig target's, which names its own mob's
-     *               bones) or is left out (a group's, which many mobs share)
-     */
-    public static ButcheryTable derive(Rig rig, ButcheryTarget target, boolean strict) {
         Map<String, List<Yield>> parts = new LinkedHashMap<>();
         Bone torso = rig.root();
         for (Bone bone : rig.bones()) {
@@ -58,11 +51,6 @@ public final class ButcheryDerivation {
             hide.add(new Yield(target.hide(), round(Math.max(1.0F, rig.weight() * target.hidePerWeight())), "hide"));
         }
         hide.addAll(target.hideExtras());
-        for (String bone : target.partExtras().keySet()) {
-            if (strict && rig.bone(bone).isEmpty()) {
-                throw new IllegalStateException("part_extras names " + bone + " of " + rig.entity() + ", which is not a bone");
-            }
-        }
         return new ButcheryTable(rig.entity(), hide, parts);
     }
 

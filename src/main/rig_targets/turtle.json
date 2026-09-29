@@ -81,18 +81,6 @@
       "contacts": false
     }
   },
-  "butchery": {
-    "hide": "none",
-    "part_extras": {
-      "body": [
-        {
-          "item": "minecraft:turtle_scute",
-          "count": 0.5,
-          "kind": "other"
-        }
-      ]
-    }
-  },
   "baby": {
     "head": [
       "head"

@@ -55,5 +55,21 @@
       "bloodandbones:water_hurts"
     ]
   },
-  "rot_time": 1000000
+  "rot_time": 1000000,
+  "butchery": {
+    "part_extras": {
+      "head": [
+        {
+          "item": "minecraft:blaze_rod",
+          "count": 1.0,
+          "kind": "other"
+        },
+        {
+          "item": "minecraft:blaze_powder",
+          "count": 1.0,
+          "kind": "other"
+        }
+      ]
+    }
+  }
 }

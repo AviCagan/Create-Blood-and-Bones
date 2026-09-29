@@ -18,5 +18,16 @@
         "bloodandbones:mirror"
       ]
     }
+  },
+  "butchery": {
+    "part_extras": {
+      "body": [
+        {
+          "item": "minecraft:bow",
+          "count": 0.25,
+          "kind": "other"
+        }
+      ]
+    }
   }
 }

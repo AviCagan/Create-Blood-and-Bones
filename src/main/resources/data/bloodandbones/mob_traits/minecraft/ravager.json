@@ -56,5 +56,16 @@
         }
       ]
     }
+  },
+  "butchery": {
+    "part_extras": {
+      "body": [
+        {
+          "item": "minecraft:saddle",
+          "count": 1.0,
+          "kind": "other"
+        }
+      ]
+    }
   }
 }

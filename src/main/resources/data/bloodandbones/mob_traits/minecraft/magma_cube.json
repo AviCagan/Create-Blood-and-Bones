@@ -32,5 +32,16 @@
       ]
     }
   },
-  "baby_yield": 0.0
+  "baby_yield": 0.0,
+  "butchery": {
+    "part_extras": {
+      "inside_cube": [
+        {
+          "item": "minecraft:magma_cream",
+          "count": 2.0,
+          "kind": "offal"
+        }
+      ]
+    }
+  }
 }

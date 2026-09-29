@@ -55,5 +55,8 @@
         "bloodandbones:undying"
       ]
     }
+  },
+  "butchery": {
+    "offal_per_weight": 0.0
   }
 }

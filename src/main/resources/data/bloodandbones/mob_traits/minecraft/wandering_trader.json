@@ -18,5 +18,16 @@
         "bloodandbones:traders_draught"
       ]
     }
+  },
+  "butchery": {
+    "part_extras": {
+      "body": [
+        {
+          "item": "minecraft:emerald",
+          "count": 1.0,
+          "kind": "other"
+        }
+      ]
+    }
   }
 }

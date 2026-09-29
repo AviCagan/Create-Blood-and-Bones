@@ -31,5 +31,16 @@
         }
       }
     }
+  },
+  "butchery": {
+    "part_extras": {
+      "root/body": [
+        {
+          "item": "minecraft:amethyst_shard",
+          "count": 0.5,
+          "kind": "other"
+        }
+      ]
+    }
   }
 }

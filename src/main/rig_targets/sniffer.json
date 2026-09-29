@@ -2,22 +2,6 @@
   "entity": "minecraft:sniffer",
   "model": "minecraft:sniffer",
   "texture": "minecraft:textures/entity/sniffer/sniffer.png",
-  "butchery": {
-    "part_extras": {
-      "root/bone/body": [
-        {
-          "item": "minecraft:torchflower_seeds",
-          "count": 0.5,
-          "kind": "offal"
-        },
-        {
-          "item": "minecraft:moss_block",
-          "count": 1.0,
-          "kind": "other"
-        }
-      ]
-    }
-  },
   "baby": {
     "head": [],
     "head_scale": 0.5,

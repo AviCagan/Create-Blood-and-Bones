@@ -2,16 +2,5 @@
   "entity": "minecraft:wandering_trader",
   "model": "minecraft:wandering_trader",
   "texture": "minecraft:textures/entity/wandering_trader.png",
-  "butchery": {
-    "part_extras": {
-      "body": [
-        {
-          "item": "minecraft:emerald",
-          "count": 1.0,
-          "kind": "other"
-        }
-      ]
-    }
-  },
   "scale": 0.9375
 }

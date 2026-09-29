@@ -1,5 +1,4 @@
 {
-  "rot_time": 4000,
   "butchery": {
     "meat": "none",
     "meat_per_block": 8.0,
@@ -7,10 +6,15 @@
     "bone_per_block": 3.0,
     "bone_min": 0.5,
     "part_extras": {
-      "body": [
+      "head": [
         {
-          "item": "minecraft:slime_ball",
-          "count": 0.1,
+          "item": "minecraft:prismarine_shard",
+          "count": 2.0,
+          "kind": "other"
+        },
+        {
+          "item": "minecraft:cod",
+          "count": 1.0,
           "kind": "offal"
         }
       ]

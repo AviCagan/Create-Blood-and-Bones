@@ -45,5 +45,18 @@
       ]
     }
   },
-  "rot_time": 20000
+  "rot_time": 20000,
+  "butchery": {
+    "meat": "none",
+    "hide": "none",
+    "part_extras": {
+      "body": [
+        {
+          "item": "minecraft:string",
+          "count": 2.0,
+          "kind": "other"
+        }
+      ]
+    }
+  }
 }

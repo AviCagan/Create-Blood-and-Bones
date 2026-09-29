@@ -44,5 +44,24 @@
       ]
     }
   },
-  "rot_time": 24000
+  "rot_time": 24000,
+  "butchery": {
+    "meat": "bloodandbones:raw_meat",
+    "meat_per_block": 8.0,
+    "hide": "bloodandbones:raw_hide",
+    "bone": "minecraft:bone",
+    "bone_per_block": 3.0,
+    "bone_min": 0.5,
+    "offal_per_weight": 2.0,
+    "fat_per_weight": 1.0,
+    "part_extras": {
+      "body": [
+        {
+          "item": "minecraft:cod",
+          "count": 1.0,
+          "kind": "offal"
+        }
+      ]
+    }
+  }
 }

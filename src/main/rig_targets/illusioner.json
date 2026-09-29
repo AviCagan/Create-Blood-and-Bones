@@ -6,16 +6,5 @@
     "arms",
     "head/hat"
   ],
-  "butchery": {
-    "part_extras": {
-      "body": [
-        {
-          "item": "minecraft:bow",
-          "count": 0.25,
-          "kind": "other"
-        }
-      ]
-    }
-  },
   "scale": 0.9375
 }

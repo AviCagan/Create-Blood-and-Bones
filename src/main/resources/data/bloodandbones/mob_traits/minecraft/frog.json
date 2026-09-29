@@ -58,5 +58,18 @@
       ]
     }
   },
-  "rot_time": 16000
+  "rot_time": 16000,
+  "butchery": {
+    "meat_per_block": 30.0,
+    "hide": "none",
+    "part_extras": {
+      "root/body": [
+        {
+          "item": "minecraft:slime_ball",
+          "count": 0.3,
+          "kind": "offal"
+        }
+      ]
+    }
+  }
 }

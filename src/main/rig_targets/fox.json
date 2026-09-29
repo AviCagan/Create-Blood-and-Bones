@@ -6,9 +6,6 @@
     "red": "fox",
     "snow": "snow_fox"
   },
-  "butchery": {
-    "hide_per_weight": 5.0
-  },
   "baby": {
     "head": [
       "head"

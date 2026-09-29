@@ -2,19 +2,6 @@
   "entity": "minecraft:strider",
   "model": "minecraft:strider",
   "texture": "minecraft:textures/entity/strider/strider.png",
-  "butchery": {
-    "meat": "none",
-    "hide": "none",
-    "part_extras": {
-      "body": [
-        {
-          "item": "minecraft:string",
-          "count": 2.0,
-          "kind": "other"
-        }
-      ]
-    }
-  },
   "baby": {
     "head": [],
     "head_scale": 0.5,

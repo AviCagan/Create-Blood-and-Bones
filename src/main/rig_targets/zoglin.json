@@ -2,12 +2,6 @@
   "entity": "minecraft:zoglin",
   "model": "minecraft:zoglin",
   "texture": "minecraft:textures/entity/hoglin/zoglin.png",
-  "butchery": {
-    "meat": "minecraft:rotten_flesh",
-    "hide": "none",
-    "offal_per_weight": 0.5,
-    "fat_per_weight": 0.0
-  },
   "baby": {
     "head": [
       "head"

@@ -39,5 +39,21 @@
       ]
     }
   },
-  "rot_time": 24000
+  "rot_time": 24000,
+  "butchery": {
+    "part_extras": {
+      "body": [
+        {
+          "item": "minecraft:ghast_tear",
+          "count": 1.0,
+          "kind": "offal"
+        },
+        {
+          "item": "minecraft:gunpowder",
+          "count": 2.0,
+          "kind": "other"
+        }
+      ]
+    }
+  }
 }

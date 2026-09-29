@@ -45,5 +45,37 @@
         "bloodandbones:chilling"
       ]
     }
+  },
+  "butchery": {
+    "part_extras": {
+      "lower_body": [
+        {
+          "item": "minecraft:snowball",
+          "count": 4.0,
+          "kind": "other"
+        }
+      ],
+      "upper_body": [
+        {
+          "item": "minecraft:snowball",
+          "count": 2.0,
+          "kind": "other"
+        }
+      ],
+      "right_arm": [
+        {
+          "item": "minecraft:stick",
+          "count": 1.0,
+          "kind": "other"
+        }
+      ],
+      "left_arm": [
+        {
+          "item": "minecraft:stick",
+          "count": 1.0,
+          "kind": "other"
+        }
+      ]
+    }
   }
 }

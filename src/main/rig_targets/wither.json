@@ -87,43 +87,5 @@
       "contacts": false
     }
   },
-  "butchery": {
-    "meat": "none",
-    "hide": "none",
-    "bone_per_block": 12.0,
-    "bone_min": 1.0,
-    "offal_per_weight": 0.0,
-    "fat_per_weight": 0.0,
-    "part_extras": {
-      "center_head": [
-        {
-          "item": "minecraft:wither_skeleton_skull",
-          "count": 0.5,
-          "kind": "bone"
-        }
-      ],
-      "right_head": [
-        {
-          "item": "minecraft:wither_skeleton_skull",
-          "count": 0.25,
-          "kind": "bone"
-        }
-      ],
-      "left_head": [
-        {
-          "item": "minecraft:wither_skeleton_skull",
-          "count": 0.25,
-          "kind": "bone"
-        }
-      ],
-      "ribcage": [
-        {
-          "item": "minecraft:coal",
-          "count": 2.0,
-          "kind": "other"
-        }
-      ]
-    }
-  },
   "scale": 2.0
 }

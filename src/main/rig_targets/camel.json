@@ -16,17 +16,6 @@
       ]
     }
   },
-  "butchery": {
-    "part_extras": {
-      "body": [
-        {
-          "item": "bloodandbones:animal_fat",
-          "count": 2.0,
-          "kind": "fat"
-        }
-      ]
-    }
-  },
   "baby": {
     "head": [],
     "head_scale": 0.45,

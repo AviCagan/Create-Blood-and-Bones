@@ -2,20 +2,6 @@
   "entity": "minecraft:glow_squid",
   "model": "minecraft:glow_squid",
   "texture": "minecraft:textures/entity/squid/glow_squid.png",
-  "butchery": {
-    "hide": "none",
-    "bone": "none",
-    "fat_per_weight": 0.0,
-    "part_extras": {
-      "body": [
-        {
-          "item": "minecraft:glow_ink_sac",
-          "count": 1.0,
-          "kind": "offal"
-        }
-      ]
-    }
-  },
   "boxes": {
     "tentacle0": {
       "min": [

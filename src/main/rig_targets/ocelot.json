@@ -5,9 +5,6 @@
   "attach": {
     "tail2": "tail1"
   },
-  "butchery": {
-    "hide_per_weight": 4.0
-  },
   "baby": {
     "head": [
       "head"

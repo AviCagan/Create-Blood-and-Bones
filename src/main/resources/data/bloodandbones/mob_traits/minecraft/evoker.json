@@ -33,5 +33,21 @@
         "bloodandbones:totem"
       ]
     }
+  },
+  "butchery": {
+    "part_extras": {
+      "body": [
+        {
+          "item": "minecraft:totem_of_undying",
+          "count": 1.0,
+          "kind": "other"
+        },
+        {
+          "item": "minecraft:emerald",
+          "count": 0.5,
+          "kind": "other"
+        }
+      ]
+    }
   }
 }

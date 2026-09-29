@@ -39,5 +39,17 @@
       "bloodandbones:inverted_healing"
     ]
   },
-  "rot_time": 12000
+  "rot_time": 12000,
+  "butchery": {
+    "offal_per_weight": 0.0,
+    "part_extras": {
+      "body": [
+        {
+          "item": "minecraft:sand",
+          "count": 0.5,
+          "kind": "other"
+        }
+      ]
+    }
+  }
 }

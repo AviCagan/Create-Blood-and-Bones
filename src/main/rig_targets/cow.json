@@ -2,9 +2,6 @@
   "entity": "minecraft:cow",
   "model": "minecraft:cow",
   "texture": "minecraft:textures/entity/cow/cow.png",
-  "butchery": {
-    "meat": "minecraft:beef"
-  },
   "baby": {
     "head": [
       "head"

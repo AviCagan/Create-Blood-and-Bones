@@ -2,10 +2,6 @@
   "entity": "minecraft:axolotl",
   "model": "minecraft:axolotl",
   "texture": "minecraft:textures/entity/axolotl/axolotl_{variant}.png",
-  "butchery": {
-    "hide": "none",
-    "meat_per_block": 20.0
-  },
   "baby": {
     "head": [],
     "head_scale": 0.5,

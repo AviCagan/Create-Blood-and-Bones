@@ -140,27 +140,6 @@
       "contacts": false
     }
   },
-  "butchery": {
-    "meat": "none",
-    "hide": "none",
-    "bone": "none",
-    "offal_per_weight": 0.0,
-    "fat_per_weight": 0.0,
-    "part_extras": {
-      "body": [
-        {
-          "item": "minecraft:ghast_tear",
-          "count": 1.0,
-          "kind": "offal"
-        },
-        {
-          "item": "minecraft:gunpowder",
-          "count": 2.0,
-          "kind": "other"
-        }
-      ]
-    }
-  },
   "boxes": {
     "tentacle0": {
       "min": [

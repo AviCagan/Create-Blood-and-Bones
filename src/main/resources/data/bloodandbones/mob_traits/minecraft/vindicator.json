@@ -16,5 +16,16 @@
         ]
       }
     }
+  },
+  "butchery": {
+    "part_extras": {
+      "body": [
+        {
+          "item": "minecraft:emerald",
+          "count": 0.5,
+          "kind": "other"
+        }
+      ]
+    }
   }
 }

@@ -35,5 +35,10 @@
         "bloodandbones:thick_hide"
       ]
     }
+  },
+  "butchery": {
+    "meat_per_block": 20.0,
+    "hide": "minecraft:armadillo_scute",
+    "hide_per_weight": 12.0
   }
 }

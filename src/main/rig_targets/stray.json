@@ -79,14 +79,6 @@
       "contacts": false
     }
   },
-  "butchery": {
-    "meat": "none",
-    "hide": "none",
-    "bone_per_block": 12.0,
-    "bone_min": 1.0,
-    "offal_per_weight": 0.0,
-    "fat_per_weight": 0.0
-  },
   "passes": [
     {
       "layer": "outer",

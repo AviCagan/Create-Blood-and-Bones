@@ -18,5 +18,26 @@
         "bloodandbones:toxic_skin"
       ]
     }
+  },
+  "butchery": {
+    "meat": "none",
+    "meat_per_block": 8.0,
+    "bone": "none",
+    "bone_per_block": 3.0,
+    "bone_min": 0.5,
+    "part_extras": {
+      "body": [
+        {
+          "item": "minecraft:pufferfish",
+          "count": 1.0,
+          "kind": "meat"
+        },
+        {
+          "item": "minecraft:bone_meal",
+          "count": 0.1,
+          "kind": "bone"
+        }
+      ]
+    }
   }
 }

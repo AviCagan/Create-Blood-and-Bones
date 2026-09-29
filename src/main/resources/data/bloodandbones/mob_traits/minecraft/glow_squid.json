@@ -21,5 +21,16 @@
         "bloodandbones:luminous"
       ]
     }
+  },
+  "butchery": {
+    "part_extras": {
+      "body": [
+        {
+          "item": "minecraft:glow_ink_sac",
+          "count": 1.0,
+          "kind": "offal"
+        }
+      ]
+    }
   }
 }

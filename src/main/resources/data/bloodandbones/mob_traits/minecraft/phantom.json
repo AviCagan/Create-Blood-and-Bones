@@ -34,5 +34,12 @@
       ]
     }
   },
-  "rot_time": 6000
+  "rot_time": 6000,
+  "butchery": {
+    "meat": "minecraft:rotten_flesh",
+    "hide": "minecraft:phantom_membrane",
+    "hide_per_weight": 8.0,
+    "bone": "none",
+    "fat_per_weight": 0.0
+  }
 }

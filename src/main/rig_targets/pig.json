@@ -2,9 +2,6 @@
   "entity": "minecraft:pig",
   "model": "minecraft:pig",
   "texture": "minecraft:textures/entity/pig/pig.png",
-  "butchery": {
-    "meat": "minecraft:porkchop"
-  },
   "baby": {
     "head": [
       "head"

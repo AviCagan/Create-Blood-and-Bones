@@ -28,9 +28,6 @@
       ]
     }
   },
-  "butchery": {
-    "meat": "minecraft:mutton"
-  },
   "baby": {
     "head": [
       "head"

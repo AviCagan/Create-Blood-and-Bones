@@ -55,5 +55,8 @@
         "bloodandbones:insulated"
       ]
     }
-  ]
+  ],
+  "butchery": {
+    "hide_per_weight": 5.0
+  }
 }

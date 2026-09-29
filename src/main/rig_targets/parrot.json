@@ -12,11 +12,5 @@
     "left_leg": "body",
     "right_leg": "body",
     "tail": "body"
-  },
-  "butchery": {
-    "hide": "minecraft:feather",
-    "hide_per_weight": 40.0,
-    "meat": "minecraft:chicken",
-    "meat_per_block": 30.0
   }
 }

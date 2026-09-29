@@ -21,5 +21,23 @@
         "bloodandbones:venomous"
       ]
     }
+  },
+  "butchery": {
+    "part_extras": {
+      "head": [
+        {
+          "item": "minecraft:spider_eye",
+          "count": 1.0,
+          "kind": "offal"
+        }
+      ],
+      "body1": [
+        {
+          "item": "minecraft:string",
+          "count": 2.0,
+          "kind": "other"
+        }
+      ]
+    }
   }
 }

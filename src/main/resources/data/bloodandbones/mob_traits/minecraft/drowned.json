@@ -33,5 +33,16 @@
         "bloodandbones:gills"
       ]
     }
+  },
+  "butchery": {
+    "part_extras": {
+      "body": [
+        {
+          "item": "minecraft:copper_ingot",
+          "count": 0.2,
+          "kind": "other"
+        }
+      ]
+    }
   }
 }

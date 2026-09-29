@@ -18,12 +18,5 @@
       "stiffness": 0.8,
       "contacts": false
     }
-  },
-  "butchery": {
-    "meat": "none",
-    "hide": "none",
-    "bone": "none",
-    "offal_per_weight": 2.0,
-    "fat_per_weight": 0.0
   }
 }

@@ -19,5 +19,8 @@
       ]
     }
   },
-  "rot_time": 30000
+  "rot_time": 30000,
+  "butchery": {
+    "meat": "bloodandbones:raw_meat"
+  }
 }

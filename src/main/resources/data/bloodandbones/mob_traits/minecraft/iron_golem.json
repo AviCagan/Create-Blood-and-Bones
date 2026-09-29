@@ -78,5 +78,37 @@
         "level": 3
       }
     ]
+  },
+  "butchery": {
+    "part_extras": {
+      "body": [
+        {
+          "item": "minecraft:iron_ingot",
+          "count": 3.0,
+          "kind": "other"
+        }
+      ],
+      "head": [
+        {
+          "item": "minecraft:poppy",
+          "count": 0.5,
+          "kind": "other"
+        }
+      ],
+      "right_arm": [
+        {
+          "item": "minecraft:iron_nugget",
+          "count": 4.0,
+          "kind": "other"
+        }
+      ],
+      "left_arm": [
+        {
+          "item": "minecraft:iron_nugget",
+          "count": 4.0,
+          "kind": "other"
+        }
+      ]
+    }
   }
 }

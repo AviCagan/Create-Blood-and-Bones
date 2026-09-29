@@ -1,16 +1,5 @@
 {
   "entity": "minecraft:dolphin",
   "model": "minecraft:dolphin",
-  "texture": "minecraft:textures/entity/dolphin.png",
-  "butchery": {
-    "part_extras": {
-      "body": [
-        {
-          "item": "minecraft:cod",
-          "count": 1.0,
-          "kind": "offal"
-        }
-      ]
-    }
-  }
+  "texture": "minecraft:textures/entity/dolphin.png"
 }

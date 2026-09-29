@@ -11,5 +11,16 @@
       }
     }
   },
-  "rot_time": 8000
+  "rot_time": 8000,
+  "butchery": {
+    "part_extras": {
+      "body": [
+        {
+          "item": "minecraft:gold_nugget",
+          "count": 1.5,
+          "kind": "other"
+        }
+      ]
+    }
+  }
 }

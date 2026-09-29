@@ -2,16 +2,6 @@
   "entity": "minecraft:mooshroom",
   "model": "minecraft:mooshroom",
   "texture": "minecraft:textures/entity/cow/{variant}_mooshroom.png",
-  "butchery": {
-    "meat": "minecraft:beef",
-    "hide_extras": [
-      {
-        "item": "minecraft:{mushroom}_mushroom",
-        "count": 2.0,
-        "kind": "other"
-      }
-    ]
-  },
   "baby": {
     "head": [
       "head"

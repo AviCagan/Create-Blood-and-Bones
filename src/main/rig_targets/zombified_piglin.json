@@ -6,21 +6,6 @@
     "cloak",
     "ear"
   ],
-  "butchery": {
-    "meat": "minecraft:rotten_flesh",
-    "part_extras": {
-      "body": [
-        {
-          "item": "minecraft:gold_nugget",
-          "count": 1.5,
-          "kind": "other"
-        }
-      ]
-    },
-    "hide": "none",
-    "offal_per_weight": 0.5,
-    "fat_per_weight": 0.0
-  },
   "baby": {
     "head": [
       "head"
