@@ -912,6 +912,7 @@ public final class DevShowcase {
                 }
             }
             case 7 -> physics(mc);
+            case 8 -> groups(mc);
             default -> {
             }
         }
@@ -1058,10 +1059,144 @@ public final class DevShowcase {
                 ServerPlayer player = server.getPlayerList().getPlayers().get(0);
                 player.teleportTo(level, origin.getX() + 0.5, origin.getY(), origin.getZ() + 0.5, 0.0F, 0.0F);
             });
+            // then the groups yard, which goes on to the Ponder scenes
+            stage = 8;
+            ticks = 0;
+        }
+    }
+
+    // ---------------------------------------------------------------- the groups yard (docs/ARCHITECTURE-PROPOSAL.md 15.29)
+
+    private static long groupsAt = -1;
+    private static BlockPos groupsYard;
+    private static int groupsStep;
+    private static final java.util.List<CarcassSavedData.Carcass> GENERIC_SHOWN = new java.util.ArrayList<>();
+    private static CarcassSavedData.Carcass floater;
+    private static CarcassSavedData.Carcass sinker;
+
+    /**
+     * Mobs with no rig file of their own, photographed: a polar bear, a zombie villager, a cave spider and a bat whose rig
+     * files are taken away for the rest of the run (none of them is in any other shot), a tropical fish (which has none),
+     * and a baby wandering trader (whose rig has no baby shape), each built from its archetype's generic body at its size
+     * and wearing its own model's parts and skin ({@code groups_0}); then a glass tank of water with a chicken floating at
+     * the top and a cow sunk to the bottom, as their weight classes say ({@code groups_1}).
+     */
+    private static void groups(Minecraft mc) {
+        MinecraftServer server = mc.getSingleplayerServer();
+        if (server == null) {
+            return;
+        }
+        long now = server.overworld().getGameTime();
+        if (groupsAt < 0) {
+            groupsAt = now;
+            groupsYard = origin.offset(-60, 0, 40);
+            server.execute(() -> {
+                ServerPlayer player = server.getPlayerList().getPlayers().get(0);
+                player.teleportTo(player.serverLevel(), groupsYard.getX() + 0.5, groupsYard.getY(), groupsYard.getZ() - 4.5, 0.0F, 20.0F);
+            });
+            return;
+        }
+        long age = now - groupsAt;
+        if (groupsStep == 0 && age >= 10) {
+            groupsStep = 1;
+            server.execute(() -> groupsBuild(server.overworld()));
+        } else if (groupsStep == 1 && age >= 40 && tankAt != null) {
+            server.execute(() -> fillTank(server.overworld()));
+            groupsView(server, 6.0, 2.5, -2.5, 0.0F, 30.0F);
+        } else if (groupsStep == 1 && age < 150) {
+            // the row, from in front and a little above
+            groupsView(server, 6.0, 2.5, -2.5, 0.0F, 30.0F);
+        } else if (groupsStep == 1) {
+            groupsStep = 2;
+            Screenshot.grab(mc.gameDirectory, PREFIX + "groups_0.png", mc.getMainRenderTarget(), message -> {
+            });
+            server.execute(() -> {
+                ServerLevel level = server.overworld();
+                for (CarcassSavedData.Carcass carcass : GENERIC_SHOWN) {
+                    var rig = com.avicagan.bloodandbones.carcass.rig.RigManager.forCarcass(carcass).orElse(null);
+                    BloodAndBones.LOGGER.info("[showcase] generic {}{}: {} bodies {}, weight {}, at {}", carcass.entity, carcass.baby ? " (baby)" : "",
+                            rig != null && rig.fitted() ? "generic" : "own rig", carcass.bones.keySet(), rig == null ? 0 : rig.weight(),
+                            CarcassAssembler.boneWorldPosition(level, carcass, carcass.rootBone));
+                }
+            });
+        } else if (groupsStep == 2 && age < 330) {
+            // the tank, from the side, through its glass
+            groupsView(server, -1.5, 1.2, 14.5, -90.0F, 5.0F);
+        } else if (groupsStep == 2) {
+            groupsStep = 3;
+            Screenshot.grab(mc.gameDirectory, PREFIX + "groups_1.png", mc.getMainRenderTarget(), message -> {
+            });
+            server.execute(() -> {
+                ServerLevel level = server.overworld();
+                BloodAndBones.LOGGER.info("[showcase] tank: chicken's body at {}, cow's at {} (water from {} to {})",
+                        floater == null ? null : CarcassAssembler.boneWorldPosition(level, floater, floater.rootBone),
+                        sinker == null ? null : CarcassAssembler.boneWorldPosition(level, sinker, sinker.rootBone), groupsYard.getY(), groupsYard.getY() + 4);
+                GENERIC_SHOWN.clear();
+                ServerPlayer player = server.getPlayerList().getPlayers().get(0);
+                player.teleportTo(level, origin.getX() + 0.5, origin.getY(), origin.getZ() + 0.5, 0.0F, 0.0F);
+            });
             mc.options.hideGui = false;
             stage = 4;
             ticks = 0;
         }
+    }
+
+    private static void groupsView(MinecraftServer server, double x, double y, double z, float yaw, float pitch) {
+        server.execute(() -> {
+            ServerPlayer player = server.getPlayerList().getPlayers().get(0);
+            player.teleportTo(player.serverLevel(), groupsYard.getX() + x, groupsYard.getY() + y, groupsYard.getZ() + z, yaw, pitch);
+        });
+    }
+
+    private static void groupsBuild(ServerLevel level) {
+        BlockPos y = groupsYard;
+        int forever = Integer.MAX_VALUE;
+        for (EntityType<?> type : List.of(EntityType.POLAR_BEAR, EntityType.ZOMBIE_VILLAGER, EntityType.CAVE_SPIDER, EntityType.BAT)) {
+            com.avicagan.bloodandbones.carcass.rig.RigManager.hideForTest(net.minecraft.core.registries.BuiltInRegistries.ENTITY_TYPE.getKey(type), forever);
+        }
+        // the row, facing the camera (north), a stride apart: none has a rig file of its own now
+        List<EntityType<?>> row = List.of(EntityType.POLAR_BEAR, EntityType.ZOMBIE_VILLAGER, EntityType.CAVE_SPIDER, EntityType.TROPICAL_FISH, EntityType.BAT);
+        for (int i = 0; i < row.size(); i++) {
+            CarcassSavedData.Carcass carcass = carcass(level, row.get(i), y.offset(i * 2 + 1, 0, 2), false, false, 180.0F);
+            if (carcass != null) {
+                GENERIC_SHOWN.add(carcass);
+            }
+        }
+        CarcassSavedData.Carcass baby = carcass(level, EntityType.WANDERING_TRADER, y.offset(11, 0, 2), false, true, 180.0F);
+        if (baby != null) {
+            GENERIC_SHOWN.add(baby);
+        }
+        // the tank, behind the row: glass walls round water four deep, seven across
+        BlockPos tank = y.offset(2, 0, 10);
+        for (int dx = 0; dx <= 8; dx++) {
+            for (int dz = 0; dz <= 8; dz++) {
+                for (int dy = 0; dy <= 4; dy++) {
+                    boolean wall = dx == 0 || dx == 8 || dz == 0 || dz == 8;
+                    if (wall) {
+                        level.setBlockAndUpdate(tank.offset(dx, dy, dz), net.minecraft.world.level.block.Blocks.GLASS.defaultBlockState());
+                    } else if (dy < 4) {
+                        level.setBlockAndUpdate(tank.offset(dx, dy, dz), net.minecraft.world.level.block.Blocks.WATER.defaultBlockState());
+                    }
+                }
+            }
+        }
+        floater = null;
+        sinker = null;
+        // built a moment later, once the tank's water has colliders: the chicken on the floor, the cow with its back at the top
+        tankAt = tank;
+    }
+
+    /** Where the tank's water starts, once built; the two carcasses go in a moment later. */
+    private static volatile BlockPos tankAt;
+
+    private static void fillTank(ServerLevel level) {
+        BlockPos tank = tankAt;
+        if (tank == null) {
+            return;
+        }
+        tankAt = null;
+        floater = carcass(level, EntityType.CHICKEN, tank.offset(3, 0, 4), false, false, 90.0F);
+        sinker = carcass(level, EntityType.COW, tank.offset(5, 2, 4), false, false, 90.0F);
     }
 
     /**

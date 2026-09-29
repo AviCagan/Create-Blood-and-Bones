@@ -472,6 +472,66 @@ public class GroupTests {
         helper.succeed();
     }
 
+    /**
+     * The rig targets' hand-written joints, parents and decor were turned into naming rules (docs/MODDED-MOBS.md); the rigs
+     * the data run writes from them are what the targets gave. A squid's tentacles, a silverfish's links, a salmon's back
+     * half and a spider's legs take the rules' joints; the silverfish's links hang one off the next; a spider's legs hang off
+     * its front body; a cod's fins ride on its body and a goat's horns are drawn with its head, none a body of its own. The
+     * generic arthropod's legs, held out flat, get a spider's joints by the same rule.
+     */
+    @GameTest(template = "empty", timeoutTicks = 20)
+    public static void namingRulesGiveWhatTheTargetsSpelledOut(GameTestHelper helper) {
+        StringBuilder wrong = new StringBuilder();
+        joint(wrong, "squid", "tentacle3", com.avicagan.bloodandbones.carcass.rig.JointRules.TENTACLE);
+        joint(wrong, "silverfish", "segment5", com.avicagan.bloodandbones.carcass.rig.JointRules.SEGMENT);
+        joint(wrong, "salmon", "body_back", com.avicagan.bloodandbones.carcass.rig.JointRules.jointFor("tail"));
+        joint(wrong, "spider", "left_middle_front_leg", com.avicagan.bloodandbones.carcass.rig.JointRules.FLAT_LEG);
+        joint(wrong, "cave_spider", "right_hind_leg", com.avicagan.bloodandbones.carcass.rig.JointRules.FLAT_LEG);
+        parent(wrong, "silverfish", "segment6", "segment5");
+        parent(wrong, "silverfish", "segment0", "segment1");
+        parent(wrong, "spider", "left_hind_leg", "body0");
+        parent(wrong, "wolf", "right_front_leg", "upper_body");
+        parent(wrong, "snow_golem", "head", "upper_body");
+        Rig cod = RigManager.fileRig(ResourceLocation.withDefaultNamespace("cod")).orElseThrow();
+        if (cod.bone("left_fin").isPresent() || cod.bone("body").orElseThrow().extras().stream().noneMatch(e -> e.part().equals("left_fin"))) {
+            wrong.append(" a cod's fin should ride on its body");
+        }
+        Rig goat = RigManager.fileRig(ResourceLocation.withDefaultNamespace("goat")).orElseThrow();
+        if (goat.bones().stream().anyMatch(b -> b.name().contains("horn"))) {
+            wrong.append(" a goat's horns should be drawn with its head, not be bodies");
+        }
+        Rig horse = RigManager.fileRig(ResourceLocation.withDefaultNamespace("horse")).orElseThrow();
+        if (horse.bones().stream().anyMatch(b -> b.name().contains("saddle") || b.name().contains("baby_leg"))
+                || !horse.root().hide().contains("saddle")) {
+            wrong.append(" a horse's saddle and baby legs should be left off");
+        }
+        Rig bug = RigManager.forEntity(id(EntityType.SPIDER)).orElseThrow();
+        var arthropod = PartsData.SERVER.genericRig(BloodAndBones.asResource("arthropod"));
+        Rig generic = arthropod.build(id(EntityType.SPIDER), 1.4F, 0.9F);
+        if (!generic.bone("right_middle_leg").orElseThrow().jointOrDefault().equals(com.avicagan.bloodandbones.carcass.rig.JointRules.FLAT_LEG) || bug.fitted()) {
+            wrong.append(" the generic arthropod's flat legs should take a spider's joints");
+        }
+        if (!wrong.isEmpty()) {
+            helper.fail("Naming rules:" + wrong);
+            return;
+        }
+        helper.succeed();
+    }
+
+    private static void joint(StringBuilder wrong, String mob, String bone, com.avicagan.bloodandbones.carcass.rig.JointSpec expected) {
+        var got = RigManager.fileRig(ResourceLocation.withDefaultNamespace(mob)).flatMap(r -> r.bone(bone)).map(Bone::jointOrDefault).orElse(null);
+        if (!expected.equals(got)) {
+            wrong.append(' ').append(mob).append(' ').append(bone).append(" has joint ").append(got);
+        }
+    }
+
+    private static void parent(StringBuilder wrong, String mob, String bone, String expected) {
+        String got = RigManager.fileRig(ResourceLocation.withDefaultNamespace(mob)).flatMap(r -> r.bone(bone)).flatMap(Bone::parent).orElse(null);
+        if (!expected.equals(got)) {
+            wrong.append(' ').append(mob).append(' ').append(bone).append(" hangs off ").append(got);
+        }
+    }
+
     /** Every vanilla mob's rot time as it was when each rig named its own: now from groups and classes, a mob's file where it differs. */
     private static final Map<String, Integer> OLD_ROT_TIMES = Map.ofEntries(
             Map.entry("allay", 6000), Map.entry("armadillo", 20000), Map.entry("axolotl", 12000), Map.entry("bat", 12000), Map.entry("bee", 8000),

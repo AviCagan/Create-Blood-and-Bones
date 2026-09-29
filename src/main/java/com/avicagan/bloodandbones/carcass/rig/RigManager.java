@@ -108,7 +108,10 @@ public class RigManager extends SimpleJsonResourceReloadListener {
         return rig.fitted();
     }
 
-    /** For game tests: act as if this mob had no rig file until the server reaches this tick (then it has its own again). */
+    /**
+     * For game tests and the showcase: act as if this mob had no rig file until the server reaches this tick (then it has
+     * its own again). In a single-player world the client's copy is hidden alike.
+     */
     public static void hideForTest(ResourceLocation entityId, int untilTick) {
         TEST_HIDDEN.put(entityId, untilTick);
     }
@@ -190,9 +193,9 @@ public class RigManager extends SimpleJsonResourceReloadListener {
         return own.isPresent() ? own : generic(entityId, com.avicagan.bloodandbones.parts.PartsData.CLIENT, CLIENT_GENERIC);
     }
 
-    /** Client side: only the rig the server sent for this mob. */
+    /** Client side: only the rig the server sent for this mob (hidden alike in a single-player world's tests and showcase). */
     public static Optional<Rig> clientFileRig(ResourceLocation entityId) {
-        return Optional.ofNullable(clientRigs.get(entityId));
+        return TEST_HIDDEN.containsKey(entityId) && hiddenNow(entityId) ? Optional.empty() : Optional.ofNullable(clientRigs.get(entityId));
     }
 
     /** An empty map clears what we had; otherwise the rigs are added to it. */
