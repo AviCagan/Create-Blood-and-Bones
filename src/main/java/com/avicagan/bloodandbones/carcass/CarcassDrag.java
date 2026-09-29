@@ -451,6 +451,7 @@ public final class CarcassDrag {
             if (!against) {
                 aim(level, drag, subLevel, player, partial, timeStep, physics);
             }
+            steadyTurn(level, drag, timeStep, physics);
             physics.getPipeline().wakeUp(subLevel);
         }
     }
@@ -613,6 +614,30 @@ public final class CarcassDrag {
     /** Torque per unit mass turning the hooked limb to point at the hand, and killing its swing. */
     private static final double AIM_STIFFNESS = 25.0;
     private static final double AIM_DAMPING = 6.0;
+    /** Share of the carcass's turning (about the upright) that a drag takes away each second, at its torso. */
+    private static final double TURN_DAMPING = 6.0;
+
+    /**
+     * The damping to go with the aim spring's reach. The spring is sized by all the mass on the hook, so once the limb is
+     * at its joint's limit it swings the whole carcass round; its damping kills only the limb's own swing, and the
+     * carcass's turn went almost undamped. A cow dragged by a hind leg the way its head pointed came round fast, swung on
+     * past rear first and rocked there, or came to lie crosswise: now and then it was still 60 to 100 degrees off the way
+     * it went while dragged (hindLegHookComesRoundRearFirst, about 1 run in 40 to 80). Sized by the whole carcass at the
+     * limb, the damping would fling the light limb about while it swings free within its joint, so the turn is damped where
+     * the carcass carries it, at its torso, and only about the upright, so it still tumbles and rolls as it is pulled.
+     * Repeated 80 times, the worst run of each drag test is now 30 degrees off, not 103.
+     */
+    private static void steadyTurn(ServerLevel level, Drag drag, double timeStep, SubLevelPhysicsSystem physics) {
+        CarcassSavedData.Carcass carcass = CarcassSavedData.get(level).carcass(drag.carcass);
+        ServerSubLevelContainer container = SubLevelContainer.getContainer(level);
+        UUID root = carcass == null ? null : carcass.bones.get(carcass.rootBone);
+        if (root == null || container == null || !(container.getSubLevel(root) instanceof ServerSubLevel torso) || torso.isRemoved()) {
+            return;
+        }
+        Vector3d turning = physics.getPhysicsHandle(torso).getAngularVelocity(new Vector3d());
+        double share = Math.min(0.5, TURN_DAMPING * timeStep);
+        physics.getPipeline().addLinearAndAngularVelocity(torso, new Vector3d(), new Vector3d(0.0, -turning.y * share, 0.0));
+    }
 
     /**
      * The grabbed limb leads: a torque spring turns it so the line from its own joint to the hook points at
