@@ -1469,6 +1469,10 @@ Cybernetic drain is ×0.25 of this. `blood_upkeep` and power traits scale both.
 
 ### 6.9 Jobs (17; goal packages in code, offered by heads through data)
 
+> **Superseded (owner, 24 September 2026):** there are to be no jobs offered by heads. Any task from a list drawn up with
+> the owner can be given to any minion, and its build decides how well it does it. The goal packages below are the first
+> draft of that list. See docs/NEXT.md, item 1.
+
 | Job | What it does | Needs | Cost |
 |---|---|---|---|
 | companion | Follows and defends its maker | — | S (exists) |
