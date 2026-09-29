@@ -58,6 +58,8 @@ public class BBBlocks {
             .blockstate((c, p) -> p.directionalBlock(c.get(), p.models().getExistingFile(p.modLoc("block/shackle_hook"))))
             .tag(net.minecraft.tags.BlockTags.MINEABLE_WITH_PICKAXE)
             .lang("Shackle Hook")
+            // on a contraption its carcass rides in its data and is drawn hanging from it (ARCHITECTURE 3.5)
+            .onRegister(com.simibubi.create.api.behaviour.movement.MovementBehaviour.movementBehaviour(new com.avicagan.bloodandbones.carcass.ShackleHookMovement()))
             .simpleItem()
             .register();
 
