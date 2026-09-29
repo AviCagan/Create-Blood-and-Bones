@@ -3623,7 +3623,7 @@ docs/NEXT.md item 2: copy rig B's wins into our rigs one at a time), and the bri
 hung, it swings and hangs differently with a leg off; dead animals look dead, limp and heavy). A review asked for them to
 wait on the owner, and for a while they did (226422a); they are back (964a91d), for the owner to confirm. Undoing
 them is one revert of that commit: the neck's default in `RigDerivation.jointFor`, the rig targets, and the
-hang in `ShackleHookBlockEntity.hangTurn` and `liftOnto`, with their tests (`lyingHeadRestsBelowItsNeck`,
+hang in `ShackleHookBlockEntity.hangTurn` (and `liftOnto`, since replaced by the checks' hoist), with their tests (`lyingHeadRestsBelowItsNeck`,
 `legOffHangsLowerOnThatSide`, and the size of the swing in `hungCarcassSwingsWhenKnocked`). The hang point is not part of
 it: that is decision 5, and it stays at the neck.
 - **A dead neck.** The default head and neck joint (`RigDerivation.jointFor`) goes from a nod of −15 to 25 degrees, a
@@ -3644,9 +3644,11 @@ it: that is decision 5, and it stays at the neck.
   it, so everything below the hook hangs loose, a knock swings it for a few seconds, and a leg cut off changes how it
   hangs. Joined where it lay, the hook's joint had yanked the carcass up to the tip in one step, and with nothing
   holding its tilt any more the yank could throw it over the hook (`hangingCarcassBleedsIntoRack` failed 7 runs in 20):
-  it is now put up on the hook in its hanging pose first, every body moved as one and stilled (`liftOnto`; a hook
-  mounted on a Sable ship still joins as before, its tip being in the ship's own coordinates). Trolleys use both.
-  `legOffHangsLowerOnThatSide`.
+  it was put up on the hook in its hanging pose first, every body moved as one and stilled (`liftOnto`). Merged with
+  the checks' gentle hoist (15.18), that step is gone: the hook draws the neck junction up at 3 blocks a second and
+  only holds it fast within 0.3 of the tip, so there is no yank left to throw it, and the body comes up hanging from
+  that point as its weight takes it, loose, turned belly-out by `hangTurn` on the way. A hook mounted on a Sable ship
+  still joins at once, as before. Trolleys hoist and hang the same way. `legOffHangsLowerOnThatSide`.
 - **Still hung by the neck.** The hook still holds a carcass where its neck meets its body (255d386), not by one
   shoulder as the brief says: that is decision 5, the owner's.
 
