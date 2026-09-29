@@ -299,8 +299,9 @@ public class CostTests {
                     Vec3 tip = ShackleHookBlock.tip(helper.absolutePos(hooks.get(i)), hook.getBlockState());
                     ServerSubLevel torso = SubLevelContainer.getContainer(level).getSubLevel(carcass.bones.get(carcass.rootBone)) instanceof ServerSubLevel b ? b : null;
                     double gap = torso == null ? Double.NaN : torso.logicalPose().transformPosition(hook.hookedAnchor(), new Vector3d()).distance(tip.x, tip.y, tip.z);
-                    gaps.append(String.format(java.util.Locale.ROOT, " %s %.2f (%.3f of %.3f)", carcass.entity.getPath(), gap,
-                            torso == null ? Double.NaN : torso.getMassTracker().getMass(), torso == null ? Double.NaN : ShackleHookBlockEntity.hoistedMass(level, carcass.id, torso)));
+                    gaps.append(String.format(java.util.Locale.ROOT, " %s %.2f (%.3f of %.3f, turning %.2f)", carcass.entity.getPath(), gap,
+                            torso == null ? Double.NaN : torso.getMassTracker().getMass(), torso == null ? Double.NaN : ShackleHookBlockEntity.hoistedMass(level, carcass.id, torso),
+                            torso == null ? Double.NaN : SubLevelContainer.getContainer(level).physicsSystem().getPhysicsHandle(torso).getAngularVelocity(new Vector3d()).length()));
                     if (!hook.isOccupied() || !(gap <= 0.35)) {
                         offTip.add(carcass.entity.getPath() + " " + gap);
                     }
@@ -308,7 +309,7 @@ public class CostTests {
                         spin = Math.max(spin, SubLevelContainer.getContainer(level).physicsSystem().getPhysicsHandle(torso).getAngularVelocity(new Vector3d()).length());
                     }
                 }
-                BloodAndBones.LOGGER.info("[hung] fastest torso {} blocks a second, fastest turning now {} radians a second; from the tips (torso mass of carcass mass):{}",
+                BloodAndBones.LOGGER.info("[hung] fastest torso {} blocks a second, fastest turning now {} radians a second; from the tips (torso mass of carcass mass, radians a second):{}",
                         fastest[0], spin, gaps);
                 if (!offTip.isEmpty()) {
                     helper.fail("Each should hang from its hook's tip; these are off by so many blocks: " + offTip);

@@ -81,8 +81,33 @@ public class ShackleHookBlockEntity extends BlockEntity {
 
     /** Blocks a second the hook hoists a body up to its tip before holding it fast. */
     public static final double HOIST_SPEED = 3.0;
-    /** How near the tip the hooked point must come before the hook holds it fast. */
+    /** How near the tip the hooked point must come to count as up: a hoist that gets it this near is held at the tip. */
     public static final double HOIST_REACH = 0.3;
+    /**
+     * How near the tip the hook hoists the hooked point on to before it holds it fast, when it can. The joint takes up
+     * what is left in a single physics substep: made from 0.3 blocks off, it jerked the point up at some 12 blocks a
+     * second, which set a light body (a rabbit) spinning at up to 5 radians a second on its hook, and the fastest torso of
+     * a hung dozen near the 10 blocks a second a hoist must stay under. A body within HOIST_REACH that has stopped
+     * coming nearer for {@link #HOIST_STALL} ticks (pressed against something) is held at the tip all the same. A
+     * Shackle Trolley holds its body at HOIST_REACH, as before.
+     */
+    public static final double HOLD_REACH = 0.05;
+    public static final int HOIST_STALL = 10;
+
+    /**
+     * One tick of a hoist's progress: whether a body {@code gap} from where it hangs is up to be held there, given the
+     * nearest it has come so far ({@code best[0]}) and the ticks since it last came nearer ({@code best[1]}), which this
+     * keeps.
+     */
+    private static boolean hoistedUp(double gap, double[] best) {
+        if (gap < best[0] - 0.01) {
+            best[0] = gap;
+            best[1] = 0;
+        } else {
+            best[1]++;
+        }
+        return gap <= HOLD_REACH || gap <= HOIST_REACH && best[1] >= HOIST_STALL;
+    }
     /**
      * Ticks a hoist may take. A body still short of the tip by then (caught under something) is held fast where it got
      * to, not pulled the rest of the way at once.
@@ -175,14 +200,7 @@ public class ShackleHookBlockEntity extends BlockEntity {
         if (belly.x * belly.x + belly.z * belly.z > 1.0e-4 && outX * outX + outZ * outZ > 1.0e-8) {
             yaw = Math.atan2(belly.z * outX - belly.x * outZ, belly.x * outX + belly.z * outZ);
         }
-        dev.ryanhcode.sable.api.physics.handle.RigidBodyHandle handle = physics.getPhysicsHandle(body);
-        Vector3d angular = handle.getAngularVelocity(new Vector3d());
-        double mass = Math.max(MIN_MASS, body.getMassTracker().getMass());
-        Vector3d torque = new Vector3d(-angular.x * HOIST_TURN_DAMPING, yaw * HOIST_TURN_STIFFNESS - angular.y * HOIST_TURN_DAMPING,
-                -angular.z * HOIST_TURN_DAMPING).mul(mass);
-        Vector3d impulse = torque.mul(timeStep);
-        current.invert().transform(impulse); // local frame
-        handle.applyLinearAndAngularImpulse(new Vector3d(), impulse);
+        turn(body, physics, timeStep, current, yaw, HOIST_TURN_STIFFNESS, HOIST_TURN_DAMPING, HOIST_TURN_DAMPING);
     }
 
     /**
@@ -200,13 +218,40 @@ public class ShackleHookBlockEntity extends BlockEntity {
             // the turn about the upright that takes the belly, seen from above, to face out
             yaw = Math.atan2(belly.z * out.x - belly.x * out.z, belly.x * out.x + belly.z * out.z);
         }
+        turn(body, physics, timeStep, current, yaw, TURN_STIFFNESS, TURN_DAMPING, SWING_DAMPING);
+    }
+
+    /**
+     * A spring of {@code stiffness} about the upright through {@code yaw}, a drag of {@code upDamping} on turning about the
+     * upright and of {@code swingDamping} on every other turn, all per unit of the body's mass, as an angular impulse over
+     * this substep. The drag never does more in a substep than stop the turn, nor the spring more than turn it half the way
+     * back: with a small body the gains per unit of mass are large for how little it takes to turn it (a rabbit's torso
+     * turns about its length some ten times as readily as a cow's, for its mass), and a physics substep (a fortieth of
+     * a second) is long, so both overshot, back and forth. A hung rabbit jittered at up to 6 radians a second, and
+     * `dozenHungCarcasses`, which asks every hung torso to hang still, caught it doing so now and then.
+     */
+    private static void turn(ServerSubLevel body, dev.ryanhcode.sable.sublevel.system.SubLevelPhysicsSystem physics, double timeStep, Quaterniond current,
+                             double yaw, double stiffness, double upDamping, double swingDamping) {
         dev.ryanhcode.sable.api.physics.handle.RigidBodyHandle handle = physics.getPhysicsHandle(body);
         Vector3d angular = handle.getAngularVelocity(new Vector3d());
         double mass = Math.max(MIN_MASS, body.getMassTracker().getMass());
-        Vector3d torque = new Vector3d(-angular.x * SWING_DAMPING, yaw * TURN_STIFFNESS - angular.y * TURN_DAMPING, -angular.z * SWING_DAMPING).mul(mass);
-        Vector3d impulse = torque.mul(timeStep);
-        current.invert().transform(impulse); // local frame
-        handle.applyLinearAndAngularImpulse(new Vector3d(), impulse);
+        org.joml.Matrix3dc toTurn = body.getMassTracker().getInverseInertiaTensor();
+        Quaterniond toLocal = new Quaterniond(current).invert();
+        // in the body's own frame, where its inertia is
+        Vector3d spin = toLocal.transform(new Vector3d(angular));
+        Vector3d drag = toLocal.transform(new Vector3d(-angular.x * swingDamping, -angular.y * upDamping, -angular.z * swingDamping).mul(mass * timeStep));
+        double along = spin.dot(toTurn.transform(new Vector3d(drag)));
+        double spinSquared = spin.lengthSquared();
+        if (along < -spinSquared && spinSquared > 0.0) {
+            drag.mul(spinSquared / -along);
+        }
+        Vector3d spring = toLocal.transform(new Vector3d(0.0, yaw * stiffness * mass * timeStep, 0.0));
+        double springTurn = toTurn.transform(new Vector3d(spring)).length();
+        double most = 0.5 * Math.abs(yaw) / timeStep;
+        if (springTurn > most && springTurn > 0.0) {
+            spring.mul(most / springTurn);
+        }
+        handle.applyLinearAndAngularImpulse(new Vector3d(), drag.add(spring));
     }
 
     /** True if any loaded hook in the level holds this carcass. */
@@ -252,6 +297,8 @@ public class ShackleHookBlockEntity extends BlockEntity {
      * saved: a hook read back with its body off the tip hoists it again (tick).
      */
     private int hoisting = -1;
+    /** The nearest the hoisted point has come to the tip, and the ticks since it last came nearer (hoistedUp). */
+    private final double[] hoistBest = {Double.MAX_VALUE, 0};
 
     /**
      * The torso-side anchor of the head joint: where the neck meets the body. When the head hangs off the torso through
@@ -387,7 +434,7 @@ public class ShackleHookBlockEntity extends BlockEntity {
         // neck junction with nothing holding its tilt (hangTurn), it comes up hanging from that point as its weight takes it.
         Vec3 tip = ShackleHookBlock.tip(worldPosition, getBlockState());
         if (dev.ryanhcode.sable.Sable.HELPER.getContaining(level, worldPosition) == null
-                && torso.logicalPose().transformPosition(new Vector3d(anchorPlot), new Vector3d()).distance(tip.x, tip.y, tip.z) > HOIST_REACH) {
+                && torso.logicalPose().transformPosition(new Vector3d(anchorPlot), new Vector3d()).distance(tip.x, tip.y, tip.z) > HOLD_REACH) {
             startHoist(level, torso);
         } else {
             attach(level, false, null);
@@ -397,6 +444,8 @@ public class ShackleHookBlockEntity extends BlockEntity {
 
     private void startHoist(ServerLevel level, ServerSubLevel torso) {
         hoisting = 0;
+        hoistBest[0] = Double.MAX_VALUE;
+        hoistBest[1] = 0;
         activate(level);
         SubLevelContainer.getContainer(level).physicsSystem().getPipeline().wakeUp(torso);
     }
@@ -426,7 +475,7 @@ public class ShackleHookBlockEntity extends BlockEntity {
             if (at == null) {
                 // its body is not loaded: taken back up (or let go) once it is, below
                 hook.hoisting = -1;
-            } else if (at.distance(tip.x, tip.y, tip.z) <= HOIST_REACH) {
+            } else if (hoistedUp(at.distance(tip.x, tip.y, tip.z), hook.hoistBest)) {
                 hook.hoisting = -1;
                 hook.attach(serverLevel, false, null);
             } else if (++hook.hoisting > HOIST_TICKS) {
@@ -453,7 +502,7 @@ public class ShackleHookBlockEntity extends BlockEntity {
         Vector3d at = hook.hookedPoint(serverLevel);
         Vec3 tip = ShackleHookBlock.tip(pos, state);
         if (at != null && dev.ryanhcode.sable.Sable.HELPER.getContaining(serverLevel, pos) == null
-                && at.distance(tip.x, tip.y, tip.z) > HOIST_REACH && at.distance(tip.x, tip.y, tip.z) <= REJOIN_REACH
+                && at.distance(tip.x, tip.y, tip.z) > HOLD_REACH && at.distance(tip.x, tip.y, tip.z) <= REJOIN_REACH
                 && SubLevelContainer.getContainer(serverLevel).getSubLevel(hook.subLevelId) instanceof ServerSubLevel torso) {
             hook.startHoist(serverLevel, torso);
             return;

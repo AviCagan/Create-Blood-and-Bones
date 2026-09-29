@@ -248,6 +248,9 @@ public class ShackleTrolleyEntity extends Entity {
             if (gap < 0.0) {
                 return; // its body or the chain is not loaded: wait
             }
+            // held once within HOIST_REACH, not hoisted on nearer as a hook's body is (ShackleHookBlockEntity.HOLD_REACH):
+            // two bodies put on one chain close together keep each other that far off, and neither trolley moves on until
+            // its own is held
             if (gap <= ShackleHookBlockEntity.HOIST_REACH) {
                 hoisting = -1;
                 attach(level);
