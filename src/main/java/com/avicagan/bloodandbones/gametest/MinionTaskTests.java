@@ -1948,7 +1948,7 @@ public class MinionTaskTests {
 
     /**
      * A butcher chops the pieces laid on a Butcher's Table by home with its Cleaver, as a Deployer does (docs/NEXT.md 1.1):
-     * one piece, then a second put on through the table's slot as a funnel would. What they come apart into goes into what
+     * one piece, then a second put on through the table's slot as a funnel would. What they come apart into (a hand's share) goes into what
      * it carries (a slot for each of the four things a cow's body gives: it empties them into the chest before the second)
      * and on into the chest by home, none on the ground, and the Cleaver comes away bloody. The table is nearer home than the
      * chest, and takes only pieces: the butcher passes it over for the chest.
@@ -1983,7 +1983,9 @@ public class MinionTaskTests {
         helper.succeedWhen(() -> {
             ChestBlockEntity chest = (ChestBlockEntity) helper.getBlockEntity(chestAt);
             helper.assertTrue(laid[0] == 2 && table.specimen().isEmpty(), "it has not chopped both pieces yet (" + laid[0] + " laid)");
-            helper.assertTrue(chest.countItem(Items.BEEF) > 0, "the beef should be in the chest by home (it carries " + count(butcher, Items.BEEF) + ")");
+            // (by hand, each piece is a chance to botch it, so any one kind may come to nothing; all four from both pieces never do)
+            int stored = chest.countItem(Items.BEEF) + chest.countItem(Items.BONE) + chest.countItem(BBItems.OFFAL.get()) + chest.countItem(BBItems.ANIMAL_FAT.get());
+            helper.assertTrue(stored > 0, "what it chopped should be in the chest by home (it carries " + count(butcher, Items.BEEF) + " beef)");
             helper.assertTrue(level.getEntitiesOfClass(ItemEntity.class, area).isEmpty(), "what it chopped should never be on the ground");
             helper.assertTrue(butcher.getMainHandItem().get(BBDataComponents.BLOODIED_AT.get()) != null, "its Cleaver should be bloody");
         });
@@ -2169,7 +2171,11 @@ public class MinionTaskTests {
      * What a poor butcher wastes is what its own goal cut (the review: the old test worked the waste out itself). Two whole
      * villagers butcher at 50%, each behind its own glass: one at a Butcher's Table with a cow's body laid on it, one at a
      * cow's body lying loose (the test cuts the limbs off first and breaks them down itself, so the body is all that is
-     * left). A player gets 4 or 5 beef from a cow's body (4.22, a dice throw for the rest); each of them gets 2 or 3, half.
+     * left). A butcher's blade is in its hand, so it gets a hand's share (the hand path: about half, each piece a chance to
+     * botch), and a 50% butcher half of that: a player gets 2.53 beef from a cow's body before the botching, each of them 1.27,
+     * so 2 at most. One cut is too few to weigh that, so the same two minions then cut a thousand times through the very
+     * calls their goals make (the loose body by hand at their share, the table's chop in their hands), against a player's
+     * hand: they get half as much, give or take 6%.
      */
     @GameTest(template = "empty", timeoutTicks = 900)
     public static void poorButcherWastesWhatItCuts(GameTestHelper helper) {
@@ -2224,18 +2230,53 @@ public class MinionTaskTests {
                 return;
             }
         }
-        // what a player gets of a cow's body's beef, and so what half of it rounds to either way
-        float beef = com.avicagan.bloodandbones.carcass.butchery.ButcheryManager.forEntity(mob("cow")).orElseThrow().part("body").stream()
-                .filter(y -> y.item().equals("minecraft:beef")).map(y -> y.count()).reduce(0.0F, Float::sum);
+        // what a player's hand gets of a cow's body's beef before the botching, and so the most half of it rounds up to
+        var cows = com.avicagan.bloodandbones.carcass.butchery.ButcheryManager.forEntity(mob("cow")).orElseThrow();
+        float beef = cows.part("body").stream().filter(y -> y.item().equals("minecraft:beef")).map(y -> y.count()).reduce(0.0F, Float::sum)
+                * com.avicagan.bloodandbones.carcass.butchery.ButcheryPaths.get(com.avicagan.bloodandbones.carcass.butchery.ButcheryPaths.HAND).share("meat");
         float half = beef * MinionFitness.yieldShare(0.5F);
+        // a thousand cuts each, through the calls the goals make: a player's hand, the minion's by the body, its chop at a table
+        Player player = helper.makeMockPlayer(net.minecraft.world.level.GameType.SURVIVAL);
+        CarcassSavedData.Carcass stand = new CarcassSavedData.Carcass(UUID.randomUUID(), mob("cow"), "body");
+        BlockPos spareAt = new BlockPos(2, 2, 1);
+        helper.setBlock(spareAt, BBBlocks.BUTCHER_TABLE.getDefaultState());
+        var spare = (com.avicagan.bloodandbones.cooking.ButcherTableBlockEntity) helper.getBlockEntity(spareAt);
+        ItemStack blade = new ItemStack(BBItems.CLEAVER.get());
+        int[] cut = {0, 0, 0};
+        for (int i = 0; i < 1000; i++) {
+            com.avicagan.bloodandbones.carcass.CarcassButchery.capturing(stack -> cut[0] += stack.is(Items.BEEF) ? stack.getCount() : 0,
+                    () -> com.avicagan.bloodandbones.carcass.CarcassButchery.byHand(player, () -> {
+                        com.avicagan.bloodandbones.carcass.CarcassButchery.dropYields(level, stand, cows.part("body"), 1.0F, new Vector3d());
+                        return true;
+                    }));
+            com.avicagan.bloodandbones.carcass.CarcassButchery.capturing(stack -> cut[1] += stack.is(Items.BEEF) ? stack.getCount() : 0,
+                    () -> com.avicagan.bloodandbones.carcass.CarcassButchery.byHand(atBody, () -> com.avicagan.bloodandbones.carcass.CarcassButchery.yielding(
+                            MinionFitness.yieldShare(atBody.taskFitness()), () -> {
+                                com.avicagan.bloodandbones.carcass.CarcassButchery.dropYields(level, stand, cows.part("body"), 1.0F, new Vector3d());
+                                return true;
+                            })));
+            spare.put(cowPiece());
+            com.avicagan.bloodandbones.carcass.CarcassButchery.yielding(MinionFitness.yieldShare(atTable.taskFitness()), () -> spare.chop(level, blade, atTable, stack -> {
+                cut[2] += stack.is(Items.BEEF) ? stack.getCount() : 0;
+                return ItemStack.EMPTY;
+            }));
+        }
+        helper.setBlock(spareAt, Blocks.AIR);
+        float byBody = cut[1] / (float) cut[0];
+        float byTable = cut[2] / (float) cut[0];
+        if (Math.abs(byBody - 0.5F) > 0.06F || Math.abs(byTable - 0.5F) > 0.06F) {
+            helper.fail("A 50% butcher should get half a player's beef by hand, by the body and at the table: " + cut[0] / 1000.0F + " a cut for a player, "
+                    + cut[1] / 1000.0F + " by the body, " + cut[2] / 1000.0F + " at the table");
+            return;
+        }
         helper.succeedWhen(() -> {
             helper.assertTrue(table.specimen().isEmpty(), "the table's piece has not been chopped yet");
             helper.assertTrue(CarcassSavedData.get(level).carcass(body.id) == null, "the loose body has not been broken down yet (the butcher at "
                     + helper.relativeVec(atBody.position()) + ", " + MinionTasks.status(atBody).getString() + ")");
             for (MinionEntity butcher : new MinionEntity[]{atTable, atBody}) {
                 int got = count(butcher, Items.BEEF);
-                helper.assertTrue(got >= Math.floor(half) && got <= Math.ceil(half) && got < Math.floor(beef), (butcher == atTable ? "At the table" : "At the body")
-                        + " a 50% butcher should keep half a player's " + beef + " beef, " + Math.floor(half) + " or " + Math.ceil(half) + ": it has " + got);
+                helper.assertTrue(got <= Math.ceil(half), (butcher == atTable ? "At the table" : "At the body")
+                        + " a 50% butcher should keep at most half a player's " + beef + " beef, rounded up to " + Math.ceil(half) + ": it has " + got);
             }
             helper.assertTrue(level.getEntitiesOfClass(ItemEntity.class, area).isEmpty(), "what they cut should be in their hands, not on the ground");
             atTable.discard();
