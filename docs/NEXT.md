@@ -5,7 +5,7 @@ The whole brief was also audited against the code on 29 September 2026: docs/BRI
 The owner's list of what to take up next, newest decisions first. Each item says what was decided, what it replaces,
 and what is still to be settled together before any code is written.
 
-## 1. Tasks instead of jobs (decided 24 September 2026; designed 29 September 2026; not started)
+## 1. Tasks instead of jobs (decided 24 September 2026; designed 29 September 2026; stage A built 29 September 2026)
 
 **The decision.** There are to be no jobs. Any task, from a list we draw up together, can be given to any minion. Some minions do a task better than others because of their own stats, and those stats come from what they are built of.
 
@@ -16,7 +16,7 @@ and what is still to be settled together before any code is written.
 - the crouch-click that cycles through the offered jobs.
 
 **Summary of the design.** Every point is a recommendation, and the owner can overturn any of them.
-- **Sixteen tasks.** The seventeen goal packages become fourteen: companion and bodyguard fold into Guard and Idle, and scavenger folds into Courier. With Idle (stay, or follow) and one new task, Tender (it keeps troughs and cradles stocked and carries blood to fallen minions), that makes sixteen. Six tasks can be done "with me", at the maker's side, as well as at home.
+- **Sixteen tasks.** The seventeen goal packages become fourteen: companion and bodyguard fold into Guard and Idle, and scavenger folds into Courier. With Idle (stay, or follow) and one new task, Tender (it keeps troughs and cradles stocked and carries blood to fallen minions), that makes sixteen. Five tasks can be done "with me", at the maker's side, as well as at home: Idle, Guard, Hunter, Medic and Courier. (This summary said six; the table in 1.1 has five.)
 - **Fitness.** Every minion gets one number for every task, shown as a percentage. 100% is how the task works today, 200% is the best and 10% the worst. The formula is the same for every task: knack × disposition × the task's main stat × the square root of its second stat. The stats are read from the build:
   - pace (legs);
   - sight (head);
@@ -42,7 +42,7 @@ and what is still to be settled together before any code is written.
   - a "Home here" button.
 
   The status line, the Surgery Table's line while building, the surgery screen, JEI and piece tooltips show the rest.
-- **The surgeon (the owner's call).** Recommended: any minion with a hand can operate. Its fitness decides how ragged the stump is. A villager or pillager head leaves a stump that costs one bucket of blood to fit later, as now; a worse surgeon's costs two or three. Fitness also decides how fast it tends a patient. The safety floor is untouched.
+- **The surgeon (the owner's call).** Recommended, and built as the default: any minion with a hand can operate. Its fitness decides how ragged the stump is. A villager or pillager head leaves a stump that costs one bucket of blood to fit later, as now; a worse surgeon's costs two or three. Fitness also decides how fast it tends a patient. The safety floor is untouched.
 - **Data:**
   - heads' `jobs` become `knacks` (a multiplier per task);
   - legs may name a grip (paw, hoof, claw, tentacle);
@@ -57,8 +57,10 @@ and what is still to be settled together before any code is written.
   Old datapacks' `jobs` lists are read as knacks.
 
 **The one question the owner must answer: the surgeon (1.5).** There are two choices:
-- any minion with a hand may do the ritual's cutting, badly unless it has a surgeon's head (recommended);
+- any minion with a hand may do the ritual's cutting, badly unless it has a surgeon's head (recommended, and the default as built);
 - only villager, illager and witch heads may cut, as the brief's words say.
+
+Either is one data switch: the surgeon task's file says `"needs_surgeon_head": false` (the default) or `true` (the brief's letter). This is the owner's call; until the owner answers, the default stands.
 
 ### 1.1 The task list
 
@@ -203,26 +205,26 @@ The three cases in the old list:
 - **Fishing with no head.** A rod in a hand fishes by feel: sight 2, mindless, about 37%.
 - **Hauling on a rabbit torso.** About 37%. It tows a cow with nearly three times a player's slowdown.
 
-**Worked examples:**
+**Worked examples.** These first left out the traits a build's parts and hides give it. Worked out again by the formula with them (stage A, `fitnessMatchesItsFormula`), four numbers changed, each marked "was":
 - **The design's cow torso on four rabbit legs, with a cow head** (spec 6.5):
-  - Herder 200%: pace 1.3 × grazer knack 1.25 × docile 1.25.
-  - Courier 143%.
-  - Hauler 114%.
+  - Herder 200%: pace 1.37 (1.3, and the rabbit's hide, which a flesh minion keeps, is Swift: 5% faster) × grazer knack 1.25 × docile 1.25.
+  - Courier 146% (was 143%).
+  - Hauler 138% (was 114%: the cow torso's Beast of Burden takes 15% off a drag's slowdown, so pull 1.18, and Swift).
   - Farmer 75% (rabbit paws).
   - Guard 26%.
   - Surgeon: cannot, no hand.
 - **Spider thorax, eight zombie arms, a farmer villager's head** (spec 6.5):
   - Surgeon 200%: hands 1.6 × √2 sight × knack 1.5 × meek 1.25. Its stump costs one bucket.
   - Farmer 200%.
-  - Guard 65%. It is no longer a pacifist: zombie arms punch.
+  - Guard 72% (was 65%: the spider's torso has its mob's 16 health; spec 6.4's 13 for the thorax alone was never built). It is no longer a pacifist: zombie arms punch.
 - **An all-zombie build:**
   - Guard 125% at home, 156% with me (loyal).
   - Surgeon 141% (stumps of two buckets).
   - Butcher 100%.
   - Courier 40% (three slots).
 - **A cow torso on wolf legs, with a wolf head:**
-  - Herder 180% (a sheepdog).
-  - Hunter 124%.
+  - Herder 200% (216% before the cap; was 180%: each wolf leg is Swift, and four sum to 20% faster, so pace 1.44). A sheepdog.
+  - Hunter 135% (was 124%, the same way).
   - Farmer 75% (paws).
   - Fisher 60%.
   - Butcher 27% (blade in its mouth).
@@ -265,7 +267,7 @@ It **wakes** to its fittest task that waits on nothing it lacks, never Hunter or
 **Shown:**
 - **The task screen** (1.3): everything.
 - **The status line** (a plain click, anyone): "Farmer 120% at home, blood 300 of 780 mB", plus "waiting for a Cleaver" or "no still water within 8 of home". Each task goal says why it is idle.
-- **The Surgery Table's line while building:** "15 health, speed 0.33; best: Herder 200%, Courier 143%; 4 of 6 sockets filled". The maker sees each part's effect as it goes on.
+- **The Surgery Table's line while building:** "15 health, speed 0.33; best: Herder 200%, Courier 146%; 4 of 6 sockets filled". The maker sees each part's effect as it goes on.
 - **The surgery screen:** before any cut, the surgeon's name, fitness and the stump's price (1.5).
 - **JEI:** the Body Parts page (bb-organs) gains each part's knacks, grip and disposition. These are part facts; a fitness needs a whole build. A "Minion Tasks" page per task (what counts, which heads have a knack for it) can come later.
 - **Piece tooltips,** with Ctrl, as organs do: the same part facts.
@@ -278,7 +280,9 @@ It **wakes** to its fittest task that waits on nothing it lacks, never Hunter or
 
 ### 1.5 The surgeon
 
-**Recommended: any minion with a hand can operate, and the head decides how badly.**
+**This is the owner's call, and still open.** Both ways are built into the data (stage A): the surgeon task's file (`data/bloodandbones/minion_task/surgeon.json`) says `"needs_surgeon_head": false`, the recommendation below, and that is the default; a datapack setting it to `true` gets the other way, the brief's letter. The heads whose data says `"surgeon": true` are the villager family's (the villager, the witch, the wandering trader and the zombie villager) and the illager family's (the pillager, the vindicator, the evoker and the illusioner). `MinionFitness.mayCut` answers for either setting, and `surgeonHeadFlagDecidesWhoCuts` tests both; the ritual reads it in stage D.
+
+**Recommended (the default): any minion with a hand can operate, and the head decides how badly.**
 - Anyone may be set to Surgeon.
 - The ritual's cut needs an awake minion on the Surgeon task within 4 blocks of the table (`Surgery.surgeonAt`). Its one physical need is a hand, and the fittest of several does the cutting.
 
@@ -300,7 +304,7 @@ Its fitness sets two things:
 
 The brief's words keep their weight: villager and pillager heads are still the surgeons that leave today's stump.
 
-**The other way, keeping the brief's words exactly.** Only a head whose data says `"surgeon": true` may cut: the villager and illager families and the witch. Any minion may still be set to Surgeon to tend at the table, and fitness still sets the tending and the stump's price among those heads. It is smaller to build and keeps the brief to the letter, but it is the one place where "any task to any minion" would not quite hold.
+**The other way, keeping the brief's words exactly (`"needs_surgeon_head": true`).** Only a head whose data says `"surgeon": true` may cut: the villager and illager families and the witch. Any minion may still be set to Surgeon to tend at the table, and fitness still sets the tending and the stump's price among those heads. It is smaller to build and keeps the brief to the letter, but it is the one place where "any task to any minion" would not quite hold.
 
 **The owner's answer replaces** docs/ARCHITECTURE-PROPOSAL.md 15.1 item 8 and spec 11 item 8 (surgeon heads by group).
 
@@ -381,6 +385,15 @@ Every missing knack and disposition counts as 1. Archetypes carry knacks and leg
 | illager / pillager / witch / zombie villager | surgeon 1.5, sentry 1.25, guard 1.25 / surgeon 1.5, sentry 1.5 / surgeon 1.5, medic 1.5 / surgeon 0.5 over its family's |
 | piglin (mob) / allay / fox / axolotl | barterer 2, guard 1.25 / courier 2 / courier 1.5, hunter 1.25 / hunter 1.25 |
 | volatile / panda / killer bunny | sapper 1.5, guard 1.25 / courier 1.25 (aggressive: guard 1.5; lazy: sentry 1.25) / guard 1.5, berserk |
+
+**As built in stage A** (docs/ARCHITECTURE-PROPOSAL.md 15.18), where the data differs from the above:
+- **The old `jobs` lists stay beside the `knacks` until stage B.** Today's jobs cannot be read from the knacks without changing what heads offer and wake as: the table drops companion, bodyguard and scavenger, and reorders (a cow's head would wake as a courier, a wolf's as a herder, a horse's as a hauler, and a professional villager's would offer the biped's courier too). Stage A changes nothing in play (1.10), so today's job system keeps reading the lists, and stage B deletes them with it. A file with both reads its `knacks` and is not warned about.
+- **`pace` stays** on the zombie villager beside its surgeon knack of 0.5, for `AttendTable` to read until the surgeon's tending reads the fitness.
+- **"Courier for the rest"** is a variant for the librarian, the cartographer, the mason and an unemployed villager (`"none"`). A modded profession gets the family's surgeon 1.5 and the biped's courier 1.25, and nothing more, until its datapack names it.
+- **The villager's own file no longer restates its family's `meek`.** A mob's own file wins over its family's variants (spec 4.2), so the nitwit's variant could not make it dim.
+- **Leg grips count only on a body standing on at least four legs.** A body standing on two wolf front legs uses them to stand, and holds with its mouth.
+- **The task file's tool** is `{"items": "<id or #tag>", "required": true, "carried": true, "grips": {...}}`, each optional: with no `items`, the task's own test in code (a Cleaver or Flensing Knife, a rod, a bow, crossbow or trident, healing splash potions, anything held as bait or sample); `carried` for a medic's potions, which it carries rather than holds; `grips`, the grip table while it holds one (a rod in hand fishes at 1, a courier's sample is held). The file also has `max_reach`, and the surgeon's `needs_surgeon_head` (1.5).
+- **The Olfactory Bulb gives Truffle Nose**, a new trait: `task_knack` Digger ×1.5. The Night Stalker Gland is left as it was.
 
 ### 1.7 What changes in code
 
@@ -463,21 +476,22 @@ Every missing knack and disposition counts as 1. Archetypes carry knacks and leg
 
 ### 1.9 Tests
 
-**New, worked out without a world** (template `empty`):
+**New, worked out without a world** (template `empty`; built in stage A, `gametest/MinionFitnessTests`, with four descriptions put right where the formula said otherwise, each marked "as built"):
 - `fitnessMatchesItsFormula` — for the four worked examples in 1.2, every task's fitness equals the number worked out by hand in the test, to within 1%.
 - `oneHundredIsToday` — a stand-in build with every factor at its reference scores 100% at every task, and every lever gives today's constant: catches 600 to 1200 ticks, strokes 15, admiring 120, tending 100, working 25 mB.
 - `cannotOnlyWhenTheBodyCannot` — a headless, armless cow torso cannot do Surgeon, Butcher, Farmer, Fisher, Medic, Barterer, Digger, Herder, Guard, Sentry, Hunter or Sapper, each with its own reason; it can do Idle, Courier, Hauler and Tender.
-- `missingToolWaitsNotCannot` — a butcher with no blade, a fisher with no rod, a herder with no food and a medic with no potions each take the task and wait, naming the item, and are shown at their fitness with it.
+- `missingToolWaitsNotCannot` — a butcher with no blade, a herder with no food and a medic with no potions each take the task and wait, naming the item, and are shown at their fitness with it. As built: a fisher with no rod does not wait, since the grip table lets a hand fish without one (0.35, as 1.1 says it fishes "by hand, paw or mouth"); it takes the task at that fitness and is shown the fitness a rod would give it, as a sentry with no bow is shown a bow's. A hunter with the mobGriefing rule off waits for it.
 - `villagerAndPillagerHeadsAreTheBestSurgeons` — with zombie arms: villager and pillager heads 200%; a witch's at least 150%; a zombie's between 75% and 150%; a blind villager's below a seeing one's. Chicken wings under a villager head cannot.
-- `professionSetsItsKnack` — each profession's head (the old `villagerHeadOffersSurgeon` table) has knack 1.5 for its task and for surgeon; a nitwit's head is lower than an unemployed villager's at every task.
-- `blindHeadIsPoorNotBarred` — with both eyes out, farmer, fisher, surgeon, sentry and hunter are still possible but lower, and sight is 4. One eye out changes nothing. Echolocate or tremor brings sight back to 12.
-- `moreHandsWorkFaster` — eight zombie arms on a spider thorax give 1.6 times the two-armed fitness at Butcher and Farmer (before the cap), and strike 60% faster.
+- `professionSetsItsKnack` — each profession's head (the old `villagerHeadOffersSurgeon` table) has knack 1.5 for its task and for surgeon; a nitwit's head is lower than an unemployed villager's at every task. As built: at every task that tends, fetches or works. At the four fights it is higher, as the disposition table has it: dim is 0.75 there and a villager's meekness 0.5.
+- `blindHeadIsPoorNotBarred` — with both eyes out, farmer, fisher, surgeon, sentry and hunter are still possible but lower, and sight is 4. One eye out changes nothing. Echolocate or tremor brings sight back to 12. As built: the hunter's number reads Blow and Pace, not Sight, so it is still possible but no lower by the number (a blind hunter still finds less in the world, where sight caps its search). A blind head's 4 and a headless body's 2 take nothing from follow-range traits: no eyes see no farther for Keen Eye.
+- `moreHandsWorkFaster` — eight zombie arms on a spider thorax give 1.6 times the two-armed fitness at Butcher and Farmer (before the cap), and strike 60% faster. As built: 1.6 times at Farmer, and at Butcher 1.6 × √1.6 (about 2), since its second is Blow, which the strike rate raises too. The extra holders counted are of the best grip only: a mouth that fishes as well as two hands is not a third hand.
 - `pawsAndHoovesPickPoorly` — wolf legs pick at 75% and cow legs at 45%; neither holds a surgeon's blade, and the legs' speed is unchanged.
 - `knacksMergeAcrossLayers` — a farmer's zombie-villager head has its own file's surgeon 0.5 and the family's farmer 1.5; the villager keeps the biped's courier 1.25 and its own guard 1.
 - `oldJobsListReadAsKnacks` — a test file still saying `"jobs": [fisher, courier, companion]` resolves to fisher 1.5 and courier 1.25, with one warning.
 - `dispositionsScaleTheirKinds` — one body under meek, brave, berserk and nocturnal heads moves as the table says: nocturnal is 1.25 at midnight and 0.75 at noon, and loyal is 1.25 with me.
 - `moddedMobWorksFromItsArchetype` — a mob with only archetype data gets every task its body allows, from its attributes and the archetype's knacks and leg grips.
-- `taskKnackTraitCounts` (if built) — a gland's knack raises that task and no other.
+- `taskKnackTraitCounts` (if built) — a gland's knack raises that task and no other. Built: the sniffer's Olfactory Bulb.
+- `surgeonHeadFlagDecidesWhoCuts` (new, for 1.5) — by default any surgeon with a hand may cut; with `"needs_surgeon_head": true`, only villager, illager and witch heads; with no hand, none.
 
 **New, in the world:**
 - `taskScreenRowsForMakerOnly` — the maker's crouching empty-hand use sends one row per task, matching `MinionFitness`. A stranger, a Deployer's stand-in and a powered-down minion get none, and folding still works.
@@ -524,9 +538,9 @@ Every missing knack and disposition counts as 1. Archetypes carry knacks and leg
 ### 1.10 Order of work
 
 Start after bb-organs is on main (it is, since 40dfb66). This change touches its sapper, variants, `pace`, `MinionStats` and `MinionJobs`.
-- **A. The fitness, worked out without a world (medium).** `MinionFitness`, knacks, leg grips, the disposition and task files, and the migrated data, with the tests worked out without a world. Nothing in play changes yet.
-- **B. Tasks replace jobs (large).** `MinionTask`, the renames, anchor and reach, the screen, the wake rule, the status lines and the save conversion, with their tests.
-- **C. The levers and blood at work (medium).**
+- **A. The fitness, worked out without a world (medium). Built 29 September 2026** (docs/ARCHITECTURE-PROPOSAL.md 15.18). `MinionTask` (the list, its kinds, anchors, the code's tests of the body and each task's data), `MinionDisposition`, `MinionFitness` (rows, factors and their sources, the stump's price, who may cut, and the levers, pure), knacks, leg grips, the disposition and task files, the `task_knack` effect, and the migrated data, with the tests worked out without a world. Nothing in play changes yet, but for 1.11's three: a headless body sees 2 blocks, a seeing head's Keen Eye and Relentless count, and a body with no arm and no head has nothing to fight with.
+- **B. Tasks replace jobs (large).** `MinionTask`'s goal packages, the renames, anchor and reach, the screen, the wake rule, the status lines and the save conversion, with their tests. It also deletes the old `jobs` lists the shipped data still keeps beside the knacks (1.6, as built), and turns `MinionFitness.Source` into the screen's words.
+- **C. The levers and blood at work (medium).** The levers are written and tested at 100% (`MinionFitness.quicker` and the rest); the goals read them here. The strike rate counts in Blow already, but blows do not land more often in play yet (spec 6.4's "+15% for each arm beyond 2" was never built): the guard's and hunter's melee goals take it here.
 - **D. The surgeon (small),** once the owner has answered.
 - **E. Tender and the Butcher's Table (medium).**
 - **F. Shown elsewhere (small):** JEI, tooltips, the command and the docs.
@@ -534,9 +548,9 @@ Start after bb-organs is on main (it is, since 40dfb66). This change touches its
 ### 1.11 Found while reading (not part of this change)
 
 - **Debugging left on bb-organs.** `MinionGoals.Bite.tick` logged "[tmpbite]" every 2 s, and there was a `gametest/TmpMergeRepro.java`. Both were gone before bb-organs was merged (40dfb66).
-- **`MINDLESS_SIGHT` (8) is more than `BLIND_SIGHT` (4).** A body with no head notices more than a blind head does. The design sets it to 2.
-- **Keen Eye and Relentless do nothing on a minion.** They raise its follow-range attribute, but `MinionStats.sight` never reads it and every search takes the smaller of the two. The design's sight counts them.
-- **`MinionStats.fights()` is true for a body with no arms and no head.** It would bite with no mouth. This is harmless today, because a mindless minion never fights.
+- **`MINDLESS_SIGHT` (8) is more than `BLIND_SIGHT` (4).** A body with no head notices more than a blind head does. The design sets it to 2. Fixed in stage A.
+- **Keen Eye and Relentless do nothing on a minion.** They raise its follow-range attribute, but `MinionStats.sight` never reads it and every search takes the smaller of the two. The design's sight counts them. Fixed in stage A, for a head that sees.
+- **`MinionStats.fights()` is true for a body with no arms and no head.** It would bite with no mouth. This is harmless today, because a mindless minion never fights. Fixed in stage A.
 - **`Surgery.payBlood` looks for one container holding the whole amount.** Stumps costing two or three buckets need it to add containers together.
 
 ## 2. Rig source B, the Sable Ragdolls way (built and judged 27 September 2026; waiting on the owner)

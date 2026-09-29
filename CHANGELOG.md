@@ -172,6 +172,13 @@ Everything below is in development builds only; the art is placeholder (see the 
 
 ### Minions
 
+- The groundwork for tasks in place of jobs (any task to any minion, better or worse by what it is built of): every
+  minion's fitness at every task is worked out on the server from its parts, their knacks and its head's disposition,
+  though nothing in play reads it yet. Datapacks can retune each task (`minion_task`) and disposition
+  (`minion_disposition`), give heads `knacks` in place of `jobs` (old `jobs` lists still work) and legs a `grip`; a trait
+  can give a knack for one task (`task_knack`: the sniffer's Olfactory Bulb makes a better digger).
+- A minion's head sees as far as Keen Eye and Relentless say; a headless minion feels its way only 2 blocks, and one with
+  no arm and no head never fights.
 - The sapper: a creeper's head, with a creeper's Powder Sac stitched in, offers a job that walks up to a monster near
   home (or to a banner of the colour you hand it) and blows itself up there, sparing itself and your side; then it lies
   powered down, whole, until it gets blood again. It breaks blocks only where the server lets minions break blocks.

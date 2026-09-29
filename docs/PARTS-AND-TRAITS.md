@@ -571,6 +571,8 @@ All files are hot-reloadable. Each is loaded by a `SimpleJsonResourceReloadListe
 | `data/<ns>/organ/<id>.json` | Organ kinds: item, look, tint, which armour pieces take it, extra drops, bloodless name |
 | `data/<ns>/scrap_material/<id>.json` | Armour base stats, look, density |
 | `data/<ns>/armour_tier/<id>.json` | Blood steel, blood diamond, soul netherite |
+| `data/<ns>/minion_task/<task>.json` | A minion task's numbers over its code defaults: kind, anchors, reach, the stats its fitness reads, grip table, tool, levers, the surgeon's `needs_surgeon_head` (docs/NEXT.md 1.6). Server only. |
+| `data/<ns>/minion_disposition/<name>.json` | A head's disposition: `kinds`, `tasks`, `with_me`, `night`, `day` (docs/NEXT.md 1.6). Server only. |
 | `data/bloodandbones/bone_slot_rules.json` | The slot classifier, blob sockets, clamps |
 | `data/<ns>/data_maps/item/hide_sources.json`, `organ_sources.json` | NeoForge data maps (as `vent_effects` is today): unstamped vanilla items → mob |
 | `data/<ns>/recipe/*.json` | The carcass_armour and carcass_armour_fitting recipes, Soul Canister filling and emptying, Blood Trough, Charging Cradle, Brass Sheathing |
@@ -581,6 +583,7 @@ Effect types live in a NeoForge custom registry, `bloodandbones:trait_effect_typ
 - **Order.** Layers apply archetype → family → overlays (ascending priority) → variants → mob file.
 - **Keys.** Inside `parts`, keys are tried most-specific first: `bones.<name>`, then `leg.hind` / `arm.wing`, then `leg`.
 - **Scalars** replace: `speed`, `jobs`, `health`, `disposition`, `scrap_material`.
+- **Knacks** (a part's `knacks`, a map from task to multiplier) merge key by key instead: each layer, and then each variant a piece matches, changes only the tasks it names (docs/NEXT.md 1.6). An old `jobs` list with no `knacks` beside it reads as knacks, the first 1.5 and the rest 1.25, and the file is logged once.
 - **Trait lists** add to the inherited list, deduplicated by trait id with the highest level winning. An object `{"add": [...], "remove": [ids]}` edits instead; `{"replace": true, ...}` inside any object replaces its lists.
 - **Numbers left out** come from the mob's `DefaultAttributes`: max_health, attack_damage, movement_speed, follow_range, armor, knockback_resistance, horse jump_strength.
 - **Variants** patch by carcass traits. `CarcassLook` already captures variant, profession, wool and mushroom. The captured traits map is extended with:
@@ -970,7 +973,7 @@ A **trait** is a named, levelled bundle. Each entry in it is (trigger, requireme
   - `bloodandbones:near` {entities or blocks tag, radius, count}
   - `bloodandbones:dry_for` {seconds, at_least or at_most}, backed by a per-host counter in `ActiveTraits`
 
-### 5.4 Effect types (30)
+### 5.4 Effect types (31)
 S = small, M = medium, L = large. Class names marked (✓) were checked in the NeoForge 21.1.249 or Create 6.0.11 jars.
 
 | # | Type (params) | Minion | Armour | Hook | Cost |
@@ -1005,6 +1008,7 @@ S = small, M = medium, L = large. Class names marked (✓) were checked in the N
 | 28 | **storage** (slots) | torso | — | resize the inventory on rebuild | S |
 | 29 | **power** (capacity_mult, drain_mult, refuel {item: mB}, feed_on_kill_mb) | yes | (through the blood_upkeep attribute) | the power system | S |
 | 30 | **glow** () | emissive pass | emissive layer | `RenderType.eyes` layer | S (client) |
+| 31 | **task_knack** (task, multiplier) | a knack for one task (the sniffer's Olfactory Bulb: Digger ×1.5) | — | multiplied into the build's knack for that task where its fitness is worked out (`MinionStats`, docs/NEXT.md 1.6) | S |
 
 `include` (composing traits) is trivial and not counted.
 
@@ -1330,7 +1334,7 @@ Saved old minions get a one-time conversion that drops their parts. `MinionTests
 7. **Cap.** Server config `max_minions_per_player` = −1 (no cap).
 
 ### 6.3 The build and `MinionStats`
-`MinionStats.of(build, resolvedData)` is a pure function, unit-testable without a world. It returns: health, armour, knockback resistance, hitbox, carry slots, reservoir or canisters, movement (mode, speed, step, jump, climb, swim, lava_walk, rideable, flight), the strikes list, ranged attacks, job options, senses and the `ActiveTraits` list. The server and client share one geometry helper for sockets, lift and hitbox, so they always agree.
+`MinionStats.of(build, resolvedData)` is a pure function, unit-testable without a world. It returns: health, armour, knockback resistance, hitbox, carry slots, reservoir or canisters, movement (mode, speed, step, jump, climb, swim, lava_walk, rideable, flight), the strikes list, ranged attacks, job options, senses and the `ActiveTraits` list. Since tasks began to take the place of jobs (docs/NEXT.md 1, stage A) it also returns what the build holds things with (each arm's grip, a pair of arms as two hands, the mouth, and on four legs or more the legs' grips), the torso's weight, the merged knacks and the head's disposition, from which `MinionFitness`, also pure, works out its fitness at every task. The server and client share one geometry helper for sockets, lift and hitbox, so they always agree.
 
 ### 6.4 What each part decides
 
@@ -1362,10 +1366,11 @@ Saved old minions get a one-time conversion that drops their parts. `MinionTests
   - others → courier
   - a nitwit offers only companion
 - Pillager heads offer surgeon and sentry.
-- **Follow range** from FOLLOW_RANGE. **Disposition** and **senses** from data.
+- **Follow range** from FOLLOW_RANGE, and what the build's traits add to it (Keen Eye, Relentless). **Disposition** and **senses** from data.
+- **Knacks** from data (docs/NEXT.md 1.6): how much better or worse than usual the head makes a minion at each task. The job options below give way to them in stage B of that change; stage A reads both.
 - **Bite:** used when it has no arms, and as an extra attack. Damage 1 + 0.25 × the head mob's attack damage, or the data value. Horned heads (goat, hoglin, zoglin, ravager) ram.
-- **Eyes taken out:** a head whose two eyes were taken out at the Surgical Rig is blind. It loses the jobs that need sight (farmer, sentry, surgeon, hunter, fisher) and has follow range 4, unless an echolocate or tremor sense replaces sight.
-- **No head: Mindless.** Companion only, follow range 8, never picks targets.
+- **Eyes taken out:** a head whose two eyes were taken out at the Surgical Rig is blind. It loses the jobs that need sight (farmer, sentry, surgeon, hunter, fisher) and has follow range 4, whatever its traits add; an echolocate or tremor sense (the head's data's, or a trait's) finds its way 12.
+- **No head: Mindless.** Companion only, follow range 2 (it feels its way), never picks targets.
 - **Several heads** (the wither): the first sets the job; each extra head adds its senses and its bite as an extra ranged "mouth".
 
 **Arms: attack type**
@@ -1391,6 +1396,7 @@ Saved old minions get a one-time conversion that drops their parts. `MinionTests
   - lava_walk;
   - rideable: needs at least 2 rideable legs, a saddle, and a torso weight share of at least 0.4, so a rabbit torso on horse legs cannot carry you.
 - **Steering:** a pig head steers with a carrot on a stick; strider legs with a warped fungus on a stick; otherwise the saddle.
+- **Grip** (docs/NEXT.md 1.2): on a body of four legs or more, front paws (canid, feline, bear, amphibian, small prey), hooves (quadruped), claws (arthropod) and tentacles hold things for handwork, as a last resort; never for blows or held weapons, and legs a body stands on alone do not.
 - **Step height** is the highest leg's. **Jump** is the mean.
 - **Flight:** wing ARMs add lift. It flies if the total lift is at least the torso volume, otherwise it only slow-falls.
   - Phantom wings (0.4 each) lift a cow (0.53): it flies.
@@ -2049,7 +2055,7 @@ Each slice ends with headless game tests (`runGameTestServer`, in the style of B
 5. **Physical build.** Heavy torsos and limbs can never be items (`LIGHT_MASS` 0.13), so they are dragged into the table's work zone and claimed with an empty-hand click. Is that the interaction you want?
 6. **Deglove pipeline on minions.** Organic frames take only unskinned pieces and brass frames only skinned ones (hideless mobs count as both). Enforce it (default), or let any piece fit either?
 7. **Front legs.** Is a quadruped's front leg a leg (default: it moves the minion and makes leggings and boots), or should front legs count as arms (they would attack and make chestplate shoulders)?
-8. **Surgeon heads.** Every villager-family and illager-family head offers Surgeon (default, by group), or only villager and pillager heads, as the brief literally says?
+8. **Surgeon heads.** Every villager-family and illager-family head offers Surgeon (default, by group), or only villager and pillager heads, as the brief literally says? *Superseded by docs/NEXT.md 1.5, still the owner's call:* any minion with a hand may cut, its fitness setting the stump's price (the default), or, with the surgeon task's `"needs_surgeon_head": true`, only the heads whose data says `"surgeon": true` (the villager and illager families, the witch with the villagers).
 9. **Signatures.** Is the direction of the 79 signatures in §8.2 right? Per the brief, the per-mob abilities get authored after the base system works (slice 9).
 10. **Boss parts.** Should warden and wither parts be usable by default (`boss_parts` true)?
 11. **Tiers.** Upgrade by crafting (piece + ingot; automatable with Mechanical Crafters; default), or at the Smithing Table like vanilla netherite?

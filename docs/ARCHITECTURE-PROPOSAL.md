@@ -1366,7 +1366,9 @@ file, composed from about 30 effect types.
    pipeline); hideless mobs count as both.
 7. A quadruped's front leg is a leg.
 8. Surgeon heads: built for villager and pillager heads, as the brief names them; their kin (other illagers, the
-   zombie villager) come with the per-mob data.
+   zombie villager) come with the per-mob data. *Now the owner's call in docs/NEXT.md 1.5* (tasks instead of jobs): any
+   minion with a hand may cut, its fitness setting the stump's price (the default), or, with the surgeon task file's
+   `"needs_surgeon_head": true`, only heads whose data says `"surgeon": true` (15.18).
 9. Per-mob signatures are authored last, once the base system works, as the brief defers them.
 10. Boss parts (warden, wither) usable by default.
 11. Tiers upgrade by crafting (piece + ingot), which Mechanical Crafters automate.
@@ -2815,3 +2817,95 @@ fix undone, and failed there.
   head offers no sentry)", which nothing had built, and has it back. The aggressive panda's head lacked spec 8.2's
   Brawler II; its variant now gives it (`carcassKeepsVariants` checks it), so "the other genes are wired" is true.
 - The suite is 450 tests (443 and the seven named above), and passed three runs in a row.
+
+### 15.18 Tasks, stage A as built: the fitness, worked out without a world (verified)
+
+docs/NEXT.md item 1 is the design the owner asked for: no jobs; any task from one list to any minion, each better or
+worse at it by what it is built of. Stage A (1.10) works the numbers out with no world. Nothing in play reads them yet:
+the job system is as it was until stage B, but for three fixes 1.11 found (below).
+
+- **The task list** (`minion/MinionTask`): the sixteen tasks in the order a task screen lists them, each with its kind
+  (fight, tend, fetch or work; Idle none), the anchors it allows (home; with its maker too for Idle, Guard, Hunter, Medic
+  and Courier), and the test of the body that is code: something to strike with (an arm that is not folded, or a head to
+  bite with) for Guard, Sentry and Hunter; a detonating organ for the Sapper (`MinionSapper.hasDetonator`); and, for the
+  handwork, anything its grip table allows (1.2's table, a column a task). What a datapack may retune is its
+  `MinionTask.Data`: kind, anchors, reach and the most its maker may set it to, the stats its fitness reads, the grip
+  table, its tool (items, required, carried, the grips while held), whether it stores its takings, the numbers its levers
+  scale, and the surgeon's `needs_surgeon_head`. The defaults are today's constants;
+  `data/<ns>/minion_task/<task>.json` overrides them field by field, "numbers" and the tool's fields one by one. Datagen
+  writes the sixteen files from the defaults (`MinionTaskDataProvider`), so a datapack sees what can be changed and a
+  missing file changes nothing.
+- **Dispositions** (`minion/MinionDisposition`): the eleven of 1.2 by kind, by task (territorial's Guard and Sentry),
+  with the maker (loyal) and by night or day (nocturnal), in `data/<ns>/minion_disposition/<name>.json`, written the same
+  way. A head names one by plain name ("meek") or a datapack's "ns:name"; one not loaded counts as none. Both kinds are
+  loaded by `PartsData` and never sent to clients (`PartsData.Kind.synced`): the fitness is worked out on the server.
+- **What the build brings** (`MinionStats`): `holders`, what it holds things with: each arm's grip (a villager's pair of
+  arms is two hands, its data's "hands"), the head's mouth, and on a body of at least four legs the legs' grips
+  (`GRIPPING_LEGS`: a zombie standing on a wolf's two front legs uses them to stand); `torsoWeight`; `knacks`;
+  `disposition` ("none" when the head names none, "mindless" with no head). A seeing head's sight counts its build's
+  follow-range traits as its attribute would take them (Keen Eye, Relentless); a blind head stays at 4 and a headless body
+  at 2 (`MINDLESS_SIGHT`, 8 before) whatever they add; an echolocate or tremor sense, in the head's data or a passive
+  trait (a bat's Echo Ear, a warden's head), finds its way at least 12. `fights()` is false for a body with no arm and no
+  head. These three are the only changes in play.
+- **Knacks** (`MinionData.knacks`, `MinionStats.knackParts`): a part's "knacks" merge key by key as trait lists do, the
+  general key's layers and then the specific key's, each layer's own map and then each variant it matches, in order. A
+  build's knack for a task is, for each part slot, the best its pieces give (one naming none counts 1; of heads the first
+  only), multiplied together and by its traits' `task_knack`s, held between 0.25 and 2.5; where each part came from is
+  kept for the screen. Old data's "jobs" with no "knacks" reads as knacks (the first 1.5, the rest 1.25, companion
+  dropped, bodyguard a guard, scavenger a courier), and `MobGroup.parse` logs such a file once (`MobGroup.OLD_JOBS`).
+- **The fitness** (`minion/MinionFitness`), pure. A `Body` first: the stats after the traits `ActiveTraits` would give
+  the minion (its parts', its organ's and, on flesh, its hides'): speed with the +40% cap on rises, health within 6 to
+  150, drag strength, blows its traits make harder, storage (a chest's only with a chest fitted), innate shots; a
+  detonator; what its head does with no tool; whether its head is a surgeon's; its knacks' parts and its disposition.
+  Then a `Row` per task: fitness = knack × disposition × main × √second, held 10% to 200%; the number before it was held;
+  why it cannot (a lang key); what it waits for (a lang key); the fitness a missing tool would give where that differs;
+  and each factor with its stat, its value and its `Source`s (a piece with its part and grip, a trait at its level, an
+  item, or a rule: blind, mindless, bite, more, strike rate, berserk, no ranged...). A required tool (the butcher's blade,
+  the herder's bait, the medic's potions) is taken as had, since the minion waits for it; with the mobGriefing rule off a
+  hunter waits for that. Blow is the hardest strike times the strike rate (+15% for each striking arm past two, to +60%),
+  or the bite with no striking arm; pull is the square root of the torso's weight over a cow's, over what drag strength
+  leaves of the slowdown.
+- **The levers**, pure, for stage C's goals: `quicker`, `longer`, `spread`, `yieldShare`, `towing`, `workingDrain` and
+  the tasks' own (`catchTicks`, `strokeTicks`, `admireTicks`, `tendTicks`, `throwTicks`, `digTicks`, `lookTicks`), each
+  today's constant at 100%.
+- **The surgeon, the owner's call (1.5).** Built both ways, one data switch apart. The default is the recommendation: any
+  minion with a hand may cut, and its fitness sets the stump's price (`MinionFitness.stumpBuckets`: one bucket at 150% and
+  over, two from 75%, three below). A datapack's `minion_task/surgeon.json` with `"needs_surgeon_head": true` gets the
+  brief's letter: only heads whose data says `"surgeon": true` cut (the villager family, the witch among them, and the
+  illager family), while anyone may still tend (`MinionFitness.mayCut`). The ritual reads it in stage D.
+- **The data.** Every shipped head has its knacks per 1.6's table beside its old jobs list; the villager's professions
+  are 1.5 at their task, the rest of them (librarian, cartographer, mason, unemployed) couriers, a nitwit dim and no
+  surgeon; the zombie villager's shaky hands are a surgeon's 0.5 over its family's. Front legs have their grips: hooves on
+  a quadruped, paws on canid, feline, bear, amphibian and small prey, claws on arthropods, tentacles on the tentacled and
+  cephalopods. The sniffer's Olfactory Bulb gives a new trait, Truffle Nose (`task_knack` Digger ×1.5).
+- **Changed from the design, and why** (each recorded where the design says it, in docs/NEXT.md):
+  - The old `jobs` lists stay in the shipped data beside the knacks until stage B. Today's jobs cannot be read from the
+    knacks without changing what heads offer and wake as (1.6's table drops companion, bodyguard and scavenger and
+    reorders: a cow's head would wake as a courier, a wolf's as a herder, a horse's as a hauler, a professional villager's
+    would offer the biped's courier), and stage A changes nothing in play. Stage B deletes them with the job system.
+  - The zombie villager keeps its `pace` beside its knack, for `AttendTable` until the tending reads the fitness.
+  - The villager's own file no longer restates its family's meek: a mob's own file wins over its family's variants, so
+    the nitwit's variant could not make it dim.
+  - Four worked examples of 1.2 left the traits out; worked out with them (a rabbit's hide and a wolf's legs are Swift,
+    a cow's torso is a Beast of Burden, a spider's torso has its mob's 16 health), 1.2 now says Courier 146%, Hauler 138%,
+    Guard 72%, Herder 200% (216% before the cap) and Hunter 135% where it said 143%, 114%, 65%, 180% and 124%. The summary's
+    "six tasks with me" is five, as 1.1's table has it.
+  - Four test descriptions in 1.9 said more than the formula does: a fisher with no rod fishes by hand, so it does not
+    wait (it is shown a rod's fitness); a nitwit is braver than an unemployed villager at the fights (dim 0.75, meek 0.5);
+    a blind hunter's number does not read sight; eight arms give a butcher 1.6 × √1.6, since its second is its blow.
+  - More holders count only of the best grip, so a mouth that fishes as well as two hands is not a third hand; a blind or
+    headless body's sight takes nothing from follow-range traits.
+- **Tests** (`gametest/MinionFitnessTests`, 15): `fitnessMatchesItsFormula`, `oneHundredIsToday`,
+  `cannotOnlyWhenTheBodyCannot`, `missingToolWaitsNotCannot`, `villagerAndPillagerHeadsAreTheBestSurgeons`,
+  `surgeonHeadFlagDecidesWhoCuts`, `professionSetsItsKnack`, `blindHeadIsPoorNotBarred`, `moreHandsWorkFaster`,
+  `pawsAndHoovesPickPoorly`, `knacksMergeAcrossLayers`, `oldJobsListReadAsKnacks`, `dispositionsScaleTheirKinds`,
+  `moddedMobWorksFromItsArchetype` (a made-up mob with only an archetype, on a copy of the wolf's rig:
+  `RigManager.addTestRig`, looked up like `PartsData.addTestMobFile`) and `taskKnackTraitCounts`. `dataLints` knows the
+  new effect works on minions only. Every old test passes unchanged.
+- **On screen** (`showcase_tasks_0.png`, new): the minion row's shot with the chat on, and in it each shown minion's four
+  best tasks and what it cannot do, worked out on the server from its data as the task screen will (`DevShowcase.fitness`,
+  the tasks by their own names). The cow on rabbit legs is Herder 200%, Tender and Courier 146%, Hauler 138%, and cannot
+  be a Sapper or a Surgeon, as 1.2 now says; the whole cow Herder 125%; the zombie with a pig's head on a rabbit's haunches
+  and one arm Hunter 152% (a swine's knack for it); the legless cow a Digger at 100%; the zombie with a cow's head and a bow
+  Herder 144% and Surgeon 125%. The other shots are as they were.
+- The suite is 466 tests (451 and the fifteen above), and passed two runs in a row, the fifteen three times over as well.
