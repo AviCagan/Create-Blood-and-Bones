@@ -63,10 +63,14 @@ public class ImplantItem extends Item {
         return spec.fuel() != null;
     }
 
-    /** A crude prosthetic, the safety floor: it runs on nothing and gives back normal working, and nothing more. */
+    /**
+     * A crude prosthetic, the safety floor: it runs on nothing and gives back normal working, and nothing more. Judged on
+     * the figures in use (its data file's), so a datapack that makes a peg leg strong also makes it need the surgeon.
+     */
     public boolean crude() {
-        return spec.fuel() == null && spec.ability() == ImplantSpec.Ability.NONE && spec.slots() == 0 && spec.walk() <= 1.0F && spec.jump() <= 1.0F
-                && spec.work() <= 1.0F && spec.attack() <= 0.0F && spec.reach() <= 0.0F && spec.safeFall() <= 0.0F;
+        ImplantSpec now = spec();
+        return now.fuel() == null && now.ability() == ImplantSpec.Ability.NONE && now.slots() == 0 && now.walk() <= 1.0F && now.jump() <= 1.0F
+                && now.work() <= 1.0F && now.attack() <= 0.0F && now.reach() <= 0.0F && now.safeFall() <= 0.0F;
     }
 
     /**

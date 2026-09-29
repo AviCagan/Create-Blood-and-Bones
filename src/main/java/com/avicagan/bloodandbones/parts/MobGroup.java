@@ -71,9 +71,22 @@ public record MobGroup(ResourceLocation id, Kind kind, int priority, List<String
                     json.has("generic_rig") ? Optional.of(ResourceLocation.parse(json.get("generic_rig").getAsString())) : Optional.empty(),
                     List.copyOf(match),
                     json.has("weight_class") ? Optional.of(ResourceLocation.parse(json.get("weight_class").getAsString())) : Optional.empty(),
-                    json.has("rot_time") ? Optional.of(json.get("rot_time").getAsInt()) : Optional.empty(),
+                    rotTime(id, json),
                     json.has("butchery") ? Optional.of(json.getAsJsonObject("butchery").deepCopy()) : Optional.empty(),
                     json.has("baby_yield") ? Optional.of(json.get("baby_yield").getAsFloat()) : Optional.empty());
+        }
+
+        /** A rot time of at least a tick, as rigs and weight classes require (rot divides by it); anything less is left out. */
+        private static Optional<Integer> rotTime(ResourceLocation id, JsonObject json) {
+            if (!json.has("rot_time")) {
+                return Optional.empty();
+            }
+            int ticks = json.get("rot_time").getAsInt();
+            if (ticks < 1) {
+                com.avicagan.bloodandbones.BloodAndBones.LOGGER.error("{}: rot_time must be at least 1 tick, not {}; left out", id, ticks);
+                return Optional.empty();
+            }
+            return Optional.of(ticks);
         }
     }
 

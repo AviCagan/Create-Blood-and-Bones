@@ -110,66 +110,135 @@ public class GroupTests {
      * The audit's first gap: a mob with no rig file died as if the Meat Hook were any weapon. A cow whose rig file is taken
      * away (for this test only, in a batch of its own that runs before any other, so no other cow is about) is killed with
      * the hook as a player kills one: it becomes a carcass of the quadruped's generic body at its hitbox's size, which bleeds,
-     * weighs, and comes apart at the joints like any other.
+     * weighs, and comes apart at the joints like any other. The rig file is given back however the test ends, and the hide
+     * is this test's own hold, so copies of it run together (the repeat switch) each hide and give back their own.
      */
     @GameTest(template = "empty", timeoutTicks = 200, batch = "bloodandbones_alone_first")
     public static void mobWithNoRigFileBecomesACarcass(GameTestHelper helper) {
         ServerLevel level = helper.getLevel();
         ResourceLocation cow = id(EntityType.COW);
-        Rig own = RigManager.fileRig(cow).orElseThrow();
-        RigManager.hideForTest(cow, level.getServer().getTickCount() + 200);
-        Rig generic = RigManager.forEntity(cow).orElse(null);
-        if (generic == null || !generic.fitted() || generic == own) {
-            helper.fail("With no rig file a cow should get its archetype's generic body, got " + generic);
+        Rig own = RigManager.all().get(cow);
+        if (own == null) {
+            helper.fail("A cow should have a rig file");
             return;
         }
-        List<String> names = generic.bones().stream().map(Bone::name).toList();
-        if (!names.equals(List.of("body", "head", "right_front_leg", "left_front_leg", "right_hind_leg", "left_hind_leg", "tail"))) {
-            helper.fail("A generic quadruped should be a body, a head, four legs and a tail, not " + names);
-            return;
+        Runnable giveBack = RigManager.hideForTest(cow, level.getServer().getTickCount() + 200);
+        Mob mob;
+        Vec3 stood;
+        Rig generic;
+        try {
+            generic = RigManager.forEntity(cow).orElse(null);
+            if (generic == null || !generic.fitted() || generic == own) {
+                helper.fail("With no rig file a cow should get its archetype's generic body, got " + generic);
+                return;
+            }
+            List<String> names = generic.bones().stream().map(Bone::name).toList();
+            if (!names.equals(List.of("body", "head", "right_front_leg", "left_front_leg", "right_hind_leg", "left_hind_leg", "tail"))) {
+                helper.fail("A generic quadruped should be a body, a head, four legs and a tail, not " + names);
+                return;
+            }
+            // the body is 0.8 of the hitbox's width across, as the generic quadruped says
+            float width = EntityType.COW.getDimensions().width();
+            float across = generic.bone("body").orElseThrow().boxSize().x;
+            if (Math.abs(across - 0.8F * width * 16.0F) > 0.01F) {
+                helper.fail("The generic body should be scaled to the cow's hitbox: " + across + " pixels across, expected " + 0.8F * width * 16.0F);
+                return;
+            }
+            mob = helper.spawn(EntityType.COW, new BlockPos(5, 2, 5));
+            stood = mob.position();
+            hookKill(helper, mob);
+        } catch (RuntimeException e) {
+            giveBack.run();
+            throw e;
         }
-        // the body is 0.8 of the hitbox's width across, as the generic quadruped says
-        float width = EntityType.COW.getDimensions().width();
-        float across = generic.bone("body").orElseThrow().boxSize().x;
-        if (Math.abs(across - 0.8F * width * 16.0F) > 0.01F) {
-            helper.fail("The generic body should be scaled to the cow's hitbox: " + across + " pixels across, expected " + 0.8F * width * 16.0F);
-            return;
-        }
-        Mob mob = helper.spawn(EntityType.COW, new BlockPos(5, 2, 5));
-        Vec3 stood = mob.position();
-        hookKill(helper, mob);
+        Rig body = generic;
         helper.runAfterDelay(SETTLE_TICKS + 10, () -> {
-            CarcassSavedData.Carcass carcass = carcassOf(helper, EntityType.COW, new BlockPos(5, 2, 5));
-            if (mob.isAlive() || carcass == null) {
-                helper.fail("A cow with no rig file killed with the Meat Hook should leave a carcass");
-                return;
+            try {
+                CarcassSavedData.Carcass carcass = carcassOf(helper, EntityType.COW, new BlockPos(5, 2, 5));
+                if (mob.isAlive() || carcass == null) {
+                    helper.fail("A cow with no rig file killed with the Meat Hook should leave a carcass");
+                    return;
+                }
+                if (RigManager.forCarcass(carcass).orElseThrow() != body || carcass.bones.size() != 7 || carcass.liveJoints.size() != 6) {
+                    helper.fail("The carcass should be the generic body's seven parts and six joints: " + carcass.bones.keySet() + ", "
+                            + carcass.liveJoints.size() + " joints");
+                    return;
+                }
+                ServerSubLevelContainer container = SubLevelContainer.getContainer(level);
+                ServerSubLevel torso = (ServerSubLevel) container.getSubLevel(carcass.bones.get(carcass.rootBone));
+                if (torso.logicalPose().position().distance(stood.x, stood.y, stood.z) > 2.5) {
+                    helper.fail("The carcass should go down where the cow stood, not " + torso.logicalPose().position());
+                    return;
+                }
+                float blood = CarcassBleeding.capacity(carcass);
+                if (Math.abs(blood - Math.round(body.weight() * 1000.0F)) > 0.5F || blood <= 0.0F) {
+                    helper.fail("It should hold its weight's worth of blood, " + Math.round(body.weight() * 1000.0F) + " mB, not " + blood);
+                    return;
+                }
+                CarcassSavedData.Carcass leg = CarcassButchery.sever(level, carcass, "right_hind_leg", null);
+                if (leg == null || !leg.rootBone.equals("right_hind_leg") || carcass.bones.containsKey("right_hind_leg")) {
+                    helper.fail("A leg of the generic body should come off at its joint as a piece of its own");
+                    return;
+                }
+                remove(level, leg);
+                remove(level, carcass);
+            } finally {
+                giveBack.run();
             }
-            if (RigManager.forCarcass(carcass).orElseThrow() != generic || carcass.bones.size() != 7 || carcass.liveJoints.size() != 6) {
-                helper.fail("The carcass should be the generic body's seven parts and six joints: " + carcass.bones.keySet() + ", "
-                        + carcass.liveJoints.size() + " joints");
-                return;
-            }
-            ServerSubLevelContainer container = SubLevelContainer.getContainer(level);
-            ServerSubLevel torso = (ServerSubLevel) container.getSubLevel(carcass.bones.get(carcass.rootBone));
-            if (torso.logicalPose().position().distance(stood.x, stood.y, stood.z) > 2.5) {
-                helper.fail("The carcass should go down where the cow stood, not " + torso.logicalPose().position());
-                return;
-            }
-            float blood = CarcassBleeding.capacity(carcass);
-            if (Math.abs(blood - Math.round(generic.weight() * 1000.0F)) > 0.5F || blood <= 0.0F) {
-                helper.fail("It should hold its weight's worth of blood, " + Math.round(generic.weight() * 1000.0F) + " mB, not " + blood);
-                return;
-            }
-            CarcassSavedData.Carcass leg = CarcassButchery.sever(level, carcass, "right_hind_leg", null);
-            if (leg == null || !leg.rootBone.equals("right_hind_leg") || carcass.bones.containsKey("right_hind_leg")) {
-                helper.fail("A leg of the generic body should come off at its joint as a piece of its own");
-                return;
-            }
-            remove(level, leg);
-            remove(level, carcass);
-            RigManager.hideForTest(cow, 0);
-            if (RigManager.forEntity(cow).orElse(null) != own) {
+            // another copy of this test may still hold the cow's rig hidden; once none does, the cow is its own rig again
+            if (RigManager.fileRig(cow).isPresent() && RigManager.forEntity(cow).orElse(null) != own) {
                 helper.fail("Given back its rig file, a cow should be its own rig again");
+                return;
+            }
+            helper.succeed();
+        });
+    }
+
+    /**
+     * The mod's own minion is no mob to butcher: no group lists it, and by its shape it would pass for a biped. Killed with
+     * the Meat Hook where the server scatters killed minions, it falls apart into what it was built of, as any other kill
+     * leaves it, and leaves no fresh carcass (which would give its flesh twice over, and make a brass one bleed).
+     */
+    @GameTest(template = "empty", timeoutTicks = 40)
+    public static void minionKilledWithTheHookLeavesNoCarcass(GameTestHelper helper) {
+        ServerLevel level = helper.getLevel();
+        ResourceLocation minionId = id(com.avicagan.bloodandbones.registry.BBEntities.MINION.get());
+        if (RigManager.forEntity(minionId).isPresent()) {
+            helper.fail("A minion should never have a carcass body");
+            return;
+        }
+        BlockPos at = helper.absolutePos(new BlockPos(5, 2, 5));
+        Player maker = helper.makeMockPlayer(GameType.SURVIVAL);
+        maker.moveTo(at.getX() + 1.5, at.getY(), at.getZ() + 0.5);
+        com.avicagan.bloodandbones.minion.MinionEntity minion = com.avicagan.bloodandbones.registry.BBEntities.MINION.get().create(level);
+        minion.moveTo(at.getX() + 0.5, at.getY(), at.getZ() + 0.5, 0.0F, 0.0F);
+        minion.setup(maker, at, com.avicagan.bloodandbones.minion.MinionBuild.of(new com.avicagan.bloodandbones.minion.PieceRef(id(EntityType.COW), "body",
+                ResourceLocation.withDefaultNamespace("textures/entity/cow/cow.png"), List.of(), 1.0F, false, Map.of(), false)), 500.0F);
+        minion.setNoAi(true);
+        level.addFreshEntity(minion);
+        // the setting is the whole server's: changed and put back within this one call (the death and its drops are in it)
+        BBServerConfig.MinionDeath before = BBServerConfig.MINION_DEATH.get();
+        try {
+            BBServerConfig.MINION_DEATH.set(BBServerConfig.MinionDeath.SCATTER);
+            hookKill(helper, minion);
+        } finally {
+            BBServerConfig.MINION_DEATH.set(before);
+        }
+        helper.runAfterDelay(10, () -> {
+            for (CarcassSavedData.Carcass carcass : CarcassSavedData.get(level).all()) {
+                if (carcass.entity.equals(minionId)) {
+                    remove(level, carcass);
+                    helper.fail("A minion killed with the Meat Hook should leave no carcass");
+                    return;
+                }
+            }
+            List<net.minecraft.world.entity.item.ItemEntity> dropped = level.getEntitiesOfClass(net.minecraft.world.entity.item.ItemEntity.class,
+                    new net.minecraft.world.phys.AABB(at).inflate(3.0));
+            boolean torso = dropped.stream().anyMatch(item -> item.getItem().is(BBItems.CARCASS_PIECE.get()));
+            dropped.forEach(net.minecraft.world.entity.Entity::discard);
+            if (minion.isAlive() || !torso) {
+                helper.fail("It should die as the server's rule says, scattering the torso it was built on (dead " + !minion.isAlive()
+                        + ", torso dropped " + torso + ")");
                 return;
             }
             helper.succeed();
@@ -352,6 +421,8 @@ public class GroupTests {
                 ResourceLocation cowFile = BloodAndBones.asResource("minecraft/cow");
                 JsonObject cow = files.containsKey(cowFile) ? JsonParser.parseString(files.get(cowFile)).getAsJsonObject() : new JsonObject();
                 cow.addProperty("weight_class", "bloodandbones:test_lead");
+                // a rot time under a tick is refused (rot divides by it), so the class's stands
+                cow.addProperty("rot_time", 0);
                 files.put(cowFile, cow.toString());
             }
             store.load(kind, files, ops);
@@ -362,7 +433,7 @@ public class GroupTests {
             return;
         }
         if (CarcassBody.rotTime(store, id(EntityType.COW)) != 1234) {
-            helper.fail("With no rot time of its own or its groups', a cow should rot in its class's time, not " + CarcassBody.rotTime(store, id(EntityType.COW)));
+            helper.fail("With no rot time of its own (a 0 refused) or its groups', a cow should rot in its class's time, not " + CarcassBody.rotTime(store, id(EntityType.COW)));
             return;
         }
         if (CarcassBody.rotTime(store, id(EntityType.TADPOLE)) != 4000) {
@@ -510,6 +581,20 @@ public class GroupTests {
         Rig generic = arthropod.build(id(EntityType.SPIDER), 1.4F, 0.9F);
         if (!generic.bone("right_middle_leg").orElseThrow().jointOrDefault().equals(com.avicagan.bloodandbones.carcass.rig.JointRules.FLAT_LEG) || bug.fitted()) {
             wrong.append(" the generic arthropod's flat legs should take a spider's joints");
+        }
+        // a generic body's file may set a bone's joint, as a rig file does; one it leaves out still comes from the rules
+        var serpent = com.avicagan.bloodandbones.carcass.rig.GenericRig.parse(BloodAndBones.asResource("test_serpent"), JsonParser.parseString(
+                "{\"bones\": [{\"name\": \"body\", \"box\": [-0.2, 0, -0.5, 0.2, 0.3, 0.5]},"
+                        + " {\"name\": \"head\", \"parent\": \"body\", \"box\": [-0.15, 0, -0.8, 0.15, 0.25, -0.5], \"pivot\": [0, 0.1, -0.5],"
+                        + " \"joint\": {\"min_degrees\": [-5, -70, -5], \"max_degrees\": [5, 70, 5], \"damping\": 3.0}},"
+                        + " {\"name\": \"tail\", \"parent\": \"body\", \"box\": [-0.1, 0, 0.5, 0.1, 0.2, 1.0], \"pivot\": [0, 0.1, 0.5]}]}").getAsJsonObject())
+                .build(BloodAndBones.asResource("test_serpent"), 1.0F, 0.5F);
+        var head = serpent.bone("head").orElseThrow().jointOrDefault();
+        if (head.maxDegrees().y != 70.0F || head.minDegrees().x != -5.0F || head.damping() != 3.0F) {
+            wrong.append(" a generic body file's own joint should be used, got ").append(head);
+        }
+        if (!serpent.bone("tail").orElseThrow().jointOrDefault().equals(com.avicagan.bloodandbones.carcass.rig.JointRules.jointFor("tail"))) {
+            wrong.append(" a generic bone with no joint should take the rules' one");
         }
         if (!wrong.isEmpty()) {
             helper.fail("Naming rules:" + wrong);

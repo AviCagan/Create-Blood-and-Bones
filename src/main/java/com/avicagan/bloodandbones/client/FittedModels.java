@@ -45,8 +45,16 @@ public final class FittedModels {
     private static final Map<ResourceLocation, Optional<ModelPart>> ROOTS = new ConcurrentHashMap<>();
     /** The skin its renderer draws a plain one of it in, by mob. */
     private static final Map<ResourceLocation, Optional<ResourceLocation>> SKINS = new ConcurrentHashMap<>();
-    /** What each bone wears, by rig and bone: the part, how it is stretched, and which parts under it are other bones. */
-    private static final Map<Bone, Optional<Fit>> FITS = new java.util.WeakHashMap<>();
+    /**
+     * What each bone wears, by mob and bone: the part, how it is stretched, and which parts under it are other bones. Keyed
+     * by the mob as well as the bone, since two mobs of one archetype and one hitbox size have bones equal in every figure,
+     * and each must wear its own model's parts. What a bone wears (its part names) is in the key too, so new generic body
+     * data is fitted afresh.
+     */
+    private static final Map<FitKey, Optional<Fit>> FITS = new ConcurrentHashMap<>();
+
+    private record FitKey(ResourceLocation entity, String bone, String wears) {
+    }
 
     private record Fit(ModelPart part, Quaternionf turn, Vector3f min, Vector3f max, List<ModelPart> others) {
     }
@@ -58,9 +66,7 @@ public final class FittedModels {
     public static void clear() {
         ROOTS.clear();
         SKINS.clear();
-        synchronized (FITS) {
-            FITS.clear();
-        }
+        FITS.clear();
     }
 
     /** The skin to draw a generic body in: the one its renderer gives a plain one of it, else what the server guessed. */
@@ -120,10 +126,7 @@ public final class FittedModels {
     /** Draw one bone of a generic body, the pose at the bone's own origin (its pivot), as CarcassModels draws a bone. */
     public static void draw(Rig rig, Bone bone, ResourceLocation texture, int color, PoseStack poseStack, MultiBufferSource buffers, int packedLight) {
         VertexConsumer buffer = buffers.getBuffer(RenderType.entityCutoutNoCull(texture));
-        Optional<Fit> fit;
-        synchronized (FITS) {
-            fit = FITS.computeIfAbsent(bone, b -> fit(rig, b));
-        }
+        Optional<Fit> fit = FITS.computeIfAbsent(new FitKey(rig.entity(), bone.name(), bone.part()), k -> fit(rig, bone));
         Vector3f boxMin = bone.boxMin();
         Vector3f boxMax = bone.boxMax();
         if (fit.isEmpty()) {

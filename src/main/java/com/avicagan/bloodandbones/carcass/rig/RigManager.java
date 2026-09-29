@@ -59,11 +59,14 @@ public class RigManager extends SimpleJsonResourceReloadListener {
 
     /** Only a rig file's rig (or a test's), never a generic body. */
     public static Optional<Rig> fileRig(ResourceLocation entityId) {
-        Rig rig = TEST_HIDDEN.containsKey(entityId) && hiddenNow(entityId) ? null : INSTANCE.rigs.get(entityId);
+        Rig rig = hiddenNow(entityId) ? null : INSTANCE.rigs.get(entityId);
         return Optional.ofNullable(rig != null ? rig : TEST_RIGS.get(entityId));
     }
 
-    /** No-carcass mobs: the ender dragon until it has a body plan (ARCHITECTURE 4.4); anything a datapack adds. */
+    /**
+     * No-carcass mobs: the ender dragon until it has a body plan (ARCHITECTURE 4.4), the mod's own minion (it dies by the
+     * server's minion rules, never as a fresh carcass to butcher again); anything a datapack adds.
+     */
     public static final net.minecraft.tags.TagKey<EntityType<?>> NO_CARCASS = net.minecraft.tags.TagKey.create(
             net.minecraft.core.registries.Registries.ENTITY_TYPE, BloodAndBones.asResource("no_carcass"));
 
@@ -77,8 +80,8 @@ public class RigManager extends SimpleJsonResourceReloadListener {
 
     /**
      * A mob's generic body: its archetype's (or the generic_rig its groups name), at its hitbox's size. None for what is
-     * not a living mob (a player never becomes a carcass, an armour stand is no mob), for the no_carcass tag, or when its
-     * groups name no generic body.
+     * not a living mob (a player never becomes a carcass, an armour stand is no mob), for the mod's own mobs (a minion is
+     * stitched from carcasses and dies by its own rules), for the no_carcass tag, or when its groups name no generic body.
      */
     private static Optional<Rig> generic(ResourceLocation entityId, com.avicagan.bloodandbones.parts.PartsData.Store store, Map<ResourceLocation, Generic> cache) {
         int generation = store.generation();
@@ -89,6 +92,7 @@ public class RigManager extends SimpleJsonResourceReloadListener {
         Optional<Rig> built = Optional.empty();
         Optional<EntityType<?>> type = BuiltInRegistries.ENTITY_TYPE.getOptional(entityId);
         if (type.isPresent() && type.get() != EntityType.PLAYER && type.get() != EntityType.ARMOR_STAND && !type.get().is(NO_CARCASS)
+                && !entityId.getNamespace().equals(BloodAndBones.MOD_ID)
                 && net.minecraft.world.entity.ai.attributes.DefaultAttributes.hasSupplier(type.get())) {
             Optional<ResourceLocation> id = store.resolve(entityId, false).carcass().genericRig();
             GenericRig body = id.map(store::genericRig).orElse(null);
@@ -109,23 +113,34 @@ public class RigManager extends SimpleJsonResourceReloadListener {
     }
 
     /**
-     * For game tests and the showcase: act as if this mob had no rig file until the server reaches this tick (then it has
-     * its own again). In a single-player world the client's copy is hidden alike.
+     * For game tests and the showcase: act as if this mob had no rig file until the server reaches this tick, or until the
+     * returned hold is let go, whichever comes first. Holds are counted, so two tests hiding the same mob (a test run many
+     * times over in one batch) each keep it hidden until both are done. In a single-player world the client's copy is
+     * hidden alike.
      */
-    public static void hideForTest(ResourceLocation entityId, int untilTick) {
-        TEST_HIDDEN.put(entityId, untilTick);
+    public static Runnable hideForTest(ResourceLocation entityId, int untilTick) {
+        Object hold = new Object();
+        TEST_HIDDEN.computeIfAbsent(entityId, k -> new java.util.concurrent.ConcurrentHashMap<>()).put(hold, untilTick);
+        return () -> {
+            Map<Object, Integer> holds = TEST_HIDDEN.get(entityId);
+            if (holds != null) {
+                holds.remove(hold);
+            }
+        };
     }
 
-    private static final Map<ResourceLocation, Integer> TEST_HIDDEN = new java.util.concurrent.ConcurrentHashMap<>();
+    /** Hides by mob: each hold and the tick it runs out. */
+    private static final Map<ResourceLocation, Map<Object, Integer>> TEST_HIDDEN = new java.util.concurrent.ConcurrentHashMap<>();
 
     private static boolean hiddenNow(ResourceLocation entityId) {
-        net.minecraft.server.MinecraftServer server = net.neoforged.neoforge.server.ServerLifecycleHooks.getCurrentServer();
-        Integer until = TEST_HIDDEN.get(entityId);
-        if (until == null || server == null || server.getTickCount() >= until) {
-            TEST_HIDDEN.remove(entityId);
+        Map<Object, Integer> holds = TEST_HIDDEN.get(entityId);
+        if (holds == null) {
             return false;
         }
-        return true;
+        net.minecraft.server.MinecraftServer server = net.neoforged.neoforge.server.ServerLifecycleHooks.getCurrentServer();
+        int now = server == null ? Integer.MAX_VALUE : server.getTickCount();
+        holds.values().removeIf(until -> now >= until);
+        return !holds.isEmpty();
     }
 
     /** What game tests add: a made-up mob's rig, under an id of the test's own. Looked up like the rest; never listed or sent. */
@@ -195,7 +210,7 @@ public class RigManager extends SimpleJsonResourceReloadListener {
 
     /** Client side: only the rig the server sent for this mob (hidden alike in a single-player world's tests and showcase). */
     public static Optional<Rig> clientFileRig(ResourceLocation entityId) {
-        return TEST_HIDDEN.containsKey(entityId) && hiddenNow(entityId) ? Optional.empty() : Optional.ofNullable(clientRigs.get(entityId));
+        return hiddenNow(entityId) ? Optional.empty() : Optional.ofNullable(clientRigs.get(entityId));
     }
 
     /** An empty map clears what we had; otherwise the rigs are added to it. */

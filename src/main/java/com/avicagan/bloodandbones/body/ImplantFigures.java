@@ -27,8 +27,9 @@ public final class ImplantFigures {
     /** The figures in use: the data's where it gives them, the item's own otherwise. */
     public static ImplantSpec of(ImplantItem item, ImplantSpec base) {
         ResourceLocation id = BuiltInRegistries.ITEM.getKey(item);
-        // the server's data when this side has it (a single player world has both), else what the server sent
-        PartsData.Store store = PartsData.SERVER.implantFiles().isEmpty() ? PartsData.CLIENT : PartsData.SERVER;
+        // this side's data: on the client what the server sent, never the server's store, which still holds the last
+        // single-player world's figures after the player has joined another server
+        PartsData.Store store = net.neoforged.fml.util.thread.EffectiveSide.get().isClient() ? PartsData.CLIENT : PartsData.SERVER;
         Known known = KNOWN.get(id);
         if (known != null && known.store() == store && known.generation() == store.generation() && known.base() == base) {
             return known.spec();

@@ -24,7 +24,9 @@ import java.util.Optional;
  * game's own models. A bone that hangs off another joins it at its {@code pivot}; the torso comes first. Bones are named
  * as the game's models name their parts ("head", "right_front_leg", "tail"), so the part slots, the joint limits and the
  * butchery all read them as they read a vanilla mob's. {@code wears} lists the model part names the client looks for in
- * the mob's own model to draw in that bone's place, first found wins (its own name when not given).
+ * the mob's own model to draw in that bone's place, first found wins (its own name when not given). {@code joint} sets how
+ * far the bone swings against its parent, as a rig file's joint does; with none, the naming rules pick one by its name
+ * (JointRules), as they do for the rig targets.
  *
  * @param bones torso first
  */
@@ -32,7 +34,8 @@ public record GenericRig(List<GenericBone> bones) {
     /** Nothing is ever smaller than this, in model pixels, or it would be no body at all. */
     private static final float MIN_PIXELS = 1.0F;
 
-    public record GenericBone(String name, Optional<String> parent, Vector3f from, Vector3f to, Optional<Vector3f> pivot, List<String> wears) {
+    public record GenericBone(String name, Optional<String> parent, Vector3f from, Vector3f to, Optional<Vector3f> pivot, List<String> wears,
+                              Optional<JointSpec> joint) {
     }
 
     public static GenericRig parse(ResourceLocation id, JsonObject json) {
@@ -62,7 +65,15 @@ public record GenericRig(List<GenericBone> bones) {
                 wears.add(name);
             }
             Optional<Vector3f> pivot = o.has("pivot") ? Optional.of(vec(o.getAsJsonArray("pivot"), 0)) : Optional.empty();
-            bones.add(new GenericBone(name, parent, vec(box, 0), vec(box, 3), pivot, List.copyOf(wears)));
+            Optional<JointSpec> joint = Optional.empty();
+            if (o.has("joint")) {
+                if (parent.isEmpty()) {
+                    throw new IllegalArgumentException(id + ": the torso (" + name + ") hangs off nothing, so it has no joint");
+                }
+                joint = Optional.of(JointSpec.CODEC.parse(com.mojang.serialization.JsonOps.INSTANCE, o.get("joint"))
+                        .getOrThrow(message -> new IllegalArgumentException(id + ": bone " + name + "'s joint: " + message)));
+            }
+            bones.add(new GenericBone(name, parent, vec(box, 0), vec(box, 3), pivot, List.copyOf(wears), joint));
         }
         if (bones.isEmpty()) {
             throw new IllegalArgumentException(id + ": a generic rig needs at least a torso");
@@ -95,6 +106,7 @@ public record GenericRig(List<GenericBone> bones) {
                     .orElseGet(() -> new Vector3f(min).add(max).mul(0.5F));
             boxes.put(bone.name(), new float[]{min.x, min.y, min.z, max.x, max.y, max.z});
             Optional<JointSpec> joint = bone.parent().isEmpty() ? Optional.empty()
+                    : bone.joint().isPresent() ? bone.joint()
                     : Optional.of(JointRules.jointFor(bone.name(), parentBox != null && restsOnTop(pivot, min, max, parentBox), lyingFlat(min, max)));
             out.add(new Bone(bone.name(), String.join("|", bone.wears()), bone.parent(), pivot, new Quaternionf(),
                     new Vector3f(min).sub(pivot), new Vector3f(max).sub(pivot), joint));

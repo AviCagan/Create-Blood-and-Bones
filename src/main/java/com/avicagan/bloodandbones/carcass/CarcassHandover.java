@@ -85,7 +85,8 @@ public final class CarcassHandover {
         pending.poses().forEach((id, pose) -> {
             if (container.getSubLevel(id) instanceof ServerSubLevel bone && !bone.isRemoved()) {
                 pipeline.teleport(bone, pose.position(), pose.orientation());
-                pipeline.resetVelocity(bone);
+                // stopped, with any speed the water put aside from Sable's drag (a mob killed in water)
+                CarcassFloat.stop(level, pipeline, bone);
                 bone.updateLastPose();
             }
         });

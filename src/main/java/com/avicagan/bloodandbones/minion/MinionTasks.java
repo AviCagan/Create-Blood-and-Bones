@@ -2281,7 +2281,8 @@ public final class MinionTasks {
             var pipeline = server.physicsSystem().getPipeline();
             for (UUID id : c.bones.values()) {
                 if (server.getSubLevel(id) instanceof dev.ryanhcode.sable.sublevel.ServerSubLevel bone && !bone.isRemoved()) {
-                    pipeline.resetVelocity(bone);
+                    // in water its real speed is put aside between ticks, and that goes too
+                    com.avicagan.bloodandbones.carcass.CarcassFloat.stop(level, pipeline, bone);
                 }
             }
         }
