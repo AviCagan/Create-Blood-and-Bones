@@ -305,7 +305,7 @@ public class BBLang {
                 "A Surgery Table _attachment_: an overhead arm of lamps, clamps and blades. Makes the table a place to _operate_.",
                 "When R-Clicked on a Surgery Table", "Fits it (swapping out any other attachment). Then patients can lie on the table, and a carcass laid on it gives up its _organs_ to a Cleaver, then its _hide_, limbs and meat, one slow cut at a time. By hand the meat and hide come out as a hand's do, about half; a _Deployer_ with a Cleaver gets all of it.",
                 "When Sneak-R-Clicked off an Empty Table", "An empty hand takes it back off.");
-        bloodless("item.bloodandbones.surgical_rig.tooltip.behaviour1", "Fits it (swapping out any other attachment). Then patients can lie on the table, and a carcass laid on it gives up its _cores_ to a Cleaver, then its _covering_, limbs and meat, one slow cut at a time. By hand the meat and covering come out as a hand's do, about half; a _Deployer_ with a Cleaver gets all of it.");
+        bloodless("item.bloodandbones.surgical_rig.tooltip.behaviour1", "Fits it (swapping out any other attachment). Then patients can lie on the table, and a wreck laid on it gives up its _cores_ to a Cleaver, then its _covering_, limbs and meat, one slow cut at a time. By hand the meat and covering come out as a hand's do, about half; a _Deployer_ with a Cleaver gets all of it.");
         item("assembly_frame",
                 "A Surgery Table _attachment_: clamps and a jig for stitching bodies together. Makes the table a place to build _minions_.",
                 "When R-Clicked on a Surgery Table", "Fits it (swapping out any other attachment). Then a carcass _torso_ laid on it can be built into a minion, with the heads, legs and arms of _any_ mob.",
