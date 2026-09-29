@@ -6,6 +6,7 @@ import com.avicagan.bloodandbones.parts.PartsData;
 import com.avicagan.bloodandbones.parts.ResolvedMob;
 import com.avicagan.bloodandbones.parts.SlotInfo;
 import com.avicagan.bloodandbones.parts.TraitList;
+import com.avicagan.bloodandbones.parts.effect.FlagEffect;
 import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
 import com.mojang.serialization.JsonOps;
@@ -180,16 +181,25 @@ public final class MinionData {
     }
 
     /**
+     * What legs let a minion do only when at least half its fitted legs can (docs/PARTS-AND-TRAITS.md section 6.4,
+     * capabilities): climb walls (spider legs), walk on lava (strider legs). A leg's trait carrying one of these flags
+     * counts only then, so one strider leg under a cow gives it nothing; the same flag from anything else (its organ) does.
+     */
+    public static final List<String> LEG_CAPABILITIES = List.of(FlagEffect.CLIMB, FlagEffect.LAVA_WALK);
+
+    /**
      * Every source of a build's minion traits, one list each (docs/PARTS-AND-TRAITS.md section 6.4): the torso's, each
      * fitted piece's for the slot it is (a rabbit's hind leg its "leg.hind" traits), and the organ's "minion" list, each
-     * with what the variants its mob's captured traits match add. A piece whose mob has no rig gives nothing. Pure: data
-     * in, lists out.
+     * with what the variants its mob's captured traits match add. A piece whose mob has no rig gives nothing. The legs'
+     * capabilities are left off unless at least half the legs share them ({@link #LEG_CAPABILITIES}). Pure: data in,
+     * lists out.
      */
     public static List<List<TraitList.Resolved>> traits(PartsData.Store store, MinionBuild build) {
         List<List<TraitList.Resolved>> out = new ArrayList<>();
         List<PieceRef> pieces = new ArrayList<>();
         pieces.add(build.torso());
         build.parts().forEach(f -> pieces.add(f.piece()));
+        List<Integer> legs = new ArrayList<>();
         for (PieceRef piece : pieces) {
             Optional<Rig> rig = store.rig(piece.entity(), piece.baby());
             if (rig.isPresent()) {
@@ -200,7 +210,18 @@ public final class MinionData {
                     case NECK -> "head";
                     default -> slot.key();
                 };
+                if (slot.slot() == com.avicagan.bloodandbones.parts.PartSlot.LEG) {
+                    legs.add(out.size());
+                }
                 out.add(traits(store.resolve(piece.entity(), piece.baby()), piece.traits(), key));
+            }
+        }
+        for (String capability : LEG_CAPABILITIES) {
+            long with = legs.stream().filter(i -> out.get(i).stream().anyMatch(t -> carries(store, t, capability))).count();
+            if (with * 2 < legs.size()) {
+                for (int i : legs) {
+                    out.set(i, out.get(i).stream().filter(t -> !carries(store, t, capability)).toList());
+                }
             }
         }
         build.organ().ifPresent(organ -> {
@@ -211,6 +232,13 @@ public final class MinionData {
             }
         });
         return out;
+    }
+
+    /** Whether this trait carries a passive flag of this name (lava_walk, climb...). */
+    private static boolean carries(PartsData.Store store, TraitList.Resolved resolved, String flag) {
+        com.avicagan.bloodandbones.parts.Trait trait = store.trait(resolved.id());
+        return trait != null && trait.effects().stream().anyMatch(facet -> facet.trigger() == com.avicagan.bloodandbones.parts.Trigger.PASSIVE
+                && facet.effect() instanceof FlagEffect flagEffect && flagEffect.flag().equals(flag));
     }
 
     /** One of the mob's own attributes as vanilla sets it, or the fallback. */

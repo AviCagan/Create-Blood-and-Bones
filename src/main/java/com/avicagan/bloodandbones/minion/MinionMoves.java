@@ -31,31 +31,34 @@ import java.util.Set;
 public final class MinionMoves {
     /** How much faster than water lets it a sinker drops each tick, so it goes down like a stone rather than drifting. */
     public static final double SINK = 0.04;
-    /** What a lava walker's path may cross that a walker's may not, as a strider's. */
-    private static final Set<PathType> LAVA_PATHS = Set.of(PathType.LAVA, PathType.DANGER_FIRE, PathType.DAMAGE_FIRE);
 
     private MinionMoves() {
     }
 
-    /** Whether it walks on lava now (the lava_walk flag, from strider legs or anything else). */
+    /**
+     * Whether it walks on lava now: the lava_walk flag, from at least half its legs being strider legs (docs/PARTS-AND-TRAITS.md
+     * section 6.4; MinionData#traits leaves it off fewer) or from anything else it is built of.
+     */
     static boolean lavaWalker(MinionEntity minion) {
         return !minion.level().isClientSide && MotionEffects.flag(minion, FlagEffect.LAVA_WALK) > 0;
     }
 
-    /** A lava walker's path finding costs lava and fire nothing, as a strider's does; anyone else's what vanilla says. */
+    /**
+     * A lava walker's path finding costs lava nothing, as a strider's does; anyone else's what vanilla says. Fire and the
+     * edge of it keep vanilla's costs: a strider is fire-proof, but strider legs do not make the rest of a minion so, and
+     * its trait spares it fire only while it stands in lava.
+     */
     static void lavaMalus(MinionEntity minion, boolean lava) {
-        for (PathType type : LAVA_PATHS) {
-            float malus = lava ? 0.0F : type.getMalus();
-            if (minion.getPathfindingMalus(type) != malus) {
-                minion.setPathfindingMalus(type, malus);
-            }
+        float malus = lava ? 0.0F : PathType.LAVA.getMalus();
+        if (minion.getPathfindingMalus(PathType.LAVA) != malus) {
+            minion.setPathfindingMalus(PathType.LAVA, malus);
         }
     }
 
     /**
-     * A lava walker's navigation: a strider's (vanilla's StriderPathNavigation). Lava is a stable, walkable place to
-     * stand and fire no bar to a path; with the path costs above, it walks over a lava pool rather than round it. While it
-     * works out a path, only the lava itself counts to stand on (MinionEntity#pathing).
+     * A lava walker's navigation: a strider's (vanilla's StriderPathNavigation), but for fire. Lava is a stable, walkable
+     * place to stand and no bar to a path; with the path cost above, it walks over a lava pool rather than round it. While
+     * it works out a path, only the lava itself counts to stand on (MinionEntity#pathing).
      */
     static final class LavaNavigation extends GroundPathNavigation {
         private final MinionEntity minion;
@@ -72,7 +75,7 @@ public final class MinionMoves {
 
         @Override
         protected boolean hasValidPathType(PathType type) {
-            return LAVA_PATHS.contains(type) || super.hasValidPathType(type);
+            return type == PathType.LAVA || super.hasValidPathType(type);
         }
 
         @Override

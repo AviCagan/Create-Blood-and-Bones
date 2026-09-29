@@ -21,6 +21,9 @@ import net.minecraft.world.level.block.Block;
 import net.minecraft.world.level.block.CropBlock;
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.level.pathfinder.Path;
+import net.minecraft.world.level.pathfinder.PathType;
+import net.minecraft.world.level.pathfinder.PathfindingContext;
+import net.minecraft.world.level.pathfinder.WalkNodeEvaluator;
 import net.minecraft.world.phys.AABB;
 import net.minecraft.world.phys.Vec3;
 import net.neoforged.neoforge.capabilities.Capabilities;
@@ -231,17 +234,67 @@ public final class MinionGoals {
         /**
          * Its path ended out of reach of what it goes for (a body a block wide is pathed as two blocks wide, so by a wall
          * or in a corner its path stops a block or two short, and vanilla's goal paths again only once the target moves):
-         * it walks the last of the way straight at what it can see.
+         * it walks the last of the way straight at what it can see, if that way is safe ground ({@link #clearWay}). A path
+         * stops short just as often because the way on is lava, fire or a drop, and the move control that walks it
+         * straight there looks at none of it.
          */
         @Override
         public void tick() {
             super.tick();
             LivingEntity target = minion.getTarget();
             if (target != null && minion.getNavigation().isDone() && !minion.isWithinMeleeAttackRange(target)
-                    && minion.distanceToSqr(target) < LAST_STRETCH * LAST_STRETCH && minion.getSensing().hasLineOfSight(target)) {
+                    && minion.distanceToSqr(target) < LAST_STRETCH * LAST_STRETCH && minion.getSensing().hasLineOfSight(target)
+                    && clearWay(minion, target.position())) {
                 minion.getMoveControl().setWantedPosition(target.getX(), target.getY(), target.getZ(), SPEED);
             }
         }
+    }
+
+    /**
+     * Whether the straight way from where it stands to there is safe to walk: every block its body would pass over (as
+     * wide as it is, each half block along) is one its own path finding costs nothing, so no lava (bar a lava walker's), fire
+     * or the edge of it, cactus, berry bush, powder snow, water or shut door, with footing under it no more than a step
+     * down or up from where it stands, so never over a drop.
+     */
+    static boolean clearWay(MinionEntity minion, Vec3 to) {
+        PathfindingContext context = new PathfindingContext(minion.level(), minion);
+        BlockPos.MutableBlockPos at = new BlockPos.MutableBlockPos();
+        Vec3 from = minion.position();
+        double dx = to.x - from.x;
+        double dz = to.z - from.z;
+        int steps = Math.max(1, Mth.ceil(Math.sqrt(dx * dx + dz * dz) * 2.0));
+        double half = minion.getBbWidth() / 2.0 - 1.0E-3;
+        int y = minion.getBlockY();
+        for (int i = 1; i <= steps; i++) {
+            double x = from.x + dx * i / steps;
+            double z = from.z + dz * i / steps;
+            for (int bx = Mth.floor(x - half); bx <= Mth.floor(x + half); bx++) {
+                for (int bz = Mth.floor(z - half); bz <= Mth.floor(z + half); bz++) {
+                    if (!footing(minion, context, at, bx, y, bz)) {
+                        return false;
+                    }
+                }
+            }
+        }
+        return true;
+    }
+
+    /** Safe footing in this column: at the height it stands, a step down, or a step up. */
+    private static boolean footing(MinionEntity minion, PathfindingContext context, BlockPos.MutableBlockPos at, int x, int y, int z) {
+        PathType here = WalkNodeEvaluator.getPathTypeStatic(context, at.set(x, y, z));
+        if (here == PathType.OPEN) {
+            // nothing to stand on at this height: a step down is fine, a drop (or water, or lava) is not
+            return safe(minion, WalkNodeEvaluator.getPathTypeStatic(context, at.set(x, y - 1, z)));
+        }
+        if (here == PathType.BLOCKED) {
+            // a block at its feet: a step up onto it
+            return safe(minion, WalkNodeEvaluator.getPathTypeStatic(context, at.set(x, y + 1, z)));
+        }
+        return safe(minion, here);
+    }
+
+    private static boolean safe(MinionEntity minion, PathType type) {
+        return type != PathType.OPEN && type != PathType.BLOCKED && minion.getPathfindingMalus(type) == 0.0F;
     }
 
     /**

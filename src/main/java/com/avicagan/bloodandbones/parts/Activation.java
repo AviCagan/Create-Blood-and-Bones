@@ -117,12 +117,17 @@ public final class Activation {
         return false;
     }
 
-    /** The first activate effect a minion can fire at this target now (in range, off cooldown, its condition holding, affordable), or null. */
+    /**
+     * The first activate effect a minion can fire at this target now (in range, off cooldown, its condition holding,
+     * affordable), or null. Never a detonation: only a sapper sets its organ off, walking up to its target first
+     * (MinionSapper), so a guard or companion with a creeper's sac in it keeps its blast rather than spending it on the
+     * first monster to come near.
+     */
     @Nullable
     public static Facet readyFor(MinionEntity minion, LivingEntity target) {
         for (Facet facet : facets(ActiveTraits.of(minion))) {
             float range = facet.facet().range();
-            if (minion.distanceToSqr(target) > range * range || TraitEvents.coolingDown(minion, facet.entry(), facet.index())
+            if (facet.facet().effect() instanceof com.avicagan.bloodandbones.parts.effect.DetonateEffect || minion.distanceToSqr(target) > range * range || TraitEvents.coolingDown(minion, facet.entry(), facet.index())
                     || minion.power() - facet.facet().costMb() < 1.0F || !TraitEvents.holds(minion, facet.entry(), facet.facet(), null)) {
                 continue;
             }

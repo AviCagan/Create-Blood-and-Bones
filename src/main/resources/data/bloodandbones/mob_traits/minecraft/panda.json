@@ -42,7 +42,13 @@
             "bite": {
               "style": "claw",
               "damage": 3.0
-            }
+            },
+            "traits": [
+              {
+                "trait": "bloodandbones:brawler",
+                "level": 2
+              }
+            ]
           },
           {
             "if": {

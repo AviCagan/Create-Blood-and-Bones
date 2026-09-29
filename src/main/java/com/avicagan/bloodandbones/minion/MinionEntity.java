@@ -111,6 +111,8 @@ public class MinionEntity extends PathfinderMob implements net.minecraft.world.e
     boolean working;
     /** Which way of getting about its navigation is set up for: ground, climb, swim or fly. */
     private String movedBy = "";
+    /** A sinker short of breath going up for air, until it has its fill again (see {@link #sinking}). */
+    private boolean surfacing;
     /** Which arm strikes next: they take turns. */
     private int nextStrike;
     /** Crouch-held clicks by the maker on it powered down, toward folding it up. */
@@ -350,10 +352,31 @@ public class MinionEntity extends PathfinderMob implements net.minecraft.world.e
         }
     }
 
-    /** A sinker drops through water to walk its bottom (a drowned's legs, an iron golem's), never paddling up. */
+    /**
+     * Whether it walks the bottom of water now: it has sink legs (a drowned's, an iron golem's) and breath enough. Sink
+     * legs do not breathe water for the body on them: one that cannot (a cow's torso) goes up for air when it runs short,
+     * paddling as any minion does, and back down once it has its fill; one with gills (a drowned's lungs, the undead
+     * horses' legs) or of brass never runs short.
+     */
+    public boolean sinking() {
+        return stats().sinks() && !surfacing;
+    }
+
+    @Override
+    public void baseTick() {
+        super.baseTick();
+        // (both sides: a rider's own client moves the steed it rides, and its air is synced)
+        if (getAirSupply() < getMaxAirSupply() / 3) {
+            surfacing = true;
+        } else if (getAirSupply() >= getMaxAirSupply()) {
+            surfacing = false;
+        }
+    }
+
+    /** A sinker drops through water to walk its bottom (a drowned's legs, an iron golem's), never paddling up while it has breath. */
     @Override
     public void travel(net.minecraft.world.phys.Vec3 input) {
-        if (!poweredDown() && stats().sinks() && isInWater() && !onGround() && !isNoGravity()) {
+        if (!poweredDown() && sinking() && isInWater() && !onGround() && !isNoGravity()) {
             setDeltaMovement(getDeltaMovement().add(0.0, -MinionMoves.SINK, 0.0));
         }
         super.travel(input);
@@ -407,6 +430,18 @@ public class MinionEntity extends PathfinderMob implements net.minecraft.world.e
     public net.minecraft.world.entity.LivingEntity getControllingPassenger() {
         return isSaddled() && !poweredDown() && getFirstPassenger() instanceof Player player && MinionMoves.steers(this, player) ? player
                 : super.getControllingPassenger();
+    }
+
+    /**
+     * The seats behind are its maker's to share: when the maker gets off, whoever rode behind gets off too, so nobody else
+     * is left in front to steer it away, and its maker can climb back on.
+     */
+    @Override
+    protected void removePassenger(net.minecraft.world.entity.Entity passenger) {
+        super.removePassenger(passenger);
+        if (!level().isClientSide && passenger instanceof Player player && isMaker(player) && isVehicle()) {
+            ejectPassengers();
+        }
     }
 
     @Override
@@ -467,9 +502,14 @@ public class MinionEntity extends PathfinderMob implements net.minecraft.world.e
         return at.yRot(-getYRot() * net.minecraft.util.Mth.DEG_TO_RAD);
     }
 
-    /** A rider is pressing on it: the server holds a ridden mob's own motion at nothing and moves it from the rider's packets. */
-    boolean steered() {
-        return getControllingPassenger() instanceof Player rider && (rider.zza != 0.0F || rider.xxa != 0.0F);
+    /**
+     * A rider is taking it somewhere: the server holds a ridden mob's own motion at nothing and moves it from the rider's
+     * packets, so it asks the rider. One steered with an item on a stick (a pig's head, strider legs) goes on by itself
+     * while its rider holds the stick, pressing nothing, as a pig does (getRiddenInput); a saddle's alone only while its
+     * rider presses on.
+     */
+    public boolean steered() {
+        return getControllingPassenger() instanceof Player rider && (stats().mount().steer().isPresent() || rider.zza != 0.0F || rider.xxa != 0.0F);
     }
 
     // ---- strikes (its arms take turns; with none, it bites)
@@ -950,10 +990,10 @@ public class MinionEntity extends PathfinderMob implements net.minecraft.world.e
     @Override
     protected void registerGoals() {
         goalSelector.addGoal(0, new FloatGoal(this) {
-            /** A sinker never paddles up: it walks the bottom. */
+            /** A sinker never paddles up while it has breath: it walks the bottom. */
             @Override
             public boolean canUse() {
-                return !(stats().sinks() && isInWater()) && super.canUse();
+                return !(sinking() && isInWater()) && super.canUse();
             }
         });
         goalSelector.addGoal(1, new MinionGoals.SeekBlood(this));

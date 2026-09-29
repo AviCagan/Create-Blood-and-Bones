@@ -330,7 +330,7 @@ public class DataLintTests {
             Map.entry("panda", "the playful gene's tumbles and the worried gene's flight from thunder (the other genes are wired)"),
             Map.entry("parrot", "the mimic alarm"),
             Map.entry("phantom", "the pounce from above (Leap stands in)"),
-            Map.entry("piglin", "the Gold Gizzard's double roll for a barterer"),
+            Map.entry("piglin", "the Gold Gizzard's double roll for a barterer; a held crossbow outside a sentry's post (its head offers no sentry)"),
             Map.entry("piglin_brute", "the brute guard (half again with an axe)"),
             Map.entry("salmon", "swimming up waterfalls"),
             Map.entry("skeleton", "a held bow outside a sentry's post (it shoots innate arrows)"),

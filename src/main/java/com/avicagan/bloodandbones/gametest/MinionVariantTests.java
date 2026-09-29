@@ -156,6 +156,50 @@ public class MinionVariantTests {
     }
 
     /**
+     * Only a sapper sets its organ off. The same creeper-headed cow with the sac in it wakes as a guard (never straight to
+     * sapping), and as a guard it bites the husk it has for a target, even close enough for the sac's blast, without ever
+     * lighting its fuse: its organ goal never fires a detonation (spec 6.9; 15.17's reason the sapper is not woken to).
+     */
+    @GameTest(template = "empty", timeoutTicks = 300)
+    public static void guardKeepsItsBlast(GameTestHelper helper) {
+        pen(helper);
+        MinionEntity minion = minion(helper, new BlockPos(3, 2, 5), sapper(false));
+        if (!minion.job().equals(BloodAndBones.asResource("guard"))) {
+            minion.discard();
+            helper.fail("A creeper's head with the sac in should wake as a guard, not " + minion.job());
+            return;
+        }
+        Husk husk = helper.spawn(EntityType.HUSK, new BlockPos(6, 2, 5));
+        husk.setNoAi(true);
+        float huskHealth = husk.getHealth();
+        minion.setTarget(husk);
+        String[] wrong = {null};
+        helper.onEachTick(() -> {
+            if (wrong[0] == null && (com.avicagan.bloodandbones.parts.effect.DetonateEffect.lit(minion) || minion.poweredDown())) {
+                wrong[0] = "the guard lit its sac at " + minion.distanceTo(husk) + " from the husk";
+            }
+            if (minion.getTarget() == null && husk.isAlive()) {
+                minion.setTarget(husk);
+            }
+        });
+        helper.succeedWhen(() -> {
+            if (wrong[0] != null) {
+                minion.discard();
+                husk.discard();
+                helper.fail(wrong[0]);
+            }
+            helper.assertTrue(!husk.isAlive() || husk.getHealth() < huskHealth, "the guard has not bitten the husk yet: at "
+                    + helper.relativeVec(minion.position()));
+            // biting it, it is well within the sac's reach of 3: still nothing for its organ goal to fire
+            boolean near = minion.distanceTo(husk) < 3.0F;
+            boolean offered = com.avicagan.bloodandbones.parts.Activation.readyFor(minion, husk) != null;
+            minion.discard();
+            husk.discard();
+            helper.assertTrue(near && !offered, "beside the husk (" + near + ") no detonation should be ready for its organ goal: " + offered);
+        });
+    }
+
+    /**
      * Handed a banner, a sapper goes for the banner of that colour standing near home (its mark) and blows up there; the
      * other colour's is left alone, and both stand after, the blast breaking no blocks.
      */
@@ -179,7 +223,8 @@ public class MinionVariantTests {
 
     /**
      * A charged creeper's powder sac holds a bigger blast (spec 8.1: power 4, not 2): the organ's variant raises its
-     * self-destruct a level, and a husk beside it is hurt the more.
+     * self-destruct a level, and a husk beside it is hurt the more. Each is put to sapping in turn, the charged one held
+     * still until the plain one has blown, so neither blast reaches the other's husk.
      */
     @GameTest(template = "empty", timeoutTicks = 200)
     public static void chargedCreeperSacIsStronger(GameTestHelper helper) {
@@ -192,23 +237,29 @@ public class MinionVariantTests {
             helper.fail("A charged creeper's sac should self-destruct a level higher: " + plain + " and " + charged);
             return;
         }
+        pen(helper);
         MinionEntity weak = minion(helper, new BlockPos(2, 2, 2), sapper(false));
         MinionEntity strong = minion(helper, new BlockPos(8, 2, 8), sapper(true));
         if (ActiveTraits.of(strong).level(selfDestruct) != 2) {
             helper.fail("The minion with the charged sac should have Self-Destruct II");
             return;
         }
+        // the charged one waits, doing nothing, for its turn
+        strong.setNoAi(true);
         Husk near = helper.spawn(EntityType.HUSK, new BlockPos(2, 2, 4));
         Husk far = helper.spawn(EntityType.HUSK, new BlockPos(8, 2, 6));
         near.setNoAi(true);
         far.setNoAi(true);
         float full = near.getMaxHealth();
         // the plain one first, then the charged one, so neither blast reaches the other's husk
+        weak.setJob(MinionJobs.SAPPER);
         weak.setTarget(near);
         float[] weakDid = {-1.0F};
         helper.onEachTick(() -> {
             if (weakDid[0] < 0.0F && weak.poweredDown()) {
                 weakDid[0] = full - (near.isAlive() ? near.getHealth() : 0.0F);
+                strong.setNoAi(false);
+                strong.setJob(MinionJobs.SAPPER);
                 strong.setTarget(far);
             }
         });
@@ -302,6 +353,14 @@ public class MinionVariantTests {
         List<List<TraitList.Resolved>> weak = MinionData.traits(PartsData.SERVER, MinionBuild.of(ref("cow", "body")).with("head", ref("panda", "head", Map.of("gene", "weak"))));
         if (weak.stream().flatMap(List::stream).noneMatch(t -> t.id().equals(BloodAndBones.asResource("sneeze")))) {
             helper.fail("A weak panda's head should sneeze");
+            return;
+        }
+        // spec 8.2: an aggressive panda's head is a bodyguard and a brawler 2
+        MinionBuild aggressive = MinionBuild.of(ref("cow", "body")).with("head", ref("panda", "head", Map.of("gene", "aggressive")));
+        int brawler = MinionData.traits(PartsData.SERVER, aggressive).stream().flatMap(List::stream)
+                .filter(t -> t.id().equals(BloodAndBones.asResource("brawler"))).mapToInt(TraitList.Resolved::level).max().orElse(0);
+        if (brawler != 2 || !MinionStats.of(PartsData.SERVER, aggressive).jobs().contains(BloodAndBones.asResource("bodyguard"))) {
+            helper.fail("An aggressive panda's head should be a bodyguard with Brawler II: brawler " + brawler);
             return;
         }
         helper.succeed();
