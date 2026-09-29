@@ -265,6 +265,9 @@ Everything below is in development builds only; the art is placeholder (see the 
 - A butcher minion with a Cleaver chops the pieces laid on a Butcher's Table near home, as a Deployer does, and keeps
   what comes off. A minion storing its takings passes over a container that takes none of them (a Butcher's Table) for
   the chest beyond it.
+- A butcher minion's Cleaver is in its hand, so wherever it cuts (a body in the field or a piece on the Butcher's
+  Table) it gets a hand's share, as you would, less what a poor one wastes; at a table it chops only the pieces the
+  table's filter takes.
 - Where a minion's fitness shows: the Surgery Table's line while building names its best two tasks; JEI's Body Parts
   page and a carcass piece's tooltip (hold Ctrl) show what each part brings to a minion's tasks: its knacks, what it
   holds things with and a head's disposition; `/bloodandbones minion fitness` gives the full breakdown for the minion

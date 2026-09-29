@@ -4091,3 +4091,33 @@ Checked against the old code: with the old bands `fitFarmerFindsRipeCropsNoLater
 `tenderFillsTroughsAndCradles` fills from a tank of eight blocks, and `taskFileKindToolAndAnchorsCount` reads the tool's
 fixed fields and words. The new and changed tests passed ten times over in one world, and the suite passed three full runs
 in a row.
+
+### 15.27 Tasks with the machines, materials and checks: the merge (verified)
+
+The integration branch's organs, checks (15.18), machines (15.19) and materials (15.20) merged into the tasks work
+(15.21 to 15.26, numbered 15.18 to 15.23 before the merge). Where the two met:
+
+- **The butcher is work by hand.** The machines' three paths make a blade in a player's or a minion's hand the hand path
+  (`data/bloodandbones/butchery_path/hand.json`: 60%, each whole piece a 15% chance to botch), scaled by the hand's
+  butchery yield; the tasks made a poor butcher waste part of each cut (`CarcassButchery.yielding`,
+  `MinionFitness.yieldShare`). Both now scale every yield in `CarcassButchery.dropYields`: a minion butcher by a body cuts
+  under `byHand(minion)` and its share, and a 50% butcher gets half a player's hand, a 100% one or better all of it and
+  never more.
+- **The Butcher's Table.** Its chop takes the machines' lying piece and hand share and the tasks' sink for what a minion
+  keeps: `chop(level, cleaver, who)` for a player or a Deployer, `chop(level, cleaver, who, into)` for a minion, whose
+  chop is by hand. `canChop` (the minion's test for work there) now asks the table's part filter too, so a butcher chops
+  only the pieces the filter takes, as a Deployer does.
+- **The Surgery Table and Surgical Rig** keep both sides: the stump priced by the surgeon's fitness and paid from any
+  container (`Surgery.payBlood`), and the rig's organs through `Surgery.harvest` and `organsLeft`.
+- **Sounds.** Minion code plays only the mod's own wet sounds (their bloodless twins through `BloodlessSounds`) and
+  vanilla sounds that are not wet; the bloodless sound test finds none missing a twin.
+- **The showcase** keeps both runs: the villager's Body Parts page and the task screens, then the Surgery Table's line,
+  then the gauge and diving shots after it (the table's line cleared from the action bar first).
+
+**Tests:** `poorButcherWastesWhatItCuts` expected a 50% butcher to keep half the table's beef (2 or 3 of 4.22); by hand
+that is half of 60%, less the botching, too few to weigh in one cut. It now checks that each butcher keeps no more
+than half a hand's beef rounded up, and weighs the share over a thousand cuts through the very calls the goals make (the
+body by `byHand` at the butcher's share, the table's `chop` in its hands) against a player's hand: half, give or take
+6% (six times the spread). `butcherChopsAtTheTable` counts all four things a cow's body gives in the chest, since by
+hand any one of them can be botched away.
+
