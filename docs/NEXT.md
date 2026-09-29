@@ -5,7 +5,7 @@ The whole brief was also audited against the code on 29 September 2026: docs/BRI
 The owner's list of what to take up next, newest decisions first. Each item says what was decided, what it replaces,
 and what is still to be settled together before any code is written.
 
-## 1. Tasks instead of jobs (decided 24 September 2026; designed 29 September 2026; stage A built 29 September 2026)
+## 1. Tasks instead of jobs (decided 24 September 2026; designed 29 September 2026; stages A and B built 29 September 2026)
 
 **The decision.** There are to be no jobs. Any task, from a list we draw up together, can be given to any minion. Some minions do a task better than others because of their own stats, and those stats come from what they are built of.
 
@@ -55,6 +55,8 @@ and what is still to be settled together before any code is written.
   - a ragged stump costs one bucket.
 
   Old datapacks' `jobs` lists are read as knacks.
+
+**Where it stands.** Stage A (the numbers) and stage B (tasks in the jobs' place, the screen, the wake rule, the status line and old saves) are built; the levers, the surgeon's stump price, the Tender and the rest follow (1.10). What stage B does differently from the design, and why, is under "As built in stage B" in 1.3 and 1.10.
 
 **The one question the owner must answer: the surgeon (1.5).** There are two choices:
 - any minion with a hand may do the ritual's cutting, badly unless it has a surgeon's head (recommended, and the default as built);
@@ -258,6 +260,14 @@ A task changes only when its maker sets it here:
 
 It **wakes** to its fittest task that waits on nothing it lacks, never Hunter or Sapper (today's rule), with ties going to list order. With nothing else possible it wakes to Idle. The action bar names the task: "Woke as a Surgeon (200%)". A villager-headed minion made at the table is ready to operate, as today.
 
+**As built in stage B** (docs/ARCHITECTURE-PROPOSAL.md 15.19):
+- **The screen** is drawn in Create's own schedule frame (`AllGuiTextures.SCHEDULE`), with its cards, brass strip and pointer for the task now, Create's icon buttons and its scroll input for the reach. Sixteen rows and four headings are taller than the frame's list, so the list scrolls, as the schedule's does; it opens scrolled to the task now. A task it cannot do shows "Cannot" and its reason in small print on the row. A task that would wait for something shows a small amber mark, and its reasons say for what. The rows are worked out at the anchor it works at now, where the task allows it (a loyal head's "with me" 1.25 shows when "With me" is on). A reach scrolled to is sent once it has been left alone half a second, or when the screen closes. Clicking a row sets that task at the anchor it works at now if the task allows it (else at home), with the task's own reach. After every request the server sends the rows again, and an open screen is brought up to date; a screen closed meanwhile stays closed.
+- **The wake rule skips the Tender** until its goals are built (stage E). Given now, it keeps home. A whole cow wakes as a Courier: its best task, Herder, waits for food.
+- **A missing tool** stops the goal as well: a butcher with no blade in hand waits, and so does a herder with nothing in its mouth and a medic with no healing potions.
+- **What its work waits on in the world** is said by five goals, for the status line's next five seconds: the fisher (no still water within its reach), the digger (nothing to sniff), the barterer (no gold), the hauler (no free hook or rack) and any task that stores (no container by home).
+- **The status line** reads "Farmer 120% at home, blood 300 of 780 mB", with "at its post" for a sentry, "at its table" for a surgeon, "with its maker", or "at home, its maker away"; then what it waits for, or "it can no longer be a Surgeon: No hand to hold a surgeon's blade" after a data reload.
+- **A companion or bodyguard whose body could not guard** (a torso with no arm and no head) loads as Idle with its maker, the nearest thing it can do; no shipped body could have been one, since such a body offered only companion before stage B's data change.
+
 **Why not the others:**
 - **A written task tag.** It still needs a writing screen, it shows no comparison, and machines never change a minion's task anyway (15.13).
 - **Cycling.** Clicking through sixteen tasks blind is slow, and it hides the numbers this whole change is about.
@@ -280,7 +290,7 @@ It **wakes** to its fittest task that waits on nothing it lacks, never Hunter or
 
 ### 1.5 The surgeon
 
-**This is the owner's call, and still open.** Both ways are built into the data (stage A): the surgeon task's file (`data/bloodandbones/minion_task/surgeon.json`) says `"needs_surgeon_head": false`, the recommendation below, and that is the default; a datapack setting it to `true` gets the other way, the brief's letter. The heads whose data says `"surgeon": true` are the villager family's (the villager, the witch, the wandering trader and the zombie villager) and the illager family's (the pillager, the vindicator, the evoker and the illusioner). `MinionFitness.mayCut` answers for either setting, and `surgeonHeadFlagDecidesWhoCuts` tests both; the ritual reads it in stage D.
+**This is the owner's call, and still open.** Both ways are built into the data (stage A): the surgeon task's file (`data/bloodandbones/minion_task/surgeon.json`) says `"needs_surgeon_head": false`, the recommendation below, and that is the default; a datapack setting it to `true` gets the other way, the brief's letter. The heads whose data says `"surgeon": true` are the villager family's (the villager, the witch, the wandering trader and the zombie villager) and the illager family's (the pillager, the vindicator, the evoker and the illusioner). `MinionFitness.mayCut` answers for either setting, and `surgeonHeadFlagDecidesWhoCuts` tests both. Since stage B the Surgery Table asks it who may cut (`surgeonHeadIsTheOwnersCall` tests both ways at the table); the stump's price and the fittest of several surgeons come in stage D.
 
 **Recommended (the default): any minion with a hand can operate, and the head decides how badly.**
 - Anyone may be set to Surgeon.
@@ -387,8 +397,8 @@ Every missing knack and disposition counts as 1. Archetypes carry knacks and leg
 | volatile / panda / killer bunny | sapper 1.5, guard 1.25 / courier 1.25 (aggressive: guard 1.5; lazy: sentry 1.25) / guard 1.5, berserk |
 
 **As built in stage A** (docs/ARCHITECTURE-PROPOSAL.md 15.18), where the data differs from the above:
-- **The old `jobs` lists stay beside the `knacks` until stage B.** Today's jobs cannot be read from the knacks without changing what heads offer and wake as: the table drops companion, bodyguard and scavenger, and reorders (a cow's head would wake as a courier, a wolf's as a herder, a horse's as a hauler, and a professional villager's would offer the biped's courier too). Stage A changes nothing in play (1.10), so today's job system keeps reading the lists, and stage B deletes them with it. A file with both reads its `knacks` and is not warned about.
-- **`pace` stays** on the zombie villager beside its surgeon knack of 0.5, for `AttendTable` to read until the surgeon's tending reads the fitness.
+- **The old `jobs` lists stayed beside the `knacks` until stage B.** Today's jobs could not be read from the knacks without changing what heads offered and woke as, and stage A changed nothing in play (1.10). Stage B deleted them with the job system: the shipped data has only `knacks` now. A third party's file with `jobs` and no `knacks` is still read as knacks, logged once.
+- **`pace` stayed** on the zombie villager beside its surgeon knack of 0.5 until stage B, which deleted it: `AttendTable` tends at the surgeon's fitness now (a heart every 5 s at 100%, never under 2 s), so the shaky hands are the knack's.
 - **"Courier for the rest"** is a variant for the librarian, the cartographer, the mason and an unemployed villager (`"none"`). A modded profession gets the family's surgeon 1.5 and the biped's courier 1.25, and nothing more, until its datapack names it.
 - **The villager's own file no longer restates its family's `meek`.** A mob's own file wins over its family's variants (spec 4.2), so the nitwit's variant could not make it dim.
 - **Leg grips count only on a body standing on at least four legs.** A body standing on two wolf front legs uses them to stand, and holds with its mouth.
@@ -493,23 +503,26 @@ Every missing knack and disposition counts as 1. Archetypes carry knacks and leg
 - `taskKnackTraitCounts` (if built) — a gland's knack raises that task and no other. Built: the sniffer's Olfactory Bulb.
 - `surgeonHeadFlagDecidesWhoCuts` (new, for 1.5) — by default any surgeon with a hand may cut; with `"needs_surgeon_head": true`, only villager, illager and witch heads; with no hand, none.
 
-**New, in the world:**
-- `taskScreenRowsForMakerOnly` — the maker's crouching empty-hand use sends one row per task, matching `MinionFitness`. A stranger, a Deployer's stand-in and a powered-down minion get none, and folding still works.
-- `setTaskFromTheScreen` — the maker sets Fisher at home, reach 6, with Home here, and it fishes there. A stranger's request, an impossible task, "with me" for a Farmer and a reach past the maximum are all refused. Everything survives saving and loading.
-- `oldJobConvertsOnLoad` — the old jobs load as the table in 1.8 says, homes kept, including through a Dormant Minion item.
-- `wakesToItsFittestTask` — a villager-headed build wakes as Surgeon and says so; a wolf head never wakes to Hunter, and a creeper's sac never to Sapper.
+**New, in the world** (those built in stage B are marked; `gametest/MinionTaskTests`):
+- `taskScreenRowsForMakerOnly` (built in B) — the maker's crouching empty-hand use sends one row per task, matching `MinionFitness`. A stranger, a Deployer's stand-in and a powered-down minion get none, and folding still works. As built, the plain click that shows the status line is a stranger's: the maker's empty hand on a minion wearing a helmet takes the helmet off, as it did before.
+- `setTaskFromTheScreen` (built in B) — the maker sets Fisher at home, reach 6, with Home here, and it fishes there. A stranger's request, an impossible task, "with me" for a Farmer and a reach past the maximum are all refused. Everything survives saving and loading.
+- `oldJobConvertsOnLoad` (built in B) — the old jobs load as the table in 1.8 says, homes kept, including through a Dormant Minion item. As built, one set down from the item makes its home where it is set down, as unfolding always has; and a companion whose body has nothing to fight with loads as Idle with its maker.
+- `wakesToItsFittestTask` (built in B) — a villager-headed build wakes as Surgeon and says so; a wolf head never wakes to Hunter, and a creeper's sac never to Sapper.
 - `fitterButcherIsFasterAndCleaner` — over 20 s, a 200% butcher makes about four times the strokes of a 50% one on a like carcass, and the poor one gets about half a player's beef per cut.
 - `poorHaulerCrawlsFitOneNoBetterThanAPlayer` — a rabbit-torso hauler tows a cow with nearly three times a player's slowdown; a horse hauler's slowdown is exactly a player's.
 - `bloodAtWorkFollowsFitness` — couriers at 200% and 50% use 12.5 and 50 mB a minute at work, to within 10%.
-- `guardWithMeIsAWolf` — it follows, and goes for what hurts its maker and what its maker hits; Idle with me follows and only fights back.
-- `courierWithMeFillsTheMakersHands` — it picks up round the maker and hands the items over; holding an apple, it takes only apples.
-- `hunterWithMeHuntsBesideTheMaker` — it hunts prey near the maker, not near home; with a Meat Hook the carcass is intact.
-- `medicWithMeHealsOnTheMove` — it follows and throws at its hurt maker.
+- `guardWithMeIsAWolf` (built in B) — it follows, and goes for what hurts its maker and what its maker hits; Idle with me follows and only fights back.
+- `courierWithMeFillsTheMakersHands` (built in B) — it picks up round the maker and hands the items over; holding an apple, it takes only apples.
+- `hunterWithMeHuntsBesideTheMaker` (built in B) — it hunts prey near the maker, not near home; with a Meat Hook the carcass is intact. As built, its reach is set to 4 so the two cows' hunting grounds are apart in a 10-block pen, and the cows are still, since a cow hit flees beyond so short a reach and a hunter lets prey go that leaves its ground.
+- `medicWithMeHealsOnTheMove` (built in B) — it follows and throws at its hurt maker. As built, its maker is hurt once it has followed them some way: a medic stops to throw where it stands, and within its following distance of 6 blocks has no need to come nearer.
 - `tenderFillsTroughsAndCradles` — blood buckets from a chest go into a trough and the empties come back; a Create tank of blood fills its buckets; canisters go from a chest into a cradle and the empties come back.
 - `tenderWakesAFallenMinion` — a flesh minion lying powered down within reach gets blood and gets up; a brass one gets a canister.
 - `butcherChopsAtTheTable` — pieces on a Butcher's Table by home are chopped.
-- `headlessFightsOnlyWhatTouchesIt` — a headless Guard ignores a zombie 4 blocks off and hits one beside it.
-- `sentryWithNoBowHoldsItsPost` — it strikes within reach and never moves.
+- `headlessFightsOnlyWhatTouchesIt` (built in B) — a headless Guard ignores a zombie 4 blocks off and hits one beside it.
+- `sentryWithNoBowHoldsItsPost` (built in B) — it strikes within reach and never moves.
+- `reloadTakesAnImpossibleTask` (added in B) — a data reload that leaves a Farmer's body with no hand sets it to Idle at home, and the status line says why.
+- `taskWordsReadBloodless` (added in B) — every task, screen and status string has its bloodless wording, and none of them reads blood, bleeding, a carcass, flesh, organs, gore, guts, butchery or a minion there.
+- `surgeonHeadIsTheOwnersCall` (added in B, for 1.5; `gametest/SurgeonTests`) — at the table, a zombie-headed surgeon cuts by default and is passed over with `"needs_surgeon_head": true`; a villager-headed one cuts either way.
 
 **The surgeon, if the recommendation is taken:**
 - `anySurgeonWithAHandCuts` — a zombie-headed surgeon cuts and leaves a stump of two buckets; a villager-headed one leaves one bucket, and cuts first when both are there; a headless one leaves three.
@@ -522,12 +535,12 @@ Every missing knack and disposition counts as 1. Archetypes carry knacks and leg
 - `safetyFloorNeverNeedsSurgeon`: a crude prosthetic goes into a three-bucket stump for nothing.
 - `surgeonKeepsToItsTable` and `unfoldedSurgeonTakesTheTableBesideIt`: tasks are set with `setTask`.
 - Every job test that uses `switchTo` or `setJob` now uses `setTask`.
-- `scavengerFetchesMatchingItem` and `filteredScavengerFetchesWhatItPasses` become courier tests.
+- `scavengerFetchesMatchingItem` and `filteredScavengerFetchesWhatItPasses` become courier tests. As built in B: `courierWithSampleFetchesItsLike` (at home, holding a shard, into the chest by home) and `filteredCourierFetchesWhatItPasses` (brass with a filter and an empty hand, with its maker, into their hands).
 - `buildCowOnFourRabbitLegs`: its best task is Herder.
-- `wingsAreNoHands`: Surgeon cannot; a bow held in a beak is still no ranged attack.
+- `wingsAreNoHands`: Surgeon cannot; a bow held in a beak is still no ranged attack. (Built in B, with the other changed tests here that stage B could make: `amputationNeedsSurgeon`, `surgeonKeepsToItsTable`, `unfoldedSurgeonTakesTheTableBesideIt`, every `setJob` and `switchTo`, the two courier tests, `buildCowOnFourRabbitLegs`. The shaky surgeon's knack is read in stage A's `knacksMergeAcrossLayers`; the stump's price is stage D's.) `fisherFishesByWater` also changed: with no rod a fisher's head fishes by hand and is shown a rod's fitness, and the sapper tests ask whether a body can sap (a detonating organ) rather than whether a head offers it.
 - bb-organs' shaky-surgeon test reads the knack.
 
-**Deleted, each replaced above:**
+**Deleted, each replaced above** (deleted in stage B):
 - `cycleJobWithEmptyHand`;
 - `villagerHeadOffersSurgeon`;
 - `pillagerHeadOffersSurgeon`;
@@ -539,8 +552,8 @@ Every missing knack and disposition counts as 1. Archetypes carry knacks and leg
 
 Start after bb-organs is on main (it is, since 40dfb66). This change touches its sapper, variants, `pace`, `MinionStats` and `MinionJobs`.
 - **A. The fitness, worked out without a world (medium). Built 29 September 2026** (docs/ARCHITECTURE-PROPOSAL.md 15.18). `MinionTask` (the list, its kinds, anchors, the code's tests of the body and each task's data), `MinionDisposition`, `MinionFitness` (rows, factors and their sources, the stump's price, who may cut, and the levers, pure), knacks, leg grips, the disposition and task files, the `task_knack` effect, and the migrated data, with the tests worked out without a world. Nothing in play changes yet, but for 1.11's three: a headless body sees 2 blocks, a seeing head's Keen Eye and Relentless count, and a body with no arm and no head has nothing to fight with.
-- **B. Tasks replace jobs (large).** `MinionTask`'s goal packages, the renames, anchor and reach, the screen, the wake rule, the status lines and the save conversion, with their tests. It also deletes the old `jobs` lists the shipped data still keeps beside the knacks (1.6, as built), and turns `MinionFitness.Source` into the screen's words.
-- **C. The levers and blood at work (medium).** The levers are written and tested at 100% (`MinionFitness.quicker` and the rest); the goals read them here. The strike rate counts in Blow already, but blows do not land more often in play yet (spec 6.4's "+15% for each arm beyond 2" was never built): the guard's and hunter's melee goals take it here.
+- **B. Tasks replace jobs (large). Built 29 September 2026** (docs/ARCHITECTURE-PROPOSAL.md 15.19). `MinionTasks` (each task's goals, the wake rule, old jobs read as tasks, a reload that takes a task away, the screen's rows and the checks on its requests), anchor and reach, the "with me" goals (`FollowMaker`, `DefendMaker`), a headless minion's touch and a bowless sentry's strike, the screen (`MinionTaskScreen`, `MinionTaskPayload`), the status lines (`TaskWords`, which turns `MinionFitness.Source` into words), the Surgery Table's best two tasks, the save conversion, and the deleted `jobs` lists and `pace`, with their tests. Also done here, ahead of stage C, because stage B removed what they stood on or the screen shows them: the surgeon's tending reads its fitness (`pace` is gone), blood at work is 25 mB a minute ÷ fitness (the hover shows it), and `Surgery.surgeonAt` asks `MinionFitness.mayCut`, so the surgeon file's switch (1.5) already decides who cuts; the fittest surgeon and the stump's price stay stage D's. The guard at home keeps within 4 blocks of home and fights what comes within its reach, as the guard job did; "patrols its reach" is read as watching it, since a guard walking a 16-block beat would wander into its neighbours' land. A herder looks out for strays as much further as its reach is set further (20 at its own 8). A courier notices loose items within its sight as well as its reach, as the scavenger did.
+- **C. The levers (medium).** The levers are written and tested at 100% (`MinionFitness.quicker` and the rest); the goals read them here (the goals already read their base numbers from the task files). Blood at work and the surgeon's tending came in stage B. The strike rate counts in Blow already, but blows do not land more often in play yet (spec 6.4's "+15% for each arm beyond 2" was never built): the guard's and hunter's melee goals take it here.
 - **D. The surgeon (small),** once the owner has answered.
 - **E. Tender and the Butcher's Table (medium).**
 - **F. Shown elsewhere (small):** JEI, tooltips, the command and the docs.

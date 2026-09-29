@@ -90,7 +90,7 @@ This spec is built from both:
 **Two futures for each piece:**
 - **Minion** (Surgery Table with the Assembly Frame):
   - the torso sets size, health, carrying and sockets;
-  - the head sets the job;
+  - the head sets the knacks and the disposition;
   - the arms set the attack;
   - the legs set movement;
   - the tail adds a small passive;
@@ -124,7 +124,7 @@ Items store only their sources; numbers are resolved from data.
 | TORSO | The rig root, or a self-contained single piece | Frame: size, health, carrying, sockets | Chestplate body |
 | TORSO_EXT | A non-root body bone: `upper_body`, `lower_body`, `body0/1`, `ribcage` | Fits a torso socket and brings its own sockets | Torso scraps |
 | NECK | `neck`, and the head-side segments of segmented mobs | Fits a head socket and carries one head socket of its own | Head scraps |
-| HEAD | Any bone with a `head` token; a head inside a head merges into the outer one | Job, disposition, senses, bite | Helmet |
+| HEAD | Any bone with a `head` token; a head inside a head merges into the outer one | Knacks, disposition, senses, bite | Helmet |
 | ARM | `*arm*`. Forms: `wing` (`*wing*`), `pair` (a villager's single `arms` bone), `shell` (shulker lid, by override) | Attack style, grip, wing lift | Chestplate shoulders |
 | LEG | `*leg*`, `*haunch*`, `tentacle*`. Sub-slots `front`, `mid`, `hind`; forms `tentacle`, `flipper` | Movement | Leggings and boots |
 | TAIL | `tail*`, `real_tail`, `tail_base`, `body_back`, fluke | One passive | Leggings hips (optional) |
@@ -231,7 +231,7 @@ That is 24 + 28 + 5 + 2 + 2 + 7 + 3 + 4 + 2 + 1 + 1 = 79. Only the shulker needs
 ### 3.1 Layers and resolution
 A mob resolves to:
 - exactly one **archetype** (body shape: complete defaults for every slot, organ set, generic rig, the torso's own movement, fallback material);
-- zero or one **family** (flavour: material, jobs, strikes, gaits, hide, organs, set);
+- zero or one **family** (flavour: material, knacks, strikes, gaits, hide, organs, set);
 - zero or more **overlays** (condition patches keyed off tags);
 - an optional **mob file** (the signature).
 
@@ -270,7 +270,7 @@ Every archetype file carries a complete default table for every slot it has, so 
 Each entry lists: members; scrap material; minion defaults (torso, head, arm, leg); armour defaults (helmet, chest, shoulders, leggings, boots); hide; organs; full set. Trait names refer to the starter library in §5.10.
 
 1. **grazer** [cow, mooshroom, sheep, goat, llama, trader_llama, camel]. Material hide_plate.
-   - Minion: torso health ×1.5 with beast_of_burden. Head: jobs herder, courier, companion; docile; bite 1. Legs: walk 0.2, amble, sure_footed 1.
+   - Minion: torso health ×1.5 with beast_of_burden. Head: knacks herder 1.25, courier 1.25; docile; bite 1. Legs: walk 0.2, amble, sure_footed 1.
    - Armour: helmet cud_chewer; chest barrel_chest; leggings sturdy; boots hooves.
    - Hide: thick_hide 1. Organs: heart big_heart; stomach four_chambers.
    - Set: Herd Beast (hauler 3, hardy 2) / Placid (meek 2).
@@ -582,7 +582,7 @@ Effect types live in a NeoForge custom registry, `bloodandbones:trait_effect_typ
 ### 4.2 Merge rules
 - **Order.** Layers apply archetype → family → overlays (ascending priority) → variants → mob file.
 - **Keys.** Inside `parts`, keys are tried most-specific first: `bones.<name>`, then `leg.hind` / `arm.wing`, then `leg`.
-- **Scalars** replace: `speed`, `jobs`, `health`, `disposition`, `scrap_material`.
+- **Scalars** replace: `speed`, `health`, `disposition`, `scrap_material`.
 - **Knacks** (a part's `knacks`, a map from task to multiplier) merge key by key instead: each layer, and then each variant a piece matches, changes only the tasks it names (docs/NEXT.md 1.6). An old `jobs` list with no `knacks` beside it reads as knacks, the first 1.5 and the rest 1.25, and the file is logged once.
 - **Trait lists** add to the inherited list, deduplicated by trait id with the highest level winning. An object `{"add": [...], "remove": [ids]}` edits instead; `{"replace": true, ...}` inside any object replaces its lists.
 - **Numbers left out** come from the mob's `DefaultAttributes`: max_health, attack_damage, movement_speed, follow_range, armor, knockback_resistance, horse jump_strength.
@@ -626,7 +626,7 @@ An inline anonymous trait is `{"name": "trait.ns.key", "effects": [...]}`.
     },
     "head": {
       "minion": {
-        "jobs": ["bloodandbones:herder", "bloodandbones:courier", "bloodandbones:companion"],
+        "knacks": {"bloodandbones:herder": 1.25, "bloodandbones:courier": 1.25},
         "disposition": "docile",
         "bite": {"style": "punch", "damage": 1.0, "knockback": 0.6}
       },
@@ -673,7 +673,7 @@ The lungs and eyes are left out on purpose: they come from the quadruped archety
   "parts": {
     "torso": {"minion": {"health_factor": 1.0, "self_move": {"mode": "crawl", "speed": 0.12}},
               "armour": [{"trait": "bloodandbones:hardy", "level": 1}]},
-    "head":  {"minion": {"jobs": ["bloodandbones:companion", "bloodandbones:courier"], "disposition": "loyal",
+    "head":  {"minion": {"knacks": {"bloodandbones:courier": 1.25}, "disposition": "loyal",
                          "bite": {"style": "bite", "damage": 1.0}},
               "armour": [{"trait": "bloodandbones:steady", "level": 1}]},
     "leg":   {"minion": {"movement": {"mode": "walk", "speed": 0.22, "gait": "trot"}},
@@ -815,7 +815,7 @@ An effect in a context it does not support is skipped, and caught by the lint.
   "hide": [{"trait": "bloodandbones:swift", "level": 1}],
   "variants": [
     {"if": {"trait": "variant", "equals": "evil"},
-     "patch": {"parts": {"head": {"minion": {"jobs": ["bloodandbones:bodyguard", "bloodandbones:guard"],
+     "patch": {"parts": {"head": {"minion": {"knacks": {"bloodandbones:guard": 1.5},
                                               "disposition": "berserk",
                                               "bite": {"style": "bite", "damage": 8.0}}}}}}
   ],
@@ -1003,8 +1003,8 @@ S = small, M = medium, L = large. Class names marked (✓) were checked in the N
 | 23 | **movement** (mode, speed, gait, step, jump, lift) | legs, the torso's own movement | — | Navigation and MoveControl swapped only on rebuild: Ground, `WallClimberNavigation`, `WaterBoundPathNavigation` with `SmoothSwimmingMoveControl`, `AmphibiousPathNavigation`, `FlyingPathNavigation` with `FlyingMoveControl`; `onClimbable()` and `canStandOnFluid()` overrides | M (the set of modes L) |
 | 24 | **strike** (style, damage_mult, speed_mult, reach, knockback) | Arms and the head's bite | — | one `MinionStrikeGoal` with a style switch; `doHurtTarget` | M |
 | 25 | **mount** (control: saddle, carrot_on_a_stick, warped_fungus_on_a_stick; seats; jump) | rideable | — | `getControllingPassenger`, `tickRidden`, `getRiddenInput`, `getRiddenSpeed`, `PlayerRideableJumping`, as AbstractHorse, Strider and Camel do | L |
-| 26 | **job** (options) | head | — | goal packages, §6.9 | L in total |
-| 27 | **disposition** (docile, brave, skittish, territorial, loyal, nocturnal, berserk, meek) | head | — | chooses the target and avoid goals | S |
+| 26 | **knack** (`task_knack`: task, multiplier) | any | — | multiplies a task's fitness, docs/NEXT.md 1.6 | S |
+| 27 | **disposition** (docile, brave, skittish, territorial, loyal, nocturnal, berserk, meek, dim) | head | — | scales a task's fitness by its sort, with the maker, or by night (docs/NEXT.md 1.2); berserk also picks every creature for a target | S |
 | 28 | **storage** (slots) | torso | — | resize the inventory on rebuild | S |
 | 29 | **power** (capacity_mult, drain_mult, refuel {item: mB}, feed_on_kill_mb) | yes | (through the blood_upkeep attribute) | the power system | S |
 | 30 | **glow** () | emissive pass | emissive layer | `RenderType.eyes` layer | S (client) |
@@ -1334,7 +1334,7 @@ Saved old minions get a one-time conversion that drops their parts. `MinionTests
 7. **Cap.** Server config `max_minions_per_player` = −1 (no cap).
 
 ### 6.3 The build and `MinionStats`
-`MinionStats.of(build, resolvedData)` is a pure function, unit-testable without a world. It returns: health, armour, knockback resistance, hitbox, carry slots, reservoir or canisters, movement (mode, speed, step, jump, climb, swim, lava_walk, rideable, flight), the strikes list, ranged attacks, job options, senses and the `ActiveTraits` list. Since tasks began to take the place of jobs (docs/NEXT.md 1, stage A) it also returns what the build holds things with (each arm's grip, a pair of arms as two hands, the mouth, and on four legs or more the legs' grips), the torso's weight, the merged knacks and the head's disposition, from which `MinionFitness`, also pure, works out its fitness at every task. The server and client share one geometry helper for sockets, lift and hitbox, so they always agree.
+`MinionStats.of(build, resolvedData)` is a pure function, unit-testable without a world. It returns: health, armour, knockback resistance, hitbox, carry slots, reservoir or canisters, movement (mode, speed, step, jump, climb, swim, lava_walk, rideable, flight), the strikes list, ranged attacks, senses and the `ActiveTraits` list. Since tasks took the place of jobs (docs/NEXT.md 1) it also returns what the build holds things with (each arm's grip, a pair of arms as two hands, the mouth, and on four legs or more the legs' grips), the torso's weight, the merged knacks and the head's disposition, from which `MinionFitness`, also pure, works out its fitness at every task. The server and client share one geometry helper for sockets, lift and hitbox, so they always agree.
 
 ### 6.4 What each part decides
 
@@ -1353,8 +1353,8 @@ Saved old minions get a one-time conversion that drops their parts. `MinionTests
 - **The torso's own movement:** hover, swim, hop, fly, float, roll or slither works with no legs.
 
 **Head: behaviour**
-- **Job options** (1–3) from data. The maker cycles them with a crouch and an empty-hand click on the woken minion.
-- Villager heads offer SURGEON plus their profession's job:
+- **Any task** from one list can be given to any minion (docs/NEXT.md 1.1); the maker crouches and uses an empty hand on the woken minion for its task screen. The head makes it better or worse at each, through its sight, its knacks and its disposition.
+- **Knacks** from data (docs/NEXT.md 1.6): how much better or worse than usual the head makes a minion at each task. Villager heads have a surgeon's knack and one for their profession's task:
   - farmer → farmer
   - fisherman → fisher
   - butcher → butcher
@@ -1364,14 +1364,13 @@ Saved old minions get a one-time conversion that drops their parts. `MinionTests
   - leatherworker → hauler
   - armorer, weaponsmith, toolsmith → guard
   - others → courier
-  - a nitwit offers only companion
-- Pillager heads offer surgeon and sentry.
+  - a nitwit's head is dim, and has no surgeon's knack
+- Pillager heads have knacks for surgery and sentry.
 - **Follow range** from FOLLOW_RANGE, and what the build's traits add to it (Keen Eye, Relentless). **Disposition** and **senses** from data.
-- **Knacks** from data (docs/NEXT.md 1.6): how much better or worse than usual the head makes a minion at each task. The job options below give way to them in stage B of that change; stage A reads both.
 - **Bite:** used when it has no arms, and as an extra attack. Damage 1 + 0.25 × the head mob's attack damage, or the data value. Horned heads (goat, hoglin, zoglin, ravager) ram.
-- **Eyes taken out:** a head whose two eyes were taken out at the Surgical Rig is blind. It loses the jobs that need sight (farmer, sentry, surgeon, hunter, fisher) and has follow range 4, whatever its traits add; an echolocate or tremor sense (the head's data's, or a trait's) finds its way 12.
-- **No head: Mindless.** Companion only, follow range 2 (it feels its way), never picks targets.
-- **Several heads** (the wither): the first sets the job; each extra head adds its senses and its bite as an extra ranged "mouth".
+- **Eyes taken out:** a head whose two eyes were taken out at the Surgical Rig is blind: follow range 4, whatever its traits add, so it does every task that reads sight worse (docs/NEXT.md 1.2); an echolocate or tremor sense (the head's data's, or a trait's) finds its way 12.
+- **No head: Mindless.** Follow range 2 (it feels its way), the mindless disposition, and it strikes only what touches it.
+- **Several heads** (the wither): the first sets its knacks and disposition; each extra head adds its senses and its bite as an extra ranged "mouth".
 
 **Arms: attack type**
 - Each ARM piece brings its strike style, its grip and (for wings) its lift.
@@ -1406,14 +1405,14 @@ Saved old minions get a one-time conversion that drops their parts. `MinionTests
 **Tail:** one passive (fly swat, swim +30%, mood tail, steady).
 
 **Organ:** one special. Its minion traits apply. Activate effects are fired by the AI when a target is in range.
-- The creeper's sac self-destructs, and the minion then powers down. Only a sapper sets off a detonating organ, once it has walked up to its target; the AI of any other job leaves it be.
+- The creeper's sac self-destructs, and the minion then powers down. A detonating organ is what lets a minion be a sapper at all; only a sapper sets it off, once it has walked up to its target, and the AI of any other task leaves it be.
 - The chicken's egg gland lays eggs.
 - produce effects do nothing on a cybernetic minion.
 
 ### 6.5 Examples
-- **Cow torso on four rabbit legs, cow head:** 15 HP, 9 slots, about 780 mB, hops at 0.325, herder, bash bite 1. It looks exactly as wrong as the brief wants.
-- **Spider thorax with 8 zombie arms, villager head:** a surgeon. 13 HP (thorax plus a foreign abdomen would add more). Eight grabbing hands at +60% attack speed. No legs, so it crawls at 0.05. Pacifist, because it is a surgeon.
-- **Blaze torso with a villager head and 2 horse legs:** hovers (the torso wins), the legs dangle, surgeon job, fireball organ if fitted.
+- **Cow torso on four rabbit legs, cow head:** 15 HP, 9 slots, about 780 mB, hops at 0.325, bash bite 1. Best at herding (200%); it cannot be a surgeon or a sapper (docs/NEXT.md 1.2). It looks exactly as wrong as the brief wants.
+- **Spider thorax with 8 zombie arms, villager head:** a born surgeon (200%) and farmer. 16 HP. Eight grabbing hands at +60% attack speed. No legs, so it crawls at 0.05.
+- **Blaze torso with a villager head and 2 horse legs:** hovers (the torso wins), the legs dangle, a surgeon's knack, fireball organ if fitted.
 - **Ravager torso claimed whole from the table:** 50 HP, its own legs rideable with a saddle, roar head. The brief's "ravager-torso creature".
 
 ### 6.6 Organic and cybernetic: each has what the other lacks, neither is stronger
@@ -1433,7 +1432,7 @@ No flat HP or armour bonus for either kind.
 |---|---|
 | Idle while awake | 3 |
 | Moving | 15 (×2 flying, hovering or floating) |
-| Working a job | 25 |
+| Working a task | 25 ÷ its fitness at it (docs/NEXT.md 1.2): 12.5 to 50 |
 | Fighting | 40 |
 | Organ active, innate shot | the trait's `cost_mb` (3–100) |
 
@@ -1441,7 +1440,7 @@ Cybernetic drain is ×0.25 of this. `blood_upkeep` and power traits scale both.
 
 **Organic: the Blood Trough.** Below 25%, the minion paths to the nearest Blood Trough within `trough_search_radius` (48).
 - It must reach the trough with its own navigation: no teleporting. If the path fails, it tries the next trough.
-- It drinks 100 mB a second, then returns to its job.
+- It drinks 100 mB a second, then returns to its task.
 - The trough is a new block with a 4,000 mB tank that accepts only `#c:blood`, filled by pipes and spouts (`Capabilities.FluidHandler.BLOCK`).
 - Troughs register in a per-level set on onLoad and setRemoved, so the search is cheap.
 - It moves on contraptions with its contents in its block entity data, and is not a drinking point while assembled (rule 5).
@@ -1475,9 +1474,10 @@ Cybernetic drain is ×0.25 of this. `blood_upkeep` and power traits scale both.
 
 ### 6.9 Jobs (17; goal packages in code, offered by heads through data)
 
-> **Superseded (owner, 24 September 2026):** there are to be no jobs offered by heads. Any task from a list drawn up with
-> the owner can be given to any minion, and its build decides how well it does it. The goal packages below are the first
-> draft of that list. See docs/NEXT.md, item 1.
+> **Superseded (owner, 24 September 2026; built 29 September 2026):** there are no jobs offered by heads. Any of sixteen
+> tasks can be given to any minion, and its build decides how well it does it (docs/NEXT.md 1.1 has the list, 1.2 the
+> fitness). The table below is the old list the tasks came from: companion and bodyguard became Guard and Idle done with
+> the maker, and the scavenger a Courier with a sample in hand.
 
 | Job | What it does | Needs | Cost |
 |---|---|---|---|
@@ -1773,7 +1773,7 @@ Legend: **M** = the part fitted to a minion. **A** = the armour made from that p
 
 **VILLAGER** (biped, villager)
 - **Head**
-  - M: SURGEON, the profession job (§6.4), courier.
+  - M: a knack for surgery and for the profession's task (§6.4); a courier's knack for the rest.
   - A: appraiser (lucky 1).
 - **Torso**
   - M: 20 HP, 3 slots.
@@ -1859,7 +1859,7 @@ Each row is what that mob's own file adds on top of its layers. Every mob has at
 
 | Mob | Signature facets |
 |---|---|
-| allay | Head: a scavenger that fetches items matching what it holds, from 32 blocks. Organ Harmonic Gland: M item_magnet 2, A item_magnet 1. |
+| allay | Head: a knack for couriering (2): as a courier it fetches items matching what it holds, from as far as 32 blocks. Organ Harmonic Gland: M item_magnet 2, A item_magnet 1. |
 | armadillo | Torso: roll_up (both). Hide (scute): Scute Plating (tough 1, durability ×1.5). Organ Scute Gland: M sheds scutes, A thick_hide 1. |
 | axolotl | Torso: play_dead (both). Head: hunter of `#minecraft:axolotl_hunt_targets`. Organ Regrowth Gland: M regen ×2 when wet, A regen 1 HP every 3 s when wet. |
 | bat | Head: echolocation (M targets through walls within 16; helmet outlines mobs within 16 every 5 s, client only). Organ Echo Ear: echo_sense 2. |
@@ -1881,7 +1881,7 @@ Each row is what that mob's own file adds on top of its layers. Every mob has at
 | enderman | See §8.1. |
 | endermite | Organ Rift Mite: rift (both). |
 | evoker | Organ Totem Gland: undying (A costs 500 mB, M 50% power; 20 minutes). Arm: fangs (M ranged; shoulders 10% on hit, 10 s). |
-| fox | Head: thief (scavenger that steals the held items of mobs it bites; helmet 5%). Legs: pounce from 5 blocks. Variant: snow fox hide is insulated. Organ Cheek Pouch: M +9 storage, A item_magnet 0. |
+| fox | Head: thief (a knack for couriering, stealing the held items of mobs it bites; helmet 5%). Legs: pounce from 5 blocks. Variant: snow fox hide is insulated. Organ Cheek Pouch: M +9 storage, A item_magnet 0. |
 | frog | Organ Sticky Tongue: M pulls a target within 6 and eats small slimes, dropping a froglight of its variant; A tongue (15 mB, 5 s). Legs: springy 3. Variants: warm legs fireproof 1, cold legs frost_guard 1. |
 | ghast | Organ Tear Gland: great_fireball (M 20 mB, 30 s; A 100 mB, 30 s; blocks only with mobGriefing and config). Tentacles: float (M float mode; boots slow fall while sneaking). Its torso is too big to be a frame. |
 | glow_squid | Organ Glow Sac: M glows, glow_aura within 8, makes glow ink; A night vision underwater and a glow layer. |
@@ -1892,17 +1892,17 @@ Each row is what that mob's own file adds on top of its layers. Every mob has at
 | husk | Arm: hungering. Torso: sunbaked (removes sun_cursed). Set: Desert Shambler (dead_face, fireproof 1) / thirst. |
 | illusioner | Organ Mirror Gland: mirror (both, 20 s). Arm: blindness arrows with a bow. |
 | iron_golem | See §8.1. |
-| llama | Organ Spit Gland: spit (M 2 s; A 10 mB, 2 s). Head: caravan (a courier that follows the minion in front of it). Hide: frost_guard 1. |
+| llama | Organ Spit Gland: spit (M 2 s; A 10 mB, 2 s). Head: caravan (a knack for couriering, following the minion in front of it). Hide: frost_guard 1. |
 | magma_cube | Organ Magma Core: landing from over 3 blocks sets entities within 2 alight (M; boots, plus fireproof 1). Torso: fire-immune and bouncy. |
 | mooshroom | Torso: stew_udder (fills bowls with stew). Organ Mycelial Gut: M forages mushrooms, A mushrooms and stews give Regeneration I for 5 s. |
 | mule | Torso: saddlebags. Legs: stubborn. |
 | ocelot | Legs: sprinter (M swift 3; A swift 1 and galloper 1). |
-| panda | Head: temperament from its gene (aggressive: bodyguard and brawler 2; lazy: a sentry that never moves; playful: random tumbles; worried: flees during thunder; weak: sneezes the `panda_sneeze` loot table; others docile). Organ Bamboo Gut: bamboo and sugar cane are edible. |
+| panda | Head: temperament from its gene (aggressive: a knack for guarding and brawler 2; lazy: a knack for sentry, never moving; playful: random tumbles; worried: flees during thunder; weak: sneezes the `panda_sneeze` loot table; others docile). Organ Bamboo Gut: bamboo and sugar cane are edible. |
 | parrot | Head: mimic (plays the nearest hostile's sound within 20 as an alarm; helmet alert). Wings: lift 0.06. Set drawback: cookie_poison. |
 | phantom | Wings: glider (chestplate shoulders act as an elytra; M lift 0.4 each). Hide (membrane): featherfall. Organ Night Stalker Gland: A dark_sight and swift 1 at night, M pounces from above. |
 | pig | Head: carrot steering (a rideable minion with a pig head is steered with a carrot on a stick). Organ Bacon Fat: M power capacity +25%, A hardy 1 and frost_guard 1. |
-| piglin | Head: barterer job. Arm: crossbow. Organ Gold Gizzard: A lucky 1; the M barterer rolls twice 10% of the time. |
-| piglin_brute | Head: brute guard (bodyguard; +50% damage with an axe). Torso: 50 HP. Organ Rage Gland: adrenaline 2. |
+| piglin | Head: a knack for bartering (2). Arm: crossbow. Organ Gold Gizzard: A lucky 1; the M barterer rolls twice 10% of the time. |
+| piglin_brute | Head: brute guard (a knack for guarding; +50% damage with an axe). Torso: 50 HP. Organ Rage Gland: adrenaline 2. |
 | pillager | Head: surgeon or sentry. Arm: quick_draw (both). |
 | polar_bear | Hide: Polar Fur (insulated; boots powder_walker). Head: maul bite 3 with swipe. Organ: Brown Fat (family). |
 | pufferfish | Organ Toxin Sac: M toxin_puff (poison aura when a target is within 2), A toxic_skin. |
@@ -1915,15 +1915,15 @@ Each row is what that mob's own file adds on top of its layers. Every mob has at
 | skeleton | Arm: bowman (with a bow and arrows; without, it throws bones for 2). Shoulders: sharpshooter 1. Organ: Marrow (skeletal). |
 | skeleton_horse | Legs: seafloor steed (rideable underwater, sink mode, never drowns). |
 | slime | Organ Slime Core: sticky (both). Torso: bouncy. |
-| sniffer | Head: digger job. Organ Olfactory Bulb: helmet activate outlines suspicious sand and gravel within 32 (20 mB). |
+| sniffer | Head: a knack for digging (2). Organ Olfactory Bulb: helmet activate outlines suspicious sand and gravel within 32 (20 mB). |
 | snow_golem | Head: snow sentry (snowball_volley, no power cost). Lower body: roll (M), frost_path (boots). Torso: heat_hurts (it melts in hot biomes). Organ Frost Core: chilling 1. |
 | spider | See §8.1. |
 | squid | See §8.1. |
 | stray | Arm: Slowness arrows. Legs: frostbitten (boots powder_walker and frost_guard 1). Organ Frost Marrow: chilling 1. |
 | strider | Legs: lava walk (M lava_walk; boots lava_wader). Torso: rideable with a warped fungus on a stick. Organ Lava Bladder: fire and lava damage ×0.5 while in lava. |
 | tadpole | Torso: bucketable (a water bucket scoops the minion into a dormant bucket item). |
-| trader_llama | Head: trader's guard (a bodyguard that also defends wandering traders and villagers). Organ: Spit Gland. |
-| turtle | Head: homing (M returns home when idle and never loses it; helmet gives 10 s of Water Breathing after leaving water). Torso: shell (M thick_hide 4, chest shell_guard 2). Organ Salt Gland: immune to dry_out, waterborn 1. |
+| trader_llama | Head: trader's guard (a knack for guarding that also defends wandering traders and villagers). Organ: Spit Gland. |
+| turtle | Head: homing (a knack for coming home: M returns home when idle and never loses it; helmet gives 10 s of Water Breathing after leaving water). Torso: shell (M thick_hide 4, chest shell_guard 2). Organ Salt Gland: immune to dry_out, waterborn 1. |
 | vex | Organ Vex Wisp: dash (M dash-strike through 6 blocks; A 20 mB, 5 s). |
 | villager | See §8.1. |
 | vindicator | Arm: axeman (+100% damage with an axe). Head variant: a head named "Johnny" is berserk. |
@@ -1936,7 +1936,7 @@ Each row is what that mob's own file adds on top of its layers. Every mob has at
 | zoglin | Head: berserk (attacks every mob except its maker, +50% damage). |
 | zombie | See §8.1. |
 | zombie_horse | Legs: undead steed (rideable, walks the seabed, never drowns). |
-| zombie_villager | Head: shaky surgeon (surgeon at half speed). Organ Curable Heart: immune to Weakness; golden apples give Absorption II. |
+| zombie_villager | Head: shaky surgeon (its surgeon's knack halved: 0.5 over its family's 1.5). Organ Curable Heart: immune to Weakness; golden apples give Absorption II. |
 | zombified_piglin | Head: horde_call (when hit, zombified piglins and undead-headed minions within 16 turn on the attacker). |
 
 ---

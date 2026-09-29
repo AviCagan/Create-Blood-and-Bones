@@ -172,6 +172,17 @@ Everything below is in development builds only; the art is placeholder (see the 
 
 ### Minions
 
+- Tasks in place of jobs: any of sixteen tasks can be given to any minion, and what it is built of decides how well it
+  does each. Crouch and use an empty hand on your minion for its task screen: every task in four groups (fight, tend,
+  fetch, work) with a bar, a percentage and a word from Hopeless to Born to it, or "Cannot" and why; hover a task for
+  each thing that made it so (its hands, its sight, its head's knack and temper, the blood it uses at work). Click a task
+  to set it; set it to work at home or with you, how far it reaches, and "Home here". Idle, Guard, Hunter, Medic and
+  Courier can be done with you: a guard with you goes for what hurts you and what you hit, as a tamed wolf does; a
+  courier brings what it picks up round you to your hands; a hunter hunts beside you; a medic follows and heals you. It
+  wakes to the task it is fittest for ("Woke as a Surgeon (200%)"). A missing tool makes it wait, and its status line
+  says so; it never changes task by itself. A minion with no head strikes only what touches it; a sentry with no bow
+  strikes what comes within reach of its post. A fitter minion uses less blood at work. Old minions' jobs become the
+  same tasks (a companion or bodyguard guards you, a scavenger is a courier). The Tender's work comes later.
 - The groundwork for tasks in place of jobs (any task to any minion, better or worse by what it is built of): every
   minion's fitness at every task is worked out on the server from its parts, their knacks and its head's disposition,
   though nothing in play reads it yet. Datapacks can retune each task (`minion_task`) and disposition
@@ -179,7 +190,7 @@ Everything below is in development builds only; the art is placeholder (see the 
   can give a knack for one task (`task_knack`: the sniffer's Olfactory Bulb makes a better digger).
 - A minion's head sees as far as Keen Eye and Relentless say; a headless minion feels its way only 2 blocks, and one with
   no arm and no head never fights.
-- The sapper: a creeper's head, with a creeper's Powder Sac stitched in, offers a job that walks up to a monster near
+- The sapper: any minion with a creeper's Powder Sac stitched in can be one (a creeper's head is best at it): it walks up to a monster near
   home (or to a banner of the colour you hand it) and blows itself up there, sparing itself and your side; then it lies
   powered down, whole, until it gets blood again. It breaks blocks only where the server lets minions break blocks.
 - What a minion holds is drawn: in the hand at the end of its first arm (a sword, a bow, a rod), in front of a villager's
