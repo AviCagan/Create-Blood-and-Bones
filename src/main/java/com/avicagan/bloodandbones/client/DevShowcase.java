@@ -1079,7 +1079,9 @@ public final class DevShowcase {
      * files are taken away for the rest of the run (none of them is in any other shot), a tropical fish (which has none),
      * and a baby wandering trader (whose rig has no baby shape), each built from its archetype's generic body at its size
      * and wearing its own model's parts and skin ({@code groups_0}); then a glass tank of water with a chicken floating at
-     * the top and a cow sunk to the bottom, as their weight classes say ({@code groups_1}).
+     * the top and a cow sunk to the bottom, as their weight classes say ({@code groups_1}); then a husk and a drowned, their
+     * rig files taken away too, the same generic biped at the same hitbox as the zombie villager drawn before them, each in
+     * its own model's parts and skin, not the first one's ({@code groups_2}).
      */
     private static void groups(Minecraft mc) {
         MinecraftServer server = mc.getSingleplayerServer();
@@ -1131,9 +1133,18 @@ public final class DevShowcase {
                 BloodAndBones.LOGGER.info("[showcase] tank: chicken's body at {}, cow's at {} (water from {} to {})",
                         floater == null ? null : CarcassAssembler.boneWorldPosition(level, floater, floater.rootBone),
                         sinker == null ? null : CarcassAssembler.boneWorldPosition(level, sinker, sinker.rootBone), groupsYard.getY(), groupsYard.getY() + 4);
+            });
+        } else if (groupsStep == 3 && age < 400) {
+            // the husk and the drowned, close to, from in front and above
+            groupsView(server, -3.5, 2.0, -0.5, 0.0F, 40.0F);
+        } else if (groupsStep == 3) {
+            groupsStep = 4;
+            Screenshot.grab(mc.gameDirectory, PREFIX + "groups_2.png", mc.getMainRenderTarget(), message -> {
+            });
+            server.execute(() -> {
                 GENERIC_SHOWN.clear();
                 ServerPlayer player = server.getPlayerList().getPlayers().get(0);
-                player.teleportTo(level, origin.getX() + 0.5, origin.getY(), origin.getZ() + 0.5, 0.0F, 0.0F);
+                player.teleportTo(server.overworld(), origin.getX() + 0.5, origin.getY(), origin.getZ() + 0.5, 0.0F, 0.0F);
             });
             mc.options.hideGui = false;
             stage = 4;
@@ -1151,7 +1162,8 @@ public final class DevShowcase {
     private static void groupsBuild(ServerLevel level) {
         BlockPos y = groupsYard;
         int forever = Integer.MAX_VALUE;
-        for (EntityType<?> type : List.of(EntityType.POLAR_BEAR, EntityType.ZOMBIE_VILLAGER, EntityType.CAVE_SPIDER, EntityType.BAT)) {
+        for (EntityType<?> type : List.of(EntityType.POLAR_BEAR, EntityType.ZOMBIE_VILLAGER, EntityType.CAVE_SPIDER, EntityType.BAT, EntityType.HUSK,
+                EntityType.DROWNED)) {
             com.avicagan.bloodandbones.carcass.rig.RigManager.hideForTest(net.minecraft.core.registries.BuiltInRegistries.ENTITY_TYPE.getKey(type), forever);
         }
         // the row, facing the camera (north), a stride apart: none has a rig file of its own now
@@ -1166,6 +1178,13 @@ public final class DevShowcase {
         CarcassSavedData.Carcass baby = carcass(level, EntityType.WANDERING_TRADER, y.offset(11, 0, 2), true, true, 180.0F);
         if (baby != null) {
             GENERIC_SHOWN.add(baby);
+        }
+        // off to the west, for the last shot: two more of the zombie villager's archetype and hitbox, lying face up
+        for (EntityType<?> twin : List.of(EntityType.HUSK, EntityType.DROWNED)) {
+            CarcassSavedData.Carcass carcass = carcass(level, twin, y.offset(twin == EntityType.HUSK ? -5 : -3, 0, 2), false, false, 180.0F);
+            if (carcass != null) {
+                GENERIC_SHOWN.add(carcass);
+            }
         }
         // the tank, behind the row: glass walls round water four deep, seven across
         BlockPos tank = y.offset(2, 0, 10);
