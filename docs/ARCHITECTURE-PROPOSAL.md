@@ -4448,3 +4448,30 @@ The suite is 525 tests, and passed three times in a row. The showcase was run in
 physics yard (the dragged cow, the three struck cows, the three hung cows, loose, one swinging, one a leg short with
 the leg below it; in bloodless mode plated wrecks and no blood), the machines' row F, the materials' row G, the belt,
 the knife held on a part, and the gauge and diving shots.
+
+#### 15.28.2 Merged with the tasks work (verified)
+
+The integration branch's minion tasks (15.21 to 15.27: `MinionJobs` renamed `MinionTasks`, `MinionFitness`,
+`MinionTask`, the task screen, the levers, the Tender, the butcher at the Butcher's Table, the fitness-priced ragged
+stump and `payBlood` across containers) merged into this section's work at e0618a0. Where the two met:
+
+- **Numbering.** Both sides had written a 15.21. The tasks keep 15.21 to 15.27, and this section follows them as 15.28
+  (its first merge 15.28.1, this one 15.28.2); every reference to it in the docs and the code comments moved with it.
+- **Mob layers** (`PartsData`, `MobGroup`) carry both sides' fields: the tasks' knacks, which merge key by key and
+  read an old `jobs` list as knacks, and this section's `tissue`, a scalar that replaces. docs/PARTS-AND-TRAITS.md 4.2
+  lists both.
+- **`butcherButchersWithCleaver`.** The tasks moved the job tests into `MinionTaskTests` and deleted
+  `MinionJobTests`, where this section had given the test 2,400 ticks to reach the torso (15.28.1). The longer time is
+  on the moved test now; a minion butcher keeps no more of a leg by hand than a player does, so the reason still holds.
+- **The showcase.** Both sides added methods at the same place in `DevShowcase`; both are kept. The tasks' longer
+  minion timeline (the fitness lines, the task screen, the table's line, the stumps by price) runs first, and its
+  last step still hands on to the physics yard, then the Ponder scenes.
+- **Generated resources** merged without a conflict, and datagen run after the merge changed nothing.
+- `CarcassButchery`, `CarcassDrag`, `BloodAndBones` and the golem group merged by themselves.
+
+Nothing failed after the merge. The suite is 578 tests (557 on the integration branch and 525 here, 504 of them
+shared) and passed three times in a row. The showcase was run and looked at: the physics yard (the cow dragged by a
+hind leg come round rear first, its head end pointing back west; the three struck cows down; the three hung cows, one
+swinging, one a leg short with the leg on the ground below it), the fitness lines and the task screen (Herder's and
+the Butcher's reasons, the list scrolled to its end, the Tender's reasons), the Surgery Table's line, the stumps by
+price, the minions' row, and the machines.
