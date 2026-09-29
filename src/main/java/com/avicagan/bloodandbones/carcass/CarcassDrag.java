@@ -759,7 +759,12 @@ public final class CarcassDrag {
 
     /** What this drag costs: the curve at the mass on its hook, times its weight class's drag. */
     private static float penaltyFor(Drag drag) {
-        return Math.min(1.0F, penaltyFor(drag.weight) * drag.classDrag);
+        return penaltyFor(drag.weight, drag.classDrag);
+    }
+
+    /** The curve at a mass, times a weight class's drag. */
+    public static float penaltyFor(double mass, float classDrag) {
+        return Math.min(1.0F, penaltyFor(mass) * classDrag);
     }
 
     /** The penalty the dragger has now, before their drag strength eases it; 0 when they drag nothing. */

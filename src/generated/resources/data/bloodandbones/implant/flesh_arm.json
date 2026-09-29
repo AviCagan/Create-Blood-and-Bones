@@ -1,0 +1,9 @@
+{
+  "attack": 1.0,
+  "drain": 1,
+  "jump": 1.0,
+  "reach": 0.0,
+  "safe_fall": 0.0,
+  "walk": 1.0,
+  "work": 1.3
+}
