@@ -7,6 +7,7 @@
     "#bloodandbones:family/golem"
   ],
   "scrap_material": "bloodandbones:golem_plate",
+  "tissue": "plate",
   "colour": "#a8a298",
   "parts": {
     "torso": {

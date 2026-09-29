@@ -20,12 +20,13 @@ import java.util.Optional;
  * @param members   entity ids and "#tag"s (mob files have none: the file's own path names the mob)
  * @param parts     by part key ("head", "leg", "leg.hind", "arm.wing"...): what it does on a minion, and in armour
  * @param boneSlots a mob file's slot for a bone the naming rules get wrong (the shulker's lid is an arm)
+ * @param tissue    what its carcass's bodies are made of, which sets how much they weigh (Tissue); a scalar, as scrap_material
  */
 public record MobGroup(ResourceLocation id, Kind kind, int priority, List<String> members,
                        Optional<ResourceLocation> archetype, Optional<ResourceLocation> family, List<ResourceLocation> overlays,
                        Optional<ResourceLocation> scrapMaterial, Map<String, PartEntry> parts, Optional<TraitList> hide,
                        Map<ResourceLocation, OrganEntry> organTraits, Optional<FullSet> fullSet, Map<String, SlotInfo> boneSlots,
-                       Optional<Integer> colour) {
+                       Optional<Integer> colour, Optional<com.avicagan.bloodandbones.carcass.Tissue> tissue) {
     public enum Kind {
         ARCHETYPE, FAMILY, OVERLAY, MOB
     }
@@ -100,7 +101,8 @@ public record MobGroup(ResourceLocation id, Kind kind, int priority, List<String
                 json.has("family") ? Optional.of(ResourceLocation.parse(json.get("family").getAsString())) : Optional.empty(),
                 List.copyOf(overlays),
                 json.has("scrap_material") ? Optional.of(ResourceLocation.parse(json.get("scrap_material").getAsString())) : Optional.empty(),
-                parts, opt(json, "hide", TraitList.CODEC, ops, id), organs, set, boneSlots, colour);
+                parts, opt(json, "hide", TraitList.CODEC, ops, id), organs, set, boneSlots, colour,
+                json.has("tissue") ? Optional.of(com.avicagan.bloodandbones.carcass.Tissue.byName(json.get("tissue").getAsString())) : Optional.empty());
     }
 
     private static PartEntry part(JsonObject o, DynamicOps<JsonElement> ops, ResourceLocation id) {

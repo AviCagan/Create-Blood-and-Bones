@@ -131,7 +131,7 @@ public final class CarcassHandover {
             if (carcass != null) {
                 // the cells learn what to draw only now, in the same tick the mob goes
                 CarcassAssembler.configureCells(level, carcass);
-                CarcassAssembler.shove(level, carcass, pending.look());
+                CarcassAssembler.blow(level, carcass, pending.look());
                 Vector3d wound = CarcassAssembler.boneWorldPosition(level, carcass, carcass.hitBone);
                 if (wound != null && Blood.bloody(carcass)) {
                     Blood.spray(level, wound, new Vector3d(pending.look().x, pending.look().y, pending.look().z), 24, Blood.soul(carcass));

@@ -33,6 +33,7 @@ import org.jetbrains.annotations.Nullable;
 import org.joml.Quaterniond;
 import org.joml.Quaternionf;
 import org.joml.Vector3d;
+import org.joml.Vector3dc;
 import org.joml.Vector3f;
 
 import java.util.ArrayList;
@@ -53,38 +54,24 @@ import java.util.UUID;
  * minimum corner sits on the corner of the plot's center block, matching {@link CarcassPartBlock}.
  */
 public final class CarcassAssembler {
-    /** Shove speed for a cow-sized animal, in blocks per second. */
-    private static final double SHOVE_SPEED = 2.6;
-    /** A cow's weight in Sable mass units; lighter animals get shoved faster, heavier ones slower. */
+    /** How fast a kill's blow sets a cow-sized carcass moving as a whole, in blocks per second. */
+    private static final double BLOW_SPEED = 2.6;
+    /** A cow's weight in Sable mass units; lighter animals are knocked faster, heavier ones slower. */
     private static final double REFERENCE_WEIGHT = 0.8;
+    /**
+     * The fastest a blow sets any carcass moving: a chicken or a rabbit is knocked a little faster than a cow, not flung.
+     * The whole blow lands on one point, so at the 5 the shove allowed the light ones tumbled four blocks and more.
+     */
+    private static final double BLOW_MAX_SPEED = 3.0;
+    /** How far a killer's blow reaches along their look, in blocks. */
+    private static final double BLOW_REACH = 8.0;
 
     private CarcassAssembler() {
     }
 
-    /** The bone whose origin lies closest to the attacker's line of sight: where the killing blow landed. */
-    private static String boneNearestRay(Entity attacker, Map<String, Vector3d> origins) {
-        Vec3 eye = attacker.getEyePosition();
-        Vec3 look = attacker.getLookAngle().normalize();
-        String best = null;
-        double bestDistance = Double.MAX_VALUE;
-        for (Map.Entry<String, Vector3d> entry : origins.entrySet()) {
-            Vector3d o = entry.getValue();
-            double rx = o.x - eye.x;
-            double ry = o.y - eye.y;
-            double rz = o.z - eye.z;
-            double along = rx * look.x + ry * look.y + rz * look.z;
-            double perpendicular = Math.sqrt(Math.max(0.0, rx * rx + ry * ry + rz * rz - along * along));
-            if (perpendicular < bestDistance) {
-                bestDistance = perpendicular;
-                best = entry.getKey();
-            }
-        }
-        return best;
-    }
-
     /**
-     * Builds the carcass where the mob stands, at rest. The kill shove is applied separately by
-     * {@link #shove} once the client has had a moment to see the carcass (see {@link CarcassHandover}).
+     * Builds the carcass where the mob stands, at rest. The killing blow is applied separately by
+     * {@link #blow} once the client has had a moment to see the carcass (see {@link CarcassHandover}).
      *
      * @return the carcass record, or null if this mob has no rig or there was no room
      */
@@ -211,7 +198,18 @@ public final class CarcassAssembler {
         }
 
         if (attacker != null) {
-            carcass.hitBone = boneNearestRay(attacker, origins);
+            // where the blow landed: the first part the killer's look meets (or, glancing past, the nearest to it), and the
+            // point on it, kept in that body's own plot so the handover's hold does not move it
+            Vec3 eye = attacker.getEyePosition();
+            Vec3 look = attacker.getLookAngle();
+            CarcassAim.Hit hit = CarcassAim.first(level, carcass, rig, eye, look, BLOW_REACH);
+            if (hit == null) {
+                hit = CarcassAim.nearest(level, carcass, rig, eye, look);
+            }
+            if (hit != null) {
+                carcass.hitBone = hit.bone();
+                carcass.hitPoint = subLevels.get(hit.bone()).logicalPose().transformPositionInverse(hit.point(), new Vector3d());
+            }
         }
 
         CarcassSavedData.get(level).add(carcass);
@@ -220,29 +218,97 @@ public final class CarcassAssembler {
     }
 
     /**
-     * Starting motion: a shove sized by the animal's weight, strongest on the limb the killing blow hit.
-     * The mob's own hit knockback is deliberately not carried over; it would launch light carcasses.
+     * The killing blow: one impulse at the point where it landed, on the part it landed on, along the killer's look
+     * (lifted a little, as a swung hook would), sized so the carcass as a whole is set moving at {@link #BLOW_SPEED} for
+     * a cow, a little faster for lighter animals (up to {@link #BLOW_MAX_SPEED}) and slower for heavier ones. Nothing
+     * else is pushed: the joints carry the blow to the rest of the body, so a blow to the flank rolls it away over its
+     * feet, one from behind pitches it forward, and one to a leg sweeps that leg. The mob's own hit knockback is
+     * deliberately not carried over; it would launch light carcasses.
      *
-     * @param look the killer's look direction
+     * @param look the killer's look direction. With no point recorded by a kill (a carcass built without a killer, as the
+     *             tests and the showcase build them), the blow lands where a stand-in killer would land it: one standing
+     *             two blocks back along the look, a player's eye height off the ground, swinging at the torso's middle.
      */
-    public static void shove(ServerLevel level, CarcassSavedData.Carcass carcass, Vec3 look) {
+    public static void blow(ServerLevel level, CarcassSavedData.Carcass carcass, Vec3 look) {
         ServerSubLevelContainer container = SubLevelContainer.getContainer(level);
         Rig rig = RigManager.forCarcass(carcass).orElse(null);
         if (container == null || rig == null) {
             return;
         }
         SubLevelPhysicsSystem physics = container.physicsSystem();
+        ServerSubLevel hit = carcass.hitBone == null || carcass.hitPoint == null ? null
+                : container.getSubLevel(carcass.bones.get(carcass.hitBone)) instanceof ServerSubLevel body && !body.isRemoved() ? body : null;
+        Vector3d point = hit == null ? null : new Vector3d(carcass.hitPoint);
+        if (hit == null) {
+            Vector3d middle = boneWorldPosition(level, carcass, carcass.rootBone);
+            if (middle == null) {
+                return;
+            }
+            Vec3 flat = new Vec3(look.x, 0.0, look.z).lengthSqr() < 1.0e-6 ? new Vec3(1.0, 0.0, 0.0) : new Vec3(look.x, 0.0, look.z).normalize();
+            Vec3 eye = new Vec3(middle.x, lowest(container, carcass, rig) + STAND_IN_EYE, middle.z).subtract(flat.scale(2.0));
+            Vec3 way = new Vec3(middle.x, middle.y, middle.z).subtract(eye).normalize();
+            CarcassAim.Hit along = CarcassAim.first(level, carcass, rig, eye, way, BLOW_REACH);
+            if (along == null) {
+                along = CarcassAim.nearest(level, carcass, rig, eye, way);
+            }
+            if (along == null || !(container.getSubLevel(carcass.bones.get(along.bone())) instanceof ServerSubLevel body) || body.isRemoved()) {
+                return;
+            }
+            hit = body;
+            point = body.logicalPose().transformPositionInverse(along.point(), new Vector3d());
+        }
+        double mass = 0.0;
+        for (UUID id : carcass.bones.values()) {
+            if (container.getSubLevel(id) instanceof ServerSubLevel body && !body.isRemoved()) {
+                mass += body.getMassTracker().getMass();
+                physics.getPipeline().wakeUp(body);
+            }
+        }
         Vec3 dir = new Vec3(look.x, Math.max(look.y, 0.0) + 0.2, look.z).normalize();
-        double speed = Math.max(0.5, Math.min(5.0, SHOVE_SPEED / Math.sqrt(Math.max(rig.weight(), 0.01) / REFERENCE_WEIGHT)));
+        double speed = Math.max(0.5, Math.min(BLOW_MAX_SPEED, BLOW_SPEED / Math.sqrt(Math.max(rig.weight(), 0.01) / REFERENCE_WEIGHT)));
+        impulseAt(physics, hit, point, new Vector3d(dir.x, dir.y, dir.z).mul(mass * speed));
+    }
+
+    /**
+     * An impulse at a point of a body, given as the change of velocity it makes: its mass takes the push and its inertia
+     * about its centre of mass the turn. Sable's own impulse at a point goes through the mass the physics engine holds
+     * for the body, which a body made this tick does not have until the engine next steps (the impulse then does
+     * nothing: a carcass knocked as it is built, or a leg knocked as a lying carcass unfolds, would not move); Sable's
+     * mass data, which that mass is set from, is there at once.
+     *
+     * @param point   where it lands, in the body's plot
+     * @param impulse the impulse, in the world
+     */
+    public static void impulseAt(SubLevelPhysicsSystem physics, ServerSubLevel body, Vector3dc point, Vector3dc impulse) {
+        dev.ryanhcode.sable.api.physics.mass.MassData mass = body.getMassTracker();
+        if (mass.isInvalid()) {
+            return;
+        }
+        org.joml.Quaterniondc turn = body.logicalPose().orientation();
+        Vector3d local = turn.transformInverse(new Vector3d(impulse), new Vector3d());
+        Vector3d arm = new Vector3d(point).sub(mass.getCenterOfMass());
+        Vector3d spin = mass.getInverseInertiaTensor().transform(arm.cross(local, new Vector3d()), new Vector3d());
+        physics.getPhysicsHandle(body).addLinearAndAngularVelocity(new Vector3d(impulse).mul(mass.getInverseMass()), turn.transform(spin, new Vector3d()));
+    }
+
+    /** A player's eye height, for a stand-in killer. */
+    private static final double STAND_IN_EYE = 1.62;
+
+    /** The lowest corner of any of a carcass's bodies, in the world: where it stands. */
+    private static double lowest(ServerSubLevelContainer container, CarcassSavedData.Carcass carcass, Rig rig) {
+        double lowest = Double.MAX_VALUE;
         for (Map.Entry<String, UUID> entry : carcass.bones.entrySet()) {
-            if (!(container.getSubLevel(entry.getValue()) instanceof ServerSubLevel subLevel) || subLevel.isRemoved()) {
+            Bone bone = rig.bone(entry.getKey()).orElse(null);
+            if (bone == null || !(container.getSubLevel(entry.getValue()) instanceof ServerSubLevel body) || body.isRemoved()) {
                 continue;
             }
-            double share = entry.getKey().equals(carcass.hitBone) ? 1.0 : 0.5;
-            Vector3d velocity = new Vector3d(dir.x, dir.y, dir.z).mul(speed * share);
-            physics.getPhysicsHandle(subLevel).addLinearAndAngularVelocity(velocity, new Vector3d());
-            physics.getPipeline().wakeUp(subLevel);
+            Vector3d[] box = CarcassAim.plotBox(body, bone);
+            for (int i = 0; i < 8; i++) {
+                Vector3d corner = new Vector3d((i & 1) == 0 ? box[0].x : box[1].x, (i & 2) == 0 ? box[0].y : box[1].y, (i & 4) == 0 ? box[0].z : box[1].z);
+                lowest = Math.min(lowest, body.logicalPose().transformPosition(corner).y);
+            }
         }
+        return lowest;
     }
 
     /**
@@ -331,7 +397,8 @@ public final class CarcassAssembler {
         int sx = pixels(bone.boxSize().x);
         int sy = pixels(bone.boxSize().y);
         int sz = pixels(bone.boxSize().z);
-        Block block = BBBlocks.CARCASS_PART.get();
+        // flesh, bone or plate, as its group says: each is a block of its own, weighed by Sable's data
+        Block block = BBBlocks.carcassPart(Tissue.of(rig.entity()));
         List<BlockPos> blocks = new ArrayList<>();
         for (int i = 0; i < cells[0]; i++) {
             for (int j = 0; j < cells[1]; j++) {

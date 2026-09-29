@@ -14,17 +14,17 @@
   "joints": {
     "body/head": {
       "min_degrees": [
-        -15,
         -30,
-        -6
+        -45,
+        -15
       ],
       "max_degrees": [
-        25,
-        30,
-        6
+        60,
+        45,
+        15
       ],
-      "damping": 4.0,
-      "stiffness": 2.0,
+      "damping": 2.5,
+      "stiffness": 0.8,
       "contacts": false
     },
     "body/tail": {

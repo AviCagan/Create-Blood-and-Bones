@@ -60,7 +60,8 @@ public final class CarcassDrag {
         public final Vector3d anchorPlot;
         /** which way the hook went in, in plot space: the player's look at the moment of the grab */
         public final Vector3d entryPlot = new Vector3d(0, -1, 0);
-        public final float weight;
+        /** The mass on the hook (the bodies of the record it holds), kept up to date as pieces come off it. */
+        public float weight;
         /** Whoever drags it, refreshed every tick; not looked up by UUID because test players are not in the level. */
         @Nullable
         LivingEntity playerEntity;
@@ -164,32 +165,14 @@ public final class CarcassDrag {
             return false;
         }
         if (carcass.resting) {
-            // unfold first; the click lands on the torso, so hook the torso where it was clicked
-            Vector3d hitWorld = hitLocation != null && serverSubLevel.getPlot().contains(hitLocation)
+            // a player hooks the part they aimed at, drawn where it lies; anyone else (a hauler) takes the torso where
+            // it was touched
+            CarcassAim.Hit aimed = player instanceof Player ? aimAtResting(level, carcass, serverSubLevel, player) : null;
+            Vector3d hitWorld = aimed != null ? aimed.point()
+                    : hitLocation != null && serverSubLevel.getPlot().contains(hitLocation)
                     ? serverSubLevel.logicalPose().transformPosition(new Vector3d(hitLocation.x, hitLocation.y, hitLocation.z), new Vector3d())
                     : serverSubLevel.logicalPose().transformPosition(new Vector3d(plotPos.getX() + 0.5, plotPos.getY() + 0.5, plotPos.getZ() + 0.5), new Vector3d());
-            java.util.Map<String, ServerSubLevel> unfolded = CarcassRest.split(level, carcass);
-            if (unfolded == null) {
-                return false;
-            }
-            ServerSubLevel torso = unfolded.get(carcass.rootBone);
-            if (torso == null) {
-                return false;
-            }
-            Vector3d anchor = torso.logicalPose().transformPositionInverse(hitWorld, new Vector3d());
-            if (!torso.getPlot().contains(anchor)) {
-                BlockPos c = torso.getPlot().getCenterBlock();
-                anchor.set(c.getX() + 0.5, c.getY() + 0.5, c.getZ() + 0.5);
-            }
-            float weight = attachedMass(SubLevelContainer.getContainer(level), carcass);
-            Drag drag = new Drag(player.getUUID(), carcass.id, carcass.rootBone, torso.getUniqueId(), anchor, weight);
-            drag.playerEntity = player;
-            drag.groundY = player.getY();
-            drag.entryPlot.set(entryDirection(torso, player));
-            DRAGS.put(player.getUUID(), drag);
-            applySlowdown(player, dragPenalty(carcass, weight));
-            broadcast(level, sync(drag));
-            return true;
+            return startResting(level, player, carcass, aimed != null ? aimed.bone() : carcass.rootBone, hitWorld);
         }
         float weight = attachedMass(SubLevelContainer.getContainer(level), carcass);
 
@@ -205,9 +188,79 @@ public final class CarcassDrag {
         drag.groundY = player.getY();
         drag.entryPlot.set(entryDirection(serverSubLevel, player));
         DRAGS.put(player.getUUID(), drag);
-        applySlowdown(player, dragPenalty(carcass, weight));
+        applySlowdown(player, penaltyFor(weight));
         broadcast(level, sync(drag));
         Blood.wound(level, carcass, serverSubLevel.logicalPose().transformPosition(anchor, new Vector3d()), 10, 1);
+        return true;
+    }
+
+    /**
+     * Unfold a carcass lying still and hook one of its parts at a world point: the part is where it was drawn, so the point
+     * lands on it. Blood wells where the hook goes in, as on a carcass already awake.
+     */
+    private static boolean startResting(ServerLevel level, LivingEntity player, CarcassSavedData.Carcass carcass, String bone, Vector3d hitWorld) {
+        java.util.Map<String, ServerSubLevel> unfolded = CarcassRest.split(level, carcass);
+        if (unfolded == null) {
+            return false;
+        }
+        ServerSubLevel body = unfolded.get(bone);
+        if (body == null) {
+            bone = carcass.rootBone;
+            body = unfolded.get(bone);
+        }
+        if (body == null) {
+            return false;
+        }
+        Vector3d anchor = body.logicalPose().transformPositionInverse(hitWorld, new Vector3d());
+        if (!body.getPlot().contains(anchor)) {
+            BlockPos c = body.getPlot().getCenterBlock();
+            anchor.set(c.getX() + 0.5, c.getY() + 0.5, c.getZ() + 0.5);
+        }
+        float weight = attachedMass(SubLevelContainer.getContainer(level), carcass);
+        Drag drag = new Drag(player.getUUID(), carcass.id, bone, body.getUniqueId(), anchor, weight);
+        drag.playerEntity = player;
+        drag.groundY = player.getY();
+        drag.entryPlot.set(entryDirection(body, player));
+        DRAGS.put(player.getUUID(), drag);
+        applySlowdown(player, penaltyFor(weight));
+        broadcast(level, sync(drag));
+        Blood.wound(level, carcass, hitWorld, 10, 1);
+        return true;
+    }
+
+    /** How far a Meat Hook reaches to hook a carcass, as a hand reaches a block. */
+    public static final double HOOK_REACH = 5.0;
+
+    /** Where a player's look first meets a resting carcass, its folded parts as drawn; or null. */
+    @Nullable
+    static CarcassAim.Hit aimAtResting(ServerLevel level, CarcassSavedData.Carcass carcass, ServerSubLevel torso, LivingEntity player) {
+        Rig rig = RigManager.forCarcass(carcass).orElse(null);
+        if (rig == null || !(level.getBlockEntity(torso.getPlot().getCenterBlock()) instanceof CarcassPartBlockEntity root)) {
+            return null;
+        }
+        com.avicagan.bloodandbones.carcass.rig.Bone torsoBone = rig.bone(carcass.rootBone).orElse(rig.root());
+        return CarcassAim.resting(torso, rig, torsoBone, root.merged(), player.getEyePosition(), player.getLookAngle(), HOOK_REACH);
+    }
+
+    /**
+     * A Meat Hook used where no carcass cell was hit: a part folded into a carcass lying still has no cells of its own,
+     * so a look at a drawn leg or head passes through it to the ground behind (or to nothing). If the look meets such a
+     * part nearer than {@code blocked} (how far off the block it did hit is), that part is hooked, or, while dragging,
+     * the drag lets go, as a click on a carcass does.
+     *
+     * @return whether a resting carcass was in the way (the use is then spent on it)
+     */
+    public static boolean useOnDrawn(ServerLevel level, Player player, double blocked) {
+        CarcassAim.RestingHit aimed = CarcassAim.nearestResting(level, player.getEyePosition(), player.getLookAngle(), Math.min(HOOK_REACH, blocked));
+        CarcassSavedData.Carcass carcass = aimed == null ? null : CarcassSavedData.get(level).carcass(aimed.root().carcassId());
+        if (carcass == null || !carcass.resting) {
+            return false;
+        }
+        if (isDragging(player)) {
+            stop(level, player);
+            return true;
+        }
+        startResting(level, player, carcass, aimed.hit().bone(), aimed.hit().point());
         return true;
     }
 
@@ -280,6 +333,17 @@ public final class CarcassDrag {
         }
         if (level.getGameTime() % 40 == 0) {
             broadcast(level, sync(drag));
+        }
+        if (level.getGameTime() % 5 == 0) {
+            // a piece cut off what is on the hook (or the hooked piece cut away from its body) changes what is being hauled
+            CarcassSavedData.Carcass held = CarcassSavedData.get(level).carcass(drag.carcass);
+            if (held != null) {
+                float now = attachedMass(container, held);
+                if (Math.abs(now - drag.weight) > 1.0e-3 * Math.max(1.0F, drag.weight)) {
+                    drag.weight = now;
+                    applySlowdown(player, penaltyFor(now));
+                }
+            }
         }
         if (level.getGameTime() % 6 == 0) {
             CarcassSavedData.Carcass dragged = CarcassSavedData.get(level).carcass(drag.carcass);
@@ -424,8 +488,9 @@ public final class CarcassDrag {
 
     /**
      * The grabbed limb leads: a torque spring turns it so the line from its own joint to the hook points at
-     * the tether target, and heavy angular damping stops it flailing about the joint. The rest of the body
-     * then follows the limb through the joints. The torso has no joint above it and only gets the damping.
+     * the tether target, and angular damping stops it flailing about the joint. The rest of the body then follows
+     * the limb through the joints, and the spring, sized by the whole carcass, turns the body with it once the limb
+     * reaches its joint's limit. The torso has no joint above it and only gets the damping.
      */
     private static void aim(ServerLevel level, Drag drag, ServerSubLevel subLevel, LivingEntity player, double partial, double timeStep, SubLevelPhysicsSystem physics) {
         RigidBodyHandle handle = physics.getPhysicsHandle(subLevel);
@@ -456,7 +521,10 @@ public final class CarcassDrag {
                 double angle = Math.acos(Math.max(-1.0, Math.min(1.0, now.dot(want))));
                 if (axis.lengthSquared() > 1.0e-8) {
                     axis.normalize();
-                    torque.add(new Vector3d(axis).mul(angle * AIM_STIFFNESS * mass));
+                    // sized by all that hangs on the hook, not the limb alone: past its joint's limit the turn carries on into
+                    // the body, so the hooked limb swings the carcass round behind it (sized by the limb, it could only swing
+                    // itself, and a carcass dragged by a hind leg went on head first)
+                    torque.add(new Vector3d(axis).mul(angle * AIM_STIFFNESS * Math.max(mass, drag.weight)));
                 }
             }
         }
@@ -465,24 +533,35 @@ public final class CarcassDrag {
         handle.applyLinearAndAngularImpulse(new Vector3d(), impulse);
     }
 
+    /** How far round from straight ahead a hook may be and still be held along the look, and past which it trails. */
+    private static final double HELD_AHEAD = 0.5;
+    private static final double TRAILS_BEHIND = -0.2;
+
     /**
-     * A point a little in front of the player's feet, so the carcass drags on the ground behind you. Anyone else (a
-     * hauler) holds it at arm's length back along the line to the hook, low down over the ground it walks on (not over
-     * its feet as they leave the ground in a hop), so it trails behind them.
+     * Where the hook is pulled to. A player facing what they have hooked holds it a little in front of their feet, along
+     * their look, so they can aim it (lift it onto a rack, swing it under a hook). A player walking away from it drags it:
+     * it trails at arm's length back along the line to the hook, at hand height, so the hooked part leads and the rest of
+     * the body comes round behind it (hooked by a hind leg it comes round rear first; by the head, head first). In
+     * between, the two blend, so turning round with it never jerks it across. Anyone else (a hauler) always drags it
+     * that way, low down over the ground it walks on (not over its feet as they leave the ground in a hop).
+     * <p>
+     * Held always in front, as it once was, a carcass walked away from was pulled towards a point past its dragger's feet,
+     * so it bumped along against their heels (the drag holds off while it touches them) and never came round.
      */
     private static Vector3d target(@Nullable Drag drag, LivingEntity player, Vector3d hook, double partial) {
         double px = Mth.lerp(partial, player.xo, player.getX());
         double py = Mth.lerp(partial, player.yo, player.getY());
         double pz = Mth.lerp(partial, player.zo, player.getZ());
+        double trail = HOLD_DISTANCE + player.getBbWidth() / 2.0;
+        Vec3 back = new Vec3(hook.x - px, 0.0, hook.z - pz);
         if (!(player instanceof Player)) {
             if (drag != null && !Double.isNaN(drag.groundY)) {
                 py = Math.min(py, drag.groundY);
             }
-            Vec3 back = new Vec3(hook.x - px, 0.0, hook.z - pz);
             if (back.lengthSqr() < 1.0e-4) {
                 back = Vec3.directionFromRotation(0.0F, player.yBodyRot + 180.0F);
             }
-            back = back.normalize().scale(HOLD_DISTANCE + player.getBbWidth() / 2.0);
+            back = back.normalize().scale(trail);
             return new Vector3d(px + back.x, py + Math.min(0.7, player.getBbHeight() * 0.5), pz + back.z);
         }
         Vec3 look = player.getLookAngle();
@@ -490,19 +569,58 @@ public final class CarcassDrag {
         if (flat.lengthSqr() < 1.0e-4) {
             flat = Vec3.directionFromRotation(0.0F, player.getYRot());
         }
-        flat = flat.normalize().scale(HOLD_DISTANCE);
-        double y = py + 0.7 + Math.max(-0.4, Math.min(0.6, look.y));
-        return new Vector3d(px + flat.x, y, pz + flat.z);
+        flat = flat.normalize();
+        // how much the hook lies ahead of them: 1 straight ahead, -1 straight behind
+        double ahead = back.lengthSqr() < 1.0e-4 ? 1.0 : flat.dot(back.normalize());
+        double held = Math.max(0.0, Math.min(1.0, (ahead - TRAILS_BEHIND) / (HELD_AHEAD - TRAILS_BEHIND)));
+        Vec3 way = held >= 1.0 || back.lengthSqr() < 1.0e-4 ? flat : back.normalize().scale(1.0 - held).add(flat.scale(held));
+        if (way.lengthSqr() < 1.0e-4) {
+            way = flat;
+        }
+        way = way.normalize().scale(HOLD_DISTANCE * held + trail * (1.0 - held));
+        double y = py + 0.7 + held * Math.max(-0.4, Math.min(0.6, look.y));
+        return new Vector3d(px + way.x, y, pz + way.z);
     }
 
-
-    public static Vector3d debugTarget(Player player) {
-        return target(null, player, new Vector3d(), 1.0);
+    /** Where this dragger's hook is pulled to now (for tests): as the drag has it, from where the hooked point is. */
+    public static Vector3d debugTarget(LivingEntity player) {
+        Drag drag = DRAGS.get(player.getUUID());
+        Vector3d hook = new Vector3d(player.getX(), player.getY(), player.getZ()).add(player.getLookAngle().x, 0.0, player.getLookAngle().z);
+        if (drag != null && player.level() instanceof ServerLevel level) {
+            ServerSubLevel held = resolve(level, drag);
+            if (held != null) {
+                hook = held.logicalPose().transformPosition(drag.anchorPlot, new Vector3d());
+            }
+        }
+        return target(drag, player, hook, 1.0);
     }
 
-    private static float dragPenalty(CarcassSavedData.Carcass carcass, float weight) {
-        Optional<Rig> rig = RigManager.forCarcass(carcass);
-        return rig.map(Rig::dragPenalty).orElseGet(() -> (float) Math.max(0.05, Math.min(0.55, 0.05 + 0.5 * Math.pow(weight / 3.0, 0.6))));
+    /** A whole chicken's mass and a whole ravager's, the two ends the brief gives the penalty for, and their penalties. */
+    public static final double CHICKEN_MASS = 0.127;
+    public static final double RAVAGER_MASS = 5.98;
+    public static final double CHICKEN_PENALTY = 0.05;
+    public static final double RAVAGER_PENALTY = 0.55;
+
+    /**
+     * The share of walking speed lost while dragging this much mass (the bodies actually on the hook, so a severed leg
+     * costs what a leg weighs, not what its cow did): the brief's "roughly 5% for a chicken up to 55% for a ravager".
+     * Between the two it rises with the logarithm of the mass, so each doubling costs the same few points more (a cow
+     * about 29%, a horse 37%, an iron golem, of plate, 47%); below a chicken it falls in proportion to the mass (a rabbit
+     * about 1%), and nothing costs more than a ravager. It moves onto weight classes when those come (docs/BRIEF-AUDIT.md
+     * package 2).
+     */
+    public static float penaltyFor(double mass) {
+        if (mass <= CHICKEN_MASS) {
+            return (float) (CHICKEN_PENALTY * Math.max(0.0, mass) / CHICKEN_MASS);
+        }
+        double along = Math.log(mass / CHICKEN_MASS) / Math.log(RAVAGER_MASS / CHICKEN_MASS);
+        return (float) Math.min(RAVAGER_PENALTY, CHICKEN_PENALTY + (RAVAGER_PENALTY - CHICKEN_PENALTY) * along);
+    }
+
+    /** The penalty the dragger has now, before their drag strength eases it; 0 when they drag nothing. */
+    public static float penalty(LivingEntity player) {
+        Drag drag = DRAGS.get(player.getUUID());
+        return drag == null ? 0.0F : penaltyFor(drag.weight);
     }
 
     private static void applySlowdown(LivingEntity player, float penalty) {

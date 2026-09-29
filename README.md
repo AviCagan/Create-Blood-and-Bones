@@ -107,9 +107,14 @@ incremental. `./gradlew runClient` / `runServer` / `runData` are configured by M
 
 ### Development aids
 
-- `./gradlew runGameTestServer` runs the game tests headless (417: every rigged mob and baby,
+- `./gradlew runGameTestServer` runs the game tests headless (433: every rigged mob and baby,
   butchery, rot, bleeding, machines and their filters, cooking and display, decoration, surgery, implants, backtanks, carcass armour and its traits, trait effects, minions and their jobs, chains, recipes,
-  advancements and sounds).
+  advancements and sounds, and the carcass physics: which way a hooked carcass turns and a struck one falls).
+- `./gradlew runGameTestServer -Dbloodandbones.debug.rig_compare=true -Dbloodandbones.debug.only=rigcompare,rigcost`
+  measures the carcass physics against the design brief instead of testing (twelve mobs killed from
+  the flank and from behind, hooked, hung, knocked, dragged up a step, cut, and what they cost) and
+  writes `run/rig-comparison/summary.txt`, to compare before and after a change
+  (`-Dbloodandbones.debug.rig_compare_runs=8` plays each scenario eight times).
 - `./gradlew runData -Dbloodandbones.dump_layers=minecraft:goat#main,...` writes those vanilla
   models' part trees to `run/build/layer-dump.txt`, for writing new rig targets in
   `src/main/rig_targets`.

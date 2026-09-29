@@ -4,7 +4,6 @@ import com.avicagan.bloodandbones.BloodAndBones;
 import com.avicagan.bloodandbones.carcass.rig.Bone;
 import com.avicagan.bloodandbones.carcass.rig.Rig;
 import com.avicagan.bloodandbones.carcass.rig.RigManager;
-import com.avicagan.bloodandbones.registry.BBBlocks;
 import dev.ryanhcode.sable.api.physics.PhysicsPipeline;
 import dev.ryanhcode.sable.api.physics.constraint.ConstraintJointAxis;
 import dev.ryanhcode.sable.api.physics.constraint.GenericConstraintConfiguration;
@@ -322,7 +321,7 @@ public final class CarcassRest {
         for (var holder : torso.getPlot().getLoadedChunks()) {
             for (var entry : holder.getChunk().getBlockEntities().entrySet()) {
                 if (entry.getValue() instanceof CarcassPartBlockEntity be && carcass.id.equals(be.carcassId())
-                        && !be.bone().equals(torsoBone.name()) && level.getBlockState(entry.getKey()).is(BBBlocks.CARCASS_PART.get())) {
+                        && !be.bone().equals(torsoBone.name()) && level.getBlockState(entry.getKey()).getBlock() instanceof CarcassPartBlock) {
                     stray.add(entry.getKey().immutable());
                 }
             }
@@ -414,26 +413,67 @@ public final class CarcassRest {
         if (torso == null || torso.distance(player.getX(), player.getY(), player.getZ()) > 6.0) {
             return;
         }
-        net.minecraft.world.phys.Vec3 look = player.getLookAngle();
-        disturb(level, carcass, carcass.rootBone, new Vector3d(look.x, look.y + 0.3, look.z), 1.2);
+        disturb(level, carcass, player, carcass.rootBone);
     }
 
+    /** How fast a full-strength punch sets a carcass moving as a whole, in blocks a second. */
+    public static final double KNOCK_SPEED = 1.5;
+
     /**
-     * A resting carcass was hit: unfold it and shove the limb that took the blow.
+     * A resting carcass was hit: unfold it and knock it where the blow landed, judged on its parts as they were drawn
+     * (a punch to a drawn leg lands on that leg).
      *
+     * @param struck the part to knock if the blow's line meets none (the cell that was hit)
      * @return true if it unfolded
      */
-    public static boolean disturb(ServerLevel level, CarcassSavedData.Carcass carcass, String bone, Vector3d direction, double speed) {
+    public static boolean disturb(ServerLevel level, CarcassSavedData.Carcass carcass, net.minecraft.world.entity.LivingEntity by, String struck) {
+        ServerSubLevelContainer container = SubLevelContainer.getContainer(level);
+        CarcassAim.Hit hit = container != null && container.getSubLevel(carcass.bones.get(carcass.rootBone)) instanceof ServerSubLevel torso && !torso.isRemoved()
+                ? CarcassDrag.aimAtResting(level, carcass, torso, by) : null;
         Map<String, ServerSubLevel> bodies = split(level, carcass);
         if (bodies == null) {
             return false;
         }
-        ServerSubLevelContainer container = SubLevelContainer.getContainer(level);
-        ServerSubLevel hit = bodies.getOrDefault(bone, bodies.get(carcass.rootBone));
-        if (container != null && hit != null && !hit.isRemoved()) {
-            container.physicsSystem().getPhysicsHandle(hit).addLinearAndAngularVelocity(new Vector3d(direction).normalize().mul(speed), new Vector3d());
-        }
+        knock(level, carcass, hit != null ? hit.bone() : struck, hit != null ? hit.point() : null, by.getLookAngle(), strength(by));
         return true;
+    }
+
+    /** How hard someone hits: a player's swing is weaker until it has recharged, as it is on a mob. */
+    public static double strength(net.minecraft.world.entity.LivingEntity by) {
+        return by instanceof net.minecraft.world.entity.player.Player player ? 0.25 + 0.75 * player.getAttackStrengthScale(0.5F) : 1.0;
+    }
+
+    /**
+     * A blow to a carcass that is awake (lying, dragged or hung): one impulse at the point it landed, on the part it landed
+     * on, along the blow (lifted a little), sized to set the carcass as a whole moving at {@link #KNOCK_SPEED} times its
+     * strength. The joints carry it to the rest, so a hung carcass swings from its hook and its legs trail the swing.
+     *
+     * @param point where it landed, in the world; the middle of the part if not known
+     */
+    public static void knock(ServerLevel level, CarcassSavedData.Carcass carcass, String bone, @Nullable Vector3d point, net.minecraft.world.phys.Vec3 look,
+                             double strength) {
+        ServerSubLevelContainer container = SubLevelContainer.getContainer(level);
+        if (container == null) {
+            return;
+        }
+        UUID id = carcass.bones.getOrDefault(bone, carcass.bones.get(carcass.rootBone));
+        if (!(container.getSubLevel(id) instanceof ServerSubLevel hit) || hit.isRemoved()) {
+            return;
+        }
+        SubLevelPhysicsSystem physics = container.physicsSystem();
+        double mass = 0.0;
+        for (UUID each : carcass.bones.values()) {
+            if (container.getSubLevel(each) instanceof ServerSubLevel body && !body.isRemoved()) {
+                mass += body.getMassTracker().getMass();
+                physics.getPipeline().wakeUp(body);
+            }
+        }
+        Vector3d at = point == null ? new Vector3d(hit.getMassTracker().getCenterOfMass() == null ? hit.logicalPose().rotationPoint()
+                : hit.getMassTracker().getCenterOfMass()) : hit.logicalPose().transformPositionInverse(point, new Vector3d());
+        // a leg just unfolded is a new body, so the change of velocity is worked out here (CarcassAssembler#impulseAt)
+        CarcassAssembler.impulseAt(physics, hit, at, new Vector3d(look.x, Math.max(look.y, 0.0) + 0.2, look.z).normalize().mul(mass * KNOCK_SPEED * strength));
+        // an awake carcass counts its stillness afresh
+        carcass.stillTicks = 0;
     }
 
     /**
@@ -515,7 +555,7 @@ public final class CarcassRest {
         // the rest cells go first so the torso is back to its own shape; also any cell named after a limb
         // that the saved list does not know about (older saves lost the list)
         for (BlockPos cell : carcass.restCells) {
-            if (level.getBlockState(cell).is(BBBlocks.CARCASS_PART.get())) {
+            if (level.getBlockState(cell).getBlock() instanceof CarcassPartBlock) {
                 level.setBlock(cell, Blocks.AIR.defaultBlockState(), Block.UPDATE_ALL);
             }
         }

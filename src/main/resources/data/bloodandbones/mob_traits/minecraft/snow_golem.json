@@ -5,6 +5,7 @@
     "parts.leg",
     "organs.bloodandbones:frost_core"
   ],
+  "tissue": "flesh",
   "organs": {
     "torso": {
       "add": [

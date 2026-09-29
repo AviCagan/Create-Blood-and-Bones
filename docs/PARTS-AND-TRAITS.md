@@ -580,7 +580,11 @@ Effect types live in a NeoForge custom registry, `bloodandbones:trait_effect_typ
 ### 4.2 Merge rules
 - **Order.** Layers apply archetype → family → overlays (ascending priority) → variants → mob file.
 - **Keys.** Inside `parts`, keys are tried most-specific first: `bones.<name>`, then `leg.hind` / `arm.wing`, then `leg`.
-- **Scalars** replace: `speed`, `jobs`, `health`, `disposition`, `scrap_material`.
+- **Scalars** replace: `speed`, `jobs`, `health`, `disposition`, `scrap_material`, `tissue`.
+- **`tissue`** says what a carcass's bodies are made of, which sets what they weigh for their size: `flesh` (the
+  default, 1.0 a block), `bone` (1.5: the skeletal overlay) or `plate` (2.0: the golem family). The snow golem's own
+  file puts it back to `flesh` (it is snow and a pumpkin, not iron). The masses themselves are Sable's
+  `physics_block_properties`, generated one file per tissue, which a datapack can override (ARCHITECTURE 15.19).
 - **Trait lists** add to the inherited list, deduplicated by trait id with the highest level winning. An object `{"add": [...], "remove": [ids]}` edits instead; `{"replace": true, ...}` inside any object replaces its lists.
 - **Numbers left out** come from the mob's `DefaultAttributes`: max_health, attack_damage, movement_speed, follow_range, armor, knockback_resistance, horse jump_strength.
 - **Variants** patch by carcass traits. `CarcassLook` already captures variant, profession, wool and mushroom. The captured traits map is extended with:

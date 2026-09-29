@@ -6,6 +6,7 @@
     "#bloodandbones:overlay/skeletal"
   ],
   "scrap_material": "bloodandbones:bone",
+  "tissue": "bone",
   "organs": {
     "torso": {
       "replace": true,

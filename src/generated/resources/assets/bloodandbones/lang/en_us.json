@@ -121,6 +121,8 @@
   "block.bloodandbones.butcher_table.tooltip.condition3": "When R-Clicked with an Empty Hand",
   "block.bloodandbones.butcher_table.tooltip.summary": "A steel table for cutting up carcass pieces by hand.",
   "block.bloodandbones.carcass_part": "Carcass",
+  "block.bloodandbones.carcass_part_bone": "Carcass",
+  "block.bloodandbones.carcass_part_plate": "Carcass",
   "block.bloodandbones.charging_cradle": "Charging Cradle",
   "block.bloodandbones.charging_cradle.tooltip": "CHARGING CRADLE",
   "block.bloodandbones.charging_cradle.tooltip.behaviour1": "Swaps a full _Soul Canister_ into any brass minion beside it that is running low or has powered down, and keeps the empty. With _brass sheets_ it mends one docked there.",

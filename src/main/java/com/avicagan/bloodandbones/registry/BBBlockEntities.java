@@ -13,7 +13,7 @@ import net.neoforged.neoforge.capabilities.RegisterCapabilitiesEvent;
 public class BBBlockEntities {
     public static final BlockEntityEntry<CarcassPartBlockEntity> CARCASS_PART = BloodAndBones.REGISTRATE
             .blockEntity("carcass_part", CarcassPartBlockEntity::new)
-            .validBlock(BBBlocks.CARCASS_PART)
+            .validBlocks(BBBlocks.CARCASS_PART, BBBlocks.CARCASS_PART_BONE, BBBlocks.CARCASS_PART_PLATE)
             .renderer(() -> CarcassPartRenderer::new)
             .register();
 

@@ -18,7 +18,8 @@ import java.util.Optional;
  * @param variantNames how a mob's variant name maps onto the texture file name where they differ
  * @param passes       extra coats drawn over the skin
  * @param scale        the renderer's model scale (a horse is drawn at 1.1); rig pixels are already multiplied by it
- * @param weight       total mass in Sable units (a full solid block is about 1.0); drives shove, drag and floating
+ * @param weight       its size as flesh, in Sable mass units (a full solid block is 1.0): how much animal there is, for
+ *                     blood and yields; its bodies' real mass also depends on their tissue (bone and plate weigh more)
  * @param rotTime      ticks for a carcass to go from fresh to rotten in a temperate place; cold stretches it
  * @param bones        bones, torso first
  * @param baby         how its baby is drawn, if it has one that becomes a carcass (see {@link #asBaby()})
@@ -79,12 +80,6 @@ public record Rig(ResourceLocation entity, ResourceLocation model, String layer,
             }
         }
         return Optional.empty();
-    }
-
-    /** Fraction of walking speed lost while dragging this carcass: about 5% for a chicken, 55% for a ravager. */
-    public float dragPenalty() {
-        double penalty = 0.05 + 0.5 * Math.pow(Math.max(weight, 0.001) / 3.0, 0.6);
-        return (float) Math.max(0.05, Math.min(0.55, penalty));
     }
 
     /** The bone with no parent. Every rig has exactly one. */

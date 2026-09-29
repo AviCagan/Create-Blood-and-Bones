@@ -2,7 +2,9 @@ package com.avicagan.bloodandbones.client;
 
 import com.avicagan.bloodandbones.BloodAndBones;
 import com.avicagan.bloodandbones.carcass.CarcassAssembler;
+import com.avicagan.bloodandbones.carcass.CarcassButchery;
 import com.avicagan.bloodandbones.carcass.CarcassDrag;
+import com.avicagan.bloodandbones.carcass.CarcassRest;
 import com.avicagan.bloodandbones.carcass.CarcassSavedData;
 import com.avicagan.bloodandbones.carcass.ShackleHookBlock;
 import com.avicagan.bloodandbones.carcass.ShackleHookBlockEntity;
@@ -582,12 +584,195 @@ public final class DevShowcase {
                         player.setItemSlot(net.minecraft.world.entity.EquipmentSlot.CHEST, ItemStack.EMPTY);
                     });
                     mc.options.hideGui = false;
-                    stage = 4;
+                    stage = 7;
                     ticks = 0;
                 }
             }
+            case 7 -> physics(mc);
             default -> {
             }
+        }
+    }
+
+    // ---------------------------------------------------------------- the physics yard (docs/ARCHITECTURE-PROPOSAL.md 15.19)
+
+    /** Server time the physics yard was started, -1 before; its corner; how far through its steps it is. */
+    private static long yardAt = -1;
+    private static BlockPos yard;
+    private static int yardStep;
+    private static CarcassSavedData.Carcass dragged;
+    private static CarcassSavedData.Carcass flanked;
+    private static CarcassSavedData.Carcass behind;
+    private static final CarcassSavedData.Carcass[] hungCows = new CarcassSavedData.Carcass[3];
+
+    /**
+     * The physics the brief asks for, photographed: a cow dragged by a hind leg, come round rear first behind its dragger;
+     * two cows killed by a blow, one from the flank (down on its side, away from the blow) and one from behind (pitched
+     * forward), their heads lolled onto the ground; and three hung cows, one whole, one with its right hind leg cut off
+     * (hanging differently, lower on the side that kept its leg) and one knocked a moment before, mid-swing. Timed on the
+     * server's clock, as the scene's pictures are.
+     */
+    private static void physics(Minecraft mc) {
+        MinecraftServer server = mc.getSingleplayerServer();
+        if (server == null) {
+            return;
+        }
+        long now = server.overworld().getGameTime();
+        if (yardAt < 0) {
+            yardAt = now;
+            yard = origin.offset(-60, 0, 0);
+            mc.options.setCameraType(net.minecraft.client.CameraType.FIRST_PERSON);
+            mc.options.hideGui = true;
+            server.execute(() -> {
+                ServerPlayer player = server.getPlayerList().getPlayers().get(0);
+                player.getInventory().clearContent();
+                player.teleportTo(player.serverLevel(), yard.getX() + 0.5, yard.getY(), yard.getZ() - 4.5, 0.0F, 20.0F);
+            });
+            return;
+        }
+        long age = now - yardAt;
+        if (yardStep == 0 && age >= 10) {
+            yardStep = 1;
+            server.execute(() -> yardBuild(server.overworld(), server.getPlayerList().getPlayers().get(0)));
+        } else if (yardStep == 1 && age >= 30) {
+            yardStep = 2;
+            // the second hung cow loses its right hind leg, and the leg drops away
+            server.execute(() -> {
+                ServerLevel level = server.overworld();
+                for (int i = 0; i < CarcassButchery.CUTS_TO_SEVER && hungCows[1] != null; i++) {
+                    CarcassButchery.cut(level, null, hungCows[1], "right_hind_leg", null);
+                }
+            });
+        } else if (yardStep >= 2 && yardStep <= 3 && age >= 31) {
+            // walk east, away from the cow, dragging it by its hind leg, looking half right (south-east): still walking
+            // away from it, and the camera in front, looking back, sees past the player to the cow
+            double x = yard.getX() + 0.5 + 0.1 * (age - 31);
+            server.execute(() -> {
+                ServerPlayer player = server.getPlayerList().getPlayers().get(0);
+                player.teleportTo(player.serverLevel(), x, yard.getY(), yard.getZ() + 1.5, -45.0F, 5.0F);
+            });
+            if (yardStep == 2 && age >= 92) {
+                yardStep = 3;
+                // from in front: the player walking at the camera, the cow trailing behind, rear first
+                mc.options.setCameraType(net.minecraft.client.CameraType.THIRD_PERSON_FRONT);
+            } else if (yardStep == 3 && age >= 104) {
+                yardStep = 4;
+                Screenshot.grab(mc.gameDirectory, PREFIX + "physics_0.png", mc.getMainRenderTarget(), message -> {
+                });
+                mc.options.setCameraType(net.minecraft.client.CameraType.FIRST_PERSON);
+                server.execute(() -> {
+                    ServerLevel level = server.overworld();
+                    ServerPlayer player = server.getPlayerList().getPlayers().get(0);
+                    BloodAndBones.LOGGER.info("[showcase] dragged cow's head end {} (dragged east, +x), player at {}", headEnd(level, dragged),
+                            player.position());
+                    CarcassDrag.stop(level, player);
+                    // two cows struck dead as they stand, facing south: one on its right flank, one from behind
+                    flanked = carcass(level, EntityType.COW, yard.offset(2, 0, 10), false);
+                    behind = carcass(level, EntityType.COW, yard.offset(8, 0, 8), false);
+                    if (flanked != null) {
+                        CarcassAssembler.blow(level, flanked, new net.minecraft.world.phys.Vec3(1.0, 0.0, 0.0));
+                    }
+                    if (behind != null) {
+                        CarcassAssembler.blow(level, behind, new net.minecraft.world.phys.Vec3(0.0, 0.0, 1.0));
+                    }
+                });
+            }
+        } else if (yardStep == 4 && age < 250) {
+            // watch them fall from the south, held there (nothing else moves the camera meanwhile)
+            yardView(server, 5.0, 1.0, 17.0, 180.0F, 20.0F);
+        } else if (yardStep == 4) {
+            yardStep = 5;
+            Screenshot.grab(mc.gameDirectory, PREFIX + "physics_1.png", mc.getMainRenderTarget(), message -> {
+            });
+            server.execute(() -> {
+                ServerPlayer player = server.getPlayerList().getPlayers().get(0);
+                if (flanked != null && behind != null) {
+                    BloodAndBones.LOGGER.info("[showcase] struck cows: flank at {} head end {}, behind at {} head end {}; camera at {}",
+                            CarcassAssembler.boneWorldPosition(player.serverLevel(), flanked, flanked.rootBone), headEnd(player.serverLevel(), flanked),
+                            CarcassAssembler.boneWorldPosition(player.serverLevel(), behind, behind.rootBone), headEnd(player.serverLevel(), behind),
+                            player.position());
+                }
+            });
+        } else if (yardStep == 5 && age < 300) {
+            // the hooks, from in front
+            yardView(server, 4.0, 0.5, 14.5, 0.0F, -10.0F);
+        } else if (yardStep == 5 && age >= 300) {
+            yardStep = 6;
+            // a punch from the east on the third hung cow, a moment before the picture
+            server.execute(() -> {
+                ServerLevel level = server.overworld();
+                if (hungCows[2] != null) {
+                    CarcassRest.knock(level, hungCows[2], hungCows[2].rootBone, null, new net.minecraft.world.phys.Vec3(-1.0, 0.0, 0.0), 1.0);
+                }
+            });
+        } else if (yardStep == 6 && age < 307) {
+            yardView(server, 4.0, 0.5, 14.5, 0.0F, -10.0F);
+        } else if (yardStep == 6) {
+            yardStep = 7;
+            Screenshot.grab(mc.gameDirectory, PREFIX + "physics_2.png", mc.getMainRenderTarget(), message -> {
+            });
+            server.execute(() -> {
+                ServerLevel level = server.overworld();
+                // what the pictures show, in numbers
+                for (int i = 0; i < hungCows.length; i++) {
+                    CarcassSavedData.Carcass cow = hungCows[i];
+                    var container = dev.ryanhcode.sable.api.sublevel.SubLevelContainer.getContainer(level);
+                    if (cow != null && container.getSubLevel(cow.bones.get(cow.rootBone)) instanceof dev.ryanhcode.sable.sublevel.ServerSubLevel torso) {
+                        org.joml.Vector3d up = torso.logicalPose().orientation().transform(new org.joml.Vector3d(0, -1, 0));
+                        BloodAndBones.LOGGER.info("[showcase] hung cow {}: bodies {}, head end {}", i, cow.bones.size(), up);
+                    }
+                }
+                ServerPlayer player = server.getPlayerList().getPlayers().get(0);
+                player.teleportTo(level, origin.getX() + 0.5, origin.getY(), origin.getZ() + 0.5, 0.0F, 0.0F);
+            });
+            mc.options.hideGui = false;
+            stage = 4;
+            ticks = 0;
+        }
+    }
+
+    /** Hold the player (the camera) at a spot of the physics yard, looking one way. */
+    private static void yardView(MinecraftServer server, double x, double y, double z, float yaw, float pitch) {
+        server.execute(() -> {
+            ServerPlayer player = server.getPlayerList().getPlayers().get(0);
+            player.teleportTo(player.serverLevel(), yard.getX() + x, yard.getY() + y, yard.getZ() + z, yaw, pitch);
+        });
+    }
+
+    /** Which way a carcass's torso points its head end (a cow's part-local -y), in the world; null if it is gone. */
+    @org.jetbrains.annotations.Nullable
+    private static org.joml.Vector3d headEnd(ServerLevel level, @org.jetbrains.annotations.Nullable CarcassSavedData.Carcass carcass) {
+        var container = dev.ryanhcode.sable.api.sublevel.SubLevelContainer.getContainer(level);
+        if (carcass == null || container == null || !(container.getSubLevel(carcass.bones.get(carcass.rootBone)) instanceof dev.ryanhcode.sable.sublevel.ServerSubLevel torso)) {
+            return null;
+        }
+        return torso.logicalPose().orientation().transform(new org.joml.Vector3d(0, -1, 0));
+    }
+
+    /** The physics yard: a cow to drag, two to strike and three on hooks under a beam. */
+    private static void yardBuild(ServerLevel level, ServerPlayer player) {
+        BlockPos y = yard;
+        // the cow to drag, facing east: dragged east, it has to come round to lead with its rear
+        dragged = carcass(level, EntityType.COW, y, false, false, -90.0F);
+        // a stone beam with three hooks under it, a cow hung on each
+        for (int dx = 0; dx <= 8; dx++) {
+            level.setBlockAndUpdate(y.offset(dx, 5, 20), Blocks.STONE.defaultBlockState());
+        }
+        for (int i = 0; i < 3; i++) {
+            BlockPos hook = y.offset(1 + 3 * i, 4, 20);
+            level.setBlockAndUpdate(hook, BBBlocks.SHACKLE_HOOK.getDefaultState().setValue(ShackleHookBlock.FACING, Direction.UP));
+            hungCows[i] = carcass(level, EntityType.COW, hook.below(3), false);
+            if (hungCows[i] != null) {
+                hang(level, player, hungCows[i], hook);
+            }
+        }
+        // back to the cow to drag: stand beside its rear and hook its right hind leg
+        var container = dev.ryanhcode.sable.api.sublevel.SubLevelContainer.getContainer(level);
+        if (dragged != null && container.getSubLevel(dragged.bones.get("right_hind_leg")) instanceof dev.ryanhcode.sable.sublevel.ServerSubLevel leg) {
+            player.setItemInHand(InteractionHand.MAIN_HAND, new ItemStack(BBItems.MEAT_HOOK.get()));
+            player.teleportTo(level, y.getX() + 0.5, y.getY(), y.getZ() + 1.5, -90.0F, 20.0F);
+            boolean started = CarcassDrag.start(level, player, leg.getPlot().getCenterBlock(), null);
+            BloodAndBones.LOGGER.info("[showcase] physics yard: drag by the hind leg started: {}", started);
         }
     }
 
@@ -974,13 +1159,17 @@ public final class DevShowcase {
     }
 
     private static CarcassSavedData.Carcass carcass(ServerLevel level, EntityType<?> type, BlockPos at, boolean shove, boolean baby) {
+        return carcass(level, type, at, shove, baby, 0.0F);
+    }
+
+    private static CarcassSavedData.Carcass carcass(ServerLevel level, EntityType<?> type, BlockPos at, boolean shove, boolean baby, float yaw) {
         if (!(type.create(level) instanceof Mob mob)) {
             return null;
         }
         mob.setBaby(baby);
-        mob.moveTo(at.getX() + 0.5, at.getY(), at.getZ() + 0.5, 0, 0);
-        mob.setYHeadRot(0);
-        mob.yBodyRot = 0;
+        mob.moveTo(at.getX() + 0.5, at.getY(), at.getZ() + 0.5, yaw, 0);
+        mob.setYHeadRot(yaw);
+        mob.yBodyRot = yaw;
         if (mob instanceof Sheep sheep) {
             sheep.setColor(DyeColor.WHITE);
         }
@@ -990,7 +1179,7 @@ public final class DevShowcase {
         if (carcass != null && shove) {
             // as a kill would: knock it over
             double angle = level.random.nextDouble() * Math.PI * 2;
-            CarcassAssembler.shove(level, carcass, new net.minecraft.world.phys.Vec3(Math.cos(angle), 0, Math.sin(angle)));
+            CarcassAssembler.blow(level, carcass, new net.minecraft.world.phys.Vec3(Math.cos(angle), 0, Math.sin(angle)));
         }
         return carcass;
     }

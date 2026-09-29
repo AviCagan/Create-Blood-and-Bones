@@ -253,6 +253,7 @@ public final class PartsData {
 
         private ResolvedMob merge(ResourceLocation entity, List<MobGroup> layers) {
             ResourceLocation material = DEFAULT_MATERIAL;
+            com.avicagan.bloodandbones.carcass.Tissue tissue = com.avicagan.bloodandbones.carcass.Tissue.FLESH;
             int colour = 0x8a6a5a;
             Map<String, List<TraitList.Resolved>> generic = new LinkedHashMap<>();
             Map<String, Map<String, List<TraitList.Resolved>>> pieces = new LinkedHashMap<>();
@@ -271,6 +272,9 @@ public final class PartsData {
                 }
                 if (layer.colour().isPresent()) {
                     colour = layer.colour().get();
+                }
+                if (layer.tissue().isPresent()) {
+                    tissue = layer.tissue().get();
                 }
                 for (Map.Entry<String, MobGroup.PartEntry> e : layer.parts().entrySet()) {
                     String key = e.getKey();
@@ -319,7 +323,7 @@ public final class PartsData {
                     : Optional.of(new ResolvedMob.FullSet(setName == null ? "set.bloodandbones.pure" : setName, bonus, drawback));
             Map<String, List<JsonElement>> minionCopy = new LinkedHashMap<>();
             minion.forEach((k, v) -> minionCopy.put(k, List.copyOf(v)));
-            return new ResolvedMob(entity, List.copyOf(ids), material, colour, Map.copyOf(parts), Map.copyOf(minionCopy), hide, Map.copyOf(organs), set);
+            return new ResolvedMob(entity, List.copyOf(ids), material, colour, Map.copyOf(parts), Map.copyOf(minionCopy), hide, Map.copyOf(organs), set, tissue);
         }
 
         /** The group of this kind that lists the mob, by id or tag; the highest priority wins. */

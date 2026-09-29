@@ -2,6 +2,7 @@ package com.avicagan.bloodandbones.registry;
 
 import com.avicagan.bloodandbones.BloodAndBones;
 import com.avicagan.bloodandbones.carcass.CarcassPartBlock;
+import com.avicagan.bloodandbones.carcass.Tissue;
 import com.avicagan.bloodandbones.carcass.ShackleHookBlock;
 import com.avicagan.bloodandbones.bleeding.BleedingRackBlock;
 import com.tterrag.registrate.util.entry.BlockEntry;
@@ -12,23 +13,39 @@ import net.minecraft.world.level.material.PushReaction;
 public class BBBlocks {
     /**
      * One block per limb cell of a physics carcass. Invisible; the limb is drawn by its block entity renderer
-     * and the physics box comes from the block state. Never obtainable, never breakable.
+     * and the physics box comes from the block state. Never obtainable, never breakable. One block for each tissue
+     * (CarcassPartBlock#tissue): flesh, a skeleton's bone, a golem's plate, weighed apart by Sable's data.
      */
-    public static final BlockEntry<CarcassPartBlock> CARCASS_PART = BloodAndBones.REGISTRATE
-            .block("carcass_part", CarcassPartBlock::new)
-            .properties(p -> p.mapColor(MapColor.COLOR_RED)
-                    .strength(-1.0F, 3600000.0F)
-                    .noLootTable()
-                    .noOcclusion()
-                    .pushReaction(PushReaction.BLOCK)
-                    .isValidSpawn((state, level, pos, type) -> false)
-                    .isRedstoneConductor((state, level, pos) -> false)
-                    .isSuffocating((state, level, pos) -> false)
-                    .isViewBlocking((state, level, pos) -> false))
-            .blockstate(NonNullBiConsumer.noop())
-            .loot(NonNullBiConsumer.noop())
-            .lang("Carcass")
-            .register();
+    public static final BlockEntry<CarcassPartBlock> CARCASS_PART = carcassPart("carcass_part", Tissue.FLESH);
+    public static final BlockEntry<CarcassPartBlock> CARCASS_PART_BONE = carcassPart("carcass_part_bone", Tissue.BONE);
+    public static final BlockEntry<CarcassPartBlock> CARCASS_PART_PLATE = carcassPart("carcass_part_plate", Tissue.PLATE);
+
+    private static BlockEntry<CarcassPartBlock> carcassPart(String name, Tissue tissue) {
+        return BloodAndBones.REGISTRATE
+                .block(name, p -> new CarcassPartBlock(p, tissue))
+                .properties(p -> p.mapColor(MapColor.COLOR_RED)
+                        .strength(-1.0F, 3600000.0F)
+                        .noLootTable()
+                        .noOcclusion()
+                        .pushReaction(PushReaction.BLOCK)
+                        .isValidSpawn((state, level, pos, type) -> false)
+                        .isRedstoneConductor((state, level, pos) -> false)
+                        .isSuffocating((state, level, pos) -> false)
+                        .isViewBlocking((state, level, pos) -> false))
+                .blockstate(NonNullBiConsumer.noop())
+                .loot(NonNullBiConsumer.noop())
+                .lang("Carcass")
+                .register();
+    }
+
+    /** The block a carcass of this tissue is built of. */
+    public static CarcassPartBlock carcassPart(Tissue tissue) {
+        return switch (tissue) {
+            case FLESH -> CARCASS_PART.get();
+            case BONE -> CARCASS_PART_BONE.get();
+            case PLATE -> CARCASS_PART_PLATE.get();
+        };
+    }
 
     /** Hangs a dragged carcass by the hooked limb; a wall or ceiling mounted hook. */
     public static final BlockEntry<ShackleHookBlock> SHACKLE_HOOK = BloodAndBones.REGISTRATE

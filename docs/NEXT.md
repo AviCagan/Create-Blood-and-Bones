@@ -566,7 +566,12 @@ not on main.
 3. Drop it.
 
 **Found along the way, to fix either way:** a wolf hung on a Shackle Hook hangs from its right hind hip, and by the same
-code a ravager would hang from its right front shoulder (docs/ARCHITECTURE-PROPOSAL.md 15.18 on that branch).
+code a ravager would hang from its right front shoulder (docs/ARCHITECTURE-PROPOSAL.md 15.18 on that branch). Fixed on
+main since (255d386: hung by the neck, through an upper body or a neck).
+
+**Since then** (docs/ARCHITECTURE-PROPOSAL.md 15.19) our own rigs went after B's first three wins and measured level with
+B on turning rear first, nearly level on falling away from a flank blow, and as loose in the head and limbs; B's fourth,
+costing less while falling, is not matched. Nothing on main uses B, and the choice above is still the owner's.
 
 
 - **Open questions answered with the design's defaults** (docs/ARCHITECTURE-PROPOSAL.md 15.1). All fourteen are still
@@ -574,7 +579,6 @@ code a ravager would hang from its right front shoulder (docs/ARCHITECTURE-PROPO
 - **Known gaps:**
   - A lava-walking minion stands on lava but cannot walk across it. This is being built now.
   - Held items and helmets are not drawn on minions yet. This is also being built now.
-  - `meatHookDragsByLeg` failed once in more than 50 runs (the drag physics under load); it is being watched.
 - **Later slices** (docs/PARTS-AND-TRAITS.md section 9):
   - the balance pass and Ponder scenes (slice 9);
   - the Deployer route for fitting armour;

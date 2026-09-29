@@ -416,7 +416,11 @@ public final class CarcassButchery {
         BloodAndBones.LOGGER.debug("Severed {} from carcass {}", bone, carcass.id);
     }
 
-    /** A body no heavier than this (Sable mass units) can be picked up by hand: heads, legs, a whole chicken. */
+    /**
+     * A body no bigger than this, as flesh (Sable mass units), can be picked up by hand: heads, legs, a whole chicken. It
+     * goes by size, not by weight, so a skeleton's skull (bone, heavier than flesh for its size) is carried as a zombie's
+     * head is.
+     */
     public static final double LIGHT_MASS = 0.13;
 
     /** Whether a bone of a carcass is light enough to carry. */
@@ -426,7 +430,10 @@ public final class CarcassButchery {
         if (container == null || id == null || !(container.getSubLevel(id) instanceof ServerSubLevel body) || body.isRemoved()) {
             return false;
         }
-        return body.getMassTracker().getMass() <= LIGHT_MASS;
+        // what its cells were made of when it was built (a datapack may have changed the mob's tissue since)
+        Tissue tissue = level.getBlockState(body.getPlot().getCenterBlock()).getBlock() instanceof CarcassPartBlock cell ? cell.tissue()
+                : Tissue.of(carcass.entity);
+        return body.getMassTracker().getMass() / tissue.density <= LIGHT_MASS;
     }
 
     /**

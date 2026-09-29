@@ -221,11 +221,17 @@ public class BBGameTests {
             gaps.add(hook.distance(target));
             List<Double> sorted = gaps.stream().sorted().toList();
             double gap = sorted.get(sorted.size() / 2);
-            // a grabbed leg cannot fully align with the target because the hip joint holds it back against the
-            // body's weight; since the leg is also steered to point at the hand it settles right about 2 blocks off
-            double allowed = grabBone.equals("body") ? 0.5 : 2.25;
-            if (gap > allowed) {
-                helper.fail("Hooked point did not reach the tether target: still " + gap + " blocks away (started " + hookedDistance[0] + " from the player)");
+            // The drag holds off while the hooked part touches its dragger (pulling harder would only shove them). This
+            // player faces away from the carcass, which once put the point the leg was pulled to in front of them, beyond
+            // them: the leg came to rest against their back 2.1 to 2.35 blocks from that point, whichever way it lay, and
+            // the bar this test had (2.25) failed 2 runs in 100. Walked away from, a carcass now trails behind its dragger
+            // (CarcassDrag.target), so nothing pulls the leg through them; a leg that still ends against its dragger has
+            // followed them all the same.
+            double allowed = grabBone.equals("body") ? 0.5 : 1.25;
+            boolean againstDragger = hooked.boundingBox().intersects(player.getBoundingBox().inflate(0.25));
+            if (gap > allowed && !againstDragger) {
+                helper.fail("Hooked point neither reached the tether target (still " + gap + " blocks away) nor came to rest against its dragger (started "
+                        + hookedDistance[0] + " from the player)");
             }
             if (!CarcassDrag.isDragging(player)) {
                 helper.fail("Drag ended on its own");
@@ -1016,7 +1022,7 @@ public class BBGameTests {
             helper.fail("Carcass assembly returned null");
             return;
         }
-        CarcassAssembler.shove(level, carcass, new Vec3(1, 0, 0));
+        CarcassAssembler.blow(level, carcass, new Vec3(1, 0, 0));
         double[] farthest = {0};
         Vector3d[] landed = {null};
         helper.runAfterDelay(120, () -> {
@@ -1534,7 +1540,7 @@ public class BBGameTests {
             ServerSubLevel torso = liveBones(helper, level, carcass).get(carcass.rootBone);
             start[0] = torso.logicalPose().position().y();
             // facing south, so east is square to its side
-            CarcassAssembler.shove(level, carcass, new Vec3(1, 0, 0));
+            CarcassAssembler.blow(level, carcass, new Vec3(1, 0, 0));
         });
         helper.runAfterDelay(150, () -> {
             CarcassSavedData.Carcass now = CarcassSavedData.get(level).carcass(id);
@@ -1595,7 +1601,7 @@ public class BBGameTests {
         if (assembled == null) {
             helper.fail("Carcass assembly returned false for " + type);
         } else if (knock) {
-            CarcassAssembler.shove(level, assembled, new Vec3(1, 0, 0));
+            CarcassAssembler.blow(level, assembled, new Vec3(1, 0, 0));
         }
         mob.discard();
         helper.runAfterDelay(SETTLE_TICKS, () -> {

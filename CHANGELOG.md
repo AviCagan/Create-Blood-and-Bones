@@ -18,6 +18,14 @@ Everything below is in development builds only; the art is placeholder (see the 
   ship's deck; a hard landing splats blood.
 - Flies gather over rotting carcasses, and maggots squirm over ones nearly gone. Rotten carcasses
   fall apart after a day.
+- The Meat Hook takes the part you aim at, on a carcass lying still too: hook a hind leg and walk
+  off and it comes round rear first; hook the head and it follows head first.
+- The killing blow lands where it hits: struck in the flank a carcass goes down on its side, away
+  from the blow; struck from behind it pitches onto its nose. Heads loll.
+- Hit a hung carcass and it swings; cut a leg off and it hangs differently.
+- Skeletons weigh as bone and golems as iron plate, heavier than flesh for their size.
+- Dragging slows you by what is actually on the hook, from about 5% for a chicken to 55% for a
+  ravager; a severed leg costs what a leg weighs, not what its whole animal did.
 
 ### Butchery
 

@@ -41,9 +41,22 @@ public class CarcassPartBlock extends Block implements EntityBlock, BlockSubLeve
 
     private static final VoxelShape[] SHAPES = new VoxelShape[16 * 16 * 16];
 
-    public CarcassPartBlock(Properties properties) {
+    /**
+     * What its cells are made of. Each tissue is a block of its own (as each wood is), not a property of one: Sable
+     * matches every state of a block against every mass in its data when it loads, for each world and each joining
+     * client, so a third property tripling the states made that nine times the work (seconds more per world).
+     */
+    private final Tissue tissue;
+
+    public CarcassPartBlock(Properties properties, Tissue tissue) {
         super(properties);
+        this.tissue = tissue;
         registerDefaultState(stateDefinition.any().setValue(SIZE_X, 16).setValue(SIZE_Y, 16).setValue(SIZE_Z, 16));
+    }
+
+    /** What this block's cells are made of, which sets what Sable weighs them at. */
+    public Tissue tissue() {
+        return tissue;
     }
 
     public static int sizeX(BlockState state) {
@@ -123,18 +136,29 @@ public class CarcassPartBlock extends Block implements EntityBlock, BlockSubLeve
         return new CarcassPartBlockEntity(BBBlockEntities.CARCASS_PART.get(), pos, state);
     }
 
-    /** A punch on a resting carcass wakes it: it unfolds and the struck limb gets a nudge. */
+    /**
+     * A punch lands where it hits. On a resting carcass it wakes it (it unfolds and the part struck takes the blow); on
+     * one awake, dragged or hung it knocks it about, so a hung carcass swings when knocked.
+     */
     @Override
     protected void attack(BlockState state, Level level, BlockPos pos, Player player) {
         if (!(level instanceof ServerLevel serverLevel) || !(level.getBlockEntity(pos) instanceof CarcassPartBlockEntity be) || be.carcassId() == null) {
             return;
         }
         CarcassSavedData.Carcass carcass = CarcassSavedData.get(serverLevel).carcass(be.carcassId());
-        if (carcass == null || !carcass.resting) {
+        if (carcass == null) {
             return;
         }
-        net.minecraft.world.phys.Vec3 look = player.getLookAngle();
-        CarcassRest.disturb(serverLevel, carcass, be.bone(), new org.joml.Vector3d(look.x, look.y + 0.3, look.z), 1.2);
+        if (carcass.resting) {
+            CarcassRest.disturb(serverLevel, carcass, player, be.bone());
+            return;
+        }
+        dev.ryanhcode.sable.sublevel.SubLevel subLevel = dev.ryanhcode.sable.Sable.HELPER.getContaining(level, pos);
+        com.avicagan.bloodandbones.carcass.rig.Rig rig = com.avicagan.bloodandbones.carcass.rig.RigManager.forCarcass(carcass).orElse(null);
+        com.avicagan.bloodandbones.carcass.rig.Bone bone = rig == null ? null : rig.bone(be.bone()).orElse(null);
+        CarcassAim.Hit hit = subLevel == null || bone == null ? null
+                : CarcassAim.body(subLevel, subLevel.logicalPose(), bone, player.getEyePosition(), player.getLookAngle(), 6.0);
+        CarcassRest.knock(serverLevel, carcass, be.bone(), hit == null ? null : hit.point(), player.getLookAngle(), CarcassRest.strength(player));
     }
 
     @Override

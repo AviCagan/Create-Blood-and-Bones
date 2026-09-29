@@ -25,8 +25,11 @@ import java.util.Optional;
  * a bone, re-parent bones, and override boxes and joints.
  */
 public final class RigDerivation {
-    /** Mass of one cubic block of animal, in Sable units where a plain solid block is 1.0. */
-    public static final float FLESH_DENSITY = 1.0F;
+    /**
+     * Mass of one cubic block of animal, in Sable units where a plain solid block is 1.0: the rig's weight is its size as
+     * flesh. What its bodies really weigh also depends on what they are made of (Tissue), which its group says.
+     */
+    public static final float FLESH_DENSITY = com.avicagan.bloodandbones.carcass.Tissue.FLESH.density;
 
     private RigDerivation() {
     }
@@ -203,7 +206,7 @@ public final class RigDerivation {
             extras.add(new ExtraPart(part, offset, rotation));
         });
         Optional<JointSpec> joint = parent.isEmpty() ? Optional.empty()
-                : Optional.of(target.joints().getOrDefault(s.path(), jointFor(s.path())));
+                : Optional.of(target.joints().getOrDefault(s.path(), jointFor(s.path(), restsOnTop(target, s, byPath.get(parent.get())))));
         return new Bone(s.path(), s.path(), parent, new Vector3f(s.offset()).mul(target.scale()), s.rotation(), min, max, joint, hide, extras, new Vector3f(1.0F));
     }
 
@@ -274,14 +277,43 @@ public final class RigDerivation {
         }
     }
 
+    /**
+     * Whether a part sits on top of the one it hangs from, as a biped's head sits on its shoulders: its pivot is at (or
+     * above) the top of its parent's box, and its own box rises from it. Read from the model, as the rest of the rig is.
+     */
+    private static boolean restsOnTop(RigTarget target, Seen part, @Nullable Seen parent) {
+        if (parent == null || parent.biggest() == null || part.biggest() == null) {
+            return false;
+        }
+        // the parent's box top and the part's box middle, in the model's own space (+y is down)
+        float top = Float.MAX_VALUE;
+        for (int i = 0; i < 8; i++) {
+            ModelPart.Cube c = parent.biggest();
+            Vector3f corner = new Vector3f((i & 1) == 0 ? c.minX : c.maxX, (i & 2) == 0 ? c.minY : c.maxY, (i & 4) == 0 ? c.minZ : c.maxZ);
+            top = Math.min(top, parent.rotation().transform(corner).add(parent.offset()).y);
+        }
+        ModelPart.Cube c = part.biggest();
+        Vector3f middle = part.rotation().transform(new Vector3f((c.minX + c.maxX) / 2.0F, (c.minY + c.maxY) / 2.0F, (c.minZ + c.maxZ) / 2.0F)).add(part.offset());
+        return part.offset().y <= top + 1.0F && middle.y < part.offset().y;
+    }
+
     /** Joint limits by part name, for bones the target does not spell out. */
     public static JointSpec jointFor(String name) {
+        return jointFor(name, true);
+    }
+
+    /**
+     * @param onTop whether the part sits on top of its parent ({@link #restsOnTop}); only a head or neck asks
+     */
+    public static JointSpec jointFor(String name, boolean onTop) {
         // judge by the part's own name, not the path above it ("body/tail" is a tail)
         String lower = name.substring(name.lastIndexOf('/') + 1).toLowerCase();
         if (lower.contains("head") || lower.contains("neck")) {
-            // a neck: modest nod and turn, no roll, and the head keeps colliding with the body so its corners
-            // cannot sink into the torso when the carcass rolls over
-            return new JointSpec(new Vector3f(-15, -30, -6), new Vector3f(25, 30, 6), 4.0F, 2.0F, true);
+            // a dead neck: the head lolls forward well past level and turns and tips a good way, with only a faint pull
+            // back toward the pose so a long neck does not fold flat at once. A head on top of the body (a biped's) keeps
+            // colliding with it, so it cannot sink into the chest as it nods; one held out in front (a cow's) must not,
+            // or its throat meets the chest at the first nod and it holds the head level
+            return new JointSpec(new Vector3f(-30, -45, -15), new Vector3f(60, 45, 15), 2.5F, 0.8F, onTop);
         }
         if (lower.contains("leg") || lower.contains("arm")) {
             // limbs swing fore and aft and splay well out sideways; damped so they settle instead of flailing,

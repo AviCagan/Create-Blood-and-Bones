@@ -81,9 +81,11 @@ public class CarcassSavedData extends SavedData {
         /** cleaver cuts per limb, and limbs whose joint to the body has been cut through */
         public final Map<String, Integer> cuts = new LinkedHashMap<>();
         public final java.util.Set<String> severed = new java.util.LinkedHashSet<>();
-        /** the limb the killing blow landed on, for the shove; not saved */
+        /** the limb the killing blow landed on, and where on it (in its body's plot), for the blow; not saved */
         @Nullable
         public String hitBone;
+        @Nullable
+        public org.joml.Vector3d hitPoint;
         /** resting form: the world joint that pins the merged body in place, not saved */
         @Nullable
         public PhysicsConstraintHandle restLock;
