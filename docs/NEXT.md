@@ -581,7 +581,9 @@ built as option 1, the recommended one, and one revert undoes it; the choice abo
 - **Known gaps:**
   - A torso's empty arm socket shows its raw stump as a flat square beside the shoulder (the space the arm's top left,
     as a carcass's cut arm shows it), which from behind reads as a thin plate sticking out.
-  - `meatHookDragsByLeg` failed once in more than 50 runs (the drag physics under load); it is being watched.
+  - `meatHookDragsByLeg` failed once in more than 50 runs (the drag physics under load); it is being watched. Its twin
+    `meatHookDragsByBody` failed about 1 run in 25 for a reason found and fixed (docs/ARCHITECTURE-PROPOSAL.md 15.21.1);
+    in 30 runs since, the leg came to rest 0.45 to 1.02 blocks from where it is pulled to, against a bar of 1.25.
 - **Later slices** (docs/PARTS-AND-TRAITS.md section 9):
   - the balance pass and Ponder scenes (slice 9);
   - the Deployer route for fitting armour;

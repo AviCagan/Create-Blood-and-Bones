@@ -3789,3 +3789,50 @@ What got worse, or did not come right (the tests hold only the cow, one of the m
   1.7 now) is almost all flesh's 4,096 sizes; weighing flesh only at the sizes the rigs make too would cut it to a sixth,
   but a datapack's own rig of a new mob could then make cells that weigh as whole blocks, so it waits on package 2's
   groups, which say what a mob is made of.
+
+#### 15.21.1 Merged with the integration branch (organs, checks, machines, materials; verified)
+
+This section was 15.19 on its own branch; the integration branch had taken 15.16 to 15.20 meanwhile, so it follows
+them. Merged at a22b8a7.
+
+- **The Shackle Hook and the Shackle Trolley** (both sides changed them). Kept both: the checks' gentle hoist (15.18:
+  the neck junction drawn up at no more than 3 blocks a second, a push at the hooked point carrying the whole
+  carcass's weight, never a snap) and this section's loose, belly-out hang (`hangTurn`). This section's `liftOnto`,
+  which moved a carcass up onto the hook in one step to stop the joint's yank throwing it, is gone: the hoist does
+  that gently. How the two meet (`hoistTurn` while it rises, `HOLD_REACH`) is under "A hung carcass hangs by its
+  weight" above and below. A hook on a Sable ship still joins at once; the checks' finding that it probably cannot
+  hold a carcass is left as it was.
+- **Mob layers** carry both sides' fields: main's organ lists and variants and this section's tissue (`MobGroup`,
+  `ResolvedMob`, `PartsData`).
+- **Resting** (`CarcassRest`): main's rule that a carcass whose bodies stay put for five seconds rests even while its
+  limbs twitch, and this section's blow that lands where it hits; a knocked carcass now also forgets where it was
+  settling. `CarcassEvents`, `CarcassDrag` and `CarcassButchery` merged by themselves: the Flensing Knife held on a
+  part, the butchery paths as data and the carrying by size sit side by side. The cost check's shove is the killing
+  blow (`CarcassAssembler.blow`). Bone and plate carcass blocks swap to their bloodless look as flesh does.
+- **The showcase** takes main's gauge and diving shots, then the physics yard, then the Ponder scenes.
+- **Generated resources** merged without a conflict; datagen run after the merge changed nothing. This branch added no
+  recipe and no sound.
+
+**What failed after the merge, and why** (each found by running the suite, repeated with
+`-Dbloodandbones.debug.repeat` until the cause showed):
+- `legOffHangsLowerOnThatSide`, 2 runs in 10 when hoisted loose, and later about 1 in 30: the two ways a hung cow's
+  head falls (above). The test now compares like with like.
+- `shackleHookHangsCarcass`, now and then: the swing a body started when let go of a rigid pose at the tip (above).
+- `dozenHungCarcasses` (main's): a hung rabbit spinning at 5.4 radians a second at the check. The hook's joint took up
+  the last 0.3 blocks in one physics substep; the rabbit spun at the moment it was held, and the dozen's fastest torso
+  was that jerk, 6.5 to 11 blocks a second against a limit of 10. A hook now hoists on to 0.05 before it holds the body
+  (or holds it at the tip once it stops coming nearer within 0.3): the fastest torso is 4.5, the rabbit still at the
+  check. A Shackle Trolley still holds at 0.3 (`trolleysQueueOnAChain`: two bodies on one chain keep each other that
+  far off, and a trolley waits until its own is held). The turn springs are also capped so that they cannot overshoot
+  on a small body; that was a guard, not the cause.
+- `meatHookDragsByBody`, about 1 run in 25, before the merge too: since what someone drags no longer collides with
+  them, a body could slide on into a dragger who had stopped and lie in them 0.76 blocks short, the drag holding off
+  while it touched them. Once they stand still, it is drawn back out (not while they walk past it, which kept a cow
+  dragged by a hind leg from coming round, 4 runs in 30).
+- `butcherButchersWithCleaver` (main's), 1 run in 6: the butchery paths made a leg by hand give nothing six times in
+  ten, and in 900 ticks the butcher broke down four or five pieces. It has the time to reach the torso now.
+
+The suite is 525 tests, and passed three times in a row. The showcase was run in both modes and looked at: the
+physics yard (the dragged cow, the three struck cows, the three hung cows, loose, one swinging, one a leg short with
+the leg below it; in bloodless mode plated wrecks and no blood), the machines' row F, the materials' row G, the belt,
+the knife held on a part, and the gauge and diving shots.
