@@ -300,7 +300,12 @@ public final class CarcassFloat {
         return false;
     }
 
-    /** Whether any of a body's cells is where Sable would drag it: any of the eighths of its blocks it tries in a liquid. */
+    /**
+     * Whether any of a body's cells is where Sable would drag it: any of the eighths of its blocks it tries in a liquid.
+     * A ship's water occlusion is not looked at here, unlike for the lift and the slowing: Sable's own drag does not
+     * look at it either, so a carcass in a dry hold below the waterline is still dragged by Sable, and its speed must still
+     * be put aside from that drag.
+     */
     private static boolean touches(ServerLevel level, ServerSubLevel body, Pose3d pose) {
         BoundingBox3ic bounds = body.getPlot().getBoundingBox();
         if (bounds == null) {
