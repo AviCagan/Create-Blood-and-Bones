@@ -70,6 +70,8 @@ public final class DevShowcase {
     private static List<View> views;
     private static long builtAt = -1;
     private static int moved;
+    /** The minions of the minion shots, what each is, for the fitness shot's lines (server side). */
+    private static final List<java.util.Map.Entry<String, com.avicagan.bloodandbones.minion.MinionBuild>> SHOWN = new java.util.concurrent.CopyOnWriteArrayList<>();
     /** Logged at each shot: the wither is the biggest, oddest body in the scene. */
     private static CarcassSavedData.Carcass witherShown;
     private static long moveAt;
@@ -464,6 +466,10 @@ public final class DevShowcase {
                                 .with("right_leg", ref.apply("rabbit", "right_haunch")).with("left_leg", ref.apply("rabbit", "left_haunch"))
                                 .with("left_arm", ref.apply("zombie", "left_arm"));
                         var builds = java.util.List.of(hopper, whole, odd, cow);
+                        SHOWN.add(java.util.Map.entry("Cow on rabbit legs", hopper));
+                        SHOWN.add(java.util.Map.entry("Whole cow", whole));
+                        SHOWN.add(java.util.Map.entry("Zombie, pig's head, rabbit's haunches, one arm", odd));
+                        SHOWN.add(java.util.Map.entry("Legless cow", cow));
                         for (int m = 0; m < builds.size(); m++) {
                             var minion = com.avicagan.bloodandbones.registry.BBEntities.MINION.get().create(player.serverLevel());
                             BlockPos at = player.blockPosition().offset(m * 3 - 4, 0, 7);
@@ -545,6 +551,7 @@ public final class DevShowcase {
                         bowman.setYHeadRot(160.0F);
                         bowman.setYBodyRot(160.0F);
                         bowman.setup(player, bowAt, archer, 1000.0F);
+                        SHOWN.add(java.util.Map.entry("Zombie with a cow's head, holding a bow", archer));
                         bowman.setNoAi(true);
                         bowman.setItemSlot(net.minecraft.world.entity.EquipmentSlot.MAINHAND, new ItemStack(net.minecraft.world.item.Items.BOW));
                         bowman.setItemSlot(net.minecraft.world.entity.EquipmentSlot.HEAD, new ItemStack(net.minecraft.world.item.Items.IRON_HELMET));
@@ -570,7 +577,17 @@ public final class DevShowcase {
                     server.execute(() -> {
                         ServerPlayer player = server.getPlayerList().getPlayers().get(0);
                         player.teleportTo(player.serverLevel(), player.getX() - 6.0, player.getY(), player.getZ() + 12.0, -135.0F, 12.0F);
+                        fitness(player);
                     });
+                    // the fitness lines in the chat, over that view
+                    mc.options.hideGui = false;
+                } else if (t == 203) {
+                    // a recipe toast would cover the corner of the lines
+                    mc.getToasts().clear();
+                } else if (t == 206) {
+                    Screenshot.grab(mc.gameDirectory, PREFIX + "tasks_0.png", mc.getMainRenderTarget(), message -> {
+                    });
+                    mc.options.hideGui = true;
                 } else if (t == 220) {
                     Screenshot.grab(mc.gameDirectory, PREFIX + "minions_1.png", mc.getMainRenderTarget(), message -> {
                     });
@@ -676,6 +693,37 @@ public final class DevShowcase {
             }
             default -> {
             }
+        }
+    }
+
+    /**
+     * Each shown minion's best tasks and what it cannot do, worked out as a task screen will (docs/NEXT.md 1.2), in the chat:
+     * the fitness in a running world, from the server's data, by the tasks' own names (bloodless ones in the bloodless run).
+     */
+    private static void fitness(ServerPlayer player) {
+        var store = com.avicagan.bloodandbones.parts.PartsData.SERVER;
+        for (var shown : SHOWN) {
+            var build = shown.getValue();
+            var rows = new java.util.ArrayList<>(com.avicagan.bloodandbones.minion.MinionFitness.rows(store, build,
+                    com.avicagan.bloodandbones.minion.MinionStats.of(store, build), com.avicagan.bloodandbones.minion.MinionFitness.Context.NONE
+                            .holding(shown.getKey().contains("bow") ? new ItemStack(net.minecraft.world.item.Items.BOW) : ItemStack.EMPTY)));
+            rows.removeIf(r -> !r.task().rated());
+            rows.sort(java.util.Comparator.comparingDouble(r -> r.can() ? -r.fitness() : 1.0));
+            net.minecraft.network.chat.MutableComponent line = net.minecraft.network.chat.Component.literal(shown.getKey() + ": ");
+            var best = rows.stream().filter(com.avicagan.bloodandbones.minion.MinionFitness.Row::can).limit(4).toList();
+            for (int i = 0; i < best.size(); i++) {
+                line.append(net.minecraft.network.chat.Component.translatable(best.get(i).task().nameKey()))
+                        .append(" " + Math.round(best.get(i).fitness() * 100.0F) + "%" + (i < best.size() - 1 ? ", " : ""));
+            }
+            var cannot = rows.stream().filter(r -> !r.can()).toList();
+            if (!cannot.isEmpty()) {
+                line.append("; cannot: ");
+                for (int i = 0; i < cannot.size(); i++) {
+                    line.append(net.minecraft.network.chat.Component.translatable(cannot.get(i).task().nameKey())).append(i < cannot.size() - 1 ? ", " : "");
+                }
+            }
+            player.sendSystemMessage(line);
+            BloodAndBones.LOGGER.info("[showcase] fitness: {}", line.getString());
         }
     }
 

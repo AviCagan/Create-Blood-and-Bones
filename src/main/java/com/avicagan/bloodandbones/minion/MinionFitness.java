@@ -4,6 +4,8 @@ import com.avicagan.bloodandbones.BloodAndBones;
 import com.avicagan.bloodandbones.item.CleaverItem;
 import com.avicagan.bloodandbones.item.FlensingKnifeItem;
 import com.avicagan.bloodandbones.parts.ActiveTraits;
+import com.avicagan.bloodandbones.parts.PartSlot;
+import com.avicagan.bloodandbones.parts.PartSlots;
 import com.avicagan.bloodandbones.parts.PartsData;
 import com.avicagan.bloodandbones.parts.TraitEffects;
 import com.avicagan.bloodandbones.parts.Trigger;
@@ -11,10 +13,13 @@ import com.avicagan.bloodandbones.parts.effect.HitscanEffect;
 import com.avicagan.bloodandbones.parts.effect.ProjectileEffect;
 import com.avicagan.bloodandbones.parts.effect.StorageEffect;
 import com.avicagan.bloodandbones.registry.BBAttributes;
+import com.google.gson.JsonElement;
+import net.minecraft.core.Holder;
 import net.minecraft.core.registries.BuiltInRegistries;
 import net.minecraft.core.registries.Registries;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.tags.TagKey;
+import net.minecraft.world.entity.ai.attributes.Attribute;
 import net.minecraft.world.entity.ai.attributes.Attributes;
 import net.minecraft.world.item.BowItem;
 import net.minecraft.world.item.CrossbowItem;
@@ -206,8 +211,8 @@ public final class MinionFitness {
         for (MinionBuild.Fitted fitted : build.parts()) {
             PieceRef piece = fitted.piece();
             var rig = store.rig(piece.entity(), piece.baby());
-            if (rig.isPresent() && com.avicagan.bloodandbones.parts.PartSlots.of(store, piece.entity(), rig.get(), piece.bone()).slot()
-                    == com.avicagan.bloodandbones.parts.PartSlot.LEG && speedFrom.stream().noneMatch(s -> s.id().equals(piece.entity()))) {
+            if (rig.isPresent() && PartSlots.of(store, piece.entity(), rig.get(), piece.bone()).slot()
+                    == PartSlot.LEG && speedFrom.stream().noneMatch(s -> s.id().equals(piece.entity()))) {
                 speedFrom.add(Source.piece(piece.entity(), "leg"));
             }
         }
@@ -228,8 +233,8 @@ public final class MinionFitness {
         for (MinionBuild.Fitted fitted : build.parts()) {
             PieceRef piece = fitted.piece();
             var rig = store.rig(piece.entity(), piece.baby());
-            if (rig.isPresent() && com.avicagan.bloodandbones.parts.PartSlots.of(store, piece.entity(), rig.get(), piece.bone()).slot()
-                    == com.avicagan.bloodandbones.parts.PartSlot.ARM) {
+            if (rig.isPresent() && PartSlots.of(store, piece.entity(), rig.get(), piece.bone()).slot()
+                    == PartSlot.ARM) {
                 armMobs.add(piece.entity());
             }
         }
@@ -296,8 +301,8 @@ public final class MinionFitness {
         if (head != null) {
             var headMob = store.resolve(head.entity(), head.baby());
             noTool = MinionData.ids(headMob, head.traits(), "head", "no_tool");
-            surgeonHead = MinionData.field(headMob, head.traits(), "head", "surgeon").filter(com.google.gson.JsonElement::isJsonPrimitive)
-                    .map(com.google.gson.JsonElement::getAsBoolean).orElse(false);
+            surgeonHead = MinionData.field(headMob, head.traits(), "head", "surgeon").filter(JsonElement::isJsonPrimitive)
+                    .map(JsonElement::getAsBoolean).orElse(false);
         }
         return new Body(stats, speed, List.copyOf(speedFrom), health, List.copyOf(healthFrom), hardest, List.copyOf(hardestFrom), striking, out, canStrike,
                 handWeapon, innate, storage, chestStorage, List.copyOf(storageFrom), drag, List.copyOf(dragFrom), MinionSapper.hasDetonator(store, build),
@@ -305,8 +310,7 @@ public final class MinionFitness {
                 store.disposition(stats.disposition()));
     }
 
-    private static List<Source> traitSources(List<MinionData.Found<TraitEffects.AttributeEffect>> effects,
-                                             net.minecraft.core.Holder<net.minecraft.world.entity.ai.attributes.Attribute> attribute) {
+    private static List<Source> traitSources(List<MinionData.Found<TraitEffects.AttributeEffect>> effects, Holder<Attribute> attribute) {
         List<Source> out = new ArrayList<>();
         for (var found : effects) {
             if (found.always() && found.effect().attribute().is(attribute)) {
