@@ -1070,6 +1070,7 @@ public final class DevShowcase {
     private static BlockPos ride;
     private static int rideStep;
     private static dev.ryanhcode.sable.sublevel.ServerSubLevel rideShip;
+    private static boolean rideShipShot;
 
     /**
      * Rule 5, photographed: a cow hung on a Shackle Hook under a stone block that a Mechanical Piston pushes, seen while it
@@ -1099,8 +1100,8 @@ public final class DevShowcase {
             rideStep = 1;
             server.execute(() -> rideBuild(server.overworld(), server.getPlayerList().getPlayers().get(0)));
         } else if (rideStep == 1 && age < 200) {
-            // the piston's row from the south-east, the hung cow in front of it
-            rideView(server, 5.5, 1.0, -3.5, 35.0F, 5.0F);
+            // the piston's row from the north, back far enough to see where the hook starts and where it stops
+            rideView(server, 4.5, 1.5, -6.5, 0.0F, -8.0F);
         } else if (rideStep == 1) {
             rideStep = 2;
             // the piston starts, slowly: two blocks east in a few seconds
@@ -1126,11 +1127,11 @@ public final class DevShowcase {
             });
         } else if (rideStep == 4 && age < 380) {
             // the ship from the south
-            rideView(server, 5.0, 1.5, 14.0, 180.0F, 15.0F);
+            rideView(server, 5.0, 2.0, 23.0, 180.0F, 12.0F);
         } else if (rideStep == 4 && age < 440) {
             // drive it east, kept level, and follow it
             double dx = (age - 380) * 0.07;
-            rideView(server, 5.0 + dx, 1.5, 14.0, 180.0F, 15.0F);
+            rideView(server, 5.0 + dx, 2.0, 23.0, 180.0F, 12.0F);
             server.execute(() -> {
                 if (rideShip != null && !rideShip.isRemoved()) {
                     var handle = dev.ryanhcode.sable.api.physics.handle.RigidBodyHandle.of(rideShip);
@@ -1139,9 +1140,11 @@ public final class DevShowcase {
                     handle.addLinearAndAngularVelocity(new org.joml.Vector3d(1.4 - v.x, 0.0, -v.z), w.negate());
                 }
             });
-            if (age == 430) {
+            if (age >= 430 && !rideShipShot) {
+                rideShipShot = true;
                 Screenshot.grab(mc.gameDirectory, PREFIX + "contraption_2.png", mc.getMainRenderTarget(), message -> {
                 });
+                server.execute(() -> BloodAndBones.LOGGER.info("[showcase] ship at {}", rideShip == null ? null : rideShip.logicalPose().position()));
             }
         } else if (rideStep == 4) {
             rideStep = 5;
