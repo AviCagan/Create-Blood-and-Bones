@@ -603,12 +603,14 @@ public final class DevShowcase {
     private static CarcassSavedData.Carcass dragged;
     private static CarcassSavedData.Carcass flanked;
     private static CarcassSavedData.Carcass behind;
+    private static CarcassSavedData.Carcass headed;
     private static final CarcassSavedData.Carcass[] hungCows = new CarcassSavedData.Carcass[3];
 
     /**
      * The physics the brief asks for, photographed: a cow dragged by a hind leg, come round rear first behind its dragger;
-     * two cows killed by a blow, one from the flank (down on its side, away from the blow) and one from behind (pitched
-     * forward); and three hung cows, one whole, one with its right hind leg cut off (the leg lying under it) and one
+     * three cows killed by a blow, one from the flank (down on its side, away from the blow), one from behind (pitched
+     * forward) and one struck in the face from in front (its head snapped back, down about where it stood, not flung);
+     * and three hung cows, one whole, one with its right hind leg cut off (the leg lying under it) and one
      * punched a moment before. Held belly-out on their hooks, the three hang alike: a looser hang, swinging and hanging
      * differently with a leg off, waits on the owner's decision 5. Timed on the server's clock, as the scene's pictures are.
      */
@@ -675,21 +677,29 @@ public final class DevShowcase {
                     if (behind != null) {
                         CarcassAssembler.blow(level, behind, new net.minecraft.world.phys.Vec3(0.0, 0.0, 1.0));
                     }
+                    // and one in the face, as a killer in front of it swinging at its head lands the blow
+                    headed = carcass(level, EntityType.COW, yard.offset(5, 0, 12), false);
+                    if (headed != null) {
+                        faceBlow(level, headed);
+                    }
                 });
             }
         } else if (yardStep == 4 && age < 250) {
             // watch them fall from the south, held there (nothing else moves the camera meanwhile)
-            yardView(server, 5.0, 1.0, 17.0, 180.0F, 20.0F);
+            yardView(server, 5.0, 1.0, 18.5, 180.0F, 20.0F);
         } else if (yardStep == 4) {
             yardStep = 5;
             Screenshot.grab(mc.gameDirectory, PREFIX + "physics_1.png", mc.getMainRenderTarget(), message -> {
             });
             server.execute(() -> {
                 ServerPlayer player = server.getPlayerList().getPlayers().get(0);
-                if (flanked != null && behind != null) {
-                    BloodAndBones.LOGGER.info("[showcase] struck cows: flank at {} head end {}, behind at {} head end {}; camera at {}",
+                if (flanked != null && behind != null && headed != null) {
+                    BloodAndBones.LOGGER.info("[showcase] struck cows: flank at {} head end {}, behind at {} head end {}, face at {} head end {} (stood at {}, struck on its {}); "
+                                    + "camera at {}",
                             CarcassAssembler.boneWorldPosition(player.serverLevel(), flanked, flanked.rootBone), headEnd(player.serverLevel(), flanked),
                             CarcassAssembler.boneWorldPosition(player.serverLevel(), behind, behind.rootBone), headEnd(player.serverLevel(), behind),
+                            CarcassAssembler.boneWorldPosition(player.serverLevel(), headed, headed.rootBone), headEnd(player.serverLevel(), headed),
+                            yard.offset(5, 0, 12), headed.hitBone,
                             player.position());
                 }
             });
@@ -729,6 +739,28 @@ public final class DevShowcase {
             stage = 4;
             ticks = 0;
         }
+    }
+
+    /**
+     * A killing blow to a cow's face, from a stand-in killer two blocks in front of it (it faces south) at a player's eye
+     * height, swinging at the middle of its head: where the look meets the head is where the blow lands, as a kill finds it.
+     */
+    private static void faceBlow(ServerLevel level, CarcassSavedData.Carcass carcass) {
+        var rig = com.avicagan.bloodandbones.carcass.rig.RigManager.forCarcass(carcass).orElse(null);
+        org.joml.Vector3d head = CarcassAssembler.boneWorldPosition(level, carcass, "head");
+        var container = dev.ryanhcode.sable.api.sublevel.SubLevelContainer.getContainer(level);
+        if (rig == null || head == null || !(container.getSubLevel(carcass.bones.get("head")) instanceof dev.ryanhcode.sable.sublevel.ServerSubLevel body)) {
+            return;
+        }
+        net.minecraft.world.phys.Vec3 at = new net.minecraft.world.phys.Vec3(head.x, head.y, head.z);
+        net.minecraft.world.phys.Vec3 eye = at.add(0.0, 0.6, 2.0);
+        net.minecraft.world.phys.Vec3 look = at.subtract(eye).normalize();
+        com.avicagan.bloodandbones.carcass.CarcassAim.Hit hit = com.avicagan.bloodandbones.carcass.CarcassAim.first(level, carcass, rig, eye, look, 8.0);
+        if (hit != null && hit.bone().equals("head")) {
+            carcass.hitBone = "head";
+            carcass.hitPoint = body.logicalPose().transformPositionInverse(hit.point(), new org.joml.Vector3d());
+        }
+        CarcassAssembler.blow(level, carcass, look);
     }
 
     /** Hold the player (the camera) at a spot of the physics yard, looking one way. */

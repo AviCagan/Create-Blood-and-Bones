@@ -416,8 +416,14 @@ public final class CarcassRest {
         disturb(level, carcass, player, carcass.rootBone);
     }
 
-    /** How fast a full-strength punch sets a carcass moving as a whole, in blocks a second. */
-    public static final double KNOCK_SPEED = 1.5;
+    /**
+     * How hard a full-strength punch pushes (an impulse, in Sable's mass units times blocks a second): what sets a cow
+     * moving at 1.5 blocks a second as a whole. The same push whatever it lands on, so weight tells: a ravager is barely
+     * moved (a fifth of a block a second), and a chicken goes as fast as {@link #PUNCH_MAX_STRUCK} lets the spot punched go.
+     */
+    public static final double PUNCH = 1.2;
+    /** The fastest a punch sets the spot it lands on moving, in blocks a second: a punched leg swings, it is not flung. */
+    public static final double PUNCH_MAX_STRUCK = 3.0;
 
     /**
      * A resting carcass was hit: unfold it and knock it where the blow landed, judged on its parts as they were drawn
@@ -445,35 +451,37 @@ public final class CarcassRest {
 
     /**
      * A blow to a carcass that is awake (lying, dragged or hung): one impulse at the point it landed, on the part it landed
-     * on, along the blow (lifted a little), sized to set the carcass as a whole moving at {@link #KNOCK_SPEED} times its
-     * strength. The joints carry it to the rest, so a hung carcass swings from its hook and its legs trail the swing.
+     * on, along the blow (lifted a little), of {@link #PUNCH} times its strength whatever it lands on, but never so hard that
+     * the spot it lands on goes faster than {@link #PUNCH_MAX_STRUCK}. The joints carry it to the rest, so a hung carcass is
+     * knocked away on its hook and its legs trail after.
      *
      * @param point where it landed, in the world; the middle of the part if not known
+     * @return the impulse given, in the world (none if there was nothing to knock)
      */
-    public static void knock(ServerLevel level, CarcassSavedData.Carcass carcass, String bone, @Nullable Vector3d point, net.minecraft.world.phys.Vec3 look,
-                             double strength) {
+    public static Vector3d knock(ServerLevel level, CarcassSavedData.Carcass carcass, String bone, @Nullable Vector3d point, net.minecraft.world.phys.Vec3 look,
+                                 double strength) {
         ServerSubLevelContainer container = SubLevelContainer.getContainer(level);
         if (container == null) {
-            return;
+            return new Vector3d();
         }
         UUID id = carcass.bones.getOrDefault(bone, carcass.bones.get(carcass.rootBone));
         if (!(container.getSubLevel(id) instanceof ServerSubLevel hit) || hit.isRemoved()) {
-            return;
+            return new Vector3d();
         }
         SubLevelPhysicsSystem physics = container.physicsSystem();
-        double mass = 0.0;
         for (UUID each : carcass.bones.values()) {
             if (container.getSubLevel(each) instanceof ServerSubLevel body && !body.isRemoved()) {
-                mass += body.getMassTracker().getMass();
                 physics.getPipeline().wakeUp(body);
             }
         }
         Vector3d at = point == null ? new Vector3d(hit.getMassTracker().getCenterOfMass() == null ? hit.logicalPose().rotationPoint()
                 : hit.getMassTracker().getCenterOfMass()) : hit.logicalPose().transformPositionInverse(point, new Vector3d());
         // a leg just unfolded is a new body, so the change of velocity is worked out here (CarcassAssembler#impulseAt)
-        CarcassAssembler.impulseAt(physics, hit, at, new Vector3d(look.x, Math.max(look.y, 0.0) + 0.2, look.z).normalize().mul(mass * KNOCK_SPEED * strength));
+        Vector3d given = CarcassAssembler.impulseAt(physics, hit, at, new Vector3d(look.x, Math.max(look.y, 0.0) + 0.2, look.z).normalize().mul(PUNCH * strength),
+                PUNCH_MAX_STRUCK);
         // an awake carcass counts its stillness afresh
         carcass.stillTicks = 0;
+        return given;
     }
 
     /**

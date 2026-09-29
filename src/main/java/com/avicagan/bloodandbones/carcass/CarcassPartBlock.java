@@ -59,6 +59,24 @@ public class CarcassPartBlock extends Block implements EntityBlock, BlockSubLeve
         return tissue;
     }
 
+    /**
+     * Whether Sable's data gives a cell of this size a mass of its own. A size it does not weigh takes the mass the data
+     * gives the block as a whole, what a full cell weighs, however small the cell is; every smaller size it does weigh
+     * comes out lighter than that.
+     */
+    public static boolean weighed(BlockState state) {
+        if (sizeX(state) == 16 && sizeY(state) == 16 && sizeZ(state) == 16) {
+            return true;
+        }
+        return massOf(state) != massOf(stateFor(state.getBlock(), 16, 16, 16));
+    }
+
+    /** What Sable's data (physics_block_properties) weighs a state at. */
+    private static double massOf(BlockState state) {
+        return ((dev.ryanhcode.sable.mixinterface.block_properties.BlockStateExtension) state)
+                .sable$getProperty(dev.ryanhcode.sable.physics.config.block_properties.PhysicsBlockPropertyTypes.MASS.get());
+    }
+
     public static int sizeX(BlockState state) {
         return state.getValue(SIZE_X);
     }

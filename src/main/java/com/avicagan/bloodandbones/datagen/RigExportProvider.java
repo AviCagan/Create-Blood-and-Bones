@@ -88,12 +88,11 @@ public class RigExportProvider implements DataProvider {
         return out;
     }
 
-    @Override
-    public CompletableFuture<?> run(CachedOutput cache) {
+    /** Every target's rig, as the data run writes it, each beside the target it comes from. */
+    public static Map<RigTarget, Rig> deriveAll() {
         Map<ModelLayerLocation, LayerDefinition> roots = LayerDefinitions.createRoots();
-        List<CompletableFuture<?>> futures = new ArrayList<>();
-        Path base = output.getOutputFolder(PackOutput.Target.DATA_PACK).resolve(BloodAndBones.MOD_ID).resolve("rig");
         Map<ResourceLocation, Optional<com.avicagan.bloodandbones.carcass.rig.BabyShape>> babies = loadBabyShapes();
+        Map<RigTarget, Rig> out = new java.util.LinkedHashMap<>();
         for (RigTarget target : loadTargets()) {
             ModelLayerLocation layer = new ModelLayerLocation(target.model(), target.layer());
             LayerDefinition definition = roots.get(layer);
@@ -101,7 +100,18 @@ public class RigExportProvider implements DataProvider {
                 throw new IllegalStateException("No layer definition for " + layer);
             }
             ModelPart root = definition.bakeRoot();
-            Rig rig = RigDerivation.derive(target, root).withBaby(babies.getOrDefault(target.entity(), Optional.empty()));
+            out.put(target, RigDerivation.derive(target, root).withBaby(babies.getOrDefault(target.entity(), Optional.empty())));
+        }
+        return out;
+    }
+
+    @Override
+    public CompletableFuture<?> run(CachedOutput cache) {
+        List<CompletableFuture<?>> futures = new ArrayList<>();
+        Path base = output.getOutputFolder(PackOutput.Target.DATA_PACK).resolve(BloodAndBones.MOD_ID).resolve("rig");
+        for (Map.Entry<RigTarget, Rig> entry : deriveAll().entrySet()) {
+            RigTarget target = entry.getKey();
+            Rig rig = entry.getValue();
             JsonElement json = Rig.CODEC.encodeStart(JsonOps.INSTANCE, rig).getOrThrow();
             Path path = base.resolve(target.entity().getNamespace()).resolve(target.entity().getPath() + ".json");
             futures.add(DataProvider.saveStable(cache, json, path));

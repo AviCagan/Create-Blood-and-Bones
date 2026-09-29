@@ -107,9 +107,11 @@ public class CarcassEvents {
 
     /**
      * A Meat Hook used at a carcass lying still, where one of its folded parts (a leg, the head) is drawn: those parts have
-     * no cells, so the game's own aim passes through them to the block behind. If the look meets such a part before that
-     * block, the part is hooked instead (on the server) and the block is left alone (on both sides). A click that lands on
-     * the carcass's own cells goes to CarcassPartBlock, which judges the same way.
+     * no cells, so the game's own aim passes through them to the block behind. If the look meets such a part before any
+     * block, the part is hooked instead (on the server) and the block is left alone (on both sides). What blocks the look
+     * is the player's own ray cast (CarcassDrag#hookReach), not the block this use names, so a wall between the player and
+     * the part stops the hook. A click that lands on the carcass's own cells goes to CarcassPartBlock, which judges the
+     * same way.
      */
     @SubscribeEvent
     public static void onUseOnBlock(net.neoforged.neoforge.event.entity.player.PlayerInteractEvent.RightClickBlock event) {
@@ -118,29 +120,32 @@ public class CarcassEvents {
                 || event.getLevel().getBlockState(event.getPos()).getBlock() instanceof com.avicagan.bloodandbones.carcass.CarcassPartBlock) {
             return;
         }
-        if (usedOnDrawn(player, player.getEyePosition().distanceTo(event.getHitVec().getLocation()))) {
+        if (usedOnDrawn(player)) {
             event.setCanceled(true);
             event.setCancellationResult(net.minecraft.world.InteractionResult.SUCCESS);
         }
     }
 
-    /** The same, used at nothing (the look went past the carcass into the air). */
+    /**
+     * The same, used at nothing, or at a block with no use of its own: the game then uses the item as well, and the server
+     * hears of that use without the block, so here too only the player's own ray cast says what is in the way.
+     */
     @SubscribeEvent
     public static void onUseInAir(net.neoforged.neoforge.event.entity.player.PlayerInteractEvent.RightClickItem event) {
         Player player = event.getEntity();
         if (event.getHand() == net.minecraft.world.InteractionHand.MAIN_HAND && player.getMainHandItem().is(BBItems.MEAT_HOOK.get())
-                && usedOnDrawn(player, CarcassDrag.HOOK_REACH)) {
+                && usedOnDrawn(player)) {
             event.setCanceled(true);
             event.setCancellationResult(net.minecraft.world.InteractionResult.SUCCESS);
         }
     }
 
-    private static boolean usedOnDrawn(Player player, double blocked) {
+    private static boolean usedOnDrawn(Player player) {
         if (player.level() instanceof ServerLevel level) {
-            return CarcassDrag.useOnDrawn(level, player, blocked);
+            return CarcassDrag.useOnDrawn(level, player);
         }
         return com.avicagan.bloodandbones.carcass.CarcassAim.nearestResting(player.level(), player.getEyePosition(), player.getLookAngle(),
-                Math.min(CarcassDrag.HOOK_REACH, blocked)) != null;
+                CarcassDrag.hookReach(player)) != null;
     }
 
     /** A mob mid-handover takes no more damage. */

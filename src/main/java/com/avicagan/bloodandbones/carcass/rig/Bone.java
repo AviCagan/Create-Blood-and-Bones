@@ -54,6 +54,12 @@ public record Bone(String name, String part, Optional<String> parent, Vector3f o
         return new Vector3f(boxMax).sub(boxMin);
     }
 
+    /** Its box in blocks cubed: how much of the animal it is, whatever it is made of (what it would weigh as flesh). */
+    public float volume() {
+        Vector3f size = boxSize();
+        return size.x * size.y * size.z / 4096.0F;
+    }
+
     public JointSpec jointOrDefault() {
         return joint.orElse(JointSpec.DEFAULT);
     }

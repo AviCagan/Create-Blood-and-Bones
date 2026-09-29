@@ -243,15 +243,35 @@ public final class CarcassDrag {
     }
 
     /**
+     * How far a Meat Hook reaches along a player's look: to the first block in the way (a wall, a closed door, the deck of
+     * a ship), and never past {@link #HOOK_REACH}. Worked out from a ray cast of the player's own, the same on either side,
+     * never from the block a use names: a use in the air names none, and one on a block of a Sable sub-level (a ship, a
+     * body) names where it hit in that sub-level's plot, far from the player. Sable's ray cast meets the blocks of every
+     * sub-level too, and gives such a hit in its plot, so it is brought out into the world before it is measured. Plants
+     * and other blocks with nothing to collide with let the hook through.
+     */
+    public static double hookReach(Player player) {
+        net.minecraft.world.level.Level level = player.level();
+        Vec3 eye = player.getEyePosition();
+        Vec3 end = eye.add(player.getLookAngle().scale(HOOK_REACH));
+        net.minecraft.world.phys.BlockHitResult hit = level.clip(new net.minecraft.world.level.ClipContext(eye, end,
+                net.minecraft.world.level.ClipContext.Block.COLLIDER, net.minecraft.world.level.ClipContext.Fluid.NONE, player));
+        if (hit.getType() == net.minecraft.world.phys.HitResult.Type.MISS) {
+            return HOOK_REACH;
+        }
+        return Math.min(HOOK_REACH, eye.distanceTo(Sable.HELPER.projectOutOfSubLevel(level, hit.getLocation())));
+    }
+
+    /**
      * A Meat Hook used where no carcass cell was hit: a part folded into a carcass lying still has no cells of its own,
      * so a look at a drawn leg or head passes through it to the ground behind (or to nothing). If the look meets such a
-     * part nearer than {@code blocked} (how far off the block it did hit is), that part is hooked, or, while dragging,
-     * the drag lets go, as a click on a carcass does.
+     * part before any block ({@link #hookReach}), that part is hooked, or, while dragging, the drag lets go, as a click on
+     * a carcass does. Behind a wall, a door or a ship's side, nothing happens.
      *
      * @return whether a resting carcass was in the way (the use is then spent on it)
      */
-    public static boolean useOnDrawn(ServerLevel level, Player player, double blocked) {
-        CarcassAim.RestingHit aimed = CarcassAim.nearestResting(level, player.getEyePosition(), player.getLookAngle(), Math.min(HOOK_REACH, blocked));
+    public static boolean useOnDrawn(ServerLevel level, Player player) {
+        CarcassAim.RestingHit aimed = CarcassAim.nearestResting(level, player.getEyePosition(), player.getLookAngle(), hookReach(player));
         CarcassSavedData.Carcass carcass = aimed == null ? null : CarcassSavedData.get(level).carcass(aimed.root().carcassId());
         if (carcass == null || !carcass.resting) {
             return false;
@@ -400,11 +420,14 @@ public final class CarcassDrag {
             if (subLevel == null) {
                 continue;
             }
-            if (isStandingOnCarcass(level, player, drag) || isAgainstPlayer(subLevel, player)) {
-                continue; // no pulling the ground out from under your own feet, riding it, or pulling it into yourself
+            if (isStandingOnCarcass(level, player, drag)) {
+                continue; // no pulling the ground out from under your own feet, or riding it
             }
-            pull(drag, subLevel, player, partial, timeStep, physics);
-            aim(level, drag, subLevel, player, partial, timeStep, physics);
+            boolean against = isAgainstPlayer(subLevel, player);
+            pull(drag, subLevel, player, partial, timeStep, physics, against);
+            if (!against) {
+                aim(level, drag, subLevel, player, partial, timeStep, physics);
+            }
             physics.getPipeline().wakeUp(subLevel);
         }
     }
@@ -450,8 +473,14 @@ public final class CarcassDrag {
      * The tether is a spring applied as impulses every physics substep, not a joint: Sable's
      * {@code applyImpulseAtPoint} takes an impulse in the body's local frame at a plot-space point
      * (verified by the impulse probe test), which gives a smooth, fully predictable pull.
+     * <p>
+     * While the hooked body touches its dragger ({@code against}), the spring never pulls it further into them, which
+     * would only shove them; but its damping stays, and so does a spring that pushes it back out to arm's length. With
+     * everything let go the moment it touched, a carcass pulled in towards a dragger who had stopped slid on into them
+     * and lay against them short of where it was pulled to (meatHookDragsByLeg, about 1 run in 10).
      */
-    private static void pull(Drag drag, ServerSubLevel subLevel, LivingEntity player, double partial, double timeStep, SubLevelPhysicsSystem physics) {
+    private static void pull(Drag drag, ServerSubLevel subLevel, LivingEntity player, double partial, double timeStep, SubLevelPhysicsSystem physics,
+                             boolean against) {
         RigidBodyHandle handle = physics.getPhysicsHandle(subLevel);
         Pose3d pose = subLevel.logicalPose();
         Vector3d hook = pose.transformPosition(drag.anchorPlot, new Vector3d());
@@ -470,7 +499,14 @@ public final class CarcassDrag {
         if (gap < 0.6) {
             damping *= 2.0; // settle instead of overshooting into the player
         }
-        Vector3d force = new Vector3d(target).sub(hook).mul(stiffness).sub(new Vector3d(hookVelocity).mul(damping));
+        Vector3d force;
+        if (against) {
+            // no pull at all, only the damping, of how fast it closes on its dragger as they move (a tick's step, a second's worth)
+            Vector3d dragger = new Vector3d(player.getX() - player.xo, player.getY() - player.yo, player.getZ() - player.zo).mul(20.0);
+            force = new Vector3d(hookVelocity).sub(dragger).mul(-damping);
+        } else {
+            force = new Vector3d(target).sub(hook).mul(stiffness).sub(new Vector3d(hookVelocity).mul(damping));
+        }
         double magnitude = force.length();
         if (magnitude > maxForce) {
             force.mul(maxForce / magnitude);

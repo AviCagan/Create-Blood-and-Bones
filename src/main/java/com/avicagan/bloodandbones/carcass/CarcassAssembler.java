@@ -63,6 +63,13 @@ public final class CarcassAssembler {
      * The whole blow lands on one point, so at the 5 the shove allowed the light ones tumbled four blocks and more.
      */
     private static final double BLOW_MAX_SPEED = 3.0;
+    /**
+     * The fastest a blow sets the spot it lands on moving, in blocks a second. Sized for the whole carcass, a blow landing
+     * on a light part of it (a head, a leg) would set that part alone moving many times as fast as the carcass (a cow's head
+     * at 22 blocks a second, a leg at 45) and yank the body after it by its joint: held to this, a blow to the head snaps
+     * the head back and moves the rest a little. A blow to the torso, which carries most of the weight, is not held back.
+     */
+    public static final double BLOW_MAX_STRUCK = 7.0;
     /** How far a killer's blow reaches along their look, in blocks. */
     private static final double BLOW_REACH = 8.0;
 
@@ -220,10 +227,11 @@ public final class CarcassAssembler {
     /**
      * The killing blow: one impulse at the point where it landed, on the part it landed on, along the killer's look
      * (lifted a little, as a swung hook would), sized so the carcass as a whole is set moving at {@link #BLOW_SPEED} for
-     * a cow, a little faster for lighter animals (up to {@link #BLOW_MAX_SPEED}) and slower for heavier ones. Nothing
-     * else is pushed: the joints carry the blow to the rest of the body, so a blow to the flank rolls it away over its
-     * feet, one from behind pitches it forward, and one to a leg sweeps that leg. The mob's own hit knockback is
-     * deliberately not carried over; it would launch light carcasses.
+     * a cow, a little faster for lighter animals (up to {@link #BLOW_MAX_SPEED}) and slower for heavier ones, by what its
+     * bodies really weigh (a golem's plate is knocked slower than flesh its size), but never so hard that the spot it
+     * lands on goes faster than {@link #BLOW_MAX_STRUCK}. Nothing else is pushed: the joints carry the blow to the rest
+     * of the body, so a blow to the flank rolls it away over its feet, one from behind pitches it forward, and one to a
+     * leg sweeps that leg. The mob's own hit knockback is deliberately not carried over; it would launch light carcasses.
      *
      * @param look the killer's look direction. With no point recorded by a kill (a carcass built without a killer, as the
      *             tests and the showcase build them), the blow lands where a stand-in killer would land it: one standing
@@ -265,8 +273,8 @@ public final class CarcassAssembler {
             }
         }
         Vec3 dir = new Vec3(look.x, Math.max(look.y, 0.0) + 0.2, look.z).normalize();
-        double speed = Math.max(0.5, Math.min(BLOW_MAX_SPEED, BLOW_SPEED / Math.sqrt(Math.max(rig.weight(), 0.01) / REFERENCE_WEIGHT)));
-        impulseAt(physics, hit, point, new Vector3d(dir.x, dir.y, dir.z).mul(mass * speed));
+        double speed = Math.max(0.5, Math.min(BLOW_MAX_SPEED, BLOW_SPEED / Math.sqrt(Math.max(mass, 0.01) / REFERENCE_WEIGHT)));
+        impulseAt(physics, hit, point, new Vector3d(dir.x, dir.y, dir.z).mul(mass * speed), BLOW_MAX_STRUCK);
     }
 
     /**
@@ -274,21 +282,30 @@ public final class CarcassAssembler {
      * about its centre of mass the turn. Sable's own impulse at a point goes through the mass the physics engine holds
      * for the body, which a body made this tick does not have until the engine next steps (the impulse then does
      * nothing: a carcass knocked as it is built, or a leg knocked as a lying carcass unfolds, would not move); Sable's
-     * mass data, which that mass is set from, is there at once.
+     * mass data, which that mass is set from, is there at once. It is made smaller if it would set the point it lands on
+     * moving faster than {@code maxSpeed}: how fast that point goes is the push over the body's mass and the turn about
+     * its centre of mass, so a light body, or one struck far out from its middle, takes less.
      *
-     * @param point   where it lands, in the body's plot
-     * @param impulse the impulse, in the world
+     * @param point    where it lands, in the body's plot
+     * @param impulse  the impulse, in the world
+     * @param maxSpeed the fastest it may set the point moving, in blocks a second
+     * @return the impulse given, in the world
      */
-    public static void impulseAt(SubLevelPhysicsSystem physics, ServerSubLevel body, Vector3dc point, Vector3dc impulse) {
+    public static Vector3d impulseAt(SubLevelPhysicsSystem physics, ServerSubLevel body, Vector3dc point, Vector3dc impulse, double maxSpeed) {
         dev.ryanhcode.sable.api.physics.mass.MassData mass = body.getMassTracker();
         if (mass.isInvalid()) {
-            return;
+            return new Vector3d();
         }
         org.joml.Quaterniondc turn = body.logicalPose().orientation();
         Vector3d local = turn.transformInverse(new Vector3d(impulse), new Vector3d());
         Vector3d arm = new Vector3d(point).sub(mass.getCenterOfMass());
         Vector3d spin = mass.getInverseInertiaTensor().transform(arm.cross(local, new Vector3d()), new Vector3d());
-        physics.getPhysicsHandle(body).addLinearAndAngularVelocity(new Vector3d(impulse).mul(mass.getInverseMass()), turn.transform(spin, new Vector3d()));
+        // the point's change of velocity: the body's own, and the turn's about its centre of mass
+        double pointSpeed = new Vector3d(local).mul(mass.getInverseMass()).add(new Vector3d(spin).cross(arm)).length();
+        double scale = pointSpeed > maxSpeed ? maxSpeed / pointSpeed : 1.0;
+        Vector3d given = new Vector3d(impulse).mul(scale);
+        physics.getPhysicsHandle(body).addLinearAndAngularVelocity(new Vector3d(given).mul(mass.getInverseMass()), turn.transform(spin.mul(scale), new Vector3d()));
+        return given;
     }
 
     /** A player's eye height, for a stand-in killer. */
@@ -398,14 +415,13 @@ public final class CarcassAssembler {
         int sy = pixels(bone.boxSize().y);
         int sz = pixels(bone.boxSize().z);
         // flesh, bone or plate, as its group says: each is a block of its own, weighed by Sable's data
-        Block block = BBBlocks.carcassPart(Tissue.of(rig.entity()));
+        Tissue tissue = Tissue.of(rig.entity());
         List<BlockPos> blocks = new ArrayList<>();
         for (int i = 0; i < cells[0]; i++) {
             for (int j = 0; j < cells[1]; j++) {
                 for (int k = 0; k < cells[2]; k++) {
                     BlockPos pos = staging.offset(i, j, k);
-                    BlockState state = CarcassPartBlock.stateFor(block,
-                            Math.min(16, sx - 16 * i), Math.min(16, sy - 16 * j), Math.min(16, sz - 16 * k));
+                    BlockState state = cellState(tissue, Math.min(16, sx - 16 * i), Math.min(16, sy - 16 * j), Math.min(16, sz - 16 * k));
                     level.setBlock(pos, state, Block.UPDATE_ALL);
                     blocks.add(pos);
                 }
@@ -428,7 +444,7 @@ public final class CarcassAssembler {
             subLevel = null;
         }
         for (BlockPos pos : blocks) {
-            if (level.getBlockState(pos).is(block)) {
+            if (level.getBlockState(pos).getBlock() instanceof CarcassPartBlock) {
                 level.setBlock(pos, Blocks.AIR.defaultBlockState(), Block.UPDATE_ALL);
             }
         }
@@ -539,6 +555,35 @@ public final class CarcassAssembler {
 
     private static int pixels(float size) {
         return Math.max(1, Math.round(size));
+    }
+
+    /**
+     * The sizes, in pixels, of the cells a bone is built of: whole blocks, and what is left over along each side.
+     * PhysicsPropertiesProvider weighs every size the rigs make this way for each tissue.
+     */
+    public static java.util.Set<List<Integer>> cellSizes(Bone bone) {
+        int[] cells = cellCounts(bone);
+        int[] size = {pixels(bone.boxSize().x), pixels(bone.boxSize().y), pixels(bone.boxSize().z)};
+        java.util.Set<List<Integer>> out = new java.util.LinkedHashSet<>();
+        for (int i = 0; i < cells[0]; i++) {
+            for (int j = 0; j < cells[1]; j++) {
+                for (int k = 0; k < cells[2]; k++) {
+                    out.add(List.of(Math.min(16, size[0] - 16 * i), Math.min(16, size[1] - 16 * j), Math.min(16, size[2] - 16 * k)));
+                }
+            }
+        }
+        return out;
+    }
+
+    /**
+     * A carcass cell of a tissue and a size. Sable's data weighs every size of flesh, but bone and plate only the sizes
+     * the rigs make (PhysicsPropertiesProvider: each size weighed costs every world and every joining client time to
+     * load); a size left out (a datapack's own rig, of a skeleton or a golem) would weigh as a whole block of it, so that
+     * cell is made of flesh instead, weighed by its size.
+     */
+    public static BlockState cellState(Tissue tissue, int sizeX, int sizeY, int sizeZ) {
+        BlockState state = CarcassPartBlock.stateFor(BBBlocks.carcassPart(tissue), sizeX, sizeY, sizeZ);
+        return CarcassPartBlock.weighed(state) ? state : CarcassPartBlock.stateFor(BBBlocks.carcassPart(Tissue.FLESH), sizeX, sizeY, sizeZ);
     }
 
     private static int[] cellCounts(Bone bone) {

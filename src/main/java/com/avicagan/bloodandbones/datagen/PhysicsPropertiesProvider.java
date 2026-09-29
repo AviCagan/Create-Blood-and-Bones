@@ -1,7 +1,9 @@
 package com.avicagan.bloodandbones.datagen;
 
 import com.avicagan.bloodandbones.BloodAndBones;
+import com.avicagan.bloodandbones.carcass.CarcassAssembler;
 import com.avicagan.bloodandbones.carcass.Tissue;
+import com.avicagan.bloodandbones.carcass.rig.Rig;
 import com.avicagan.bloodandbones.registry.BBBlocks;
 import com.google.gson.JsonObject;
 import net.minecraft.core.registries.BuiltInRegistries;
@@ -29,12 +31,31 @@ public class PhysicsPropertiesProvider implements DataProvider {
 
     /**
      * One file for each tissue's block (CarcassPartBlock#tissue). Sable matches every state of a block against every
-     * override of its file, for each world as it loads and for each joining client, so the work grows as a block's
-     * states times its overrides: three blocks of 4,096 states cost three times what one did, where a tissue property
-     * on one block (12,288 states, each file checked against all of them) cost nine times, some twenty seconds a world.
+     * override of its file, each time it applies them: for every world (dimension) as it loads, and on each client as it
+     * joins and at each /reload, on the client's own thread. So the work grows as a block's states (4,096 sizes) times
+     * its overrides. Flesh, which any mob may be, weighs all 4,096 sizes, as the one carcass block did before bone and
+     * plate; bone and plate weigh only the sizes the rigs make (adults and babies, each weighed for either tissue, so a
+     * datapack may make any rigged mob of either), a few hundred, which keeps the three near the cost of one. A cell of a
+     * size left out is made of flesh instead (CarcassAssembler#cellState).
      */
     @Override
     public CompletableFuture<?> run(CachedOutput cache) {
+        java.util.Set<List<Integer>> made = new java.util.TreeSet<>(java.util.Comparator.<List<Integer>>comparingInt(size -> size.get(0))
+                .thenComparingInt(size -> size.get(1)).thenComparingInt(size -> size.get(2)));
+        for (Rig rig : RigExportProvider.deriveAll().values()) {
+            for (Rig each : rig.baby().isPresent() ? List.of(rig, rig.asBaby()) : List.of(rig)) {
+                each.bones().forEach(bone -> made.addAll(CarcassAssembler.cellSizes(bone)));
+            }
+        }
+        java.util.Set<List<Integer>> every = new java.util.LinkedHashSet<>();
+        for (int x = 1; x <= 16; x++) {
+            for (int y = 1; y <= 16; y++) {
+                for (int z = 1; z <= 16; z++) {
+                    every.add(List.of(x, y, z));
+                }
+            }
+        }
+        BloodAndBones.LOGGER.info("The rigs make {} sizes of carcass cell, of 4096", made.size());
         List<CompletableFuture<?>> files = new ArrayList<>();
         for (Tissue tissue : Tissue.values()) {
             String block = BuiltInRegistries.BLOCK.getKey(BBBlocks.carcassPart(tissue)).getPath();
@@ -47,15 +68,14 @@ public class PhysicsPropertiesProvider implements DataProvider {
             root.add("properties", defaults);
 
             JsonObject overrides = new JsonObject();
-            for (int x = 1; x <= 16; x++) {
-                for (int y = 1; y <= 16; y++) {
-                    for (int z = 1; z <= 16; z++) {
-                        double volume = (x / 16.0) * (y / 16.0) * (z / 16.0);
-                        JsonObject props = new JsonObject();
-                        props.addProperty("sable:mass", round(volume * tissue.density));
-                        overrides.add("size_x=" + x + ",size_y=" + y + ",size_z=" + z, props);
-                    }
-                }
+            for (List<Integer> size : tissue == Tissue.FLESH ? every : made) {
+                int x = size.get(0);
+                int y = size.get(1);
+                int z = size.get(2);
+                double volume = (x / 16.0) * (y / 16.0) * (z / 16.0);
+                JsonObject props = new JsonObject();
+                props.addProperty("sable:mass", round(volume * tissue.density));
+                overrides.add("size_x=" + x + ",size_y=" + y + ",size_z=" + z, props);
             }
             root.add("overrides", overrides);
 

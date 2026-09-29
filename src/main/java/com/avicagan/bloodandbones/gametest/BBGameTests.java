@@ -154,6 +154,9 @@ public class BBGameTests {
         dragTest(helper, "body");
     }
 
+    /** How long the drag tests' stand-in player walks off for, in ticks. */
+    private static final int WALK_TICKS = 30;
+
     private static void dragTest(GameTestHelper helper, String grabBone) {
         ServerLevel level = helper.getLevel();
         Cow cow = helper.spawn(EntityType.COW, new BlockPos(5, 2, 5));
@@ -179,11 +182,20 @@ public class BBGameTests {
             if (!CarcassDrag.isDragging(player)) {
                 helper.fail("Player is not marked as dragging");
             }
-            // stand 3 blocks away, facing away from the carcass, and keep ticking the tether
-            player.setPos(start.add(3.0, 0.0, 0.0));
+            // walk off east, facing away from the carcass, from a block beside it to four blocks off, and keep ticking the tether
+            player.setPos(start.add(1.0, 0.0, 0.0));
             player.setYRot(-90.0F);
             player.setOldPosAndRot(); // mock players never tick, so refresh the previous-tick position the tether interpolates from
             hookedDistance[0] = body.logicalPose().position().distance(player.getX(), player.getY(), player.getZ());
+        });
+        // at a walk (two blocks a second) for a second and a half, then standing: the carcass trails behind at arm's length
+        int[] walked = {0};
+        helper.onEachTick(() -> {
+            if (hookedDistance[0] > 0.0 && walked[0] < WALK_TICKS) {
+                walked[0]++;
+                player.setOldPosAndRot();
+                player.setPos(player.getX() + 3.0 / WALK_TICKS, player.getY(), player.getZ());
+            }
         });
         // the hooked point's distance to its target over the last second, judged by its middle value: one
         // tick caught mid-swing does not fail a drag that holds on, and one that keeps swinging still fails
@@ -221,17 +233,16 @@ public class BBGameTests {
             gaps.add(hook.distance(target));
             List<Double> sorted = gaps.stream().sorted().toList();
             double gap = sorted.get(sorted.size() / 2);
-            // The drag holds off while the hooked part touches its dragger (pulling harder would only shove them). This
-            // player faces away from the carcass, which once put the point the leg was pulled to in front of them, beyond
-            // them: the leg came to rest against their back 2.1 to 2.35 blocks from that point, whichever way it lay, and
-            // the bar this test had (2.25) failed 2 runs in 100. Walked away from, a carcass now trails behind its dragger
-            // (CarcassDrag.target), so nothing pulls the leg through them; a leg that still ends against its dragger has
-            // followed them all the same.
+            // The drag never pulls the hooked part into its dragger (it would only shove them). This player faces away
+            // from the carcass, which once put the point the leg was pulled to in front of them, beyond them: the leg came
+            // to rest against their back 2.1 to 2.35 blocks from that point, and the bar this test had (2.25) failed 2 runs
+            // in 100. Walked away from, a carcass now trails behind its dragger (CarcassDrag.target); and one that slides
+            // on into a dragger who has stopped is held off by the drag's damping, not let go the moment it touches them
+            // (let go, it lay against their back up to 1.4 blocks short, 5 runs in 60). So the leg must reach the point it
+            // is pulled to, however it lies.
             double allowed = grabBone.equals("body") ? 0.5 : 1.25;
-            boolean againstDragger = hooked.boundingBox().intersects(player.getBoundingBox().inflate(0.25));
-            if (gap > allowed && !againstDragger) {
-                helper.fail("Hooked point neither reached the tether target (still " + gap + " blocks away) nor came to rest against its dragger (started "
-                        + hookedDistance[0] + " from the player)");
+            if (gap > allowed) {
+                helper.fail("Hooked point did not reach the tether target: still " + gap + " blocks away (started " + hookedDistance[0] + " from the player)");
             }
             if (!CarcassDrag.isDragging(player)) {
                 helper.fail("Drag ended on its own");

@@ -417,23 +417,25 @@ public final class CarcassButchery {
     }
 
     /**
-     * A body no bigger than this, as flesh (Sable mass units), can be picked up by hand: heads, legs, a whole chicken. It
-     * goes by size, not by weight, so a skeleton's skull (bone, heavier than flesh for its size) is carried as a zombie's
-     * head is.
+     * A body no bigger than this, as flesh (Sable mass units, a block of flesh weighing 1.0), can be picked up by hand:
+     * heads, legs, a whole chicken. It goes by size, not by weight, so a skeleton's skull (bone, heavier than flesh for its
+     * size) is carried as a zombie's head is.
      */
     public static final double LIGHT_MASS = 0.13;
 
-    /** Whether a bone of a carcass is light enough to carry. */
+    /**
+     * Whether a bone of a carcass is light enough to carry: judged by its box in the rig, as a minion judges a piece
+     * (MinionAssembly#light), so what a datapack makes a tissue weigh (Sable's physics_block_properties) never changes
+     * what can be carried.
+     */
     public static boolean canPickUp(ServerLevel level, CarcassSavedData.Carcass carcass, String bone) {
         ServerSubLevelContainer container = SubLevelContainer.getContainer(level);
         UUID id = carcass.bones.get(bone);
         if (container == null || id == null || !(container.getSubLevel(id) instanceof ServerSubLevel body) || body.isRemoved()) {
             return false;
         }
-        // what its cells were made of when it was built (a datapack may have changed the mob's tissue since)
-        Tissue tissue = level.getBlockState(body.getPlot().getCenterBlock()).getBlock() instanceof CarcassPartBlock cell ? cell.tissue()
-                : Tissue.of(carcass.entity);
-        return body.getMassTracker().getMass() / tissue.density <= LIGHT_MASS;
+        return com.avicagan.bloodandbones.carcass.rig.RigManager.forCarcass(carcass).flatMap(rig -> rig.bone(bone)).map(b -> (double) b.volume())
+                .orElse(body.getMassTracker().getMass()) <= LIGHT_MASS;
     }
 
     /**
