@@ -119,7 +119,7 @@ incremental. `./gradlew runClient` / `runServer` / `runData` are configured by M
 
 ### Development aids
 
-- `./gradlew runGameTestServer` runs the game tests headless (578: every rigged mob and baby,
+- `./gradlew runGameTestServer` runs the game tests headless (588: every rigged mob and baby, mobs with no rig of their own and weight classes,
   butchery and its three yield paths, rot, cold air, bleeding, machines, their motion and their part filters, cooking and display, decoration, surgery, organs, implants, backtanks, carcass armour and its traits, trait effects, minions and their tasks, movement and mounts, chains, recipes
   and the soul blood line on Create's machines, bloodless mode (no game logic reads it; no gory word or wet sound
   left), advancements and sounds, what a dozen carcasses at once cost the server, and the carcass physics: which way a

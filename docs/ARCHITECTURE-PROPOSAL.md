@@ -4635,6 +4635,15 @@ others (`GameTestServerMixin`). One trap found on the way: a step a test sets ou
 `runAfterDelay` may run more than once (the game's map of steps is added to while it is read), so a test's delayed steps
 are all set out at its start.
 
+**The showcase** (`DevShowcase`, a groups yard after the physics yard). `showcase_groups_0`: a row of carcasses with no
+rig file of their own, knocked down as a kill knocks them: a polar bear, a zombie villager, a cave spider and a bat
+(whose files are taken away for the rest of the run; none of them is in another shot), a tropical fish, and a baby
+wandering trader. Each wears its own model's parts in its own skin: the polar bear's white body, legs and snouted head,
+the zombie villager lying in its robe, the cave spider's teal body and red eyes, the bat's dark wings; the fish is its
+white base skin (the tint of its pattern is lost), and the baby is half size. `showcase_groups_1`: a glass tank of water
+four deep from above, the chicken floating at the top and the cow sunk on the floor (the log gives the chicken's body a
+fifth of a block under the surface and the cow's a block above the floor). The earlier shots are unchanged.
+
 **Left for the owner.**
 - Size-2 slimes still split as they die, as 4.4 decided (only the smallest leave a carcass). The audit counts them among
   the mobs that miss out; which is wanted?
