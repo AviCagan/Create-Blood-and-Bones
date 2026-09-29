@@ -29,10 +29,10 @@
     },
     "head": {
       "minion": {
-        "jobs": [
-          "bloodandbones:guard",
-          "bloodandbones:bodyguard"
-        ],
+        "knacks": {
+          "bloodandbones:guard": 1.5,
+          "bloodandbones:fisher": 1.25
+        },
         "disposition": "territorial",
         "bite": {
           "style": "claw",
@@ -61,6 +61,11 @@
         "boots": [
           "bloodandbones:waterborn"
         ]
+      }
+    },
+    "leg.front": {
+      "minion": {
+        "grip": "paw"
       }
     }
   },

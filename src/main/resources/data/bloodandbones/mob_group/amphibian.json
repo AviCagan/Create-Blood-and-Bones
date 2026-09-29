@@ -19,10 +19,9 @@
   "parts": {
     "head": {
       "minion": {
-        "jobs": [
-          "bloodandbones:companion",
-          "bloodandbones:hunter"
-        ],
+        "knacks": {
+          "bloodandbones:hunter": 1.25
+        },
         "bite": {
           "style": "bite",
           "damage": 1.0
@@ -59,6 +58,11 @@
         "boots": [
           "bloodandbones:springy"
         ]
+      }
+    },
+    "leg.front": {
+      "minion": {
+        "grip": "paw"
       }
     }
   },

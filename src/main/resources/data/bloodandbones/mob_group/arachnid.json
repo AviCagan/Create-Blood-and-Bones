@@ -18,10 +18,10 @@
   "parts": {
     "head": {
       "minion": {
-        "jobs": [
-          "bloodandbones:hunter",
-          "bloodandbones:guard"
-        ],
+        "knacks": {
+          "bloodandbones:hunter": 1.5,
+          "bloodandbones:guard": 1.25
+        },
         "disposition": "nocturnal",
         "traits": [
           "bloodandbones:dark_sight"

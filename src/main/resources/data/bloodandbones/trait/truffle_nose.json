@@ -1,0 +1,17 @@
+{
+  "name": "trait.bloodandbones.truffle_nose",
+  "max_level": 1,
+  "contexts": [
+    "minion"
+  ],
+  "effects": [
+    {
+      "trigger": "passive",
+      "effect": {
+        "type": "bloodandbones:task_knack",
+        "task": "bloodandbones:digger",
+        "multiplier": 1.5
+      }
+    }
+  ]
+}

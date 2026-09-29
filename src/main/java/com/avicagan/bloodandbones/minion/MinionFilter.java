@@ -26,7 +26,7 @@ import org.jetbrains.annotations.Nullable;
 
 /**
  * A brass minion's filter slot (docs/PARTS-AND-TRAITS.md section 6.6, brass only: flesh has its hides, its mending
- * and its organs' produce instead). What is in it limits what the minion picks up (a courier, farmer or scavenger), what
+ * and its organs' produce instead). What is in it limits what the minion picks up (a courier or farmer), what
  * it reaps (a farmer) and what it goes for (a hunter, herder, guard or sentry), tested as Create's own filter slots test
  * ({@link FilterItemStack}), so a Filter's list, an Attribute Filter's attributes or any plain item work as they do on a
  * funnel. A mob is asked about as its spawn egg, as the carcass machines' filters ask: an egg or a carcass piece in the

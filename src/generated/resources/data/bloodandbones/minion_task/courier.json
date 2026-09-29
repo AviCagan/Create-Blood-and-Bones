@@ -1,0 +1,35 @@
+{
+  "anchors": [
+    "home",
+    "maker"
+  ],
+  "grips": {
+    "claw": 1.0,
+    "hand": 1.0,
+    "hoof": 0.75,
+    "mouth": 0.75,
+    "none": 0.35,
+    "paw": 1.0,
+    "tentacle": 1.0,
+    "wing": 0.6
+  },
+  "kind": "fetch",
+  "main": "carry",
+  "max_reach": 32,
+  "numbers": {
+    "look_every": 20.0
+  },
+  "reach": 10,
+  "second": "pace",
+  "stores": true,
+  "tool": {
+    "grips": {
+      "claw": 1.0,
+      "hand": 1.0,
+      "mouth": 0.75,
+      "paw": 1.0,
+      "tentacle": 1.0,
+      "wing": 0.6
+    }
+  }
+}

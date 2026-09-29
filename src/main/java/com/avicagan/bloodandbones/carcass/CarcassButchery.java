@@ -270,6 +270,11 @@ public final class CarcassButchery {
                                   float scale, Vector3d at) {
         float fresh = carcass.freshness;
         scale *= babyYieldScale(carcass);
+        // a poor minion butcher wastes some of each cut (see yielding)
+        Float share = YIELD.get();
+        if (share != null) {
+            scale *= share;
+        }
         ButcheryPath path = path();
         Context context = PATH.get();
         float hand = context == null ? 1.0F : context.yield();
@@ -553,6 +558,24 @@ public final class CarcassButchery {
             count *= 0.5F;
         }
         return count;
+    }
+
+    /** The share of its yields a butchery action gives while a minion butcher works it, else null (all of them). */
+    private static final ThreadLocal<Float> YIELD = new ThreadLocal<>();
+
+    /**
+     * Run a butchery action (a cut, a stroke of skinning) with every yield it makes scaled by {@code share}, as
+     * {@link #capturing} hands them on: a minion butcher below 100% wastes that much of each (docs/NEXT.md 1.2). A share over
+     * 1 counts as 1, so no butcher beats hand yields.
+     */
+    public static <T> T yielding(float share, java.util.function.Supplier<T> action) {
+        Float previous = YIELD.get();
+        YIELD.set(Math.max(0.0F, Math.min(1.0F, share)) * (previous == null ? 1.0F : previous));
+        try {
+            return action.get();
+        } finally {
+            YIELD.set(previous);
+        }
     }
 
     /** Run a butchery action with every yield it makes handed to {@code sink} instead of dropped. */

@@ -267,23 +267,176 @@ public class BBLang {
         BloodAndBones.REGISTRATE.addRawLang("bloodandbones.surgery.action.swap", "Swap it for what is on the table");
         BloodAndBones.REGISTRATE.addRawLang("bloodandbones.surgery.state.dead", "%s (dry)");
         // ---- minions (docs/PARTS-AND-TRAITS.md section 6)
-        for (String[] job : new String[][]{{"companion", "Companion"}, {"courier", "Courier"}, {"farmer", "Farmer"}, {"bodyguard", "Bodyguard"},
-                {"guard", "Guard"}, {"herder", "Herder"}, {"surgeon", "Surgeon"}, {"sentry", "Sentry"}, {"scavenger", "Scavenger"},
-                {"fisher", "Fisher"}, {"hunter", "Hunter"}, {"hauler", "Hauler"}, {"butcher", "Butcher"}, {"medic", "Medic"},
-                {"barterer", "Barterer"}, {"digger", "Digger"}, {"sapper", "Sapper"}}) {
-            BloodAndBones.REGISTRATE.addRawLang("bloodandbones.minion.job." + job[0], job[1]);
+        // the tasks (docs/NEXT.md 1.1), what each does, why a body cannot do one, what one waits for, and the heads'
+        // dispositions (docs/NEXT.md 1.2); a construct takes things apart rather than butchering them (brief rule 4)
+        for (String[] task : new String[][]{
+                {"idle", "Idle", "Stays at home, or follows you. It only fights back."},
+                {"guard", "Guard", "At home, fights the monsters within its reach. With you, goes for what hurts you and what you hit, as a tamed wolf does."},
+                {"sentry", "Sentry", "Never leaves its post, and shoots what comes within range. With no bow, it strikes what comes within reach."},
+                {"hunter", "Hunter", "Kills prey near home or near you. With a Meat Hook in hand, it leaves whole carcasses."},
+                {"sapper", "Sapper", "Walks up to its target, or to the banner it was shown, and blows itself up. Then it lies powered down."},
+                {"surgeon", "Surgeon", "Keeps by its Surgery Table, does the ritual's cutting, and tends whoever lies there."},
+                {"medic", "Medic", "Throws the healing potions it carries at hurt allies."},
+                {"herder", "Herder", "Leads strays back home with the food it holds."},
+                {"tender", "Tender", "Keeps troughs and cradles near home stocked, and carries blood to fallen minions."},
+                {"courier", "Courier", "Picks up loose items and takes them to the container by home, or with you, to your hands. Holding one, it takes only its like."},
+                {"hauler", "Hauler", "Drags whole carcasses to a free Shackle Hook or Bleeding Rack."},
+                {"farmer", "Farmer", "Reaps ripe crops near home and plants them again."},
+                {"fisher", "Fisher", "Fishes still water near home, with a rod or by hand."},
+                {"butcher", "Butcher", "Takes carcasses near home apart with a Cleaver or a Flensing Knife, at hand yields."},
+                {"barterer", "Barterer", "Trades gold from the container by home as a piglin does."},
+                {"digger", "Digger", "Sniffs up what a sniffer finds in the ground near home."}}) {
+            BloodAndBones.REGISTRATE.addRawLang("bloodandbones.minion.task." + task[0], task[1]);
+            BloodAndBones.REGISTRATE.addRawLang("bloodandbones.minion.task." + task[0] + ".desc", task[2]);
         }
-        // a construct takes things apart rather than butchering them (brief rule 4)
-        bloodless("bloodandbones.minion.job.butcher", "Dismantler");
+        bloodless("bloodandbones.minion.task.butcher", "Dismantler");
+        bloodless("bloodandbones.minion.task.butcher.desc", "Takes bodies near home apart with a Cleaver or a Flensing Knife, at hand yields.");
+        bloodless("bloodandbones.minion.task.hunter.desc", "Downs prey near home or near you. With a Meat Hook in hand, it leaves them whole.");
+        bloodless("bloodandbones.minion.task.hauler.desc", "Drags whole bodies to a free Shackle Hook or Draining Rack.");
+        bloodless("bloodandbones.minion.task.surgeon.desc", "Keeps by its Surgery Table, does the ritual's work, and tends whoever lies there.");
+        bloodless("bloodandbones.minion.task.tender.desc", "Keeps troughs and cradles near home stocked, and carries essence to fallen constructs.");
+        for (String[] cannot : new String[][]{{"strike", "Nothing to strike with"}, {"detonator", "Nothing in it that detonates"},
+                {"hand", "No hand to hold a surgeon's blade"}, {"throw", "Nothing to throw with"}, {"bait", "Nothing to hold food with"},
+                {"pick", "Nothing to pick with"}, {"catch", "Nothing to catch with"}, {"blade", "Nothing to hold a blade with"},
+                {"nose", "No nose, paws or claws to dig with"}}) {
+            BloodAndBones.REGISTRATE.addRawLang("bloodandbones.minion.cannot." + cannot[0], cannot[1]);
+        }
+        bloodless("bloodandbones.minion.cannot.hand", "No hand to hold a tool");
+        for (String[] wants : new String[][]{{"butcher", "waiting for a Cleaver or a Flensing Knife"}, {"herder", "waiting for food to lead animals with"},
+                {"medic", "waiting for splash potions of healing"}, {"griefing", "waiting for the mobGriefing rule, which is off"}}) {
+            BloodAndBones.REGISTRATE.addRawLang("bloodandbones.minion.wants." + wants[0], wants[1]);
+        }
+        // a tool its task file narrows, named from the file
+        BloodAndBones.REGISTRATE.addRawLang("bloodandbones.minion.wants.items", "waiting for %s");
+        // what a tool it lacks would make of it
+        BloodAndBones.REGISTRATE.addRawLang("bloodandbones.minion.with_tool", "With %s: %s");
+        for (String[] tool : new String[][]{{"sentry", "a bow, crossbow or trident"}, {"fisher", "a fishing rod"}, {"courier", "a sample to fetch the like of"},
+                {"butcher", "a Cleaver or a Flensing Knife"}, {"herder", "food"}, {"medic", "healing potions"}}) {
+            BloodAndBones.REGISTRATE.addRawLang("bloodandbones.minion.tool." + tool[0], tool[1]);
+        }
+        // what its task's work waits on in the world, for its status line
+        for (String[] idle : new String[][]{{"fisher", "no still water within %s of home"}, {"digger", "no grass, moss or dirt to sniff within %s of home"},
+                {"barterer", "no gold in a container within %s of home"}, {"hauler", "no free Shackle Hook or Bleeding Rack within %s of home"},
+                {"container", "no container within 6 of home to put its takings in"},
+                {"tender_blood", "no blood to be had by the bucket within %s of home"},
+                {"tender_canister", "no full Soul Canister in a container within %s of home"},
+                {"tender_rest", "nowhere by home for the rest of a bucket that a fallen minion cannot hold"},
+                {"maker_full", "its maker has no room for what it brings"},
+                {"surgeon", "no Surgery Table within %s of where it stands"}}) {
+            BloodAndBones.REGISTRATE.addRawLang("bloodandbones.minion.idle." + idle[0], idle[1]);
+        }
+        // how fit it is, in a word (docs/NEXT.md 1.3)
+        for (String[] fit : new String[][]{{"hopeless", "Hopeless"}, {"fair", "Fair"}, {"able", "Able"}, {"good", "Good"}, {"born", "Born to it"}}) {
+            BloodAndBones.REGISTRATE.addRawLang("bloodandbones.minion.fit." + fit[0], fit[1]);
+        }
+        // where it works
+        for (String[] where : new String[][]{{"home", "at home"}, {"post", "at its post"}, {"table", "at its table"}, {"maker", "with its maker"},
+                {"maker_away", "at home, its maker away"}}) {
+            BloodAndBones.REGISTRATE.addRawLang("bloodandbones.minion.where." + where[0], where[1]);
+        }
+        BloodAndBones.REGISTRATE.addRawLang("bloodandbones.minion.doing", "%s %s %s");
+        BloodAndBones.REGISTRATE.addRawLang("bloodandbones.minion.doing_idle", "%s %s");
+        BloodAndBones.REGISTRATE.addRawLang("bloodandbones.minion.task_fitness", "%s %s");
+        BloodAndBones.REGISTRATE.addRawLang("bloodandbones.minion.woke", "Woke as a %s (%s)");
+        BloodAndBones.REGISTRATE.addRawLang("bloodandbones.minion.woke_idle", "Woke, %s at home");
+        BloodAndBones.REGISTRATE.addRawLang("bloodandbones.minion.lost", "it can no longer be a %s: %s");
+        // a row's reasons: each stat it reads, its value and where that came from (docs/NEXT.md 1.3)
+        BloodAndBones.REGISTRATE.addRawLang("bloodandbones.minion.factor", "%s ×%s: %s");
+        BloodAndBones.REGISTRATE.addRawLang("bloodandbones.minion.factor_second", "%s ×%s, at half weight: %s");
+        for (String[] stat : new String[][]{{"pace", "Pace"}, {"sight", "Sight"}, {"hands", "Hands"}, {"blow", "Blow"}, {"ranged", "Ranged"},
+                {"toughness", "Toughness"}, {"carry", "Carry"}, {"pull", "Pull"}}) {
+            BloodAndBones.REGISTRATE.addRawLang("bloodandbones.minion.stat." + stat[0], stat[1]);
+        }
+        for (String[] value : new String[][]{{"pace", "speed %s"}, {"sight", "%s blocks"}, {"blow", "%s a blow"}, {"ranged", "a ranged attack"},
+                {"no_ranged", "no ranged attack"}, {"toughness", "%s health"}, {"carry", "%s slots"}, {"pull", "weight %s"}}) {
+            BloodAndBones.REGISTRATE.addRawLang("bloodandbones.minion.value." + value[0], value[1]);
+        }
+        for (String[] grip : new String[][]{{"hand", "hand"}, {"paw", "paw"}, {"claw", "claw"}, {"hoof", "hoof"}, {"tentacle", "tentacle"},
+                {"wing", "wing"}, {"mouth", "mouth"}, {"none", "its own body"}}) {
+            BloodAndBones.REGISTRATE.addRawLang("bloodandbones.minion.grip." + grip[0], grip[1]);
+        }
+        BloodAndBones.REGISTRATE.addRawLang("bloodandbones.minion.source.piece", "%s %s");
+        for (String[] part : new String[][]{{"head", "head"}, {"torso", "torso"}, {"arm", "arm"}, {"leg", "leg"}, {"tail", "tail"}, {"neck", "neck"}}) {
+            BloodAndBones.REGISTRATE.addRawLang("bloodandbones.minion.part." + part[0], part[1]);
+        }
+        BloodAndBones.REGISTRATE.addRawLang("bloodandbones.minion.part_front", "front %s");
+        BloodAndBones.REGISTRATE.addRawLang("bloodandbones.minion.part_mid", "middle %s");
+        BloodAndBones.REGISTRATE.addRawLang("bloodandbones.minion.part_hind", "hind %s");
+        for (String[] rule : new String[][]{{"blind", "both eyes out"}, {"mindless", "no head: it feels its way"}, {"bite", "its bite"},
+                {"own_way", "its own way of moving"}, {"more", "%s of them"}, {"strike_rate", "%s arms that strike"}, {"berserk", "berserk"},
+                {"no_tool", "its mouth, as good as a tool"}, {"chest", "a chest, %s slots more"}, {"own_body", "its own body"}}) {
+            BloodAndBones.REGISTRATE.addRawLang("bloodandbones.minion.rule." + rule[0], rule[1]);
+        }
+        BloodAndBones.REGISTRATE.addRawLang("bloodandbones.minion.knack", "Knack ×%s: %s");
+        BloodAndBones.REGISTRATE.addRawLang("bloodandbones.minion.knack_part", "%s %s");
+        BloodAndBones.REGISTRATE.addRawLang("bloodandbones.minion.disposition_line", "Disposition ×%s: %s");
+        // what its fitness makes of its work (docs/NEXT.md 1.2)
+        for (String[] lever : new String[][]{{"strike", "Strikes every %s s"}, {"sentry", "Shoots every %s s with a bow, spread %s"},
+                {"surgeon", "Tends a heart every %s s"}, {"surgeon_stump", "A stump it cuts costs %s of blood to fit"},
+                {"surgeon_no_cut", "It tends, but only a surgeon's head may cut"}, {"medic", "Throws every %s s, spread %s"},
+                {"herder", "Keeps after a stray for %s s"}, {"look", "Looks round every %s s"}, {"hauler", "Towing, slowed %s times as much as a player, to at most %s"},
+                {"hauler_player", "Towing, slowed as much as a player, no less"},
+                {"farmer", "Looks for ripe crops every %s s"}, {"fisher", "A catch every %s to %s s"}, {"butcher", "A stroke every %s s, keeping %s of each cut"},
+                {"barterer", "Looks gold over for %s s"}, {"digger", "A find every %s to %s s"}}) {
+            BloodAndBones.REGISTRATE.addRawLang("bloodandbones.minion.lever." + lever[0], lever[1]);
+        }
+        bloodless("bloodandbones.minion.lever.surgeon_stump", "An open socket it leaves costs %s of essence to fit");
+        bloodless("bloodandbones.minion.lever.surgeon_no_cut", "It tends, but only a surgeon's head may do the ritual's work");
+        // what a part brings to a minion's tasks, on JEI's Body Parts page and a piece's tooltip (docs/NEXT.md 1.4)
+        BloodAndBones.REGISTRATE.addRawLang("bloodandbones.minion.facts.knacks", "Knacks: %s");
+        BloodAndBones.REGISTRATE.addRawLang("bloodandbones.minion.facts.knack", "%s ×%s");
+        BloodAndBones.REGISTRATE.addRawLang("bloodandbones.minion.facts.grip", "Holds with: %s");
+        BloodAndBones.REGISTRATE.addRawLang("bloodandbones.minion.facts.grip_pair", "Holds with: %s, %s of them");
+        BloodAndBones.REGISTRATE.addRawLang("bloodandbones.minion.facts.leg_grip", "Holds with: %s, on a body with %s legs or more");
+        BloodAndBones.REGISTRATE.addRawLang("bloodandbones.minion.facts.disposition", "Disposition: %s");
+        // what the surgeon file's switch reads (docs/NEXT.md 1.5): by default any hand may cut, so the head counts only with it on
+        BloodAndBones.REGISTRATE.addRawLang("bloodandbones.minion.facts.surgeon", "A surgeon's head: it may do the ritual's cutting even where only such heads may");
+        bloodless("bloodandbones.minion.facts.surgeon", "A surgeon's head: it may do the ritual's work even where only such heads may");
+        // JEI's page shows a part as a new mob of its kind has it, and says what a carcass keeps of its mob that changes that
+        BloodAndBones.REGISTRATE.addRawLang("bloodandbones.minion.facts.varies", "As a new one has them: its %s changes them");
+        BloodAndBones.REGISTRATE.addRawLang("bloodandbones.minion.facts.or", " or ");
+        for (String[] trait : new String[][]{{"profession", "profession"}, {"gene", "gene"}, {"variant", "kind"}, {"name", "name"}, {"wool", "wool"},
+                {"charged", "charge"}, {"mushroom", "colour"}}) {
+            BloodAndBones.REGISTRATE.addRawLang("bloodandbones.minion.facts.trait." + trait[0], trait[1]);
+        }
+        BloodAndBones.REGISTRATE.addRawLang("bloodandbones.minion.facts.in_minion", "In a minion:");
+        BloodAndBones.REGISTRATE.addRawLang("bloodandbones.minion.facts.hold_ctrl", "Hold Ctrl for what it brings to a minion's tasks");
+        BloodAndBones.REGISTRATE.addRawLang("bloodandbones.minion.at_work", "At work: %s mB of blood a minute");
+        BloodAndBones.REGISTRATE.addRawLang("bloodandbones.minion.at_work_brass", "At work: %s mB of soul blood a minute");
+        // the task screen (docs/NEXT.md 1.3)
+        BloodAndBones.REGISTRATE.addRawLang("bloodandbones.minion.screen.title", "%s: Tasks");
+        for (String[] group : new String[][]{{"fight", "Fight"}, {"tend", "Tend"}, {"fetch", "Fetch"}, {"work", "Work"}}) {
+            BloodAndBones.REGISTRATE.addRawLang("bloodandbones.minion.screen.group." + group[0], group[1]);
+        }
+        BloodAndBones.REGISTRATE.addRawLang("bloodandbones.minion.screen.cannot", "Cannot");
+        BloodAndBones.REGISTRATE.addRawLang("bloodandbones.minion.screen.cannot_line", "%s: %s");
+        BloodAndBones.REGISTRATE.addRawLang("bloodandbones.minion.screen.fit_line", "%s: %s, %s");
+        BloodAndBones.REGISTRATE.addRawLang("bloodandbones.minion.screen.row_with_me", "As it would do it with you");
+        BloodAndBones.REGISTRATE.addRawLang("bloodandbones.minion.screen.click", "Click to set it to this");
+        BloodAndBones.REGISTRATE.addRawLang("bloodandbones.minion.screen.now", "Its task now");
+        BloodAndBones.REGISTRATE.addRawLang("bloodandbones.minion.screen.at_home", "At home");
+        BloodAndBones.REGISTRATE.addRawLang("bloodandbones.minion.screen.at_home.hint", "It works from home: a sentry from its post, a surgeon at its table");
+        BloodAndBones.REGISTRATE.addRawLang("bloodandbones.minion.screen.with_me", "With me");
+        BloodAndBones.REGISTRATE.addRawLang("bloodandbones.minion.screen.with_me.hint", "It works round you while you are within 64 blocks; farther off, at home");
+        BloodAndBones.REGISTRATE.addRawLang("bloodandbones.minion.screen.with_me.never", "A %s works only from home");
+        BloodAndBones.REGISTRATE.addRawLang("bloodandbones.minion.screen.reach", "Reach");
+        BloodAndBones.REGISTRATE.addRawLang("bloodandbones.minion.screen.reach.hint", "How far from home, or from you, it works: %s to %s blocks (its own: %s)");
+        BloodAndBones.REGISTRATE.addRawLang("bloodandbones.minion.screen.home_here", "Home here");
+        BloodAndBones.REGISTRATE.addRawLang("bloodandbones.minion.screen.home_here.hint", "Its home becomes where it stands now: lead it there first");
+        for (String[] disposition : new String[][]{{"none", "Even-Tempered"}, {"brave", "Brave"}, {"berserk", "Berserk"}, {"territorial", "Territorial"},
+                {"loyal", "Loyal"}, {"docile", "Docile"}, {"meek", "Meek"}, {"skittish", "Skittish"}, {"nocturnal", "Nocturnal"}, {"dim", "Dim"},
+                {"mindless", "Mindless"}}) {
+            BloodAndBones.REGISTRATE.addRawLang("bloodandbones.minion.disposition." + disposition[0], disposition[1]);
+        }
         BloodAndBones.REGISTRATE.addRawLang("bloodandbones.minion.holds", "Holding %s");
         BloodAndBones.REGISTRATE.addRawLang("bloodandbones.minion.wears", "Wearing %s");
         BloodAndBones.REGISTRATE.addRawLang("bloodandbones.minion.cannot_hold", "It has no hand or head to hold that with");
         BloodAndBones.REGISTRATE.addRawLang("bloodandbones.minion.carries", "Carrying %s");
         BloodAndBones.REGISTRATE.addRawLang("bloodandbones.minion.no_room", "It has no room left to carry that");
-        BloodAndBones.REGISTRATE.addRawLang("bloodandbones.minion.job_now", "Job: %s");
         BloodAndBones.REGISTRATE.addRawLang("bloodandbones.minion.status", "%s, blood %s of %s mB");
+        BloodAndBones.REGISTRATE.addRawLang("bloodandbones.minion.status_more", "%s; %s");
         BloodAndBones.REGISTRATE.addRawLang("bloodandbones.minion.status_down", "%s, out of blood (%s of %s mB): give it blood to wake it");
-        BloodAndBones.REGISTRATE.addRawLang("bloodandbones.minion.frame_stats", "%s health, speed %s, %s; %s of %s sockets filled");
+        BloodAndBones.REGISTRATE.addRawLang("bloodandbones.minion.frame_stats", "%s health, speed %s; best: %s; %s of %s sockets filled");
         BloodAndBones.REGISTRATE.addRawLang("bloodandbones.minion.no_fit", "That doesn't go on a minion");
         BloodAndBones.REGISTRATE.addRawLang("bloodandbones.minion.needs_hide", "A flesh minion takes pieces with their hide still on");
         BloodAndBones.REGISTRATE.addRawLang("bloodandbones.minion.needs_skinned", "A brass minion takes only skinned pieces");
@@ -341,7 +494,7 @@ public class BBLang {
         BloodAndBones.REGISTRATE.addRawLang("bloodandbones.minion.filter_brass_only", "Only brass minions take a filter");
         BloodAndBones.REGISTRATE.addRawLang("bloodandbones.minion.status_filtered", "%s, blood %s of %s mB, filter: %s");
         item("dormant_minion",
-                "A minion that ran out of blood, _folded up_ to carry. It keeps everything: what it is built of, its job, what it carries.",
+                "A minion that ran out of blood, _folded up_ to carry. It keeps everything: what it is built of, its task, what it carries.",
                 "When Used on a Block", "Sets it down there, still out of blood. Give it _blood_ to wake it.");
         BloodAndBones.REGISTRATE.addRawLang("bloodandbones.surgery.no_organs", "Nothing more to take out of it");
         BloodAndBones.REGISTRATE.addRawLang("bloodandbones.surgery.filtered", "The rig's filter passes this over");
@@ -351,8 +504,22 @@ public class BBLang {
         BloodAndBones.REGISTRATE.addRawLang("bloodandbones.surgery.state.missing", "Missing");
         BloodAndBones.REGISTRATE.addRawLang("bloodandbones.surgery.state.ragged", "Ragged stump");
         bloodless("bloodandbones.surgery.state.ragged", "Open socket");
+        // a ragged stump's price (docs/NEXT.md 1.5): what fitting anything but a crude prosthetic there costs
+        BloodAndBones.REGISTRATE.addRawLang("bloodandbones.surgery.state.ragged_price", "Ragged stump: %s");
+        bloodless("bloodandbones.surgery.state.ragged_price", "Open socket: %s");
+        BloodAndBones.REGISTRATE.addRawLang("bloodandbones.surgery.bucket", "a bucket");
+        BloodAndBones.REGISTRATE.addRawLang("bloodandbones.surgery.buckets", "%s buckets");
         BloodAndBones.REGISTRATE.addRawLang("bloodandbones.surgery.needs_surgeon", "Needs a surgeon");
-        BloodAndBones.REGISTRATE.addRawLang("bloodandbones.surgery.needs_blood", "Needs a bucket of blood");
+        BloodAndBones.REGISTRATE.addRawLang("bloodandbones.surgery.needs_blood", "Needs %s of blood");
+        // the surgeon by the table, before any cut: who, how fit, and what its stumps will cost
+        BloodAndBones.REGISTRATE.addRawLang("bloodandbones.surgery.surgeon", "Surgeon: %s, %s");
+        BloodAndBones.REGISTRATE.addRawLang("bloodandbones.surgery.surgeon_price", "Its stumps cost %s of blood to fit");
+        bloodless("bloodandbones.surgery.surgeon_price", "Its open sockets cost %s of essence to fit");
+        BloodAndBones.REGISTRATE.addRawLang("bloodandbones.surgery.surgeon_head", "Minion (%s head)");
+        BloodAndBones.REGISTRATE.addRawLang("bloodandbones.surgery.surgeon_headless", "Minion (no head)");
+        BloodAndBones.REGISTRATE.addRawLang("bloodandbones.surgery.no_surgeon", "No surgeon by the table");
+        BloodAndBones.REGISTRATE.addRawLang("bloodandbones.surgery.no_surgeon.hint", "Set a minion to Surgeon within 4 blocks to cut");
+        bloodless("bloodandbones.surgery.no_surgeon.hint", "Set a construct to Surgeon within 4 blocks for the ritual");
         BloodAndBones.REGISTRATE.addRawLang("bloodandbones.surgery.action.none", "-");
         BloodAndBones.REGISTRATE.addRawLang("bloodandbones.surgery.action.take_off", "Take it off");
         BloodAndBones.REGISTRATE.addRawLang("bloodandbones.surgery.action.fit", "Fit what is on the table");
@@ -770,13 +937,13 @@ public class BBLang {
                 "The Steel Table holds one item, any item, on its top. Tables side by side join into one run, with legs only where the run ends or turns. Funnels and hoppers can load it.",
                 "The Steel Rack has two shelves of two places. Right-click its front with an item on the place you are looking at; an empty hand takes it back. Funnels and hoppers fill it from the lower left.");
         jei("surgery",
-                "Amputation is a ritual: lay a Cleaver on the Surgery Table (with its Surgical Rig), have a surgeon minion (one with a villager's or a pillager's head, and an arm) awake beside it, and lie on the table (right-click with an empty hand) to have one of your own limbs, eyes or organs taken out. You get it back, with your name on it. Nothing takes a part any other way, and nothing can go wrong.",
-                "The surgeon hacks: what it takes off leaves a ragged stump, and fitting anything but a crude prosthetic there later takes a bucket of blood as well (from a bucket or a Fluid Backtank you carry). Swap an implant straight in for a part of flesh and there is no stump at all.",
+                "Amputation is a ritual: lay a Cleaver on the Surgery Table (with its Surgical Rig), have a minion with a hand awake beside it and set to Surgeon, and lie on the table (right-click with an empty hand) to have one of your own limbs, eyes or organs taken out. You get it back, with your name on it. Nothing takes a part any other way, and nothing can go wrong.",
+                "The surgeon hacks: what it takes off leaves a ragged stump, and fitting anything but a crude prosthetic there later takes blood as well (from buckets and a Fluid Backtank you carry, added together): a bucket after a fit surgeon (a villager's or a pillager's head), two or three after a poorer one. The screen shows the price before the cut. Swap an implant straight in for a part of flesh and there is no stump at all.",
                 "A missing arm means no off-hand and slower swings, a missing leg no sprinting, a missing eye less to see by. Lay an implant or a part on the table and lie down again to fit it; an implant unclips with nothing on the table. Fitting never needs a surgeon, and a crude prosthetic never needs blood, so one can always go on.");
         bloodless("bloodandbones.jei.surgery.1",
-                "Replacement is a procedure: lay a Cleaver on the Surgery Table (with its Surgical Rig), have a surgeon construct (one with a villager's or a pillager's head, and an arm) awake beside it, and lie on the table (right-click with an empty hand) to have one of your own limbs, eyes or organs removed. You get it back, with your name on it. Nothing removes a part any other way, and nothing can go wrong.");
+                "Replacement is a procedure: lay a Cleaver on the Surgery Table (with its Surgical Rig), have a construct with a hand awake beside it and set to Surgeon, and lie on the table (right-click with an empty hand) to have one of your own limbs, eyes or organs removed. You get it back, with your name on it. Nothing removes a part any other way, and nothing can go wrong.");
         bloodless("bloodandbones.jei.surgery.2",
-                "The surgeon works roughly: what it removes leaves an open socket, and fitting anything but a crude prosthetic there later takes a bucket of essence as well (from a bucket or a Fluid Backtank you carry). Swap an implant straight in for a part and there is no open socket at all.");
+                "The surgeon works roughly: what it removes leaves an open socket, and fitting anything but a crude prosthetic there later takes essence as well (from buckets and a Fluid Backtank you carry, added together): a bucket after a fit surgeon (a villager's or a pillager's head), two or three after a poorer one. The screen shows the price first. Swap an implant straight in for a part and there is no open socket at all.");
         bloodless("bloodandbones.jei.surgery.3",
                 "A missing arm means no off-hand and slower swings, a missing leg no sprinting, a missing eye less to see by. Lay an implant or a part on the table and lie down again to fit it; an implant unclips with nothing on the table. Fitting never needs a surgeon, and a crude prosthetic never needs essence, so one can always go on.");
         jei("implants",
@@ -802,7 +969,7 @@ public class BBLang {
                 "Tiers, in order: an Essence Steel Ingot, then an Essence Diamond, then a Soul Netherite Ingot, each giving more armour, toughness and durability than the last. Mechanical Crafters fit coverings, cores and tiers too, but only where nothing comes back out.");
         jei("minions",
                 "Fit an Assembly Frame to a Surgery Table and lay a carcass torso on it, or take a whole carcass lying on it with an empty hand (what is still attached comes along). Stitch on heads, legs, arms and tails of any mob, one a click: a cow on rabbit legs is a cow that hops. A Cleaver takes the last piece back. Wake it with a bucket of blood.",
-                "Every part does its own thing. The torso sets its size, health and how much it carries; the head its jobs and its bite; the legs how fast and how it moves; arms its blows. Crouch and R-Click it with an empty hand to change its job.",
+                "Every part does its own thing. The torso sets its size, health and how much it carries; the head its sight, its bite and its knacks; the legs how fast and how it moves; arms its blows and what it holds with. Any minion can take any task, some far better than others. Crouch and R-Click it with an empty hand for its tasks: how well it does each and why, where it works and how far it reaches.",
                 "It runs on blood: a little all the time, more moving, working and fighting. Low, it walks to a Blood Trough to drink. Empty, it lies down where it is, alive, and nothing but a player can hurt it; give it blood and it gets up. Crouch-R-Click one lying down a few times to fold it up and carry it; set down, it works from there. Its maker's Cleaver on one lying down on an Assembly Frame table takes it back apart into a frame there.");
         jei("soul_blood",
                 "Soul Blood is blood with a soul in it, and it takes a line of machines to make in bulk. First a Basin Lid on a Basin of blood sets 250 mB of it into Congealed Blood. Then an Encased Fan blowing through soul fire haunts it into a Soul Clot. Last, a Mechanical Mixer over a superheated Basin melts the clot back into 200 mB of Soul Blood.",
@@ -852,6 +1019,11 @@ public class BBLang {
         BloodAndBones.REGISTRATE.addRawLang("bloodandbones.command.explain.nothing", "nothing");
         BloodAndBones.REGISTRATE.addRawLang("bloodandbones.command.dump.done", "Wrote %s traits of %s mobs to %s");
         BloodAndBones.REGISTRATE.addRawLang("bloodandbones.command.dump.failed", "Could not write the traits: %s");
+        // /bloodandbones minion fitness (docs/NEXT.md 1.4)
+        BloodAndBones.REGISTRATE.addRawLang("bloodandbones.command.minion.title", "%s, now %s");
+        BloodAndBones.REGISTRATE.addRawLang("bloodandbones.command.minion.raw", "(%s before it was held)");
+        BloodAndBones.REGISTRATE.addRawLang("bloodandbones.command.minion.none", "Look at a minion within 16 blocks to see how fit it is at each task");
+        BloodAndBones.REGISTRATE.addRawLang("bloodandbones.command.minion.not_yours", "Only its maker, or an operator, may see that");
         // JEI's Body Parts pages and the organ fitting
         BloodAndBones.REGISTRATE.addRawLang("bloodandbones.jei.category.body_parts", "Body Parts");
         bloodless("bloodandbones.jei.category.body_parts", "Parts and Cores");

@@ -6,10 +6,10 @@
   "parts": {
     "head": {
       "minion": {
-        "jobs": [
-          "bloodandbones:surgeon",
-          "bloodandbones:sentry"
-        ],
+        "knacks": {
+          "bloodandbones:surgeon": 1.5,
+          "bloodandbones:sentry": 1.5
+        },
         "disposition": "brave",
         "bite": {
           "style": "punch",

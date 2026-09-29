@@ -169,13 +169,20 @@ public class MinionBodyTests {
         helper.succeed();
     }
 
-    /** A villager's pair of arms is a pacifist's: it never attacks. */
+    /**
+     * A villager's pair of arms is a pacifist's: its arms never strike, so with no head the body has nothing to fight with;
+     * under a head it bites with that (docs/NEXT.md 1.7).
+     */
     @GameTest(template = "empty", timeoutTicks = 20)
     public static void villagerArmsArePacifist(GameTestHelper helper) {
-        MinionBuild build = MinionBuild.of(ref("villager", "body")).with("head", ref("villager", "head")).with("arms", ref("villager", "arms"));
-        MinionStats stats = MinionStats.of(PartsData.SERVER, build);
-        if (stats.fights() || stats.strikes().isEmpty()) {
-            helper.fail("Villager arms should be there and never fight: " + stats.strikes());
+        MinionBuild headless = MinionBuild.of(ref("villager", "body")).with("arms", ref("villager", "arms"));
+        MinionStats stats = MinionStats.of(PartsData.SERVER, headless);
+        if (stats.fights() || stats.strikes().isEmpty() || !stats.strikes().stream().allMatch(s -> "pacifist".equals(s.style()))) {
+            helper.fail("Villager arms should be there and never strike: " + stats.strikes());
+            return;
+        }
+        if (!MinionStats.of(PartsData.SERVER, headless.with("head", ref("villager", "head"))).fights()) {
+            helper.fail("Under a head, folded arms should bite with it");
             return;
         }
         helper.succeed();

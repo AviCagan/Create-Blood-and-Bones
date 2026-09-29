@@ -48,7 +48,17 @@ public class RigManager extends SimpleJsonResourceReloadListener {
     }
 
     public static Optional<Rig> forEntity(ResourceLocation entityId) {
-        return Optional.ofNullable(INSTANCE.rigs.get(entityId));
+        Rig rig = INSTANCE.rigs.get(entityId);
+        return Optional.ofNullable(rig != null ? rig : TEST_RIGS.get(entityId));
+    }
+
+    /** What game tests add: a made-up mob's rig, under an id of the test's own. Looked up like the rest; never listed or sent. */
+    private static final Map<ResourceLocation, Rig> TEST_RIGS = new java.util.concurrent.ConcurrentHashMap<>();
+
+    /** For game tests: a rig for a made-up mob (a modded one with no data of its own), for the rest of the run. */
+    public static void addTestRig(Rig rig) {
+        TEST_RIGS.put(rig.entity(), rig);
+        BABIES.remove(rig.entity());
     }
 
     public static Map<ResourceLocation, Rig> all() {

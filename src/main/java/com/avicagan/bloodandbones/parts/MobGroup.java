@@ -35,6 +35,12 @@ public record MobGroup(ResourceLocation id, Kind kind, int priority, List<String
         ARCHETYPE, FAMILY, OVERLAY, MOB
     }
 
+    /**
+     * Files read so far whose minion data still lists a head's old "jobs" and no "knacks" (docs/NEXT.md 1.8): each is read
+     * as knacks ({@code MinionData.oldJobs}) and logged once, so a third party's datapack keeps working.
+     */
+    public static final java.util.concurrent.atomic.AtomicInteger OLD_JOBS = new java.util.concurrent.atomic.AtomicInteger();
+
     /** The armour pieces a part's traits can be aimed at. */
     public static final List<String> PIECES = List.of("helmet", "chestplate", "leggings", "boots", "shoulders", "hips");
 
@@ -112,6 +118,10 @@ public record MobGroup(ResourceLocation id, Kind kind, int priority, List<String
                 parts.put(e.getKey(), part(e.getValue().getAsJsonObject(), ops, id));
             }
         }
+        if (oldJobs(json)) {
+            com.avicagan.bloodandbones.BloodAndBones.LOGGER.warn("{} lists minion \"jobs\" with no \"knacks\": read as knacks (the first 1.5, the rest 1.25)", id);
+            OLD_JOBS.incrementAndGet();
+        }
         Map<ResourceLocation, OrganEntry> organs = organs(json, ops, id);
         List<Variant> variants = new ArrayList<>();
         if (json.has("variants")) {
@@ -159,6 +169,29 @@ public record MobGroup(ResourceLocation id, Kind kind, int priority, List<String
                 json.has("tissue") ? Optional.of(com.avicagan.bloodandbones.carcass.Tissue.byName(json.get("tissue").getAsString())) : Optional.empty());
     }
 
+    /** Whether a part's minion data here, or one of its variants, lists "jobs" and no "knacks". */
+    private static boolean oldJobs(JsonObject json) {
+        if (!json.has("parts") || !json.get("parts").isJsonObject()) {
+            return false;
+        }
+        for (Map.Entry<String, JsonElement> e : json.getAsJsonObject("parts").entrySet()) {
+            if (!e.getValue().isJsonObject() || !(e.getValue().getAsJsonObject().get("minion") instanceof JsonObject minion)) {
+                continue;
+            }
+            if (minion.has("jobs") && !minion.has("knacks")) {
+                return true;
+            }
+            if (minion.get("variants") instanceof com.google.gson.JsonArray variants) {
+                for (JsonElement v : variants) {
+                    if (v instanceof JsonObject o && o.has("jobs") && !o.has("knacks")) {
+                        return true;
+                    }
+                }
+            }
+        }
+        return false;
+    }
+
     /** An object's "organ_traits": each organ's minion and armour lists. */
     private static Map<ResourceLocation, OrganEntry> organs(JsonObject json, DynamicOps<JsonElement> ops, ResourceLocation id) {
         Map<ResourceLocation, OrganEntry> organs = new LinkedHashMap<>();
@@ -184,7 +217,45 @@ public record MobGroup(ResourceLocation id, Kind kind, int priority, List<String
                 armour = Optional.of(decode(TraitList.CODEC, a, ops, id + " armour"));
             }
         }
-        return new PartEntry(o.has("minion") ? Optional.of(o.get("minion")) : Optional.empty(), armour, pieces);
+        return new PartEntry(o.has("minion") ? Optional.of(checkedMinion(o.get("minion"), id)) : Optional.empty(), armour, pieces);
+    }
+
+    /**
+     * A part's minion data as written, less what could only fail later, in play, logged as it loads: a head's disposition
+     * that is no id ("Brave"), and a knack whose task is no id ("bloodandbones:Surgeon") or whose value is no number, in its
+     * own map or its variants. What is left out counts as never written: the layer under it, or 1.
+     */
+    private static JsonElement checkedMinion(JsonElement minion, ResourceLocation id) {
+        if (!minion.isJsonObject()) {
+            return minion;
+        }
+        JsonObject o = minion.getAsJsonObject().deepCopy();
+        check(o, id);
+        if (o.get("variants") instanceof com.google.gson.JsonArray variants) {
+            for (JsonElement variant : variants) {
+                if (variant instanceof JsonObject v) {
+                    check(v, id);
+                }
+            }
+        }
+        return o;
+    }
+
+    private static void check(JsonObject o, ResourceLocation id) {
+        JsonElement disposition = o.get("disposition");
+        if (disposition != null && !(disposition.isJsonPrimitive() && com.avicagan.bloodandbones.minion.MinionDisposition.valid(disposition.getAsString()))) {
+            com.avicagan.bloodandbones.BloodAndBones.LOGGER.warn("{}: disposition {} is no id (lower case, as \"meek\" or \"ns:name\"): left out", id, disposition);
+            o.remove("disposition");
+        }
+        if (o.get("knacks") instanceof JsonObject knacks) {
+            for (String task : List.copyOf(knacks.keySet())) {
+                JsonElement value = knacks.get(task);
+                if (ResourceLocation.tryParse(task) == null || !value.isJsonPrimitive() || !value.getAsJsonPrimitive().isNumber()) {
+                    com.avicagan.bloodandbones.BloodAndBones.LOGGER.warn("{}: knack {}: {} is no task id and number: left out", id, task, value);
+                    knacks.remove(task);
+                }
+            }
+        }
     }
 
     private static <T> Optional<T> opt(JsonObject o, String key, Codec<T> codec, DynamicOps<JsonElement> ops, ResourceLocation id) {

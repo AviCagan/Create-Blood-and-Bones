@@ -72,7 +72,7 @@ Each decision unblocks one or more work packages below; the package numbers are 
    Rig B is on the local branch `bb-rig-b`. [1]
 
    Package 1 built the first option, the recommended one, for the owner to confirm: rig B's looser necks and loose hang
-   copied into our rigs (ARCHITECTURE 15.21; one revert takes them back).
+   copied into our rigs (ARCHITECTURE 15.28; one revert takes them back).
 5. **Where a Shackle Hook holds a carcass.** The brief says "held by one shoulder". The code holds it at the neck on purpose (255d386), and docs/NEXT.md treats a shoulder hang as a bug. Which is wanted? [1]
 6. **The Flensing Knife and the Cleaver.** The brief names one hand tool. The build has two: the knife skins, and the Cleaver severs and butchers. No decision records the split. Keep it? [5]
 7. **Loading a chain.** In the brief, the Shackle Hook "loads it onto a chain conveyor". Today a player does it by right-clicking a chain with the Meat Hook while dragging. Should the hook block do it itself? [4]
@@ -85,14 +85,8 @@ Each decision unblocks one or more work packages below; the package numbers are 
 11. **The ragged stump, and restoring rot.**
     - Swapping an implant straight in for flesh needs the surgeon but leaves no ragged stump (14.12). So a one-step swap always avoids the ragged-stump cost.
     - A fully rotted limb works again after 1 mB of blood and one second. How much more should restoring it from the maximum cost? [11]
-12. **Tasks instead of jobs (docs/NEXT.md item 1).** To settle:
-    - the task list;
-    - what makes a minion good at a task;
-    - whether anything is impossible or only done badly;
-    - how a task is given;
-    - whether the surgeon stays tied to villager and pillager heads;
-    - how a minion's fitness for a task is shown;
-    - how parts state their aptitude in data. [13]
+12. **Tasks instead of jobs (docs/NEXT.md item 1).** Designed and built on 29 September 2026: the task list, what makes a minion good at a task, what is impossible and what only done badly, how a task is given, how fitness is shown and how parts state their aptitude in data are settled in docs/NEXT.md 1.1 to 1.6. One question is left:
+    - whether the surgeon stays tied to villager and pillager heads (the surgeon switch, docs/NEXT.md 1.5). [13]
 13. **The fourteen defaults of ARCHITECTURE 15.1** are still unconfirmed (docs/NEXT.md). Two of them overlap with decisions above:
     - #5 (heavy pieces never become items) is decision 2;
     - #8 (other illagers and the witch also make surgeons) goes with decision 12.
@@ -539,23 +533,25 @@ An attribute filter set to a part is asked about the whole body, so it never mat
 - The owner decided on 24 September that there are no jobs. Any task can be given to any minion, which does it better or worse depending on its stats (docs/NEXT.md item 1).
 - The brief also says neither kind of minion "should be more OP than the other".
 
-**What is there.** A minion's head offers one to three of 17 jobs. Everything else in the brief's Minions section is built and tested (see below). Flesh and brass minions each have something the other lacks, but nothing compares them:
+**Built on 29 September 2026** (docs/NEXT.md 1.10; docs/ARCHITECTURE-PROPOSAL.md 15.21 to 15.26). Any minion can be given any of 16 tasks and does it better or worse by its parts: its fitness comes from its stats, its head's knacks and disposition, all in data, and is shown on the task screen, the status line, the Surgery Table, JEI and piece tooltips. Only the surgeon switch (decision 12, docs/NEXT.md 1.5) waits for the owner.
+
+**What is still open.** Flesh and brass minions each have something the other lacks, but nothing compares them:
 - brass drains a quarter as much blood, ignores poison, wither, hunger and drowning, and takes a module;
 - flesh mends itself.
 
 That comparison belongs in the balance pass (PARTS-AND-TRAITS slice 9).
 
-**What to build (after decision 12).**
-- Tasks, with aptitude coming from the parts and stored as data.
-- The task list.
-- A way to give a task.
-- A way to show how fit a minion is for each task.
+**What was built.**
+- Tasks, with aptitude coming from the parts and stored as data (`minion/MinionTask`, `MinionFitness`, the task files and head data).
+- The task list (docs/NEXT.md 1.1).
+- A way to give a task: the task screen (`MinionTaskScreen`), with anchor and reach.
+- A way to show how fit a minion is for each task (`TaskWords`, the status line, JEI, `/bloodandbones minion fitness`).
 
-**Size.** Large.
+**Size.** Large; done.
 
-**Touches.** `minion/MinionStats`, `MinionJobs`, head data, `body/Surgery.surgeonAt`, the Surgery Table's status line, and JEI.
+**Touched.** `minion/MinionStats`, `MinionTasks` (in `MinionJobs`' place), head data, `body/Surgery.surgeonAt`, the Surgery Table's status line, and JEI.
 
-**Owner first.** Yes.
+**Owner first.** Only the surgeon switch.
 
 ### 14. Blood, Soul Blood and the materials as written (done 29 September 2026, `bb-materials`)
 
@@ -777,7 +773,7 @@ One line each. Details and test names are in ARCHITECTURE sections 13 to 15.
 - **Decoration:** the Gut Chain (on chain conveyors too), ribcage arches, bone piles, and three bloody casings.
 - **Chain trolleys:** carry hung carcasses along Create's chains and queue.
 - **The body:** a set of slots, with crude prosthetics that give back exactly what flesh does. The safety floor never needs a surgeon or blood.
-- **Amputation:** only at the table, with a surgeon minion (villager or pillager head). A ragged stump costs a bucket of blood to fit; the heart can only be swapped.
+- **Amputation:** only at the table, with a surgeon minion (villager or pillager head). A ragged stump costs a bucket of blood to fit; the heart can only be swapped. (Since tasks' stage D: any minion with a hand set to Surgeon may cut by default, the owner's call in docs/NEXT.md 1.5, and its stump costs one to three buckets by its fitness.)
 - **Empty-slot penalties:** a missing arm means no off-hand and slow swings; a missing leg means no sprinting.
 - **Necrosis:** on organic implants, cleared by blood perfusion. At the maximum the limb stops working, but never falls off or kills.
 - **Cybernetics:** the throttle (gauge, pitch, glow), all seven modules, no redstone-link module, and both set bonuses.

@@ -1,0 +1,32 @@
+{
+  "anchors": [
+    "home"
+  ],
+  "grips": {
+    "claw": 0.6,
+    "hand": 0.35,
+    "mouth": 0.35,
+    "paw": 0.6,
+    "tentacle": 0.6
+  },
+  "kind": "work",
+  "main": "hands",
+  "max_reach": 12,
+  "numbers": {
+    "catch_least": 0.16666667,
+    "catch_max": 1200.0,
+    "catch_min": 600.0
+  },
+  "reach": 8,
+  "second": "sight",
+  "stores": true,
+  "tool": {
+    "grips": {
+      "claw": 0.6,
+      "hand": 1.0,
+      "mouth": 0.35,
+      "paw": 0.6,
+      "tentacle": 0.6
+    }
+  }
+}

@@ -35,9 +35,9 @@
     },
     "head": {
       "minion": {
-        "jobs": [
-          "bloodandbones:sentry"
-        ]
+        "knacks": {
+          "bloodandbones:sentry": 1.5
+        }
       },
       "armour": [
         "bloodandbones:deep_digger"

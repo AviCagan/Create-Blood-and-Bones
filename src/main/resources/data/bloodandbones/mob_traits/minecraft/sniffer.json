@@ -15,7 +15,8 @@
         {
           "trait": "bloodandbones:keen_eye",
           "level": 2
-        }
+        },
+        "bloodandbones:truffle_nose"
       ],
       "armour": [
         "bloodandbones:blood_scent"
@@ -25,10 +26,10 @@
   "parts": {
     "head": {
       "minion": {
-        "jobs": [
-          "bloodandbones:digger",
-          "bloodandbones:hauler"
-        ]
+        "knacks": {
+          "bloodandbones:digger": 2.0,
+          "bloodandbones:hauler": 1.25
+        }
       }
     }
   }

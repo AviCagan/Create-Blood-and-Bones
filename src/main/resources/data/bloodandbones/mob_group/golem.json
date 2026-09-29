@@ -20,11 +20,10 @@
     },
     "head": {
       "minion": {
-        "jobs": [
-          "bloodandbones:guard",
-          "bloodandbones:sentry",
-          "bloodandbones:bodyguard"
-        ],
+        "knacks": {
+          "bloodandbones:guard": 1.5,
+          "bloodandbones:sentry": 1.25
+        },
         "disposition": "territorial"
       },
       "armour": [

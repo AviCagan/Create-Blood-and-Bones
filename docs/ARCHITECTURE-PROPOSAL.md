@@ -451,8 +451,13 @@ slot and has armour variants. The plan for building it is §14.
 
 **Decided after the jobs were built (24 September 2026)**: no jobs. Any task, from a list drawn up with the owner,
 can be given to any minion. Some minions do a task better than others because of the stats they get from what they are
-built of. This replaces heads offering jobs (spec 6.4 and 6.9). It is not built yet; what is still to settle is listed in
-docs/NEXT.md, item 1.
+built of. This replaces heads offering jobs (spec 6.4 and 6.9). It was built in six stages (docs/NEXT.md 1.10), all
+done: the numbers (§15.21) and tasks in the jobs' place, with the task screen (§15.22); the levers and the surgeon's
+stump price (§15.23); the Tender, the butcher at the Butcher's Table, and the fitness shown on the Surgery Table, in JEI,
+on piece tooltips and by `/bloodandbones minion fitness` (§15.24); then a review's findings put right (§15.25). The surgeon (docs/NEXT.md 1.5) is still the owner's
+call: by default any minion with a hand may cut, its fitness pricing the stump, and a datapack's surgeon task file with
+`"needs_surgeon_head": true` limits the cutting to surgeons' heads (the villager and illager families', the witch's
+among them), the brief's letter. Both are built and tested.
 
 **Still open** (as of the latest build): everything up to and including machines, materials,
 cooking, display and decoration is built and tested (§13). What remains needs design decisions
@@ -1335,7 +1340,8 @@ The brief says to build the throttle once, as shared infrastructure, and then th
   of blood as well (`Surgery.costsBlood`), from a bucket or any fluid item the operator carries, a worn Fluid
   Backtank included. Once fitted the stump is
   dressed: take the implant out and it is an ordinary empty slot. Swapping an implant straight in for flesh
-  leaves no stump. `raggedStumpCostsBlood`, `raggedStumpPaidFromBacktank`.
+  leaves no stump. `raggedStumpCostsBlood`, `raggedStumpPaidFromBacktank`. (Since §15.23 the fittest surgeon by the table
+  cuts, and a stump costs one to three buckets by its fitness, paid from all the operator carries.)
 - **The safety floor holds**: fitting, reattaching, swapping implants and modules never need a surgeon, and a crude
   prosthetic (`ImplantItem.crude`: runs on nothing, gives nothing past flesh) never needs blood, even in a ragged
   stump, so one can always go on. `safetyFloorNeverNeedsSurgeon`.
@@ -1368,7 +1374,9 @@ file, composed from about 30 effect types.
    pipeline); hideless mobs count as both.
 7. A quadruped's front leg is a leg.
 8. Surgeon heads: built for villager and pillager heads, as the brief names them; their kin (other illagers, the
-   zombie villager) come with the per-mob data.
+   zombie villager) come with the per-mob data. *Now the owner's call in docs/NEXT.md 1.5* (tasks instead of jobs): any
+   minion with a hand may cut, its fitness setting the stump's price (the default), or, with the surgeon task file's
+   `"needs_surgeon_head": true`, only heads whose data says `"surgeon": true` (15.21; both built at the table in 15.23).
 9. Per-mob signatures are authored last, once the base system works, as the brief defers them.
 10. Boss parts (warden, wither) usable by default.
 11. Tiers upgrade by crafting (piece + ingot), which Mechanical Crafters automate.
@@ -2925,7 +2933,7 @@ What it turned up:
      fifth run he stood clear and nothing happened. So the hoist ends the throw across the world, not the jostle. The drag
      already stops pulling a body that touches its player; the hoist could wait the same way, but then a body would hang
      low for as long as a player stands by it. Left for package 1, with the drag.
-2. **Walking forward while dragging carries you off** (not fixed here; for package 1. Fixed since: 15.21, "What you drag
+2. **Walking forward while dragging carries you off** (not fixed here; for package 1. Fixed since: 15.28, "What you drag
    never pushes you").
    - The drag pulls the hooked point to 1.1 blocks in front of where the player looks. Walking forward, facing where
      you go, pulls the carcass into your path. You walk into it and it pushes you, which moves the point it is pulled
@@ -3519,8 +3527,612 @@ scuffed stain: steel and mud.
   views come after the machines'. The gauge shots come after main's longer minion and effects timeline (ticks 345 and
   395 of that stage).
 - The suite is 504 tests.
+### 15.21 Tasks, stage A as built: the fitness, worked out without a world (verified)
 
-### 15.21 Physics and weight: where you hook it, where the blow lands, what dragging costs (verified)
+docs/NEXT.md item 1 is the design the owner asked for: no jobs; any task from one list to any minion, each better or
+worse at it by what it is built of. Stage A (1.10) works the numbers out with no world. Nothing in play reads them yet:
+the job system is as it was until stage B, but for three fixes 1.11 found (below).
+
+- **The task list** (`minion/MinionTask`): the sixteen tasks in the order a task screen lists them, each with its kind
+  (fight, tend, fetch or work; Idle none), the anchors it allows (home; with its maker too for Idle, Guard, Hunter, Medic
+  and Courier), and the test of the body that is code: something to strike with (an arm that is not folded, or a head to
+  bite with) for Guard, Sentry and Hunter; a detonating organ for the Sapper (`MinionSapper.hasDetonator`); and, for the
+  handwork, anything its grip table allows (1.2's table, a column a task). What a datapack may retune is its
+  `MinionTask.Data`: kind, anchors, reach and the most its maker may set it to, the stats its fitness reads, the grip
+  table, its tool (items, required, carried, the grips while held), whether it stores its takings, the numbers its levers
+  scale, and the surgeon's `needs_surgeon_head`. The defaults are today's constants;
+  `data/<ns>/minion_task/<task>.json` overrides them field by field, "numbers" and the tool's fields one by one. Datagen
+  writes the sixteen files from the defaults (`MinionTaskDataProvider`), so a datapack sees what can be changed and a
+  missing file changes nothing.
+- **Dispositions** (`minion/MinionDisposition`): the eleven of 1.2 by kind, by task (territorial's Guard and Sentry),
+  with the maker (loyal) and by night or day (nocturnal), in `data/<ns>/minion_disposition/<name>.json`, written the same
+  way. A head names one by plain name ("meek") or a datapack's "ns:name"; one not loaded counts as none. Both kinds are
+  loaded by `PartsData` and never sent to clients (`PartsData.Kind.synced`): the fitness is worked out on the server.
+- **What the build brings** (`MinionStats`): `holders`, what it holds things with: each arm's grip (a villager's pair of
+  arms is two hands, its data's "hands"), the head's mouth, and on a body of at least four legs the legs' grips
+  (`GRIPPING_LEGS`: a zombie standing on a wolf's two front legs uses them to stand); `torsoWeight`; `knacks`;
+  `disposition` ("none" when the head names none, "mindless" with no head). A seeing head's sight counts its build's
+  follow-range traits as its attribute would take them (Keen Eye, Relentless); a blind head stays at 4 and a headless body
+  at 2 (`MINDLESS_SIGHT`, 8 before) whatever they add; an echolocate or tremor sense, in the head's data or a passive
+  trait (a bat's Echo Ear, a warden's head), finds its way at least 12. `fights()` is false for a body with no arm and no
+  head. These three are the only changes in play.
+- **Knacks** (`MinionData.knacks`, `MinionStats.knackParts`): a part's "knacks" merge key by key as trait lists do, the
+  general key's layers and then the specific key's, each layer's own map and then each variant it matches, in order. A
+  build's knack for a task is, for each part slot, the best its pieces give (one naming none counts 1; of heads the first
+  only), multiplied together and by its traits' `task_knack`s, held between 0.25 and 2.5; where each part came from is
+  kept for the screen. Old data's "jobs" with no "knacks" reads as knacks (the first 1.5, the rest 1.25, companion
+  dropped, bodyguard a guard, scavenger a courier), and `MobGroup.parse` logs such a file once (`MobGroup.OLD_JOBS`).
+- **The fitness** (`minion/MinionFitness`), pure. A `Body` first: the stats after the traits `ActiveTraits` would give
+  the minion (its parts', its organ's and, on flesh, its hides'): speed with the +40% cap on rises, health within 6 to
+  150, drag strength, blows its traits make harder, storage (a chest's only with a chest fitted), innate shots; a
+  detonator; what its head does with no tool; whether its head is a surgeon's; its knacks' parts and its disposition.
+  Then a `Row` per task: fitness = knack × disposition × main × √second, held 10% to 200%; the number before it was held;
+  why it cannot (a lang key); what it waits for (a lang key); the fitness a missing tool would give where that differs;
+  and each factor with its stat, its value and its `Source`s (a piece with its part and grip, a trait at its level, an
+  item, or a rule: blind, mindless, bite, more, strike rate, berserk, no ranged...). A required tool (the butcher's blade,
+  the herder's bait, the medic's potions) is taken as had, since the minion waits for it; with the mobGriefing rule off a
+  hunter waits for that. Blow is the hardest strike times the strike rate (+15% for each striking arm past two, to +60%),
+  or the bite with no striking arm; pull is the square root of the torso's weight over a cow's, over what drag strength
+  leaves of the slowdown.
+- **The levers**, pure, for stage C's goals: `quicker`, `longer`, `spread`, `yieldShare`, `towing`, `workingDrain` and
+  the tasks' own (`catchTicks`, `strokeTicks`, `admireTicks`, `tendTicks`, `throwTicks`, `digTicks`, `lookTicks`), each
+  today's constant at 100%.
+- **The surgeon, the owner's call (1.5).** Built both ways, one data switch apart. The default is the recommendation: any
+  minion with a hand may cut, and its fitness sets the stump's price (`MinionFitness.stumpBuckets`: one bucket at 150% and
+  over, two from 75%, three below). A datapack's `minion_task/surgeon.json` with `"needs_surgeon_head": true` gets the
+  brief's letter: only heads whose data says `"surgeon": true` cut (the villager family, the witch among them, and the
+  illager family), while anyone may still tend (`MinionFitness.mayCut`). The ritual reads it in stage D.
+- **The data.** Every shipped head has its knacks per 1.6's table beside its old jobs list; the villager's professions
+  are 1.5 at their task, the rest of them (librarian, cartographer, mason, unemployed) couriers, a nitwit dim and no
+  surgeon; the zombie villager's shaky hands are a surgeon's 0.5 over its family's. Front legs have their grips: hooves on
+  a quadruped, paws on canid, feline, bear, amphibian and small prey, claws on arthropods, tentacles on the tentacled and
+  cephalopods. The sniffer's Olfactory Bulb gives a new trait, Truffle Nose (`task_knack` Digger ×1.5).
+- **Changed from the design, and why** (each recorded where the design says it, in docs/NEXT.md):
+  - The old `jobs` lists stay in the shipped data beside the knacks until stage B. Today's jobs cannot be read from the
+    knacks without changing what heads offer and wake as (1.6's table drops companion, bodyguard and scavenger and
+    reorders: a cow's head would wake as a courier, a wolf's as a herder, a horse's as a hauler, a professional villager's
+    would offer the biped's courier), and stage A changes nothing in play. Stage B deletes them with the job system.
+  - The zombie villager keeps its `pace` beside its knack, for `AttendTable` until the tending reads the fitness.
+  - The villager's own file no longer restates its family's meek: a mob's own file wins over its family's variants, so
+    the nitwit's variant could not make it dim.
+  - Four worked examples of 1.2 left the traits out; worked out with them (a rabbit's hide and a wolf's legs are Swift,
+    a cow's torso is a Beast of Burden, a spider's torso has its mob's 16 health), 1.2 now says Courier 146%, Hauler 138%,
+    Guard 72%, Herder 200% (216% before the cap) and Hunter 135% where it said 143%, 114%, 65%, 180% and 124%. The summary's
+    "six tasks with me" is five, as 1.1's table has it.
+  - Four test descriptions in 1.9 said more than the formula does: a fisher with no rod fishes by hand, so it does not
+    wait (it is shown a rod's fitness); a nitwit is braver than an unemployed villager at the fights (dim 0.75, meek 0.5);
+    a blind hunter's number does not read sight; eight arms give a butcher 1.6 × √1.6, since its second is its blow.
+  - More holders count only of the best grip, so a mouth that fishes as well as two hands is not a third hand; a blind or
+    headless body's sight takes nothing from follow-range traits.
+- **Tests** (`gametest/MinionFitnessTests`, 15): `fitnessMatchesItsFormula`, `oneHundredIsToday`,
+  `cannotOnlyWhenTheBodyCannot`, `missingToolWaitsNotCannot`, `villagerAndPillagerHeadsAreTheBestSurgeons`,
+  `surgeonHeadFlagDecidesWhoCuts`, `professionSetsItsKnack`, `blindHeadIsPoorNotBarred`, `moreHandsWorkFaster`,
+  `pawsAndHoovesPickPoorly`, `knacksMergeAcrossLayers`, `oldJobsListReadAsKnacks`, `dispositionsScaleTheirKinds`,
+  `moddedMobWorksFromItsArchetype` (a made-up mob with only an archetype, on a copy of the wolf's rig:
+  `RigManager.addTestRig`, looked up like `PartsData.addTestMobFile`) and `taskKnackTraitCounts`. `dataLints` knows the
+  new effect works on minions only. Every old test passes unchanged.
+- **On screen** (`showcase_tasks_0.png`, new): the minion row's shot with the chat on, and in it each shown minion's four
+  best tasks and what it cannot do, worked out on the server from its data as the task screen will (`DevShowcase.fitness`,
+  the tasks by their own names). The cow on rabbit legs is Herder 200%, Tender and Courier 146%, Hauler 138%, and cannot
+  be a Sapper or a Surgeon, as 1.2 now says; the whole cow Herder 125%; the zombie with a pig's head on a rabbit's haunches
+  and one arm Hunter 152% (a swine's knack for it); the legless cow a Digger at 100%; the zombie with a cow's head and a bow
+  Herder 144% and Surgeon 125%. The other shots are as they were.
+- The suite is 466 tests (451 and the fifteen above), and passed two runs in a row, the fifteen three times over as well.
+
+
+### 15.22 Tasks, stage B as built: tasks in the jobs' place, and the task screen (verified)
+
+docs/NEXT.md item 1 is the design; stage B (1.10) switches the game over from jobs to tasks. Any of the sixteen tasks can
+be given to any minion; its fitness (§15.21) says how well it does it, and now the screen, the status line, the wake rule
+and the blood it uses at work read it.
+
+- **Each task's goals** (`minion/MinionTasks`, renamed from `MinionJobs`): given to every minion, each working only while
+  it has its task (`MinionEntity.hasTask`). Companion and bodyguard folded into Guard and Idle done with the maker; the
+  scavenger into the Courier, whose `Fetch` goal picks up loose items within its reach of where it works (and within its
+  sight, as the scavenger's did): holding something, only items like it (its sample), brass with a filter only what the
+  filter passes. At home the container by home takes them (`MinionGoals.Deposit`, for every task whose data says
+  `"stores"`); with its maker they go into the maker's hands. The farmer keeps `Collect` for what it reaped. The Tender
+  can be set but its goals are stage E's: until then it keeps home.
+- **Anchor and reach.** `MinionEntity` keeps `TASK`, `ANCHOR` (home, or the maker) and `REACH` (0: the task's own) as
+  synced data and saves them beside `Home`. `reach()` is what its maker set, held to 2..the task's `max_reach`, else its
+  own (`MinionTask.Data.reach`); every goal that searched a fixed range reads it (the guard's and sapper's monsters, the
+  sentry's range, the herder's keep (its look-out scales with it, 20 at 8), the fisher's water, the digger's ground, the
+  barterer's gold, the butcher's carcasses, the hauler's carcasses and hooks, the farmer's crops, the medic's patients,
+  the courier's items, the sapper's banner). `workingMaker()` is its maker while its task is done with them and they are
+  in the same world within 64 blocks; `centre()` is then their feet, else home. Farther off, or elsewhere, it works at
+  home (`StayNearHome` takes it back there).
+- **With me.** `FollowMaker` keeps a minion near its maker as vanilla's `FollowOwnerGoal` keeps a wolf (setting off at 6
+  blocks and stopping at 3, as the companion did, its path renewed every half second). `DefendMaker` is the wolf's two
+  goals, for Guard with the maker: what hurt the maker, and what the maker hit, each new blow once and while fresh (5 s),
+  never the maker's own side, a tamed animal or horse, a player the maker may not hurt, a creeper or an armour stand. Idle
+  with its maker only fights back (`HurtByTargetGoal`, every task's). The hunter hunts prey within its reach of the maker,
+  the medic throws at the hurt within its reach of the maker, the courier hands the maker what it fetched round them.
+  `TeleportEffect`'s blink to its owner works for a minion working with its maker; `SocialGoals.SenseTarget` hunts by a
+  sense for any fight task but a guard with its maker, within its reach of where it works.
+- **A body with no head** (`MinionGoals.TouchTarget`, `Feel`) takes for its target only what touches it (within half a
+  block of its body): what hurt it, and on Guard or Sentry any monster, on Hunter prey (where mobs may grief), and strikes
+  it once a second, never going after it. **A sentry with no ranged attack** (`MinionTasks.SentryStrike`) takes a monster
+  it can strike from its post and strikes it there, never taking a step.
+- **The wake rule** (`MinionTasks.wakeTask`): its fittest task at home that waits on nothing, holding nothing, ties to the
+  list's order; never Hunter or Sapper, and not the Tender until its goals are built; with none, Idle. Its maker's action
+  bar: "Woke as a Surgeon (200%)".
+- **Tasks change only when its maker sets them.** `keepValid` is gone: a missing tool makes it wait (the butcher's goal,
+  the herder's and the medic's look for theirs), and the status line says for what. `MinionTasks.keepPossible`, every
+  second: a data reload that leaves its body unable to do its task sets it to Idle at home and remembers why for the status
+  line ("it can no longer be a Surgeon: No hand to hold a surgeon's blade"); one that no longer allows its task with the
+  maker brings it home.
+- **Fitness on the minion.** `fitnessBody()` is `MinionFitness.body` worked out once with its stats (again when its build
+  or the data changes); `row(task, anchor)` and `fitness(task)` apply what it holds and carries, the time of day, the
+  mobGriefing rule and a fitted chest when read. Ahead of stage C, because stage B removed or shows them: blood at work is
+  25 mB a minute ÷ its fitness (12.5 to 50; brass a quarter), read once a second; the surgeon tends a heart every 5 s ÷ its
+  fitness, never under 2 s (the zombie villager's `pace` is gone, its shaky hands are its knack of 0.5); and
+  `Surgery.surgeonAt` counts only a minion on the Surgeon task that `MinionFitness.mayCut` allows, so the surgeon file's
+  `needs_surgeon_head` (docs/NEXT.md 1.5, the owner's call; false by default) already decides who cuts. The fittest of
+  several surgeons and the stump's price are stage D's.
+- **The status line** (`MinionTasks.status`, `TaskWords`): "Farmer 120% at home, blood 300 of 780 mB" ("at its post",
+  "at its table", "with its maker", "at home, its maker away"), then what it waits for, what its work waits on in the world
+  for the next five seconds (the fisher's water, the digger's ground, the barterer's gold, the hauler's hook or rack, the
+  container by home: `MinionEntity.idle`), or why a reload took its task. The Surgery Table's line while building names
+  the best two tasks the build can do where it named jobs: the cow on rabbit legs, whole, is "15 health, speed 0.33;
+  best: Herder 200%, Tender 146%" and its sockets.
+- **Old saves** (`MinionTasks.fromJob`, docs/NEXT.md 1.8): a saved `Job` becomes its task as 1.8's table says, home kept;
+  a companion whose body could not guard is Idle with its maker. A folded minion converts as it is set down.
+- **The task screen** (`client/MinionTaskScreen`, `network/MinionTaskPayload`). The maker's crouching empty hand on the
+  minion awake asks the server, which works out one row a task (`MinionTasks.open`) and sends them (`Open`): each task's
+  fitness at the anchor it works at now where the task allows it, whether it can, whether it would wait, its hover lines
+  already in words (`TaskWords.lines`, such as "Hands ×1.3: hand, 4 of them, Zombie arm"; "Sight ×1.41, at half weight: 48 blocks,
+  Villager head"; "Knack ×1.5: Villager head ×1.5"; "Disposition ×1.25: Meek"; "At work: 12.5 mB of blood a minute"), the
+  anchors it allows and its reach and most. Task and disposition files never go to clients. A stranger, a machine's
+  stand-in (even the maker's own Deployer) and anyone on it powered down get nothing; crouch-holding on it down still folds
+  it, and a plain click is still the status line. Its requests (`Set`: a task, an anchor, a reach, "Home here") are
+  checked again (`MinionTasks.handle`): the maker, not a stand-in, within 8 blocks, it awake, the task one its body can do,
+  the anchor one the task allows, the reach 0 or within its bounds; the server then sends the rows again, and an open
+  screen is brought up to date (a closed one stays closed). A test's stand-in maker, which has no connection, is shown
+  the screen through `MinionTasks.Viewer`.
+- **How it looks.** It is drawn in Create's own schedule frame (`AllGuiTextures.SCHEDULE`), each task a Create schedule
+  card (`SCHEDULE_CARD_*`), the four groups under brass headings, the task now marked with the schedule's brass strip and
+  pointer; the bar, the percentage and the word (Hopeless red to Born to it teal), "Cannot" and its reason in small print;
+  Create's `IconButton`s for At home (a bed) and With me (a head), Home here (Create's target icon) and done, and its
+  `ScrollInput` and `Label` for the reach. The list scrolls as the schedule's does, fading at its ends.
+- **Data.** The shipped heads' old `jobs` lists are gone (47 files), leaving the knacks; the zombie villager's `pace` is
+  gone. A third party's `jobs` list is still read as knacks, logged once.
+- **Words** (`BBLang`): the tasks' names and what each does, the words for fitness, where it works, the waits and what
+  its work waits on, the factors, stats, grips, parts and rules of a row, the screen's buttons and headings, the status
+  lines. Bloodless mode has its own wording where the usual rewording is not enough (the Dismantler takes bodies apart,
+  the hunter downs prey and leaves them whole, the hauler drags bodies to a Draining Rack, the surgeon does the ritual's
+  work, the Tender carries essence to fallen constructs), checked by `taskWordsReadBloodless`.
+- **Deleted:** `MinionStats.JOBS`, `HANDS`, `SIGHT`, `HARVESTING`, `COMPANION` and its `jobs`; `MinionJobs.offered`,
+  `needsMet`, `wakeJob`, `keepValid`, `startJob` and the fixed ranges; the crouch-click cycling and `job_now`;
+  `MinionEntity.jobKey`, `job()`, `setJob`, `hasJob`; `AttendTable`'s `pace` and `MinionGoals.headScalar`.
+- **Changed from the design, and why** (each recorded where the design says it, in docs/NEXT.md 1.3, 1.9 and 1.10):
+  - The screen scrolls: sixteen rows and four headings are taller than the schedule frame's list. It opens scrolled to
+    the task now. A reach scrolled to is sent once left alone half a second, or as the screen closes. Clicking a row sets
+    that task at the anchor it works at now if the task allows it, else at home, with the task's own reach.
+  - The wake rule skips the Tender, whose goals are stage E's. A whole cow, or a cow on rabbit legs, wakes as a Courier:
+    its best task, Herder, waits for food.
+  - Blood at work, the surgeon's tending and who may cut came in ahead of stages C and D (above).
+  - The guard at home keeps within 4 blocks of home and fights what comes within its reach, as the guard job did:
+    "patrols its reach" is read as watching it. The herder's look-out grows with its reach; the courier notices loose
+    items within its sight as well as its reach, as the scavenger did.
+  - A companion or bodyguard whose body could not guard loads as Idle with its maker. One set down from a Dormant Minion
+    makes its home where it is set down, as unfolding always has.
+  - A missing tool stops the goal as well as showing on the screen: the butcher with no blade, the herder with nothing in
+    its mouth and the medic with no healing potions wait, and the status line says for what.
+- **Tests.** `gametest/MinionTaskTests` (renamed from `MinionJobTests`), twelve new: `taskScreenRowsForMakerOnly`,
+  `setTaskFromTheScreen`, `oldJobConvertsOnLoad`, `wakesToItsFittestTask`, `reloadTakesAnImpossibleTask` (a made-up mob
+  on a copy of the zombie's rig whose data is changed under a Farmer to leave it no hand), `taskWordsReadBloodless`,
+  `guardWithMeIsAWolf`, `courierWithMeFillsTheMakersHands`, `hunterWithMeHuntsBesideTheMaker`, `medicWithMeHealsOnTheMove`,
+  `headlessFightsOnlyWhatTouchesIt` and `sentryWithNoBowHoldsItsPost`; and in `gametest/SurgeonTests`
+  `surgeonHeadIsTheOwnersCall`, the owner's call at the table both ways (the surgeon file swapped for one tick through
+  `PartsData.Store.setTestTask`). A test's maker is a stand-in player with no connection, shown the screen's rows through
+  `MinionTasks.Viewer`. Changed: every `setJob` and `switchTo` is `setTask`; `scavengerFetchesMatchingItem` and
+  `filteredScavengerFetchesWhatItPasses` are `courierWithSampleFetchesItsLike` (at home, into the chest by home) and
+  `filteredCourierFetchesWhatItPasses` (with its maker, into their hands); `fisherFishesByWater` (a fisher's head with no
+  rod fishes by hand); the sapper tests ask whether a body can sap; `wingsAreNoHands`, `buildCowOnFourRabbitLegs` (best at
+  herding), `minionSavedAndLoaded` (task, anchor and reach saved), `amputationNeedsSurgeon` (a minion by the table on
+  another task is no surgeon), `carcassKeepsVariants` (a knack, not a jobs list). Deleted, each replaced as 1.9 says:
+  `cycleJobWithEmptyHand`, `villagerHeadOffersSurgeon`, `pillagerHeadOffersSurgeon`, `villagerAndPillagerHeadsOfferSurgeon`,
+  `nitwitOffersCompanionOnly`, `blindHeadLosesSightJobs`.
+  `medicWithMeHealsOnTheMove` hurts its maker only once the medic has followed them 3 blocks: hurt sooner, a medic
+  stops to throw where it stands, within its following distance of 6 blocks, and one full run caught it short.
+- **On screen** (`showcase_tasks_1.png` and `showcase_tasks_2.png`, new; `DevShowcase` opens the screen on the cow on rabbit
+  legs from the server, as the maker's crouching click would). It woke as a Courier, its best task (Herder) waiting for
+  food. In the first the mouse is on Herder: its card has the brass rim, and the hover reads "Herder: 200%, Born to it",
+  what the task does, "waiting for food to lead animals with" in gold, "Pace ×1.37: speed 0.34, Rabbit leg, Swift I",
+  "Sight ×1, at half weight: 16 blocks, Cow head", "Knack ×1.25: Cow head ×1.25", "Disposition ×1.25: Docile", "At work:
+  12.5 mB of blood a minute" and "Click to set it to this"; above it Sapper and Surgeon read "Cannot", with "Nothing in it
+  that detonates" and "No hand to hold a surgeon's blade" under them. The second is scrolled to the end: Medic 94% Able,
+  Herder 200% Born to it, Tender 146% Good, Courier 146% Good (the task now, with the brass strip and the pointer), Hauler
+  138%, Farmer 75% Fair, Fisher 60%, Butcher 22% Hopeless, Barterer 75%, Digger 100% Able; the amber marks on Medic,
+  Herder and Butcher are the potions, food and blade they would wait for. At the foot At home is lit (the bed), With me
+  (a head) is not, Reach 10 (the courier's own), Home here and done. In the bloodless run's
+  (`showcase_bloodless_tasks_1.png`, `_2.png`) the title is "Construct: Tasks", the butcher the Dismantler, the surgeon's
+  reason "No hand to hold a tool" and the blood at work "12.5 mB of essence a minute". The other shots are as they were.
+- The suite is 473 tests (466, less the six deleted, and the thirteen above), and passed two runs in a row after the
+  medic test's fix; `medicWithMeHealsOnTheMove` passed twenty times over, and the three added last
+  (`reloadTakesAnImpossibleTask`, `taskWordsReadBloodless`, `surgeonHeadIsTheOwnersCall`) three to five times over.
+
+
+### 15.23 Tasks, stages C and D as built: the levers, and the surgeon's stump (verified)
+
+docs/NEXT.md item 1 is the design. Stage C (1.10) puts every lever of 1.2's table to work: what a minion's fitness at its
+task makes of the work in play, each today's constant at 100%. Stage D prices the surgeon's stump by its fitness, as the
+recommendation in 1.5 has it, with the brief's letter one data switch away; which of the two stands is still the owner's
+call, and the recommendation is the default until they answer.
+
+- **The levers** (`MinionFitness`, pure; each goal reads its task's numbers from its file, `MinionTask.Data`). The fitness a
+  lever reads is held between 25% and 200% (`lever`), so nothing is ever more than four times slower, and the goals read
+  the minion's fitness at its task worked out once a second and whenever its task or build changes
+  (`MinionEntity.taskFitness`), not on every tick they ask:
+  - the sentry: the time between shots ÷ fitness, never under half (`shotTicks`: a bow's second after it looses, a
+    crossbow's second after loading and one to two after loosing, a trident's two), and its spread, vanilla's 14 less 4 a
+    step of difficulty, ÷ fitness (`shotSpread`), for the bow, the crossbow and the trident alike;
+  - the medic: a throw every 3 s ÷ fitness, never under 1 s (`throwTicks`), at a witch's spread of 8 ÷ fitness
+    (`throwSpread`);
+  - the herder: 30 s after a stray × fitness (`strayTicks`);
+  - the courier and the farmer: how often they look round, every half second ÷ fitness (`lookTicks`), as the one-in-ten
+    chance each time its goal was asked became one in that many; the Tender's (every second) waits for its goals (stage E);
+  - the fisher: 30 to 60 s between catches ÷ fitness, never under a sixth of 30 s with Lure's cut as well (`catchTicks`,
+    `catchLeast`); the digger 1 to 2 minutes ÷ fitness (`digTicks`); the barterer 6 s looking the gold over
+    (`admireTicks`);
+  - the butcher: a stroke every 0.75 s ÷ fitness, never under 0.3 s (`strokeTicks`), and below 100% its yields × fitness
+    (`yieldShare`), through `CarcassButchery.yielding`, a scale around a cut or a stroke of skinning as `capturing` sends
+    its yields elsewhere; a scale over 1 counts as 1, so no butcher beats hand yields;
+  - the hauler: towing, a player's slowdown at 100% and over, never less, and a player's ÷ fitness below, at most 90%
+    (`towing`), through `CarcassDrag.Dragger`, which a dragger that is not a player answers for itself. A minion's drag
+    strength counts only in its fitness now (its pull): before, it eased its slowdown directly, so a cow torso's Beast of
+    Burden towed with less slowdown than a player;
+  - the surgeon's tending (a heart every 5 s ÷ fitness, never under 2 s) and blood at work (25 mB a minute ÷ fitness held
+    50% to 200%, brass a quarter) came in stage B.
+- **The strike rate** (spec 6.4's "+15% for each arm beyond 2, up to +60%", counted in Blow since stage A): blows land
+  that much more often, `MinionGoals.blowTicks`, a second at two arms that strike and 13 ticks at eight. The melee goal
+  (`Bite`, vanilla's `MeleeAttackGoal` with its own blow timing, its first blow at once as vanilla's), a headless body's
+  `Feel` and a bowless sentry's strike all take it.
+- **Shown.** The task screen's hover says what a task's fitness makes of its work, in the task's own numbers
+  (`TaskWords.levers`): "A stroke every 3 s, keeping 25% of each cut", "Shoots every 0.5 s with a bow, spread 3", "Keeps
+  after a stray for 60 s", "Towing, slowed 2.74 times as much as a player, to at most 90%", "Strikes every 0.65 s".
+- **The surgeon** (docs/NEXT.md 1.5):
+  - `Surgery.surgeonAt` takes the fittest awake minion on the Surgeon task within 4 blocks that may cut (`MinionFitness.mayCut`:
+    by default any with a hand; with the surgeon file's `"needs_surgeon_head": true` only a head whose data says
+    `"surgeon": true`, while anyone may still be set to Surgeon to tend). The shipped surgeon file writes the switch out as
+    false.
+  - Its fitness prices the stump: one bucket at 150% and over, two from 75%, three below (`MinionFitness.stumpBuckets`,
+    from the surgeon file's `"one_bucket_from"` and `"two_buckets_from"`). A villager's or pillager's head with a hand
+    is 200%, a zombie's 141%, the zombie villager's shaky hands 88%, a headless body 12%.
+  - `Body` keeps each ragged stump's price per part (`raggedBuckets`); its codec reads a body saved with the old list of
+    ragged parts as a bucket each. `Surgery.raggedCost` replaces the old check: the stump's buckets for fitting anything
+    but a crude prosthetic, 0 for a crude one whatever the stump.
+  - `Surgery.payBlood(player, mB, take)` adds up all the blood the operator carries, taking nothing unless all of it is
+    there: what gives only all it holds or nothing (a bucket) first, in the order carried, while it is no more than is
+    owed, then the rest from what gives any part (a backtank). "Needs 2 buckets of blood" when short.
+  - The surgery screen, before any cut: "Surgeon: Minion (Zombie head), 141%" and "Its stumps cost 2 buckets of blood to
+    fit" at its foot (amber at two, red at three), or "No surgeon by the table"; each ragged stump with its price
+    ("Ragged stump: 2 buckets"). Clients are sent, with each minion, its fitness at its task and, for a surgeon that may
+    cut, its stumps' price (`shownFitness`, `shownStump`), since task and disposition files never go to clients; the
+    server works both out once a second and at once when its task or build changes. The task screen's Surgeon row says
+    the price too, or that with the switch on only a surgeon's head may cut.
+  - The stump is drawn raggeder the dearer it is (`BodyRendering.stump`): at a bucket as before; at two longer, its flaps
+    hanging further and flaring wider, with torn strips at its corners; at three more so. Bloodless mode keeps a plain end.
+  - The JEI surgery pages say any minion with a hand set to Surgeon, and the price by its fitness.
+- **Words** (`BBLang`): the levers' lines, the surgeon and price lines, "a bucket" and "%s buckets", each with bloodless
+  wording where the usual rewording is not enough (an open socket leaves a price in essence; only a surgeon's head may do
+  the ritual's work). `taskWordsReadBloodless` reads them too.
+- **Changed from the design, and why** (each recorded in docs/NEXT.md 1.5, 1.9 and 1.10):
+  - `fitterButcherIsFasterAndCleaner` reads the pace at the carcass (a stroke every 8 ticks at 200%, every 30 at 50%: 3.75
+    times as often), not the count over the whole 20 s: between pieces each butcher looks for its next one (a one-in-twenty
+    chance on every other tick, about two seconds, now and then six) and walks to it, the same for both and at random, so
+    the count ranged from 1.2 to 4 times over the runs, most often about twice, and failed now and then as a check. The
+    poor one's half of a player's beef is read over 200 cuts under the scale its goal cuts under, since each cut's yield is
+    rounded by a dice throw.
+  - The 200% butcher is a butcher's head over a spider's torso on four of its own legs with four zombie arms, and the 50%
+    one a whole villager: the design named only the numbers.
+  - `bloodAtWorkFollowsFitness` adds a brass horse, a little under 200% (brass keeps no hide), at a quarter of what its
+    fitness would cost flesh.
+  - bb-organs had no test of its own for the zombie villager's shaky hands; `shakySurgeonReadsItsKnack` is new.
+  - The Tender's look waits for its goals (stage E).
+- **Found on the way:**
+  - A butcher measured its reach to a piece from its feet, and a resting body's torso lies a block up: standing against
+    the body where its path ended, it was out of reach, stood there five seconds and gave the body up for half a minute
+    (more than half the runs of the new butcher test, one butcher or the other). It now reaches as far across as before and two and a half blocks
+    over or under its feet, as the hauler measures across.
+  - The surgery screen closed at once whenever the server opened it (laying the patient on the table) a tick before the
+    seat they ride reached the client, so `showcase_body_2.png` had shown no screen. It now waits a second for them to be
+    seen on the table.
+- **Tests** (eight new, seven changed): in `gametest/MinionTaskTests` `fitterButcherIsFasterAndCleaner`,
+  `poorHaulerCrawlsFitOneNoBetterThanAPlayer` (and the Hauler row's words on its maker's screen),
+  `bloodAtWorkFollowsFitness`, `moreArmsStrikeMoreOften`, and `taskWordsReadBloodless` reading the new words; in
+  `gametest/MinionFitnessTests` `oneHundredIsToday` with every lever at 100% and its bounds; in `gametest/SurgeonTests`
+  `anySurgeonWithAHandCuts`, `raggedStumpPaidAcrossContainers`, `oldRaggedStumpIsOneBucket`, `shakySurgeonReadsItsKnack`,
+  `surgeonHeadIsTheOwnersCall` cutting both ways, and `amputationNeedsSurgeon`, `raggedStumpCostsBlood`,
+  `raggedStumpPaidFromBacktank` and `safetyFloorNeverNeedsSurgeon` reading the price.
+- **On screen:** `showcase_body_2.png` is the surgery screen on yourself with a zombie-headed surgeon by the table: "Left
+  arm: Ragged stump: 2 buckets" in red, the rest of the body's rows, and at the foot "Surgeon: Minion (Zombie head), 141%"
+  and, in amber, "Its stumps cost 2 buckets of blood to fit"; bloodless, "Open socket: 2 buckets", "Construct (Zombie
+  head)" and "Its open sockets cost 2 buckets of essence to fit", the eyes lenses and the organs pump, bellows and hopper.
+  `showcase_stumps.png` has a stump of each price side by side: a bucket on the right arm (short, its flaps short), two on
+  the left leg (longer flaps, torn at the corners), three on the left arm (the longest, flaring widest), and a clean cut on
+  the right leg; bloodless, plain ends. `showcase_tasks_3.png` (new) hovers on the cow on rabbit legs' Butcher (22%,
+  Hopeless): its mouth and bite, "A stroke every 3 s, keeping 25% of each cut" and "At work: 50 mB of blood a minute";
+  bloodless, the Dismantler and essence. `showcase_tasks_1.png` gains "Keeps after a stray for 60 s" on Herder. The other
+  shots are as they were.
+- The suite is 481 tests (473 and the eight new above), and passed two full runs in a row; the new and changed tests passed
+  five times over, and `fitterButcherIsFasterAndCleaner` (after the reach fix) 34 times.
+
+
+### 15.24 Tasks, stages E and F as built: the Tender, the Butcher's Table, and the fitness shown elsewhere (verified)
+
+docs/NEXT.md item 1 is the design. Stage E (1.10) builds the sixteenth task, the Tender, and puts the butcher to work at the
+Butcher's Table; stage F shows a minion's fitness where the design says, outside the task screen. With them all six stages
+are built. The surgeon (docs/NEXT.md 1.5) is still the owner's call: by default any minion with a hand may cut, its fitness
+pricing the stump, and a datapack's `data/bloodandbones/minion_task/surgeon.json` with `{"needs_surgeon_head": true}`
+limits the cutting to surgeons' heads (the villager and illager families', the witch's among them), the brief's letter.
+Both ways are built and tested (`surgeonHeadFlagDecidesWhoCuts`, `surgeonHeadIsTheOwnersCall`).
+
+**Stage E: the Tender** (`minion/MinionTender`, its goal `Tend`):
+- **One errand a look.** Every second or so at 100% (its task file's `look_every`, a fitter Tender sooner), it looks over
+  its reach of home (8, up to 12) from the loaded chunks' block entities (`survey`): its maker's minions lying powered
+  down, the Blood Troughs with room, the Charging Cradles wanting canisters or sheets or holding empties, the tanks with a
+  bucket of blood to give (a Create Fluid Tank or a Bleeding Rack's tray), and the containers (chests, barrels, shulker
+  boxes, Create Item Vaults: `store`). It then picks the most pressing errand it can run now (`plan`), walks there and
+  does it: a bucket or canister to a fallen minion first; buckets of blood into a trough; canisters and sheets into a
+  cradle; then fetching what they want out of a container (buckets of blood, or empty buckets to fill at a tank when none
+  are to be had, canisters, sheets), filling empty buckets at a tank, taking a cradle's empties out, and last putting back
+  what it no longer wants. It takes as many at a trip as it has room for. A place or a fallen minion it cannot get to, or
+  that turns out not to do what it looked like doing, is left alone half a minute.
+- **Nothing is made or lost.** Every move is tried first and made only whole: a bucket pours into a trough only with room
+  for all of it (NeoForge's `FluidUtil.tryEmptyContainer`, simulated then done), fills at a tank only from a whole bucket
+  of blood (`tryFillContainer` the same way), items come out of a container only as many as it has room for, and what a
+  cradle or container does not take stays in its hands (the insert's remainder). A fallen flesh minion mostly holds less
+  than a bucket: it takes what it holds, the Tender drinks the rest if it is flesh with room, and the troughs by home take
+  what is left, nearest the fallen one first (`MinionTender.share`); with nowhere for it all it does not pour, and its
+  status line says so. A fallen brass minion takes a canister only with room for all of it.
+- **Stocked:** troughs to the full; cradles to eight canisters and up to 16 brass sheets (a new number in the Tender's task
+  file, `"sheets"`); the cradles' empty canisters out to a container.
+- **Its status line** says what it lacks when something is wanted and nothing is to be had: "no blood to be had by the
+  bucket within 8 of home", "no full Soul Canister in a container within 8 of home", "nowhere by home for the rest of a
+  bucket that a fallen minion cannot hold".
+- **The wake rule takes it now** (`MinionTasks.wakes`): stage B skipped it until its goals were built. A whole cow and the
+  cow on rabbit legs wake as Tenders: their best, Herder, waits for food, and Tender and Courier tie at 146% (Tender first
+  in the list).
+
+**Stage E: the butcher at the Butcher's Table:**
+- With a Cleaver, a butcher chops the pieces laid on a Butcher's Table within its reach of home, a stroke a piece at its
+  strokes' pace, as a Deployer does (`ButcherTableBlockEntity.chop`, which now hands what it gives to the butcher, and what
+  it has no room for falls on the table top as a Deployer's chop leaves it). It keeps what comes off, at its yield share,
+  and the Cleaver comes away bloody. Of a carcass and a table the one nearer home goes first. It goes to a table only with
+  a free slot for each kind of thing the piece gives (`yieldKinds`), else it empties itself into the container first.
+- **Found on the way:** a task that stores its takings (`MinionGoals.Deposit`) took them to the block with slots nearest
+  home, even one that takes none of them: a Butcher's Table by home, which takes only a piece, stood for good between a
+  butcher and its chest. It is now the nearest container that takes some of what it carries.
+
+**Stage F: shown elsewhere:**
+- **The Surgery Table's line while building** (stage B's `MinionAssembly.status`): "15 health, speed 0.32; best: Herder
+  200%, Tender 146%; 5 of 5 sockets filled" for the cow on rabbit legs.
+- **What a part brings** (`TaskWords.partFacts`, from the mob data clients already have): its knacks, those of 1 left out;
+  what an arm holds with (a villager's folded pair "hand, 2 of them"), and a leg whose data names a grip ("paw, on a body
+  with 4 legs or more"); a head's disposition, and whether it is a surgeon's head. JEI's Body Parts page shows them under
+  each part (`BodyPartsCategory`), as the mob has them; a carcass piece's tooltip shows its own (a villager's profession
+  with them) under "In a minion:" while Ctrl is held, and "Hold Ctrl for what it brings to a minion's tasks" otherwise
+  (`CarcassPieceItem.facts`).
+- **`/bloodandbones minion fitness`** (`minion/MinionCommand`): the minion under its maker's (or an operator's) crosshair
+  within 16 blocks, a wall stopping the look; what it is doing, then every task's lines as the task screen's hover has
+  them, with the number before it was held where the cap took some off ("(213% before it was held)").
+- **Words** (`BBLang`): the Tender's waits, the part facts, the command's lines; `taskWordsReadBloodless` reads them all in
+  bloodless mode.
+- **Docs:** spec 6.3, 6.4, 6.5, 6.7, 6.8, 6.9 and 8.2 ("a knack for X" throughout); §12; docs/NEXT.md item 1 marked built;
+  the changelog and the README.
+
+**Changed from the design, and why** (each recorded where the design says it, in docs/NEXT.md 1.1, 1.4, 1.9 and 1.10):
+- "The containers there" are chests, barrels, shulker boxes and item vaults, never a machine's slots, a trough, a cradle, a
+  table or a furnace: it would take what a Deployer holds or put an empty bucket in a furnace's fuel slot. "A tank" is a
+  Create Fluid Tank or a Bleeding Rack's tray, never a basin (whose blood waits for a recipe) or a trough (it would pour one
+  trough into another).
+- A fallen flesh minion's bucket is shared out (above) rather than poured in whole as a hand pours one, which would spill
+  what it cannot hold.
+- A cradle is kept to 16 brass sheets, a number the design did not give.
+- The butcher goes to a table only with room for what the piece gives, so what it chops ends in its hands and not on the
+  table top.
+- The Surgery Table's line names the Tender where 1.4's example named the Courier: the two tie, and ties go to the list's
+  order. Its example's numbers were for another build.
+- The command is its own class, not `TraitsCommand`'s, as it reads a live minion rather than a mob's data.
+- A JEI "Minion Tasks" page per task is not built; the design left it for later.
+- The JEI page is one per mob, so it shows a head's knacks as the mob has them; what the carcass kept (a villager's
+  profession) shows on the piece's own tooltip.
+
+**Tests** (five new): in `gametest/MinionTaskTests` `tenderFillsTroughsAndCradles` (a whole cow tends a chest of two buckets
+of blood and two empties, a barrel of three canisters and five sheets, a trough, a Create Fluid Tank of 2000 mB and a cradle
+holding two empties: at the end the trough holds 4000 mB and the tank none, the cradle three canisters and five sheets and
+no empties, the containers the four empty buckets and two empty canisters and nothing else, nothing on the ground or left in
+its hands), `tenderWakesAFallenMinion` (a brass Tender, which drinks no blood, wakes a zombie-torsoed flesh minion holding
+344 mB with the chest's bucket, the other 656 into the trough to the drop, and a brass one with the chest's canister, the
+empties back in the chest; it checks `share` first), `butcherChopsAtTheTable` (a butcher's head over a spider's torso on
+four legs with four zombie arms chops a cow's body and a second laid on through the table's slot; what they give ends in
+the chest beyond the table, none on the ground, the Cleaver bloody) and `fitnessCommandShowsEveryTask`; in
+`gametest/MinionFitnessTests` `partFactsShowKnacksGripsAndDispositions`. `taskWordsReadBloodless` reads the new words.
+- **On screen:** `showcase_tasks_4.png` (new) hovers on the cow on rabbit legs' Tender row, now its task (the brass strip
+  and the pointer): "Tender: 146%, Good", what it does, "Carry ×1: 9 slots, Cow torso, Beast of Burden", "Pace ×1.17, at
+  half weight: speed 0.34, Rabbit leg, Swift I", "Disposition ×1.25: Docile", "Looks round every 0.7 s" and "At work: 17.12
+  mB of blood a minute"; bloodless, it "carries essence to fallen constructs" and the butcher's row is the Dismantler's.
+  `showcase_tasks_2.png` now has the Tender as its task and its own reach, 8. `showcase_jei_knacks.png` (new) is the
+  villager's Body Parts page scrolled to its head: "Knacks: Courier ×1.25, Surgeon ×1.5, Farmer ×1.25", "Disposition:
+  Meek", "A surgeon's head: it may always do the ritual's cutting" (bloodless, "the ritual's work"), then its armour;
+  `showcase_jei_organs.png`, the creeper's page, gains "Knacks: Courier ×1.25, Sapper ×1.5, Guard ×1.25" under its head.
+  `showcase_table_line.png` (new) looks down at the Surgery Table with the cow on rabbit legs being built on it, its line on
+  the action bar: "15 health, speed 0.32; best: Herder 200%, Tender 146%; 5 of 5 sockets filled". The other shots are as
+  they were.
+- The suite is 486 tests (481 and the five new above), and passed three full runs in a row; the five new tests passed ten
+  times over, all at once in one world.
+
+### 15.25 Tasks: the review's findings put right (verified)
+
+A review of stages A to F (docs/NEXT.md item 1) found nineteen things; all were real, and all are put right here. Where
+the design is recorded, docs/NEXT.md 1.1, 1.2, 1.4, 1.6, 1.9 and 1.10 say so too.
+
+**What the screen said and what the goals did now agree:**
+- **Folded arms under a head bite.** `MinionFitness` counted a head as something to strike with (the design's "an arm that
+  is not folded, or a head to bite with"), but `MinionStats.fights()`, which every fight goal asks, was false whenever all
+  the arms were folded. A whole villager set to Guard was shown at its bite's fitness and never took a target, even when
+  hit. `fights()` is now an arm that strikes or a head; with neither it fights nothing, as before.
+- **A sapper with no head** was offered the task (it has the organ) and never acted: its goal and its target goal both
+  needed a head. It now sets itself off at a monster against it or what hurt it there (`MinionGoals.TouchTarget` takes the
+  sapper's monsters; `MinionSapper.Sap` goes on only while it touches its target), never walking after one or seeing a
+  banner; `Feel` leaves it to the sapper's goal.
+- **A task file's `kind`** was read and never used. The disposition scales by it and the screen groups by it (the row
+  carries it in `MinionTaskPayload.Row`); `SocialGoals` asks for the four fight tasks by name, as what they do is code.
+- **A task file's tool** changed only the row. Every goal that waits for a tool now asks `MinionFitness.isTool` (the
+  goal's own test, narrowed to the file's `items`): the butcher's blade, the fisher's rod, the sentry's weapon
+  (`heldWeapon`, so `hasRangedAttack` too), the medic's potions and the herder's bait, and a courier's sample.
+- **A task file's anchors** could name "maker" for a task whose goals work only from home. `MinionTask.checked` leaves out,
+  and logs, an anchor the task's own defaults do not have; with none left, it keeps its own. `Data.anchorFor` is where a
+  task is set when asked for somewhere it is not done: waking, `setTask(task)`, losing a task, the rows and the command.
+- **The looks came half as often as they said.** The courier's, farmer's and Tender's one-in-`lookTicks` chance was taken
+  each time its goal was asked whether to start, which vanilla's `Mob.serverAiStep` does every other tick. `MinionGoals.looks`
+  takes one in half of it, as vanilla's `Goal.reducedTickDelay` does, and the courier's and farmer's `look_every` is 20 (a
+  second, what their jobs did), where it had been written 10 from the one-in-ten. The Tender looks every second at 100%,
+  as its row said, where it had looked every two.
+- **The surgeon's reach** did nothing: `AttendTable` looked 6 blocks round for a table whatever it was set to. It now looks
+  within its reach. It also worked out its tending pace once, as it started; each heart's wait is now read from its
+  fitness then (`nextHeart`).
+- **The farmer's pickup** looked 10 blocks round home while it reaps out to its reach (up to 12): `Collect` reaches its
+  reach and two blocks more (`MinionEntity.RANGE`, now 2).
+
+**Bugs:**
+- **Items copied.** A courier's and a farmer's goals run every tick, and between the ticks it is asked whether to go on it
+  is not; each could take up an item another had taken that tick, the maker walking over it or a second courier, since a
+  stack taken whole was discarded with its count left on it (vanilla's `ItemEntity.playerTouch` puts the count back
+  after it discards). `MinionGoals.pickUp` takes nothing from an item gone or empty and empties one it takes whole
+  (as `HopperBlockEntity.addItem` does); both goals drop an item gone meanwhile.
+- **A courier with its maker** put everything into their pack with `placeItemBackInInventory`, which drops at their feet
+  what does not fit, and then fetched it back, over and over. It now hands over only what fits (`Inventory.add`), keeps
+  the rest, says "its maker has no room for what it brings" and tries again in ten seconds, and never fetches an item its
+  maker threw.
+- **Bad data crashed in play.** A head's `disposition` that is no id ("Brave") or a knack key that is none
+  ("bloodandbones:Surgeon") threw from the entity tick (the server) and from the stats' size (clients). `MobGroup`
+  leaves them out as the data loads, with a warning, and every place that turns them into ids takes a bad one as none.
+- **The farmer's scan and the Tender's tanks.** A fit farmer at reach 12 read four times the blocks a second that today's
+  did. It now reads a band of its box a look (`FARM_SCAN`, today's 17 × 17 × 5 once a second at most), moving to the next
+  band when one has no ripe crop. The Tender asked every block of a Create tank for its fluid, a lookup and two
+  simulations each; it asks each tank once, at its controller (itself while it has none), and goes to its block nearest.
+
+**Shown right:**
+- **JEI's Body Parts page** showed a villager's head with the family's knacks under the professions (Farmer ×1.25 among
+  them), which no villager head in play has: every villager's carcass records its profession, "none" included. The page
+  now reads each part as a new one of its mob has it, the traits made by a mob never added to the world (only for a mob
+  whose parts' data has variants), and says which kept trait changes that ("As a new one has them: its profession changes
+  them", `TaskWords.mobFacts`). The surgeon's fact no longer says "it may always do the ritual's cutting": by default any
+  hand may cut, so it says "it may do the ritual's cutting even where only such heads may".
+
+**Tests made to test:** `headlessFightsOnlyWhatTouchesIt` and `sentryWithNoBowHoldsItsPost` ended at the first blow and put
+the other husk where no targeting could reach it, so a headless guard hunting by sight, or a bowless sentry going for any
+monster in its reach, would have passed. Each now waits three seconds with only what it must leave alone in reach (a husk
+1.8 blocks off for the headless guard, within the 2 it notices things in), asserts no target and no step, then gives it
+the one it may strike and watches on after. The butcher's waste, the sentry's shots, the surgeon's hearts and the
+fisher's wait are now measured from what the goals do (docs/NEXT.md 1.9, "Added after the review").
+
+**The Tender test that failed now and then.** `tenderWakesAFallenMinion` failed 2 times in 125, each time waiting on a
+different errand. Its Tender is 32% fit (3 slots of 9 × the square root of pace 0.92): 63 ticks a look by its number, but
+126 in play, because of the half-rate looks above. Five errands, one a look, came to about 630 ticks of looking alone on
+average, and five random gaps of 126 run past the 1600-tick budget with their walks about 2% of the time. With the looks
+put right its runs took 239 to 650 ticks (38 runs); the test has 3000.
+
+**Tests** (498 in all): the twelve new ones are listed in docs/NEXT.md 1.9 under "Added after the review":
+`foldedArmsBiteWithTheHead`, `headlessSapperGoesOffAtATouch`, `pickUpTakesNothingTwice`,
+`courierKeepsWhatItsMakerHasNoRoomFor`, `poorButcherWastesWhatItCuts`, `sentryShootsByItsFitness`,
+`surgeonTendsByItsFitness`, `fisherWaitsByItsFitness`, `surgeonFindsATableWithinItsReach`, `taskFileKindToolAndAnchorsCount`,
+`taskFileKindAndAnchorsInPlay` and `badMinionDataLeftOutAsItLoads`; `headlessFightsOnlyWhatTouchesIt`,
+`sentryWithNoBowHoldsItsPost`, `cannotOnlyWhenTheBodyCannot`, `villagerArmsArePacifist` and
+`partFactsShowKnacksGripsAndDispositions` were strengthened. The new and strengthened tests and `tenderWakesAFallenMinion`
+passed twenty times over, all in one world; `tenderWakesAFallenMinion` passed 60 times more in batches shared with the
+other Tender, butcher, courier and hunter tests, where it had failed 2 times in 60; and the suite passed three full runs in
+a row.
+
+### 15.26 Tasks: the second review's findings put right (verified)
+
+A second review, of 15.25's fixes, found eight things. All were real; all are put right here, and docs/NEXT.md 1.1, 1.6
+and 1.9 say so where the design is recorded.
+
+- **The farmer's bands ran the wrong way above 100%.** 15.25 sized each look's band as `FARM_SCAN` × the look's ticks, so
+  the quicker a farmer looked, the narrower its band, and a band moved on only when it held no ripe crop: a 200% farmer at
+  its own reach of 8 read its box in three looks (8, 8 and 1 columns), 30 ticks, where a 100% farmer read it whole every
+  20. `MinionGoals.farmColumns` now sizes a band by the longer of its look and a 100% farmer's, so a fitter farmer's band
+  is a 100% farmer's (the whole box at reach 8 or less) and it goes over its box as much sooner as it looks more often,
+  reading at most twice today's blocks a second; a poorer one's band is wider, keeping it to `FARM_SCAN` a tick.
+- **Wings.** A wing's strike style is "flap", damage 0, and `doHurtTarget` only knocked back with it, while Blow left it out
+  and read the head's bite; `fights()` and the Strike need counted it, so a headless body on wings was offered Guard and
+  flapped at what touched it for ever. `MinionStats.Strike.hurts` (not folded, not a flap, some damage) is now what Blow,
+  the Strike need (`MinionFitness.Body.canStrike` is `fights()`), `fights()`, the ranged goal's "arm that hits" and
+  `doHurtTarget` all ask. With no arm that hurts, the head bites and the wings throw back what it bites (0.8, the flap's
+  knockback); with no head either there is nothing to fight with.
+- **A task file's `required` and `carried`** changed only the row: a butcher's file making its blade optional left the
+  butcher standing, ready by its row, with no reason; a fisher's making its rod required showed an untranslated key while it
+  fished by hand; a medic's `carried` false had its row read the hand while it threw from what it carried. The goals decide
+  both, so `MinionTask.checked` keeps the code's and logs a file's word otherwise, and leaves out a tool given to a task
+  that works with none; the task files no longer write them. Where a file narrows the items, `TaskWords.waits` and
+  `TaskWords.tool` name them ("waiting for Flensing Knife", "With Crossbow"; a tag by its conventional name where it has
+  one), where the butcher's line said "a Cleaver or a Flensing Knife" whatever the file named.
+- **The maker's reach with them.** Idle with its maker followed at `FollowMaker`'s fixed 6 and 3 whatever its reach, and a
+  guard with its maker went for anything its maker hit or was hurt by, however far. Idle now sets off 2 blocks past its
+  reach and stops 1 short (never nearer than 3), so 6 and 3 at its own 4 as before; `DefendMaker` takes only what is within
+  its reach of the maker and gives up on one that gets further.
+- **The surgeon with no table** in reach said nothing, and its status line said "at its table". `AttendTable` says "no
+  Surgery Table within %s of where it stands" until it next looks (it looks every 5 s; the line is kept up in between) and
+  clears it once it has one; `TaskWords.where` says "at its table" only while its home is one.
+- **The docs** still had tasks unbuilt: BRIEF-AUDIT's package 13 is marked built and decision 12 narrowed to the surgeon
+  switch, and PARTS-AND-TRAITS says tasks where it said jobs.
+- **Untested:** the look chance, the farmer's bands, the Tender's many-block tank, and a reload that moves a task where it
+  is done. Each now has a test (below). `MinionEntity.looksTaken` counts the looks `MinionGoals.looks` takes, for the test;
+  `MinionTender.tanksFound` gives a Tender's look's tanks.
+
+Checked against the old code: with the old bands `fitFarmerFindsRipeCropsNoLater` failed every run at its sums and 5 runs in
+6 in the world (the 200% farmer took 17 to 25 ticks on average to start on a ripe crop); with the old one-in-n chance
+`looksComeAsOftenAsTheScreenSays` counted 102 to 131 looks for the 240 expected and failed every run.
+
+**Tests** (504 in all): `fitFarmerFindsRipeCropsNoLater`, `looksComeAsOftenAsTheScreenSays`, `wingsBuffetTheHeadBites`,
+`withMeKeepsToItsReach`, `surgeonWithNoTableSaysSo` and `reloadMovesATaskWhereItIsDone` are new;
+`tenderFillsTroughsAndCradles` fills from a tank of eight blocks, and `taskFileKindToolAndAnchorsCount` reads the tool's
+fixed fields and words. The new and changed tests passed ten times over in one world, and the suite passed three full runs
+in a row.
+
+### 15.27 Tasks with the machines, materials and checks: the merge (verified)
+
+The integration branch's organs, checks (15.18), machines (15.19) and materials (15.20) merged into the tasks work
+(15.21 to 15.26, numbered 15.18 to 15.23 before the merge). Where the two met:
+
+- **The butcher is work by hand.** The machines' three paths make a blade in a player's or a minion's hand the hand path
+  (`data/bloodandbones/butchery_path/hand.json`: 60%, each whole piece a 15% chance to botch), scaled by the hand's
+  butchery yield; the tasks made a poor butcher waste part of each cut (`CarcassButchery.yielding`,
+  `MinionFitness.yieldShare`). Both now scale every yield in `CarcassButchery.dropYields`: a minion butcher by a body cuts
+  under `byHand(minion)` and its share, and a 50% butcher gets half a player's hand, a 100% one or better all of it and
+  never more.
+- **The Butcher's Table.** Its chop takes the machines' lying piece and hand share and the tasks' sink for what a minion
+  keeps: `chop(level, cleaver, who)` for a player or a Deployer, `chop(level, cleaver, who, into)` for a minion, whose
+  chop is by hand. `canChop` (the minion's test for work there) now asks the table's part filter too, so a butcher chops
+  only the pieces the filter takes, as a Deployer does.
+- **The Surgery Table and Surgical Rig** keep both sides: the stump priced by the surgeon's fitness and paid from any
+  container (`Surgery.payBlood`), and the rig's organs through `Surgery.harvest` and `organsLeft`.
+- **Sounds.** Minion code plays only the mod's own wet sounds (their bloodless twins through `BloodlessSounds`) and
+  vanilla sounds that are not wet; the bloodless sound test finds none missing a twin.
+- **The showcase** keeps both runs: the villager's Body Parts page and the task screens, then the Surgery Table's line,
+  then the gauge and diving shots after it (the table's line cleared from the action bar first, and the diving gear's
+  toasts before the diving shot). With the machines and materials scenes the frames come slower than the ticks, and a
+  pin or scroll on the task screen three ticks before its picture was not yet drawn in it (the herder's reasons were
+  missing and two shots came out the same); the task screen's steps are now ten ticks apart. Photographed in both modes:
+  the fitness lines, the task screen with the herder's, butcher's and Tender's reasons (the Dismantler's and "essence"
+  in bloodless mode), the Surgery Table's line, the surgeon's stump price on the surgery screen ("open socket" in
+  bloodless mode), the villager's knacks in JEI, the gauge and the diving gauge, the Guillotine's Ponder scene and the
+  materials' basins and Butcher's Hooks.
+
+**Tests:** `poorButcherWastesWhatItCuts` expected a 50% butcher to keep half the table's beef (2 or 3 of 4.22); by hand
+that is half of 60%, less the botching, too few to weigh in one cut. It now checks that each butcher keeps no more
+than half a hand's beef rounded up, and weighs the share over a thousand cuts through the very calls the goals make (the
+body by `byHand` at the butcher's share, the table's `chop` in its hands) against a player's hand: half, give or take
+6% (six times the spread). `butcherChopsAtTheTable` counts all four things a cow's body gives in the chest, since by
+hand any one of them can be botched away.
+
+
+**Suite:** 557 in all (504 here and 504 on the integration branch, 451 of them shared), passing three full runs in a row.
+
+### 15.28 Physics and weight: where you hook it, where the blow lands, what dragging costs (verified)
 
 This partly closes docs/BRIEF-AUDIT.md package 1 (physics: where you hook it and where the blow lands) and closes
 package 3 (weight and the drag penalty). Package 1 is only partly done because the physics does not yet hold for most
@@ -3790,10 +4402,10 @@ What got worse, or did not come right (the tests hold only the cow, one of the m
   but a datapack's own rig of a new mob could then make cells that weigh as whole blocks, so it waits on package 2's
   groups, which say what a mob is made of.
 
-#### 15.21.1 Merged with the integration branch (organs, checks, machines, materials; verified)
+#### 15.28.1 Merged with the integration branch (organs, checks, machines, materials; verified)
 
-This section was 15.19 on its own branch; the integration branch had taken 15.16 to 15.20 meanwhile, so it follows
-them. Merged at a22b8a7.
+This section was 15.19 on its own branch; the integration branch had taken 15.16 to 15.20 meanwhile, so it followed
+them as 15.21. The tasks work took 15.21 to 15.27 in the next merge (15.28.2), so it is 15.28 now. Merged at a22b8a7.
 
 - **The Shackle Hook and the Shackle Trolley** (both sides changed them). Kept both: the checks' gentle hoist (15.18:
   the neck junction drawn up at no more than 3 blocks a second, a push at the hooked point carrying the whole

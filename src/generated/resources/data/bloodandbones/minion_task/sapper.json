@@ -1,0 +1,12 @@
+{
+  "anchors": [
+    "home"
+  ],
+  "kind": "fight",
+  "main": "pace",
+  "max_reach": 32,
+  "numbers": {},
+  "reach": 16,
+  "second": "toughness",
+  "stores": false
+}

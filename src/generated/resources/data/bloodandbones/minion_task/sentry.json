@@ -1,0 +1,20 @@
+{
+  "anchors": [
+    "home"
+  ],
+  "kind": "fight",
+  "main": "ranged",
+  "max_reach": 32,
+  "numbers": {
+    "bow_every": 20.0,
+    "crossbow_max": 40.0,
+    "crossbow_min": 20.0,
+    "spread": 14.0,
+    "spread_per_difficulty": 4.0,
+    "trident_every": 40.0
+  },
+  "reach": 16,
+  "second": "sight",
+  "stores": false,
+  "tool": {}
+}

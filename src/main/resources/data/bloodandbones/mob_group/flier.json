@@ -32,11 +32,10 @@
     },
     "head": {
       "minion": {
-        "jobs": [
-          "bloodandbones:sentry",
-          "bloodandbones:scavenger",
-          "bloodandbones:companion"
-        ],
+        "knacks": {
+          "bloodandbones:courier": 1.5,
+          "bloodandbones:sentry": 1.25
+        },
         "disposition": "nocturnal",
         "bite": {
           "style": "bite"

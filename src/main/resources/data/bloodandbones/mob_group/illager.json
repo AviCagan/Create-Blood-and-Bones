@@ -20,11 +20,12 @@
   "parts": {
     "head": {
       "minion": {
-        "jobs": [
-          "bloodandbones:surgeon",
-          "bloodandbones:guard",
-          "bloodandbones:sentry"
-        ],
+        "knacks": {
+          "bloodandbones:surgeon": 1.5,
+          "bloodandbones:sentry": 1.25,
+          "bloodandbones:guard": 1.25
+        },
+        "surgeon": true,
         "disposition": "brave"
       },
       "armour": [

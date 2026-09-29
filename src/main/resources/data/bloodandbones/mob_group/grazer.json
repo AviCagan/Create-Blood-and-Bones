@@ -27,11 +27,10 @@
     },
     "head": {
       "minion": {
-        "jobs": [
-          "bloodandbones:herder",
-          "bloodandbones:courier",
-          "bloodandbones:companion"
-        ],
+        "knacks": {
+          "bloodandbones:herder": 1.25,
+          "bloodandbones:courier": 1.25
+        },
         "disposition": "docile",
         "bite": {
           "style": "punch",

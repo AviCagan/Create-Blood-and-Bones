@@ -21,8 +21,9 @@ import java.util.Map;
 
 /**
  * Surgery: each part of the body of whoever lies on the table (you, or someone you are working on), what it
- * is now, and what the thing on the table would do to it. It closes when they get off the table, or when you
- * walk away from it.
+ * is now (a ragged stump with its price), and what the thing on the table would do to it; and, on a player, before any
+ * cut, the surgeon by the table, how fit it is and what a stump it cuts will cost (docs/NEXT.md 1.5). It closes when they
+ * get off the table, or when you walk away from it.
  */
 public class SurgeryScreen extends Screen {
     private final BlockPos table;
@@ -31,6 +32,11 @@ public class SurgeryScreen extends Screen {
 
     /** Height of a part's row: nine parts fit a small window. */
     private static final int ROW = 20;
+    /** Ticks it waits for the table's seat to reach this client before closing for want of a patient on it. */
+    private static final int SETTLING = 20;
+    private int age;
+    /** Whoever it is for has been seen on the table since it opened. */
+    private boolean seen;
 
     private int top() {
         return Math.max(32, (height - BodyPart.values().length * ROW - 30) / 2 + 10);
@@ -98,8 +104,9 @@ public class SurgeryScreen extends Screen {
             buttons.put(part, addRenderableWidget(button));
             i++;
         }
+        // beside the surgeon's lines, at the foot
         addRenderableWidget(Button.builder(Component.translatable("bloodandbones.surgery.done"), b -> onClose())
-                .bounds(width / 2 - 50, top + BodyPart.values().length * ROW + 6, 100, 20).build());
+                .bounds(width / 2 + 80, top + BodyPart.values().length * ROW + 6, 60, 20).build());
         refresh();
     }
 
@@ -130,7 +137,10 @@ public class SurgeryScreen extends Screen {
     public void tick() {
         Player surgeon = Minecraft.getInstance().player;
         net.minecraft.world.entity.LivingEntity patient = patient();
-        if (surgeon == null || patient == null || !com.avicagan.bloodandbones.body.Surgery.mayOperate(surgeon, patient, table)) {
+        boolean may = surgeon != null && patient != null && com.avicagan.bloodandbones.body.Surgery.mayOperate(surgeon, patient, table);
+        seen |= may;
+        // the server opens it as it lays them on the table, and the seat they ride may reach this client a tick after it
+        if (!may && (seen || ++age > SETTLING)) {
             onClose();
             return;
         }
@@ -156,15 +166,50 @@ public class SurgeryScreen extends Screen {
         for (BodyPart part : BodyPart.values()) {
             Component state = switch (body.state(part)) {
                 case NATURAL -> Component.translatable("bloodandbones.surgery.state.natural");
-                case MISSING -> Component.translatable(body.ragged(part) ? "bloodandbones.surgery.state.ragged" : "bloodandbones.surgery.state.missing");
+                // a ragged stump shows what fitting there costs
+                case MISSING -> body.ragged(part) ? Component.translatable("bloodandbones.surgery.state.ragged_price", Surgery.buckets(body.raggedBuckets(part)))
+                        : Component.translatable("bloodandbones.surgery.state.missing");
                 case IMPLANT -> body.works(part, player) ? body.implant(part).getHoverName()
                         : Component.translatable("bloodandbones.surgery.state.dead", body.implant(part).getHoverName());
             };
             int y = top + i * ROW + 5;
-            graphics.drawString(font, Component.translatable(part.translationKey()), width / 2 - 140, y, 0xFFFFFF);
-            graphics.drawString(font, state, width / 2 - 60, y, body.state(part) == Body.State.MISSING ? 0xD04040 : 0xA0A0A0);
+            graphics.drawString(font, Component.translatable(part.translationKey()), width / 2 - 195, y, 0xFFFFFF);
+            graphics.drawString(font, state, width / 2 - 125, y, body.state(part) == Body.State.MISSING ? 0xD04040 : 0xA0A0A0);
             i++;
         }
+        if (player instanceof Player) {
+            surgeonLines(graphics, player, top + BodyPart.values().length * ROW + 6);
+        }
+    }
+
+    /**
+     * On a player, whose flesh comes off only by a surgeon minion's hand: the fittest surgeon by the table, how fit it is,
+     * and what a stump it cuts will cost to fit later (docs/NEXT.md 1.5), shown before any cut; or that there is none.
+     */
+    private void surgeonLines(GuiGraphics graphics, net.minecraft.world.entity.LivingEntity patient, int y) {
+        com.avicagan.bloodandbones.minion.MinionEntity surgeon = Surgery.surgeonAt(patient.level(), table);
+        int x = width / 2 - 195;
+        if (surgeon == null) {
+            graphics.drawString(font, Component.translatable("bloodandbones.surgery.no_surgeon"), x, y, 0xD04040);
+            graphics.drawString(font, Component.translatable("bloodandbones.surgery.no_surgeon.hint"), x, y + 11, 0xA0A0A0);
+            return;
+        }
+        graphics.drawString(font, Component.translatable("bloodandbones.surgery.surgeon", surgeonName(surgeon),
+                com.avicagan.bloodandbones.minion.TaskWords.percent(surgeon.shownFitness())), x, y, 0xFFFFFF);
+        int buckets = Surgery.stumpBuckets(surgeon);
+        graphics.drawString(font, Component.translatable("bloodandbones.surgery.surgeon_price", Surgery.buckets(buckets)), x, y + 11,
+                buckets <= 1 ? 0xA0A0A0 : buckets == 2 ? 0xE0A040 : 0xD04040);
+    }
+
+    /** Its own name if it has one, else by its head: "Minion (Villager head)". */
+    private static Component surgeonName(com.avicagan.bloodandbones.minion.MinionEntity surgeon) {
+        if (surgeon.hasCustomName()) {
+            return surgeon.getDisplayName();
+        }
+        var head = surgeon.build().map(build -> com.avicagan.bloodandbones.minion.MinionStats.head(
+                com.avicagan.bloodandbones.parts.PartsData.of(surgeon.level()), build)).orElse(null);
+        return head == null ? Component.translatable("bloodandbones.surgery.surgeon_headless")
+                : Component.translatable("bloodandbones.surgery.surgeon_head", net.minecraft.core.registries.BuiltInRegistries.ENTITY_TYPE.get(head.entity()).getDescription());
     }
 
     @Override

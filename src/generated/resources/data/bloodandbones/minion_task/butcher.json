@@ -1,0 +1,21 @@
+{
+  "anchors": [
+    "home"
+  ],
+  "grips": {
+    "hand": 1.0,
+    "mouth": 0.35,
+    "tentacle": 0.5
+  },
+  "kind": "work",
+  "main": "hands",
+  "max_reach": 12,
+  "numbers": {
+    "stroke": 15.0,
+    "stroke_least": 6.0
+  },
+  "reach": 6,
+  "second": "blow",
+  "stores": true,
+  "tool": {}
+}

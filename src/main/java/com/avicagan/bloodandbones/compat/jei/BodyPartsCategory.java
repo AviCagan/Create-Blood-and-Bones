@@ -4,6 +4,7 @@ import com.avicagan.bloodandbones.BloodAndBones;
 import com.avicagan.bloodandbones.carcass.butchery.ButcheryManager;
 import com.avicagan.bloodandbones.carcass.butchery.Yield;
 import com.avicagan.bloodandbones.minion.MinionData;
+import com.avicagan.bloodandbones.minion.TaskWords;
 import com.avicagan.bloodandbones.parts.Hides;
 import com.avicagan.bloodandbones.parts.Organs;
 import com.avicagan.bloodandbones.parts.PartsData;
@@ -40,7 +41,8 @@ import java.util.Set;
 
 /**
  * A mob's Body Parts page (docs/PARTS-AND-TRAITS.md section 7.9), beside its Butchery page: what each of its parts gives
- * fitted into a minion and in carcass armour, its hide, and its organs (the items the Surgical Rig cuts out of it, shown
+ * fitted into a minion (its traits, and what it brings to a minion's tasks: its knacks, what it holds with, a head's
+ * disposition; docs/NEXT.md 1.4) and in carcass armour, its hide, and its organs (the items the Surgical Rig cuts out of it, shown
  * so JEI finds this page from a Gland) and what each of them gives, and a full set of it. Read from the parts data the
  * server sent, so a datapack's changes show.
  */
@@ -78,7 +80,7 @@ public class BodyPartsCategory extends AbstractRecipeCategory<BodyPartsCategory.
             for (ResourceLocation organ : organIds) {
                 organs.add(Organs.stack(store, organ, entity, false));
             }
-            out.add(new Entry(entity, icon, organs, hides(entity), lines(store, resolved, organIds)));
+            out.add(new Entry(entity, icon, organs, hides(entity), lines(store, resolved, organIds, fresh(type, resolved))));
         }
         return out;
     }
@@ -104,7 +106,27 @@ public class BodyPartsCategory extends AbstractRecipeCategory<BodyPartsCategory.
         return out;
     }
 
-    private static List<FormattedText> lines(PartsData.Store store, ResolvedMob resolved, Set<ResourceLocation> organIds) {
+    /**
+     * What a new one of this mob records of itself that its parts' data reads (an unemployed villager's profession, "none";
+     * a panda's gene as it is born), as a carcass of it would keep it (CarcassLook#traits): made, never added to the world,
+     * and only for a mob whose data has variants that change what its parts bring to a minion's tasks.
+     */
+    private static Map<String, String> fresh(EntityType<?> type, ResolvedMob resolved) {
+        var level = Minecraft.getInstance().level;
+        boolean varies = resolved.minion().keySet().stream().anyMatch(key -> !MinionData.variantTraits(resolved, key, "knacks", "jobs", "disposition", "surgeon").isEmpty());
+        if (level == null || !varies) {
+            return Map.of();
+        }
+        try {
+            return type.create(level) instanceof net.minecraft.world.entity.LivingEntity living
+                    ? Map.copyOf(com.avicagan.bloodandbones.carcass.CarcassLook.traits(living)) : Map.of();
+        } catch (RuntimeException e) {
+            BloodAndBones.LOGGER.debug("Could not make a {} to read its traits for its Body Parts page", BuiltInRegistries.ENTITY_TYPE.getKey(type), e);
+            return Map.of();
+        }
+    }
+
+    private static List<FormattedText> lines(PartsData.Store store, ResolvedMob resolved, Set<ResourceLocation> organIds, Map<String, String> fresh) {
         List<FormattedText> out = new ArrayList<>();
         List<String> keys = new ArrayList<>(new java.util.TreeSet<>(resolved.parts().keySet()));
         resolved.minion().keySet().stream().filter(k -> !keys.contains(k)).forEach(keys::add);
@@ -115,12 +137,17 @@ public class BodyPartsCategory extends AbstractRecipeCategory<BodyPartsCategory.
         for (String key : keys) {
             List<TraitList.Resolved> minion = MinionData.traits(resolved, key);
             ResolvedMob.Part part = resolved.parts().get(key);
-            if (minion.isEmpty() && (part == null || part.armour().isEmpty() && part.pieces().isEmpty())) {
+            // what the part brings to a minion's tasks: its knacks, what it holds with, a head's disposition
+            List<Component> facts = TaskWords.mobFacts(resolved, fresh, key);
+            if (minion.isEmpty() && facts.isEmpty() && (part == null || part.armour().isEmpty() && part.pieces().isEmpty())) {
                 continue;
             }
             out.add(partName(key).withStyle(ChatFormatting.DARK_RED, ChatFormatting.BOLD));
             if (!minion.isEmpty()) {
                 out.add(Component.translatable("bloodandbones.jei.body_parts.minion", list(store, minion)).withStyle(ChatFormatting.DARK_GRAY));
+            }
+            for (Component fact : facts) {
+                out.add(Component.literal(" ").append(fact).withStyle(ChatFormatting.DARK_GRAY));
             }
             if (part != null && !part.armour().isEmpty()) {
                 out.add(Component.translatable("bloodandbones.jei.body_parts.armour", list(store, part.armour())).withStyle(ChatFormatting.DARK_GRAY));

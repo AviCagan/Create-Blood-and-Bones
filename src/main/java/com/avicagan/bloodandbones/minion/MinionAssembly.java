@@ -33,6 +33,7 @@ import net.minecraft.world.phys.AABB;
 import org.jetbrains.annotations.Nullable;
 import org.joml.Vector3d;
 
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
@@ -403,12 +404,31 @@ public final class MinionAssembly {
         return minion;
     }
 
-    /** A line on what is built so far: its health, speed and what it would do (woken with nothing in hand). */
+    /**
+     * A line on what is built so far (docs/NEXT.md 1.4): its health, speed, the two tasks it would do best, and its sockets:
+     * "15 health, speed 0.33; best: Herder 200%, Courier 146%; 4 of 6 sockets filled". The maker sees each part's effect as
+     * it goes on.
+     */
     public static Component status(PartsData.Store store, MinionBuild build) {
         MinionStats stats = MinionStats.of(store, build);
-        ResourceLocation job = MinionJobs.wakeJob(MinionJobs.offered(store, build, stats, ItemStack.EMPTY, false));
-        MutableComponent line = Component.translatable("bloodandbones.minion.frame_stats", Math.round(stats.health()), String.format("%.2f", stats.speed()),
-                Component.translatable(MinionEntity.jobKey(job)), build.parts().size(), MinionBody.sockets(store, build.torso()).size());
-        return line;
+        MinionFitness.Body body = MinionFitness.body(store, build, stats);
+        List<MinionFitness.Row> rows = new ArrayList<>();
+        for (MinionTask task : MinionTask.values()) {
+            MinionFitness.Row row = MinionFitness.row(store, body, task, MinionFitness.Context.NONE);
+            if (task.rated() && row.can()) {
+                rows.add(row);
+            }
+        }
+        // the fittest first, ties in the list's order
+        rows.sort(java.util.Comparator.comparingDouble(r -> -r.fitness()));
+        MutableComponent best = Component.empty();
+        for (int i = 0; i < Math.min(2, rows.size()); i++) {
+            if (i > 0) {
+                best.append(", ");
+            }
+            best.append(Component.translatable("bloodandbones.minion.task_fitness", TaskWords.name(rows.get(i).task()), TaskWords.percent(rows.get(i).fitness())));
+        }
+        return Component.translatable("bloodandbones.minion.frame_stats", Math.round(stats.health()), String.format("%.2f", stats.speed()),
+                rows.isEmpty() ? Component.translatable(MinionTask.IDLE.nameKey()) : best, build.parts().size(), MinionBody.sockets(store, build.torso()).size());
     }
 }

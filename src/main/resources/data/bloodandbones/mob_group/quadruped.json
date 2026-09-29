@@ -78,10 +78,9 @@
     },
     "head": {
       "minion": {
-        "jobs": [
-          "bloodandbones:companion",
-          "bloodandbones:courier"
-        ],
+        "knacks": {
+          "bloodandbones:courier": 1.25
+        },
         "disposition": "loyal",
         "bite": {
           "style": "bite",
@@ -103,6 +102,11 @@
       "armour": [
         "bloodandbones:swift"
       ]
+    },
+    "leg.front": {
+      "minion": {
+        "grip": "hoof"
+      }
     },
     "tail": {
       "armour": [

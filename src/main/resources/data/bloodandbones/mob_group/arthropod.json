@@ -35,11 +35,10 @@
     },
     "head": {
       "minion": {
-        "jobs": [
-          "bloodandbones:hunter",
-          "bloodandbones:guard",
-          "bloodandbones:companion"
-        ],
+        "knacks": {
+          "bloodandbones:hunter": 1.5,
+          "bloodandbones:guard": 1.25
+        },
         "disposition": "nocturnal",
         "bite": {
           "style": "bite"
@@ -54,7 +53,8 @@
         "movement": {
           "mode": "climb",
           "gait": "skitter"
-        }
+        },
+        "grip": "claw"
       },
       "armour": {
         "leggings": [

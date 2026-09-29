@@ -11,8 +11,9 @@ import com.avicagan.bloodandbones.carcass.CarcassSavedData;
 import com.avicagan.bloodandbones.carcass.ShackleHookBlock;
 import com.avicagan.bloodandbones.carcass.ShackleHookBlockEntity;
 import com.avicagan.bloodandbones.carcass.rig.RigManager;
-import com.avicagan.bloodandbones.item.CleaverItem;
+import com.avicagan.bloodandbones.cooking.ButcherTableBlockEntity;
 import com.avicagan.bloodandbones.item.FlensingKnifeItem;
+import com.avicagan.bloodandbones.network.MinionTaskPayload;
 import com.avicagan.bloodandbones.parts.PartsData;
 import com.avicagan.bloodandbones.registry.BBTags;
 import com.google.gson.JsonElement;
@@ -26,6 +27,7 @@ import net.minecraft.nbt.CompoundTag;
 import net.minecraft.network.chat.Component;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.level.ServerLevel;
+import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.sounds.SoundEvents;
 import net.minecraft.sounds.SoundSource;
 import net.minecraft.tags.BlockTags;
@@ -56,12 +58,10 @@ import net.minecraft.world.entity.projectile.ThrownPotion;
 import net.minecraft.world.entity.projectile.ThrownTrident;
 import net.minecraft.world.item.BowItem;
 import net.minecraft.world.item.CrossbowItem;
-import net.minecraft.world.item.FishingRodItem;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.Items;
 import net.minecraft.world.item.ProjectileWeaponItem;
 import net.minecraft.world.item.SpawnEggItem;
-import net.minecraft.world.item.TridentItem;
 import net.minecraft.world.item.alchemy.PotionContents;
 import net.minecraft.world.item.enchantment.EnchantmentHelper;
 import net.minecraft.world.item.enchantment.Enchantments;
@@ -78,11 +78,13 @@ import net.minecraft.world.phys.EntityHitResult;
 import net.minecraft.world.phys.Vec3;
 import net.neoforged.bus.api.SubscribeEvent;
 import net.neoforged.neoforge.capabilities.Capabilities;
+import net.neoforged.neoforge.common.util.FakePlayer;
 import net.neoforged.neoforge.event.EventHooks;
 import net.neoforged.neoforge.event.entity.EntityJoinLevelEvent;
 import net.neoforged.neoforge.event.entity.ProjectileImpactEvent;
 import net.neoforged.neoforge.items.IItemHandler;
 import net.neoforged.neoforge.items.ItemHandlerHelper;
+import net.neoforged.neoforge.network.PacketDistributor;
 import org.jetbrains.annotations.Nullable;
 import org.joml.Vector3d;
 
@@ -92,77 +94,44 @@ import java.util.EnumSet;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Objects;
+import java.util.Optional;
 import java.util.Set;
 import java.util.UUID;
 
 /**
- * The jobs heads offer beyond the first few (docs/PARTS-AND-TRAITS.md section 6.9), each a package of goals: the
- * sentry, scavenger, herder, fisher, hunter, hauler, butcher, medic, barterer and digger. A head's data offers a job;
- * the job stands only while its needs are met: a sentry needs a ranged attack in hand, a fisher a rod (or a fish's
- * mouth), a butcher a Cleaver or Flensing Knife. What it holds its maker hands it: one of whatever they use on it
- * (the old one comes back), and an empty hand takes it back; arrows for its bow and a medic's healing potions go in
- * with what it carries. What a scavenger fetches and what a herder leads by is whatever it holds. A brass minion's
- * filter ({@link MinionFilter}) narrows what the scavenger, herder, hunter and sentry take.
+ * The tasks at work (docs/NEXT.md 1.1): each task's package of goals, given to every minion and working only while it has
+ * that task, and what giving a task takes: the task a minion wakes to, an old job read as a task, a data reload that leaves
+ * its body unable to do its task, the task screen's rows and the requests it sends back (docs/NEXT.md 1.3), and what its
+ * maker hands it to hold. The work: the guard, sentry, hunter, sapper ({@link MinionSapper}), surgeon (at its table,
+ * {@link MinionGoals.AttendTable}), medic, herder, courier, hauler, farmer ({@link MinionGoals.Farm}), fisher, butcher,
+ * barterer, digger and Tender ({@link MinionTender}); Idle only stays at home or follows its maker. Five tasks can be done
+ * "with me", round the maker: Idle, Guard, Hunter, Medic and Courier.
+ * <p>
+ * What it holds its maker hands it: one of whatever they use on it (the old one comes back), and an empty hand takes it
+ * back; arrows for its bow and a medic's healing potions go in with what it carries. A missing tool never moves it to
+ * another task: it waits for one, and says so. What a courier fetches and what a herder leads by is whatever it holds. A
+ * brass minion's filter ({@link MinionFilter}) narrows what the courier, herder, hunter, guard and sentry take.
  * <p>
  * None of them breaks or places a block, but for the sapper's blast where the server allows it ({@link MinionSapper}).
  * The two game events here are the sentry's: its arrows pass through its own side, and a crossbow's can be picked up.
  */
-public final class MinionJobs {
-    public static final ResourceLocation SENTRY = BloodAndBones.asResource("sentry");
-    public static final ResourceLocation SCAVENGER = BloodAndBones.asResource("scavenger");
-    public static final ResourceLocation HERDER = BloodAndBones.asResource("herder");
-    public static final ResourceLocation FISHER = BloodAndBones.asResource("fisher");
-    public static final ResourceLocation HUNTER = BloodAndBones.asResource("hunter");
-    public static final ResourceLocation HAULER = BloodAndBones.asResource("hauler");
-    public static final ResourceLocation BUTCHER = BloodAndBones.asResource("butcher");
-    public static final ResourceLocation MEDIC = BloodAndBones.asResource("medic");
-    public static final ResourceLocation BARTERER = BloodAndBones.asResource("barterer");
-    public static final ResourceLocation DIGGER = BloodAndBones.asResource("digger");
-    public static final ResourceLocation SAPPER = MinionSapper.SAPPER;
-
-    /** Jobs worked from home: idle, it goes back there (a sentry to its post). */
-    public static final List<ResourceLocation> HOMEBODIES = List.of(BloodAndBones.asResource("farmer"), BloodAndBones.asResource("courier"),
-            BloodAndBones.asResource("guard"), SENTRY, SCAVENGER, HERDER, FISHER, HUNTER, HAULER, BUTCHER, MEDIC, BARTERER, DIGGER, SAPPER);
-    /** Jobs whose takings go into the nearest container by home. */
-    public static final List<ResourceLocation> STORERS = List.of(BloodAndBones.asResource("courier"), BloodAndBones.asResource("farmer"),
-            FISHER, BUTCHER, DIGGER, BARTERER);
-
-    /** How far a sentry shoots, and looks for something to shoot. */
-    public static final double SENTRY_RANGE = 16.0;
-    /** How far a scavenger looks for what it fetches. */
-    public static final double FETCH_RANGE = 32.0;
-    /** A herder keeps its animals this near home, and looks this far out for strays. */
-    public static final double HERD_HOME = 8.0;
-    public static final double HERD_SEARCH = 20.0;
-    /** A hunter hunts this near home. */
-    public static final double HUNT_RANGE = 12.0;
-    /** A hauler fetches carcasses this far from home, to a hook or rack this far from the carcass. */
-    public static final double HAUL_RANGE = 24.0;
-    /** A butcher works on carcasses this near home. */
-    public static final double BUTCHER_RANGE = 6.0;
-    /** A medic looks this far for the hurt, and throws from this near. */
-    public static final double MEDIC_RANGE = 16.0;
+public final class MinionTasks {
+    /** The least reach its maker may set (docs/NEXT.md 1.1); the most is twice the task's own, its data's "max_reach". */
+    public static final int LEAST_REACH = 2;
+    /** How near its maker must stand to use its task screen (docs/NEXT.md 1.3). */
+    public static final double SCREEN_REACH = 8.0;
+    /** A medic throws from this near. */
     public static final double THROW_RANGE = 8.0;
-    /** Water a fisher fishes, ground a digger sniffs and a container a barterer takes gold from, this near home. */
-    public static final int FISH_RANGE = 8;
-    public static final int DIG_RANGE = 6;
-    public static final int BARTER_RANGE = 6;
-    /** Ticks at the water between catches (30 to 60 seconds, less with Lure) and at the ground between finds. */
-    public static final int CATCH_MIN = 600;
-    public static final int CATCH_MAX = 1200;
-    public static final int DIG_MIN = 1200;
-    public static final int DIG_MAX = 2400;
-    /** A piglin looks the gold over this long before it trades. */
-    public static final int ADMIRE = 120;
     /** The work a fisher or digger still has to do before its next catch or find, kept with the minion. */
     private static final String WORK_LEFT = BloodAndBones.MOD_ID + ":work_left";
 
-    private MinionJobs() {
+    private MinionTasks() {
     }
 
-    /** Every job's goals, given to every minion; each works only while the minion has its job. */
+    /** Every task's goals, given to every minion; each works only while the minion has its task. */
     static void goals(MinionEntity minion, GoalSelector goals, GoalSelector targets) {
         goals.addGoal(2, new Sentry(minion));
+        goals.addGoal(2, new SentryStrike(minion));
         goals.addGoal(2, new MinionSapper.Sap(minion));
         goals.addGoal(3, new Fish(minion));
         goals.addGoal(3, new Dig(minion));
@@ -171,111 +140,225 @@ public final class MinionJobs {
         goals.addGoal(3, new Haul(minion));
         goals.addGoal(3, new Medic(minion));
         goals.addGoal(3, new Herd(minion));
-        goals.addGoal(5, new Scavenge(minion));
-        // a sentry takes as its target a monster it can see within its reach; a hunter the prey near home
+        goals.addGoal(3, new MinionTender.Tend(minion));
+        goals.addGoal(5, new Fetch(minion));
+        // a sentry takes as its target a monster it can see within its range of its post, or with no ranged attack, one it
+        // can strike from where it stands; a hunter the prey near where it hunts
         targets.addGoal(3, new NearestAttackableTargetGoal<>(minion, Mob.class, 10, true, false,
-                target -> target instanceof Enemy && !(target instanceof MinionEntity) && minion.filter().allows(minion.level(), target)) {
+                target -> target instanceof Enemy && !(target instanceof MinionEntity) && minion.filter().allows(minion.level(), target)
+                        && (minion.hasRangedAttack() || minion.isWithinMeleeAttackRange(target))) {
             @Override
             public boolean canUse() {
-                return minion.hasJob("sentry") && !minion.stats().mindless() && minion.hasRangedAttack() && super.canUse();
+                return minion.hasTask(MinionTask.SENTRY) && !minion.stats().mindless() && minion.stats().fights() && super.canUse();
+            }
+
+            @Override
+            public boolean canContinueToUse() {
+                LivingEntity target = minion.getTarget();
+                // with no ranged attack, only while it can still strike it from its post
+                return super.canContinueToUse() && (minion.hasRangedAttack() || target != null && minion.isWithinMeleeAttackRange(target));
             }
 
             @Override
             protected double getFollowDistance() {
                 // asked first while it is being made, before it has a build
-                return minion.build().isEmpty() ? SENTRY_RANGE : Math.min(SENTRY_RANGE, minion.stats().sight());
+                return minion.build().isEmpty() ? 16.0 : Math.min(minion.reach(), minion.stats().sight());
             }
         });
         targets.addGoal(3, new Hunt(minion));
     }
 
-    // ---- what it can do now
+    // ---- the task it wakes to, and an old job read as a task (docs/NEXT.md 1.3 and 1.8)
 
     /**
-     * The jobs its head offers that it can do now, in the head's order (docs/PARTS-AND-TRAITS.md section 6.4); with
-     * none, it keeps its maker company.
+     * The task it wakes to: its fittest at home that waits on nothing it lacks, holding nothing (a villager-headed body made
+     * at the table is ready to operate), ties going to the list's order; with none, Idle. Never Hunter, which would go
+     * straight for the animals kept round the table it was made at, nor Sapper, which would spend its blast on the first
+     * monster to wander by: its maker puts it to either.
      */
-    public static List<ResourceLocation> offered(MinionEntity minion) {
-        MinionBuild build = minion.build().orElse(null);
-        return build == null ? List.of(MinionStats.COMPANION)
-                : offered(PartsData.of(minion.level()), build, minion.stats(), minion.getMainHandItem(), minion.hasRangedAttack());
-    }
-
-    /** The same for a build not yet woken (the table's line on it), holding whatever it would hold. */
-    public static List<ResourceLocation> offered(PartsData.Store store, MinionBuild build, MinionStats stats, ItemStack held, boolean ranged) {
-        List<ResourceLocation> out = new ArrayList<>();
-        for (ResourceLocation job : stats.jobs()) {
-            if (needsMet(store, build, stats, held, ranged, job)) {
-                out.add(job);
+    public static MinionTask wakeTask(MinionEntity minion) {
+        MinionTask best = MinionTask.IDLE;
+        float fittest = 0.0F;
+        for (MinionTask task : MinionTask.values()) {
+            if (!wakes(task)) {
+                continue;
+            }
+            MinionFitness.Row row = minion.row(task, MinionTask.Anchor.HOME);
+            if (row.ready() && row.fitness() > fittest) {
+                best = task;
+                fittest = row.fitness();
             }
         }
-        if (out.isEmpty()) {
-            out.add(MinionStats.COMPANION);
-        }
-        return out;
+        return best;
+    }
+
+    /** Whether it may wake to this task (see {@link #wakeTask}). */
+    public static boolean wakes(MinionTask task) {
+        return task.rated() && task != MinionTask.HUNTER && task != MinionTask.SAPPER;
+    }
+
+    /** Its maker's action bar as it wakes: "Woke as a Surgeon (200%)". */
+    public static Component woke(MinionEntity minion) {
+        MinionTask task = minion.task();
+        return task.rated() ? Component.translatable("bloodandbones.minion.woke", TaskWords.name(task), TaskWords.percent(minion.row(task, MinionTask.Anchor.HOME).fitness()))
+                : Component.translatable("bloodandbones.minion.woke_idle", TaskWords.name(task));
     }
 
     /**
-     * A job's needs beyond the build: a ranged attack for a sentry, a rod or a fish's mouth for a fisher, a blade for a
-     * butcher, an organ that detonates for a sapper.
+     * A minion saved with a job, from before tasks (docs/NEXT.md 1.8): companion and bodyguard become Guard with its maker,
+     * a guard Guard at home, a sentry Sentry at its post, a scavenger a Courier at home keeping what it holds as its sample,
+     * any other job the same task at home, and a job no task is named after Idle at home. Its home is kept. Every old job was
+     * offered under stricter rules than a task's, so it can do what it gets; should a datapack's retune say otherwise, it is
+     * Idle (with its maker, if it was going to work with them).
      */
-    static boolean needsMet(PartsData.Store store, MinionBuild build, MinionStats stats, ItemStack held, boolean ranged, ResourceLocation job) {
-        if (job.equals(SENTRY)) {
-            return ranged;
-        }
-        if (job.equals(SAPPER)) {
-            return MinionSapper.hasDetonator(store, build);
-        }
-        if (job.equals(FISHER)) {
-            return !stats.strikes().isEmpty() && held.getItem() instanceof FishingRodItem || ownTool(store, build, FISHER);
-        }
-        if (job.equals(BUTCHER)) {
-            return held.getItem() instanceof CleaverItem || held.getItem() instanceof FlensingKnifeItem;
-        }
-        return true;
-    }
-
-    /** Whether its head does this job with nothing in hand (its data's "no_tool": a fish fishes with its mouth). */
-    static boolean ownTool(PartsData.Store store, MinionBuild build, ResourceLocation job) {
-        PieceRef head = MinionStats.head(store, build);
-        return head != null && MinionData.ids(store.resolve(head.entity(), head.baby()), head.traits(), "head", "no_tool").contains(job);
-    }
-
-    /**
-     * The job it wakes to, of those it is offered with nothing in hand: the first but hunting, which would go straight
-     * for the animals kept round the table it was made at, and sapping, which would spend its blast on the first monster
-     * to wander by (unless it is offered nothing else). Its maker puts it to either with a click.
-     */
-    public static ResourceLocation wakeJob(List<ResourceLocation> offered) {
-        return offered.stream().filter(job -> !job.equals(HUNTER) && !job.equals(SAPPER)).findFirst().orElse(offered.get(0));
-    }
-
-    /** A job it has that it can no longer do (its bow broke, its rod was taken) gives way to the first it can. */
-    static void keepValid(MinionEntity minion) {
-        List<ResourceLocation> jobs = offered(minion);
-        if (!jobs.contains(minion.job())) {
-            startJob(minion, jobs.get(0));
-        }
-    }
-
-    /** Put it to a job it can do: a fresh start, a sentry taking its post where it stands. */
-    static void startJob(MinionEntity minion, ResourceLocation job) {
-        if (minion.setJob(job)) {
-            minion.setTarget(null);
-            minion.getNavigation().stop();
-            if (job.equals(SENTRY)) {
-                minion.setHome(minion.blockPosition());
+    static void fromJob(MinionEntity minion, String job) {
+        MinionTask task;
+        MinionTask.Anchor anchor = MinionTask.Anchor.HOME;
+        ResourceLocation id = ResourceLocation.tryParse(job);
+        String path = id != null && id.getNamespace().equals(BloodAndBones.MOD_ID) ? id.getPath() : "";
+        switch (path) {
+            case "companion", "bodyguard" -> {
+                task = MinionTask.GUARD;
+                anchor = MinionTask.Anchor.MAKER;
+            }
+            case "scavenger" -> task = MinionTask.COURIER;
+            default -> {
+                MinionTask named = MinionTask.byId(id);
+                task = named == null ? MinionTask.IDLE : named;
             }
         }
+        // its home stays as it was (an old sentry's home was its post already)
+        BlockPos home = minion.home();
+        PartsData.Store store = PartsData.of(minion.level());
+        if (!minion.setTask(task, store.task(task).anchorFor(anchor), 0) && !minion.setTask(MinionTask.IDLE, store.task(MinionTask.IDLE).anchorFor(anchor), 0)) {
+            minion.setTask(MinionTask.IDLE, store.task(MinionTask.IDLE).anchorFor(MinionTask.Anchor.HOME), 0);
+        }
+        minion.setHome(home);
+    }
+
+    /**
+     * A data reload that leaves its body unable to do its task (docs/NEXT.md 1.3) sets it to Idle at home, and its status
+     * line says why; one that no longer lets its task be done where it was (with its maker, or at home) moves it to where the
+     * task is done. A missing tool never does either: it waits for one.
+     */
+    public static void keepPossible(MinionEntity minion) {
+        MinionTask task = minion.task();
+        if (minion.build().isEmpty() || minion.level().isClientSide) {
+            return;
+        }
+        MinionFitness.Row row = minion.row(task, MinionTask.Anchor.HOME);
+        MinionTask.Data data = PartsData.of(minion.level()).task(task);
+        if (!row.can()) {
+            minion.loseTask(task, row.cannot().orElse("bloodandbones.minion.cannot.strike"));
+        } else if (!data.allows(minion.anchor())) {
+            minion.setTask(task, data.anchorFor(minion.anchor()), 0);
+        }
+    }
+
+    // ---- what it is doing, for its status line (docs/NEXT.md 1.4)
+
+    /**
+     * Its status line, for anyone's plain click: "Farmer 120% at home, blood 300 of 780 mB", and what it waits for ("waiting
+     * for a Cleaver or a Flensing Knife", "no still water within 8 of home"), or why a data reload took its task.
+     */
+    public static Component status(MinionEntity minion) {
+        Component doing = TaskWords.doing(minion);
+        Component line;
+        if (minion.poweredDown()) {
+            line = Component.translatable("bloodandbones.minion.status_down", doing, Math.round(minion.power()), minion.stats().reservoir());
+        } else if (!minion.filter().isEmpty()) {
+            line = Component.translatable("bloodandbones.minion.status_filtered", doing, Math.round(minion.power()), minion.stats().reservoir(),
+                    minion.filter().stack().getHoverName());
+        } else {
+            line = Component.translatable("bloodandbones.minion.status", doing, Math.round(minion.power()), minion.stats().reservoir());
+        }
+        Component more = minion.poweredDown() ? null : TaskWords.waiting(minion);
+        return more == null ? line : Component.translatable("bloodandbones.minion.status_more", line, more);
+    }
+
+    // ---- the task screen (docs/NEXT.md 1.3)
+
+    /**
+     * Something that can be shown the task screen without a connection: a test's stand-in maker. A real player is sent it.
+     */
+    public interface Viewer {
+        void showTasks(MinionTaskPayload.Open open);
+    }
+
+    /** Its maker's crouching empty hand on it awake: the task screen, its rows worked out here. Anyone else, or asleep: nothing. */
+    public static void showScreen(MinionEntity minion, Player player) {
+        open(minion, player).ifPresent(open -> send(player, open));
+    }
+
+    private static void send(Player player, MinionTaskPayload.Open open) {
+        if (player instanceof ServerPlayer server && !(player instanceof FakePlayer)) {
+            PacketDistributor.sendToPlayer(server, open);
+        } else if (player instanceof Viewer viewer) {
+            viewer.showTasks(open);
+        }
+    }
+
+    /** Whether this player may use the task screen on it: its maker (not a machine's stand-in), near it, and it awake. */
+    public static boolean mayDirect(MinionEntity minion, Player player) {
+        return !(player instanceof FakePlayer) && minion.isMaker(player) && minion.isAlive() && !minion.poweredDown() && minion.build().isPresent()
+                && player.level() == minion.level() && player.distanceToSqr(minion) <= SCREEN_REACH * SCREEN_REACH;
+    }
+
+    /**
+     * The task screen's rows, one a task in the list's order, as this player would see them (docs/NEXT.md 1.3): each at the
+     * anchor the minion works at if the task allows it, else where the task is done; nothing for anyone who may not direct it.
+     */
+    public static Optional<MinionTaskPayload.Open> open(MinionEntity minion, Player player) {
+        if (!mayDirect(minion, player)) {
+            return Optional.empty();
+        }
+        PartsData.Store store = PartsData.of(minion.level());
+        List<MinionTaskPayload.Row> rows = new ArrayList<>();
+        for (MinionTask task : MinionTask.values()) {
+            MinionTask.Data data = store.task(task);
+            MinionFitness.Row row = minion.row(task, minion.anchor());
+            int anchors = 0;
+            for (MinionTask.Anchor anchor : data.anchors()) {
+                anchors |= 1 << anchor.ordinal();
+            }
+            rows.add(new MinionTaskPayload.Row(task.ordinal(), data.kind().ordinal(), row.fitness(), row.can(), row.waitsFor().isPresent(),
+                    TaskWords.lines(store, minion, row, data.anchorFor(minion.anchor())), anchors, data.reach(),
+                    data.maxReach()));
+        }
+        return Optional.of(new MinionTaskPayload.Open(minion.getId(), minion.getDisplayName(), minion.task().ordinal(), minion.anchor().ordinal(),
+                minion.reachSet(), false, rows));
+    }
+
+    /**
+     * A request from the task screen, checked here (docs/NEXT.md 1.3): from its maker, not a machine's stand-in, within 8
+     * blocks; it awake; the task one its body can do; the anchor one the task allows; the reach 0 (the task's own) or within
+     * its bounds. "Home here" sets home where it stands. Whatever was done, the screen is sent again. False, and nothing
+     * changed, if it was refused.
+     */
+    public static boolean handle(Player player, MinionTaskPayload.Set request) {
+        if (!(player.level().getEntity(request.minion()) instanceof MinionEntity minion) || !mayDirect(minion, player)
+                || request.task() < 0 || request.task() >= MinionTask.values().length || request.anchor() < 0
+                || request.anchor() >= MinionTask.Anchor.values().length) {
+            return false;
+        }
+        MinionTask task = MinionTask.values()[request.task()];
+        MinionTask.Anchor anchor = MinionTask.Anchor.values()[request.anchor()];
+        boolean done = task == minion.task() && anchor == minion.anchor() && request.reach() == minion.reachSet()
+                || minion.setTask(task, anchor, request.reach());
+        if (done && request.homeHere()) {
+            minion.setHome(minion.blockPosition());
+        }
+        open(minion, player).ifPresent(open -> send(player, open.refreshed()));
+        return done;
     }
 
     // ---- what it holds
 
     /**
      * Its maker's hand on it, awake and standing: an item goes into its hand (one of it; what it held comes back),
-     * an empty hand takes back what it holds. Arrows for the bow or crossbow it holds, and healing for a medic's head,
-     * go in with what it carries instead, the whole stack, its hand kept. Null when this is not that (crouching changes
-     * its job instead; saddled, an empty hand climbs on).
+     * an empty hand takes back what it holds. Arrows for the bow or crossbow it holds, and healing for a medic, go in with
+     * what it carries instead, the whole stack, its hand kept. Null when this is not that (crouching opens its task screen
+     * instead; saddled, an empty hand climbs on). Taking a tool away never changes its task: it waits for another.
      */
     @Nullable
     static InteractionResult handInteract(MinionEntity minion, Player player, InteractionHand hand) {
@@ -306,7 +389,6 @@ public final class MinionJobs {
             minion.setItemSlot(EquipmentSlot.MAINHAND, ItemStack.EMPTY);
             player.getInventory().placeItemBackInInventory(holding);
             minion.level().playSound(null, minion.blockPosition(), SoundEvents.ITEM_PICKUP, SoundSource.NEUTRAL, 0.6F, 0.8F);
-            keepValid(minion);
             return InteractionResult.CONSUME;
         }
         if (!takes(given)) {
@@ -359,7 +441,6 @@ public final class MinionJobs {
         minion.setDropChance(EquipmentSlot.MAINHAND, 0.0F);
         minion.level().playSound(null, minion.blockPosition(), SoundEvents.ITEM_PICKUP, SoundSource.NEUTRAL, 0.6F, 1.2F);
         player.displayClientMessage(Component.translatable("bloodandbones.minion.holds", one.getHoverName()), true);
-        keepValid(minion);
         return InteractionResult.CONSUME;
     }
 
@@ -367,7 +448,7 @@ public final class MinionJobs {
     private static boolean stocks(MinionEntity minion, ItemStack stack) {
         ItemStack held = minion.getMainHandItem();
         return held.getItem() instanceof ProjectileWeaponItem weapon && weapon.getAllSupportedProjectiles(held).test(stack)
-                || minion.stats().jobs().contains(MEDIC) && heals(stack);
+                || minion.hasTask(MinionTask.MEDIC) && tool(minion, MinionTask.MEDIC, stack);
     }
 
     /** What it takes into its hand: anything but what already does something to a mob (a saddle, a lead, a name tag, an egg). */
@@ -388,14 +469,22 @@ public final class MinionJobs {
     }
 
     /**
-     * A bow, crossbow or trident in a hand that fights (a pacifist's pair of arms does not, nor a wing or a shell: a
-     * held weapon needs an arm of hand grip, section 5.6), or null.
+     * Whether this is the task's tool as its row reads it too ({@link MinionFitness#isTool}): what the goal can work with,
+     * narrowed to what its task file names. Every goal that waits for a tool asks this, so it waits for what its row says.
+     */
+    static boolean tool(MinionEntity minion, MinionTask task, ItemStack stack) {
+        return MinionFitness.isTool(task, PartsData.of(minion.level()).task(task), stack);
+    }
+
+    /**
+     * A sentry's weapon: a bow, crossbow or trident (its task's tool) in a hand that fights (a pacifist's pair of arms does
+     * not, nor a wing or a shell: a held weapon needs an arm of hand grip, section 5.6), or null.
      */
     @Nullable
     static ItemStack heldWeapon(MinionEntity minion) {
         ItemStack held = minion.getMainHandItem();
-        boolean weapon = held.getItem() instanceof BowItem || held.getItem() instanceof CrossbowItem || held.getItem() instanceof TridentItem;
-        return weapon && minion.stats().strikes().stream().anyMatch(s -> "hand".equals(s.grip()) && !"pacifist".equals(s.style())) ? held : null;
+        return tool(minion, MinionTask.SENTRY, held) && minion.stats().strikes().stream().anyMatch(s -> "hand".equals(s.grip()) && !"pacifist".equals(s.style()))
+                ? held : null;
     }
 
     /** Ammunition for this weapon from what it carries: the stack itself, so a shot takes one from it. */
@@ -422,7 +511,7 @@ public final class MinionJobs {
         }
     }
 
-    /** Whether one of the slots it can use is empty: room for whatever a job turns up. */
+    /** Whether one of the slots it can use is empty: room for whatever its work turns up. */
     static boolean freeSlot(MinionEntity minion) {
         for (int i = 0; i < minion.slots(); i++) {
             if (minion.inventory.getItem(i).isEmpty()) {
@@ -437,21 +526,31 @@ public final class MinionJobs {
         minion.getPersistentData().putInt(WORK_LEFT, 0);
     }
 
-    /** A tick of work toward a catch or find: true when it comes, and the next wait starts. */
-    private static boolean worked(MinionEntity minion, int min, int max, int less) {
+    /** For tests: the ticks of work it has left before its next catch or find, or -1 before it has set to work on one. */
+    public static int workLeft(MinionEntity minion) {
         CompoundTag data = minion.getPersistentData();
-        int left = data.contains(WORK_LEFT) ? data.getInt(WORK_LEFT) : nextWait(minion, min, max, less);
+        return data.contains(WORK_LEFT) ? data.getInt(WORK_LEFT) : -1;
+    }
+
+    /**
+     * A tick of work toward a catch or find: true when it comes, and the next wait starts. The wait is somewhere between
+     * {@code times}' two (its fitness's), less what Lure takes off, never under {@code least}.
+     */
+    private static boolean worked(MinionEntity minion, int[] times, int less, int least) {
+        CompoundTag data = minion.getPersistentData();
+        int left = data.contains(WORK_LEFT) ? data.getInt(WORK_LEFT) : nextWait(minion, times, less, least);
         if (left <= 0) {
-            data.putInt(WORK_LEFT, nextWait(minion, min, max, less));
+            data.putInt(WORK_LEFT, nextWait(minion, times, less, least));
             return true;
         }
         data.putInt(WORK_LEFT, left - 1);
         return false;
     }
 
-    /** Ticks to the next catch or find: somewhere between the two, less what Lure takes off, never under a sixth of the least. */
-    private static int nextWait(MinionEntity minion, int min, int max, int less) {
-        return Math.max(min / 6, min + minion.getRandom().nextInt(max - min + 1) - less);
+    private static int nextWait(MinionEntity minion, int[] times, int less, int least) {
+        int min = times[0];
+        int max = Math.max(min, times[1]);
+        return Math.max(least, min + minion.getRandom().nextInt(max - min + 1) - less);
     }
 
     // ---- sentry
@@ -460,7 +559,8 @@ public final class MinionJobs {
      * A sentry never moves from its post: it turns to what it has for a target and shoots it with the bow, crossbow or
      * trident in its hand, in the way of vanilla's ranged goals (RangedBowAttackGoal, RangedCrossbowAttackGoal, the
      * drowned's throw) but standing still. Arrows come from what it carries; a trident is thrown as the drowned throws
-     * one, and wears the one in hand.
+     * one, and wears the one in hand. Its fitness (docs/NEXT.md 1.2) sets the time between its shots (a bow's second, a
+     * crossbow's one to two, a trident's two at 100%, never under half) and how true they fly (vanilla's spread at 100%).
      */
     static class Sentry extends Goal {
         private final MinionEntity minion;
@@ -480,7 +580,7 @@ public final class MinionJobs {
         @Override
         public boolean canUse() {
             LivingEntity target = minion.getTarget();
-            return minion.hasJob("sentry") && target != null && target.isAlive() && minion.hasRangedAttack();
+            return minion.hasTask(MinionTask.SENTRY) && target != null && target.isAlive() && minion.hasRangedAttack();
         }
 
         @Override
@@ -512,7 +612,12 @@ public final class MinionJobs {
             minion.getLookControl().setLookAt(target, 30.0F, 30.0F);
             boolean sees = minion.getSensing().hasLineOfSight(target);
             seeTime = sees ? Math.max(0, seeTime) + 1 : Math.min(0, seeTime) - 1;
-            boolean near = minion.distanceToSqr(target) <= SENTRY_RANGE * SENTRY_RANGE;
+            // its range is its reach from its post (16 blocks unless its maker set it otherwise)
+            double range = minion.reach();
+            boolean near = minion.distanceToSqr(target) <= range * range;
+            MinionTask.Data data = PartsData.of(level).task(MinionTask.SENTRY);
+            float fitness = minion.taskFitness();
+            float spread = MinionFitness.shotSpread(data, level.getDifficulty().getId(), fitness);
             cooldown--;
             if (weapon.getItem() instanceof BowItem) {
                 if (minion.isUsingItem()) {
@@ -521,8 +626,8 @@ public final class MinionJobs {
                     } else if (sees && minion.getTicksUsingItem() >= 20) {
                         int drawn = minion.getTicksUsingItem();
                         minion.stopUsingItem();
-                        shootBow(level, minion, weapon, target, BowItem.getPowerForTime(drawn));
-                        cooldown = 20;
+                        shootBow(level, minion, weapon, target, BowItem.getPowerForTime(drawn), spread);
+                        cooldown = MinionFitness.shotTicks(data.number("bow_every", 20.0F), fitness);
                     }
                 } else if (cooldown <= 0 && sees && near && !minion.getProjectile(weapon).isEmpty()) {
                     minion.startUsingItem(InteractionHand.MAIN_HAND);
@@ -532,30 +637,92 @@ public final class MinionJobs {
                     if (cooldown <= 0 && sees && near) {
                         loosing = minion;
                         try {
-                            crossbow.performShooting(level, minion, InteractionHand.MAIN_HAND, weapon, 1.6F, 14 - level.getDifficulty().getId() * 4, target);
+                            crossbow.performShooting(level, minion, InteractionHand.MAIN_HAND, weapon, 1.6F, spread, target);
                         } finally {
                             loosing = null;
                         }
-                        cooldown = 20 + minion.getRandom().nextInt(20);
+                        int least = Math.round(data.number("crossbow_min", 20.0F));
+                        int most = Math.max(least, Math.round(data.number("crossbow_max", 40.0F)));
+                        cooldown = MinionFitness.shotTicks(least + minion.getRandom().nextInt(most - least + 1), fitness);
                     }
                 } else if (minion.isUsingItem()) {
                     if (minion.getTicksUsingItem() >= CrossbowItem.getChargeDuration(weapon, minion)) {
                         // loaded from what it carries (MinionEntity#getProjectile)
                         minion.releaseUsingItem();
-                        cooldown = 20;
+                        cooldown = MinionFitness.shotTicks(data.number("crossbow_min", 20.0F), fitness);
                     }
                 } else if (sees && near && !minion.getProjectile(weapon).isEmpty()) {
                     minion.startUsingItem(InteractionHand.MAIN_HAND);
                 }
             } else if (cooldown <= 0 && sees && near) {
-                throwTrident(level, minion, weapon, target);
-                cooldown = 40;
+                throwTrident(level, minion, weapon, target, spread);
+                cooldown = MinionFitness.shotTicks(data.number("trident_every", 40.0F), fitness);
             }
         }
     }
 
-    /** A bow shot as a skeleton looses one, the arrow taken from what it carries (one that lands can be picked up). */
-    static void shootBow(ServerLevel level, MinionEntity minion, ItemStack bow, LivingEntity target, float power) {
+    /**
+     * A sentry with no ranged attack still never leaves its post: it strikes only what comes within its reach where it
+     * stands, a blow as often as a melee goal lands one (vanilla's MeleeAttackGoal; sooner with more arms that strike,
+     * {@link MinionGoals#blowTicks}), turning to it and taking no step.
+     */
+    static class SentryStrike extends Goal {
+        private final MinionEntity minion;
+        private int cooldown;
+
+        SentryStrike(MinionEntity minion) {
+            this.minion = minion;
+            setFlags(EnumSet.of(Flag.MOVE, Flag.LOOK, Flag.JUMP));
+        }
+
+        @Override
+        public boolean requiresUpdateEveryTick() {
+            return true;
+        }
+
+        @Override
+        public boolean canUse() {
+            LivingEntity target = minion.getTarget();
+            return minion.hasTask(MinionTask.SENTRY) && target != null && target.isAlive() && !minion.hasRangedAttack() && minion.stats().fights();
+        }
+
+        @Override
+        public boolean canContinueToUse() {
+            return canUse();
+        }
+
+        @Override
+        public void start() {
+            minion.getNavigation().stop();
+            minion.setAggressive(true);
+        }
+
+        @Override
+        public void stop() {
+            minion.setAggressive(false);
+        }
+
+        @Override
+        public void tick() {
+            LivingEntity target = minion.getTarget();
+            if (target == null) {
+                return;
+            }
+            minion.getNavigation().stop();
+            minion.getLookControl().setLookAt(target, 30.0F, 30.0F);
+            cooldown = Math.max(0, cooldown - 1);
+            if (cooldown == 0 && minion.isWithinMeleeAttackRange(target) && minion.getSensing().hasLineOfSight(target)) {
+                cooldown = MinionGoals.blowTicks(minion);
+                minion.doHurtTarget(target);
+            }
+        }
+    }
+
+    /**
+     * A bow shot as a skeleton looses one, the arrow taken from what it carries (one that lands can be picked up), with this
+     * spread (a skeleton's is 14 less 4 a step of difficulty).
+     */
+    static void shootBow(ServerLevel level, MinionEntity minion, ItemStack bow, LivingEntity target, float power, float spread) {
         ItemStack ammo = minion.getProjectile(bow);
         if (ammo.isEmpty()) {
             return;
@@ -570,15 +737,15 @@ public final class MinionJobs {
         double dy = target.getY(1.0 / 3.0) - arrow.getY();
         double dz = target.getZ() - minion.getZ();
         double flat = Math.sqrt(dx * dx + dz * dz);
-        arrow.shoot(dx, dy + flat * 0.2F, dz, 1.6F, 14 - level.getDifficulty().getId() * 4);
+        arrow.shoot(dx, dy + flat * 0.2F, dz, 1.6F, spread);
         arrow.pickup = free ? AbstractArrow.Pickup.CREATIVE_ONLY : AbstractArrow.Pickup.ALLOWED;
         minion.playSound(SoundEvents.ARROW_SHOOT, 1.0F, 1.0F / (minion.getRandom().nextFloat() * 0.4F + 0.8F));
         level.addFreshEntity(arrow);
         bow.hurtAndBreak(1, minion, EquipmentSlot.MAINHAND);
     }
 
-    /** A trident thrown as the drowned throws one (a copy that cannot be picked up, loyal to nobody); the one in hand wears. */
-    static void throwTrident(ServerLevel level, MinionEntity minion, ItemStack trident, LivingEntity target) {
+    /** A trident thrown as the drowned throws one (a copy that cannot be picked up, loyal to nobody), with this spread; the one in hand wears. */
+    static void throwTrident(ServerLevel level, MinionEntity minion, ItemStack trident, LivingEntity target, float spread) {
         ItemStack copy = trident.copyWithCount(1);
         EnchantmentHelper.updateEnchantments(copy, enchantments -> enchantments.removeIf(e -> e.is(Enchantments.LOYALTY) || e.is(Enchantments.RIPTIDE)));
         ThrownTrident thrown = new ThrownTrident(level, minion, copy);
@@ -586,7 +753,7 @@ public final class MinionJobs {
         double dy = target.getY(1.0 / 3.0) - thrown.getY();
         double dz = target.getZ() - minion.getZ();
         double flat = Math.sqrt(dx * dx + dz * dz);
-        thrown.shoot(dx, dy + flat * 0.2F, dz, 1.6F, 14 - level.getDifficulty().getId() * 4);
+        thrown.shoot(dx, dy + flat * 0.2F, dz, 1.6F, spread);
         minion.playSound(SoundEvents.DROWNED_SHOOT, 1.0F, 1.0F / (minion.getRandom().nextFloat() * 0.4F + 0.8F));
         level.addFreshEntity(thrown);
         minion.swing(InteractionHand.MAIN_HAND);
@@ -628,15 +795,19 @@ public final class MinionJobs {
                 || maker != null && (maker.equals(other.getUUID()) || other instanceof MinionEntity them && maker.equals(them.makerId()));
     }
 
-    // ---- scavenger
+    // ---- courier
 
     /**
-     * A scavenger fetches, as an allay does, items like the one in its hand from as far as 32 blocks (as far as its head
-     * sees), and brings them to its maker while its maker is about home, as far out as it fetches from (an allay goes to
-     * its player only within 64 of it). With its maker away it keeps what it found until they are back. Brass with a
-     * filter fetches only what the filter passes too, and with its hand empty, whatever the filter passes.
+     * A courier picks up loose items within its reach (as far as its head sees them), as an allay does: holding one, only
+     * items like it (its sample), and brass with a filter only what the filter passes too. At home it leaves them for the
+     * container by home ({@link MinionGoals.Deposit}); with its maker, it brings them to its maker's hands, as an allay
+     * brings its player what it found, as many as they have room for: what does not fit it keeps, trying again in ten
+     * seconds, and what its maker threw away it leaves be. It takes only what it has room for. It looks round every second
+     * or so at 100%, a fitter courier more often (docs/NEXT.md 1.2).
      */
-    static class Scavenge extends Goal {
+    static class Fetch extends Goal {
+        /** Its maker had no room for what it brought: it tries again after this long. */
+        private static final int FULL_HANDS = 200;
         private final MinionEntity minion;
         @Nullable
         private ItemEntity item;
@@ -645,8 +816,10 @@ public final class MinionJobs {
         /** Items it could not get to, by entity id, forgotten every half minute. */
         private final List<Integer> unreachable = new ArrayList<>();
         private int forgotAt;
+        /** When it may bring what it carries to its maker again, after they had no room for any of it. */
+        private int bringAgainAt;
 
-        Scavenge(MinionEntity minion) {
+        Fetch(MinionEntity minion) {
             this.minion = minion;
             setFlags(EnumSet.of(Flag.MOVE));
         }
@@ -658,7 +831,7 @@ public final class MinionJobs {
 
         @Override
         public boolean canUse() {
-            if (!minion.hasJob("scavenger") || minion.getMainHandItem().isEmpty() && minion.filter().isEmpty() || minion.getRandom().nextInt(10) != 0) {
+            if (!minion.hasTask(MinionTask.COURIER) || !MinionGoals.looks(minion, MinionTask.COURIER)) {
                 return false;
             }
             if (minion.tickCount - forgotAt > 600) {
@@ -666,13 +839,13 @@ public final class MinionJobs {
                 forgotAt = minion.tickCount;
             }
             item = find();
-            bringing = item == null && carrying() && maker() != null;
+            bringing = item == null && mayBring();
             return item != null || bringing;
         }
 
         @Override
         public boolean canContinueToUse() {
-            return minion.hasJob("scavenger") && (item != null && item.isAlive() || bringing && maker() != null);
+            return minion.hasTask(MinionTask.COURIER) && (item != null && item.isAlive() || bringing && minion.withMaker());
         }
 
         @Override
@@ -688,50 +861,57 @@ public final class MinionJobs {
             bringing = false;
         }
 
-        /** The nearest item it fetches that it has room for. */
+        /** Whether it has something to bring its maker now: it is with them, carries what it fetched, and they had room last time. */
+        private boolean mayBring() {
+            return carrying() && minion.withMaker() && minion.tickCount >= bringAgainAt;
+        }
+
+        /**
+         * The nearest item it fetches that it has room for: within its reach of where it works, and as far as it sees. With
+         * its maker, never what they threw away: it would only bring it back.
+         */
         @Nullable
         private ItemEntity find() {
-            double range = Math.min(FETCH_RANGE, minion.stats().sight());
-            List<ItemEntity> near = minion.level().getEntitiesOfClass(ItemEntity.class, minion.getBoundingBox().inflate(range),
-                    e -> e.isAlive() && !e.hasPickUpDelay() && !unreachable.contains(e.getId()) && fetches(e.getItem()) && minion.canCarry(e.getItem())
-                            && e.distanceToSqr(minion) < range * range);
+            Vec3 centre = minion.centre();
+            double reach = minion.reach();
+            double sight = minion.stats().sight();
+            Player maker = minion.workingMaker();
+            List<ItemEntity> near = minion.level().getEntitiesOfClass(ItemEntity.class, new AABB(centre, centre).inflate(reach),
+                    e -> e.isAlive() && !e.hasPickUpDelay() && !unreachable.contains(e.getId()) && fetches(minion, e.getItem()) && minion.canCarry(e.getItem())
+                            && e.distanceToSqr(centre) < reach * reach && e.distanceToSqr(minion) < sight * sight && !(maker != null && thrownBy(e, maker)));
             return near.stream().min(Comparator.comparingDouble(minion::distanceToSqr)).orElse(null);
         }
 
-        /** Like what it holds (anything, if it holds nothing), and passed by its filter. */
-        private boolean fetches(ItemStack stack) {
-            ItemStack held = minion.getMainHandItem();
-            return !stack.isEmpty() && (held.isEmpty() ? !minion.filter().isEmpty() : alike(held, stack)) && minion.filter().allows(minion.level(), stack);
+        /** Whether this player threw it (its thrower, as vanilla keeps one for a dropped item). */
+        private static boolean thrownBy(ItemEntity item, Player player) {
+            Entity thrower = item.getOwner();
+            return thrower != null && thrower.getUUID().equals(player.getUUID());
         }
 
+        /** Whether it carries anything it fetched, to bring. */
         private boolean carrying() {
             for (int i = 0; i < minion.slots(); i++) {
-                if (fetches(minion.inventory.getItem(i))) {
+                if (fetches(minion, minion.inventory.getItem(i))) {
                     return true;
                 }
             }
             return false;
         }
 
-        /** Its maker, while about home: it never sets off after them further than it fetches from. */
-        @Nullable
-        private Player maker() {
-            Player maker = minion.maker();
-            return maker != null && maker.isAlive() && !maker.isSpectator() && maker.level() == minion.level()
-                    && maker.distanceToSqr(Vec3.atBottomCenterOf(minion.home())) < FETCH_RANGE * FETCH_RANGE ? maker : null;
-        }
-
         @Override
         public void tick() {
             if (item != null) {
-                if (minion.distanceToSqr(item) < 2.5 + minion.getBbWidth()) {
-                    keep(minion, item.getItem().copy());
-                    minion.take(item, item.getItem().getCount());
-                    item.discard();
+                if (!item.isAlive() || item.getItem().isEmpty()) {
+                    // taken meanwhile (by its maker, another courier): this tick is not asked whether it goes on
+                    item = null;
+                    bringing = mayBring();
+                    approach.reset(minion);
+                } else if (minion.distanceToSqr(item) < 2.5 + minion.getBbWidth()) {
+                    MinionGoals.pickUp(minion, item);
                     minion.level().playSound(null, minion.blockPosition(), SoundEvents.ALLAY_ITEM_TAKEN, SoundSource.NEUTRAL, 0.6F, 0.9F);
-                    // the next one, or home to its maker with them
+                    // the next one, or to its maker with them
                     item = find();
-                    bringing = item == null && maker() != null;
+                    bringing = item == null && mayBring();
                     approach.reset(minion);
                 } else if (!approach.step(minion, item.blockPosition(), 1, 1.1)) {
                     unreachable.add(item.getId());
@@ -739,26 +919,47 @@ public final class MinionJobs {
                 }
                 return;
             }
-            Player maker = maker();
+            Player maker = minion.workingMaker();
             if (!bringing || maker == null) {
                 return;
             }
             minion.getLookControl().setLookAt(maker);
             if (minion.distanceToSqr(maker) < Math.pow(2.5 + minion.getBbWidth(), 2)) {
-                // into its maker's hands
+                // into its maker's hands, as much as they have room for (as a player picks up: Inventory#add takes what fits)
+                boolean gave = false;
                 for (int i = 0; i < minion.inventory.getContainerSize(); i++) {
                     ItemStack stack = minion.inventory.getItem(i);
-                    if (fetches(stack)) {
-                        maker.getInventory().placeItemBackInInventory(minion.inventory.removeItemNoUpdate(i));
+                    if (fetches(minion, stack)) {
+                        int before = stack.getCount();
+                        maker.getInventory().add(stack);
+                        gave |= stack.getCount() < before;
+                        minion.inventory.setItem(i, stack.isEmpty() ? ItemStack.EMPTY : stack);
                     }
                 }
-                minion.level().playSound(null, minion.blockPosition(), SoundEvents.ALLAY_ITEM_GIVEN, SoundSource.NEUTRAL, 0.6F, 0.9F);
-                minion.swing(InteractionHand.MAIN_HAND);
+                if (gave) {
+                    minion.level().playSound(null, minion.blockPosition(), SoundEvents.ALLAY_ITEM_GIVEN, SoundSource.NEUTRAL, 0.6F, 0.9F);
+                    minion.swing(InteractionHand.MAIN_HAND);
+                }
+                if (carrying()) {
+                    // what its maker has no room for it keeps, and tries again later: no longer at work, it says why
+                    bringAgainAt = minion.tickCount + FULL_HANDS;
+                    minion.working = false;
+                    minion.idle(Component.translatable("bloodandbones.minion.idle.maker_full"));
+                }
                 bringing = false;
             } else if (!approach.step(minion, maker.blockPosition(), 2, 1.1)) {
                 bringing = false;
             }
         }
+    }
+
+    /**
+     * What a courier fetches: like what it holds (anything, if it holds nothing, or nothing its task file takes for a sample),
+     * and what its filter passes.
+     */
+    static boolean fetches(MinionEntity minion, ItemStack stack) {
+        ItemStack held = minion.getMainHandItem();
+        return !stack.isEmpty() && (!tool(minion, MinionTask.COURIER, held) || alike(held, stack)) && minion.filter().allows(minion.level(), stack);
     }
 
     /** Someone's own, which a herder and a hunter leave be: tamed (a pet, a broken-in horse or llama) or named. */
@@ -775,13 +976,13 @@ public final class MinionJobs {
     // ---- herder
 
     /**
-     * A herder keeps the animals that would follow what it holds (wheat for cattle and sheep, seeds for chickens) within
-     * 8 of home: it walks out to a stray and leads it back, the stray walking after it, as an animal follows a player
-     * with its food. Holding nothing, it herds nothing. Never someone's own animal (tamed or named), whom its owner has
+     * A herder keeps the animals that would follow what it holds (wheat for cattle and sheep, seeds for chickens) within its
+     * reach of home (8): it looks out as far again and more for strays (20 at its own reach), walks out to one and leads it
+     * back, the stray walking after it, as an animal follows a player with its food, giving up on it after half a minute.
+     * Holding nothing, it herds nothing, and waits for food. Never someone's own animal (tamed or named), whom its owner has
      * put where it is. Brass with a filter herds only the animals it passes.
      */
     static class Herd extends Goal {
-        private static final int GIVE_UP = 600;
         private final MinionEntity minion;
         @Nullable
         private Animal stray;
@@ -804,7 +1005,7 @@ public final class MinionJobs {
         @Override
         public boolean canUse() {
             ItemStack held = minion.getMainHandItem();
-            if (!minion.hasJob("herder") || held.isEmpty() || minion.getRandom().nextInt(20) != 0) {
+            if (!minion.hasTask(MinionTask.HERDER) || !tool(minion, MinionTask.HERDER, held) || minion.getRandom().nextInt(20) != 0) {
                 return false;
             }
             if (minion.tickCount - forgotAt > 600) {
@@ -812,19 +1013,22 @@ public final class MinionJobs {
                 forgotAt = minion.tickCount;
             }
             Vec3 home = Vec3.atBottomCenterOf(minion.home());
-            double range = Math.min(HERD_SEARCH, minion.stats().sight());
-            stray = minion.level().getEntitiesOfClass(Animal.class, new AABB(minion.home()).inflate(HERD_SEARCH),
+            double keep = minion.reach();
+            double search = search(minion);
+            double range = Math.min(search, minion.stats().sight());
+            stray = minion.level().getEntitiesOfClass(Animal.class, new AABB(minion.home()).inflate(search),
                             a -> a.isAlive() && a.isFood(held) && minion.filter().allows(minion.level(), a) && !a.isLeashed() && !a.isVehicle()
                                     && !a.isPassenger() && !owned(a) && !lost.contains(a.getId())
-                                    && a.distanceToSqr(home) > HERD_HOME * HERD_HOME && a.distanceToSqr(minion) < range * range)
+                                    && a.distanceToSqr(home) > keep * keep && a.distanceToSqr(minion) < range * range)
                     .stream().min(Comparator.comparingDouble(a -> a.distanceToSqr(home))).orElse(null);
             return stray != null;
         }
 
         @Override
         public boolean canContinueToUse() {
-            return stray != null && stray.isAlive() && minion.hasJob("herder") && minion.tickCount - startedAt < GIVE_UP
-                    && stray.distanceToSqr(Vec3.atBottomCenterOf(minion.home())) > (HERD_HOME - 2.0) * (HERD_HOME - 2.0);
+            double keep = minion.reach() - 2.0;
+            return stray != null && stray.isAlive() && minion.hasTask(MinionTask.HERDER) && minion.tickCount - startedAt < giveUp(minion)
+                    && stray.distanceToSqr(Vec3.atBottomCenterOf(minion.home())) > keep * keep;
         }
 
         @Override
@@ -838,7 +1042,7 @@ public final class MinionJobs {
         @Override
         public void stop() {
             minion.working = false;
-            if (stray != null && minion.tickCount - startedAt >= GIVE_UP) {
+            if (stray != null && minion.tickCount - startedAt >= giveUp(minion)) {
                 lost.add(stray.getId());
             }
             if (stray != null) {
@@ -885,12 +1089,24 @@ public final class MinionJobs {
         }
     }
 
+    /** How far out a herder looks for strays: its task's "search" (20) at its own reach, and as much more as its reach is more. */
+    static double search(MinionEntity minion) {
+        MinionTask.Data data = PartsData.of(minion.level()).task(MinionTask.HERDER);
+        return data.number("search", 20.0F) * minion.reach() / Math.max(1, data.reach());
+    }
+
+    /** How long a herder keeps after one stray before it gives up on it: its task's "wait", 30 s at 100%, a fitter herder longer. */
+    private static int giveUp(MinionEntity minion) {
+        return MinionFitness.strayTicks(PartsData.of(minion.level()).task(MinionTask.HERDER), minion.taskFitness());
+    }
+
     // ---- fisher
 
     /**
-     * A fisher by open water near home, a rod in hand (or a fish's mouth), rolls the fishing loot table every 30 to 60
-     * seconds it spends there (less with Lure; no treasure, which needs a bobber in open water), into what it carries.
-     * A rod wears a point a catch, as a player's does.
+     * A fisher by still water within its reach of home rolls the fishing loot table every 30 to 60 seconds it spends there
+     * at 100% (a fitter fisher sooner; less with Lure; never under a sixth of 30 s, Lure's own floor; no treasure, which needs
+     * a bobber in open water), into what it carries: with a rod in hand as a player's rod does, a point off it a catch;
+     * without one, by hand, paw or mouth (a fish's mouth as well as a rod).
      */
     static class Fish extends Goal {
         private final MinionEntity minion;
@@ -912,18 +1128,22 @@ public final class MinionJobs {
 
         @Override
         public boolean canUse() {
-            if (!minion.hasJob("fisher") || minion.getRandom().nextInt(20) != 0 || !minion.canCarry(new ItemStack(Items.COD))) {
+            if (!minion.hasTask(MinionTask.FISHER) || minion.getRandom().nextInt(20) != 0 || !minion.canCarry(new ItemStack(Items.COD))) {
                 return false;
             }
             water = find();
+            if (water == null) {
+                minion.idle(Component.translatable("bloodandbones.minion.idle.fisher", minion.reach()));
+            }
             return water != null;
         }
 
         @Nullable
         private BlockPos find() {
             BlockPos home = minion.home();
-            BlockPos from = home.offset(-FISH_RANGE, -2, -FISH_RANGE);
-            BlockPos to = home.offset(FISH_RANGE, 2, FISH_RANGE);
+            int reach = minion.reach();
+            BlockPos from = home.offset(-reach, -2, -reach);
+            BlockPos to = home.offset(reach, 2, reach);
             if (!MinionGoals.loaded(minion, from, to)) {
                 return null;
             }
@@ -944,7 +1164,7 @@ public final class MinionJobs {
 
         @Override
         public boolean canContinueToUse() {
-            return water != null && !caught && minion.hasJob("fisher") && minion.level().isLoaded(water) && fishable(water);
+            return water != null && !caught && minion.hasTask(MinionTask.FISHER) && minion.level().isLoaded(water) && fishable(water);
         }
 
         @Override
@@ -978,9 +1198,10 @@ public final class MinionJobs {
             minion.getNavigation().stop();
             minion.getLookControl().setLookAt(at);
             ItemStack rod = minion.getMainHandItem();
-            boolean byRod = rod.getItem() instanceof FishingRodItem && !minion.stats().strikes().isEmpty();
+            boolean byRod = tool(minion, MinionTask.FISHER, rod) && !minion.stats().strikes().isEmpty();
             int lure = byRod ? Math.round(EnchantmentHelper.getFishingTimeReduction(level, rod, minion) * 20.0F) : 0;
-            if (worked(minion, CATCH_MIN, CATCH_MAX, lure)) {
+            MinionTask.Data data = PartsData.of(level).task(MinionTask.FISHER);
+            if (worked(minion, MinionFitness.catchTicks(data, minion.taskFitness()), lure, MinionFitness.catchLeast(data))) {
                 LootParams params = new LootParams.Builder(level)
                         .withParameter(LootContextParams.ORIGIN, at)
                         .withParameter(LootContextParams.TOOL, byRod ? rod : ItemStack.EMPTY)
@@ -1004,9 +1225,9 @@ public final class MinionJobs {
     // ---- digger
 
     /**
-     * A digger sniffs the grass, moss and dirt round home (vanilla's sniffer_diggable_block tag), and every minute or
-     * two it spends at it turns up what a sniffer digs (the sniffer_digging loot table), into what it carries. It
-     * leaves the ground as it was.
+     * A digger sniffs the grass, moss and dirt within its reach of home (vanilla's sniffer_diggable_block tag), and every
+     * minute or two it spends at it (at 100%; a fitter digger sooner) turns up what a sniffer digs (the sniffer_digging loot
+     * table), into what it carries. It leaves the ground as it was.
      */
     static class Dig extends Goal {
         private final MinionEntity minion;
@@ -1029,10 +1250,13 @@ public final class MinionJobs {
 
         @Override
         public boolean canUse() {
-            if (!minion.hasJob("digger") || minion.getRandom().nextInt(20) != 0 || !minion.canCarry(new ItemStack(Items.TORCHFLOWER_SEEDS))) {
+            if (!minion.hasTask(MinionTask.DIGGER) || minion.getRandom().nextInt(20) != 0 || !minion.canCarry(new ItemStack(Items.TORCHFLOWER_SEEDS))) {
                 return false;
             }
             spot = find();
+            if (spot == null) {
+                minion.idle(Component.translatable("bloodandbones.minion.idle.digger", minion.reach()));
+            }
             return spot != null;
         }
 
@@ -1040,8 +1264,9 @@ public final class MinionJobs {
         @Nullable
         private BlockPos find() {
             BlockPos home = minion.home();
-            BlockPos from = home.offset(-DIG_RANGE, -2, -DIG_RANGE);
-            BlockPos to = home.offset(DIG_RANGE, 2, DIG_RANGE);
+            int reach = minion.reach();
+            BlockPos from = home.offset(-reach, -2, -reach);
+            BlockPos to = home.offset(reach, 2, reach);
             if (!MinionGoals.loaded(minion, from, to)) {
                 return null;
             }
@@ -1060,7 +1285,7 @@ public final class MinionJobs {
 
         @Override
         public boolean canContinueToUse() {
-            return spot != null && !found && minion.hasJob("digger") && minion.level().isLoaded(spot) && diggable(spot);
+            return spot != null && !found && minion.hasTask(MinionTask.DIGGER) && minion.level().isLoaded(spot) && diggable(spot);
         }
 
         @Override
@@ -1098,7 +1323,8 @@ public final class MinionJobs {
                 level.sendParticles(new BlockParticleOption(ParticleTypes.BLOCK, ground), top.x, top.y, top.z, 6, 0.3, 0.05, 0.3, 0.05);
                 level.playSound(null, spot, SoundEvents.SNIFFER_SNIFFING, SoundSource.NEUTRAL, 0.6F, 1.1F);
             }
-            if (worked(minion, DIG_MIN, DIG_MAX, 0)) {
+            MinionTask.Data data = PartsData.of(level).task(MinionTask.DIGGER);
+            if (worked(minion, MinionFitness.digTicks(data, minion.taskFitness()), 0, 1)) {
                 LootParams params = new LootParams.Builder(level)
                         .withParameter(LootContextParams.ORIGIN, top)
                         .withParameter(LootContextParams.THIS_ENTITY, minion)
@@ -1121,7 +1347,8 @@ public final class MinionJobs {
     // ---- barterer
 
     /**
-     * A barterer takes a gold ingot from the container by home, looks it over as a piglin does (six seconds), and
+     * A barterer takes a gold ingot from a container within its reach of home, looks it over as a piglin does (six seconds at
+     * 100%, a fitter barterer sooner), and
      * rolls the piglin_bartering loot table, putting what it got back into that container (what does not fit it keeps,
      * for the next trip to it). It trades only while it has a slot free for what it gets, so a full chest never has its
      * gold turned into litter; and the ingot it looks over is in what it carries, so it is saved, folded and dropped
@@ -1150,10 +1377,13 @@ public final class MinionJobs {
 
         @Override
         public boolean canUse() {
-            if (!minion.hasJob("barterer") || minion.getRandom().nextInt(20) != 0 || !freeSlot(minion)) {
+            if (!minion.hasTask(MinionTask.BARTERER) || minion.getRandom().nextInt(20) != 0 || !freeSlot(minion)) {
                 return false;
             }
             chest = find();
+            if (chest == null) {
+                minion.idle(Component.translatable("bloodandbones.minion.idle.barterer", minion.reach()));
+            }
             return chest != null;
         }
 
@@ -1161,8 +1391,9 @@ public final class MinionJobs {
         @Nullable
         private BlockPos find() {
             BlockPos home = minion.home();
-            BlockPos from = home.offset(-BARTER_RANGE, -2, -BARTER_RANGE);
-            BlockPos to = home.offset(BARTER_RANGE, 2, BARTER_RANGE);
+            int reach = minion.reach();
+            BlockPos from = home.offset(-reach, -2, -reach);
+            BlockPos to = home.offset(reach, 2, reach);
             if (!MinionGoals.loaded(minion, from, to)) {
                 return null;
             }
@@ -1193,7 +1424,7 @@ public final class MinionJobs {
 
         @Override
         public boolean canContinueToUse() {
-            return chest != null && !traded && minion.hasJob("barterer") && minion.level().isLoaded(chest);
+            return chest != null && !traded && minion.hasTask(MinionTask.BARTERER) && minion.level().isLoaded(chest);
         }
 
         @Override
@@ -1244,7 +1475,7 @@ public final class MinionJobs {
                 level.playSound(null, minion.blockPosition(), SoundEvents.PIGLIN_ADMIRING_ITEM, SoundSource.NEUTRAL, 1.0F, 1.0F);
                 return;
             }
-            if (++admired < ADMIRE) {
+            if (++admired < MinionFitness.admireTicks(PartsData.of(level).task(MinionTask.BARTERER), minion.taskFitness())) {
                 return;
             }
             admiring = false;
@@ -1269,13 +1500,13 @@ public final class MinionJobs {
     // ---- hunter
 
     /**
-     * A hunter takes for its target grown prey near home that it can see (its head's data names the prey, "prey": ids
-     * and #tags of any passive mob, a fish too, else #bloodandbones:hunter_prey), never a named, tamed, leashed or ridden
-     * one; its bite or arms kill it. The rules hold for the whole chase: prey leashed or named meanwhile, or run off
-     * from its hunting ground, is let be. It hunts only where mobs may do harm (the mobGriefing rule, spec section 10),
-     * and is not woken to it (MinionJobs#wakeJob). With a Meat Hook in hand the kill leaves an intact carcass, exactly as
-     * a player's Meat Hook kill does (CarcassEvents#onDeath reads the killer's hand). Brass with a filter hunts only the
-     * prey it passes.
+     * A hunter takes for its target grown prey within its reach of where it hunts (home, or its maker while it hunts beside
+     * them) that it can see (its head's data names the prey, "prey": ids and #tags of any passive mob, a fish too, else
+     * #bloodandbones:hunter_prey), never a named, tamed, leashed or ridden one; its bite or arms kill it. The rules hold for
+     * the whole chase: prey leashed or named meanwhile, or run off from its hunting ground, is let be. It hunts only where
+     * mobs may do harm (the mobGriefing rule, spec section 10), and waits for it otherwise; it is never woken to hunting
+     * ({@link #wakeTask}). With a Meat Hook in hand the kill leaves an intact carcass, exactly as a player's Meat Hook kill
+     * does (CarcassEvents#onDeath reads the killer's hand). Brass with a filter hunts only the prey it passes.
      */
     static class Hunt extends NearestAttackableTargetGoal<PathfinderMob> {
         private final MinionEntity minion;
@@ -1289,7 +1520,7 @@ public final class MinionJobs {
 
         /** A hunter with a head and a blow to strike, where mobs may do harm. */
         private boolean hunting() {
-            return minion.hasJob("hunter") && !minion.stats().mindless() && minion.stats().fights() && EventHooks.canEntityGrief(minion.level(), minion);
+            return minion.hasTask(MinionTask.HUNTER) && !minion.stats().mindless() && minion.stats().fights() && EventHooks.canEntityGrief(minion.level(), minion);
         }
 
         @Override
@@ -1308,27 +1539,37 @@ public final class MinionJobs {
 
         @Override
         protected double getFollowDistance() {
-            // asked once while it is being made, before it knows its minion
-            return minion == null || minion.build().isEmpty() ? HUNT_RANGE * 2.0 : Math.min(HUNT_RANGE * 2.0, minion.stats().sight());
+            // asked once while it is being made, before it knows its minion: as far again as its reach, as far as it sees
+            return minion == null || minion.build().isEmpty() ? 24.0 : Math.min(minion.reach() * 2.0, minion.stats().sight());
         }
 
+        /** Prey on its hunting ground: within its reach of home, or of its maker while it hunts beside them. */
         private boolean hunts(PathfinderMob mob) {
-            if (mob instanceof Enemy || mob instanceof MinionEntity || mob.isBaby() || owned(mob) || mob.isLeashed() || mob.isVehicle() || mob.isPassenger()
-                    || mob.distanceToSqr(Vec3.atBottomCenterOf(minion.home())) > HUNT_RANGE * HUNT_RANGE || !minion.filter().allows(minion.level(), mob)) {
-                return false;
-            }
-            if (prey.isEmpty()) {
-                return mob.getType().is(BBTags.HUNTER_PREY);
-            }
-            ResourceLocation id = BuiltInRegistries.ENTITY_TYPE.getKey(mob.getType());
-            for (String name : prey) {
-                if (name.startsWith("#") ? mob.getType().is(TagKey.create(Registries.ENTITY_TYPE, ResourceLocation.parse(name.substring(1))))
-                        : id.toString().equals(name)) {
-                    return true;
-                }
-            }
+            double reach = minion.reach();
+            return mob.distanceToSqr(minion.centre()) <= reach * reach && isPrey(minion, mob, prey);
+        }
+    }
+
+    /**
+     * Whether a hunter goes for this mob wherever it is: grown prey its head names ({@code names}, or with none the default
+     * tag), neither a monster nor a minion, nobody's own, not leashed or ridden, and passed by its filter.
+     */
+    static boolean isPrey(MinionEntity minion, PathfinderMob mob, List<String> names) {
+        if (mob instanceof Enemy || mob instanceof MinionEntity || mob.isBaby() || owned(mob) || mob.isLeashed() || mob.isVehicle() || mob.isPassenger()
+                || !minion.filter().allows(minion.level(), mob)) {
             return false;
         }
+        if (names.isEmpty()) {
+            return mob.getType().is(BBTags.HUNTER_PREY);
+        }
+        ResourceLocation id = BuiltInRegistries.ENTITY_TYPE.getKey(mob.getType());
+        for (String name : names) {
+            ResourceLocation tag = name.startsWith("#") ? ResourceLocation.tryParse(name.substring(1)) : null;
+            if (tag != null ? mob.getType().is(TagKey.create(Registries.ENTITY_TYPE, tag)) : id.toString().equals(name)) {
+                return true;
+            }
+        }
+        return false;
     }
 
     /** What its head hunts, as written ("minecraft:rabbit", "#minecraft:axolotl_hunt_targets"); empty for the default tag. */
@@ -1348,9 +1589,11 @@ public final class MinionJobs {
     // ---- medic
 
     /**
-     * A medic throws a splash potion of healing (or regeneration) from what it carries at an ally two hearts or more down:
-     * its maker, its maker's other flesh minions, a villager. Brass it leaves to its brass sheets and cradle, which are
-     * what mend brass (spec 6.6). It closes to throwing range, then throws as a witch does.
+     * A medic throws a splash potion of healing (or regeneration) from what it carries at an ally two hearts or more down
+     * within its reach of where it works (home, or its maker while it goes with them): its maker, its maker's other flesh
+     * minions, a villager. Brass it leaves to its brass sheets and cradle, which are what mend brass (spec 6.6). It closes
+     * to throwing range, then throws as a witch does. With no healing potions it waits for some. Its fitness (docs/NEXT.md
+     * 1.2) sets the time between throws (3 s at 100%, never under 1 s) and how true they fly (a witch's spread at 100%).
      */
     static class Medic extends Goal {
         private final MinionEntity minion;
@@ -1373,7 +1616,7 @@ public final class MinionJobs {
 
         @Override
         public boolean canUse() {
-            if (!minion.hasJob("medic") || minion.tickCount < cooldown || minion.getRandom().nextInt(10) != 0 || potion(minion) < 0) {
+            if (!minion.hasTask(MinionTask.MEDIC) || minion.tickCount < cooldown || minion.getRandom().nextInt(10) != 0 || potion(minion) < 0) {
                 return false;
             }
             patient = patient();
@@ -1383,7 +1626,9 @@ public final class MinionJobs {
         /** The worst-hurt ally it can see. */
         @Nullable
         private LivingEntity patient() {
-            double range = Math.min(MEDIC_RANGE, minion.stats().sight());
+            double range = Math.min(minion.reach(), minion.stats().sight());
+            double reach = minion.reach();
+            Vec3 centre = minion.centre();
             List<LivingEntity> allies = new ArrayList<>();
             Player maker = minion.maker();
             if (maker != null && maker.level() == minion.level() && !maker.isSpectator()) {
@@ -1392,7 +1637,8 @@ public final class MinionJobs {
             allies.addAll(minion.level().getEntitiesOfClass(LivingEntity.class, minion.getBoundingBox().inflate(range),
                     e -> e != minion && (e instanceof AbstractVillager || e instanceof MinionEntity other && !other.poweredDown() && !other.cybernetic()
                             && minion.makerId() != null && minion.makerId().equals(other.makerId()))));
-            return allies.stream().filter(e -> e.isAlive() && hurt(e) && e.distanceToSqr(minion) < range * range && minion.hasLineOfSight(e))
+            return allies.stream().filter(e -> e.isAlive() && hurt(e) && e.distanceToSqr(minion) < range * range && e.distanceToSqr(centre) < reach * reach
+                            && minion.hasLineOfSight(e))
                     .min(Comparator.comparingDouble(e -> e.getHealth() / e.getMaxHealth())).orElse(null);
         }
 
@@ -1402,7 +1648,7 @@ public final class MinionJobs {
 
         @Override
         public boolean canContinueToUse() {
-            return patient != null && patient.isAlive() && !thrown && hurt(patient) && minion.hasJob("medic") && minion.tickCount - startedAt < 400
+            return patient != null && patient.isAlive() && !thrown && hurt(patient) && minion.hasTask(MinionTask.MEDIC) && minion.tickCount - startedAt < 400
                     && patient.level() == minion.level() && potion(minion) >= 0;
         }
 
@@ -1449,20 +1695,21 @@ public final class MinionJobs {
             ThrownPotion potion = new ThrownPotion(level, minion);
             potion.setItem(stack);
             potion.setXRot(potion.getXRot() + 20.0F);
-            potion.shoot(dx, dy + flat * 0.2, dz, 0.75F, 8.0F);
+            MinionTask.Data data = PartsData.of(level).task(MinionTask.MEDIC);
+            potion.shoot(dx, dy + flat * 0.2, dz, 0.75F, MinionFitness.throwSpread(data, minion.taskFitness()));
             level.playSound(null, minion.getX(), minion.getY(), minion.getZ(), SoundEvents.WITCH_THROW, SoundSource.NEUTRAL, 1.0F,
                     0.8F + minion.getRandom().nextFloat() * 0.4F);
             level.addFreshEntity(potion);
             minion.swing(InteractionHand.MAIN_HAND);
-            cooldown = minion.tickCount + 60;
+            cooldown = minion.tickCount + MinionFitness.throwTicks(data, minion.taskFitness());
             thrown = true;
         }
     }
 
-    /** The slot of a splash (or lingering) potion that heals: instant health or regeneration. -1 for none. */
+    /** The slot of a potion it throws (a splash or lingering one that heals, its task's tool). -1 for none. */
     static int potion(MinionEntity minion) {
         for (int i = 0; i < minion.slots(); i++) {
-            if (heals(minion.inventory.getItem(i))) {
+            if (tool(minion, MinionTask.MEDIC, minion.inventory.getItem(i))) {
                 return i;
             }
         }
@@ -1484,22 +1731,36 @@ public final class MinionJobs {
 
     // ---- butcher
 
+    /** A butcher's blade: a Cleaver, or a Flensing Knife. With neither in hand it waits for one. */
+    static boolean blade(ItemStack stack) {
+        return stack.getItem() instanceof com.avicagan.bloodandbones.item.CleaverItem || stack.getItem() instanceof FlensingKnifeItem;
+    }
+
     /**
-     * A butcher takes carcasses near home apart by hand (docs/PARTS-AND-TRAITS.md section 6.9), a blow a little under a
-     * second, through the same CarcassButchery a player's Cleaver or Flensing Knife uses, so the yields are a player's
+     * A butcher takes carcasses within its reach of home apart by hand (docs/PARTS-AND-TRAITS.md section 6.9), a stroke every
+     * 0.75 s at 100%, through the same CarcassButchery a player's Cleaver or Flensing Knife uses, so the yields are a player's
      * hand yields: with a Cleaver it breaks down loose pieces and cuts limbs off whole bodies; with a Flensing Knife it
-     * skins them. What comes off goes into what it carries.
+     * skins them. With a Cleaver it also chops the pieces laid on a Butcher's Table within its reach of home, a stroke a
+     * piece, as a Deployer holding one does (ButcherTableBlockEntity#chop). Whichever lies nearest home goes first. What
+     * comes off goes into what it carries. Its fitness (docs/NEXT.md 1.2) sets how often it strokes (a fitter butcher sooner,
+     * never under 0.3 s) and, below 100%, how much of each cut it wastes: its yields times its fitness, so no butcher beats
+     * hand yields.
      */
     static class Butcher extends Goal {
-        private static final int STROKE = 15;
+        /** How far over or under its feet a piece may lie for it to cut: a resting body's torso lies a block up. */
+        private static final double REACH_UP = 2.5;
         private final MinionEntity minion;
         @Nullable
         private UUID carcass;
         @Nullable
         private String bone;
+        /** A Butcher's Table with a piece on it to chop, when that is its work rather than a carcass. */
+        @Nullable
+        private BlockPos table;
         private boolean done;
         private int nextStroke;
         private final List<UUID> unreachable = new ArrayList<>();
+        private final MinionGoals.Unreachable tablesOutOfReach = new MinionGoals.Unreachable();
         private int forgotAt;
         private final MinionGoals.Approach approach = new MinionGoals.Approach();
 
@@ -1515,7 +1776,7 @@ public final class MinionJobs {
 
         @Override
         public boolean canUse() {
-            if (!minion.hasJob("butcher") || minion.getRandom().nextInt(20) != 0 || !(minion.level() instanceof ServerLevel level)
+            if (!minion.hasTask(MinionTask.BUTCHER) || !tool(minion, MinionTask.BUTCHER, minion.getMainHandItem()) || minion.getRandom().nextInt(20) != 0 || !(minion.level() instanceof ServerLevel level)
                     || !minion.canCarry(new ItemStack(Items.BEEF))) {
                 return false;
             }
@@ -1526,12 +1787,25 @@ public final class MinionJobs {
             return pick(level);
         }
 
-        /** The nearest carcass by home with work in it for the blade it holds, and the bone to work on. */
+        /**
+         * The nearest work by home for the blade it holds: a carcass and the bone to work on, or, with a Cleaver, a Butcher's
+         * Table with a piece on it.
+         */
         private boolean pick(ServerLevel level) {
             boolean skinning = minion.getMainHandItem().getItem() instanceof FlensingKnifeItem;
             Vec3 home = Vec3.atBottomCenterOf(minion.home());
             double best = Double.MAX_VALUE;
             carcass = null;
+            table = null;
+            if (!skinning) {
+                for (BlockPos at : tables(level)) {
+                    double d = home.distanceToSqr(Vec3.atCenterOf(at));
+                    if (d < best) {
+                        best = d;
+                        table = at;
+                    }
+                }
+            }
             for (CarcassSavedData.Carcass c : CarcassSavedData.get(level).all()) {
                 if (unreachable.contains(c.id) || CarcassDrag.isDraggingCarcass(c.id)
                         || com.avicagan.bloodandbones.carcass.trolley.ShackleTrolleyEntity.isHanging(level, c.id)) {
@@ -1543,13 +1817,57 @@ public final class MinionJobs {
                     continue;
                 }
                 double d = home.distanceToSqr(at.x, at.y, at.z);
-                if (d < BUTCHER_RANGE * BUTCHER_RANGE && d < best) {
+                double reach = minion.reach();
+                if (d < reach * reach && d < best) {
                     best = d;
                     carcass = c.id;
                     bone = work;
+                    table = null;
                 }
             }
-            return carcass != null;
+            return carcass != null || table != null;
+        }
+
+        /**
+         * Whether it has a free slot for each kind of thing the piece on this table comes apart into (or, carrying nothing,
+         * however few slots it has): else it takes what it carries to the container by home first.
+         */
+        private boolean roomToChop(ButcherTableBlockEntity t) {
+            int free = 0;
+            for (int i = 0; i < minion.slots(); i++) {
+                if (minion.inventory.getItem(i).isEmpty()) {
+                    free++;
+                }
+            }
+            return free >= Math.min(t.yieldKinds(), minion.slots());
+        }
+
+        /** Butcher's Tables within its reach of home with a piece on them to chop, from the loaded chunks' block entities. */
+        private List<BlockPos> tables(ServerLevel level) {
+            List<BlockPos> out = new ArrayList<>();
+            BlockPos home = minion.home();
+            double reach = minion.reach();
+            int r = Mth.ceil(reach);
+            for (int cx = (home.getX() - r) >> 4; cx <= (home.getX() + r) >> 4; cx++) {
+                for (int cz = (home.getZ() - r) >> 4; cz <= (home.getZ() + r) >> 4; cz++) {
+                    LevelChunk chunk = level.getChunkSource().getChunkNow(cx, cz);
+                    if (chunk == null) {
+                        continue;
+                    }
+                    for (BlockEntity be : chunk.getBlockEntities().values()) {
+                        if (be instanceof ButcherTableBlockEntity t && be.getBlockPos().distToCenterSqr(Vec3.atBottomCenterOf(home)) < reach * reach
+                                && t.canChop() && roomToChop(t) && !tablesOutOfReach.contains(minion, be.getBlockPos())) {
+                            out.add(be.getBlockPos());
+                        }
+                    }
+                }
+            }
+            return out;
+        }
+
+        /** Ticks to its next stroke: 0.75 s at 100%, sooner for a fitter butcher, never under 0.3 s. */
+        private int stroke() {
+            return MinionFitness.strokeTicks(PartsData.of(minion.level()).task(MinionTask.BUTCHER), minion.taskFitness());
         }
 
         /** A Flensing Knife's work: the torso of a carcass not yet skinned that has a hide to give. */
@@ -1585,14 +1903,15 @@ public final class MinionJobs {
 
         @Override
         public boolean canContinueToUse() {
-            return carcass != null && !done && minion.hasJob("butcher") && minion.canCarry(new ItemStack(Items.BEEF));
+            return (carcass != null || table != null) && !done && minion.hasTask(MinionTask.BUTCHER) && tool(minion, MinionTask.BUTCHER, minion.getMainHandItem())
+                    && minion.canCarry(new ItemStack(Items.BEEF));
         }
 
         @Override
         public void start() {
             minion.working = true;
             done = false;
-            nextStroke = minion.tickCount + STROKE;
+            nextStroke = minion.tickCount + stroke();
             approach.reset(minion);
         }
 
@@ -1601,10 +1920,15 @@ public final class MinionJobs {
             minion.working = false;
             carcass = null;
             bone = null;
+            table = null;
         }
 
         @Override
         public void tick() {
+            if (table != null && !done && minion.level() instanceof ServerLevel level) {
+                chopAtTable(level);
+                return;
+            }
             if (carcass == null || bone == null || done || !(minion.level() instanceof ServerLevel level)) {
                 return;
             }
@@ -1622,8 +1946,11 @@ public final class MinionJobs {
             }
             Vec3 point = new Vec3(at.x, at.y, at.z);
             minion.getLookControl().setLookAt(point);
+            // within its arm's length across, and a little over or under its feet: a resting body's torso lies a block up,
+            // and a butcher standing against it where its path ends is as near as it gets (measured from its feet, it stood
+            // there out of reach until it gave the body up)
             double reach = 2.0 + minion.getBbWidth() / 2.0;
-            if (minion.distanceToSqr(point) > reach * reach) {
+            if (Math.hypot(minion.getX() - point.x, minion.getZ() - point.z) > reach || Math.abs(point.y - minion.getY()) > REACH_UP) {
                 if (!approach.step(minion, BlockPos.containing(point), 2, 1.0)) {
                     unreachable.add(carcass);
                     carcass = null;
@@ -1635,14 +1962,15 @@ public final class MinionJobs {
             if (minion.tickCount < nextStroke) {
                 return;
             }
-            nextStroke = minion.tickCount + STROKE;
+            nextStroke = minion.tickCount + stroke();
             ItemStack blade = minion.getMainHandItem();
             boolean skinning = blade.getItem() instanceof FlensingKnifeItem;
             boolean bloody = com.avicagan.bloodandbones.carcass.Blood.bloody(c);
-            // what comes off goes into its hands, as a machine's yields go to the machine; a blade in its hand gets what
-            // a player's would (the hand path, by its butchery yield)
+            // what comes off goes into its hands, as a machine's yields go to the machine; a blade in its hand gets what a
+            // player's would (the hand path, by its butchery yield), less what a poor butcher wastes
             boolean did = CarcassButchery.capturing(stack -> keep(minion, stack), () -> CarcassButchery.byHand(minion,
-                    () -> skinning ? CarcassButchery.skin(level, null, c, at) : CarcassButchery.cut(level, null, c, bone, at)));
+                    () -> CarcassButchery.yielding(MinionFitness.yieldShare(minion.taskFitness()),
+                    () -> skinning ? CarcassButchery.skin(level, null, c, at) : CarcassButchery.cut(level, null, c, bone, at))));
             minion.swing(InteractionHand.MAIN_HAND);
             if (did && bloody) {
                 com.avicagan.bloodandbones.carcass.Blood.bloody(blade, level);
@@ -1651,12 +1979,53 @@ public final class MinionJobs {
                 done = true;
             }
         }
+
+        /**
+         * At a Butcher's Table: it stands at arm's length from the top and, at its stroke, chops the piece there with its
+         * Cleaver as a Deployer does, keeping what comes off (a hand's share, less what a poor butcher wastes), the Cleaver coming
+         * away bloody. It chops only a piece the table's filter takes.
+         * It goes to a table only with a free slot for each kind of thing the piece comes apart into, so what it chops stays
+         * in its hands; carrying nothing, it chops whatever its room, and what it has no room for falls on the table top.
+         */
+        private void chopAtTable(ServerLevel level) {
+            if (!(level.getBlockEntity(table) instanceof ButcherTableBlockEntity at) || !at.canChop()) {
+                // chopped or taken off meanwhile (by a player, a Deployer, a funnel)
+                done = true;
+                return;
+            }
+            Vec3 top = Vec3.atCenterOf(table).add(0.0, 0.5, 0.0);
+            minion.getLookControl().setLookAt(top);
+            double reach = 2.0 + minion.getBbWidth() / 2.0;
+            if (Math.hypot(minion.getX() - top.x, minion.getZ() - top.z) > reach || Math.abs(top.y - minion.getY()) > REACH_UP) {
+                if (!approach.step(minion, table, 1, 1.0)) {
+                    tablesOutOfReach.add(table);
+                    table = null;
+                }
+                return;
+            }
+            approach.reset(minion);
+            minion.getNavigation().stop();
+            if (minion.tickCount < nextStroke) {
+                return;
+            }
+            nextStroke = minion.tickCount + stroke();
+            ItemStack blade = minion.getMainHandItem();
+            if (!(blade.getItem() instanceof com.avicagan.bloodandbones.item.CleaverItem)) {
+                done = true;
+                return;
+            }
+            // what it has no room for falls on the table top, as a Deployer's chop leaves it
+            CarcassButchery.yielding(MinionFitness.yieldShare(minion.taskFitness()), () -> at.chop(level, blade, minion, minion::carry));
+            minion.swing(InteractionHand.MAIN_HAND);
+            // one chop takes the whole piece apart
+            done = true;
+        }
     }
 
     // ---- hauler
 
     /**
-     * A hauler drags whole carcasses lying within 24 of home to the nearest free Shackle Hook or Bleeding Rack, with the
+     * A hauler drags whole carcasses lying within its reach of home (24) to the nearest free Shackle Hook or Bleeding Rack, with the
      * same drag a player's Meat Hook makes (CarcassDrag: the spring pull, the slowdown by the carcass's weight that its
      * drag strength eases, the drips and trail). At a hook it hangs the carcass by its torso as a player's Meat Hook
      * click does, from where a player could: the tip within reach above the body, nothing solid between (never through
@@ -1741,7 +2110,7 @@ public final class MinionJobs {
 
         @Override
         public boolean canUse() {
-            if (!minion.hasJob("hauler") || minion.getRandom().nextInt(20) != 0 || !(minion.level() instanceof ServerLevel level)
+            if (!minion.hasTask(MinionTask.HAULER) || minion.getRandom().nextInt(20) != 0 || !(minion.level() instanceof ServerLevel level)
                     || !MinionGoals.canPath(minion)) {
                 return false;
             }
@@ -1755,8 +2124,10 @@ public final class MinionJobs {
         /** The nearest whole carcass by home that lies loose, and the nearest free hook or rack to it. */
         private boolean pick(ServerLevel level) {
             Vec3 home = Vec3.atBottomCenterOf(minion.home());
+            double reach = minion.reach();
             List<BlockPos> ends = destinations(level);
             if (ends.isEmpty()) {
+                minion.idle(Component.translatable("bloodandbones.minion.idle.hauler", minion.reach()));
                 return false;
             }
             double best = Double.MAX_VALUE;
@@ -1766,7 +2137,7 @@ public final class MinionJobs {
                 // the cheap tests first: most of the world's carcasses lie nowhere near home
                 Vector3d at = CarcassAssembler.boneWorldPosition(level, c, c.rootBone);
                 double d = at == null ? Double.MAX_VALUE : home.distanceToSqr(at.x, at.y, at.z);
-                if (d >= HAUL_RANGE * HAUL_RANGE || d >= best || unreachable.contains(c.id) || !whole(c)
+                if (d >= reach * reach || d >= best || unreachable.contains(c.id) || !whole(c)
                         || !level.isLoaded(BlockPos.containing(at.x, at.y, at.z)) || CarcassRest.isHeld(level, c) || onRack(level, c) != null) {
                     continue;
                 }
@@ -1815,7 +2186,8 @@ public final class MinionJobs {
             List<BlockPos> out = new ArrayList<>();
             BlockPos home = minion.home();
             Set<BlockPos> racksInUse = null;
-            int r = Mth.ceil(HAUL_RANGE);
+            double reach = minion.reach();
+            int r = Mth.ceil(reach);
             for (int cx = (home.getX() - r) >> 4; cx <= (home.getX() + r) >> 4; cx++) {
                 for (int cz = (home.getZ() - r) >> 4; cz <= (home.getZ() + r) >> 4; cz++) {
                     LevelChunk chunk = level.getChunkSource().getChunkNow(cx, cz);
@@ -1823,7 +2195,7 @@ public final class MinionJobs {
                         continue;
                     }
                     for (BlockEntity be : chunk.getBlockEntities().values()) {
-                        if (be.getBlockPos().distSqr(home) >= HAUL_RANGE * HAUL_RANGE) {
+                        if (be.getBlockPos().distSqr(home) >= reach * reach) {
                             continue;
                         }
                         if (be instanceof BleedingRackBlockEntity && racksInUse == null) {
@@ -1843,7 +2215,7 @@ public final class MinionJobs {
         private Set<BlockPos> racksInUse(ServerLevel level) {
             Set<BlockPos> out = new HashSet<>();
             Vec3 home = Vec3.atBottomCenterOf(minion.home());
-            double near = HAUL_RANGE + 4.0;
+            double near = minion.reach() + 4.0;
             for (CarcassSavedData.Carcass c : CarcassSavedData.get(level).all()) {
                 Vector3d at = CarcassAssembler.boneWorldPosition(level, c, c.rootBone);
                 BleedingRackBlockEntity rack = at == null || home.distanceToSqr(at.x, at.y, at.z) >= near * near ? null : onRack(level, c);
@@ -1868,7 +2240,7 @@ public final class MinionJobs {
 
         @Override
         public boolean canContinueToUse() {
-            return carcass != null && to != null && !done && minion.hasJob("hauler") && minion.tickCount - startedAt < GIVE_UP && minion.level().isLoaded(to);
+            return carcass != null && to != null && !done && minion.hasTask(MinionTask.HAULER) && minion.tickCount - startedAt < GIVE_UP && minion.level().isLoaded(to);
         }
 
         @Override
@@ -2228,7 +2600,7 @@ public final class MinionJobs {
 
     /** A cell of a carcass's torso to hook, in its body's plot (as a player's hook takes one), or null if it has none. */
     @Nullable
-    static BlockPos torsoCell(ServerLevel level, CarcassSavedData.Carcass carcass) {
+    public static BlockPos torsoCell(ServerLevel level, CarcassSavedData.Carcass carcass) {
         var container = dev.ryanhcode.sable.api.sublevel.SubLevelContainer.getContainer(level);
         UUID id = carcass.bones.get(carcass.rootBone);
         if (container == null || id == null || !(container.getSubLevel(id) instanceof dev.ryanhcode.sable.sublevel.ServerSubLevel body) || body.isRemoved()) {

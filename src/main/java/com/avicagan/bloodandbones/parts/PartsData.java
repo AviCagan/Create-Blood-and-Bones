@@ -39,7 +39,8 @@ import java.util.concurrent.ConcurrentHashMap;
 /**
  * The parts-and-traits data (docs/PARTS-AND-TRAITS.md section 4): mob groups (archetypes, families, overlays),
  * per-mob files, traits, scrap materials, armour tiers and the bone slot rules. Loaded on the server from data packs and
- * sent to clients as the files were written, so both sides resolve a mob the same way.
+ * sent to clients as the files were written, so both sides resolve a mob the same way. The minion tasks' numbers and the
+ * heads' dispositions (docs/NEXT.md 1.6) stay on the server: fitness is worked out there.
  */
 public final class PartsData {
     private static final Gson GSON = new GsonBuilder().create();
@@ -48,12 +49,19 @@ public final class PartsData {
     /** The file kinds, each a folder under data/&lt;ns&gt;/. */
     public enum Kind {
         MOB_GROUP("mob_group"), MOB_TRAITS("mob_traits"), TRAIT("trait"), SCRAP_MATERIAL("scrap_material"), BONE_SLOT_RULES("bone_slot_rules"),
-        ARMOUR_TIER("armour_tier"), ORGAN("organ");
+        ARMOUR_TIER("armour_tier"), ORGAN("organ"), MINION_TASK("minion_task", false), MINION_DISPOSITION("minion_disposition", false);
 
         public final String folder;
+        /** Sent to clients; the server-only kinds are not. */
+        public final boolean synced;
 
         Kind(String folder) {
+            this(folder, true);
+        }
+
+        Kind(String folder, boolean synced) {
             this.folder = folder;
+            this.synced = synced;
         }
     }
 
@@ -67,12 +75,15 @@ public final class PartsData {
         private volatile Map<Integer, ArmourTier> tiers = Map.of();
         private volatile Map<ResourceLocation, OrganKind> organs = Map.of();
         private volatile PartSlots.Rules slotRules = PartSlots.DEFAULT;
+        private volatile Map<com.avicagan.bloodandbones.minion.MinionTask, com.avicagan.bloodandbones.minion.MinionTask.Data> tasks = Map.of();
+        private volatile Map<ResourceLocation, com.avicagan.bloodandbones.minion.MinionDisposition> dispositions = Map.of();
         private final Map<String, ResolvedMob> resolved = new ConcurrentHashMap<>();
         private volatile int generation;
         /** What game tests add on top (under ids of their own): looked up like the rest, never listed, sent or linted. */
         private final Map<ResourceLocation, Trait> testTraits = new ConcurrentHashMap<>();
         private final Map<ResourceLocation, MobGroup> testMobFiles = new ConcurrentHashMap<>();
         private final Map<ResourceLocation, OrganKind> testOrgans = new ConcurrentHashMap<>();
+        private final Map<com.avicagan.bloodandbones.minion.MinionTask, com.avicagan.bloodandbones.minion.MinionTask.Data> testTasks = new ConcurrentHashMap<>();
 
         /** Every file of one kind, as written, by id. */
         public Map<ResourceLocation, String> raw(Kind kind) {
@@ -121,6 +132,25 @@ public final class PartsData {
                     Map<ResourceLocation, OrganKind> out = new java.util.TreeMap<>();
                     files.forEach((id, text) -> parse(id, text, json -> out.put(id, MobGroup.decode(OrganKind.CODEC, json, ops, "organ " + id))));
                     organs = java.util.Collections.unmodifiableMap(new LinkedHashMap<>(out));
+                }
+                case MINION_TASK -> {
+                    // data/<ns>/minion_task/<task>.json, over the task's defaults; a file for a task no code does is left out
+                    Map<com.avicagan.bloodandbones.minion.MinionTask, com.avicagan.bloodandbones.minion.MinionTask.Data> out = new java.util.EnumMap<>(
+                            com.avicagan.bloodandbones.minion.MinionTask.class);
+                    files.keySet().stream().sorted().forEach(id -> parse(id, files.get(id), json -> {
+                        var task = com.avicagan.bloodandbones.minion.MinionTask.byId(id);
+                        if (task == null) {
+                            BloodAndBones.LOGGER.warn("Minion task file {} names no task: a task needs code (its goals)", id);
+                        } else {
+                            out.put(task, task.checked(out.getOrDefault(task, task.defaults()).read(json), id));
+                        }
+                    }));
+                    tasks = java.util.Collections.unmodifiableMap(out);
+                }
+                case MINION_DISPOSITION -> {
+                    Map<ResourceLocation, com.avicagan.bloodandbones.minion.MinionDisposition> out = new LinkedHashMap<>();
+                    files.forEach((id, text) -> parse(id, text, json -> out.put(id, com.avicagan.bloodandbones.minion.MinionDisposition.read(json))));
+                    dispositions = Map.copyOf(out);
                 }
                 case BONE_SLOT_RULES -> {
                     List<PartSlots.Rule> rules = new ArrayList<>();
@@ -255,6 +285,48 @@ public final class PartsData {
 
         public PartSlots.Rules slotRules() {
             return slotRules;
+        }
+
+        /** A task's numbers: its file's over its defaults, or the defaults (today's constants) with no file. */
+        public com.avicagan.bloodandbones.minion.MinionTask.Data task(com.avicagan.bloodandbones.minion.MinionTask task) {
+            var test = testTasks.get(task);
+            if (test != null) {
+                return test;
+            }
+            var data = tasks.get(task);
+            return data != null ? data : task.defaults();
+        }
+
+        /**
+         * For game tests: a task's numbers in place of its file's, until set back with null. Tests share one world, so a
+         * test sets it and sets it back within one tick.
+         */
+        public void setTestTask(com.avicagan.bloodandbones.minion.MinionTask task, @Nullable com.avicagan.bloodandbones.minion.MinionTask.Data data) {
+            if (data == null) {
+                testTasks.remove(task);
+            } else {
+                testTasks.put(task, data);
+            }
+            invalidate();
+        }
+
+        /**
+         * A disposition by the name a head's data gives ("meek", or a datapack's "ns:name"): its file, else the shipped one of
+         * that name, else none (every multiplier 1).
+         */
+        public com.avicagan.bloodandbones.minion.MinionDisposition disposition(String name) {
+            ResourceLocation id = com.avicagan.bloodandbones.minion.MinionDisposition.id(name);
+            var file = dispositions.get(id);
+            if (file != null) {
+                return file;
+            }
+            var shipped = id.getNamespace().equals(BloodAndBones.MOD_ID) ? com.avicagan.bloodandbones.minion.MinionDisposition.DEFAULTS.get(id.getPath()) : null;
+            return shipped != null ? shipped : com.avicagan.bloodandbones.minion.MinionDisposition.NONE;
+        }
+
+        /** Every disposition file, by id. */
+        public Map<ResourceLocation, com.avicagan.bloodandbones.minion.MinionDisposition> dispositions() {
+            return dispositions;
         }
 
         /** Bumped whenever data changes, so caches built from it know to rebuild. */
@@ -485,11 +557,13 @@ public final class PartsData {
         }
     }
 
-    /** Everything the server has, one payload per kind. */
+    /** Everything the server has that clients need, one payload per kind. */
     public static List<SyncPayload> payloads() {
         List<SyncPayload> out = new ArrayList<>();
         for (Kind kind : Kind.values()) {
-            out.add(new SyncPayload(kind.ordinal(), new HashMap<>(SERVER.raw(kind))));
+            if (kind.synced) {
+                out.add(new SyncPayload(kind.ordinal(), new HashMap<>(SERVER.raw(kind))));
+            }
         }
         return out;
     }

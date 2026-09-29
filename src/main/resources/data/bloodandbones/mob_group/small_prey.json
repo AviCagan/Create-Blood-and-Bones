@@ -17,10 +17,9 @@
   "parts": {
     "head": {
       "minion": {
-        "jobs": [
-          "bloodandbones:courier",
-          "bloodandbones:companion"
-        ],
+        "knacks": {
+          "bloodandbones:courier": 1.5
+        },
         "disposition": "skittish",
         "bite": {
           "style": "bite",
@@ -51,6 +50,11 @@
         "boots": [
           "bloodandbones:swift"
         ]
+      }
+    },
+    "leg.front": {
+      "minion": {
+        "grip": "paw"
       }
     }
   },

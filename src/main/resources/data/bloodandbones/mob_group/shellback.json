@@ -33,10 +33,10 @@
     },
     "head": {
       "minion": {
-        "jobs": [
-          "bloodandbones:guard",
-          "bloodandbones:sentry"
-        ],
+        "knacks": {
+          "bloodandbones:guard": 1.25,
+          "bloodandbones:sentry": 1.25
+        },
         "bite": {
           "style": "bite",
           "damage": 1.0

@@ -90,6 +90,15 @@ public final class CarcassDrag {
 
     private static final Map<UUID, Drag> DRAGS = new ConcurrentHashMap<>();
 
+    /**
+     * Something that drags a carcass by its own rule rather than a player's: a hauler minion, slowed by how fit it is at
+     * hauling (docs/NEXT.md 1.2), not by the drag strength a player's traits give.
+     */
+    public interface Dragger {
+        /** Its slowdown dragging a carcass that slows a player by {@code playerSlowdown} (a share of walking speed). */
+        float dragSlowdown(float playerSlowdown);
+    }
+
     private CarcassDrag() {
     }
 
@@ -748,9 +757,10 @@ public final class CarcassDrag {
             return;
         }
         speed.removeModifier(SLOWDOWN_ID);
-        // a strong hauler (the drag strength traits give) feels less of it
+        // a strong player (the drag strength traits give) feels less of it; a hauler minion by its own rule (its fitness)
         AttributeInstance strength = player.getAttribute(com.avicagan.bloodandbones.registry.BBAttributes.DRAG_STRENGTH);
-        float eased = strength == null ? penalty : penalty * (1.0F - (float) Math.min(0.75, strength.getValue()));
+        float eased = player instanceof Dragger dragger ? dragger.dragSlowdown(penalty)
+                : strength == null ? penalty : penalty * (1.0F - (float) Math.min(0.75, strength.getValue()));
         speed.addTransientModifier(new AttributeModifier(SLOWDOWN_ID, -eased, AttributeModifier.Operation.ADD_MULTIPLIED_TOTAL));
     }
 

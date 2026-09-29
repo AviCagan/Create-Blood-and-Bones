@@ -20,11 +20,10 @@
     },
     "head": {
       "minion": {
-        "jobs": [
-          "bloodandbones:medic",
-          "bloodandbones:surgeon",
-          "bloodandbones:courier"
-        ]
+        "knacks": {
+          "bloodandbones:surgeon": 1.5,
+          "bloodandbones:medic": 1.5
+        }
       }
     }
   },

@@ -117,6 +117,28 @@ public class CarcassPieceItem extends Item {
                     .orElse(false);
             tooltip.add(Component.translatable("item.bloodandbones.carcass_piece." + (slime ? "small" : "baby")).withStyle(net.minecraft.ChatFormatting.GRAY));
         }
+        // what it brings to a minion's tasks (its knacks, what it holds with, a head's disposition), with Ctrl, as an organ's
+        // traits are shown (docs/NEXT.md 1.4)
+        List<Component> facts = facts(piece);
+        if (!facts.isEmpty()) {
+            if (flag.hasControlDown()) {
+                tooltip.add(Component.translatable("bloodandbones.minion.facts.in_minion").withStyle(net.minecraft.ChatFormatting.GRAY));
+                facts.forEach(fact -> tooltip.add(Component.literal("  ").append(fact).withStyle(net.minecraft.ChatFormatting.DARK_AQUA)));
+            } else {
+                tooltip.add(Component.translatable("bloodandbones.minion.facts.hold_ctrl").withStyle(net.minecraft.ChatFormatting.DARK_GRAY));
+            }
+        }
+    }
+
+    /** What this piece brings to a minion's tasks, from its mob's data for the part it is (none for a part no minion takes). */
+    public static List<Component> facts(Piece piece) {
+        com.avicagan.bloodandbones.parts.PartsData.Store store = com.avicagan.bloodandbones.parts.CarcassArmourItem.store();
+        Rig rig = store.rig(piece.entity(), piece.baby()).orElse(null);
+        if (rig == null || rig.bone(piece.bone()).isEmpty()) {
+            return List.of();
+        }
+        var slot = com.avicagan.bloodandbones.parts.PartSlots.of(store, piece.entity(), rig, piece.bone());
+        return com.avicagan.bloodandbones.minion.TaskWords.partFacts(store.resolve(piece.entity(), piece.baby()), piece.traits(), slot.key());
     }
 
     @Override

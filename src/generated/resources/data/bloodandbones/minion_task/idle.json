@@ -1,0 +1,11 @@
+{
+  "anchors": [
+    "home",
+    "maker"
+  ],
+  "kind": "none",
+  "max_reach": 8,
+  "numbers": {},
+  "reach": 4,
+  "stores": false
+}

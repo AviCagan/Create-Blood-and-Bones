@@ -72,6 +72,14 @@ public final class DevShowcase {
     private static List<View> views;
     private static long builtAt = -1;
     private static int moved;
+    /** The minions of the minion shots, what each is, for the fitness shot's lines (server side). */
+    private static final List<java.util.Map.Entry<String, com.avicagan.bloodandbones.minion.MinionBuild>> SHOWN = new java.util.concurrent.CopyOnWriteArrayList<>();
+    /** The cow on rabbit legs of the minion shots, whose task screen is photographed (server side). */
+    private static volatile java.util.UUID taskMinion;
+    /** The Surgery Table with a minion being built on it, whose line is photographed (server side). */
+    private static volatile BlockPos frameAt;
+    /** That build, whole: the cow on rabbit legs. */
+    private static volatile com.avicagan.bloodandbones.minion.MinionBuild frameBuild;
     /** Logged at each shot: the wither is the biggest, oddest body in the scene. */
     private static CarcassSavedData.Carcass witherShown;
     private static long moveAt;
@@ -207,9 +215,12 @@ public final class DevShowcase {
                 if (scene >= PONDERS.size()) {
                     // the cow's pages first, then where a creeper's powder sac comes from (its Body Parts page), then where it goes (fitting it)
                     int page = scene - PONDERS.size();
-                    String[] names = {"jei.png", "jei_organs.png", "jei_fitting.png"};
+                    String[] names = {"jei.png", "jei_organs.png", "jei_knacks.png", "jei_fitting.png"};
                     ItemStack sac = com.avicagan.bloodandbones.parts.Organs.stack(com.avicagan.bloodandbones.parts.PartsData.CLIENT,
                             BloodAndBones.asResource("powder_sac"), net.minecraft.resources.ResourceLocation.withDefaultNamespace("creeper"), false);
+                    // the villager's heart, whose Body Parts page is the villager's: its head's knacks, disposition and surgeon's head
+                    ItemStack heart = com.avicagan.bloodandbones.parts.Organs.stack(com.avicagan.bloodandbones.parts.PartsData.CLIENT,
+                            BloodAndBones.asResource("village_heart"), net.minecraft.resources.ResourceLocation.withDefaultNamespace("villager"), false);
                     if (phase == 0 && page == 0) {
                         otherHand(mc);
                     }
@@ -220,8 +231,16 @@ public final class DevShowcase {
                         // and every item of this mod in the list beside it, to see their icons
                         jei.getIngredientFilter().setFilterText(page > 0 ? "@bloodandbones gland" : "@bloodandbones");
                         jei.getRecipesGui().show(jei.getJeiHelpers().getFocusFactory().createFocus(
-                                page == 1 ? mezz.jei.api.recipe.RecipeIngredientRole.OUTPUT : mezz.jei.api.recipe.RecipeIngredientRole.INPUT,
-                                mezz.jei.api.constants.VanillaTypes.ITEM_STACK, page > 0 ? sac : new ItemStack(net.minecraft.world.item.Items.COW_SPAWN_EGG)));
+                                page == 1 || page == 2 ? mezz.jei.api.recipe.RecipeIngredientRole.OUTPUT : mezz.jei.api.recipe.RecipeIngredientRole.INPUT,
+                                mezz.jei.api.constants.VanillaTypes.ITEM_STACK, page == 2 ? heart : page > 0 ? sac : new ItemStack(net.minecraft.world.item.Items.COW_SPAWN_EGG)));
+                    } else if (page == 2 && phase == 30 && mc.screen != null) {
+                        // the villager's page scrolled down to its head (the list's box, as a mouse wheel over it scrolls it)
+                        int x = mc.getWindow().getGuiScaledWidth() / 2;
+                        int y = mc.getWindow().getGuiScaledHeight() / 2 + 20;
+                        mc.screen.mouseScrolled(x, y, 0.0, -2.0);
+                        BloodAndBones.LOGGER.info("[showcase] villager's head: {}", com.avicagan.bloodandbones.minion.TaskWords.mobFacts(
+                                com.avicagan.bloodandbones.parts.PartsData.CLIENT.resolve(net.minecraft.resources.ResourceLocation.withDefaultNamespace("villager"), false),
+                                java.util.Map.of("profession", "none"), "head").stream().map(net.minecraft.network.chat.Component::getString).toList());
                     } else if (page < names.length - 1 && phase == PONDER_GAP - 1 && com.avicagan.bloodandbones.compat.jei.BBJeiPlugin.runtime != null) {
                         Screenshot.grab(mc.gameDirectory, PREFIX + names[page], mc.getMainRenderTarget(), message -> {
                         });
@@ -408,10 +427,27 @@ public final class DevShowcase {
                         if (player.serverLevel().getBlockEntity(at) instanceof com.avicagan.bloodandbones.body.SurgeryTableBlockEntity table) {
                             table.put(new ItemStack(BBItems.CLEAVER.get()));
                         }
+                        // a surgeon by the table, a zombie's head on a zombie (docs/NEXT.md 1.5: 141%, its stumps two buckets), and
+                        // the stump its cutting left where the vent arm was: the screen names it and both prices before any cut
+                        var surgeon = com.avicagan.bloodandbones.registry.BBEntities.MINION.get().create(player.serverLevel());
+                        BlockPos by = at.south(2);
+                        surgeon.moveTo(by.getX() + 0.5, by.getY(), by.getZ() + 0.5, 180.0F, 0.0F);
+                        surgeon.setup(player, by, com.avicagan.bloodandbones.minion.MinionBuild.of(piece("zombie", "body")).with("head", piece("zombie", "head"))
+                                .with("right_arm", piece("zombie", "right_arm")).with("left_arm", piece("zombie", "left_arm"))
+                                .with("right_leg", piece("zombie", "right_leg")).with("left_leg", piece("zombie", "left_leg")), 1000.0F);
+                        surgeon.setNoAi(true);
+                        surgeon.setTask(com.avicagan.bloodandbones.minion.MinionTask.SURGEON);
+                        surgeon.setItemSlot(net.minecraft.world.entity.EquipmentSlot.HEAD, new ItemStack(net.minecraft.world.item.Items.LEATHER_HELMET));
+                        player.serverLevel().addFreshEntity(surgeon);
+                        com.avicagan.bloodandbones.body.BodyEffects.body(player).lose(com.avicagan.bloodandbones.body.BodyPart.LEFT_ARM, 2);
+                        com.avicagan.bloodandbones.body.BodyEffects.changed(player);
                         if (com.avicagan.bloodandbones.body.SurgeryTableBlock.lieDown(player.serverLevel(), at, player)) {
                             net.neoforged.neoforge.network.PacketDistributor.sendToPlayer(player, new com.avicagan.bloodandbones.body.Surgery.OpenPayload(at, player.getId()));
                         }
                     });
+                } else if (t == 137) {
+                    // the advancement toasts would cover the screen's corner
+                    mc.getToasts().clear();
                 } else if (t == 140) {
                     Screenshot.grab(mc.gameDirectory, PREFIX + "body_2.png", mc.getMainRenderTarget(), message -> {
                     });
@@ -501,6 +537,11 @@ public final class DevShowcase {
                                 .with("right_leg", ref.apply("rabbit", "right_haunch")).with("left_leg", ref.apply("rabbit", "left_haunch"))
                                 .with("left_arm", ref.apply("zombie", "left_arm"));
                         var builds = java.util.List.of(hopper, whole, odd, cow);
+                        SHOWN.add(java.util.Map.entry("Cow on rabbit legs", hopper));
+                        frameBuild = hopper;
+                        SHOWN.add(java.util.Map.entry("Whole cow", whole));
+                        SHOWN.add(java.util.Map.entry("Zombie, pig's head, rabbit's haunches, one arm", odd));
+                        SHOWN.add(java.util.Map.entry("Legless cow", cow));
                         for (int m = 0; m < builds.size(); m++) {
                             var minion = com.avicagan.bloodandbones.registry.BBEntities.MINION.get().create(player.serverLevel());
                             BlockPos at = player.blockPosition().offset(m * 3 - 4, 0, 7);
@@ -515,6 +556,9 @@ public final class DevShowcase {
                                 minion.setItemSlot(net.minecraft.world.entity.EquipmentSlot.HEAD, new ItemStack(net.minecraft.world.item.Items.ZOMBIE_HEAD));
                             }
                             player.serverLevel().addFreshEntity(minion);
+                            if (m == 0) {
+                                taskMinion = minion.getUUID();
+                            }
                             if (m == 3) {
                                 minion.powerDown();
                             }
@@ -526,6 +570,7 @@ public final class DevShowcase {
                                     net.neoforged.neoforge.fluids.capability.IFluidHandler.FluidAction.EXECUTE);
                         }
                         BlockPos tableAt = player.blockPosition().offset(0, 0, 3);
+                        frameAt = tableAt;
                         player.serverLevel().setBlockAndUpdate(tableAt, BBBlocks.SURGERY_TABLE.getDefaultState()
                                 .setValue(com.avicagan.bloodandbones.body.SurgeryTableBlock.ATTACHMENT, com.avicagan.bloodandbones.body.TableAttachment.ASSEMBLY));
                         if (player.serverLevel().getBlockEntity(tableAt) instanceof com.avicagan.bloodandbones.body.SurgeryTableBlockEntity table) {
@@ -582,6 +627,7 @@ public final class DevShowcase {
                         bowman.setYHeadRot(160.0F);
                         bowman.setYBodyRot(160.0F);
                         bowman.setup(player, bowAt, archer, 1000.0F);
+                        SHOWN.add(java.util.Map.entry("Zombie with a cow's head, holding a bow", archer));
                         bowman.setNoAi(true);
                         bowman.setItemSlot(net.minecraft.world.entity.EquipmentSlot.MAINHAND, new ItemStack(net.minecraft.world.item.Items.BOW));
                         bowman.setItemSlot(net.minecraft.world.entity.EquipmentSlot.HEAD, new ItemStack(net.minecraft.world.item.Items.IRON_HELMET));
@@ -607,8 +653,60 @@ public final class DevShowcase {
                     server.execute(() -> {
                         ServerPlayer player = server.getPlayerList().getPlayers().get(0);
                         player.teleportTo(player.serverLevel(), player.getX() - 6.0, player.getY(), player.getZ() + 12.0, -135.0F, 12.0F);
+                        fitness(player);
                     });
-                } else if (t == 220) {
+                    // the fitness lines in the chat, over that view
+                    mc.options.hideGui = false;
+                } else if (t == 203) {
+                    // a recipe toast would cover the corner of the lines
+                    mc.getToasts().clear();
+                } else if (t == 206) {
+                    Screenshot.grab(mc.gameDirectory, PREFIX + "tasks_0.png", mc.getMainRenderTarget(), message -> {
+                    });
+                    // the cow on rabbit legs' task screen, opened as its maker's crouching empty hand opens it (docs/NEXT.md 1.3); each
+                    // step below is ten ticks after the last, so that a frame is drawn between them however slowly the scene draws
+                    // (a picture is the last frame drawn, and the screen comes back from the server)
+                    server.execute(() -> {
+                        ServerPlayer player = server.getPlayerList().getPlayers().get(0);
+                        if (taskMinion != null && player.serverLevel().getEntity(taskMinion) instanceof com.avicagan.bloodandbones.minion.MinionEntity minion) {
+                            com.avicagan.bloodandbones.minion.MinionTasks.showScreen(minion, player);
+                            BloodAndBones.LOGGER.info("[showcase] task screen on the cow on rabbit legs: {}", com.avicagan.bloodandbones.minion.MinionTasks.status(minion).getString());
+                        }
+                    });
+                } else if (t == 216) {
+                    // its reasons for herding shown over its row, as a hovering mouse shows them
+                    if (mc.screen instanceof MinionTaskScreen screen) {
+                        screen.pinHover(com.avicagan.bloodandbones.minion.MinionTask.HERDER);
+                    }
+                } else if (t == 226) {
+                    Screenshot.grab(mc.gameDirectory, PREFIX + "tasks_1.png", mc.getMainRenderTarget(), message -> {
+                    });
+                    BloodAndBones.LOGGER.info("[showcase] took task screen shot; screen {}", mc.screen == null ? "none" : mc.screen.getClass().getSimpleName());
+                    // and the rest of the list, scrolled to its end
+                    if (mc.screen instanceof MinionTaskScreen screen) {
+                        screen.pinHover(null);
+                        screen.scrollToEnd();
+                    }
+                } else if (t == 236) {
+                    Screenshot.grab(mc.gameDirectory, PREFIX + "tasks_2.png", mc.getMainRenderTarget(), message -> {
+                    });
+                    // and what its fitness makes of a butcher's work (docs/NEXT.md 1.2): its strokes and how much of each cut it keeps
+                    if (mc.screen instanceof MinionTaskScreen screen) {
+                        screen.pinHover(com.avicagan.bloodandbones.minion.MinionTask.BUTCHER);
+                    }
+                } else if (t == 246) {
+                    Screenshot.grab(mc.gameDirectory, PREFIX + "tasks_3.png", mc.getMainRenderTarget(), message -> {
+                    });
+                    // and the Tender's (stage E): what it does, what it reads and how often it looks round
+                    if (mc.screen instanceof MinionTaskScreen screen) {
+                        screen.pinHover(com.avicagan.bloodandbones.minion.MinionTask.TENDER);
+                    }
+                } else if (t == 256) {
+                    Screenshot.grab(mc.gameDirectory, PREFIX + "tasks_4.png", mc.getMainRenderTarget(), message -> {
+                    });
+                    mc.setScreen(null);
+                    mc.options.hideGui = true;
+                } else if (t == 260) {
                     Screenshot.grab(mc.gameDirectory, PREFIX + "minions_1.png", mc.getMainRenderTarget(), message -> {
                     });
                     // and near, from in front: the bowman's bow and helmet
@@ -616,7 +714,7 @@ public final class DevShowcase {
                         ServerPlayer player = server.getPlayerList().getPlayers().get(0);
                         player.teleportTo(player.serverLevel(), player.getX() + 2.0, player.getY(), player.getZ() - 3.8, -20.0F, 10.0F);
                     });
-                } else if (t == 235) {
+                } else if (t == 272) {
                     Screenshot.grab(mc.gameDirectory, PREFIX + "minions_2.png", mc.getMainRenderTarget(), message -> {
                     });
                     // then the flier's wings, from below and in front
@@ -624,7 +722,7 @@ public final class DevShowcase {
                         ServerPlayer player = server.getPlayerList().getPlayers().get(0);
                         player.teleportTo(player.serverLevel(), player.getX() + 7.0, player.getY(), player.getZ(), 0.0F, -20.0F);
                     });
-                } else if (t == 250) {
+                } else if (t == 287) {
                     Screenshot.grab(mc.gameDirectory, PREFIX + "minions_3.png", mc.getMainRenderTarget(), message -> {
                     });
                     // then the pig's head in its carved pumpkin, from in front (the row faces away from where it was made)
@@ -632,7 +730,7 @@ public final class DevShowcase {
                         ServerPlayer player = server.getPlayerList().getPlayers().get(0);
                         player.teleportTo(player.serverLevel(), player.getX(), player.getY(), player.getZ() + 1.5, 160.0F, 5.0F);
                     });
-                } else if (t == 265) {
+                } else if (t == 302) {
                     Screenshot.grab(mc.gameDirectory, PREFIX + "minions_4.png", mc.getMainRenderTarget(), message -> {
                     });
                     // then the whole cow beside it in its zombie's head, from in front the same way
@@ -640,21 +738,29 @@ public final class DevShowcase {
                         ServerPlayer player = server.getPlayerList().getPlayers().get(0);
                         player.teleportTo(player.serverLevel(), player.getX() - 3.0, player.getY(), player.getZ(), 160.0F, 5.0F);
                     });
-                } else if (t == 275) {
+                } else if (t == 312) {
                     Screenshot.grab(mc.gameDirectory, PREFIX + "minions_5.png", mc.getMainRenderTarget(), message -> {
                     });
-                    // stumps: a ragged one where a surgeon hacked the left arm off, a clean one for the right leg
+                    // stumps, raggeder the dearer (docs/NEXT.md 1.5): the right arm a fit surgeon's (a bucket), the left leg a fair
+                    // one's (two), the left arm a poor one's (three), and a clean cut for the right leg
                     server.execute(() -> {
                         ServerPlayer player = server.getPlayerList().getPlayers().get(0);
                         var body = com.avicagan.bloodandbones.body.BodyEffects.body(player);
-                        body.lose(com.avicagan.bloodandbones.body.BodyPart.LEFT_ARM, true);
-                        body.lose(com.avicagan.bloodandbones.body.BodyPart.RIGHT_LEG, false);
+                        body.lose(com.avicagan.bloodandbones.body.BodyPart.RIGHT_ARM, 1);
+                        body.lose(com.avicagan.bloodandbones.body.BodyPart.LEFT_LEG, 2);
+                        body.lose(com.avicagan.bloodandbones.body.BodyPart.LEFT_ARM, 3);
+                        body.lose(com.avicagan.bloodandbones.body.BodyPart.RIGHT_LEG, 0);
                         com.avicagan.bloodandbones.body.BodyEffects.changed(player);
-                        // back where the view from behind was taken, clear of the minions, for this and the night's effects
-                        player.teleportTo(player.serverLevel(), player.getX() - 6.0, player.getY(), player.getZ() + 2.3, 150.0F, 15.0F);
+                        // the carcass armour off, which is still drawn over a limb that is gone
+                        for (var slot : new net.minecraft.world.entity.EquipmentSlot[]{net.minecraft.world.entity.EquipmentSlot.HEAD,
+                                net.minecraft.world.entity.EquipmentSlot.LEGS, net.minecraft.world.entity.EquipmentSlot.FEET}) {
+                            player.setItemSlot(slot, ItemStack.EMPTY);
+                        }
+                        // back beyond where the view from behind was taken, clear of the minions, for this and the night's effects
+                        player.teleportTo(player.serverLevel(), player.getX() - 12.0, player.getY(), player.getZ() + 2.3, 150.0F, 15.0F);
                     });
                     mc.options.setCameraType(net.minecraft.client.CameraType.THIRD_PERSON_FRONT);
-                } else if (t == 285) {
+                } else if (t == 322) {
                     Screenshot.grab(mc.gameDirectory, PREFIX + "stumps.png", mc.getMainRenderTarget(), message -> {
                     });
                     server.execute(() -> {
@@ -690,15 +796,15 @@ public final class DevShowcase {
                     });
                     mc.options.setCameraType(net.minecraft.client.CameraType.THIRD_PERSON_FRONT);
                     mc.options.hideGui = true;
-                } else if (t == 295) {
+                } else if (t == 332) {
                     com.avicagan.bloodandbones.client.effect.RangedClient.receive(new com.avicagan.bloodandbones.parts.effect.BeamPayload(effectHost, effectTarget, 400, 16.0F, "guardian_beam"));
                     com.avicagan.bloodandbones.client.effect.SocialClient.receive(new com.avicagan.bloodandbones.parts.effect.SensePayload("reveal",
                             java.util.List.of(effectHost, effectTarget), 400));
-                } else if (t == 307) {
+                } else if (t == 344) {
                     Screenshot.grab(mc.gameDirectory, PREFIX + "effects_0.png", mc.getMainRenderTarget(), message -> {
                     });
                     mc.options.setCameraType(net.minecraft.client.CameraType.FIRST_PERSON);
-                } else if (t == 323) {
+                } else if (t == 360) {
                     Screenshot.grab(mc.gameDirectory, PREFIX + "effects_1.png", mc.getMainRenderTarget(), message -> {
                     });
                     // the backtank's gauge: a copper tank of blood worn, running a Flesh Arm and a Sinew Leg; a Hydraulic Arm
@@ -706,6 +812,46 @@ public final class DevShowcase {
                     server.execute(() -> {
                         ServerPlayer player = server.getPlayerList().getPlayers().get(0);
                         player.serverLevel().setDayTime(6000);
+                        player.setItemSlot(net.minecraft.world.entity.EquipmentSlot.CHEST, ItemStack.EMPTY);
+                        // back to the Surgery Table with the minion being built on it, its build now the cow on rabbit legs,
+                        // looking down at it (docs/NEXT.md 1.4)
+                        if (frameAt != null) {
+                            if (frameBuild != null && player.serverLevel().getBlockEntity(frameAt) instanceof com.avicagan.bloodandbones.body.SurgeryTableBlockEntity table) {
+                                table.setBuild(frameBuild);
+                            }
+                            player.teleportTo(player.serverLevel(), frameAt.getX() + 0.5, frameAt.getY(), frameAt.getZ() - 2.6, 0.0F, 32.0F);
+                        }
+                    });
+                    mc.options.setCameraType(net.minecraft.client.CameraType.FIRST_PERSON);
+                    mc.options.hideGui = false;
+                    // the night's outlines ended
+                    com.avicagan.bloodandbones.client.effect.SocialClient.receive(new com.avicagan.bloodandbones.parts.effect.SensePayload("reveal",
+                            java.util.List.of(effectHost, effectTarget), 0));
+                } else if (t == 388) {
+                    // the fitness lines off the chat, which would cover it
+                    mc.gui.getChat().clearMessages(false);
+                    // a plain click on the table: its line while building, on the action bar
+                    server.execute(() -> {
+                        ServerPlayer player = server.getPlayerList().getPlayers().get(0);
+                        if (frameAt != null) {
+                            net.minecraft.world.level.block.state.BlockState table = player.serverLevel().getBlockState(frameAt);
+                            table.useWithoutItem(player.serverLevel(), player, new net.minecraft.world.phys.BlockHitResult(net.minecraft.world.phys.Vec3.atCenterOf(frameAt),
+                                    net.minecraft.core.Direction.UP, frameAt, false));
+                            if (player.serverLevel().getBlockEntity(frameAt) instanceof com.avicagan.bloodandbones.body.SurgeryTableBlockEntity built) {
+                                built.build().ifPresent(b -> BloodAndBones.LOGGER.info("[showcase] table line: {}", com.avicagan.bloodandbones.minion.MinionAssembly
+                                        .status(com.avicagan.bloodandbones.parts.PartsData.SERVER, b).getString()));
+                            }
+                        }
+                    });
+                } else if (t == 396) {
+                    Screenshot.grab(mc.gameDirectory, PREFIX + "table_line.png", mc.getMainRenderTarget(), message -> {
+                    });
+                    // the table's line off the action bar, which would sit over the gauge
+                    mc.gui.setOverlayMessage(net.minecraft.network.chat.Component.empty(), false);
+                    // the backtank's gauge: a copper tank of blood worn, running a Flesh Arm and a Sinew Leg; a Hydraulic Arm
+                    // beside them has no soul blood, so it shows dimmed
+                    server.execute(() -> {
+                        ServerPlayer player = server.getPlayerList().getPlayers().get(0);
                         ItemStack tank = new ItemStack(BBItems.backtank(com.avicagan.bloodandbones.backtank.BacktankTier.COPPER));
                         com.avicagan.bloodandbones.backtank.FluidBacktankItem.setFluid(tank, new net.neoforged.neoforge.fluids.FluidStack(BBFluids.blood(), 1500));
                         player.setItemSlot(net.minecraft.world.entity.EquipmentSlot.CHEST, tank);
@@ -720,7 +866,7 @@ public final class DevShowcase {
                     });
                     mc.options.setCameraType(net.minecraft.client.CameraType.FIRST_PERSON);
                     mc.options.hideGui = false;
-                } else if (t == 345) {
+                } else if (t == 418) {
                     Screenshot.grab(mc.gameDirectory, PREFIX + "gauge.png", mc.getMainRenderTarget(), message -> {
                     });
                     BloodAndBones.LOGGER.info("[showcase] gauge: {} implants; bar colour {}", BacktankGauge.poweredImplants(mc.player).size(),
@@ -742,7 +888,10 @@ public final class DevShowcase {
                         player.setGameMode(GameType.SURVIVAL);
                         diveAt = dive(player.serverLevel(), player, true);
                     });
-                } else if (t == 395) {
+                } else if (t == 458) {
+                    // the recipe and advancement toasts the diving gear brings would cover the corner
+                    mc.getToasts().clear();
+                } else if (t == 468) {
                     Screenshot.grab(mc.gameDirectory, PREFIX + "gauge_diving.png", mc.getMainRenderTarget(), message -> {
                     });
                     BloodAndBones.LOGGER.info("[showcase] diving: Create's air gauge up {}, this gauge {} implants",
@@ -768,7 +917,7 @@ public final class DevShowcase {
         }
     }
 
-    // ---------------------------------------------------------------- the physics yard (docs/ARCHITECTURE-PROPOSAL.md 15.21)
+    // ---------------------------------------------------------------- the physics yard (docs/ARCHITECTURE-PROPOSAL.md 15.28)
 
     /** Server time the physics yard was started, -1 before; its corner; how far through its steps it is. */
     private static long yardAt = -1;
@@ -979,6 +1128,44 @@ public final class DevShowcase {
             player.teleportTo(level, y.getX() + 0.5, y.getY(), y.getZ() + 1.5, -90.0F, 20.0F);
             boolean started = CarcassDrag.start(level, player, leg.getPlot().getCenterBlock(), null);
             BloodAndBones.LOGGER.info("[showcase] physics yard: drag by the hind leg started: {}", started);
+        }
+    }
+
+    /** A piece of a vanilla mob, for a minion built here. */
+    private static com.avicagan.bloodandbones.minion.PieceRef piece(String mob, String bone) {
+        return new com.avicagan.bloodandbones.minion.PieceRef(net.minecraft.resources.ResourceLocation.withDefaultNamespace(mob), bone,
+                net.minecraft.resources.ResourceLocation.withDefaultNamespace("textures/entity/" + mob + "/" + mob + ".png"), List.of(), 1.0F, false,
+                java.util.Map.of(), false);
+    }
+
+    /**
+     * Each shown minion's best tasks and what it cannot do, worked out as a task screen will (docs/NEXT.md 1.2), in the chat:
+     * the fitness in a running world, from the server's data, by the tasks' own names (bloodless ones in the bloodless run).
+     */
+    private static void fitness(ServerPlayer player) {
+        var store = com.avicagan.bloodandbones.parts.PartsData.SERVER;
+        for (var shown : SHOWN) {
+            var build = shown.getValue();
+            var rows = new java.util.ArrayList<>(com.avicagan.bloodandbones.minion.MinionFitness.rows(store, build,
+                    com.avicagan.bloodandbones.minion.MinionStats.of(store, build), com.avicagan.bloodandbones.minion.MinionFitness.Context.NONE
+                            .holding(shown.getKey().contains("bow") ? new ItemStack(net.minecraft.world.item.Items.BOW) : ItemStack.EMPTY)));
+            rows.removeIf(r -> !r.task().rated());
+            rows.sort(java.util.Comparator.comparingDouble(r -> r.can() ? -r.fitness() : 1.0));
+            net.minecraft.network.chat.MutableComponent line = net.minecraft.network.chat.Component.literal(shown.getKey() + ": ");
+            var best = rows.stream().filter(com.avicagan.bloodandbones.minion.MinionFitness.Row::can).limit(4).toList();
+            for (int i = 0; i < best.size(); i++) {
+                line.append(net.minecraft.network.chat.Component.translatable(best.get(i).task().nameKey()))
+                        .append(" " + Math.round(best.get(i).fitness() * 100.0F) + "%" + (i < best.size() - 1 ? ", " : ""));
+            }
+            var cannot = rows.stream().filter(r -> !r.can()).toList();
+            if (!cannot.isEmpty()) {
+                line.append("; cannot: ");
+                for (int i = 0; i < cannot.size(); i++) {
+                    line.append(net.minecraft.network.chat.Component.translatable(cannot.get(i).task().nameKey())).append(i < cannot.size() - 1 ? ", " : "");
+                }
+            }
+            player.sendSystemMessage(line);
+            BloodAndBones.LOGGER.info("[showcase] fitness: {}", line.getString());
         }
     }
 

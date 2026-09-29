@@ -17,11 +17,10 @@
   "parts": {
     "head": {
       "minion": {
-        "jobs": [
-          "bloodandbones:guard",
-          "bloodandbones:companion",
-          "bloodandbones:courier"
-        ],
+        "knacks": {
+          "bloodandbones:guard": 1.25,
+          "bloodandbones:courier": 1.25
+        },
         "bite": {
           "style": "bite",
           "damage": 1.0

@@ -6,7 +6,8 @@ import com.avicagan.bloodandbones.minion.MinionBody;
 import com.avicagan.bloodandbones.minion.MinionBuild;
 import com.avicagan.bloodandbones.minion.MinionData;
 import com.avicagan.bloodandbones.minion.MinionEntity;
-import com.avicagan.bloodandbones.minion.MinionJobs;
+import com.avicagan.bloodandbones.minion.MinionFitness;
+import com.avicagan.bloodandbones.minion.MinionTask;
 import com.avicagan.bloodandbones.minion.MinionStats;
 import com.avicagan.bloodandbones.minion.PieceRef;
 import com.avicagan.bloodandbones.parts.ActiveTraits;
@@ -110,9 +111,10 @@ public class MinionVariantTests {
     }
 
     /**
-     * A creeper's head offers the sapper (its family's data) only to a body with a detonating organ in it. Put to it, the
-     * minion walks up to the husk it has for a target, hisses, and blows up beside it: the husk is hurt, no block breaks
-     * (the server allows minions none), and the minion lies powered down, whole and unhurt, never destroyed.
+     * A body can be a sapper only with a detonating organ in it (docs/NEXT.md 1.2: the task's test of its body), and a
+     * creeper's head has a knack for it. Put to it, the minion walks up to the husk it has for a target, hisses, and blows
+     * up beside it: the husk is hurt, no block breaks (the server allows minions none), and the minion lies powered down,
+     * whole and unhurt, never destroyed.
      */
     @GameTest(template = "empty", timeoutTicks = 300)
     public static void sapperDetonatesAndPowersDown(GameTestHelper helper) {
@@ -120,15 +122,18 @@ public class MinionVariantTests {
         MinionBuild build = sapper(false);
         MinionBuild noSac = build.withOrgan(Optional.empty());
         MinionStats stats = MinionStats.of(PartsData.SERVER, build);
-        if (!stats.jobs().contains(MinionJobs.SAPPER)
-                || !MinionJobs.offered(PartsData.SERVER, build, stats, ItemStack.EMPTY, false).contains(MinionJobs.SAPPER)
-                || MinionJobs.offered(PartsData.SERVER, noSac, MinionStats.of(PartsData.SERVER, noSac), ItemStack.EMPTY, false).contains(MinionJobs.SAPPER)) {
-            helper.fail("A creeper's head should offer the sapper, and only with a detonating organ in: " + stats.jobs());
+        MinionFitness.Row with = MinionFitness.of(PartsData.SERVER, build, stats, MinionFitness.Context.NONE, MinionTask.SAPPER);
+        MinionFitness.Row without = MinionFitness.of(PartsData.SERVER, noSac, MinionStats.of(PartsData.SERVER, noSac), MinionFitness.Context.NONE,
+                MinionTask.SAPPER);
+        if (!with.can() || stats.knack(MinionTask.SAPPER.id) != 1.5F || without.can()
+                || !"bloodandbones.minion.cannot.detonator".equals(without.cannot().orElse(""))) {
+            helper.fail("A creeper's head should have a knack for sapping, and a body be able to sap only with a detonating organ in: "
+                    + with.cannot() + ", " + without.cannot());
             return;
         }
         MinionEntity minion = minion(helper, new BlockPos(2, 2, 5), build);
-        if (!minion.setJob(MinionJobs.SAPPER)) {
-            helper.fail("It should take the sapper's job");
+        if (!minion.setTask(MinionTask.SAPPER)) {
+            helper.fail("It should take the sapper's task");
             return;
         }
         Husk husk = helper.spawn(EntityType.HUSK, new BlockPos(8, 2, 5));
@@ -156,17 +161,17 @@ public class MinionVariantTests {
     }
 
     /**
-     * Only a sapper sets its organ off. The same creeper-headed cow with the sac in it wakes as a guard (never straight to
-     * sapping), and as a guard it bites the husk it has for a target, even close enough for the sac's blast, without ever
-     * lighting its fuse: its organ goal never fires a detonation (spec 6.9; 15.17's reason the sapper is not woken to).
+     * Only a sapper sets its organ off. The same creeper-headed cow with the sac in it never wakes to sapping, and set to
+     * Guard it bites the husk it has for a target, even close enough for the sac's blast, without ever lighting its fuse:
+     * its organ goal never fires a detonation (spec 6.9; 15.17's reason the sapper is not woken to).
      */
     @GameTest(template = "empty", timeoutTicks = 300)
     public static void guardKeepsItsBlast(GameTestHelper helper) {
         pen(helper);
         MinionEntity minion = minion(helper, new BlockPos(3, 2, 5), sapper(false));
-        if (!minion.job().equals(BloodAndBones.asResource("guard"))) {
+        if (minion.hasTask(MinionTask.SAPPER) || !minion.setTask(MinionTask.GUARD)) {
             minion.discard();
-            helper.fail("A creeper's head with the sac in should wake as a guard, not " + minion.job());
+            helper.fail("A creeper's head with the sac in should never wake as a sapper, and take guarding: " + minion.task());
             return;
         }
         Husk husk = helper.spawn(EntityType.HUSK, new BlockPos(6, 2, 5));
@@ -200,6 +205,54 @@ public class MinionVariantTests {
     }
 
     /**
+     * A sapper with no head (docs/NEXT.md 1.1) finds no target and no banner by sight: set to Sapper, a cow's body on its
+     * legs with the sac in it and no head leaves be a husk 2.2 blocks off, never lighting its fuse or walking to it, and sets
+     * itself off once a husk is against it, as a headless guard strikes only what touches it. Its row reads the body as it is
+     * (mindless), and only a missing detonating organ would shut the task.
+     */
+    @GameTest(template = "empty", timeoutTicks = 400)
+    public static void headlessSapperGoesOffAtATouch(GameTestHelper helper) {
+        pen(helper);
+        MinionBuild headless = MinionBuild.of(ref("cow", "body"));
+        for (String leg : new String[]{"right_front_leg", "left_front_leg", "right_hind_leg", "left_hind_leg"}) {
+            headless = headless.with(leg, ref("cow", leg));
+        }
+        headless = headless.withOrgan(Optional.of(new CarcassArmour.Organ(BloodAndBones.asResource("powder_sac"), CREEPER, false, Map.of())));
+        MinionEntity minion = minion(helper, new BlockPos(3, 2, 5), headless);
+        MinionFitness.Row row = minion.row(MinionTask.SAPPER, MinionTask.Anchor.HOME);
+        if (!minion.stats().mindless() || !row.can() || !"mindless".equals(row.dispositionName()) || !minion.setTask(MinionTask.SAPPER)) {
+            helper.fail("A headless body with the sac in should take the sapper's task, as a mindless one: " + row.cannot() + ", " + row.dispositionName());
+            return;
+        }
+        net.minecraft.world.phys.Vec3 post = minion.position();
+        Husk close = helper.spawn(EntityType.HUSK, new net.minecraft.world.phys.Vec3(5.7, 2.0, 5.5));
+        close.setNoAi(true);
+        Husk[] near = new Husk[1];
+        double[] strayed = {0.0};
+        helper.onEachTick(() -> strayed[0] = Math.max(strayed[0], minion.position().distanceTo(post)));
+        helper.startSequence()
+                .thenIdle(60)
+                .thenExecute(() -> {
+                    helper.assertTrue(!com.avicagan.bloodandbones.parts.effect.DetonateEffect.lit(minion) && !minion.poweredDown(),
+                            "with nothing against it, it should not set itself off");
+                    helper.assertTrue(!com.avicagan.bloodandbones.minion.MinionGoals.touches(minion, close) && strayed[0] < 0.5,
+                            "the husk off to its side is not against it, and it should not walk to it: " + strayed[0]);
+                    near[0] = helper.spawn(EntityType.HUSK, new BlockPos(4, 2, 5));
+                    near[0].setNoAi(true);
+                })
+                .thenWaitUntil(() -> helper.assertTrue(minion.poweredDown(), "it has not set itself off at the husk against it yet (target "
+                        + minion.getTarget() + ")"))
+                .thenExecute(() -> {
+                    helper.assertTrue(strayed[0] < 1.0, "it should never walk after anything: " + strayed[0]);
+                    helper.assertTrue(!near[0].isAlive() || near[0].getHealth() < near[0].getMaxHealth(), "the husk against it should be hurt");
+                    minion.discard();
+                    close.discard();
+                    near[0].discard();
+                })
+                .thenSucceed();
+    }
+
+    /**
      * Handed a banner, a sapper goes for the banner of that colour standing near home (its mark) and blows up there; the
      * other colour's is left alone, and both stand after, the blast breaking no blocks.
      */
@@ -209,7 +262,7 @@ public class MinionVariantTests {
         helper.setBlock(new BlockPos(8, 2, 8), Blocks.RED_BANNER);
         helper.setBlock(new BlockPos(8, 2, 2), Blocks.BLUE_BANNER);
         MinionEntity minion = minion(helper, new BlockPos(2, 2, 5), sapper(false));
-        minion.setJob(MinionJobs.SAPPER);
+        minion.setTask(MinionTask.SAPPER);
         minion.setItemSlot(EquipmentSlot.MAINHAND, new ItemStack(Items.RED_BANNER));
         helper.succeedWhen(() -> {
             helper.assertTrue(minion.poweredDown(), "the sapper has not blown up at its banner yet: at " + helper.relativeVec(minion.position()));
@@ -252,14 +305,14 @@ public class MinionVariantTests {
         far.setNoAi(true);
         float full = near.getMaxHealth();
         // the plain one first, then the charged one, so neither blast reaches the other's husk
-        weak.setJob(MinionJobs.SAPPER);
+        weak.setTask(MinionTask.SAPPER);
         weak.setTarget(near);
         float[] weakDid = {-1.0F};
         helper.onEachTick(() -> {
             if (weakDid[0] < 0.0F && weak.poweredDown()) {
                 weakDid[0] = full - (near.isAlive() ? near.getHealth() : 0.0F);
                 strong.setNoAi(false);
-                strong.setJob(MinionJobs.SAPPER);
+                strong.setTask(MinionTask.SAPPER);
                 strong.setTarget(far);
             }
         });
@@ -306,7 +359,7 @@ public class MinionVariantTests {
 
     /**
      * What a carcass keeps of its mob (spec 9, slice 3): a creeper's charge, a fox's and a frog's and a rabbit's variant, a
-     * panda's gene, a given name. The heads they make: the killer bunny's is a berserk bodyguard or guard with a bite of 8,
+     * panda's gene, a given name. The heads they make: the killer bunny's is berserk, with a knack for guarding and a bite of 8,
      * a vindicator named Johnny is berserk, a zoglin's always is, and a weak panda's sneezes.
      */
     @GameTest(template = "empty", timeoutTicks = 20)
@@ -339,8 +392,9 @@ public class MinionVariantTests {
         MinionBuild killer = MinionBuild.of(ref("cow", "body")).with("head", ref("rabbit", "head", CarcassLook.traits(rabbit)));
         MinionStats bunny = MinionStats.of(PartsData.SERVER, killer);
         MinionStats tame = MinionStats.of(PartsData.SERVER, MinionBuild.of(ref("cow", "body")).with("head", ref("rabbit", "head", Map.of("variant", "brown"))));
-        if (!bunny.berserk() || Math.abs(bunny.biteDamage() - 8.0F) > 0.01F || !bunny.jobs().contains(BloodAndBones.asResource("bodyguard")) || tame.berserk()) {
-            helper.fail("The killer bunny's head should be a berserk bodyguard biting for 8, a brown rabbit's not: " + bunny.jobs() + ", " + bunny.biteDamage());
+        if (!bunny.berserk() || Math.abs(bunny.biteDamage() - 8.0F) > 0.01F || bunny.knack(MinionTask.GUARD.id) != 1.5F || tame.berserk()) {
+            helper.fail("The killer bunny's head should be berserk with a knack for guarding, biting for 8, a brown rabbit's not: " + bunny.knacks() + ", "
+                    + bunny.biteDamage());
             return;
         }
         MinionStats johnny = MinionStats.of(PartsData.SERVER, MinionBuild.of(ref("cow", "body")).with("head", ref("vindicator", "head", Map.of("name", "Johnny"))));
@@ -355,12 +409,12 @@ public class MinionVariantTests {
             helper.fail("A weak panda's head should sneeze");
             return;
         }
-        // spec 8.2: an aggressive panda's head is a bodyguard and a brawler 2
+        // spec 8.2: an aggressive panda's head has a knack for guarding and is a brawler 2
         MinionBuild aggressive = MinionBuild.of(ref("cow", "body")).with("head", ref("panda", "head", Map.of("gene", "aggressive")));
         int brawler = MinionData.traits(PartsData.SERVER, aggressive).stream().flatMap(List::stream)
                 .filter(t -> t.id().equals(BloodAndBones.asResource("brawler"))).mapToInt(TraitList.Resolved::level).max().orElse(0);
-        if (brawler != 2 || !MinionStats.of(PartsData.SERVER, aggressive).jobs().contains(BloodAndBones.asResource("bodyguard"))) {
-            helper.fail("An aggressive panda's head should be a bodyguard with Brawler II: brawler " + brawler);
+        if (brawler != 2 || MinionStats.of(PartsData.SERVER, aggressive).knack(MinionTask.GUARD.id) != 1.5F) {
+            helper.fail("An aggressive panda's head should have a knack for guarding and Brawler II: brawler " + brawler);
             return;
         }
         helper.succeed();

@@ -161,11 +161,14 @@ Everything below is in development builds only; the art is placeholder (see the 
   goes where one is missing; a prosthetic unclips. Limbs are only ever lost by choice, and nothing
   can go wrong.
 - Amputation is a ritual, as the brief has it: a player's flesh only comes off with a surgeon minion
-  (a villager's or a pillager's head, and an arm) awake beside the table. It hacks: the stump it leaves
-  is ragged, and fitting anything but a crude prosthetic there later takes a bucket of blood as well (from
-  a bucket or a worn backtank). Fitting never needs a surgeon, and a crude prosthetic never needs blood, so
-  one can always go on. A surgeon keeps to its table and tends whoever lies on it.
-- Stumps show: a limb gone leaves the top of it in your own skin with a raw end; a ragged one is
+  awake beside the table (any minion with a hand set to Surgeon; a datapack can keep it to villager,
+  illager and witch heads, as the brief's words have it). It hacks: the stump it leaves is ragged, and
+  fitting anything but a crude prosthetic there later takes blood as well, by how fit the surgeon was: a
+  bucket after a villager's or a pillager's head, two or three after a poorer one, from every bucket and
+  backtank you carry added together. The surgery screen names the surgeon and its price before you cut.
+  Fitting never needs a surgeon, and a crude prosthetic never needs blood, so one can always go on. A
+  surgeon keeps to its table and tends whoever lies on it, a fitter one faster.
+- Stumps show, a dearer ragged stump raggeder: a limb gone leaves the top of it in your own skin with a raw end; a ragged one is
   longer, torn, with flaps of flesh hanging off.
 - Missing parts follow the design brief: an arm gone means no off-hand and swings a quarter slower
   (the main hand always works); a leg gone means no sprinting; an eye gone closes the view in with fog
@@ -260,7 +263,46 @@ Everything below is in development builds only; the art is placeholder (see the 
 
 ### Minions
 
-- The sapper: a creeper's head, with a creeper's Powder Sac stitched in, offers a job that walks up to a monster near
+- Tasks in place of jobs: any of sixteen tasks can be given to any minion, and what it is built of decides how well it
+  does each. Crouch and use an empty hand on your minion for its task screen: every task in four groups (fight, tend,
+  fetch, work) with a bar, a percentage and a word from Hopeless to Born to it, or "Cannot" and why; hover a task for
+  each thing that made it so (its hands, its sight, its head's knack and temper, the blood it uses at work). Click a task
+  to set it; set it to work at home or with you, how far it reaches, and "Home here". Idle, Guard, Hunter, Medic and
+  Courier can be done with you: a guard with you goes for what hurts you and what you hit, as a tamed wolf does; a
+  courier brings what it picks up round you to your hands; a hunter hunts beside you; a medic follows and heals you. It
+  wakes to the task it is fittest for ("Woke as a Surgeon (200%)"). A missing tool makes it wait, and its status line
+  says so; it never changes task by itself. A minion with no head strikes only what touches it; a sentry with no bow
+  strikes what comes within reach of its post. A fitter minion uses less blood at work. Old minions' jobs become the
+  same tasks (a companion or bodyguard guards you, a scavenger is a courier).
+- The Tender, the sixteenth task: it keeps the Blood Troughs and Charging Cradles near home stocked from the chests,
+  barrels, shulker boxes and item vaults there. Buckets of blood go into the troughs, and empty buckets it fills at a
+  Create Fluid Tank or a Bleeding Rack's tray; full Soul Canisters and brass sheets go into the cradles, and the cradles'
+  empties back out. Any of your minions lying powered down near home gets a bucket of blood or a canister and gets up.
+  Nothing it carries is lost: what a fallen minion cannot hold of a bucket the Tender drinks, or pours into a trough.
+  The empties go back into a container. A bigger torso carries more at a trip, and a fitter Tender looks round sooner.
+- A butcher minion with a Cleaver chops the pieces laid on a Butcher's Table near home, as a Deployer does, and keeps
+  what comes off. A minion storing its takings passes over a container that takes none of them (a Butcher's Table) for
+  the chest beyond it.
+- A butcher minion's Cleaver is in its hand, so wherever it cuts (a body in the field or a piece on the Butcher's
+  Table) it gets a hand's share, as you would, less what a poor one wastes; at a table it chops only the pieces the
+  table's filter takes.
+- Where a minion's fitness shows: the Surgery Table's line while building names its best two tasks; JEI's Body Parts
+  page and a carcass piece's tooltip (hold Ctrl) show what each part brings to a minion's tasks: its knacks, what it
+  holds things with and a head's disposition; `/bloodandbones minion fitness` gives the full breakdown for the minion
+  you look at, every task.
+- How fit a minion is at its task changes its work: a fitter butcher strokes faster and wastes nothing (a poor one
+  wastes part of each cut), a fitter sentry shoots sooner and truer, a fitter medic throws sooner and truer, a fitter
+  fisher, digger, barterer, courier or farmer works or looks round sooner, a fitter herder keeps after a stray longer;
+  a poor hauler tows a body slower than you would, a fit one as fast, never faster. The task screen says what it makes
+  of each. More arms that strike land blows more often (+15% for each past two).
+- The groundwork for tasks in place of jobs (any task to any minion, better or worse by what it is built of): every
+  minion's fitness at every task is worked out on the server from its parts, their knacks and its head's disposition,
+  though nothing in play reads it yet. Datapacks can retune each task (`minion_task`) and disposition
+  (`minion_disposition`), give heads `knacks` in place of `jobs` (old `jobs` lists still work) and legs a `grip`; a trait
+  can give a knack for one task (`task_knack`: the sniffer's Olfactory Bulb makes a better digger).
+- A minion's head sees as far as Keen Eye and Relentless say; a headless minion feels its way only 2 blocks, and one with
+  no arm and no head never fights.
+- The sapper: any minion with a creeper's Powder Sac stitched in can be one (a creeper's head is best at it): it walks up to a monster near
   home (or to a banner of the colour you hand it) and blows itself up there, sparing itself and your side; then it lies
   powered down, whole, until it gets blood again. It breaks blocks only where the server lets minions break blocks.
 - What a minion holds is drawn: in the hand at the end of its first arm (a sword, a bow, a rod), in front of a villager's

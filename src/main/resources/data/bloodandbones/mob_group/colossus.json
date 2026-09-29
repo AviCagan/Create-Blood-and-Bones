@@ -25,11 +25,10 @@
     },
     "head": {
       "minion": {
-        "jobs": [
-          "bloodandbones:sentry",
-          "bloodandbones:guard",
-          "bloodandbones:bodyguard"
-        ],
+        "knacks": {
+          "bloodandbones:sentry": 1.5,
+          "bloodandbones:guard": 1.5
+        },
         "disposition": "berserk",
         "bite": {
           "style": "bite"

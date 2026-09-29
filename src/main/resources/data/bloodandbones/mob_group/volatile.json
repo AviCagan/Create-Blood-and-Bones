@@ -10,10 +10,10 @@
   "parts": {
     "head": {
       "minion": {
-        "jobs": [
-          "bloodandbones:sapper",
-          "bloodandbones:guard"
-        ]
+        "knacks": {
+          "bloodandbones:sapper": 1.5,
+          "bloodandbones:guard": 1.25
+        }
       }
     }
   }

@@ -77,15 +77,17 @@ provided by [Sable](https://github.com/ryanhcode/sable).
   a minion for that mob's ability.
 - **Minions.** Stitched together from carcass pieces on the Surgery Table (with its Assembly Frame): a
   torso, then the heads, legs, arms and tails of any mob. Every piece does its own thing: the torso sets
-  size and health, the head the job and bite, the legs speed and how it moves, so a cow on rabbit legs
+  size, health and how much it carries, the head its sight, bite and knacks, the legs speed and how it moves, so a cow on rabbit legs
   hops, spider legs climb, strider legs walk across lava, drowned legs walk the seabed, horse legs can be
   saddled and ridden (a pig's head steered with a carrot on a stick, a camel carrying two), wings strong
-  enough fly it, and arms hit in their own styles. The head decides the jobs on offer (a villager's by
-  its trade): sentry, scavenger, herder, fisher, hunter, hauler, butcher, medic, barterer, digger,
-  sapper (a creeper's head and powder sac: it walks up to a monster and blows itself up, then lies
-  powered down) and the rest, worked with whatever you hand it and drawn holding it. Woken
+  enough fly it, and arms hit in their own styles. Any of sixteen tasks can go to any minion, and what it
+  is built of makes it better or worse at each (a villager's head is a born surgeon and good at its trade's
+  task; paws pick poorly; eight arms work fast): guard, sentry, hunter, sapper (with a creeper's powder sac:
+  it walks up to a monster and blows itself up, then lies powered down), surgeon, medic, herder, tender,
+  courier, hauler, farmer, fisher, butcher, barterer and digger, worked with whatever you hand it and drawn
+  holding it. Crouch and use an empty hand on it for its task screen. Woken
   with a bucket of blood, it runs on blood and drinks from a Blood Trough; run dry, it lies down alive
-  until it gets more, and is never destroyed by neglect. Built of skinned pieces under Brass Sheathing,
+  until it gets more (a Tender brings it some), and is never destroyed by neglect. Built of skinned pieces under Brass Sheathing,
   it is a brass minion instead: woken and kept going on Soul Canisters that a Charging Cradle swaps in
   (Mechanical Arms and funnels keep the cradle stocked), with a cybernetic module of its own and a filter
   slot that takes a Create filter.
@@ -101,9 +103,10 @@ provided by [Sable](https://github.com/ryanhcode/sable).
   on for everyone with `/gamerule bloodandbonesBloodless true`. Nothing about how the game plays
   changes.
 - Tooltips (hold Shift), JEI pages (including a Butchery page per mob showing what its carcass
-  gives and a Body Parts page showing what its parts and organs do), Ponder scenes and an
-  advancement tab explain it all in game. `/bloodandbones traits explain <mob>` says what a mob's
-  parts do; `/bloodandbones traits dump` writes them all to a CSV file.
+  gives and a Body Parts page showing what its parts and organs do, and what each part brings to a
+  minion's tasks), Ponder scenes and an advancement tab explain it all in game. `/bloodandbones traits
+  explain <mob>` says what a mob's parts do; `/bloodandbones traits dump` writes them all to a CSV
+  file; `/bloodandbones minion fitness` shows how fit the minion you look at is at every task, and why.
 
 ## Building
 
@@ -116,8 +119,8 @@ incremental. `./gradlew runClient` / `runServer` / `runData` are configured by M
 
 ### Development aids
 
-- `./gradlew runGameTestServer` runs the game tests headless (525: every rigged mob and baby,
-  butchery and its three yield paths, rot, cold air, bleeding, machines, their motion and their part filters, cooking and display, decoration, surgery, organs, implants, backtanks, carcass armour and its traits, trait effects, minions and their jobs, movement and mounts, chains, recipes
+- `./gradlew runGameTestServer` runs the game tests headless (557: every rigged mob and baby,
+  butchery and its three yield paths, rot, cold air, bleeding, machines, their motion and their part filters, cooking and display, decoration, surgery, organs, implants, backtanks, carcass armour and its traits, trait effects, minions and their tasks, movement and mounts, chains, recipes
   and the soul blood line on Create's machines, bloodless mode (no game logic reads it; no gory word or wet sound
   left), advancements and sounds, what a dozen carcasses at once cost the server, and the carcass physics: which way a
   hooked carcass turns and a struck one falls).
@@ -135,8 +138,9 @@ incremental. `./gradlew runClient` / `runServer` / `runData` are configured by M
   models' part trees to `run/build/layer-dump.txt`, for writing new rig targets in
   `src/main/rig_targets`.
 - `./gradlew runClient -Dbloodandbones.showcase=true` makes a flat world, builds a scene of
-  carcasses, machines and the rest, screenshots it (and five Ponder scenes, the cow's JEI
-  page and a creeper's powder sac's) into `run/screenshots/showcase_*.png`, and quits. It runs without a screen under
+  carcasses, machines and the rest, screenshots it (and six Ponder scenes, the cow's JEI
+  page, a creeper's powder sac's and a villager's Body Parts page, a minion's task screen and a
+  Surgery Table's line while building) into `run/screenshots/showcase_*.png`, and quits. It runs without a screen under
   `xvfb-run`. `-Dbloodandbones.showcase=bloodless` does the same with bloodless mode forced on.
 
 ## Licence

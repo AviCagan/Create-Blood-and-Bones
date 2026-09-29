@@ -18,10 +18,9 @@
   "parts": {
     "head": {
       "minion": {
-        "jobs": [
-          "bloodandbones:scavenger",
-          "bloodandbones:companion"
-        ],
+        "knacks": {
+          "bloodandbones:courier": 1.25
+        },
         "disposition": "skittish",
         "bite": {
           "style": "bite",

@@ -2,11 +2,10 @@
   "parts": {
     "head": {
       "minion": {
-        "jobs": [
-          "bloodandbones:barterer",
-          "bloodandbones:guard",
-          "bloodandbones:courier"
-        ]
+        "knacks": {
+          "bloodandbones:barterer": 2.0,
+          "bloodandbones:guard": 1.25
+        }
       }
     }
   }

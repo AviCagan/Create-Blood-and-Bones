@@ -58,11 +58,11 @@ public class MinionRangedGoal extends Goal {
         return !(minion.distanceToSqr(target) < MELEE * MELEE && hands());
     }
 
-    /** Whether it has an arm that hits (asked every tick it fights, so no stream). */
+    /** Whether it has an arm that hurts (asked every tick it fights, so no stream). */
     private boolean hands() {
         List<MinionStats.Strike> strikes = minion.stats().strikes();
         for (int i = 0; i < strikes.size(); i++) {
-            if (!"pacifist".equals(strikes.get(i).style())) {
+            if (strikes.get(i).hurts()) {
                 return true;
             }
         }
