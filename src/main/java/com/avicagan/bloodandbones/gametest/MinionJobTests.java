@@ -703,9 +703,12 @@ public class MinionJobTests {
     /**
      * A butcher's head with a Cleaver in hand takes a cow carcass by home apart by hand: a leg cut off and broken down,
      * what came off in its own hands (seen in what it carries, none left lying). A leg's small yield may roll nothing, so
-     * it has the time and the reach (home beside the cow) to go on to the next piece.
+     * it has the time and the reach (home beside the cow) to go on to the next piece, as far as the torso, whose yield
+     * never rolls nothing. By hand a leg now gives three fifths of its table less a botched share (the butchery paths,
+     * 15.19), so six pieces in ten give nothing: with time for only the first four or five pieces (900 ticks, each piece
+     * three strokes to cut off and three to break down), about one run in eight had none come off yet.
      */
-    @GameTest(template = "empty", timeoutTicks = 900)
+    @GameTest(template = "empty", timeoutTicks = 2400)
     public static void butcherButchersWithCleaver(GameTestHelper helper) {
         pen(helper);
         ServerLevel level = helper.getLevel();
