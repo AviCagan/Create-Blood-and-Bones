@@ -65,6 +65,8 @@ public class ButcheryPathTests {
     /** The speed every machine and Deployer in the comparison turns at; the times are worked out at the top speed too. */
     private static final int RPM = 32;
     private static final int TOP_RPM = 256;
+    /** Ticks to let blocks just set in a test get their colliders before a carcass is laid on them. */
+    private static final int SETTLE_TICKS = 20;
 
     /** Ticks a Deployer takes to push once at a speed: DeployerBlockEntity's timer runs 1000 out, 1000 back, 500 waiting. */
     private static int deployerCycle(int rpm) {
@@ -219,13 +221,12 @@ public class ButcheryPathTests {
         helper.setBlock(tableAt, BBBlocks.SURGERY_TABLE.getDefaultState().setValue(SurgeryTableBlock.ATTACHMENT, TableAttachment.SURGICAL));
         SurgeryTableBlockEntity table = (SurgeryTableBlockEntity) level.getBlockEntity(helper.absolutePos(tableAt));
 
-        CarcassSavedData.Carcass manglerCow = cow(helper, manglerAt.above());
-        cow(helper, stationAt.above());
-        cow(helper, tableAt.above());
-        CarcassSavedData.Carcass handCow = cow(helper, new BlockPos(8, 2, 8));
-        if (manglerCow == null || handCow == null || table == null) {
+        if (table == null) {
             return;
         }
+        // the cows are built once the blocks just set here have their colliders: built at once, one could fall through
+        // the table it was laid on (the Surgery Table's cow, once in four whole runs, and the rig then had nothing to cut)
+        CarcassSavedData.Carcass[] cows = new CarcassSavedData.Carcass[1];
         long[] started = new long[1];
         int[] stroke = {0, 0, 0};
         // the Butcher's Table's chops and the rig's cuts, for the times at the top speed
@@ -233,8 +234,16 @@ public class ButcheryPathTests {
         int[] rigCuts = {0};
 
         helper.startSequence()
+                .thenIdle(SETTLE_TICKS)
+                .thenExecute(() -> {
+                    cow(helper, manglerAt.above());
+                    cow(helper, stationAt.above());
+                    cow(helper, tableAt.above());
+                    cows[0] = cow(helper, new BlockPos(8, 2, 8));
+                })
                 // by hand: all at once, timed by the tools' own pauses
                 .thenExecute(() -> {
+                    CarcassSavedData.Carcass handCow = cows[0];
                     int strokes = 0;
                     while (!handCow.skinned && strokes < 20) {
                         CarcassButchery.capturing(byHand::add, () -> CarcassButchery.skin(level, hand, handCow, null));

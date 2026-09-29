@@ -4633,7 +4633,11 @@ nothing), `weightClassesComeFromSizeOrGroups` (on a copy of the server's data wi
 `rotTimesAreAsTheyWere`, `movedKnobsKeepTheirOldFigures`. A batch named `bloodandbones_alone_first` now runs before all
 others (`GameTestServerMixin`). One trap found on the way: a step a test sets out from inside another step's
 `runAfterDelay` may run more than once (the game's map of steps is added to while it is read), so a test's delayed steps
-are all set out at its start.
+are all set out at its start. Another: a carcass built at a test's first tick on blocks the test has just set can fall
+through them, before Sable has their colliders (the float test's chicken first went through its pool's floor). The first
+full run of this work lost `cowDownEachPath` that way, once in four runs: its Surgery Table's cow was gone before the
+Surgical Rig began, and the rig had nothing to cut. Its cows are now built once the arena has stood 20 ticks; it passed
+30 times on its own after, and every full run.
 
 **The showcase** (`DevShowcase`, a groups yard after the physics yard). `showcase_groups_0`: a row of carcasses with no
 rig file of their own, knocked down as a kill knocks them: a polar bear, a zombie villager, a cave spider and a bat
