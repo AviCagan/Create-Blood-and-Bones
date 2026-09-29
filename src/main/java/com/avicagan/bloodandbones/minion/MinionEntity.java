@@ -181,9 +181,7 @@ public class MinionEntity extends PathfinderMob implements net.minecraft.world.e
         PartsData.Store store = PartsData.of(level());
         if (stats == null || statsGeneration != store.generation()) {
             MinionBuild build = build().orElse(null);
-            stats = build == null ? new MinionStats(10, 0, 3, 250, "crawl", 0.12F, 1, 0, List.of(), List.of(MinionStats.COMPANION), true, false, false, false, 0.6F, 0.6F, 0.6F, 0.6F,
-                    MinionStats.MINDLESS_SIGHT, 0.0F, MinionStats.Mount.SADDLE, false)
-                    : MinionStats.of(store, build);
+            stats = build == null ? MinionStats.NOTHING : MinionStats.of(store, build);
             // the saddle's place, turned into the frame a passenger's place is given in (the renderer turns it a half turn more)
             MinionBody.Layout layout = build == null ? null : MinionBody.layout(store, build);
             org.joml.Vector3f saddle = layout == null ? new org.joml.Vector3f(0.0F, stats.height(), 0.0F) : MinionBody.saddlePoint(layout);
@@ -708,20 +706,7 @@ public class MinionEntity extends PathfinderMob implements net.minecraft.world.e
      * is warmer), for its data's variants.
      */
     public List<PieceRef> hidePieces() {
-        MinionBuild build = build().orElse(null);
-        if (build == null || build.cybernetic()) {
-            return List.of();
-        }
-        List<PieceRef> out = new java.util.ArrayList<>();
-        List<PieceRef> pieces = new java.util.ArrayList<>();
-        pieces.add(build.torso());
-        build.parts().forEach(f -> pieces.add(f.piece()));
-        for (PieceRef piece : pieces) {
-            if (!piece.skinned() && out.stream().noneMatch(p -> p.entity().equals(piece.entity())) && out.size() < HIDES) {
-                out.add(piece);
-            }
-        }
-        return out;
+        return build().map(MinionData::hidePieces).orElse(List.of());
     }
 
     public boolean cybernetic() {

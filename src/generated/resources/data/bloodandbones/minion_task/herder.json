@@ -1,0 +1,26 @@
+{
+  "anchors": [
+    "home"
+  ],
+  "grips": {
+    "claw": 1.0,
+    "hand": 1.0,
+    "mouth": 0.75,
+    "paw": 1.0,
+    "tentacle": 1.0,
+    "wing": 0.6
+  },
+  "kind": "tend",
+  "main": "pace",
+  "max_reach": 16,
+  "numbers": {
+    "search": 20.0,
+    "wait": 600.0
+  },
+  "reach": 8,
+  "second": "sight",
+  "stores": false,
+  "tool": {
+    "required": true
+  }
+}

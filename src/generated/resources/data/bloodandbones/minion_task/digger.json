@@ -1,0 +1,19 @@
+{
+  "anchors": [
+    "home"
+  ],
+  "grips": {
+    "claw": 0.6,
+    "mouth": 1.0,
+    "paw": 0.6
+  },
+  "kind": "work",
+  "main": "hands",
+  "max_reach": 12,
+  "numbers": {
+    "dig_max": 2400.0,
+    "dig_min": 1200.0
+  },
+  "reach": 6,
+  "stores": true
+}

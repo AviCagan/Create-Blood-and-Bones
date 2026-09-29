@@ -95,7 +95,7 @@ public class DataLintTests {
         if (effect instanceof TraitEffects.DietEffect diet) {
             return !onMinion || diet.forageMb() > 0 && !diet.foods().isEmpty();
         }
-        if (effect instanceof StorageEffect) {
+        if (effect instanceof StorageEffect || effect instanceof com.avicagan.bloodandbones.parts.effect.TaskKnackEffect) {
             return onMinion;
         }
         if (effect instanceof PowerEffect power) {

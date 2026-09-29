@@ -133,6 +133,84 @@ public final class MinionData {
     }
 
     /**
+     * A part's knacks for one particular piece (docs/NEXT.md 1.6): how much better or worse than usual it makes a minion at
+     * each task, from its "knacks" map ({"bloodandbones:surgeon": 1.5}). They merge key by key as trait lists do: the general
+     * key's layers first ("leg", then "leg.front"), archetype to the mob's own file, each layer's own map and then each of its
+     * variants the piece's captured traits match, in order, a later one changing only the tasks it names (a family inherits
+     * its archetype's knacks and can change one). Old data's "jobs" list, where a map has no "knacks", reads as knacks
+     * ({@link #oldJobs}). Tasks not named count as 1.
+     */
+    public static Map<ResourceLocation, Float> knacks(ResolvedMob mob, Map<String, String> captured, String key) {
+        List<String> keys = new ArrayList<>();
+        int dot = key.indexOf('.');
+        if (dot > 0) {
+            keys.add(key.substring(0, dot));
+        }
+        keys.add(key);
+        Map<ResourceLocation, Float> out = new java.util.LinkedHashMap<>();
+        for (String k : keys) {
+            for (JsonElement layer : mob.minion().getOrDefault(k, List.of())) {
+                if (!layer.isJsonObject()) {
+                    continue;
+                }
+                JsonObject o = layer.getAsJsonObject();
+                out.putAll(ownKnacks(o));
+                if (!captured.isEmpty() && o.has("variants") && o.get("variants").isJsonArray()) {
+                    for (JsonElement variant : o.getAsJsonArray("variants")) {
+                        if (variant.isJsonObject() && matches(variant.getAsJsonObject().getAsJsonObject("if"), captured)) {
+                            out.putAll(ownKnacks(variant.getAsJsonObject()));
+                        }
+                    }
+                }
+            }
+        }
+        return out;
+    }
+
+    /** One map's knacks: its "knacks", else its old "jobs" read as knacks, else none. */
+    private static Map<ResourceLocation, Float> ownKnacks(JsonObject o) {
+        if (o.has("knacks") && o.get("knacks").isJsonObject()) {
+            Map<ResourceLocation, Float> out = new java.util.LinkedHashMap<>();
+            o.getAsJsonObject("knacks").entrySet().forEach(e -> out.put(ResourceLocation.parse(e.getKey()), e.getValue().getAsFloat()));
+            return out;
+        }
+        return o.has("jobs") ? oldJobs(o.get("jobs")) : Map.of();
+    }
+
+    /**
+     * An old datapack's "jobs" list read as knacks (docs/NEXT.md 1.8): the first job 1.5, the rest 1.25; companion is
+     * dropped (anything can keep company), a bodyguard is a guard and a scavenger a courier, a task named twice keeping its
+     * first. (The file is logged once as it loads: {@code MobGroup.OLD_JOBS}.)
+     */
+    public static Map<ResourceLocation, Float> oldJobs(JsonElement jobs) {
+        Map<ResourceLocation, Float> out = new java.util.LinkedHashMap<>();
+        if (!jobs.isJsonArray()) {
+            return out;
+        }
+        boolean first = true;
+        for (JsonElement e : jobs.getAsJsonArray()) {
+            ResourceLocation job = ResourceLocation.tryParse(e.getAsString());
+            if (job == null) {
+                continue;
+            }
+            float knack = first ? 1.5F : 1.25F;
+            first = false;
+            String path = job.getNamespace().equals(com.avicagan.bloodandbones.BloodAndBones.MOD_ID) ? job.getPath() : "";
+            switch (path) {
+                case "companion" -> {
+                    continue;
+                }
+                case "bodyguard" -> job = MinionTask.GUARD.id;
+                case "scavenger" -> job = MinionTask.COURIER.id;
+                default -> {
+                }
+            }
+            out.putIfAbsent(job, knack);
+        }
+        return out;
+    }
+
+    /**
      * A part's minion traits for one mob: every layer's "traits" list, the general key's first ("leg"), then the
      * specific one's ("leg.hind"), each adding to or editing what the ones before gave.
      */
@@ -232,6 +310,114 @@ public final class MinionData {
             }
         });
         return out;
+    }
+
+    /**
+     * The pieces whose hide a flesh build keeps (docs/PARTS-AND-TRAITS.md section 6.6): the first piece of each different mob
+     * among its pieces fitted with the hide on, torso first, up to three; none on brass.
+     */
+    public static List<PieceRef> hidePieces(MinionBuild build) {
+        if (build.cybernetic()) {
+            return List.of();
+        }
+        List<PieceRef> out = new ArrayList<>();
+        List<PieceRef> pieces = new ArrayList<>();
+        pieces.add(build.torso());
+        build.parts().forEach(f -> pieces.add(f.piece()));
+        for (PieceRef piece : pieces) {
+            if (!piece.skinned() && out.stream().noneMatch(p -> p.entity().equals(piece.entity())) && out.size() < MinionEntity.HIDES) {
+                out.add(piece);
+            }
+        }
+        return out;
+    }
+
+    /**
+     * The traits a build gives a minion and their levels, worked out as its {@code ActiveTraits} are, with no world: its
+     * parts' and organ's ({@link #traits(PartsData.Store, MinionBuild)}) and, on flesh, the hides it keeps; the same trait
+     * from several places counts once at its highest level, or summed if it says so, held to its most. Traits that are not
+     * for minions, or not loaded, are left out.
+     */
+    public static Map<ResourceLocation, Integer> levels(PartsData.Store store, MinionBuild build) {
+        Map<ResourceLocation, Integer> levels = new java.util.LinkedHashMap<>();
+        List<List<TraitList.Resolved>> sources = new ArrayList<>(traits(store, build));
+        for (PieceRef hide : hidePieces(build)) {
+            sources.add(store.resolve(hide.entity(), false).hide(hide.traits()));
+        }
+        for (List<TraitList.Resolved> source : sources) {
+            for (TraitList.Resolved t : source) {
+                com.avicagan.bloodandbones.parts.Trait trait = store.trait(t.id());
+                if (trait != null && trait.sums()) {
+                    levels.merge(t.id(), t.level(), Integer::sum);
+                } else {
+                    levels.merge(t.id(), t.level(), Math::max);
+                }
+            }
+        }
+        Map<ResourceLocation, Integer> out = new java.util.LinkedHashMap<>();
+        levels.forEach((id, level) -> {
+            com.avicagan.bloodandbones.parts.Trait trait = store.trait(id);
+            if (trait != null && trait.contexts().contains(com.avicagan.bloodandbones.parts.ActiveTraits.MINION)) {
+                out.put(id, Math.min(level, Math.max(1, trait.maxLevel())));
+            }
+        });
+        return out;
+    }
+
+    /** One effect of a build's traits, with the trait and level it comes at and its entry in the trait. */
+    public record Found<T>(ResourceLocation trait, int level, com.avicagan.bloodandbones.parts.TraitEffect facet, T effect) {
+        /** Always on (passive, with no condition): what a stat worked out with no world can count. */
+        public boolean always() {
+            return facet.trigger() == com.avicagan.bloodandbones.parts.Trigger.PASSIVE && facet.requirements().isEmpty();
+        }
+    }
+
+    /**
+     * Every effect of this type a build's traits give a minion ({@link #levels}), those that work on a minion and that the
+     * server has not turned off. Pure: for the stats worked out with no world.
+     */
+    public static <T extends com.avicagan.bloodandbones.parts.TraitEffect.Effect> List<Found<T>> effects(PartsData.Store store, MinionBuild build, Class<T> type) {
+        return effects(store, levels(store, build), type);
+    }
+
+    /** The same from a build's trait levels, worked out once. */
+    public static <T extends com.avicagan.bloodandbones.parts.TraitEffect.Effect> List<Found<T>> effects(PartsData.Store store, Map<ResourceLocation, Integer> levels,
+                                                                                                        Class<T> type) {
+        List<Found<T>> out = new ArrayList<>();
+        levels.forEach((id, level) -> {
+            com.avicagan.bloodandbones.parts.Trait trait = store.trait(id);
+            for (com.avicagan.bloodandbones.parts.TraitEffect facet : trait.effects()) {
+                if (type.isInstance(facet.effect()) && facet.appliesIn(com.avicagan.bloodandbones.parts.ActiveTraits.MINION)
+                        && com.avicagan.bloodandbones.parts.TraitEffects.enabled(facet.effect())) {
+                    out.add(new Found<>(id, level, facet, type.cast(facet.effect())));
+                }
+            }
+        });
+        return out;
+    }
+
+    /**
+     * A value of one of the host's attributes, from this base, with what these trait effects always do to that attribute (the
+     * passive ones with no condition), each times the trait strength, taken as vanilla's {@code AttributeInstance} takes
+     * modifiers: the added values, then the shares of the base, then the shares of the whole. Its caps are the caller's.
+     */
+    public static double attributed(double base, Holder<Attribute> attribute, List<Found<com.avicagan.bloodandbones.parts.TraitEffects.AttributeEffect>> effects) {
+        double add = 0.0;
+        double ofBase = 0.0;
+        double ofTotal = 1.0;
+        for (Found<com.avicagan.bloodandbones.parts.TraitEffects.AttributeEffect> found : effects) {
+            if (!found.always() || !found.effect().attribute().is(attribute)) {
+                continue;
+            }
+            double amount = found.effect().amount().calculate(found.level()) * com.avicagan.bloodandbones.parts.TraitEffects.strength();
+            switch (found.effect().operation()) {
+                case ADD_VALUE -> add += amount;
+                case ADD_MULTIPLIED_BASE -> ofBase += amount;
+                case ADD_MULTIPLIED_TOTAL -> ofTotal *= 1.0 + amount;
+            }
+        }
+        double value = base + add;
+        return (value + value * ofBase) * ofTotal;
     }
 
     /** Whether this trait carries a passive flag of this name (lava_walk, climb...). */

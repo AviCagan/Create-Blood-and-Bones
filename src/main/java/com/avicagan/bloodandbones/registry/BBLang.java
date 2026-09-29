@@ -239,6 +239,30 @@ public class BBLang {
         }
         // a construct takes things apart rather than butchering them (brief rule 4)
         bloodless("bloodandbones.minion.job.butcher", "Dismantler");
+        // the tasks that take the jobs' place (docs/NEXT.md 1.1), why a body cannot do one, what one waits for, and the heads'
+        // dispositions (docs/NEXT.md 1.2)
+        for (String[] task : new String[][]{{"idle", "Idle"}, {"guard", "Guard"}, {"sentry", "Sentry"}, {"hunter", "Hunter"}, {"sapper", "Sapper"},
+                {"surgeon", "Surgeon"}, {"medic", "Medic"}, {"herder", "Herder"}, {"tender", "Tender"}, {"courier", "Courier"}, {"hauler", "Hauler"},
+                {"farmer", "Farmer"}, {"fisher", "Fisher"}, {"butcher", "Butcher"}, {"barterer", "Barterer"}, {"digger", "Digger"}}) {
+            BloodAndBones.REGISTRATE.addRawLang("bloodandbones.minion.task." + task[0], task[1]);
+        }
+        bloodless("bloodandbones.minion.task.butcher", "Dismantler");
+        for (String[] cannot : new String[][]{{"strike", "Nothing to strike with"}, {"detonator", "Nothing in it that detonates"},
+                {"hand", "No hand to hold a surgeon's blade"}, {"throw", "Nothing to throw with"}, {"bait", "Nothing to hold food with"},
+                {"pick", "Nothing to pick with"}, {"catch", "Nothing to catch with"}, {"blade", "Nothing to hold a blade with"},
+                {"nose", "No nose, paws or claws to dig with"}}) {
+            BloodAndBones.REGISTRATE.addRawLang("bloodandbones.minion.cannot." + cannot[0], cannot[1]);
+        }
+        bloodless("bloodandbones.minion.cannot.hand", "No hand to hold a tool");
+        for (String[] wants : new String[][]{{"butcher", "waiting for a Cleaver or a Flensing Knife"}, {"herder", "waiting for food to lead animals with"},
+                {"medic", "waiting for splash potions of healing"}, {"griefing", "waiting for the mobGriefing rule, which is off"}}) {
+            BloodAndBones.REGISTRATE.addRawLang("bloodandbones.minion.wants." + wants[0], wants[1]);
+        }
+        for (String[] disposition : new String[][]{{"none", "Even-Tempered"}, {"brave", "Brave"}, {"berserk", "Berserk"}, {"territorial", "Territorial"},
+                {"loyal", "Loyal"}, {"docile", "Docile"}, {"meek", "Meek"}, {"skittish", "Skittish"}, {"nocturnal", "Nocturnal"}, {"dim", "Dim"},
+                {"mindless", "Mindless"}}) {
+            BloodAndBones.REGISTRATE.addRawLang("bloodandbones.minion.disposition." + disposition[0], disposition[1]);
+        }
         BloodAndBones.REGISTRATE.addRawLang("bloodandbones.minion.holds", "Holding %s");
         BloodAndBones.REGISTRATE.addRawLang("bloodandbones.minion.wears", "Wearing %s");
         BloodAndBones.REGISTRATE.addRawLang("bloodandbones.minion.cannot_hold", "It has no hand or head to hold that with");

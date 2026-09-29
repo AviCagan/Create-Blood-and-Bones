@@ -1,0 +1,13 @@
+{
+  "anchors": [
+    "home",
+    "maker"
+  ],
+  "kind": "fight",
+  "main": "blow",
+  "max_reach": 24,
+  "numbers": {},
+  "reach": 12,
+  "second": "pace",
+  "stores": false
+}

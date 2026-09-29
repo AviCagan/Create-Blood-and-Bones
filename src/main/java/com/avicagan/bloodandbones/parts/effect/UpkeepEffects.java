@@ -40,7 +40,8 @@ import org.jetbrains.annotations.Nullable;
 
 /**
  * Upkeep: regen, mend, produce, storage, power, the rest of diet (graze is in {@code TraitEvents#onUseBlock}), and
- * lethal_save (an effect that is a {@code TraitEffect.DeathSaver}; {@code TraitEvents#onDeath} asks it). Also exposure,
+ * lethal_save (an effect that is a {@code TraitEffect.DeathSaver}; {@code TraitEvents#onDeath} asks it). Also task_knack,
+ * a minion's knack for one task from a trait, read where its fitness is worked out ({@code MinionStats}). Also exposure,
  * the harm a drawback's surroundings do (sun, water, heat), and the {@code blood_upkeep} attribute (docs/PARTS-AND-TRAITS.md
  * section 5.7), which scales what implants and minions drink.
  * <p>
@@ -79,6 +80,7 @@ public final class UpkeepEffects {
         types.register("power", () -> PowerEffect.CODEC);
         types.register("lethal_save", () -> LethalSaveEffect.CODEC);
         types.register("exposure", () -> ExposureEffect.CODEC);
+        types.register("task_knack", () -> TaskKnackEffect.CODEC);
     }
 
     /**
@@ -102,6 +104,8 @@ public final class UpkeepEffects {
      */
     public static void lang() {
         BBLang.raw("attribute.bloodandbones.blood_upkeep", "Blood Upkeep");
+        // task_knack
+        BBLang.trait("truffle_nose", "Truffle Nose", "A minion has a knack for digging: half again as fit for the Digger task.");
         // produce
         BBLang.trait("milk_udder", "Milk Udder", "A minion fills an empty bucket it carries with milk every 5 minutes, for 50 mB of blood. "
                 + "Use an empty bucket on it to milk it there and then, for the same.");

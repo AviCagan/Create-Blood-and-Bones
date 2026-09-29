@@ -33,6 +33,12 @@ public record MobGroup(ResourceLocation id, Kind kind, int priority, List<String
         ARCHETYPE, FAMILY, OVERLAY, MOB
     }
 
+    /**
+     * Files read so far whose minion data still lists a head's old "jobs" and no "knacks" (docs/NEXT.md 1.8): each is read
+     * as knacks ({@code MinionData.oldJobs}) and logged once, so a third party's datapack keeps working.
+     */
+    public static final java.util.concurrent.atomic.AtomicInteger OLD_JOBS = new java.util.concurrent.atomic.AtomicInteger();
+
     /** The armour pieces a part's traits can be aimed at. */
     public static final List<String> PIECES = List.of("helmet", "chestplate", "leggings", "boots", "shoulders", "hips");
 
@@ -110,6 +116,10 @@ public record MobGroup(ResourceLocation id, Kind kind, int priority, List<String
                 parts.put(e.getKey(), part(e.getValue().getAsJsonObject(), ops, id));
             }
         }
+        if (oldJobs(json)) {
+            com.avicagan.bloodandbones.BloodAndBones.LOGGER.warn("{} lists minion \"jobs\" with no \"knacks\": read as knacks (the first 1.5, the rest 1.25)", id);
+            OLD_JOBS.incrementAndGet();
+        }
         Map<ResourceLocation, OrganEntry> organs = organs(json, ops, id);
         List<Variant> variants = new ArrayList<>();
         if (json.has("variants")) {
@@ -154,6 +164,29 @@ public record MobGroup(ResourceLocation id, Kind kind, int priority, List<String
                 List.copyOf(overlays),
                 json.has("scrap_material") ? Optional.of(ResourceLocation.parse(json.get("scrap_material").getAsString())) : Optional.empty(),
                 parts, opt(json, "hide", TraitList.CODEC, ops, id), organs, set, boneSlots, colour, organLists, List.copyOf(variants));
+    }
+
+    /** Whether a part's minion data here, or one of its variants, lists "jobs" and no "knacks". */
+    private static boolean oldJobs(JsonObject json) {
+        if (!json.has("parts") || !json.get("parts").isJsonObject()) {
+            return false;
+        }
+        for (Map.Entry<String, JsonElement> e : json.getAsJsonObject("parts").entrySet()) {
+            if (!e.getValue().isJsonObject() || !(e.getValue().getAsJsonObject().get("minion") instanceof JsonObject minion)) {
+                continue;
+            }
+            if (minion.has("jobs") && !minion.has("knacks")) {
+                return true;
+            }
+            if (minion.get("variants") instanceof com.google.gson.JsonArray variants) {
+                for (JsonElement v : variants) {
+                    if (v instanceof JsonObject o && o.has("jobs") && !o.has("knacks")) {
+                        return true;
+                    }
+                }
+            }
+        }
+        return false;
     }
 
     /** An object's "organ_traits": each organ's minion and armour lists. */

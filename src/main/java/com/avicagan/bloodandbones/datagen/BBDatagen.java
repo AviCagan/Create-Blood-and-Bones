@@ -9,6 +9,7 @@ public class BBDatagen {
         generator.addProvider(event.includeServer(), new RigExportProvider(generator.getPackOutput()));
         generator.addProvider(event.includeServer(), new LayerDumpProvider());
         generator.addProvider(event.includeServer(), new PhysicsPropertiesProvider(generator.getPackOutput()));
+        generator.addProvider(event.includeServer(), new MinionTaskDataProvider(generator.getPackOutput()));
         generator.addProvider(event.includeServer(), new BBBlockTagsProvider(generator.getPackOutput(), event.getLookupProvider(), event.getExistingFileHelper()));
     }
 }

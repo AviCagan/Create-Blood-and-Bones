@@ -1,0 +1,14 @@
+{
+  "anchors": [
+    "home"
+  ],
+  "kind": "fetch",
+  "main": "pull",
+  "max_reach": 32,
+  "numbers": {
+    "slowdown_most": 0.9
+  },
+  "reach": 24,
+  "second": "pace",
+  "stores": false
+}

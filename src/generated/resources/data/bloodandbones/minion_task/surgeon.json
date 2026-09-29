@@ -1,0 +1,18 @@
+{
+  "anchors": [
+    "home"
+  ],
+  "grips": {
+    "hand": 1.0
+  },
+  "kind": "tend",
+  "main": "hands",
+  "max_reach": 12,
+  "numbers": {
+    "tend_every": 100.0,
+    "tend_least": 40.0
+  },
+  "reach": 6,
+  "second": "sight",
+  "stores": false
+}
