@@ -64,6 +64,13 @@ public final class CarcassDrag {
         /** Whoever drags it, refreshed every tick; not looked up by UUID because test players are not in the level. */
         @Nullable
         LivingEntity playerEntity;
+        /**
+         * For a hauler: the height of the ground it last stood on (never the body it drags), which its hands keep to.
+         * Held above its feet as they are, a hauler hopping up a step (onto a Bleeding Rack, say) yanked the body up after
+         * it, into itself: it landed on its own body, and with the body pulled up after its rising feet the two were
+         * flung together, blocks off the line it was towing along.
+         */
+        double groundY = Double.NaN;
 
         Drag(UUID player, UUID carcass, String bone, UUID subLevel, Vector3d anchorPlot, float weight) {
             this.player = player;
@@ -177,6 +184,7 @@ public final class CarcassDrag {
             float weight = attachedMass(SubLevelContainer.getContainer(level), carcass);
             Drag drag = new Drag(player.getUUID(), carcass.id, carcass.rootBone, torso.getUniqueId(), anchor, weight);
             drag.playerEntity = player;
+            drag.groundY = player.getY();
             drag.entryPlot.set(entryDirection(torso, player));
             DRAGS.put(player.getUUID(), drag);
             applySlowdown(player, dragPenalty(carcass, weight));
@@ -194,6 +202,7 @@ public final class CarcassDrag {
 
         Drag drag = new Drag(player.getUUID(), carcass.id, part.bone(), serverSubLevel.getUniqueId(), anchor, weight);
         drag.playerEntity = player;
+        drag.groundY = player.getY();
         drag.entryPlot.set(entryDirection(serverSubLevel, player));
         DRAGS.put(player.getUUID(), drag);
         applySlowdown(player, dragPenalty(carcass, weight));
@@ -260,8 +269,11 @@ public final class CarcassDrag {
             stop(level, player);
             return;
         }
+        if (!(player instanceof Player) && player.onGround() && !isStandingOnCarcass(level, player, drag)) {
+            drag.groundY = player.getY();
+        }
         Vector3d hookWorld = subLevel.logicalPose().transformPosition(drag.anchorPlot, new Vector3d());
-        Vector3d target = target(player, hookWorld, 1.0);
+        Vector3d target = target(drag, player, hookWorld, 1.0);
         if (hookWorld.distance(target) > MAX_DISTANCE) {
             stop(level, player);
             return;
@@ -338,7 +350,7 @@ public final class CarcassDrag {
         return subLevel.boundingBox().intersects(player.getBoundingBox().inflate(0.15));
     }
 
-    /** The player's feet are on (or in) one of the carcass's bodies. */
+    /** The dragger's feet, across all the width it stands on (a broad hauler's reach well past a player's), are on (or in) one of the carcass's bodies. */
     private static boolean isStandingOnCarcass(ServerLevel level, LivingEntity player, Drag drag) {
         if (!player.onGround()) {
             return false;
@@ -348,8 +360,9 @@ public final class CarcassDrag {
         if (carcass == null || container == null) {
             return false;
         }
-        net.minecraft.world.phys.AABB feet = new net.minecraft.world.phys.AABB(player.getX() - 0.3, player.getY() - 0.2, player.getZ() - 0.3,
-                player.getX() + 0.3, player.getY() + 0.1, player.getZ() + 0.3);
+        double half = player.getBbWidth() / 2.0;
+        net.minecraft.world.phys.AABB feet = new net.minecraft.world.phys.AABB(player.getX() - half, player.getY() - 0.2, player.getZ() - half,
+                player.getX() + half, player.getY() + 0.1, player.getZ() + half);
         for (UUID id : carcass.bones.values()) {
             SubLevel bone = container.getSubLevel(id);
             if (bone instanceof ServerSubLevel serverBone && !serverBone.isRemoved() && serverBone.boundingBox().intersects(feet)) {
@@ -378,7 +391,7 @@ public final class CarcassDrag {
         RigidBodyHandle handle = physics.getPhysicsHandle(subLevel);
         Pose3d pose = subLevel.logicalPose();
         Vector3d hook = pose.transformPosition(drag.anchorPlot, new Vector3d());
-        Vector3d target = target(player, hook, partial);
+        Vector3d target = target(drag, player, hook, partial);
         // velocity of the hooked point: body velocity plus spin about the center of mass
         Vector3d linear = handle.getLinearVelocity(new Vector3d());
         Vector3d angular = handle.getAngularVelocity(new Vector3d());
@@ -435,7 +448,7 @@ public final class CarcassDrag {
             Vector3d joint = pose.transformPosition(spec.anchorChild(subLevel), new Vector3d());
             Vector3d hook = pose.transformPosition(drag.anchorPlot, new Vector3d());
             Vector3d now = new Vector3d(hook).sub(joint);
-            Vector3d want = target(player, hook, partial).sub(joint);
+            Vector3d want = target(drag, player, hook, partial).sub(joint);
             if (now.lengthSquared() > 1.0e-4 && want.lengthSquared() > 1.0e-4) {
                 now.normalize();
                 want.normalize();
@@ -454,13 +467,17 @@ public final class CarcassDrag {
 
     /**
      * A point a little in front of the player's feet, so the carcass drags on the ground behind you. Anyone else (a
-     * hauler) holds it at arm's length back along the line to the hook, low down, so it trails behind them.
+     * hauler) holds it at arm's length back along the line to the hook, low down over the ground it walks on (not over
+     * its feet as they leave the ground in a hop), so it trails behind them.
      */
-    private static Vector3d target(LivingEntity player, Vector3d hook, double partial) {
+    private static Vector3d target(@Nullable Drag drag, LivingEntity player, Vector3d hook, double partial) {
         double px = Mth.lerp(partial, player.xo, player.getX());
         double py = Mth.lerp(partial, player.yo, player.getY());
         double pz = Mth.lerp(partial, player.zo, player.getZ());
         if (!(player instanceof Player)) {
+            if (drag != null && !Double.isNaN(drag.groundY)) {
+                py = Math.min(py, drag.groundY);
+            }
             Vec3 back = new Vec3(hook.x - px, 0.0, hook.z - pz);
             if (back.lengthSqr() < 1.0e-4) {
                 back = Vec3.directionFromRotation(0.0F, player.yBodyRot + 180.0F);
@@ -480,7 +497,7 @@ public final class CarcassDrag {
 
 
     public static Vector3d debugTarget(Player player) {
-        return target(player, new Vector3d(), 1.0);
+        return target(null, player, new Vector3d(), 1.0);
     }
 
     private static float dragPenalty(CarcassSavedData.Carcass carcass, float weight) {

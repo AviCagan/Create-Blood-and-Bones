@@ -210,6 +210,10 @@ Everything below is in development builds only; the art is placeholder (see the 
   zombie's, not inside it. An aggressive panda's head brawls.
 - Fixed: a carcass lying on the floor beside a Bleeding Rack sometimes did not bleed into it; a hauler lays bodies on a
   rack gently and makes sure they stay in the tray.
+- Fixed: a hauler hopping up onto a Bleeding Rack yanked the body it towed up into itself, and the two were flung off
+  the line together; a body that missed the tray was then fetched back by walking straight into it, and given up. A
+  hauler's hands now keep to the ground it walks on, not to its feet in mid-hop; it comes round the body to take another
+  pass; and it steadies a body on the tray until it lies still, so it bleeds in a few seconds rather than half a minute.
 - Rebuilt from carcass pieces: fit an Assembly Frame to the Surgery Table, lay a carcass torso on it
   (or take a whole carcass lying on it with an empty hand, whatever is still attached coming along),
   then stitch on the heads, legs, arms and tails of any mob, one a click. A Cleaver takes the last

@@ -129,12 +129,19 @@ public class ShackleHookBlockEntity extends BlockEntity {
     private GenericConstraintHandle joint;
 
     /**
-     * The torso-side anchor of the head joint: where the neck meets the body. Falls back to the torso's
-     * own center for rigs without a head.
+     * The torso-side anchor of the head joint: where the neck meets the body. When the head hangs off the torso through
+     * another piece (a wolf's upper body, a ravager's neck), it is where that piece meets the torso, on the way to the
+     * head; with the head cut off, where a neck or upper body meets it. Otherwise any joint off the torso, and for a
+     * torso with none, its own center.
      */
     public static Vector3d neckJunction(CarcassSavedData.Carcass carcass, ServerSubLevel torso) {
+        CarcassJoints.Spec towardHead = jointTowardHead(carcass);
+        if (towardHead != null) {
+            return towardHead.anchorParent(torso);
+        }
         for (CarcassJoints.Spec joint : carcass.joints) {
-            if (joint.parent().equals(carcass.rootBone) && joint.child().toLowerCase().contains("head")) {
+            String child = joint.child().toLowerCase(java.util.Locale.ROOT);
+            if (joint.parent().equals(carcass.rootBone) && (child.contains("neck") || child.contains("upper"))) {
                 return joint.anchorParent(torso);
             }
         }
@@ -145,6 +152,29 @@ public class ShackleHookBlockEntity extends BlockEntity {
         }
         BlockPos c = torso.getPlot().getCenterBlock();
         return new Vector3d(c.getX() + 0.5, c.getY() + 0.5, c.getZ() + 0.5);
+    }
+
+    /** The joint off the torso on the way to a head still attached, following the joints up from the head; or null. */
+    @Nullable
+    public static CarcassJoints.Spec jointTowardHead(CarcassSavedData.Carcass carcass) {
+        java.util.Map<String, CarcassJoints.Spec> byChild = new java.util.HashMap<>();
+        for (CarcassJoints.Spec joint : carcass.joints) {
+            byChild.put(joint.child(), joint);
+        }
+        for (CarcassJoints.Spec joint : carcass.joints) {
+            if (!joint.child().toLowerCase(java.util.Locale.ROOT).contains("head")) {
+                continue;
+            }
+            CarcassJoints.Spec step = joint;
+            // up from the head, no further than there are joints (a broken record never loops)
+            for (int i = 0; i <= carcass.joints.size() && step != null; i++) {
+                if (step.parent().equals(carcass.rootBone)) {
+                    return step;
+                }
+                step = byChild.get(step.parent());
+            }
+        }
+        return null;
     }
 
     /**

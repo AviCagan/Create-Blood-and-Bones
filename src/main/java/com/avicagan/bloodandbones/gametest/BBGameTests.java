@@ -320,6 +320,45 @@ public class BBGameTests {
         });
     }
 
+    /**
+     * A Shackle Hook hangs a carcass by where its neck meets its torso, even when the head hangs off the torso through
+     * another piece: a wolf by its upper body (not its right hind hip, as it once did) and a ravager by its neck (not a
+     * front shoulder); a cow, whose head joins its torso, by its head's joint.
+     */
+    @GameTest(template = "empty", timeoutTicks = 20)
+    public static void shackleHookHoldsByTheNeck(GameTestHelper helper) {
+        java.util.Map<EntityType<? extends net.minecraft.world.entity.Mob>, String> expected = new java.util.LinkedHashMap<>();
+        expected.put(EntityType.WOLF, "upper_body");
+        expected.put(EntityType.RAVAGER, "neck");
+        expected.put(EntityType.COW, "head");
+        int x = 2;
+        for (var entry : expected.entrySet()) {
+            var mob = helper.spawn(entry.getKey(), new BlockPos(x, 2, 5));
+            CarcassSavedData.Carcass carcass = CarcassAssembler.assemble(mob, null);
+            mob.discard();
+            x += 4;
+            if (carcass == null) {
+                helper.fail("No carcass was made of the " + entry.getKey().toShortString());
+                return;
+            }
+            // the point the hook takes, against where the expected piece's joint meets the torso
+            ServerSubLevel torso = liveBones(helper, helper.getLevel(), carcass).get(carcass.rootBone);
+            var joint = carcass.joints.stream().filter(j -> j.parent().equals(carcass.rootBone) && j.child().equals(entry.getValue())).findFirst().orElse(null);
+            if (torso == null || joint == null) {
+                helper.fail("The " + entry.getKey().toShortString() + " carcass has no " + entry.getValue() + " joined to its torso");
+                return;
+            }
+            org.joml.Vector3d held = com.avicagan.bloodandbones.carcass.ShackleHookBlockEntity.neckJunction(carcass, torso);
+            if (held.distance(joint.anchorParent(torso)) > 1.0e-6) {
+                var took = com.avicagan.bloodandbones.carcass.ShackleHookBlockEntity.jointTowardHead(carcass);
+                helper.fail("A " + entry.getKey().toShortString() + " should hang where its " + entry.getValue() + " meets its torso (the way "
+                        + "to its head found " + (took == null ? "nothing" : took.parent() + " > " + took.child()) + ")");
+                return;
+            }
+        }
+        helper.succeed();
+    }
+
     /** Hang a carcass on a Shackle Hook under a ceiling block: the hooked limb stays at the tip, the body dangles. */
     @GameTest(template = "empty", timeoutTicks = 400)
     public static void shackleHookHangsCarcass(GameTestHelper helper) {
