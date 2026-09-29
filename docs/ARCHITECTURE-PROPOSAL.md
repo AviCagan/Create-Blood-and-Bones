@@ -454,7 +454,7 @@ can be given to any minion. Some minions do a task better than others because of
 built of. This replaces heads offering jobs (spec 6.4 and 6.9). It was built in six stages (docs/NEXT.md 1.10), all
 done: the numbers (§15.18) and tasks in the jobs' place, with the task screen (§15.19); the levers and the surgeon's
 stump price (§15.20); the Tender, the butcher at the Butcher's Table, and the fitness shown on the Surgery Table, in JEI,
-on piece tooltips and by `/bloodandbones minion fitness` (§15.21). The surgeon (docs/NEXT.md 1.5) is still the owner's
+on piece tooltips and by `/bloodandbones minion fitness` (§15.21); then a review's findings put right (§15.22). The surgeon (docs/NEXT.md 1.5) is still the owner's
 call: by default any minion with a hand may cut, its fitness pricing the stump, and a datapack's surgeon task file with
 `"needs_surgeon_head": true` limits the cutting to surgeons' heads (the villager and illager families', the witch's
 among them), the brief's letter. Both are built and tested.
@@ -3259,3 +3259,77 @@ the chest beyond the table, none on the ground, the Cleaver bloody) and `fitness
   they were.
 - The suite is 486 tests (481 and the five new above), and passed three full runs in a row; the five new tests passed ten
   times over, all at once in one world.
+
+### 15.22 Tasks: the review's findings put right (verified)
+
+A review of stages A to F (docs/NEXT.md item 1) found nineteen things; all were real, and all are put right here. Where
+the design is recorded, docs/NEXT.md 1.1, 1.2, 1.4, 1.6, 1.9 and 1.10 say so too.
+
+**What the screen said and what the goals did now agree:**
+- **Folded arms under a head bite.** `MinionFitness` counted a head as something to strike with (the design's "an arm that
+  is not folded, or a head to bite with"), but `MinionStats.fights()`, which every fight goal asks, was false whenever all
+  the arms were folded. A whole villager set to Guard was shown at its bite's fitness and never took a target, even when
+  hit. `fights()` is now an arm that strikes or a head; with neither it fights nothing, as before.
+- **A sapper with no head** was offered the task (it has the organ) and never acted: its goal and its target goal both
+  needed a head. It now sets itself off at a monster against it or what hurt it there (`MinionGoals.TouchTarget` takes the
+  sapper's monsters; `MinionSapper.Sap` goes on only while it touches its target), never walking after one or seeing a
+  banner; `Feel` leaves it to the sapper's goal.
+- **A task file's `kind`** was read and never used. The disposition scales by it and the screen groups by it (the row
+  carries it in `MinionTaskPayload.Row`); `SocialGoals` asks for the four fight tasks by name, as what they do is code.
+- **A task file's tool** changed only the row. Every goal that waits for a tool now asks `MinionFitness.isTool` (the
+  goal's own test, narrowed to the file's `items`): the butcher's blade, the fisher's rod, the sentry's weapon
+  (`heldWeapon`, so `hasRangedAttack` too), the medic's potions and the herder's bait, and a courier's sample.
+- **A task file's anchors** could name "maker" for a task whose goals work only from home. `MinionTask.checked` leaves out,
+  and logs, an anchor the task's own defaults do not have; with none left, it keeps its own. `Data.anchorFor` is where a
+  task is set when asked for somewhere it is not done: waking, `setTask(task)`, losing a task, the rows and the command.
+- **The looks came half as often as they said.** The courier's, farmer's and Tender's one-in-`lookTicks` chance was taken
+  each time its goal was asked whether to start, which vanilla's `Mob.serverAiStep` does every other tick. `MinionGoals.looks`
+  takes one in half of it, as vanilla's `Goal.reducedTickDelay` does, and the courier's and farmer's `look_every` is 20 (a
+  second, what their jobs did), where it had been written 10 from the one-in-ten. The Tender looks every second at 100%,
+  as its row said, where it had looked every two.
+- **The surgeon's reach** did nothing: `AttendTable` looked 6 blocks round for a table whatever it was set to. It now looks
+  within its reach. It also worked out its tending pace once, as it started; each heart's wait is now read from its
+  fitness then (`nextHeart`).
+- **The farmer's pickup** looked 10 blocks round home while it reaps out to its reach (up to 12): `Collect` reaches its
+  reach and two blocks more (`MinionEntity.RANGE`, now 2).
+
+**Bugs:**
+- **Items copied.** A courier's and a farmer's goals run every tick, and between the ticks it is asked whether to go on it
+  is not; each could take up an item another had taken that tick, the maker walking over it or a second courier, since a
+  stack taken whole was discarded with its count left on it (vanilla's `ItemEntity.playerTouch` puts the count back
+  after it discards). `MinionGoals.pickUp` takes nothing from an item gone or empty and empties one it takes whole
+  (as `HopperBlockEntity.addItem` does); both goals drop an item gone meanwhile.
+- **A courier with its maker** put everything into their pack with `placeItemBackInInventory`, which drops at their feet
+  what does not fit, and then fetched it back, over and over. It now hands over only what fits (`Inventory.add`), keeps
+  the rest, says "its maker has no room for what it brings" and tries again in ten seconds, and never fetches an item its
+  maker threw.
+- **Bad data crashed in play.** A head's `disposition` that is no id ("Brave") or a knack key that is none
+  ("bloodandbones:Surgeon") threw from the entity tick (the server) and from the stats' size (clients). `MobGroup`
+  leaves them out as the data loads, with a warning, and every place that turns them into ids takes a bad one as none.
+- **The farmer's scan and the Tender's tanks.** A fit farmer at reach 12 read four times the blocks a second that today's
+  did. It now reads a band of its box a look (`FARM_SCAN`, today's 17 × 17 × 5 once a second at most), moving to the next
+  band when one has no ripe crop. The Tender asked every block of a Create tank for its fluid, a lookup and two
+  simulations each; it asks each tank once, at its controller (itself while it has none), and goes to its block nearest.
+
+**Shown right:**
+- **JEI's Body Parts page** showed a villager's head with the family's knacks under the professions (Farmer ×1.25 among
+  them), which no villager head in play has: every villager's carcass records its profession, "none" included. The page
+  now reads each part as a new one of its mob has it, the traits made by a mob never added to the world (only for a mob
+  whose parts' data has variants), and says which kept trait changes that ("As a new one has them: its profession changes
+  them", `TaskWords.mobFacts`). The surgeon's fact no longer says "it may always do the ritual's cutting": by default any
+  hand may cut, so it says "it may do the ritual's cutting even where only such heads may".
+
+**Tests made to test:** `headlessFightsOnlyWhatTouchesIt` and `sentryWithNoBowHoldsItsPost` ended at the first blow and put
+the other husk where no targeting could reach it, so a headless guard hunting by sight, or a bowless sentry going for any
+monster in its reach, would have passed. Each now waits three seconds with only what it must leave alone in reach (a husk
+1.8 blocks off for the headless guard, within the 2 it notices things in), asserts no target and no step, then gives it
+the one it may strike and watches on after. The butcher's waste, the sentry's shots, the surgeon's hearts and the
+fisher's wait are now measured from what the goals do (docs/NEXT.md 1.9, "Added after the review").
+
+**The Tender test that failed now and then.** `tenderWakesAFallenMinion` failed 2 times in 125, each time waiting on a
+different errand. Its Tender is 32% fit (3 slots of 9 × the square root of pace 0.92): 63 ticks a look by its number, but
+126 in play, because of the half-rate looks above. Five errands, one a look, came to about 630 ticks of looking alone on
+average, and five random gaps of 126 run past the 1600-tick budget with their walks about 2% of the time. With the looks
+put right its runs took 239 to 650 ticks (38 runs); the test has 3000.
+
+**Tests** (NUMBER in all):

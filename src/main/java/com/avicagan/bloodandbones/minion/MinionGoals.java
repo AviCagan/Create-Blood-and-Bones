@@ -48,8 +48,8 @@ public final class MinionGoals {
     /**
      * Who it fights (docs/NEXT.md 1.1): on any task, what hurts it (Idle does no more); a guard at home the monsters within its
      * reach of home, and a guard with its maker what hurts its maker and what its maker hits, as a tamed wolf does. Never its
-     * maker (MinionEntity#canAttack), and a pacifist (no arm that hits, no head to bite with) takes no target at all. A body
-     * with no head fights only what touches it ({@link #touches}).
+     * maker (MinionEntity#canAttack), and a body with nothing to fight with (no arm that hits, no head to bite with) takes no
+     * target at all; folded arms under a head bite with it. A body with no head fights only what touches it ({@link #touches}).
      */
     static void targets(MinionEntity minion, GoalSelector targets) {
         berserk(minion, targets);
@@ -240,14 +240,15 @@ public final class MinionGoals {
     static final double TOUCH = 0.5;
 
     /** Whether this touches it: a body with no head knows only what it feels (docs/NEXT.md 1.1). */
-    static boolean touches(MinionEntity minion, Entity other) {
+    public static boolean touches(MinionEntity minion, Entity other) {
         return other.getBoundingBox().intersects(minion.getBoundingBox().inflate(TOUCH));
     }
 
     /**
      * A body with no head strikes only what touches it: what hurt it, and on a task that goes for monsters (Guard, Sentry)
-     * any monster against it, and a hunter's prey there (where mobs may do harm). Idle only fights back. It drops what
-     * moves away.
+     * any monster against it, and a hunter's prey there (where mobs may do harm). Idle only fights back. A sapper with no
+     * head sets itself off at a monster against it, or what hurt it there, having nothing else to find its target by
+     * (MinionSapper.Sap). It drops what moves away.
      */
     static class TouchTarget extends TargetGoal {
         private final MinionEntity minion;
@@ -262,7 +263,7 @@ public final class MinionGoals {
 
         @Override
         public boolean canUse() {
-            if (!minion.stats().mindless() || !minion.stats().fights() || minion.poweredDown() || minion.tickCount % 5 != 0) {
+            if (!minion.stats().mindless() || !minion.stats().fights() && !minion.hasTask(MinionTask.SAPPER) || minion.poweredDown() || minion.tickCount % 5 != 0) {
                 return false;
             }
             felt = null;
@@ -272,7 +273,7 @@ public final class MinionGoals {
                 return true;
             }
             MinionTask task = minion.task();
-            boolean monsters = task == MinionTask.GUARD || task == MinionTask.SENTRY;
+            boolean monsters = task == MinionTask.GUARD || task == MinionTask.SENTRY || task == MinionTask.SAPPER;
             boolean hunts = task == MinionTask.HUNTER && net.neoforged.neoforge.event.EventHooks.canEntityGrief(minion.level(), minion);
             if (!monsters && !hunts) {
                 return false;
@@ -335,7 +336,9 @@ public final class MinionGoals {
         @Override
         public boolean canUse() {
             LivingEntity target = minion.getTarget();
-            return minion.stats().mindless() && minion.stats().fights() && target != null && target.isAlive() && touches(minion, target);
+            // a sapper sets itself off instead (MinionSapper.Sap)
+            return minion.stats().mindless() && minion.stats().fights() && !minion.hasTask(MinionTask.SAPPER) && target != null && target.isAlive()
+                    && touches(minion, target);
         }
 
         @Override
@@ -360,8 +363,8 @@ public final class MinionGoals {
     }
 
     /**
-     * It goes for its target with its arms, or its teeth if it has none: a blow a second, as vanilla's melee goal lands them,
-     * more often with more arms that strike ({@link #blowTicks}).
+     * It goes for its target with its arms, or its teeth if it has none that strike (folded arms under a head): a blow a
+     * second, as vanilla's melee goal lands them, more often with more arms that strike ({@link #blowTicks}).
      */
     public static class Bite extends MeleeAttackGoal {
         private static final double SPEED = 1.2;
@@ -396,7 +399,7 @@ public final class MinionGoals {
 
         @Override
         public boolean canUse() {
-            // a pacifist (a villager's pair of arms and no bite of its own worth using) never attacks, a sentry strikes or
+            // a body with nothing to fight with never attacks (folded arms under a head bite with it), a sentry strikes or
             // shoots from where it stands rather than closing in, a sapper walks up and blows itself up instead, and a body
             // with no head only strikes what touches it (Feel)
             return !minion.stats().mindless() && minion.stats().fights() && !minion.hasTask(MinionTask.SENTRY) && !minion.hasTask(MinionTask.SAPPER)
@@ -774,19 +777,18 @@ public final class MinionGoals {
     }
 
     /**
-     * A surgeon keeps by its Surgery Table (its home, or the nearest one it finds when set down elsewhere), where the
-     * amputation ritual needs it (Surgery#surgeonAt), and tends whoever lies there, a heart a few seconds.
+     * A surgeon keeps by its Surgery Table (its home, or the nearest one within its reach of where it stands when set down
+     * elsewhere), where the amputation ritual needs it (Surgery#surgeonAt), and tends whoever lies there: a heart every five
+     * seconds at 100%, ÷ its fitness, never under two (docs/NEXT.md 1.5), each heart's wait read from its fitness then.
      */
     public static class AttendTable extends Goal {
-        /** How far it looks for a table when its home is not one. */
-        private static final int SEARCH = 6;
         private final MinionEntity minion;
         private int nextSearch;
         /** Its table out of its reach (a door shut): it tries again after this. */
         private int restUntil;
         private final Approach approach = new Approach();
-        /** Ticks between the hearts it heals: five seconds at 100%, sooner for a fitter surgeon, later for a shaky one. */
-        private int every = 100;
+        /** When it tends the patient's next heart; 0 while nobody hurt lies there. */
+        private int nextHeart;
 
         public AttendTable(MinionEntity minion) {
             this.minion = minion;
@@ -811,9 +813,12 @@ public final class MinionGoals {
         @Override
         public void start() {
             approach.reset(minion);
-            // a heart every 5 s at 100%, ÷ its fitness, never under 2 s (docs/NEXT.md 1.5): a zombie villager's shaky hands are slow
-            every = MinionFitness.tendTicks(com.avicagan.bloodandbones.parts.PartsData.of(minion.level()).task(MinionTask.SURGEON),
-                    minion.fitness(MinionTask.SURGEON));
+            nextHeart = 0;
+        }
+
+        /** Ticks to the next heart it tends, at its fitness now: a zombie villager's shaky hands are slow, a nocturnal head quicker by night. */
+        private int every() {
+            return MinionFitness.tendTicks(com.avicagan.bloodandbones.parts.PartsData.of(minion.level()).task(MinionTask.SURGEON), minion.taskFitness());
         }
 
         @Nullable
@@ -827,8 +832,9 @@ public final class MinionGoals {
                 return null;
             }
             nextSearch = minion.tickCount + 100;
-            BlockPos from = minion.blockPosition().offset(-SEARCH, -2, -SEARCH);
-            BlockPos to = minion.blockPosition().offset(SEARCH, 2, SEARCH);
+            int reach = minion.reach();
+            BlockPos from = minion.blockPosition().offset(-reach, -2, -reach);
+            BlockPos to = minion.blockPosition().offset(reach, 2, reach);
             if (!loaded(minion, from, to)) {
                 return null;
             }
@@ -864,13 +870,18 @@ public final class MinionGoals {
             net.minecraft.world.entity.LivingEntity patient = com.avicagan.bloodandbones.body.Surgery.patientAt(minion.level(), table);
             if (patient != null) {
                 minion.getLookControl().setLookAt(patient);
-                // it tends them: a heart every five seconds at 100% while they lie there hurt
-                if (minion.tickCount % every == 0 && patient.getHealth() < patient.getMaxHealth()) {
-                    patient.heal(1.0F);
-                    minion.swing(net.minecraft.world.InteractionHand.MAIN_HAND);
-                }
             } else {
                 minion.getLookControl().setLookAt(centre);
+            }
+            if (patient == null || patient.getHealth() >= patient.getMaxHealth()) {
+                nextHeart = 0;
+            } else if (nextHeart == 0) {
+                // it tends them while they lie there hurt: the first heart after a wait, as each after it
+                nextHeart = minion.tickCount + every();
+            } else if (minion.tickCount >= nextHeart) {
+                patient.heal(1.0F);
+                minion.swing(net.minecraft.world.InteractionHand.MAIN_HAND);
+                nextHeart = minion.tickCount + every();
             }
         }
     }
@@ -907,7 +918,8 @@ public final class MinionGoals {
 
     /**
      * A farmer picks up what lies about near home, what it reaped that fell short, while it has room (and, brass, what its
-     * filter passes). A courier fetches with its own goal (MinionTasks.Fetch).
+     * filter passes): within its reach of home and two blocks more, as far as it reaps. A courier fetches with its own goal
+     * (MinionTasks.Fetch).
      */
     public static class Collect extends Goal {
         private final MinionEntity minion;
@@ -942,7 +954,8 @@ public final class MinionGoals {
                 unreachable.clear();
                 forgotAt = minion.tickCount;
             }
-            List<ItemEntity> items = minion.level().getEntitiesOfClass(ItemEntity.class, new AABB(minion.home()).inflate(MinionEntity.RANGE),
+            // as far as it reaps, and what rolled off the furthest crop
+            List<ItemEntity> items = minion.level().getEntitiesOfClass(ItemEntity.class, new AABB(minion.home()).inflate(minion.reach() + MinionEntity.RANGE),
                     e -> e.isAlive() && !e.hasPickUpDelay() && !unreachable.contains(e.getId()) && room(e.getItem())
                             && minion.filter().allows(minion.level(), e.getItem()));
             item = items.stream().min(Comparator.comparingDouble(minion::distanceToSqr)).orElse(null);
@@ -981,20 +994,45 @@ public final class MinionGoals {
             if (item == null) {
                 return;
             }
+            if (!item.isAlive() || item.getItem().isEmpty()) {
+                // taken meanwhile (by a player, another minion): this tick is not asked whether it goes on
+                item = null;
+                return;
+            }
             if (minion.distanceToSqr(item) < 2.5 + minion.getBbWidth()) {
-                ItemStack left = minion.carry(item.getItem().copy());
-                if (left.isEmpty()) {
-                    item.discard();
-                } else {
-                    item.setItem(left);
-                }
-                minion.take(item, 1);
+                pickUp(minion, item);
                 item = null;
             } else if (!approach.step(minion, item.blockPosition(), 1, 1.0)) {
                 unreachable.add(item.getId());
                 item = null;
             }
         }
+    }
+
+    /**
+     * It takes up what it has room for of an item lying on the ground, as a player's pickup does, and the count it took.
+     * Nothing from one already gone or emptied: another took it this tick, and a goal that runs every tick is not asked
+     * whether it goes on in the ticks between (vanilla's Mob#serverAiStep). What stays on the ground is what it did not take,
+     * so one taken whole is emptied as it goes (HopperBlockEntity#addItem does the same): vanilla's own pickup puts a
+     * discarded item's count back, and a copy of that would be a second stack.
+     */
+    public static int pickUp(MinionEntity minion, ItemEntity item) {
+        if (!item.isAlive() || item.getItem().isEmpty()) {
+            return 0;
+        }
+        ItemStack left = minion.carry(item.getItem().copy());
+        int taken = item.getItem().getCount() - left.getCount();
+        if (taken <= 0) {
+            return 0;
+        }
+        minion.take(item, taken);
+        if (left.isEmpty()) {
+            item.setItem(ItemStack.EMPTY);
+            item.discard();
+        } else {
+            item.setItem(left);
+        }
+        return taken;
     }
 
     /**
@@ -1109,13 +1147,35 @@ public final class MinionGoals {
     }
 
     /**
+     * Whether a task that looks round (a courier, a farmer, a Tender) looks now: once every {@link MinionFitness#lookTicks}
+     * ticks on average, a second at 100% (docs/NEXT.md 1.2). A goal is asked whether to start only every other tick (vanilla's
+     * Mob#serverAiStep ticks only the running goals in between), so the chance each time is one in half that, as vanilla's
+     * own goals take theirs (Goal#reducedTickDelay).
+     */
+    static boolean looks(MinionEntity minion, MinionTask task) {
+        int every = MinionFitness.lookTicks(com.avicagan.bloodandbones.parts.PartsData.of(minion.level()).task(task), minion.taskFitness());
+        return minion.getRandom().nextInt(Math.max(1, Mth.positiveCeilDiv(every, 2))) == 0;
+    }
+
+    /**
+     * The most blocks a farmer reads a tick when it looks for ripe crops, on average: today's farmer's, its 17 by 17 by 5 box
+     * once a second. A fitter farmer looks more often and a far-reaching one over a bigger box, so each look reads a band of
+     * the box, as wide as this allows.
+     */
+    static final float FARM_SCAN = 17 * 17 * 5 / 20.0F;
+
+    /**
      * A farmer harvests ripe crops within its reach of home (brass: those its filter passes) and plants them again from what
-     * it reaped. It looks for ripe ones every half second or so at 100%, a fitter farmer more often (docs/NEXT.md 1.2).
+     * it reaped. It looks for ripe ones every second or so at 100%, a fitter farmer more often (docs/NEXT.md 1.2). A look
+     * reads a band of the box within its reach (all of it at its own reach and 100%), so it never reads more blocks a second
+     * than today's farmer did: it works one band until it finds no ripe crop there, then looks along the next.
      */
     public static class Farm extends Goal {
         private final MinionEntity minion;
         @Nullable
         private BlockPos crop;
+        /** The band of its box it looks along next. */
+        private int band;
         private final Unreachable unreachable = new Unreachable();
         private final Approach approach = new Approach();
 
@@ -1124,16 +1184,24 @@ public final class MinionGoals {
             setFlags(EnumSet.of(Flag.MOVE, Flag.LOOK));
         }
 
+        /** The ripe crop nearest it in the band it looks along now; with none there, the next band's turn comes. */
         @Nullable
         private BlockPos findRipe() {
             BlockPos home = minion.home();
-            BlockPos best = null;
-            double bestDistance = Double.MAX_VALUE;
             int reach = minion.reach();
             if (!loaded(minion, home.offset(-reach, -2, -reach), home.offset(reach, 2, reach))) {
                 return null;
             }
-            for (BlockPos pos : BlockPos.betweenClosed(home.offset(-reach, -2, -reach), home.offset(reach, 2, reach))) {
+            int width = reach * 2 + 1;
+            int look = MinionFitness.lookTicks(com.avicagan.bloodandbones.parts.PartsData.of(minion.level()).task(MinionTask.FARMER), minion.taskFitness());
+            int columns = Mth.clamp(Math.round(FARM_SCAN * look) / (width * 5), 1, width);
+            int bands = Mth.positiveCeilDiv(width, columns);
+            band = Math.floorMod(band, bands);
+            int x = home.getX() - reach + band * columns;
+            BlockPos best = null;
+            double bestDistance = Double.MAX_VALUE;
+            for (BlockPos pos : BlockPos.betweenClosed(x, home.getY() - 2, home.getZ() - reach, Math.min(x + columns - 1, home.getX() + reach),
+                    home.getY() + 2, home.getZ() + reach)) {
                 BlockState state = minion.level().getBlockState(pos);
                 if (state.getBlock() instanceof CropBlock crop && crop.isMaxAge(state) && !unreachable.contains(minion, pos)
                         && minion.filter().allowsCrop(minion.level(), state, pos)) {
@@ -1143,6 +1211,9 @@ public final class MinionGoals {
                         best = pos.immutable();
                     }
                 }
+            }
+            if (best == null) {
+                band++;
             }
             return best;
         }
@@ -1155,8 +1226,7 @@ public final class MinionGoals {
 
         @Override
         public boolean canUse() {
-            if (!minion.hasTask(MinionTask.FARMER) || minion.getRandom().nextInt(MinionFitness.lookTicks(
-                    com.avicagan.bloodandbones.parts.PartsData.of(minion.level()).task(MinionTask.FARMER), minion.taskFitness())) != 0) {
+            if (!minion.hasTask(MinionTask.FARMER) || !looks(minion, MinionTask.FARMER)) {
                 return false;
             }
             crop = findRipe();

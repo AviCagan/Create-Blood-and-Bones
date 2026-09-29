@@ -656,10 +656,14 @@ public class MinionTests {
         });
     }
 
-    /** A pacifist (a villager's pair of arms) takes no target when hurt: it never attacks, so it neither pays for fighting nor stands its ground. */
+    /**
+     * A body with nothing to fight with (a villager's folded pair of arms, which never strike, and no head to bite with)
+     * takes no target when hurt: it neither pays for fighting nor stands its ground. Under a head the same arms bite with it
+     * (docs/NEXT.md 1.7; MinionTaskTests#foldedArmsBiteWithTheHead).
+     */
     @GameTest(template = "empty", timeoutTicks = 80)
     public static void pacifistTakesNoTarget(GameTestHelper helper) {
-        MinionBuild build = MinionBuild.of(ref("villager", "body")).with("head", ref("villager", "head")).with("arms", ref("villager", "arms"));
+        MinionBuild build = MinionBuild.of(ref("villager", "body")).with("arms", ref("villager", "arms"));
         MinionEntity minion = minion(helper, new BlockPos(3, 2, 3), build, 500.0F);
         Zombie zombie = helper.spawn(EntityType.ZOMBIE, new BlockPos(7, 2, 7));
         zombie.setNoAi(true);

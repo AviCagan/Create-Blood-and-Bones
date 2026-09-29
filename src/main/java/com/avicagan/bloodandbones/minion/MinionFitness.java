@@ -1,8 +1,6 @@
 package com.avicagan.bloodandbones.minion;
 
 import com.avicagan.bloodandbones.BloodAndBones;
-import com.avicagan.bloodandbones.item.CleaverItem;
-import com.avicagan.bloodandbones.item.FlensingKnifeItem;
 import com.avicagan.bloodandbones.parts.ActiveTraits;
 import com.avicagan.bloodandbones.parts.PartSlot;
 import com.avicagan.bloodandbones.parts.PartSlots;
@@ -339,7 +337,7 @@ public final class MinionFitness {
     public static Row row(PartsData.Store store, Body body, MinionTask task, Context context) {
         MinionTask.Data data = store.task(task);
         MinionStats stats = body.stats();
-        float disposition = body.disposition().multiplier(task, context.anchor(), context.night());
+        float disposition = body.disposition().multiplier(task, data.kind(), context.anchor(), context.night());
         List<MinionStats.KnackPart> knackFrom = body.knackParts().getOrDefault(task.id, List.of());
         float knack = stats.knack(task.id);
         if (!task.rated()) {
@@ -397,14 +395,23 @@ public final class MinionFitness {
         if (data.tool().isEmpty()) {
             return false;
         }
-        MinionTask.Tool tool = data.tool().get();
-        List<ItemStack> where = tool.carried() ? context.carried() : List.of(context.held());
+        List<ItemStack> where = data.tool().get().carried() ? context.carried() : List.of(context.held());
         for (ItemStack stack : where) {
-            if (!stack.isEmpty() && (tool.items().isPresent() ? matches(tool.items().get(), stack) : takes(task, stack))) {
+            if (isTool(task, data, stack)) {
                 return true;
             }
         }
         return false;
+    }
+
+    /**
+     * Whether this is the task's tool, as its goals and its row both read it (docs/NEXT.md 1.6): what its goals can work with
+     * (a Cleaver or Flensing Knife, a rod, a bow, crossbow or trident, a healing potion; anything as a herder's bait or a
+     * courier's sample), narrowed to its file's "items" where it names them. A file cannot teach a goal a new tool: that,
+     * as a new task, needs code.
+     */
+    public static boolean isTool(MinionTask task, MinionTask.Data data, ItemStack stack) {
+        return !stack.isEmpty() && takes(task, stack) && data.tool().flatMap(MinionTask.Tool::items).map(items -> matches(items, stack)).orElse(true);
     }
 
     /** An item id, or a "#tag", this stack is. */
@@ -417,10 +424,10 @@ public final class MinionFitness {
         return id != null && BuiltInRegistries.ITEM.getKey(stack.getItem()).equals(id);
     }
 
-    /** The tools the tasks' own code takes (today's tests): a blade, a rod, a bow, crossbow or trident, healing, any bait or sample. */
+    /** The tools the tasks' own goals can work with: a blade, a rod, a bow, crossbow or trident, healing, any bait or sample. */
     private static boolean takes(MinionTask task, ItemStack stack) {
         return switch (task) {
-            case BUTCHER -> stack.getItem() instanceof CleaverItem || stack.getItem() instanceof FlensingKnifeItem;
+            case BUTCHER -> MinionTasks.blade(stack);
             case FISHER -> stack.getItem() instanceof FishingRodItem;
             case SENTRY -> weapon(stack);
             case MEDIC -> MinionTasks.heals(stack);
@@ -526,7 +533,8 @@ public final class MinionFitness {
                 yield held(stat, blow, blow / BLOW, from);
             }
             case RANGED -> {
-                boolean inHand = body.handWeapon() && (weapon(context.held()) || tooled && task == MinionTask.SENTRY);
+                // a sentry's weapon is its task's tool (its file may narrow it); any other task's, any bow, crossbow or trident
+                boolean inHand = body.handWeapon() && (task == MinionTask.SENTRY ? tooled : weapon(context.held()));
                 if (inHand) {
                     yield held(stat, 1.0F, 1.0F, context.held().isEmpty() ? List.of() : List.of(Source.item(context.held())));
                 }

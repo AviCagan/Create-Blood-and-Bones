@@ -77,8 +77,8 @@ public class MinionEntity extends PathfinderMob implements net.minecraft.world.e
     private static final EntityDataAccessor<Boolean> LAVA_WALKER = SynchedEntityData.defineId(MinionEntity.class, EntityDataSerializers.BOOLEAN);
     /** How long a spur from its rider's stick lasts (a pig's carrot, a strider's fungus), as theirs does. */
     private static final EntityDataAccessor<Integer> BOOST_TIME = SynchedEntityData.defineId(MinionEntity.class, EntityDataSerializers.INT);
-    /** How far from home a farmer picks up what lies about. */
-    public static final double RANGE = 10.0;
+    /** How far past its reach of home a farmer picks up what lies about: what it reaped rolls off the crop (its own 8: 10). */
+    public static final double RANGE = 2.0;
     /** A task done with its maker is done round them while they are in the same world and this near; else at home. */
     public static final double WITH_ME = 64.0;
     /** mB of blood a minute: idle, moving, working, fighting (docs/PARTS-AND-TRAITS.md section 6.7). */
@@ -192,7 +192,8 @@ public class MinionEntity extends PathfinderMob implements net.minecraft.world.e
         // its fittest task that waits on nothing it lacks, at home (docs/NEXT.md 1.3), named on its maker's action bar
         MinionTask woke = MinionTasks.wakeTask(this);
         entityData.set(TASK, woke.id.toString());
-        entityData.set(ANCHOR, (byte) 0);
+        // at home, unless a datapack has its task done only with its maker
+        entityData.set(ANCHOR, (byte) PartsData.of(level()).task(woke).anchorFor(MinionTask.Anchor.HOME).ordinal());
         entityData.set(REACH, 0);
         refreshFitness();
         if (maker != null) {
@@ -687,9 +688,12 @@ public class MinionEntity extends PathfinderMob implements net.minecraft.world.e
         return set <= 0 ? data.reach() : Math.max(MinionTasks.LEAST_REACH, Math.min(data.maxReach(), set));
     }
 
-    /** At home, with its task's own reach: see {@link #setTask(MinionTask, MinionTask.Anchor, int)}. */
+    /**
+     * At home (or, where a datapack has the task done only with its maker, with them), with its task's own reach: see
+     * {@link #setTask(MinionTask, MinionTask.Anchor, int)}.
+     */
     public boolean setTask(MinionTask task) {
-        return setTask(task, MinionTask.Anchor.HOME, 0);
+        return setTask(task, PartsData.of(level()).task(task).anchorFor(MinionTask.Anchor.HOME), 0);
     }
 
     /**
@@ -725,7 +729,7 @@ public class MinionEntity extends PathfinderMob implements net.minecraft.world.e
     /** Its task taken from it (a data reload left its body unable to do it): Idle at home, remembering why for its status line. */
     void loseTask(MinionTask task, String reason) {
         entityData.set(TASK, MinionTask.IDLE.id.toString());
-        entityData.set(ANCHOR, (byte) 0);
+        entityData.set(ANCHOR, (byte) PartsData.of(level()).task(MinionTask.IDLE).anchorFor(MinionTask.Anchor.HOME).ordinal());
         entityData.set(REACH, 0);
         lostTask = task;
         lostReason = reason;
@@ -797,10 +801,10 @@ public class MinionEntity extends PathfinderMob implements net.minecraft.world.e
                 com.avicagan.bloodandbones.parts.effect.StorageEffect.hasChest(this));
     }
 
-    /** Its row for a task done at this anchor (at home if the task is not done there). */
+    /** Its row for a task done at this anchor (where the task is done instead, if not there: {@link MinionTask.Data#anchorFor}). */
     public MinionFitness.Row row(MinionTask task, MinionTask.Anchor at) {
         MinionFitness.Body body = fitnessBody();
-        MinionTask.Anchor where = PartsData.of(level()).task(task).allows(at) ? at : MinionTask.Anchor.HOME;
+        MinionTask.Anchor where = PartsData.of(level()).task(task).anchorFor(at);
         if (body == null) {
             // no build (one saved before minions were built of parts): it can do nothing but stand
             return new MinionFitness.Row(task, 1.0F, 1.0F, task.rated() ? Optional.ofNullable(task.cannotKey()) : Optional.empty(), Optional.empty(),

@@ -214,7 +214,45 @@ public record MobGroup(ResourceLocation id, Kind kind, int priority, List<String
                 armour = Optional.of(decode(TraitList.CODEC, a, ops, id + " armour"));
             }
         }
-        return new PartEntry(o.has("minion") ? Optional.of(o.get("minion")) : Optional.empty(), armour, pieces);
+        return new PartEntry(o.has("minion") ? Optional.of(checkedMinion(o.get("minion"), id)) : Optional.empty(), armour, pieces);
+    }
+
+    /**
+     * A part's minion data as written, less what could only fail later, in play, logged as it loads: a head's disposition
+     * that is no id ("Brave"), and a knack whose task is no id ("bloodandbones:Surgeon") or whose value is no number, in its
+     * own map or its variants. What is left out counts as never written: the layer under it, or 1.
+     */
+    private static JsonElement checkedMinion(JsonElement minion, ResourceLocation id) {
+        if (!minion.isJsonObject()) {
+            return minion;
+        }
+        JsonObject o = minion.getAsJsonObject().deepCopy();
+        check(o, id);
+        if (o.get("variants") instanceof com.google.gson.JsonArray variants) {
+            for (JsonElement variant : variants) {
+                if (variant instanceof JsonObject v) {
+                    check(v, id);
+                }
+            }
+        }
+        return o;
+    }
+
+    private static void check(JsonObject o, ResourceLocation id) {
+        JsonElement disposition = o.get("disposition");
+        if (disposition != null && !(disposition.isJsonPrimitive() && com.avicagan.bloodandbones.minion.MinionDisposition.valid(disposition.getAsString()))) {
+            com.avicagan.bloodandbones.BloodAndBones.LOGGER.warn("{}: disposition {} is no id (lower case, as \"meek\" or \"ns:name\"): left out", id, disposition);
+            o.remove("disposition");
+        }
+        if (o.get("knacks") instanceof JsonObject knacks) {
+            for (String task : List.copyOf(knacks.keySet())) {
+                JsonElement value = knacks.get(task);
+                if (ResourceLocation.tryParse(task) == null || !value.isJsonPrimitive() || !value.getAsJsonPrimitive().isNumber()) {
+                    com.avicagan.bloodandbones.BloodAndBones.LOGGER.warn("{}: knack {}: {} is no task id and number: left out", id, task, value);
+                    knacks.remove(task);
+                }
+            }
+        }
     }
 
     private static <T> Optional<T> opt(JsonObject o, String key, Codec<T> codec, DynamicOps<JsonElement> ops, ResourceLocation id) {

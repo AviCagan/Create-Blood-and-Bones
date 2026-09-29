@@ -80,7 +80,7 @@ public class BodyPartsCategory extends AbstractRecipeCategory<BodyPartsCategory.
             for (ResourceLocation organ : organIds) {
                 organs.add(Organs.stack(store, organ, entity, false));
             }
-            out.add(new Entry(entity, icon, organs, hides(entity), lines(store, resolved, organIds)));
+            out.add(new Entry(entity, icon, organs, hides(entity), lines(store, resolved, organIds, fresh(type, resolved))));
         }
         return out;
     }
@@ -106,7 +106,27 @@ public class BodyPartsCategory extends AbstractRecipeCategory<BodyPartsCategory.
         return out;
     }
 
-    private static List<FormattedText> lines(PartsData.Store store, ResolvedMob resolved, Set<ResourceLocation> organIds) {
+    /**
+     * What a new one of this mob records of itself that its parts' data reads (an unemployed villager's profession, "none";
+     * a panda's gene as it is born), as a carcass of it would keep it (CarcassLook#traits): made, never added to the world,
+     * and only for a mob whose data has variants that change what its parts bring to a minion's tasks.
+     */
+    private static Map<String, String> fresh(EntityType<?> type, ResolvedMob resolved) {
+        var level = Minecraft.getInstance().level;
+        boolean varies = resolved.minion().keySet().stream().anyMatch(key -> !MinionData.variantTraits(resolved, key, "knacks", "jobs", "disposition", "surgeon").isEmpty());
+        if (level == null || !varies) {
+            return Map.of();
+        }
+        try {
+            return type.create(level) instanceof net.minecraft.world.entity.LivingEntity living
+                    ? Map.copyOf(com.avicagan.bloodandbones.carcass.CarcassLook.traits(living)) : Map.of();
+        } catch (RuntimeException e) {
+            BloodAndBones.LOGGER.debug("Could not make a {} to read its traits for its Body Parts page", BuiltInRegistries.ENTITY_TYPE.getKey(type), e);
+            return Map.of();
+        }
+    }
+
+    private static List<FormattedText> lines(PartsData.Store store, ResolvedMob resolved, Set<ResourceLocation> organIds, Map<String, String> fresh) {
         List<FormattedText> out = new ArrayList<>();
         List<String> keys = new ArrayList<>(new java.util.TreeSet<>(resolved.parts().keySet()));
         resolved.minion().keySet().stream().filter(k -> !keys.contains(k)).forEach(keys::add);
@@ -118,7 +138,7 @@ public class BodyPartsCategory extends AbstractRecipeCategory<BodyPartsCategory.
             List<TraitList.Resolved> minion = MinionData.traits(resolved, key);
             ResolvedMob.Part part = resolved.parts().get(key);
             // what the part brings to a minion's tasks: its knacks, what it holds with, a head's disposition
-            List<Component> facts = TaskWords.partFacts(resolved, Map.of(), key);
+            List<Component> facts = TaskWords.mobFacts(resolved, fresh, key);
             if (minion.isEmpty() && facts.isEmpty() && (part == null || part.armour().isEmpty() && part.pieces().isEmpty())) {
                 continue;
             }

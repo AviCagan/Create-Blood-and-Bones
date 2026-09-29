@@ -83,7 +83,7 @@ public final class MinionCommand {
         List<Component> out = new ArrayList<>();
         out.add(Component.translatable("bloodandbones.command.minion.title", minion.getDisplayName(), TaskWords.doing(minion)).withStyle(ChatFormatting.GOLD));
         for (MinionTask task : MinionTask.values()) {
-            MinionTask.Anchor at = store.task(task).allows(minion.anchor()) ? minion.anchor() : MinionTask.Anchor.HOME;
+            MinionTask.Anchor at = store.task(task).anchorFor(minion.anchor());
             MinionFitness.Row row = minion.row(task, at);
             List<Component> lines = TaskWords.lines(store, minion, row, at);
             for (int i = 0; i < lines.size(); i++) {

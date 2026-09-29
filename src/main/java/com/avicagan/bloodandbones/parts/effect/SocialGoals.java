@@ -61,10 +61,14 @@ public final class SocialGoals {
             return super.canUse();
         }
 
-        /** Whether its task goes after monsters on its own: a fight, but a guard with its maker. */
+        /**
+         * Whether its task's goals go after monsters on their own: the guard's (but with its maker), the sentry's, the hunter's
+         * and the sapper's. What the goals do is code; the task file's kind only says how a disposition scales it.
+         */
         private static boolean hunts(MinionEntity minion) {
             MinionTask task = minion.task();
-            return task.kind == MinionTask.Kind.FIGHT && !(task == MinionTask.GUARD && minion.withMaker());
+            return (task == MinionTask.GUARD || task == MinionTask.SENTRY || task == MinionTask.HUNTER || task == MinionTask.SAPPER)
+                    && !(task == MinionTask.GUARD && minion.withMaker());
         }
 
         /** Its echolocation and tremor senses that work now, their conditions holding. */

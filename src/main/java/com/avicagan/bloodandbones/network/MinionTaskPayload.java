@@ -22,13 +22,15 @@ public final class MinionTaskPayload {
     }
 
     /**
-     * One task's row: the task (its place in the list), its fitness, whether the body can do it at all, whether it would
-     * wait for something, the lines shown over it (its reasons, in words), the anchors it allows (a bit each, home first),
-     * and its own reach and the most its maker may set.
+     * One task's row: the task (its place in the list), the sort of work its file says it is (its place in the kinds: the
+     * group it is listed under), its fitness, whether the body can do it at all, whether it would wait for something, the
+     * lines shown over it (its reasons, in words), the anchors it allows (a bit each, home first), and its own reach and the
+     * most its maker may set.
      */
-    public record Row(int task, float fitness, boolean can, boolean waiting, List<Component> lines, int anchors, int reach, int maxReach) {
+    public record Row(int task, int kind, float fitness, boolean can, boolean waiting, List<Component> lines, int anchors, int reach, int maxReach) {
         public static final StreamCodec<RegistryFriendlyByteBuf, Row> STREAM_CODEC = StreamCodec.of((buf, row) -> {
             ByteBufCodecs.VAR_INT.encode(buf, row.task());
+            ByteBufCodecs.VAR_INT.encode(buf, row.kind());
             buf.writeFloat(row.fitness());
             buf.writeBoolean(row.can());
             buf.writeBoolean(row.waiting());
@@ -36,7 +38,7 @@ public final class MinionTaskPayload {
             ByteBufCodecs.VAR_INT.encode(buf, row.anchors());
             ByteBufCodecs.VAR_INT.encode(buf, row.reach());
             ByteBufCodecs.VAR_INT.encode(buf, row.maxReach());
-        }, buf -> new Row(ByteBufCodecs.VAR_INT.decode(buf), buf.readFloat(), buf.readBoolean(), buf.readBoolean(),
+        }, buf -> new Row(ByteBufCodecs.VAR_INT.decode(buf), ByteBufCodecs.VAR_INT.decode(buf), buf.readFloat(), buf.readBoolean(), buf.readBoolean(),
                 new ArrayList<>(ComponentSerialization.STREAM_CODEC.apply(ByteBufCodecs.list()).decode(buf)), ByteBufCodecs.VAR_INT.decode(buf),
                 ByteBufCodecs.VAR_INT.decode(buf), ByteBufCodecs.VAR_INT.decode(buf)));
 

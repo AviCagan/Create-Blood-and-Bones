@@ -172,12 +172,23 @@ public final class MinionTender {
                 && be.getLevel() != null && be.getLevel().getCapability(Capabilities.ItemHandler.BLOCK, be.getBlockPos(), null) != null;
     }
 
-    /** A Create Fluid Tank or a Bleeding Rack's tray with a whole bucket of blood to give, as a bucket can be filled with. */
+    /** Where a Create tank of many blocks is asked: its controller, or itself while it has none (just placed). */
+    private static BlockPos controller(FluidTankBlockEntity tank) {
+        BlockPos at = tank.getController();
+        return at != null ? at : tank.getBlockPos();
+    }
+
+    /**
+     * A Create Fluid Tank or a Bleeding Rack's tray with a whole bucket of blood to give, as a bucket can be filled with. A
+     * tank of many blocks is one tank: asked at its controller, as each of its blocks hands on the controller's.
+     */
     static boolean tank(ServerLevel level, BlockEntity be) {
         if (!(be instanceof FluidTankBlockEntity) && !(be instanceof BleedingRackBlockEntity)) {
             return false;
         }
-        IFluidHandler handler = level.getCapability(Capabilities.FluidHandler.BLOCK, be.getBlockPos(), null);
+        BlockPos at = be instanceof FluidTankBlockEntity tank ? controller(tank) : be.getBlockPos();
+        // a controller across a chunk's edge that is not loaded is not looked at (looking would load it)
+        IFluidHandler handler = level.isLoaded(at) ? level.getCapability(Capabilities.FluidHandler.BLOCK, at, null) : null;
         if (handler == null) {
             return false;
         }
@@ -196,6 +207,9 @@ public final class MinionTender {
         List<Cradle> cradles = new ArrayList<>();
         List<BlockPos> tanks = new ArrayList<>();
         List<BlockPos> stores = new ArrayList<>();
+        // a Create tank of many blocks is asked once, at its controller, and gone to at its block nearest the Tender
+        java.util.Map<BlockPos, Boolean> tankHasBlood = new java.util.HashMap<>();
+        java.util.Map<BlockPos, BlockPos> tankNearest = new java.util.HashMap<>();
         int r = Mth.ceil(reach);
         for (int cx = (home.getX() - r) >> 4; cx <= (home.getX() + r) >> 4; cx++) {
             for (int cz = (home.getZ() - r) >> 4; cz <= (home.getZ() + r) >> 4; cz++) {
@@ -228,6 +242,11 @@ public final class MinionTender {
                         if (canisters > 0 || wanted > 0 || empties > 0) {
                             cradles.add(new Cradle(pos.immutable(), canisters, wanted, empties));
                         }
+                    } else if (be instanceof FluidTankBlockEntity part) {
+                        BlockPos controller = controller(part);
+                        if (tankHasBlood.computeIfAbsent(controller, c -> tank(level, part))) {
+                            tankNearest.merge(controller, pos.immutable(), (a, b) -> minion.distanceToSqr(Vec3.atCenterOf(b)) < minion.distanceToSqr(Vec3.atCenterOf(a)) ? b : a);
+                        }
                     } else if (tank(level, be)) {
                         tanks.add(pos.immutable());
                     } else if (store(be)) {
@@ -236,6 +255,7 @@ public final class MinionTender {
                 }
             }
         }
+        tanks.addAll(tankNearest.values());
         List<MinionEntity> fallen = level.getEntitiesOfClass(MinionEntity.class, new AABB(home).inflate(reach),
                 m -> m != minion && m.isAlive() && m.poweredDown() && m.build().isPresent() && minion.makerId() != null
                         && minion.makerId().equals(m.makerId()) && m.distanceToSqr(centre) < reach * reach && !skips.skipped(m));
@@ -397,8 +417,7 @@ public final class MinionTender {
 
         @Override
         public boolean canUse() {
-            if (!minion.hasTask(MinionTask.TENDER) || !(minion.level() instanceof ServerLevel level)
-                    || minion.getRandom().nextInt(MinionFitness.lookTicks(PartsData.of(level).task(MinionTask.TENDER), minion.taskFitness())) != 0) {
+            if (!minion.hasTask(MinionTask.TENDER) || !(minion.level() instanceof ServerLevel level) || !MinionGoals.looks(minion, MinionTask.TENDER)) {
                 return false;
             }
             survey = survey(level, minion, this);

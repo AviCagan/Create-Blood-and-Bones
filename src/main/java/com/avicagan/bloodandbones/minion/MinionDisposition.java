@@ -26,9 +26,12 @@ public record MinionDisposition(Map<MinionTask.Kind, Float> kinds, Map<ResourceL
     /** The one a body with no head has. */
     public static final String MINDLESS = "mindless";
 
-    /** What it multiplies a fitness at this task by: its task's own, else its sort's; with me; by night or by day. */
-    public float multiplier(MinionTask task, MinionTask.Anchor anchor, boolean isNight) {
-        float m = tasks.containsKey(task.id) ? tasks.get(task.id) : kinds.getOrDefault(task.kind, 1.0F);
+    /**
+     * What it multiplies a fitness at this task by: its task's own, else its sort's (the task file's "kind", which a datapack
+     * may change: {@link MinionTask.Data#kind}); with me; by night or by day.
+     */
+    public float multiplier(MinionTask task, MinionTask.Kind kind, MinionTask.Anchor anchor, boolean isNight) {
+        float m = tasks.containsKey(task.id) ? tasks.get(task.id) : kinds.getOrDefault(kind, 1.0F);
         if (anchor == MinionTask.Anchor.MAKER) {
             m *= withMe;
         }
@@ -41,9 +44,18 @@ public record MinionDisposition(Map<MinionTask.Kind, Float> kinds, Map<ResourceL
         return id.getNamespace() + ".minion.disposition." + id.getPath();
     }
 
-    /** A disposition's id from what a head's data calls it: a plain name is the mod's own ("meek"). */
+    /**
+     * A disposition's id from what a head's data calls it: a plain name is the mod's own ("meek"). One that is no id at all
+     * ("Brave") is none: data is checked as it loads ({@code MobGroup}), and nothing in play ever fails on it.
+     */
     public static ResourceLocation id(String name) {
-        return name.indexOf(':') < 0 ? BloodAndBones.asResource(name) : ResourceLocation.parse(name);
+        ResourceLocation id = valid(name) ? name.indexOf(':') < 0 ? BloodAndBones.asResource(name) : ResourceLocation.tryParse(name) : null;
+        return id != null ? id : BloodAndBones.asResource("none");
+    }
+
+    /** Whether a head's data may call a disposition this: a plain name or a namespaced one, lower case, as ids are. */
+    public static boolean valid(String name) {
+        return name.indexOf(':') < 0 ? ResourceLocation.isValidPath(name) : ResourceLocation.tryParse(name) != null;
     }
 
     /** The shipped dispositions (docs/NEXT.md 1.2), which the files of the same names hold too. */

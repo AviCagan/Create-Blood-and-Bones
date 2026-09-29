@@ -34,7 +34,8 @@ import java.util.EnumSet;
  * it goes for the nearest banner of that colour standing within its reach of home (16), as a sapper goes for the flag its
  * side planted. Blocks break only where the organ's blast may break them, the server's {@code minion_block_damage} and
  * mobGriefing all allow it. With no detonating organ a body cannot be a sapper at all ({@link #hasDetonator}, the task's
- * test of its body).
+ * test of its body). A body with no head finds no target and no banner: it sets itself off at a monster against it, as a
+ * headless guard strikes only what touches it (MinionGoals.TouchTarget), and never walks after one.
  */
 public final class MinionSapper {
     public static final ResourceLocation SAPPER = BloodAndBones.asResource("sapper");
@@ -97,16 +98,22 @@ public final class MinionSapper {
 
         @Override
         public boolean canUse() {
-            if (!minion.hasTask(MinionTask.SAPPER) || minion.poweredDown() || minion.stats().mindless() || detonator(minion) == null && !DetonateEffect.lit(minion)) {
+            if (!minion.hasTask(MinionTask.SAPPER) || minion.poweredDown() || detonator(minion) == null && !DetonateEffect.lit(minion)) {
                 return false;
             }
             LivingEntity target = minion.getTarget();
             if (target != null && target.isAlive()) {
                 mark = null;
-                return true;
+                return felt(target);
             }
-            mark = minion.getRandom().nextInt(20) == 0 ? findMark() : null;
+            // a body with no head sees no banner
+            mark = !minion.stats().mindless() && minion.getRandom().nextInt(20) == 0 ? findMark() : null;
             return mark != null;
+        }
+
+        /** Whether it knows where this is: it sees it, or, with no head, it touches it. */
+        private boolean felt(LivingEntity target) {
+            return !minion.stats().mindless() || MinionGoals.touches(minion, target);
         }
 
         @Override
@@ -118,7 +125,7 @@ public final class MinionSapper {
                 return true;
             }
             LivingEntity target = minion.getTarget();
-            return target != null && target.isAlive() || mark != null && marked(mark);
+            return target != null && target.isAlive() && felt(target) || mark != null && marked(mark);
         }
 
         @Override
@@ -157,6 +164,9 @@ public final class MinionSapper {
                 minion.getNavigation().stop();
                 Activation.fire(minion, facet, target != null && target.isAlive() ? target : null);
                 approach.reset(minion);
+            } else if (minion.stats().mindless()) {
+                // it knows only what is against it, and never walks after it
+                minion.getNavigation().stop();
             } else if (!approach.step(minion, BlockPos.containing(at), 1, 1.2)) {
                 if (mark != null && (target == null || !target.isAlive())) {
                     unreachable.add(mark);

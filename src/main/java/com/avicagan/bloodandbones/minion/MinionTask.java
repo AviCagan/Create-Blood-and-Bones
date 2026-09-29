@@ -108,6 +108,10 @@ public enum MinionTask {
     }
 
     public final ResourceLocation id;
+    /**
+     * Its sort of work as shipped: the default of its data's {@link Data#kind}, which is what a disposition scales and the task
+     * screen groups it under, so a datapack may move it.
+     */
     public final Kind kind;
     public final Need need;
     /** What its reason says when its grip table leaves the body nothing to do it with ("cannot.hand"...), for a grip task. */
@@ -227,6 +231,11 @@ public enum MinionTask {
             return anchors.contains(anchor);
         }
 
+        /** Where it is set when asked to be set here: here if it allows it, else the first anchor it allows. */
+        public Anchor anchorFor(Anchor at) {
+            return allows(at) || anchors.isEmpty() ? at : anchors.get(0);
+        }
+
         /** As a task file writes it. */
         public JsonObject toJson() {
             JsonObject o = new JsonObject();
@@ -325,7 +334,7 @@ public enum MinionTask {
                     numbers("bow_every", 20, "crossbow_min", 20, "crossbow_max", 40, "trident_every", 40, "spread", 14, "spread_per_difficulty", 4));
             case HUNTER -> data(HOME_OR_MAKER, 12, 24, Stat.BLOW, Stat.PACE, Map.of(), null, false, Map.of());
             case SAPPER -> data(HOME, 16, 32, Stat.PACE, Stat.TOUGHNESS, Map.of(), null, false, Map.of());
-            // it keeps by its table (its home, or the nearest within 6) and tends a heart every 5 s, never faster than every 2; a
+            // it keeps by its table (its home, or the nearest within its reach of where it stands) and tends a heart every 5 s, never faster than every 2; a
             // stump it cuts costs a bucket of blood to fit at 150% and over, two from 75%, three below (docs/NEXT.md 1.5)
             case SURGEON -> data(HOME, 6, 12, Stat.HANDS, Stat.SIGHT, TOOL, null, false, numbers("tend_every", 100, "tend_least", 40,
                     "one_bucket_from", MinionFitness.CLEAN_CUT, "two_buckets_from", MinionFitness.FAIR_CUT));
@@ -336,12 +345,14 @@ public enum MinionTask {
                     numbers("search", 20, "wait", 600));
             // it looks round every second, and keeps a cradle stocked with up to 16 brass sheets
             case TENDER -> data(HOME, 8, 12, Stat.CARRY, Stat.PACE, CARRYING, null, false, numbers("look_every", 20, "sheets", 16));
-            // a sample in hand narrows what it fetches, held as anything holds one
+            // a sample in hand narrows what it fetches, held as anything holds one; it looks round every second, as the
+            // scavenger did (a one-in-ten chance each time its goal was asked, which is every other tick)
             case COURIER -> data(HOME_OR_MAKER, 10, 32, Stat.CARRY, Stat.PACE, CARRYING, Tool.of(false, false, HOLDING), true,
-                    numbers("look_every", 10));
+                    numbers("look_every", 20));
             // it tows at most 90% slower than it walks, and never with less slowdown than a player
             case HAULER -> data(HOME, 24, 32, Stat.PULL, Stat.PACE, Map.of(), null, false, numbers("slowdown_most", 0.9F));
-            case FARMER -> data(HOME, 8, 12, Stat.HANDS, Stat.SIGHT, PICKING, null, true, numbers("look_every", 10));
+            // it looks for ripe crops every second, as the farmer job did
+            case FARMER -> data(HOME, 8, 12, Stat.HANDS, Stat.SIGHT, PICKING, null, true, numbers("look_every", 20));
             // 30 to 60 s between catches, never under a sixth of that (Lure's floor); a rod in hand fishes as a player's does
             case FISHER -> data(HOME, 8, 12, Stat.HANDS, Stat.SIGHT, FISHING, Tool.of(false, false, FISHING_ROD), true,
                     numbers("catch_min", 600, "catch_max", 1200, "catch_least", 1.0F / 6.0F));
@@ -352,6 +363,26 @@ public enum MinionTask {
             // 1 to 2 minutes between finds
             case DIGGER -> data(HOME, 6, 12, Stat.HANDS, null, NOSE, null, true, numbers("dig_min", 1200, "dig_max", 2400));
         };
+    }
+
+    /**
+     * A task file's data as the goals can do it (docs/NEXT.md 1.6): its anchors only those the task's goals work from, since
+     * a file can take an anchor away but not teach a goal a new one (only Idle, Guard, Hunter, Medic and Courier work round
+     * their maker). One it cannot do is left out, and logged; with none left, the task's own stand.
+     */
+    public Data checked(Data data, ResourceLocation file) {
+        List<Anchor> allowed = defaults().anchors();
+        List<Anchor> kept = data.anchors().stream().filter(allowed::contains).toList();
+        if (kept.size() < data.anchors().size()) {
+            BloodAndBones.LOGGER.warn("Minion task file {}: {} is done only {}; left out {}", file, id, allowed,
+                    data.anchors().stream().filter(a -> !allowed.contains(a)).toList());
+        }
+        if (kept.isEmpty()) {
+            BloodAndBones.LOGGER.warn("Minion task file {} allows {} nowhere it can be done; it keeps {}", file, id, allowed);
+            kept = allowed;
+        }
+        return kept.equals(data.anchors()) ? data : new Data(data.kind(), kept, data.reach(), data.maxReach(), data.main(), data.second(), data.grips(),
+                data.tool(), data.stores(), data.numbers(), data.needsSurgeonHead());
     }
 
     private Data data(List<Anchor> anchors, int reach, int most, @Nullable Stat main, @Nullable Stat second, Map<String, Float> grips, @Nullable Tool tool,

@@ -17,7 +17,7 @@
   "main": "carry",
   "max_reach": 32,
   "numbers": {
-    "look_every": 10.0
+    "look_every": 20.0
   },
   "reach": 10,
   "second": "pace",

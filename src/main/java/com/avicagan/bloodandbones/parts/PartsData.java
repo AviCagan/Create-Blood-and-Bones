@@ -142,7 +142,7 @@ public final class PartsData {
                         if (task == null) {
                             BloodAndBones.LOGGER.warn("Minion task file {} names no task: a task needs code (its goals)", id);
                         } else {
-                            out.put(task, out.getOrDefault(task, task.defaults()).read(json));
+                            out.put(task, task.checked(out.getOrDefault(task, task.defaults()).read(json), id));
                         }
                     }));
                     tasks = java.util.Collections.unmodifiableMap(out);

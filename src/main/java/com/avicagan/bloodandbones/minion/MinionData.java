@@ -88,6 +88,34 @@ public final class MinionData {
         return Optional.empty();
     }
 
+    /**
+     * The traits a carcass keeps of its mob (a villager's profession, a panda's gene) that change one of these fields of a
+     * part through its data's variants, in the order the layers name them: what a part's facts vary with.
+     */
+    public static java.util.Set<String> variantTraits(ResolvedMob mob, String key, String... fields) {
+        java.util.Set<String> out = new java.util.LinkedHashSet<>();
+        List<String> keys = new ArrayList<>();
+        int dot = key.indexOf('.');
+        if (dot > 0) {
+            keys.add(key.substring(0, dot));
+        }
+        keys.add(key);
+        for (String k : keys) {
+            for (JsonElement layer : mob.minion().getOrDefault(k, List.of())) {
+                if (!(layer instanceof JsonObject o) || !(o.get("variants") instanceof com.google.gson.JsonArray variants)) {
+                    continue;
+                }
+                for (JsonElement v : variants) {
+                    if (v instanceof JsonObject variant && variant.get("if") instanceof JsonObject when && when.has("trait")
+                            && java.util.Arrays.stream(fields).anyMatch(variant::has)) {
+                        out.add(when.get("trait").getAsString());
+                    }
+                }
+            }
+        }
+        return out;
+    }
+
     private static boolean matches(@org.jetbrains.annotations.Nullable JsonObject when, Map<String, String> traits) {
         return ResolvedMob.Variant.matches(when, traits);
     }
@@ -128,7 +156,12 @@ public final class MinionData {
     /** A list of ids in a part's minion object, for one piece (its variants first): a head's senses. */
     public static List<ResourceLocation> ids(ResolvedMob mob, Map<String, String> traits, String key, String field) {
         List<ResourceLocation> out = new ArrayList<>();
-        field(mob, traits, key, field).filter(JsonElement::isJsonArray).ifPresent(a -> a.getAsJsonArray().forEach(e -> out.add(ResourceLocation.parse(e.getAsString()))));
+        field(mob, traits, key, field).filter(JsonElement::isJsonArray).ifPresent(a -> a.getAsJsonArray().forEach(e -> {
+            ResourceLocation id = e.isJsonPrimitive() ? ResourceLocation.tryParse(e.getAsString()) : null;
+            if (id != null) {
+                out.add(id);
+            }
+        }));
         return out;
     }
 
@@ -171,7 +204,13 @@ public final class MinionData {
     private static Map<ResourceLocation, Float> ownKnacks(JsonObject o) {
         if (o.has("knacks") && o.get("knacks").isJsonObject()) {
             Map<ResourceLocation, Float> out = new java.util.LinkedHashMap<>();
-            o.getAsJsonObject("knacks").entrySet().forEach(e -> out.put(ResourceLocation.parse(e.getKey()), e.getValue().getAsFloat()));
+            // a key that is no id was left out as the data loaded (MobGroup), and is passed over here too
+            o.getAsJsonObject("knacks").entrySet().forEach(e -> {
+                ResourceLocation task = ResourceLocation.tryParse(e.getKey());
+                if (task != null && e.getValue().isJsonPrimitive() && e.getValue().getAsJsonPrimitive().isNumber()) {
+                    out.put(task, e.getValue().getAsFloat());
+                }
+            });
             return out;
         }
         return o.has("jobs") ? oldJobs(o.get("jobs")) : Map.of();

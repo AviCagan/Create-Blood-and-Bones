@@ -1664,35 +1664,67 @@ public class MinionTaskTests {
 
     // ---- fighting (docs/NEXT.md 1.1)
 
-    /** A guard with no head feels its way: it ignores a husk 4 blocks off and strikes one against it, never walking off after it. */
-    @GameTest(template = "empty", timeoutTicks = 300)
+    /**
+     * A guard with no head feels its way (docs/NEXT.md 1.1). For three seconds it leaves be a husk 1.8 blocks off (within the
+     * 2 blocks a headless body notices things in, but not against it) and one 4 blocks off: it takes no target and stands
+     * where it was. Then a third husk is put against it: it strikes that one, and for two seconds more still goes for
+     * neither of the others and never walks off.
+     */
+    @GameTest(template = "empty", timeoutTicks = 400)
     public static void headlessFightsOnlyWhatTouchesIt(GameTestHelper helper) {
         pen(helper);
         Maker maker = new Maker(helper, new BlockPos(2, 2, 2));
         MinionBuild headless = MinionBuild.of(ref("zombie", "body")).with("right_arm", ref("zombie", "right_arm")).with("left_arm", ref("zombie", "left_arm"))
                 .with("right_leg", ref("zombie", "right_leg")).with("left_leg", ref("zombie", "left_leg"));
         MinionEntity minion = minion(helper, new BlockPos(3, 2, 5), headless, maker);
-        if (!minion.stats().mindless() || !minion.setTask(MinionTask.GUARD)) {
-            helper.fail("A zombie's arms with no head should still take guarding");
+        if (!minion.stats().mindless() || !minion.setTask(MinionTask.GUARD) || minion.stats().sight() != MinionStats.MINDLESS_SIGHT) {
+            helper.fail("A zombie's arms with no head should still take guarding, noticing things 2 blocks off");
             return;
         }
         Vec3 post = minion.position();
+        Husk close = helper.spawn(EntityType.HUSK, new Vec3(5.3, 2.0, 5.5));
+        close.setNoAi(true);
         Husk far = helper.spawn(EntityType.HUSK, new BlockPos(7, 2, 5));
         far.setNoAi(true);
-        Husk near = helper.spawn(EntityType.HUSK, new BlockPos(4, 2, 5));
-        near.setNoAi(true);
-        helper.succeedWhen(() -> {
-            helper.assertTrue(near.getHealth() < near.getMaxHealth() || !near.isAlive(), "it has not struck the husk against it yet (target "
-                    + minion.getTarget() + ")");
-            helper.assertTrue(far.isAlive() && far.getHealth() >= far.getMaxHealth(), "it should never go for the husk 4 blocks off");
-            helper.assertTrue(minion.position().distanceTo(post) < 1.5, "it should not walk off after anything: " + minion.position().distanceTo(post));
-            far.discard();
-            near.discard();
+        Husk[] near = new Husk[1];
+        double[] strayed = {0.0};
+        String[] wrong = {null};
+        helper.onEachTick(() -> {
+            strayed[0] = Math.max(strayed[0], minion.position().distanceTo(post));
+            if (wrong[0] == null && (close.getHealth() < close.getMaxHealth() || far.getHealth() < far.getMaxHealth())) {
+                wrong[0] = "it went for a husk not against it: " + close.getHealth() + ", " + far.getHealth();
+            }
+            if (wrong[0] == null && near[0] == null && minion.getTarget() != null) {
+                wrong[0] = "with nothing against it, it took a target: " + minion.getTarget() + " at " + minion.distanceTo(minion.getTarget());
+            }
         });
+        helper.startSequence()
+                .thenIdle(60)
+                .thenExecute(() -> {
+                    helper.assertTrue(wrong[0] == null, String.valueOf(wrong[0]));
+                    helper.assertTrue(!com.avicagan.bloodandbones.minion.MinionGoals.touches(minion, close), "the husk 1.8 blocks off should not be against it");
+                    near[0] = helper.spawn(EntityType.HUSK, new BlockPos(4, 2, 5));
+                    near[0].setNoAi(true);
+                })
+                .thenWaitUntil(() -> helper.assertTrue(near[0].getHealth() < near[0].getMaxHealth() || !near[0].isAlive(),
+                        "it has not struck the husk against it yet (target " + minion.getTarget() + ")"))
+                .thenIdle(40)
+                .thenExecute(() -> {
+                    helper.assertTrue(wrong[0] == null, String.valueOf(wrong[0]));
+                    helper.assertTrue(strayed[0] < 1.5, "it should not walk off after anything: " + strayed[0]);
+                    close.discard();
+                    far.discard();
+                    near[0].discard();
+                })
+                .thenSucceed();
     }
 
-    /** A sentry with no bow holds its post: it strikes the husk within its reach and never moves toward the one further off. */
-    @GameTest(template = "empty", timeoutTicks = 300)
+    /**
+     * A sentry with no bow holds its post (docs/NEXT.md 1.1). For three seconds only a husk 5 blocks off is in its pen: it
+     * takes no target (it could not strike one out of its reach without leaving its post) and does not stir. Then a husk
+     * comes within its reach: it strikes that one, and for a second more still never moves toward the one further off.
+     */
+    @GameTest(template = "empty", timeoutTicks = 400)
     public static void sentryWithNoBowHoldsItsPost(GameTestHelper helper) {
         pen(helper);
         Maker maker = new Maker(helper, new BlockPos(2, 2, 2));
@@ -1703,18 +1735,35 @@ public class MinionTaskTests {
         }
         Vec3 post = minion.position();
         double[] strayed = {0.0};
-        helper.onEachTick(() -> strayed[0] = Math.max(strayed[0], minion.position().distanceTo(post)));
         Husk far = helper.spawn(EntityType.HUSK, new BlockPos(8, 2, 5));
         far.setNoAi(true);
-        Husk near = helper.spawn(EntityType.HUSK, new BlockPos(4, 2, 5));
-        near.setNoAi(true);
-        helper.succeedWhen(() -> {
-            helper.assertTrue(near.getHealth() < near.getMaxHealth() || !near.isAlive(), "the sentry has not struck the husk within its reach yet");
-            helper.assertTrue(strayed[0] < 0.5, "the sentry left its post: " + strayed[0]);
-            helper.assertTrue(far.isAlive() && far.getHealth() >= far.getMaxHealth(), "it should never go for the husk out of its reach");
-            far.discard();
-            near.discard();
+        Husk[] near = new Husk[1];
+        String[] wrong = {null};
+        helper.onEachTick(() -> {
+            strayed[0] = Math.max(strayed[0], minion.position().distanceTo(post));
+            if (wrong[0] == null && minion.getTarget() == far) {
+                wrong[0] = "it took the husk out of its reach for a target";
+            }
         });
+        helper.startSequence()
+                .thenIdle(60)
+                .thenExecute(() -> {
+                    helper.assertTrue(wrong[0] == null && minion.getTarget() == null, wrong[0] + ", its target " + minion.getTarget());
+                    helper.assertTrue(strayed[0] < 0.5, "the sentry left its post: " + strayed[0]);
+                    near[0] = helper.spawn(EntityType.HUSK, new BlockPos(4, 2, 5));
+                    near[0].setNoAi(true);
+                })
+                .thenWaitUntil(() -> helper.assertTrue(near[0].getHealth() < near[0].getMaxHealth() || !near[0].isAlive(),
+                        "the sentry has not struck the husk within its reach yet"))
+                .thenIdle(20)
+                .thenExecute(() -> {
+                    helper.assertTrue(wrong[0] == null, String.valueOf(wrong[0]));
+                    helper.assertTrue(strayed[0] < 0.5, "the sentry left its post: " + strayed[0]);
+                    helper.assertTrue(far.isAlive() && far.getHealth() >= far.getMaxHealth(), "it should never go for the husk out of its reach");
+                    far.discard();
+                    near[0].discard();
+                })
+                .thenSucceed();
     }
 
     // ---- the Tender and the Butcher's Table (docs/NEXT.md 1.1; stage E)
@@ -1818,9 +1867,12 @@ public class MinionTaskTests {
      * bucket of blood to a fallen flesh minion and its canister to a fallen brass one, and puts the empty bucket and canister
      * back. None of the bucket is spilled: the flesh one holds less than a bucket, a brass Tender drinks no blood, so the rest
      * goes into the trough by home, to the drop. The sharing out itself is checked first: the fallen one, the Tender, then
-     * the troughs; with nowhere for the rest, no pour.
+     * the troughs; with nowhere for the rest, no pour. The Tender is poor at it (32%: it carries 3 slots of 9), so it looks
+     * round only every three seconds or so, one errand a look: five errands (a bucket out, the flesh one, a canister out, the
+     * brass one, the empties back) with their walks took 12 to 33 s over 38 runs. It has two and a half minutes. (It had 80 s
+     * while its looks came half as often as they should, and ran out of them 2 times in 125.)
      */
-    @GameTest(template = "empty", timeoutTicks = 1600)
+    @GameTest(template = "empty", timeoutTicks = 3000)
     public static void tenderWakesAFallenMinion(GameTestHelper helper) {
         int[] one = com.avicagan.bloodandbones.minion.MinionTender.share(344, 0, new int[]{4000});
         int[] two = com.avicagan.bloodandbones.minion.MinionTender.share(344, 200, new int[]{300, 4000});
@@ -1957,6 +2009,480 @@ public class MinionTaskTests {
             return;
         }
         minion.discard();
+        helper.succeed();
+    }
+
+    // ---- the review of the tasks (docs/ARCHITECTURE-PROPOSAL.md 15.22)
+
+    /**
+     * Folded arms never strike, but a head over them bites (docs/NEXT.md 1.7): a whole villager is shown able to guard, by
+     * its bite, and set to Guard it bites the husk by home, as its row says. The row and its fight goals agree.
+     */
+    @GameTest(template = "empty", timeoutTicks = 400)
+    public static void foldedArmsBiteWithTheHead(GameTestHelper helper) {
+        pen(helper);
+        Maker maker = new Maker(helper, new BlockPos(2, 2, 2));
+        MinionEntity minion = minion(helper, new BlockPos(3, 2, 5), villager(), maker);
+        MinionFitness.Row row = minion.row(MinionTask.GUARD, MinionTask.Anchor.HOME);
+        if (!row.can() || !minion.stats().fights() || !minion.setTask(MinionTask.GUARD)) {
+            helper.fail("A whole villager should be able to guard by its bite: " + row.cannot() + ", fights " + minion.stats().fights());
+            return;
+        }
+        Husk husk = helper.spawn(EntityType.HUSK, new BlockPos(6, 2, 5));
+        husk.setNoAi(true);
+        helper.succeedWhen(() -> {
+            helper.assertTrue(husk.getHealth() < husk.getMaxHealth() || !husk.isAlive(), "the villager has not bitten the husk yet (target " + minion.getTarget() + ")");
+            helper.assertTrue(husk.getLastHurtByMob() == minion, "the husk was hurt by something else: " + husk.getLastHurtByMob());
+            husk.discard();
+            minion.discard();
+        });
+    }
+
+    /**
+     * An item taken up is gone for everyone after it (the review's duplication). A minion takes a stack whole and leaves the
+     * item empty as it goes, so a second minion's pickup of it on the same tick (a running goal's tick, before anyone asks
+     * whether it goes on) takes nothing; nor does one after a player took the stack, though vanilla's pickup puts the count
+     * back on the stack it discards. Part of a stack taken leaves the rest on the ground for the next.
+     */
+    @GameTest(template = "empty", timeoutTicks = 20)
+    public static void pickUpTakesNothingTwice(GameTestHelper helper) {
+        ServerLevel level = helper.getLevel();
+        Maker maker = new Maker(helper, new BlockPos(1, 2, 1));
+        MinionEntity first = minion(helper, new BlockPos(3, 2, 3), armed(ref("chicken", "head")), maker);
+        MinionEntity second = minion(helper, new BlockPos(5, 2, 3), armed(ref("chicken", "head")), maker);
+        Vec3 at = helper.absoluteVec(new Vec3(4.5, 2.2, 3.5));
+        ItemEntity apples = new ItemEntity(level, at.x, at.y, at.z, new ItemStack(Items.APPLE, 5));
+        level.addFreshEntity(apples);
+        int one = com.avicagan.bloodandbones.minion.MinionGoals.pickUp(first, apples);
+        int two = com.avicagan.bloodandbones.minion.MinionGoals.pickUp(second, apples);
+        if (one != 5 || two != 0 || count(first, Items.APPLE) != 5 || count(second, Items.APPLE) != 0 || apples.isAlive() || !apples.getItem().isEmpty()) {
+            helper.fail("A stack taken whole should be gone and empty, and the second pickup take nothing: " + one + ", " + two + ", "
+                    + count(first, Items.APPLE) + ", " + count(second, Items.APPLE));
+            return;
+        }
+        ItemEntity bread = new ItemEntity(level, at.x, at.y, at.z, new ItemStack(Items.BREAD, 4));
+        level.addFreshEntity(bread);
+        bread.playerTouch(maker);
+        int after = com.avicagan.bloodandbones.minion.MinionGoals.pickUp(second, bread);
+        if (maker.getInventory().countItem(Items.BREAD) != 4 || bread.isAlive() || after != 0 || count(second, Items.BREAD) != 0) {
+            helper.fail("What a player picked up should not be taken again: " + maker.getInventory().countItem(Items.BREAD) + ", " + after);
+            return;
+        }
+        // a slot left with room for 3 more: 3 are taken and 2 stay on the ground, a stack of their own
+        for (int i = 0; i < first.inventory.getContainerSize(); i++) {
+            first.inventory.setItem(i, i < first.slots() ? new ItemStack(Items.STONE, 64) : ItemStack.EMPTY);
+        }
+        first.inventory.setItem(0, new ItemStack(Items.CARROT, 61));
+        ItemEntity carrots = new ItemEntity(level, at.x, at.y, at.z, new ItemStack(Items.CARROT, 5));
+        level.addFreshEntity(carrots);
+        int part = com.avicagan.bloodandbones.minion.MinionGoals.pickUp(first, carrots);
+        if (part != 3 || !carrots.isAlive() || carrots.getItem().getCount() != 2 || count(first, Items.CARROT) != 64) {
+            helper.fail("Part of a stack taken should leave the rest on the ground: took " + part + ", left " + carrots.getItem().getCount());
+            return;
+        }
+        carrots.discard();
+        first.discard();
+        second.discard();
+        helper.succeed();
+    }
+
+    /**
+     * A courier with its maker hands over only what they have room for (docs/NEXT.md 1.1). With their pack full, it keeps the
+     * three apples it fetched (none are dropped at their feet), says why and tries again later; once they have room, it
+     * hands them over. The stick its maker threw away lies at their feet all the while: it never fetches that back.
+     */
+    @GameTest(template = "empty", timeoutTicks = 900)
+    public static void courierKeepsWhatItsMakerHasNoRoomFor(GameTestHelper helper) {
+        pen(helper);
+        ServerLevel level = helper.getLevel();
+        Maker maker = new Maker(helper, new BlockPos(5, 2, 5));
+        for (int i = 0; i < maker.getInventory().items.size(); i++) {
+            maker.getInventory().items.set(i, new ItemStack(Items.STONE, 64));
+        }
+        MinionEntity minion = minion(helper, new BlockPos(4, 2, 4), armed(ref("chicken", "head")), maker);
+        if (!minion.setTask(MinionTask.COURIER, MinionTask.Anchor.MAKER, 0)) {
+            helper.fail("A chicken's head should take carrying with its maker");
+            return;
+        }
+        BlockPos far = helper.absolutePos(new BlockPos(8, 2, 8));
+        level.addFreshEntity(new ItemEntity(level, far.getX() + 0.5, far.getY() + 0.2, far.getZ() + 0.5, new ItemStack(Items.APPLE, 3)));
+        Vec3 feet = helper.absoluteVec(new Vec3(6.5, 2.2, 5.5));
+        ItemEntity thrown = new ItemEntity(level, feet.x, feet.y, feet.z, new ItemStack(Items.STICK));
+        thrown.setThrower(maker);
+        level.addFreshEntity(thrown);
+        AABB area = area(helper);
+        String[] wrong = {null};
+        boolean[] fetched = {false};
+        helper.onEachTick(() -> {
+            fetched[0] |= count(minion, Items.APPLE) == 3;
+            if (wrong[0] == null && fetched[0] && !level.getEntitiesOfClass(ItemEntity.class, area, e -> e.getItem().is(Items.APPLE)).isEmpty()) {
+                wrong[0] = "an apple it had fetched is on the ground";
+            }
+            if (wrong[0] == null && (!thrown.isAlive() || count(minion, Items.STICK) > 0)) {
+                wrong[0] = "it fetched the stick its maker threw away";
+            }
+        });
+        helper.startSequence()
+                .thenWaitUntil(() -> helper.assertTrue(fetched[0], "it has not fetched the apples yet (" + count(minion, Items.APPLE) + ")"))
+                .thenWaitUntil(() -> helper.assertTrue(statusSays(minion, "bloodandbones.minion.idle.maker_full"),
+                        "it has not tried to hand them over yet: " + MinionTasks.status(minion).getString()))
+                .thenExecute(() -> {
+                    helper.assertTrue(wrong[0] == null, String.valueOf(wrong[0]));
+                    helper.assertTrue(count(minion, Items.APPLE) == 3 && maker.getInventory().countItem(Items.APPLE) == 0,
+                            "with no room it should keep the apples: " + count(minion, Items.APPLE));
+                    // room for them
+                    maker.getInventory().items.set(0, ItemStack.EMPTY);
+                })
+                .thenWaitUntil(() -> helper.assertTrue(maker.getInventory().countItem(Items.APPLE) == 3, "its maker has "
+                        + maker.getInventory().countItem(Items.APPLE) + " of the 3 apples (it carries " + count(minion, Items.APPLE) + ")"))
+                .thenExecute(() -> {
+                    helper.assertTrue(wrong[0] == null, String.valueOf(wrong[0]));
+                    thrown.discard();
+                    minion.discard();
+                })
+                .thenSucceed();
+    }
+
+    /**
+     * What a poor butcher wastes is what its own goal cut (the review: the old test worked the waste out itself). Two whole
+     * villagers butcher at 50%, each behind its own glass: one at a Butcher's Table with a cow's body laid on it, one at a
+     * cow's body lying loose (the test cuts the limbs off first and breaks them down itself, so the body is all that is
+     * left). A player gets 4 or 5 beef from a cow's body (4.22, a dice throw for the rest); each of them gets 2 or 3, half.
+     */
+    @GameTest(template = "empty", timeoutTicks = 900)
+    public static void poorButcherWastesWhatItCuts(GameTestHelper helper) {
+        pen(helper);
+        ServerLevel level = helper.getLevel();
+        for (int z = 1; z <= 9; z++) {
+            for (int y = 2; y <= 4; y++) {
+                helper.setBlock(new BlockPos(5, y, z), Blocks.GLASS);
+            }
+        }
+        BlockPos tableAt = new BlockPos(2, 2, 7);
+        helper.setBlock(tableAt, BBBlocks.BUTCHER_TABLE.getDefaultState());
+        var table = (com.avicagan.bloodandbones.cooking.ButcherTableBlockEntity) helper.getBlockEntity(tableAt);
+        table.put(cowPiece());
+        Set<UUID> before = new HashSet<>();
+        CarcassSavedData.get(level).all().forEach(c -> before.add(c.id));
+        Cow cow = helper.spawn(EntityType.COW, new BlockPos(8, 2, 7));
+        CarcassSavedData.Carcass body = CarcassAssembler.assemble(cow, null);
+        cow.discard();
+        if (body == null) {
+            helper.fail("The cow carcass was not made");
+            return;
+        }
+        before.add(body.id);
+        // its limbs off, each at the end of its chain first, and broken down here, so the body is the only piece left
+        for (int tries = 0; !body.joints.isEmpty(); tries++) {
+            String end = body.joints.stream().map(j -> j.child()).filter(child -> body.joints.stream().noneMatch(j -> j.parent().equals(child)))
+                    .findFirst().orElse(null);
+            if (end == null || tries > 40) {
+                helper.fail("Could not cut the cow's limbs off: " + body.joints);
+                return;
+            }
+            for (int i = 0; i < com.avicagan.bloodandbones.carcass.CarcassButchery.CUTS_TO_SEVER; i++) {
+                com.avicagan.bloodandbones.carcass.CarcassButchery.cut(level, null, body, end, null);
+            }
+        }
+        for (CarcassSavedData.Carcass piece : List.copyOf(CarcassSavedData.get(level).all())) {
+            if (!before.contains(piece.id)) {
+                com.avicagan.bloodandbones.carcass.CarcassButchery.butcher(level, piece, piece.rootBone, null);
+            }
+        }
+        AABB area = area(helper);
+        level.getEntitiesOfClass(ItemEntity.class, area).forEach(ItemEntity::discard);
+        Maker maker = new Maker(helper, new BlockPos(1, 2, 1));
+        MinionEntity atTable = minion(helper, new BlockPos(2, 2, 3), villager(), maker);
+        MinionEntity atBody = minion(helper, new BlockPos(8, 2, 3), villager(), maker);
+        for (MinionEntity butcher : new MinionEntity[]{atTable, atBody}) {
+            give(butcher, maker, new ItemStack(BBItems.CLEAVER.get()));
+            butcher.setHome(helper.absolutePos(new BlockPos(butcher == atTable ? 2 : 8, 2, 6)));
+            if (!butcher.setTask(MinionTask.BUTCHER, MinionTask.Anchor.HOME, 3) || Math.abs(butcher.fitness(MinionTask.BUTCHER) - 0.5F) > 1.0E-3F) {
+                helper.fail("A whole villager should take butchery at 50%: " + butcher.fitness(MinionTask.BUTCHER));
+                return;
+            }
+        }
+        // what a player gets of a cow's body's beef, and so what half of it rounds to either way
+        float beef = com.avicagan.bloodandbones.carcass.butchery.ButcheryManager.forEntity(mob("cow")).orElseThrow().part("body").stream()
+                .filter(y -> y.item().equals("minecraft:beef")).map(y -> y.count()).reduce(0.0F, Float::sum);
+        float half = beef * MinionFitness.yieldShare(0.5F);
+        helper.succeedWhen(() -> {
+            helper.assertTrue(table.specimen().isEmpty(), "the table's piece has not been chopped yet");
+            helper.assertTrue(CarcassSavedData.get(level).carcass(body.id) == null, "the loose body has not been broken down yet (the butcher at "
+                    + helper.relativeVec(atBody.position()) + ", " + MinionTasks.status(atBody).getString() + ")");
+            for (MinionEntity butcher : new MinionEntity[]{atTable, atBody}) {
+                int got = count(butcher, Items.BEEF);
+                helper.assertTrue(got >= Math.floor(half) && got <= Math.ceil(half) && got < Math.floor(beef), (butcher == atTable ? "At the table" : "At the body")
+                        + " a 50% butcher should keep half a player's " + beef + " beef, " + Math.floor(half) + " or " + Math.ceil(half) + ": it has " + got);
+            }
+            helper.assertTrue(level.getEntitiesOfClass(ItemEntity.class, area).isEmpty(), "what they cut should be in their hands, not on the ground");
+            atTable.discard();
+            atBody.discard();
+        });
+    }
+
+    /**
+     * A sentry's fitness sets the time between its shots (docs/NEXT.md 1.2), measured in the world: a pillager's head with a
+     * bow (200%) and a chicken's (50%), each with a husk of its own behind glass, shoot every 20 ticks of drawing and half a
+     * second, or two seconds, of waiting: about 30 ticks and 60 between the arrows each takes from what it carries.
+     */
+    @GameTest(template = "empty", timeoutTicks = 700)
+    public static void sentryShootsByItsFitness(GameTestHelper helper) {
+        pen(helper);
+        for (int z = 1; z <= 9; z++) {
+            for (int y = 2; y <= 4; y++) {
+                helper.setBlock(new BlockPos(5, y, z), Blocks.GLASS);
+            }
+        }
+        Maker maker = new Maker(helper, new BlockPos(5, 2, 0));
+        MinionEntity fit = minion(helper, new BlockPos(2, 2, 2), armed(ref("pillager", "head")), maker);
+        MinionEntity poor = minion(helper, new BlockPos(8, 2, 2), armed(ref("chicken", "head")), maker);
+        MinionTask.Data data = PartsData.of(helper.getLevel()).task(MinionTask.SENTRY);
+        List<List<Integer>> shots = List.of(new ArrayList<>(), new ArrayList<>());
+        int[] carried = new int[2];
+        MinionEntity[] sentries = {fit, poor};
+        for (int i = 0; i < 2; i++) {
+            give(sentries[i], maker, new ItemStack(Items.BOW));
+            give(sentries[i], maker, new ItemStack(Items.ARROW, 64));
+            if (!sentries[i].setTask(MinionTask.SENTRY)) {
+                helper.fail("Both should take up sentry");
+                return;
+            }
+            carried[i] = count(sentries[i], Items.ARROW);
+            Husk husk = helper.spawn(EntityType.HUSK, new BlockPos(i == 0 ? 2 : 8, 2, 8));
+            husk.setNoAi(true);
+            // it takes the arrows without dying or being knocked out of its sentry's sight
+            husk.getAttribute(net.minecraft.world.entity.ai.attributes.Attributes.MAX_HEALTH).setBaseValue(1000.0);
+            husk.setHealth(1000.0F);
+            husk.getAttribute(net.minecraft.world.entity.ai.attributes.Attributes.KNOCKBACK_RESISTANCE).setBaseValue(1.0);
+        }
+        float[] fitness = {fit.fitness(MinionTask.SENTRY), poor.fitness(MinionTask.SENTRY)};
+        if (Math.abs(fitness[0] - 2.0F) > 1.0E-3F || Math.abs(fitness[1] - 0.5F) > 1.0E-3F) {
+            helper.fail("The sentries should be 200% and 50%: " + fitness[0] + ", " + fitness[1]);
+            return;
+        }
+        helper.onEachTick(() -> {
+            for (int i = 0; i < 2; i++) {
+                int now = count(sentries[i], Items.ARROW);
+                for (int shot = now; shot < carried[i]; shot++) {
+                    shots.get(i).add((int) helper.getTick());
+                }
+                carried[i] = now;
+            }
+        });
+        helper.succeedWhen(() -> {
+            helper.assertTrue(shots.get(0).size() >= 6 && shots.get(1).size() >= 6, "they have not shot six arrows each yet: " + shots);
+            for (int i = 0; i < 2; i++) {
+                // a bow is drawn for a second, then it waits its time between shots
+                int want = 20 + MinionFitness.shotTicks(data.number("bow_every", 20.0F), fitness[i]);
+                int gap = medianGap(shots.get(i));
+                helper.assertTrue(gap >= want && gap <= want + 3, (i == 0 ? "The 200%" : "The 50%") + " sentry should shoot every " + want + " ticks or so: "
+                        + gap + " (shots at " + shots.get(i) + ")");
+            }
+            fit.discard();
+            poor.discard();
+        });
+    }
+
+    /**
+     * A surgeon tends by its fitness (docs/NEXT.md 1.5), measured in the world and read again for each heart (the review: it
+     * read its fitness once, as it started): a villager's head over a zombie's arm (200%) tends the pig on its table a heart
+     * every 50 ticks; after three, its head is swapped for a zombie villager's shaky one (88%) while it stands there, and it
+     * tends one every 113 from the next heart on.
+     */
+    @GameTest(template = "empty", timeoutTicks = 900)
+    public static void surgeonTendsByItsFitness(GameTestHelper helper) {
+        ServerLevel level = helper.getLevel();
+        BlockPos tableAt = new BlockPos(5, 2, 5);
+        helper.setBlock(tableAt, BBBlocks.SURGERY_TABLE.getDefaultState().setValue(com.avicagan.bloodandbones.body.SurgeryTableBlock.ATTACHMENT,
+                com.avicagan.bloodandbones.body.TableAttachment.SURGICAL));
+        BlockPos table = helper.absolutePos(tableAt);
+        net.minecraft.world.entity.animal.Pig patient = helper.spawn(EntityType.PIG, new BlockPos(5, 2, 7));
+        patient.setNoAi(true);
+        if (!com.avicagan.bloodandbones.body.SurgeryTableBlock.lieDown(level, table, patient)) {
+            helper.fail("The patient should be lying on the table");
+            return;
+        }
+        patient.setHealth(1.0F);
+        Maker maker = new Maker(helper, new BlockPos(3, 2, 3));
+        MinionBuild steady = MinionBuild.of(ref("zombie", "body")).with("head", villagerHead("none")).with("right_arm", ref("zombie", "right_arm"))
+                .with("left_leg", ref("zombie", "left_leg")).with("right_leg", ref("zombie", "right_leg"));
+        MinionBuild shaky = steady.with("head", ref("zombie_villager", "head", Map.of("profession", "farmer")));
+        MinionEntity surgeon = minion(helper, new BlockPos(5, 2, 4), steady, maker);
+        surgeon.setHome(table);
+        if (!surgeon.setTask(MinionTask.SURGEON) || surgeon.fitness(MinionTask.SURGEON) != MinionFitness.MOST) {
+            helper.fail("A villager's head over a zombie's arm should take up surgery at 200%: " + surgeon.fitness(MinionTask.SURGEON));
+            return;
+        }
+        List<Integer> hearts = new ArrayList<>();
+        float[] health = {patient.getHealth()};
+        helper.onEachTick(() -> {
+            if (patient.getHealth() > health[0]) {
+                hearts.add((int) helper.getTick());
+                if (hearts.size() == 3) {
+                    surgeon.setBuild(shaky);
+                }
+            }
+            health[0] = patient.getHealth();
+        });
+        MinionTask.Data data = PartsData.of(level).task(MinionTask.SURGEON);
+        helper.succeedWhen(() -> {
+            helper.assertTrue(hearts.size() >= 6, "it has tended " + hearts.size() + " of 6 hearts (at " + helper.relativeVec(surgeon.position()) + ")");
+            float shakyFitness = surgeon.fitness(MinionTask.SURGEON);
+            int steadyEvery = MinionFitness.tendTicks(data, MinionFitness.MOST);
+            int shakyEvery = MinionFitness.tendTicks(data, shakyFitness);
+            List<Integer> gaps = new ArrayList<>();
+            for (int i = 1; i < hearts.size(); i++) {
+                gaps.add(hearts.get(i) - hearts.get(i - 1));
+            }
+            // the heart after the swap was already due at the steady pace; the ones after it come at the shaky one
+            helper.assertTrue(steadyEvery == 50 && shakyEvery == 113 && Math.abs(shakyFitness - 0.884F) < 0.01F, "the paces should be 50 and 113 ticks: "
+                    + steadyEvery + ", " + shakyEvery + " at " + shakyFitness);
+            helper.assertTrue(Math.abs(gaps.get(0) - 50) <= 1 && Math.abs(gaps.get(1) - 50) <= 1 && Math.abs(gaps.get(3) - 113) <= 1
+                    && Math.abs(gaps.get(4) - 113) <= 1, "it should tend every 50 ticks, then every 113 once shaky: " + gaps);
+            surgeon.discard();
+            patient.discard();
+        });
+    }
+
+    /**
+     * A surgeon set down away from a table takes the nearest within its reach of where it stands (docs/NEXT.md 1.1), and its
+     * maker's reach counts: a table 8 blocks off is beyond its own 6, and within the 10 its maker sets.
+     */
+    @GameTest(template = "empty", timeoutTicks = 500)
+    public static void surgeonFindsATableWithinItsReach(GameTestHelper helper) {
+        pen(helper);
+        BlockPos tableAt = new BlockPos(9, 2, 5);
+        helper.setBlock(tableAt, BBBlocks.SURGERY_TABLE.getDefaultState().setValue(com.avicagan.bloodandbones.body.SurgeryTableBlock.ATTACHMENT,
+                com.avicagan.bloodandbones.body.TableAttachment.SURGICAL));
+        BlockPos table = helper.absolutePos(tableAt);
+        Maker maker = new Maker(helper, new BlockPos(1, 2, 4));
+        MinionEntity surgeon = minion(helper, new BlockPos(1, 2, 5), armed(villagerHead("none")), maker);
+        BlockPos home = surgeon.home();
+        if (!surgeon.setTask(MinionTask.SURGEON) || surgeon.reach() != 6) {
+            helper.fail("It should take up surgery, reaching 6");
+            return;
+        }
+        helper.startSequence()
+                .thenIdle(150)
+                .thenExecute(() -> {
+                    helper.assertTrue(surgeon.home().equals(home), "a table 8 blocks off is beyond its reach of 6: its home is now " + surgeon.home());
+                    helper.assertTrue(surgeon.setTask(MinionTask.SURGEON, MinionTask.Anchor.HOME, 10), "its maker may set its reach to 10");
+                })
+                .thenWaitUntil(() -> helper.assertTrue(surgeon.home().equals(table), "with a reach of 10 it has not taken the table yet"))
+                .thenExecute(surgeon::discard)
+                .thenSucceed();
+    }
+
+    /**
+     * A fisher's fitness sets its wait for a catch (docs/NEXT.md 1.2), measured in the world with no hurrying: a fisherman's
+     * head with a rod (200%) sets its wait between 15 and 30 s and catches when it is up; a zombie's head fishing by hand
+     * (49%) sets its between about 61 and 121 s.
+     */
+    @GameTest(template = "empty", timeoutTicks = 1000)
+    public static void fisherWaitsByItsFitness(GameTestHelper helper) {
+        pen(helper);
+        for (int x = 6; x <= 9; x++) {
+            for (int z = 3; z <= 7; z++) {
+                boolean rim = x == 6 || x == 9 || z == 3 || z == 7;
+                helper.setBlock(new BlockPos(x, 2, z), rim ? Blocks.STONE : Blocks.WATER);
+            }
+        }
+        Maker maker = new Maker(helper, new BlockPos(1, 2, 1));
+        MinionEntity fit = minion(helper, new BlockPos(3, 2, 3), armed(villagerHead("fisherman")), maker);
+        MinionEntity poor = minion(helper, new BlockPos(3, 2, 7), armed(ref("zombie", "head")), maker);
+        give(fit, maker, new ItemStack(Items.FISHING_ROD));
+        if (!fit.setTask(MinionTask.FISHER) || !poor.setTask(MinionTask.FISHER)) {
+            helper.fail("Both should take up fishing");
+            return;
+        }
+        MinionTask.Data data = PartsData.of(helper.getLevel()).task(MinionTask.FISHER);
+        float[] fitness = {fit.fitness(MinionTask.FISHER), poor.fitness(MinionTask.FISHER)};
+        int[][] times = {MinionFitness.catchTicks(data, fitness[0]), MinionFitness.catchTicks(data, fitness[1])};
+        if (fitness[0] != MinionFitness.MOST || Math.abs(fitness[1] - 0.495F) > 0.01F || times[1][0] <= times[0][1]) {
+            helper.fail("The fishers should be 200% and about 49%, their waits apart: " + fitness[0] + ", " + fitness[1]);
+            return;
+        }
+        // the wait each set as it first set to work, and when; and the tick of the fit one's catch
+        int[] wait = {-1, -1};
+        int[] from = {-1, -1};
+        int[] caught = {-1};
+        MinionEntity[] fishers = {fit, poor};
+        helper.onEachTick(() -> {
+            for (int i = 0; i < 2; i++) {
+                int left = MinionTasks.workLeft(fishers[i]);
+                if (wait[i] < 0 && left >= 0) {
+                    wait[i] = left;
+                    from[i] = (int) helper.getTick();
+                }
+            }
+            if (caught[0] < 0 && carried(fit) > 0) {
+                caught[0] = (int) helper.getTick();
+            }
+        });
+        helper.succeedWhen(() -> {
+            helper.assertTrue(wait[0] >= 0 && wait[1] >= 0, "they have not both set to work yet: " + wait[0] + ", " + wait[1]);
+            // a wait is set and its first tick worked at once, so a tick less is seen
+            for (int i = 0; i < 2; i++) {
+                helper.assertTrue(wait[i] >= times[i][0] - 1 && wait[i] <= times[i][1], (i == 0 ? "The 200%" : "The 49%") + " fisher's wait should be "
+                        + times[i][0] + " to " + times[i][1] + " ticks: " + (wait[i] + 1));
+            }
+            helper.assertTrue(caught[0] >= 0, "the fit one has not caught anything yet (" + MinionTasks.workLeft(fit) + " ticks of its wait left)");
+            int took = caught[0] - from[0];
+            helper.assertTrue(took >= wait[0] && took <= wait[0] + 40, "its catch should come when its wait is up: after " + took + " ticks of " + (wait[0] + 1));
+            fit.discard();
+            poor.discard();
+        });
+    }
+
+    /**
+     * A task file's kind moves the task under that group on the screen, its anchors are where it is set, and its tool is
+     * what the goals take (docs/NEXT.md 1.6): a hauler whose file says it is a fight is sent as one; a guard whose file has it
+     * only with its maker is set there by the plain call that sets tasks at home; a sentry whose file names only the crossbow
+     * has no ranged attack with a bow in hand. Each file is set and set back within the one tick, since the tests share one
+     * world.
+     */
+    @GameTest(template = "empty", timeoutTicks = 20)
+    public static void taskFileKindAndAnchorsInPlay(GameTestHelper helper) {
+        Maker maker = new Maker(helper, new BlockPos(2, 2, 2));
+        MinionEntity minion = minion(helper, new BlockPos(3, 2, 3), armed(ref("pillager", "head")), maker);
+        give(minion, maker, new ItemStack(Items.BOW));
+        PartsData.Store store = PartsData.of(helper.getLevel());
+        MinionTask.Data hauler = store.task(MinionTask.HAULER);
+        MinionTask.Data guard = store.task(MinionTask.GUARD);
+        MinionTask.Data sentry = store.task(MinionTask.SENTRY);
+        int kind;
+        boolean guardSet;
+        MinionTask.Anchor guardAt;
+        boolean bowWith;
+        try {
+            store.setTestTask(MinionTask.HAULER, hauler.read(com.google.gson.JsonParser.parseString("{\"kind\": \"fight\"}").getAsJsonObject()));
+            kind = MinionTasks.open(minion, maker).orElseThrow().rows().get(MinionTask.HAULER.ordinal()).kind();
+            store.setTestTask(MinionTask.GUARD, guard.read(com.google.gson.JsonParser.parseString("{\"anchors\": [\"maker\"]}").getAsJsonObject()));
+            guardSet = minion.setTask(MinionTask.GUARD);
+            guardAt = minion.anchor();
+            store.setTestTask(MinionTask.SENTRY, sentry.read(com.google.gson.JsonParser.parseString("{\"tool\": {\"items\": \"minecraft:crossbow\"}}").getAsJsonObject()));
+            bowWith = minion.hasRangedAttack();
+        } finally {
+            store.setTestTask(MinionTask.HAULER, null);
+            store.setTestTask(MinionTask.GUARD, null);
+            store.setTestTask(MinionTask.SENTRY, null);
+        }
+        int shipped = MinionTasks.open(minion, maker).orElseThrow().rows().get(MinionTask.HAULER.ordinal()).kind();
+        boolean bowWithout = minion.hasRangedAttack();
+        minion.discard();
+        if (kind != MinionTask.Kind.FIGHT.ordinal() || shipped != MinionTask.Kind.FETCH.ordinal()) {
+            helper.fail("The screen should list the hauler under its file's kind: " + kind + ", " + shipped);
+            return;
+        }
+        if (!guardSet || guardAt != MinionTask.Anchor.MAKER) {
+            helper.fail("A guard done only with its maker should be set there: " + guardSet + ", " + guardAt);
+            return;
+        }
+        if (bowWith || !bowWithout) {
+            helper.fail("A sentry whose file names only the crossbow should have no ranged attack with a bow: " + bowWith + ", " + bowWithout);
+            return;
+        }
         helper.succeed();
     }
 }

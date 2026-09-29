@@ -224,9 +224,9 @@ public final class DevShowcase {
                         int x = mc.getWindow().getGuiScaledWidth() / 2;
                         int y = mc.getWindow().getGuiScaledHeight() / 2 + 20;
                         mc.screen.mouseScrolled(x, y, 0.0, -2.0);
-                        BloodAndBones.LOGGER.info("[showcase] villager's head: {}", com.avicagan.bloodandbones.minion.TaskWords.partFacts(
+                        BloodAndBones.LOGGER.info("[showcase] villager's head: {}", com.avicagan.bloodandbones.minion.TaskWords.mobFacts(
                                 com.avicagan.bloodandbones.parts.PartsData.CLIENT.resolve(net.minecraft.resources.ResourceLocation.withDefaultNamespace("villager"), false),
-                                java.util.Map.of(), "head").stream().map(net.minecraft.network.chat.Component::getString).toList());
+                                java.util.Map.of("profession", "none"), "head").stream().map(net.minecraft.network.chat.Component::getString).toList());
                     } else if (page < names.length - 1 && phase == PONDER_GAP - 1 && com.avicagan.bloodandbones.compat.jei.BBJeiPlugin.runtime != null) {
                         Screenshot.grab(mc.gameDirectory, PREFIX + names[page], mc.getMainRenderTarget(), message -> {
                         });

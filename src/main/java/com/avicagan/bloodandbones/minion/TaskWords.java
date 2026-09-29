@@ -153,6 +153,38 @@ public final class TaskWords {
         return out;
     }
 
+    /**
+     * What a part brings as a mob of its kind has it new (JEI's Body Parts page, one per mob; docs/NEXT.md 1.4): its facts
+     * read with the traits a new one records of itself ({@code fresh}: an unemployed villager's profession, "none"), and
+     * which of the traits a carcass keeps change them ("Its profession changes these"): those a new one records, and a name,
+     * which any mob may be given. A carried piece's tooltip reads its own traits instead ({@link #partFacts}).
+     */
+    public static List<Component> mobFacts(com.avicagan.bloodandbones.parts.ResolvedMob mob, java.util.Map<String, String> fresh, String key) {
+        List<Component> out = partFacts(mob, fresh, key);
+        List<Component> varies = new ArrayList<>();
+        for (String trait : MinionData.variantTraits(mob, key, "knacks", "jobs", "disposition", "surgeon")) {
+            if (fresh.containsKey(trait) || "name".equals(trait)) {
+                varies.add(Component.translatableWithFallback("bloodandbones.minion.facts.trait." + trait, trait));
+            }
+        }
+        if (!varies.isEmpty() && !out.isEmpty()) {
+            out.add(Component.translatable("bloodandbones.minion.facts.varies", or(varies)));
+        }
+        return out;
+    }
+
+    /** These, with "or" before the last. */
+    private static Component or(List<Component> parts) {
+        MutableComponent out = Component.empty();
+        for (int i = 0; i < parts.size(); i++) {
+            if (i > 0) {
+                out.append(i == parts.size() - 1 ? Component.translatable("bloodandbones.minion.facts.or") : Component.literal(", "));
+            }
+            out.append(parts.get(i));
+        }
+        return out;
+    }
+
     /** A grip's name: "hand", "paw"; one the mod has no words for as its data names it. */
     private static Component grip(String grip) {
         return Component.translatableWithFallback("bloodandbones.minion.grip." + grip, grip);

@@ -14,7 +14,7 @@
   "main": "hands",
   "max_reach": 12,
   "numbers": {
-    "look_every": 10.0
+    "look_every": 20.0
   },
   "reach": 8,
   "second": "sight",

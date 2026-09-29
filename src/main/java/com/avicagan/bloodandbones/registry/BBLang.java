@@ -282,7 +282,8 @@ public class BBLang {
                 {"container", "no container within 6 of home to put its takings in"},
                 {"tender_blood", "no blood to be had by the bucket within %s of home"},
                 {"tender_canister", "no full Soul Canister in a container within %s of home"},
-                {"tender_rest", "nowhere by home for the rest of a bucket that a fallen minion cannot hold"}}) {
+                {"tender_rest", "nowhere by home for the rest of a bucket that a fallen minion cannot hold"},
+                {"maker_full", "its maker has no room for what it brings"}}) {
             BloodAndBones.REGISTRATE.addRawLang("bloodandbones.minion.idle." + idle[0], idle[1]);
         }
         // how fit it is, in a word (docs/NEXT.md 1.3)
@@ -349,8 +350,16 @@ public class BBLang {
         BloodAndBones.REGISTRATE.addRawLang("bloodandbones.minion.facts.grip_pair", "Holds with: %s, %s of them");
         BloodAndBones.REGISTRATE.addRawLang("bloodandbones.minion.facts.leg_grip", "Holds with: %s, on a body with %s legs or more");
         BloodAndBones.REGISTRATE.addRawLang("bloodandbones.minion.facts.disposition", "Disposition: %s");
-        BloodAndBones.REGISTRATE.addRawLang("bloodandbones.minion.facts.surgeon", "A surgeon's head: it may always do the ritual's cutting");
-        bloodless("bloodandbones.minion.facts.surgeon", "A surgeon's head: it may always do the ritual's work");
+        // what the surgeon file's switch reads (docs/NEXT.md 1.5): by default any hand may cut, so the head counts only with it on
+        BloodAndBones.REGISTRATE.addRawLang("bloodandbones.minion.facts.surgeon", "A surgeon's head: it may do the ritual's cutting even where only such heads may");
+        bloodless("bloodandbones.minion.facts.surgeon", "A surgeon's head: it may do the ritual's work even where only such heads may");
+        // JEI's page shows a part as a new mob of its kind has it, and says what a carcass keeps of its mob that changes that
+        BloodAndBones.REGISTRATE.addRawLang("bloodandbones.minion.facts.varies", "As a new one has them: its %s changes them");
+        BloodAndBones.REGISTRATE.addRawLang("bloodandbones.minion.facts.or", " or ");
+        for (String[] trait : new String[][]{{"profession", "profession"}, {"gene", "gene"}, {"variant", "kind"}, {"name", "name"}, {"wool", "wool"},
+                {"charged", "charge"}, {"mushroom", "colour"}}) {
+            BloodAndBones.REGISTRATE.addRawLang("bloodandbones.minion.facts.trait." + trait[0], trait[1]);
+        }
         BloodAndBones.REGISTRATE.addRawLang("bloodandbones.minion.facts.in_minion", "In a minion:");
         BloodAndBones.REGISTRATE.addRawLang("bloodandbones.minion.facts.hold_ctrl", "Hold Ctrl for what it brings to a minion's tasks");
         BloodAndBones.REGISTRATE.addRawLang("bloodandbones.minion.at_work", "At work: %s mB of blood a minute");

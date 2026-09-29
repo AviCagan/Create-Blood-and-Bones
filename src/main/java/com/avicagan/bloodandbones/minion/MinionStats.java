@@ -456,9 +456,13 @@ public record MinionStats(float health, float knockbackResistance, int slots, in
         return lift > 0.0F && !flies;
     }
 
-    /** Whether it has an arm that hits at all, or no arm and a head to bite with (a body with neither has nothing to fight with). */
+    /**
+     * Whether it has anything to fight with: an arm that hits, or a head to bite with (docs/NEXT.md 1.7). Folded (pacifist)
+     * arms never strike, but a head over them still bites, as the task screen's Blow reads it; a body with neither has nothing
+     * to fight with.
+     */
     public boolean fights() {
-        return strikes.isEmpty() ? !mindless : strikes.stream().anyMatch(s -> !"pacifist".equals(s.style()));
+        return !mindless || strikes.stream().anyMatch(s -> !"pacifist".equals(s.style()));
     }
 
     private static float volume(Optional<Bone> bone) {

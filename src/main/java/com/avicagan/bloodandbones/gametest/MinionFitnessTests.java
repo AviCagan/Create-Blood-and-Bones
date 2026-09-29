@@ -287,7 +287,8 @@ public class MinionFitnessTests {
         }
         // stage C's levers, each today's constant at 100% (docs/NEXT.md 1.2): a sentry's shots (a bow's second, a crossbow's
         // one to two, a trident's two) and its spread (14 less 4 a step of difficulty), a medic's throw every 3 s at a witch's
-        // spread, a herder's 30 s after a stray, a courier's and farmer's look every half second and a tender's every second,
+        // spread, a herder's 30 s after a stray, a courier's, farmer's and tender's look every second (a courier's and farmer's
+        // was a one-in-ten chance each time its goal was asked, which is every other tick),
         // a hauler towing at a player's slowdown, a butcher's whole yield, a digger's minute or two, the fisher's floor, a
         // blow a second, and a surgeon's stump a bucket at 150% and over, two from 75%, three below
         MinionTask.Data sentry = store.task(MinionTask.SENTRY);
@@ -298,8 +299,8 @@ public class MinionFitnessTests {
                 || MinionFitness.shotTicks(sentry.number("crossbow_max", 0.0F), 1.0F) != 40 || MinionFitness.shotTicks(sentry.number("trident_every", 0.0F), 1.0F) != 40
                 || MinionFitness.shotSpread(sentry, 2, 1.0F) != 6.0F || MinionFitness.shotSpread(sentry, 0, 1.0F) != 14.0F
                 || MinionFitness.throwTicks(medic, 1.0F) != 60 || MinionFitness.throwSpread(medic, 1.0F) != 8.0F
-                || MinionFitness.strayTicks(store.task(MinionTask.HERDER), 1.0F) != 600 || MinionFitness.lookTicks(store.task(MinionTask.COURIER), 1.0F) != 10
-                || MinionFitness.lookTicks(store.task(MinionTask.FARMER), 1.0F) != 10 || MinionFitness.lookTicks(store.task(MinionTask.TENDER), 1.0F) != 20
+                || MinionFitness.strayTicks(store.task(MinionTask.HERDER), 1.0F) != 600 || MinionFitness.lookTicks(store.task(MinionTask.COURIER), 1.0F) != 20
+                || MinionFitness.lookTicks(store.task(MinionTask.FARMER), 1.0F) != 20 || MinionFitness.lookTicks(store.task(MinionTask.TENDER), 1.0F) != 20
                 || MinionFitness.towing(store.task(MinionTask.HAULER), 0.3F, 1.0F) != 0.3F || MinionFitness.yieldShare(1.0F) != 1.0F
                 || digs[0] != 1200 || digs[1] != 2400 || MinionFitness.catchLeast(store.task(MinionTask.FISHER)) != 100
                 || com.avicagan.bloodandbones.minion.MinionGoals.BLOW_EVERY != 20 || MinionFitness.stumpBuckets(surgeon, 2.0F) != 1
@@ -315,7 +316,7 @@ public class MinionFitnessTests {
         if (MinionFitness.strokeTicks(store.task(MinionTask.BUTCHER), 5.0F) != 8 || MinionFitness.strokeTicks(store.task(MinionTask.BUTCHER), 0.1F) != 60
                 || MinionFitness.catchTicks(store.task(MinionTask.FISHER), 2.0F)[0] != 300 || MinionFitness.shotTicks(20.0F, 5.0F) != 10
                 || MinionFitness.shotSpread(sentry, 2, 2.0F) != 3.0F || MinionFitness.throwTicks(medic, 5.0F) < 20 || MinionFitness.throwTicks(medic, 2.0F) != 30
-                || MinionFitness.strayTicks(store.task(MinionTask.HERDER), 2.0F) != 1200 || MinionFitness.lookTicks(store.task(MinionTask.COURIER), 2.0F) != 5
+                || MinionFitness.strayTicks(store.task(MinionTask.HERDER), 2.0F) != 1200 || MinionFitness.lookTicks(store.task(MinionTask.COURIER), 2.0F) != 10
                 || MinionFitness.yieldShare(0.5F) != 0.5F || MinionFitness.yieldShare(2.0F) != 1.0F || MinionFitness.yieldShare(0.1F) != 0.25F
                 || Math.abs(MinionFitness.towing(hauler, 0.2F, 0.5F) - 0.4F) > 1.0E-6F || MinionFitness.towing(hauler, 0.3F, 0.1F) != 0.9F
                 || MinionFitness.towing(hauler, 0.3F, 2.0F) != 0.3F || MinionFitness.workingDrain(4.0F) != 12.5F || MinionFitness.workingDrain(0.1F) != 50.0F
@@ -342,7 +343,9 @@ public class MinionFitnessTests {
     /**
      * A headless, armless, legless cow torso cannot do what needs a body part it lacks, each for its reason: Surgeon,
      * Butcher, Farmer, Fisher, Medic, Barterer, Digger, Herder, Guard, Sentry, Hunter and Sapper. It can do Idle, Courier,
-     * Hauler and Tender: anything can carry something, if only on its back.
+     * Hauler and Tender: anything can carry something, if only on its back. Folded arms never strike, so a villager's torso
+     * and folded pair with no head cannot guard, keep a post or hunt, and has nothing to fight with; under a head it can,
+     * biting with the head (docs/NEXT.md 1.7), and its fight goals agree ({@link MinionStats#fights}).
      */
     @GameTest(template = "empty", timeoutTicks = 20)
     public static void cannotOnlyWhenTheBodyCannot(GameTestHelper helper) {
@@ -361,6 +364,23 @@ public class MinionFitnessTests {
         }
         if (!(rows.get(MinionTask.COURIER).fitness() > MinionFitness.LEAST) || rows.get(MinionTask.COURIER).waitsFor().isPresent()) {
             helper.fail("A bare torso still carries: " + describe(rows.get(MinionTask.COURIER)));
+            return;
+        }
+        MinionBuild folded = MinionBuild.of(ref("villager", "body")).with("arms", ref("villager", "arms"));
+        MinionBuild headed = folded.with("head", villagerHead("none"));
+        Map<MinionTask, MinionFitness.Row> foldedRows = rows(folded);
+        Map<MinionTask, MinionFitness.Row> headedRows = rows(headed);
+        for (MinionTask task : List.of(MinionTask.GUARD, MinionTask.SENTRY, MinionTask.HUNTER)) {
+            if (!foldedRows.get(task).cannot().equals(Optional.of("bloodandbones.minion.cannot.strike")) || !headedRows.get(task).can()) {
+                helper.fail("Folded arms alone cannot fight, and under a head bite with it: " + describe(foldedRows.get(task)) + " / "
+                        + describe(headedRows.get(task)));
+                return;
+            }
+        }
+        if (MinionStats.of(PartsData.SERVER, folded).fights() || !MinionStats.of(PartsData.SERVER, headed).fights()
+                || !headedRows.get(MinionTask.GUARD).main().get().from().stream().anyMatch(f -> f.id().equals(bb("bite")))) {
+            helper.fail("The fight goals should agree with the rows: folded arms alone fight nothing, under a head they bite: "
+                    + describe(headedRows.get(MinionTask.GUARD)));
             return;
         }
         helper.succeed();
@@ -825,6 +845,129 @@ public class MinionFitnessTests {
         List<net.minecraft.network.chat.Component> tooltip = com.avicagan.bloodandbones.item.CarcassPieceItem.facts(com.avicagan.bloodandbones.item.CarcassPieceItem.piece(head));
         if (!tooltip.equals(farmer)) {
             helper.fail("A farmer villager's head piece should show its head's facts: " + tooltip);
+            return;
+        }
+        // JEI's page, one per mob, reads a part as a new one of its mob has it: a new villager records its profession as
+        // "none", which every villager's carcass keeps, so its head has Surgeon and Courier ×1.5 and no Farmer knack, and the
+        // page says its profession changes them; a new witch records none, and its head's facts say nothing of one
+        Villager fresh = EntityType.VILLAGER.create(helper.getLevel());
+        Map<String, String> kept = fresh == null ? Map.of() : CarcassLook.traits(fresh);
+        List<net.minecraft.network.chat.Component> page = TaskWords.mobFacts(store.resolve(mob("villager"), false), kept, "head");
+        var witchMade = EntityType.WITCH.create(helper.getLevel());
+        List<net.minecraft.network.chat.Component> witch = TaskWords.mobFacts(store.resolve(mob("witch"), false),
+                witchMade == null ? Map.of() : CarcassLook.traits(witchMade), "head");
+        if (!"none".equals(kept.get("profession")) || page.isEmpty() || !MinionTaskTests.names(page.get(0), MinionTask.COURIER.nameKey())
+                || !MinionTaskTests.names(page.get(0), MinionTask.SURGEON.nameKey()) || MinionTaskTests.names(page.get(0), MinionTask.FARMER.nameKey())
+                || page.stream().noneMatch(line -> MinionTaskTests.names(line, "bloodandbones.minion.facts.varies")
+                && MinionTaskTests.names(line, "bloodandbones.minion.facts.trait.profession"))
+                || witch.stream().anyMatch(line -> MinionTaskTests.names(line, "bloodandbones.minion.facts.varies"))) {
+            helper.fail("JEI should show a villager's head as a new one has it, and say its profession changes that; a witch's says nothing of one: "
+                    + kept + " " + page.stream().map(net.minecraft.network.chat.Component::getString).toList() + " / "
+                    + witch.stream().map(net.minecraft.network.chat.Component::getString).toList());
+            return;
+        }
+        helper.succeed();
+    }
+
+    /**
+     * What a head's data says that could only fail later, in play, is left out as the data loads (and logged): a disposition
+     * that is no id ("Brave") and a knack whose task is no id or whose value is no number, in the part's own map and its
+     * variants. What is left counts: its good knacks stand, and where a bad one was, the layer under it shows through (here
+     * its archetype's guard knack and disposition).
+     */
+    @GameTest(template = "empty", timeoutTicks = 20)
+    public static void badMinionDataLeftOutAsItLoads(GameTestHelper helper) {
+        ResourceLocation id = TestTraits.mob(helper, "bad_head", """
+                {"parts": {"head": {"minion": {"disposition": "Brave", "knacks": {"bloodandbones:Surgeon": 1.5, "bloodandbones:farmer": 1.25,
+                  "bloodandbones:guard": "lots"},
+                  "variants": [{"if": {"trait": "variant", "equals": "odd"}, "disposition": "Not An Id", "knacks": {"Bad Key": 2.0, "bloodandbones:fisher": 1.5}}]}}}}
+                """);
+        var resolved = PartsData.SERVER.resolve(id, false);
+        Map<ResourceLocation, Float> plain = MinionData.knacks(resolved, Map.of(), "head");
+        Map<ResourceLocation, Float> odd = MinionData.knacks(resolved, Map.of("variant", "odd"), "head");
+        Optional<com.google.gson.JsonElement> disposition = MinionData.field(resolved, Map.of("variant", "odd"), "head", "disposition");
+        // the good knacks stand, the bad ones are gone (the guard's "lots" leaves its archetype's 1.25 to show through), and the
+        // disposition is the archetype's, the file's own and its variant's being no ids
+        boolean lowerCase = java.util.stream.Stream.concat(plain.keySet().stream(), odd.keySet().stream())
+                .allMatch(k -> k.getPath().equals(k.getPath().toLowerCase(java.util.Locale.ROOT)));
+        if (plain.get(bb("farmer")) != 1.25F || odd.get(bb("fisher")) != 1.5F || !lowerCase || plain.containsKey(bb("surgeon"))
+                || !Float.valueOf(1.25F).equals(plain.get(bb("guard"))) || disposition.isEmpty() || !disposition.get().isJsonPrimitive()
+                || !MinionDisposition.valid(disposition.get().getAsString())) {
+            helper.fail("What is no id or no number should be left out as it loads, the rest kept: " + plain + " / " + odd + " / " + disposition);
+            return;
+        }
+        // and nothing in play fails on such a name, should one get past: it is no disposition at all
+        if (!MinionDisposition.id("Brave").equals(bb("none")) || !PartsData.SERVER.disposition("Not An Id").equals(MinionDisposition.NONE)
+                || MinionDisposition.valid("Brave") || !MinionDisposition.valid("meek") || !MinionDisposition.valid("mypack:grumpy")
+                || TaskWords.partFacts(resolved, Map.of("variant", "odd"), "head").isEmpty()) {
+            helper.fail("A name that is no id should read as no disposition, never fail");
+            return;
+        }
+        helper.succeed();
+    }
+
+    /**
+     * A task file's kind, tool and anchors are what the game reads (docs/NEXT.md 1.6). A hauler's file saying it is a fight
+     * makes a brave head haul at 1.25; a butcher's naming only the Flensing Knife makes a Cleaver no blade (its row waits, and
+     * the goals ask the same test), and naming a stick makes no tool the goals could not use; a sentry's naming only the
+     * crossbow leaves a bow no ranged attack, for the row and for the sentry's goals alike. A file may take an anchor away
+     * but not add one its goals cannot work from: a farmer "with me" is left at home, a guard "with me" only stays so. Each
+     * file is set and set back within the one tick, since the tests share one world.
+     */
+    @GameTest(template = "empty", timeoutTicks = 20)
+    public static void taskFileKindToolAndAnchorsCount(GameTestHelper helper) {
+        PartsData.Store store = PartsData.SERVER;
+        MinionBuild brave = armed(ref("pillager", "head"));
+        MinionTask.Data hauler = store.task(MinionTask.HAULER);
+        MinionTask.Data butcher = store.task(MinionTask.BUTCHER);
+        MinionTask.Data sentry = store.task(MinionTask.SENTRY);
+        float asFetch = rows(brave).get(MinionTask.HAULER).disposition();
+        float asFight;
+        MinionFitness.Row cleaver;
+        MinionFitness.Row knife;
+        boolean stick;
+        MinionFitness.Row bow;
+        MinionFitness.Row crossbow;
+        try {
+            store.setTestTask(MinionTask.HAULER, hauler.read(JsonParser.parseString("{\"kind\": \"fight\"}").getAsJsonObject()));
+            asFight = rows(brave).get(MinionTask.HAULER).disposition();
+            store.setTestTask(MinionTask.BUTCHER, butcher.read(JsonParser.parseString("{\"tool\": {\"items\": \"bloodandbones:flensing_knife\"}}").getAsJsonObject()));
+            cleaver = rows(brave, MinionFitness.Context.NONE.holding(new ItemStack(BBItems.CLEAVER.get()))).get(MinionTask.BUTCHER);
+            knife = rows(brave, MinionFitness.Context.NONE.holding(new ItemStack(BBItems.FLENSING_KNIFE.get()))).get(MinionTask.BUTCHER);
+            store.setTestTask(MinionTask.BUTCHER, butcher.read(JsonParser.parseString("{\"tool\": {\"items\": \"minecraft:stick\"}}").getAsJsonObject()));
+            stick = MinionFitness.isTool(MinionTask.BUTCHER, store.task(MinionTask.BUTCHER), new ItemStack(Items.STICK));
+            store.setTestTask(MinionTask.SENTRY, sentry.read(JsonParser.parseString("{\"tool\": {\"items\": \"minecraft:crossbow\"}}").getAsJsonObject()));
+            bow = rows(brave, MinionFitness.Context.NONE.holding(new ItemStack(Items.BOW))).get(MinionTask.SENTRY);
+            crossbow = rows(brave, MinionFitness.Context.NONE.holding(new ItemStack(Items.CROSSBOW))).get(MinionTask.SENTRY);
+        } finally {
+            store.setTestTask(MinionTask.HAULER, null);
+            store.setTestTask(MinionTask.BUTCHER, null);
+            store.setTestTask(MinionTask.SENTRY, null);
+        }
+        if (asFetch != 1.0F || asFight != 1.25F) {
+            helper.fail("A hauler's file saying it is a fight should have a brave head haul at 1.25: " + asFetch + ", " + asFight);
+            return;
+        }
+        if (cleaver.ready() || !cleaver.waitsFor().equals(Optional.of("bloodandbones.minion.wants.butcher")) || !knife.ready() || stick) {
+            helper.fail("A butcher's file naming only the knife should leave a Cleaver no blade, and a stick none: " + describe(cleaver) + " / " + describe(knife));
+            return;
+        }
+        if (bow.main().get().value() != MinionFitness.NO_RANGED || crossbow.main().get().value() != 1.0F) {
+            helper.fail("A sentry's file naming only the crossbow should leave a bow no ranged attack: " + describe(bow) + " / " + describe(crossbow));
+            return;
+        }
+        ResourceLocation file = bb("test_anchors");
+        MinionTask.Data farmer = MinionTask.FARMER.checked(MinionTask.FARMER.defaults().read(JsonParser.parseString("{\"anchors\": [\"home\", \"maker\"]}")
+                .getAsJsonObject()), file);
+        MinionTask.Data farmerNowhere = MinionTask.FARMER.checked(MinionTask.FARMER.defaults().read(JsonParser.parseString("{\"anchors\": [\"maker\"]}")
+                .getAsJsonObject()), file);
+        MinionTask.Data guard = MinionTask.GUARD.checked(MinionTask.GUARD.defaults().read(JsonParser.parseString("{\"anchors\": [\"maker\"]}")
+                .getAsJsonObject()), file);
+        if (!farmer.anchors().equals(List.of(MinionTask.Anchor.HOME)) || !farmerNowhere.anchors().equals(List.of(MinionTask.Anchor.HOME))
+                || !guard.anchors().equals(List.of(MinionTask.Anchor.MAKER)) || guard.anchorFor(MinionTask.Anchor.HOME) != MinionTask.Anchor.MAKER
+                || farmer.anchorFor(MinionTask.Anchor.MAKER) != MinionTask.Anchor.HOME) {
+            helper.fail("A file may take an anchor away, never add one its goals cannot work from: " + farmer.anchors() + ", " + farmerNowhere.anchors() + ", "
+                    + guard.anchors());
             return;
         }
         helper.succeed();

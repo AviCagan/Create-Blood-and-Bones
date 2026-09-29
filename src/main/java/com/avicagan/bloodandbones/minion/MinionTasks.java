@@ -58,12 +58,10 @@ import net.minecraft.world.entity.projectile.ThrownPotion;
 import net.minecraft.world.entity.projectile.ThrownTrident;
 import net.minecraft.world.item.BowItem;
 import net.minecraft.world.item.CrossbowItem;
-import net.minecraft.world.item.FishingRodItem;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.Items;
 import net.minecraft.world.item.ProjectileWeaponItem;
 import net.minecraft.world.item.SpawnEggItem;
-import net.minecraft.world.item.TridentItem;
 import net.minecraft.world.item.alchemy.PotionContents;
 import net.minecraft.world.item.enchantment.EnchantmentHelper;
 import net.minecraft.world.item.enchantment.Enchantments;
@@ -231,16 +229,17 @@ public final class MinionTasks {
         }
         // its home stays as it was (an old sentry's home was its post already)
         BlockPos home = minion.home();
-        if (!minion.setTask(task, anchor, 0) && !minion.setTask(MinionTask.IDLE, anchor, 0)) {
-            minion.setTask(MinionTask.IDLE);
+        PartsData.Store store = PartsData.of(minion.level());
+        if (!minion.setTask(task, store.task(task).anchorFor(anchor), 0) && !minion.setTask(MinionTask.IDLE, store.task(MinionTask.IDLE).anchorFor(anchor), 0)) {
+            minion.setTask(MinionTask.IDLE, store.task(MinionTask.IDLE).anchorFor(MinionTask.Anchor.HOME), 0);
         }
         minion.setHome(home);
     }
 
     /**
      * A data reload that leaves its body unable to do its task (docs/NEXT.md 1.3) sets it to Idle at home, and its status
-     * line says why; one that no longer lets its task be done with its maker brings it home. A missing tool never does
-     * either: it waits for one.
+     * line says why; one that no longer lets its task be done where it was (with its maker, or at home) moves it to where the
+     * task is done. A missing tool never does either: it waits for one.
      */
     static void keepPossible(MinionEntity minion) {
         MinionTask task = minion.task();
@@ -248,10 +247,11 @@ public final class MinionTasks {
             return;
         }
         MinionFitness.Row row = minion.row(task, MinionTask.Anchor.HOME);
+        MinionTask.Data data = PartsData.of(minion.level()).task(task);
         if (!row.can()) {
             minion.loseTask(task, row.cannot().orElse("bloodandbones.minion.cannot.strike"));
-        } else if (minion.anchor() == MinionTask.Anchor.MAKER && !PartsData.of(minion.level()).task(task).allows(MinionTask.Anchor.MAKER)) {
-            minion.setTask(task, MinionTask.Anchor.HOME, 0);
+        } else if (!data.allows(minion.anchor())) {
+            minion.setTask(task, data.anchorFor(minion.anchor()), 0);
         }
     }
 
@@ -306,7 +306,7 @@ public final class MinionTasks {
 
     /**
      * The task screen's rows, one a task in the list's order, as this player would see them (docs/NEXT.md 1.3): each at the
-     * anchor the minion works at if the task allows it, else at home; nothing for anyone who may not direct it.
+     * anchor the minion works at if the task allows it, else where the task is done; nothing for anyone who may not direct it.
      */
     public static Optional<MinionTaskPayload.Open> open(MinionEntity minion, Player player) {
         if (!mayDirect(minion, player)) {
@@ -321,8 +321,8 @@ public final class MinionTasks {
             for (MinionTask.Anchor anchor : data.anchors()) {
                 anchors |= 1 << anchor.ordinal();
             }
-            rows.add(new MinionTaskPayload.Row(task.ordinal(), row.fitness(), row.can(), row.waitsFor().isPresent(),
-                    TaskWords.lines(store, minion, row, data.allows(minion.anchor()) ? minion.anchor() : MinionTask.Anchor.HOME), anchors, data.reach(),
+            rows.add(new MinionTaskPayload.Row(task.ordinal(), data.kind().ordinal(), row.fitness(), row.can(), row.waitsFor().isPresent(),
+                    TaskWords.lines(store, minion, row, data.anchorFor(minion.anchor())), anchors, data.reach(),
                     data.maxReach()));
         }
         return Optional.of(new MinionTaskPayload.Open(minion.getId(), minion.getDisplayName(), minion.task().ordinal(), minion.anchor().ordinal(),
@@ -448,7 +448,7 @@ public final class MinionTasks {
     private static boolean stocks(MinionEntity minion, ItemStack stack) {
         ItemStack held = minion.getMainHandItem();
         return held.getItem() instanceof ProjectileWeaponItem weapon && weapon.getAllSupportedProjectiles(held).test(stack)
-                || minion.hasTask(MinionTask.MEDIC) && heals(stack);
+                || minion.hasTask(MinionTask.MEDIC) && tool(minion, MinionTask.MEDIC, stack);
     }
 
     /** What it takes into its hand: anything but what already does something to a mob (a saddle, a lead, a name tag, an egg). */
@@ -469,14 +469,22 @@ public final class MinionTasks {
     }
 
     /**
-     * A bow, crossbow or trident in a hand that fights (a pacifist's pair of arms does not, nor a wing or a shell: a
-     * held weapon needs an arm of hand grip, section 5.6), or null.
+     * Whether this is the task's tool as its row reads it too ({@link MinionFitness#isTool}): what the goal can work with,
+     * narrowed to what its task file names. Every goal that waits for a tool asks this, so it waits for what its row says.
+     */
+    static boolean tool(MinionEntity minion, MinionTask task, ItemStack stack) {
+        return MinionFitness.isTool(task, PartsData.of(minion.level()).task(task), stack);
+    }
+
+    /**
+     * A sentry's weapon: a bow, crossbow or trident (its task's tool) in a hand that fights (a pacifist's pair of arms does
+     * not, nor a wing or a shell: a held weapon needs an arm of hand grip, section 5.6), or null.
      */
     @Nullable
     static ItemStack heldWeapon(MinionEntity minion) {
         ItemStack held = minion.getMainHandItem();
-        boolean weapon = held.getItem() instanceof BowItem || held.getItem() instanceof CrossbowItem || held.getItem() instanceof TridentItem;
-        return weapon && minion.stats().strikes().stream().anyMatch(s -> "hand".equals(s.grip()) && !"pacifist".equals(s.style())) ? held : null;
+        return tool(minion, MinionTask.SENTRY, held) && minion.stats().strikes().stream().anyMatch(s -> "hand".equals(s.grip()) && !"pacifist".equals(s.style()))
+                ? held : null;
     }
 
     /** Ammunition for this weapon from what it carries: the stack itself, so a shot takes one from it. */
@@ -516,6 +524,12 @@ public final class MinionTasks {
     /** For tests: its next catch or find comes at once, once it is at the water or the ground. */
     public static void hurry(MinionEntity minion) {
         minion.getPersistentData().putInt(WORK_LEFT, 0);
+    }
+
+    /** For tests: the ticks of work it has left before its next catch or find, or -1 before it has set to work on one. */
+    public static int workLeft(MinionEntity minion) {
+        CompoundTag data = minion.getPersistentData();
+        return data.contains(WORK_LEFT) ? data.getInt(WORK_LEFT) : -1;
     }
 
     /**
@@ -787,10 +801,13 @@ public final class MinionTasks {
      * A courier picks up loose items within its reach (as far as its head sees them), as an allay does: holding one, only
      * items like it (its sample), and brass with a filter only what the filter passes too. At home it leaves them for the
      * container by home ({@link MinionGoals.Deposit}); with its maker, it brings them to its maker's hands, as an allay
-     * brings its player what it found. It takes only what it has room for. It looks round every half second or so at 100%, a
-     * fitter courier more often (docs/NEXT.md 1.2).
+     * brings its player what it found, as many as they have room for: what does not fit it keeps, trying again in ten
+     * seconds, and what its maker threw away it leaves be. It takes only what it has room for. It looks round every second
+     * or so at 100%, a fitter courier more often (docs/NEXT.md 1.2).
      */
     static class Fetch extends Goal {
+        /** Its maker had no room for what it brought: it tries again after this long. */
+        private static final int FULL_HANDS = 200;
         private final MinionEntity minion;
         @Nullable
         private ItemEntity item;
@@ -799,6 +816,8 @@ public final class MinionTasks {
         /** Items it could not get to, by entity id, forgotten every half minute. */
         private final List<Integer> unreachable = new ArrayList<>();
         private int forgotAt;
+        /** When it may bring what it carries to its maker again, after they had no room for any of it. */
+        private int bringAgainAt;
 
         Fetch(MinionEntity minion) {
             this.minion = minion;
@@ -812,8 +831,7 @@ public final class MinionTasks {
 
         @Override
         public boolean canUse() {
-            if (!minion.hasTask(MinionTask.COURIER) || minion.getRandom().nextInt(MinionFitness.lookTicks(PartsData.of(minion.level()).task(MinionTask.COURIER),
-                    minion.taskFitness())) != 0) {
+            if (!minion.hasTask(MinionTask.COURIER) || !MinionGoals.looks(minion, MinionTask.COURIER)) {
                 return false;
             }
             if (minion.tickCount - forgotAt > 600) {
@@ -821,7 +839,7 @@ public final class MinionTasks {
                 forgotAt = minion.tickCount;
             }
             item = find();
-            bringing = item == null && carrying() && minion.withMaker();
+            bringing = item == null && mayBring();
             return item != null || bringing;
         }
 
@@ -843,16 +861,31 @@ public final class MinionTasks {
             bringing = false;
         }
 
-        /** The nearest item it fetches that it has room for: within its reach of where it works, and as far as it sees. */
+        /** Whether it has something to bring its maker now: it is with them, carries what it fetched, and they had room last time. */
+        private boolean mayBring() {
+            return carrying() && minion.withMaker() && minion.tickCount >= bringAgainAt;
+        }
+
+        /**
+         * The nearest item it fetches that it has room for: within its reach of where it works, and as far as it sees. With
+         * its maker, never what they threw away: it would only bring it back.
+         */
         @Nullable
         private ItemEntity find() {
             Vec3 centre = minion.centre();
             double reach = minion.reach();
             double sight = minion.stats().sight();
+            Player maker = minion.workingMaker();
             List<ItemEntity> near = minion.level().getEntitiesOfClass(ItemEntity.class, new AABB(centre, centre).inflate(reach),
                     e -> e.isAlive() && !e.hasPickUpDelay() && !unreachable.contains(e.getId()) && fetches(minion, e.getItem()) && minion.canCarry(e.getItem())
-                            && e.distanceToSqr(centre) < reach * reach && e.distanceToSqr(minion) < sight * sight);
+                            && e.distanceToSqr(centre) < reach * reach && e.distanceToSqr(minion) < sight * sight && !(maker != null && thrownBy(e, maker)));
             return near.stream().min(Comparator.comparingDouble(minion::distanceToSqr)).orElse(null);
+        }
+
+        /** Whether this player threw it (its thrower, as vanilla keeps one for a dropped item). */
+        private static boolean thrownBy(ItemEntity item, Player player) {
+            Entity thrower = item.getOwner();
+            return thrower != null && thrower.getUUID().equals(player.getUUID());
         }
 
         /** Whether it carries anything it fetched, to bring. */
@@ -868,18 +901,17 @@ public final class MinionTasks {
         @Override
         public void tick() {
             if (item != null) {
-                if (minion.distanceToSqr(item) < 2.5 + minion.getBbWidth()) {
-                    ItemStack left = minion.carry(item.getItem().copy());
-                    minion.take(item, item.getItem().getCount() - left.getCount());
-                    if (left.isEmpty()) {
-                        item.discard();
-                    } else {
-                        item.setItem(left);
-                    }
+                if (!item.isAlive() || item.getItem().isEmpty()) {
+                    // taken meanwhile (by its maker, another courier): this tick is not asked whether it goes on
+                    item = null;
+                    bringing = mayBring();
+                    approach.reset(minion);
+                } else if (minion.distanceToSqr(item) < 2.5 + minion.getBbWidth()) {
+                    MinionGoals.pickUp(minion, item);
                     minion.level().playSound(null, minion.blockPosition(), SoundEvents.ALLAY_ITEM_TAKEN, SoundSource.NEUTRAL, 0.6F, 0.9F);
                     // the next one, or to its maker with them
                     item = find();
-                    bringing = item == null && minion.withMaker();
+                    bringing = item == null && mayBring();
                     approach.reset(minion);
                 } else if (!approach.step(minion, item.blockPosition(), 1, 1.1)) {
                     unreachable.add(item.getId());
@@ -893,14 +925,27 @@ public final class MinionTasks {
             }
             minion.getLookControl().setLookAt(maker);
             if (minion.distanceToSqr(maker) < Math.pow(2.5 + minion.getBbWidth(), 2)) {
-                // into its maker's hands
+                // into its maker's hands, as much as they have room for (as a player picks up: Inventory#add takes what fits)
+                boolean gave = false;
                 for (int i = 0; i < minion.inventory.getContainerSize(); i++) {
-                    if (fetches(minion, minion.inventory.getItem(i))) {
-                        maker.getInventory().placeItemBackInInventory(minion.inventory.removeItemNoUpdate(i));
+                    ItemStack stack = minion.inventory.getItem(i);
+                    if (fetches(minion, stack)) {
+                        int before = stack.getCount();
+                        maker.getInventory().add(stack);
+                        gave |= stack.getCount() < before;
+                        minion.inventory.setItem(i, stack.isEmpty() ? ItemStack.EMPTY : stack);
                     }
                 }
-                minion.level().playSound(null, minion.blockPosition(), SoundEvents.ALLAY_ITEM_GIVEN, SoundSource.NEUTRAL, 0.6F, 0.9F);
-                minion.swing(InteractionHand.MAIN_HAND);
+                if (gave) {
+                    minion.level().playSound(null, minion.blockPosition(), SoundEvents.ALLAY_ITEM_GIVEN, SoundSource.NEUTRAL, 0.6F, 0.9F);
+                    minion.swing(InteractionHand.MAIN_HAND);
+                }
+                if (carrying()) {
+                    // what its maker has no room for it keeps, and tries again later: no longer at work, it says why
+                    bringAgainAt = minion.tickCount + FULL_HANDS;
+                    minion.working = false;
+                    minion.idle(Component.translatable("bloodandbones.minion.idle.maker_full"));
+                }
                 bringing = false;
             } else if (!approach.step(minion, maker.blockPosition(), 2, 1.1)) {
                 bringing = false;
@@ -908,10 +953,13 @@ public final class MinionTasks {
         }
     }
 
-    /** What a courier fetches: like what it holds (anything, if it holds nothing), and what its filter passes. */
+    /**
+     * What a courier fetches: like what it holds (anything, if it holds nothing, or nothing its task file takes for a sample),
+     * and what its filter passes.
+     */
     static boolean fetches(MinionEntity minion, ItemStack stack) {
         ItemStack held = minion.getMainHandItem();
-        return !stack.isEmpty() && (held.isEmpty() || alike(held, stack)) && minion.filter().allows(minion.level(), stack);
+        return !stack.isEmpty() && (!tool(minion, MinionTask.COURIER, held) || alike(held, stack)) && minion.filter().allows(minion.level(), stack);
     }
 
     /** Someone's own, which a herder and a hunter leave be: tamed (a pet, a broken-in horse or llama) or named. */
@@ -957,7 +1005,7 @@ public final class MinionTasks {
         @Override
         public boolean canUse() {
             ItemStack held = minion.getMainHandItem();
-            if (!minion.hasTask(MinionTask.HERDER) || held.isEmpty() || minion.getRandom().nextInt(20) != 0) {
+            if (!minion.hasTask(MinionTask.HERDER) || !tool(minion, MinionTask.HERDER, held) || minion.getRandom().nextInt(20) != 0) {
                 return false;
             }
             if (minion.tickCount - forgotAt > 600) {
@@ -1150,7 +1198,7 @@ public final class MinionTasks {
             minion.getNavigation().stop();
             minion.getLookControl().setLookAt(at);
             ItemStack rod = minion.getMainHandItem();
-            boolean byRod = rod.getItem() instanceof FishingRodItem && !minion.stats().strikes().isEmpty();
+            boolean byRod = tool(minion, MinionTask.FISHER, rod) && !minion.stats().strikes().isEmpty();
             int lure = byRod ? Math.round(EnchantmentHelper.getFishingTimeReduction(level, rod, minion) * 20.0F) : 0;
             MinionTask.Data data = PartsData.of(level).task(MinionTask.FISHER);
             if (worked(minion, MinionFitness.catchTicks(data, minion.taskFitness()), lure, MinionFitness.catchLeast(data))) {
@@ -1516,8 +1564,8 @@ public final class MinionTasks {
         }
         ResourceLocation id = BuiltInRegistries.ENTITY_TYPE.getKey(mob.getType());
         for (String name : names) {
-            if (name.startsWith("#") ? mob.getType().is(TagKey.create(Registries.ENTITY_TYPE, ResourceLocation.parse(name.substring(1))))
-                    : id.toString().equals(name)) {
+            ResourceLocation tag = name.startsWith("#") ? ResourceLocation.tryParse(name.substring(1)) : null;
+            if (tag != null ? mob.getType().is(TagKey.create(Registries.ENTITY_TYPE, tag)) : id.toString().equals(name)) {
                 return true;
             }
         }
@@ -1658,10 +1706,10 @@ public final class MinionTasks {
         }
     }
 
-    /** The slot of a splash (or lingering) potion that heals: instant health or regeneration. -1 for none. */
+    /** The slot of a potion it throws (a splash or lingering one that heals, its task's tool). -1 for none. */
     static int potion(MinionEntity minion) {
         for (int i = 0; i < minion.slots(); i++) {
-            if (heals(minion.inventory.getItem(i))) {
+            if (tool(minion, MinionTask.MEDIC, minion.inventory.getItem(i))) {
                 return i;
             }
         }
@@ -1728,7 +1776,7 @@ public final class MinionTasks {
 
         @Override
         public boolean canUse() {
-            if (!minion.hasTask(MinionTask.BUTCHER) || !blade(minion.getMainHandItem()) || minion.getRandom().nextInt(20) != 0 || !(minion.level() instanceof ServerLevel level)
+            if (!minion.hasTask(MinionTask.BUTCHER) || !tool(minion, MinionTask.BUTCHER, minion.getMainHandItem()) || minion.getRandom().nextInt(20) != 0 || !(minion.level() instanceof ServerLevel level)
                     || !minion.canCarry(new ItemStack(Items.BEEF))) {
                 return false;
             }
@@ -1855,7 +1903,7 @@ public final class MinionTasks {
 
         @Override
         public boolean canContinueToUse() {
-            return (carcass != null || table != null) && !done && minion.hasTask(MinionTask.BUTCHER) && blade(minion.getMainHandItem())
+            return (carcass != null || table != null) && !done && minion.hasTask(MinionTask.BUTCHER) && tool(minion, MinionTask.BUTCHER, minion.getMainHandItem())
                     && minion.canCarry(new ItemStack(Items.BEEF));
         }
 

@@ -205,6 +205,54 @@ public class MinionVariantTests {
     }
 
     /**
+     * A sapper with no head (docs/NEXT.md 1.1) finds no target and no banner by sight: set to Sapper, a cow's body on its
+     * legs with the sac in it and no head leaves be a husk 2.2 blocks off, never lighting its fuse or walking to it, and sets
+     * itself off once a husk is against it, as a headless guard strikes only what touches it. Its row reads the body as it is
+     * (mindless), and only a missing detonating organ would shut the task.
+     */
+    @GameTest(template = "empty", timeoutTicks = 400)
+    public static void headlessSapperGoesOffAtATouch(GameTestHelper helper) {
+        pen(helper);
+        MinionBuild headless = MinionBuild.of(ref("cow", "body"));
+        for (String leg : new String[]{"right_front_leg", "left_front_leg", "right_hind_leg", "left_hind_leg"}) {
+            headless = headless.with(leg, ref("cow", leg));
+        }
+        headless = headless.withOrgan(Optional.of(new CarcassArmour.Organ(BloodAndBones.asResource("powder_sac"), CREEPER, false, Map.of())));
+        MinionEntity minion = minion(helper, new BlockPos(3, 2, 5), headless);
+        MinionFitness.Row row = minion.row(MinionTask.SAPPER, MinionTask.Anchor.HOME);
+        if (!minion.stats().mindless() || !row.can() || !"mindless".equals(row.dispositionName()) || !minion.setTask(MinionTask.SAPPER)) {
+            helper.fail("A headless body with the sac in should take the sapper's task, as a mindless one: " + row.cannot() + ", " + row.dispositionName());
+            return;
+        }
+        net.minecraft.world.phys.Vec3 post = minion.position();
+        Husk close = helper.spawn(EntityType.HUSK, new net.minecraft.world.phys.Vec3(5.7, 2.0, 5.5));
+        close.setNoAi(true);
+        Husk[] near = new Husk[1];
+        double[] strayed = {0.0};
+        helper.onEachTick(() -> strayed[0] = Math.max(strayed[0], minion.position().distanceTo(post)));
+        helper.startSequence()
+                .thenIdle(60)
+                .thenExecute(() -> {
+                    helper.assertTrue(!com.avicagan.bloodandbones.parts.effect.DetonateEffect.lit(minion) && !minion.poweredDown(),
+                            "with nothing against it, it should not set itself off");
+                    helper.assertTrue(!com.avicagan.bloodandbones.minion.MinionGoals.touches(minion, close) && strayed[0] < 0.5,
+                            "the husk off to its side is not against it, and it should not walk to it: " + strayed[0]);
+                    near[0] = helper.spawn(EntityType.HUSK, new BlockPos(4, 2, 5));
+                    near[0].setNoAi(true);
+                })
+                .thenWaitUntil(() -> helper.assertTrue(minion.poweredDown(), "it has not set itself off at the husk against it yet (target "
+                        + minion.getTarget() + ")"))
+                .thenExecute(() -> {
+                    helper.assertTrue(strayed[0] < 1.0, "it should never walk after anything: " + strayed[0]);
+                    helper.assertTrue(!near[0].isAlive() || near[0].getHealth() < near[0].getMaxHealth(), "the husk against it should be hurt");
+                    minion.discard();
+                    close.discard();
+                    near[0].discard();
+                })
+                .thenSucceed();
+    }
+
+    /**
      * Handed a banner, a sapper goes for the banner of that colour standing near home (its mark) and blows up there; the
      * other colour's is left alone, and both stand after, the blast breaking no blocks.
      */

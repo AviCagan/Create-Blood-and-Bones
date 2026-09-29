@@ -154,21 +154,29 @@ public class MinionTaskScreen extends AbstractSimiScreen {
         return (graphics, x, y) -> graphics.renderItem(stack, x, y);
     }
 
-    /** Where each row and heading goes: Idle first, then the four groups, each under its heading. */
+    /**
+     * Where each row and heading goes: Idle first, then the four groups, each under its heading, the tasks in the list's
+     * order within them. A task's group is its file's kind, which a datapack may change, so the server sends it.
+     */
     private void layout() {
         headings.clear();
         int y = PAD;
-        MinionTask.Kind kind = MinionTask.Kind.NONE;
-        for (MinionTask task : MinionTask.values()) {
-            if (task.kind != kind) {
-                kind = task.kind;
-                y += 2;
-                headings.add(new int[]{kind.ordinal(), y});
-                y += HEADING;
+        for (MinionTask.Kind kind : MinionTask.Kind.values()) {
+            boolean first = true;
+            for (MinionTaskPayload.Row row : data.rows()) {
+                if (row.kind() != kind.ordinal()) {
+                    continue;
+                }
+                if (first && kind != MinionTask.Kind.NONE) {
+                    y += 2;
+                    headings.add(new int[]{kind.ordinal(), y});
+                    y += HEADING;
+                }
+                first = false;
+                rowY[row.task()] = y;
+                rowHeight[row.task()] = row.can() ? ROW : CANNOT_ROW;
+                y += rowHeight[row.task()] + GAP;
             }
-            rowY[task.ordinal()] = y;
-            rowHeight[task.ordinal()] = data.rows().get(task.ordinal()).can() ? ROW : CANNOT_ROW;
-            y += rowHeight[task.ordinal()] + GAP;
         }
         contentHeight = y + PAD;
     }
@@ -200,6 +208,7 @@ public class MinionTaskScreen extends AbstractSimiScreen {
         atHome.green = home;
         withMe.green = !home;
         withMe.active = row.allows(MinionTask.Anchor.MAKER.ordinal());
+        atHome.active = row.allows(MinionTask.Anchor.HOME.ordinal());
         atHome.setToolTip(Component.translatable("bloodandbones.minion.screen.at_home"));
         atHome.getToolTip().add(Component.translatable("bloodandbones.minion.screen.at_home.hint").withStyle(ChatFormatting.GRAY));
         withMe.setToolTip(Component.translatable("bloodandbones.minion.screen.with_me"));
@@ -389,8 +398,10 @@ public class MinionTaskScreen extends AbstractSimiScreen {
             MinionTaskPayload.Row row = data.rows().get(hovered);
             if (row.can() && hovered != data.task()) {
                 playUiSound(SoundEvents.UI_BUTTON_CLICK.value());
-                // at the anchor it works at now if the task allows it, else at home, reaching as far as the task's own
-                int anchor = row.allows(data.anchor()) ? data.anchor() : MinionTask.Anchor.HOME.ordinal();
+                // at the anchor it works at now if the task allows it, else the first the task allows (home, unless a datapack
+                // took that away), reaching as far as the task's own
+                int anchor = row.allows(data.anchor()) ? data.anchor()
+                        : row.allows(MinionTask.Anchor.HOME.ordinal()) ? MinionTask.Anchor.HOME.ordinal() : MinionTask.Anchor.MAKER.ordinal();
                 request(hovered, anchor, 0, false);
                 return true;
             }
