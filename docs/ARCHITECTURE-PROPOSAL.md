@@ -4561,7 +4561,12 @@ the tank, and a graft only works with blood in the tank, so in play rot barely b
 about 2.1 points a second, and swinging by a point a swing. Whether rot should build faster than blood clears it goes
 with decision 11.
 
+**Verified.** The suite is 590 tests (578 and these 12) and passed three times in a row; datagen changed nothing
+after the new lines. The showcase was run in both modes and looked at.
+
 **Showcase.** `showcase_body_2` is the new screen on yourself, the ragged stump the zombie-headed surgeon left picked:
 what fits it, and its price. `showcase_surgery_1` is the same with the brass arm picked (unclip, swap, fit the carried
 module) and a slot hovered. `showcase_body_5` is a player with the left arm and right leg gone, holding a sword and a
-shield in iron armour: the shield and that leg's armour are not drawn.
+shield in iron armour: the shield, the chestplate's left sleeve and that leg's armour are not drawn, the sword and
+the rest are. In bloodless mode the doll's stumps are grey sockets with grey studs for the price, the organs a pump,
+bellows and a hopper, and every line says essence and socket.
