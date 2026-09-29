@@ -767,12 +767,12 @@ public final class MinionGoals {
         }
 
         /** How far off its maker must be for it to set off after them. */
-        double setOff() {
+        public double setOff() {
             return minion.hasTask(MinionTask.IDLE) ? minion.reach() + 2.0 : START;
         }
 
         /** How near it comes before it stops. */
-        double stopAt() {
+        public double stopAt() {
             return minion.hasTask(MinionTask.IDLE) ? Math.max(STOP, minion.reach() - 1.0) : STOP;
         }
 
@@ -816,6 +816,9 @@ public final class MinionGoals {
         private final Approach approach = new Approach();
         /** When it tends the patient's next heart; 0 while nobody hurt lies there. */
         private int nextHeart;
+        /** Why it found no table when it last looked, said until it looks again; null once it has one. */
+        @Nullable
+        private net.minecraft.network.chat.Component noTable;
 
         public AttendTable(MinionEntity minion) {
             this.minion = minion;
@@ -853,9 +856,13 @@ public final class MinionGoals {
             // a home far off, unloaded, is not looked at (looking would load it)
             if (minion.level().isLoaded(minion.home())
                     && minion.level().getBlockState(minion.home()).getBlock() instanceof com.avicagan.bloodandbones.body.SurgeryTableBlock) {
+                noTable = null;
                 return minion.home();
             }
             if (minion.tickCount < nextSearch) {
+                if (noTable != null) {
+                    minion.idle(noTable);
+                }
                 return null;
             }
             nextSearch = minion.tickCount + 100;
@@ -872,11 +879,12 @@ public final class MinionGoals {
                     best = pos.immutable();
                 }
             }
+            // with none, it says why until it next looks: a reach set too short, or set down too far off
+            noTable = best == null ? net.minecraft.network.chat.Component.translatable("bloodandbones.minion.idle.surgeon", reach) : null;
             if (best != null) {
                 minion.setHome(best);
             } else {
-                // it says why until it next looks: a reach set too short, or set down too far off
-                minion.idle(net.minecraft.network.chat.Component.translatable("bloodandbones.minion.idle.surgeon", reach));
+                minion.idle(noTable);
             }
             return best;
         }
@@ -1184,7 +1192,11 @@ public final class MinionGoals {
      */
     static boolean looks(MinionEntity minion, MinionTask task) {
         int every = MinionFitness.lookTicks(com.avicagan.bloodandbones.parts.PartsData.of(minion.level()).task(task), minion.taskFitness());
-        return minion.getRandom().nextInt(Math.max(1, Mth.positiveCeilDiv(every, 2))) == 0;
+        if (minion.getRandom().nextInt(Math.max(1, Mth.positiveCeilDiv(every, 2))) != 0) {
+            return false;
+        }
+        minion.looksTaken++;
+        return true;
     }
 
     /**

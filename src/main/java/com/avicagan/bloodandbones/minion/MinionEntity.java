@@ -138,6 +138,8 @@ public class MinionEntity extends PathfinderMob implements net.minecraft.world.e
     private boolean legacy;
     /** Set by task goals while they are doing something, for the drain. */
     boolean working;
+    /** How many times it has looked round for its task's work (a courier's, farmer's or Tender's looks), counted for the tests. */
+    int looksTaken;
     /** Which way of getting about its navigation is set up for: ground, climb, swim or fly. */
     private String movedBy = "";
     /** A sinker short of breath going up for air, until it has its fill again (see {@link #sinking}). */
@@ -873,6 +875,16 @@ public class MinionEntity extends PathfinderMob implements net.minecraft.world.e
     /** At work, as a task's goal sets it while it does something (or a test standing in for one): the blood it uses follows its fitness. */
     public void setWorking(boolean working) {
         this.working = working;
+    }
+
+    /** Whether a task's goal has it doing something now. */
+    public boolean working() {
+        return working;
+    }
+
+    /** How many times it has looked round for its task's work so far ({@link MinionGoals#looks}). */
+    public int looksTaken() {
+        return looksTaken;
     }
 
     /** Why its task's work stands still (nothing to do there), said by its goal for its status line, for the next few seconds. */

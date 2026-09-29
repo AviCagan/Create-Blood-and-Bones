@@ -197,6 +197,11 @@ public final class MinionTender {
                 && FluidUtil.tryFillContainer(new ItemStack(Items.BUCKET), handler, BUCKET, null, false).isSuccess();
     }
 
+    /** The tanks a Tender's look finds now, nearest first: a tank of many blocks once, at its block nearest it (for the tests). */
+    public static List<BlockPos> tanksFound(ServerLevel level, MinionEntity minion) {
+        return survey(level, minion, new Tend(minion)).tanks();
+    }
+
     /** What lies within its reach of home now, from the loaded chunks' block entities (none is loaded to look), less what it skips. */
     static Survey survey(ServerLevel level, MinionEntity minion, Tend skips) {
         BlockPos home = minion.home();

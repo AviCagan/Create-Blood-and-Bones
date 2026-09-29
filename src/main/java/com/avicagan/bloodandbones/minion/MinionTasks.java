@@ -241,7 +241,7 @@ public final class MinionTasks {
      * line says why; one that no longer lets its task be done where it was (with its maker, or at home) moves it to where the
      * task is done. A missing tool never does either: it waits for one.
      */
-    static void keepPossible(MinionEntity minion) {
+    public static void keepPossible(MinionEntity minion) {
         MinionTask task = minion.task();
         if (minion.build().isEmpty() || minion.level().isClientSide) {
             return;
