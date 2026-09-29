@@ -143,7 +143,16 @@ The packages are in order of how much their gap hurts the brief:
 
 **Owner first.** Partly. Decisions 4 and 5 shape the joints and the hang. The hooking fix, the impulse and the tests can start now.
 
-### 2. Groups first: any mob works on day one, and everything retunes by data
+### 2. Groups first: any mob works on day one, and everything retunes by data (built 29 September 2026, `bb-groups`, but what waits on the owner)
+
+Built (ARCHITECTURE 15.29, docs/MODDED-MOBS.md): a generic body for any mob with no rig, from its archetype, scaled to its
+hitbox and wearing its own model's parts and skin on the client; the archetypes' match rules read at last; babies with no
+baby shape; weight classes as data (listed in 15.29 for the owner), driving drag, blood, floating or sinking and rot time;
+rot time and butchery by group, a mob's own file or table as the override; the constants below moved into the server
+config or data at today's figures; naming rules in place of most rig-target overrides; the guide for model authors.
+Left for the owner: whether a size-2 slime should leave a carcass (4.4 says it splits), the class list and whether a
+class should set the drag penalty itself; not built: the client-sent rigs and export command of 4.1, and families by Java
+class.
 
 **Why.**
 - Rule 2: "Nothing is ever configured per-mob if it can be configured per-group … rigs, butchery yields, drag penalty, part lists … keys off those." A specific mob's own file "must never be required". "A modded mob nobody has ever heard of should work on day one."

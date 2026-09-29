@@ -38,6 +38,12 @@ Everything below is in development builds only; the art is placeholder (see the 
   ravager; a severed leg costs what a leg weighs, not what its whole animal did.
 - A dead spider lies still at last: a carcass whose limbs only twitch where it lies now folds into its resting form
   after five seconds, as a still one does, so it stops costing the server anything.
+- Any mob becomes a carcass when killed with the Meat Hook, one from another mod or with no rig of its own (the tropical
+  fish): its body is its kind's (four-legged, two-legged, a fish, a bird...) at its size, wearing its own model's parts
+  and skin as far as they can be found. Babies of kinds with no baby shape of their own are the grown carcass at half
+  size. The ender dragon still dies whole.
+- Weight classes, from tiny to colossal: light carcasses float and heavy ones sink. Small carcasses no longer shake
+  themselves apart in water.
 - A carcass in the air of a Create: Dragons Plus freezing fan (a fan blowing through powder snow) does not
   rot. Other addons' freezing fans and freezers join through Dragons Plus or a tag.
 
@@ -69,6 +75,10 @@ Everything below is in development builds only; the art is placeholder (see the 
 - The Surgical Rig's organs are the organ data's: every organ a mob's part holds comes out at the rig, one a cut,
   before the hide (a cow's rumen as well as its heart, lungs, stomach and eyes; a skeleton's marrow, dry), and a
   carcass folded to rest on the table gives them up without being unfolded.
+
+- A mob with no butchery table of its own gets one from its groups (rotten flesh from anything rotting, bones from
+  skeletons, feathers from fowl...), and a mod or datapack can give any group or mob its own.
+- The Beheader's skulls are data (another mod's mob can have its head kept whole).
 
 ### Blood
 
@@ -520,6 +530,13 @@ Everything below is in development builds only; the art is placeholder (see the 
   scenes and advancements.
 - An in-game settings screen (Mods, Blood & Bones, Config) for bloodless mode and the rot
   settings; a server config sets the rot speed and the falling apart.
+
+### For datapacks and other mods
+
+- Weight classes, rot times, butchery by group, babies' yields, generic bodies and implant figures are data; the drag
+  curve, cuts and strokes, spoil points, machine stress and pace, Spit Roast times, the throttle, module upkeep and
+  necrosis rates are in the server config. Every default is what it was.
+- docs/MODDED-MOBS.md: how to name a model's parts so its joints come out right with no rig target.
 
 ### Known gaps
 

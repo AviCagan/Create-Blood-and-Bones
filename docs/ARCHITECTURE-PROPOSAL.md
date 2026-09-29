@@ -4475,3 +4475,172 @@ hind leg come round rear first, its head end pointing back west; the three struc
 swinging, one a leg short with the leg on the ground below it), the fitness lines and the task screen (Herder's and
 the Butcher's reasons, the list scrolled to its end, the Tender's reasons), the Surgery Table's line, the stumps by
 price, the minions' row, and the machines.
+
+### 15.29 (numbered at merge) Groups first: any mob on day one, everything retuned by data (verified)
+
+This closes docs/BRIEF-AUDIT.md package 2 but for what is left for the owner (the end of this section). Organ lists and
+recipes were already data (15.16, 15.20.1) and are not touched. The guide for other mods' model authors that the
+package asks for is docs/MODDED-MOBS.md.
+
+**A body for any mob.** A mob with no rig file died as if the Meat Hook were any weapon (`CarcassAssembler.assemble`
+returned null): a modded mob, the tropical fish, and a baby of a kind whose rig has no baby shape. Section 4.1 offered
+two ways, a generic rig scaled to the hitbox, or the client reading the model and sending it. The code decided it: the
+server builds every carcass's bodies, and must do so on a dedicated server with no client that has ever drawn the mob
+(and in the game tests, which have none), so the server needs a body of its own; and a rig a client sends would be data
+a client makes up, to be trusted on the server. So both are used, each where it can be: the server builds the body, the
+client dresses it.
+- **The body** (`carcass/rig/GenericRig`, data in `data/bloodandbones/generic_rig/<archetype>.json`, eleven files, one
+  per archetype, named by the archetype's `"generic_rig"`). Each bone is a box measured against the hitbox: across and
+  along in hitbox widths, up in hitbox heights, the front toward negative z as in the game's models. `GenericRig.build`
+  turns it into an ordinary `Rig` of the mob, in model pixels, with the joints the naming rules give (`JointRules`,
+  below) and a baby that is the grown one at half size about its feet. `RigManager.forEntity` returns it for any living
+  mob with no rig file (`fileRig` is only files); it is built once per mob and parts-data generation, so it is the same
+  object each time. Both sides build it the same way from data both have (the parts data is sent to clients; the
+  hitbox is the entity type's), so nothing new is sent. Never for a player or an armour stand, nor for the new
+  `#bloodandbones:no_carcass` tag (the ender dragon, which 4.4 keeps whole until it has a body plan).
+- **Which archetype.** Section 3.1 of docs/PARTS-AND-TRAITS.md promised `match` rules for archetypes (rig counts,
+  hitbox aspect, spawn category), and the quadruped file had some, but nothing read them: an unlisted mob fell to the
+  biped. `MobGroup.Match` and `PartsData.matched` read them now, for a mob no file or tag lists: the highest-scoring
+  rule that passes wins, ties to the lower id so every side agrees. The archetypes' rules: four or six legs and no arms
+  (the quadruped, 50), two and two (the biped, 50), six or eight legs (the arthropod, 55); wider than tall and a
+  creature (the quadruped, 20) or a monster (15); taller than wide (the biped, 20); much wider than tall and a monster
+  (the arthropod, 25); a water category (the fish, 30); ambient (the flier, 30). The leg count now reads only rig
+  files, never the generic body (which comes from the archetype this picks).
+- **The look** (`client/FittedModels`). A generic rig says `"fitted": true`, and each bone's `part` lists the model
+  part names it may wear ("tail|real_tail|tail1"). The client finds the mob's model under the layer named after it (as
+  the game's own and most mods' are), or, failing that, the root of its renderer's model if that is a
+  `HierarchicalModel` (the tropical fish's, whose layers are named for its two shapes). Each bone draws the shallowest
+  part of a name it lists, with what hangs under it except other bones' parts, turned as it rests in the model and
+  stretched to fill the bone's box; the skin is what its renderer gives a plain one of the mob, made once and never
+  added to the world. A bone with no such part is a box in a patch of the skin. Rot colour, maggots, wounds and
+  bloodless plating go through the same drawing as any carcass.
+- **Babies.** `RigManager.forEntity(id, true)` shrinks a rig with no baby shape to half about its feet
+  (`RigManager.SHRUNK`), as the game draws such a baby; the baby rig is worked out once per grown rig object.
+
+**Weight classes** (`carcass/WeightClass`, `data/bloodandbones/weight_class/<id>.json`). The brief's classes, for the
+owner to confirm:
+
+| Class | Size up to (blocks of flesh) | Floats or sinks | Rot time | Vanilla mobs in it |
+|---|---|---|---|---|
+| tiny | 0.05 | floats (1.3) | 12,000 | bat, cod, tadpole, parrot, rabbit, silverfish, endermite, allay, vex |
+| small | 0.2 | floats (1.2) | 12,000 | salmon, cat, frog, bee, phantom, blaze, breeze, pufferfish, axolotl, chicken, ocelot, cave spider |
+| medium | 0.7 | floats (1.1) | 20,000 | armadillo, fox, wolf, the skeletons, creeper, dolphin, enderman, villager, wandering trader, witch, the zombies, sheep, the piglins, the illagers, pig, spider, guardian, the squids |
+| large | 1.6 | sinks slowly (0.9) | 24,000 | donkey, cow, mooshroom, snow golem, mule, turtle, goat, strider, the llamas, the horses, shulker, iron golem |
+| huge | 10 | sinks (0.8) | 36,000 | hoglin, zoglin, panda, polar bear, wither, camel, warden, slime, ravager, magma cube, elder guardian, sniffer |
+| colossal | above | sinks (0.7) | 48,000 | ghast |
+
+A mob's groups (or its own file) may name its class (`"weight_class"`, the last layer naming one wins); with none, its
+size picks one (`CarcassBody.weightClass`), so a modded mob has one on day one. Each class sets:
+- `drag`: the drag penalty (15.28's curve, by the mass on the hook) is multiplied by it (`CarcassDrag.penaltyFor(mass,
+  classDrag)`). All six ship at 1, so every penalty is as 15.28 measured it.
+- `blood_per_weight`: mB a fresh carcass holds per block of animal (`CarcassBleeding.capacity`). All six ship at 1,000,
+  the old constant.
+- `buoyancy`: what water lifts, as a share of its weight when wholly under (`CarcassFloat`). Light classes float,
+  heavy ones sink, as section 5 said.
+- `rot_time`: for a mob whose rig and groups name none.
+
+**Floating and sinking, and what Sable's water did to a carcass.** A carcass in water was lifted by Sable a block's
+worth for every cell however small (`sable:volume` 1 on every carcass block), so all of them floated alike; that is now
+0 (`PhysicsPropertiesProvider`) and the class's `buoyancy` lifts each body in water through the middle of its mass, by
+its weight and how much of it is under. Testing it turned up a worse problem: a small carcass in water shook itself
+apart. Sable works out its water drag once a game tick, from the speed at the start of the tick, counting each cell as a
+whole block of water pushed aside, and holds that force through every physics step of the tick. A chicken's head (a
+hundredth of a block of flesh) was pushed back about six times as hard as it was moving, so each tick it went the
+other way faster, and within a second it was flung through the pool's floor. Undoing Sable's drag exactly each tick was
+tried (`buoyancy.rs` worked through point by point); the least mismatch grew the same way, and it flung the chicken
+upward instead. What holds: at the end of each tick a carcass body in water has its speed and turning put aside
+(`CarcassFloat.postPhysicsTick`, on the new `ForgeSablePostPhysicsTickEvent` subscriber), so Sable, working out its drag
+before the next, sees it still and drags it not at all; the first thing the next physics step does is give them back
+(`CarcassFloat.giveBack`, first in `onPrePhysicsTick`). The water slows it instead by its real size, a share of its speed
+taken away each step, which cannot overshoot. What reads a carcass's motion between ticks (whether it has come to rest,
+whether it landed, a hauler steadying it) reads the put-aside speeds (`CarcassFloat.velocity`, `scaleAside`).
+`lightCarcassFloatsHeavyOneSinks`: a chicken built on the floor of a pool four deep comes up to the top, a cow built
+with its back at the surface goes down to the floor.
+
+**Rot time by group.** Every rig target named its own rot time (79 numbers, 14 different). It is now the rig's own if
+a rig names one (a datapack still can), else the last of its groups to name one (`"rot_time"` on a group or a mob file),
+else its weight class's (`CarcassBody.rotTime`). The mod's rigs name none now: the rotting overlay says 6,000, the
+skeletal overlay 48,000, the golem and slime families never (1,000,000), the marine family 8,000, the cephalopods 12,000,
+vermin and spirits 6,000, the felines and arachnids 20,000, the equines 36,000, the guardians 24,000; 52 of the 79 come
+from groups and classes, and 25 mobs keep a figure of their own in their mob file (a new, otherwise empty file for the
+tadpole). `rotTimesAreAsTheyWere` holds all 79 to the old table.
+
+**Butchery by group.** A mob with no butchery table (a modded one; one a datapack took the table from) gets one worked
+out at once from its rig (its own or its generic body) and what its groups say (`ButcheryManager.byGroup`, with
+`ButcheryDerivation` moved out of datagen into `carcass/butchery`). A group's or mob file's `"butchery"` is a rig
+target's butchery section, any of its fields; the layers merge field by field, the last to set one winning. Groups that
+now say something: the rotting overlay (rotten flesh, no hide), the skeletal overlay (bones, no meat), the golem,
+elemental, spirit and vermin families (no meat, hide or bone), the slime family (slime balls), the fowl (chicken and
+feathers), the grazers (beef), swine and piglins (porkchops), small prey (rabbit and its hide), the fish archetype
+(cod and bone meal), the arachnids (spider eyes and string), the cephalopods (ink). A table of the mob's own stays the
+optional override: the 79 vanilla tables are still written by datagen from their rig targets, which are the owner's
+per-mob tuning, so no vanilla yield changed. The tropical fish shows both: its body gives bone meal by the fish
+archetype, and tropical fish (not cod) by one line in its own file.
+
+**The knobs moved out of code.** Kept at today's figures, which stay in the code as the defaults, and
+`movedKnobsKeepTheirOldFigures` holds every default to the constant it replaced:
+- server config (`bloodandbones-server.toml`): `[carcasses]` the drag curve's two ends (`drag_light_mass`,
+  `drag_light_penalty`, `drag_heavy_mass`, `drag_heavy_penalty`), `cuts_to_sever`, `cuts_to_butcher`,
+  `strokes_to_skin` and `carry_mass` (was `LIGHT_MASS`); `[rot]` the spoil thresholds `going_off_below` (0.6) and
+  `rotting_below` (0.3), which the yields, the scraps, the piece tooltips, Create's fresh and rotting filters and the
+  minion builder all read; `[machines]` each machine's stress per RPM and pace; `[cooking]` the Spit Roast's times;
+  `[cybernetics]` the throttle's spool time, its full-spool drain and a fired module's cost, and each module's upkeep;
+  `[necrosis]` the rates by swing, by blocks walked and by meal, and a perfusion's blood and what it takes away;
+- data: blood per weight (the weight classes); the slime's and magma cube's baby yields (`"baby_yield"` in their mob
+  files, which any group can set); the Beheader's skull map (the NeoForge data map
+  `data/bloodandbones/data_maps/entity_type/beheader_skulls.json`, item and chance, so another mod's mob with a head of
+  its own can join); every implant's figures and drain (`data/bloodandbones/implant/<item>.json`, written by datagen from
+  the figures each implant item is built with, read through the parts data so clients have them: `ImplantFigures`).
+  What an implant is (the part it replaces, its fuel, its ability, its module slots) stays with the item.
+
+**Fewer hand-written rig overrides.** What the rig targets spelled out again and again is now read from the part names
+and the model's structure (`RigDerivation.withNamingRules`, `JointRules`), and the target says only what the rules get
+wrong:
+- decor parts (a nose, a beak, an ear, a horn, an eye, a hat, a jacket, a mane, a hump, a fin, a spike, the tip of a
+  wing or tail, sleeves and trousers) are never bodies: under a body they draw with it, loose they ride with the head,
+  their side's arm or leg, or the torso;
+- tack (saddles and their straps, bridles, reins, chests, a foal's spare legs) is left off;
+- the torso is the shallowest part named `body`;
+- links named `segmentN` hang one off the next toward the torso; a front body (`body0` before the torso, or
+  `upper_body`) carries the head and what joins at the front;
+- joints by name for tentacles, segments, a body's back half (`_back`) and legs lying flat (a spider's).
+The targets went from 154 joint entries in 39 files to 74 in 26, 103 merges to 7, 95 attachments to 44, 74 named torsos
+to 14, 38 parents to 5 and 86 hidden parts to 20. Every rig and butchery table the data run writes is what it was
+before, but for the order of a few lists that do not matter (the order a cod's fins and a slime's face are drawn in, and
+the order of a horse's hidden tack), checked by comparing every generated file with those lists sorted.
+`namingRulesGiveWhatTheTargetsSpelledOut` holds the rules to the rigs. The overrides left are deliberate: the zombies'
+and skeletons' heads, arms and legs (tuned as a family), the horse family's necks and tails, the wither's heads, ribcage
+and tail and what hangs off its shoulders, the ghast's tentacles (looser than a squid's), the turtle's flippers, the
+chicken's wings, the ravager's neck, the shulker's lid, the wolf's shoulders and tail, the snow golem's upper body, the
+rabbit's haunches and feet, seven heads that sit on top of their bodies but must not collide with them (15.28), the
+torsos the rules cannot find (the spiders' abdomen, the guardians' and blaze's heads, a salmon's front half, the
+silverfish's and endermite's middle links, the shulker's base, the slimes' cubes, the snow golem's lower body, the
+wither's shoulders), the parts of a few mobs drawn as one piece (a bee's legs and wings, a blaze's rods, a breeze's rods,
+a magma cube's layers, a silverfish's layers, an allay's and a vex's arms, a parrot's legs and tail, a rabbit's tail,
+the tadpole's tail, a cat's and an ocelot's tail tips, the armadillo's tail, a parrot's second head part, the horse
+family's head inside its head parts), a few parts hidden that are not tack (the illagers' folded arms and hats, the
+piglins' cloaks and ears, the frog's croaking throat and tongue, the turtle's egg belly, the breeze's wind, the
+armadillo's rolled-up shell), and every collision box smaller than what is drawn (47, in 21 files).
+
+**Tests** (`gametest/GroupTests`, 10): `mobWithNoRigFileBecomesACarcass` (a cow with its rig file taken away, in a batch of
+its own that runs before any other so no other cow is about: killed with the hook as a player kills one, it is the
+generic quadruped's seven parts and six joints at its hitbox's size, goes down where it stood, holds its weight's worth
+of blood and loses a leg at its joint; given back its file it is its own rig again),
+`tropicalFishBecomesACarcassAndButchersByGroup`, `babyWithNoBabyShapeBecomesAHalfSizeCarcass` (a baby wandering trader),
+`unlistedMobsTakeTheirArchetypeByShape` (the giant a biped at its size; the ender dragon, a player and an armour stand
+nothing), `weightClassesComeFromSizeOrGroups` (on a copy of the server's data with a class and a mob file added),
+`lightCarcassFloatsHeavyOneSinks`, `butcheryComesFromGroupsWhereAMobHasNoTable`, `namingRulesGiveWhatTheTargetsSpelledOut`,
+`rotTimesAreAsTheyWere`, `movedKnobsKeepTheirOldFigures`. A batch named `bloodandbones_alone_first` now runs before all
+others (`GameTestServerMixin`). One trap found on the way: a step a test sets out from inside another step's
+`runAfterDelay` may run more than once (the game's map of steps is added to while it is read), so a test's delayed steps
+are all set out at its start.
+
+**Left for the owner.**
+- Size-2 slimes still split as they die, as 4.4 decided (only the smallest leave a carcass). The audit counts them among
+  the mobs that miss out; which is wanted?
+- The weight classes above: the list, where the sizes fall, and the floating figures. The drag penalty stays 15.28's
+  curve by the mass on the hook, which each class only multiplies (1 for all); should a class set the penalty itself?
+- The ender dragon stays on `no_carcass` until it has a body plan (4.4).
+- Section 4.1's client-sent rigs and a `/bloodandbones rig export` command are not built; a modded mob's own rig comes
+  from a datapack or a rig target (docs/MODDED-MOBS.md). A family by Java class (docs/PARTS-AND-TRAITS.md 3.1, through a
+  throwaway instance) is not built either; tags and the archetype rules cover a modded mob meanwhile.
