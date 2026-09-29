@@ -4490,8 +4490,8 @@ the buttons sat over the body in the outside view (`showcase_body_2.png` on main
   your left), the eyes in the head and the lungs, heart and stomach down the torso, each slot drawn as it is. Their own
   is skin or the organ's colour. A stump is a dark hole with the limb's root and a raw end; a ragged one is torn, its
   strips longer and a drop under it for each bucket fitting there costs. An implant is its kind's colour (brass,
-  graft, iron) with its item on it, darkened when it is not working. A green mark sits on each slot where something on
-  the table or carried fits. Under the doll are the slot's name and state, and at the foot of the panel the surgeon,
+  graft, iron) with its item on it, darkened when it is not working. A green mark sits on each slot where something
+  carried fits. Under the doll are the slot's name and state, and at the foot of the panel the surgeon,
   its fitness and its stumps' price, before any cut (the tasks work's lines, kept).
 - The right panel is the slot picked on the doll: its state, what is on the table, the blood on you
   (`Surgery.bloodCarried`), a row of every implant, prosthetic, limb and module you carry that fits a slot of this

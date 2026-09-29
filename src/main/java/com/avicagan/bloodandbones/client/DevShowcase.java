@@ -335,6 +335,16 @@ public final class DevShowcase {
                     mc.player.setYHeadRot(yaw);
                     mc.player.yHeadRotO = yaw;
                 }
+                // the missing-limb shot: square on to the camera, looking level
+                if (mc.player != null && t >= 178 && t <= 188) {
+                    float yaw = mc.player.getYRot();
+                    mc.player.setYBodyRot(yaw);
+                    mc.player.yBodyRotO = yaw;
+                    mc.player.setYHeadRot(yaw);
+                    mc.player.yHeadRotO = yaw;
+                    mc.player.setXRot(0.0F);
+                    mc.player.xRotO = 0.0F;
+                }
                 if (t == 0) {
                     mc.options.setCameraType(net.minecraft.client.CameraType.THIRD_PERSON_FRONT);
                     mc.options.hideGui = true;

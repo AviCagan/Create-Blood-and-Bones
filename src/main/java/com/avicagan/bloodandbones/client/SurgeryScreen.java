@@ -254,17 +254,17 @@ public class SurgeryScreen extends AbstractSimiScreen {
         return Surgery.options(body, part, onTable(), Minecraft.getInstance().player);
     }
 
-    /** Whether anything but unclipping can be done to the slot, with what is on the table or carried. */
+    /** Whether something the surgeon carries can be used on the slot (the doll's green mark). */
     private boolean offered(Body body, BodyPart part) {
         for (Surgery.Option option : options(body, part)) {
-            if (option.source() != Surgery.BARE) {
+            if (option.source() >= 0) {
                 return true;
             }
         }
         return false;
     }
 
-    /** The slot picked when the screen opens: the first where something carried or on the table fits, else the first with anything. */
+    /** The slot picked when the screen opens: the first where something carried fits, else the first with anything. */
     private BodyPart firstChoice() {
         LivingEntity patient = patient();
         if (patient == null) {
@@ -441,7 +441,7 @@ public class SurgeryScreen extends AbstractSimiScreen {
      * skin (an organ its own colour); gone is a dark hole with the stump at its root, torn and dripping where it is ragged,
      * a drop for each bucket it costs to fit (clean in bloodless mode: a grey socket, grey studs); an implant is its own
      * colour (brass, flesh, iron) with its item on it, darkened if it is not working. The picked slot has a brass frame,
-     * the hovered a white one, and a green mark where something carried or on the table fits.
+     * the hovered a white one, and a green mark where something carried fits.
      */
     private void doll(GuiGraphics graphics, LivingEntity patient, Body body, @Nullable BodyPart hovered) {
         int u = unit();
