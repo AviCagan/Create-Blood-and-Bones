@@ -4,11 +4,13 @@ import com.avicagan.bloodandbones.BloodAndBones;
 import com.avicagan.bloodandbones.body.Surgery;
 import com.avicagan.bloodandbones.body.SurgeryTableBlockEntity;
 import com.avicagan.bloodandbones.carcass.CarcassAssembler;
+import com.avicagan.bloodandbones.carcass.CarcassButchery;
 import com.avicagan.bloodandbones.carcass.CarcassLook;
 import com.avicagan.bloodandbones.carcass.CarcassSavedData;
 import com.avicagan.bloodandbones.carcass.ShackleHookBlock;
 import com.avicagan.bloodandbones.carcass.ShackleHookBlockEntity;
 import com.avicagan.bloodandbones.item.CarcassPieceItem;
+import com.avicagan.bloodandbones.minion.MinionBody;
 import com.avicagan.bloodandbones.minion.MinionBuild;
 import com.avicagan.bloodandbones.minion.MinionEntity;
 import com.avicagan.bloodandbones.minion.DormantMinionItem;
@@ -1992,6 +1994,189 @@ public class MinionTaskTests {
             helper.assertTrue(level.getEntitiesOfClass(ItemEntity.class, area).isEmpty(), "what it chopped should never be on the ground");
             helper.assertTrue(butcher.getMainHandItem().get(BBDataComponents.BLOODIED_AT.get()) != null, "its Cleaver should be bloody");
         });
+    }
+
+    // ---- what a butcher takes (docs/BRIEF-AUDIT.md package 10: "filters on ... the butchering task")
+
+    /** A piece of a cow as a carried piece, fresh. */
+    private static ItemStack cowPiece(String bone) {
+        ItemStack stack = new ItemStack(BBItems.CARCASS_PIECE.get());
+        stack.set(BBDataComponents.PIECE.get(), new CarcassPieceItem.Piece(mob("cow"), bone, ResourceLocation.withDefaultNamespace("textures/entity/cow/cow.png"),
+                List.of(), 1.0F, false, Map.of(), 0.0F, 0.0F, 0.0F, false));
+        return stack;
+    }
+
+    /** Whether the carcass with this id still has a part jointed on whose name holds this. */
+    private static long jointed(CarcassSavedData.Carcass c, String part) {
+        return c.joints.stream().filter(j -> j.child().contains(part)).count();
+    }
+
+    /** The cow's records in the pen other than this one (what was cut off it) whose root is a part like this. */
+    private static long looseCow(ServerLevel level, AABB area, java.util.UUID whole, String part) {
+        return CarcassSavedData.get(level).all().stream().filter(c -> !c.id.equals(whole) && c.entity.equals(mob("cow")) && c.rootBone.contains(part)
+                && inside(area, CarcassAssembler.boneWorldPosition(level, c, c.rootBone))).count();
+    }
+
+    /**
+     * A butcher holding a cow's hind leg beside its Cleaver takes only parts like it, as a courier holding a sample fetches
+     * only its like: it cuts the cow's two hind legs off and breaks them down, and leaves the head, the front legs and the
+     * body be however long it stands there. Handed the piece, it holds it in its other hand (an empty hand takes the
+     * sample back first). Somewhere to hold it: a second hand, the other side of a villager's folded arms, or a mouth; a
+     * headless body with one arm has none.
+     */
+    @GameTest(template = "empty", timeoutTicks = 2400)
+    public static void butcherWithASampleTakesOnlyItsLike(GameTestHelper helper) {
+        pen(helper);
+        ServerLevel level = helper.getLevel();
+        PartsData.Store store = PartsData.SERVER;
+        MinionBuild oneArm = MinionBuild.of(ref("zombie", "body")).with("right_arm", ref("zombie", "right_arm")).with("right_leg", ref("zombie", "right_leg"))
+                .with("left_leg", ref("zombie", "left_leg"));
+        MinionBuild villagerBuild = villager();
+        if (MinionBody.anchors(store, oneArm, MinionBody.layout(store, oneArm)).other().piece() >= 0
+                || !"hand".equals(MinionBody.anchors(store, armed(villagerHead("butcher")), MinionBody.layout(store, armed(villagerHead("butcher")))).other().how())
+                || !"pair".equals(MinionBody.anchors(store, villagerBuild, MinionBody.layout(store, villagerBuild)).other().how())) {
+            helper.fail("A second hand, a pair of arms' other side, and none for one arm and no head");
+            return;
+        }
+        Cow cow = helper.spawn(EntityType.COW, new BlockPos(6, 2, 6));
+        CarcassSavedData.Carcass carcass = CarcassAssembler.assemble(cow, null);
+        cow.discard();
+        if (carcass == null) {
+            helper.fail("The cow carcass was not made");
+            return;
+        }
+        java.util.UUID id = carcass.id;
+        Maker maker = new Maker(helper, new BlockPos(1, 2, 1));
+        MinionEntity butcher = minion(helper, new BlockPos(4, 2, 4), armed(villagerHead("butcher")), maker);
+        if (!butcher.setTask(MinionTask.BUTCHER)) {
+            helper.fail("A butcher's head with hands should take butchery");
+            return;
+        }
+        give(butcher, maker, new ItemStack(BBItems.CLEAVER.get()));
+        give(butcher, maker, cowPiece("left_hind_leg"));
+        if (!butcher.getMainHandItem().is(BBItems.CLEAVER.get()) || CarcassPieceItem.piece(butcher.getOffhandItem()) == null
+                || !said(maker, "bloodandbones.minion.sample")) {
+            helper.fail("The hind leg should go in its other hand beside the Cleaver: " + butcher.getMainHandItem() + ", " + butcher.getOffhandItem());
+            return;
+        }
+        give(butcher, maker, ItemStack.EMPTY);
+        if (!butcher.getOffhandItem().isEmpty() || !butcher.getMainHandItem().is(BBItems.CLEAVER.get())
+                || maker.getInventory().items.stream().noneMatch(stack -> stack.is(BBItems.CARCASS_PIECE.get()))) {
+            helper.fail("An empty hand should take the sample back first, and leave the Cleaver");
+            return;
+        }
+        give(butcher, maker, cowPiece("left_hind_leg"));
+        AABB area = area(helper);
+        long[] hindOffAt = {-1};
+        helper.succeedWhen(() -> {
+            CarcassSavedData.Carcass left = CarcassSavedData.get(level).carcass(id);
+            helper.assertTrue(left != null, "the cow's record is gone");
+            helper.assertTrue(jointed(left, "head") == 1 && jointed(left, "front") == 2, "it took a part not like its sample: " + left.joints);
+            helper.assertTrue(jointed(left, "hind") == 0 && looseCow(level, area, id, "hind") == 0, "the hind legs are not all off and broken down yet ("
+                    + jointed(left, "hind") + " on, " + looseCow(level, area, id, "hind") + " loose)");
+            helper.assertTrue(looseCow(level, area, id, "") == 0, "nothing else should have come off the cow");
+            if (hindOffAt[0] < 0) {
+                hindOffAt[0] = helper.getTick();
+            }
+            helper.assertTrue(helper.getTick() - hindOffAt[0] > 200, "watching it leave the rest");
+        });
+    }
+
+    /**
+     * A brass butcher with an Attribute Filter set to "is a carcass head" takes a cow's head off and breaks it down, and
+     * leaves its legs and body, and the cow's body laid on a Butcher's Table nearer home than the cow.
+     */
+    @GameTest(template = "empty", timeoutTicks = 2400)
+    public static void brassButcherTakesWhatItsFilterPasses(GameTestHelper helper) {
+        pen(helper);
+        ServerLevel level = helper.getLevel();
+        BlockPos tableAt = new BlockPos(6, 2, 3);
+        helper.setBlock(tableAt, BBBlocks.BUTCHER_TABLE.getDefaultState());
+        var table = (com.avicagan.bloodandbones.cooking.ButcherTableBlockEntity) helper.getBlockEntity(tableAt);
+        table.put(cowPiece("body"));
+        Cow cow = helper.spawn(EntityType.COW, new BlockPos(6, 2, 7));
+        CarcassSavedData.Carcass carcass = CarcassAssembler.assemble(cow, null);
+        cow.discard();
+        if (carcass == null) {
+            helper.fail("The cow carcass was not made");
+            return;
+        }
+        java.util.UUID id = carcass.id;
+        Maker maker = new Maker(helper, new BlockPos(1, 2, 1));
+        MinionEntity butcher = minion(helper, new BlockPos(4, 2, 4), brassArmed(villagerHead("butcher")), maker);
+        if (!butcher.setTask(MinionTask.BUTCHER)) {
+            helper.fail("A butcher's head with hands should take butchery");
+            return;
+        }
+        give(butcher, maker, new ItemStack(BBItems.CLEAVER.get()));
+        setFilter(butcher, maker, PartFilterTests.attributeFilter(new com.avicagan.bloodandbones.registry.BBItemAttributes.PiecePart("head")));
+        if (butcher.filter().isEmpty()) {
+            helper.fail("The Attribute Filter should go in its slot");
+            return;
+        }
+        AABB area = area(helper);
+        long[] headOffAt = {-1};
+        helper.succeedWhen(() -> {
+            CarcassSavedData.Carcass left = CarcassSavedData.get(level).carcass(id);
+            helper.assertTrue(left != null, "the cow's record is gone");
+            helper.assertTrue(jointed(left, "leg") == 4, "it took a leg, which its filter does not pass: " + left.joints);
+            helper.assertTrue(!table.specimen().isEmpty(), "it chopped the body on the table, which its filter does not pass");
+            helper.assertTrue(jointed(left, "head") == 0 && looseCow(level, area, id, "head") == 0, "the head is not off and broken down yet");
+            if (headOffAt[0] < 0) {
+                headOffAt[0] = helper.getTick();
+            }
+            helper.assertTrue(helper.getTick() - headOffAt[0] > 200, "watching it leave the rest");
+        });
+    }
+
+    /**
+     * A butcher obeys the filter of a Butcher's Table: a cow's leg lying on a table set to "is a carcass head", nearer home,
+     * it leaves be; one lying on a table with no filter it breaks down.
+     */
+    @GameTest(template = "empty", timeoutTicks = 1600)
+    public static void butcherLeavesWhatTheTableTurnsAway(GameTestHelper helper) {
+        pen(helper);
+        ServerLevel level = helper.getLevel();
+        BlockPos headsOnly = new BlockPos(3, 2, 6);
+        BlockPos anything = new BlockPos(7, 2, 6);
+        helper.setBlock(headsOnly, BBBlocks.BUTCHER_TABLE.getDefaultState());
+        helper.setBlock(anything, BBBlocks.BUTCHER_TABLE.getDefaultState());
+        ((com.avicagan.bloodandbones.cooking.ButcherTableBlockEntity) helper.getBlockEntity(headsOnly)).filtering
+                .setFilter(PartFilterTests.attributeFilter(new com.avicagan.bloodandbones.registry.BBItemAttributes.PiecePart("head")));
+        // a cow's leg set down lying on each table's top
+        for (BlockPos at : List.of(headsOnly, anything)) {
+            BlockPos top = helper.absolutePos(at);
+            Player setter = helper.makeMockPlayer(net.minecraft.world.level.GameType.SURVIVAL);
+            ItemStack leg = cowPiece("left_front_leg");
+            setter.setItemInHand(InteractionHand.MAIN_HAND, leg);
+            leg.useOn(new net.minecraft.world.item.context.UseOnContext(setter, InteractionHand.MAIN_HAND, new net.minecraft.world.phys.BlockHitResult(
+                    new Vec3(top.getX() + 0.5, top.getY() + 1.0, top.getZ() + 0.5), net.minecraft.core.Direction.UP, top, false)));
+        }
+        Maker maker = new Maker(helper, new BlockPos(1, 2, 1));
+        MinionEntity[] butcher = new MinionEntity[1];
+        long[] clearedAt = {-1};
+        helper.startSequence()
+                .thenWaitUntil(() -> {
+                    helper.assertTrue(!CarcassButchery.lyingOn(level, helper.absolutePos(headsOnly), com.avicagan.bloodandbones.cooking.ButcherTableBlockEntity.TOP).isEmpty()
+                            && !CarcassButchery.lyingOn(level, helper.absolutePos(anything), com.avicagan.bloodandbones.cooking.ButcherTableBlockEntity.TOP).isEmpty(),
+                            "a leg should lie on each table");
+                })
+                .thenExecute(() -> {
+                    butcher[0] = minion(helper, new BlockPos(3, 2, 3), armed(villagerHead("butcher")), maker);
+                    helper.assertTrue(butcher[0].setTask(MinionTask.BUTCHER), "a butcher's head with hands should take butchery");
+                    give(butcher[0], maker, new ItemStack(BBItems.CLEAVER.get()));
+                })
+                .thenWaitUntil(() -> {
+                    helper.assertTrue(!CarcassButchery.lyingOn(level, helper.absolutePos(headsOnly), com.avicagan.bloodandbones.cooking.ButcherTableBlockEntity.TOP).isEmpty(),
+                            "it broke down the leg on the table set to heads");
+                    helper.assertTrue(CarcassButchery.lyingOn(level, helper.absolutePos(anything), com.avicagan.bloodandbones.cooking.ButcherTableBlockEntity.TOP).isEmpty(),
+                            "it has not broken down the leg on the table with no filter yet");
+                    if (clearedAt[0] < 0) {
+                        clearedAt[0] = helper.getTick();
+                    }
+                    helper.assertTrue(helper.getTick() - clearedAt[0] > 200, "watching it leave the other leg");
+                })
+                .thenSucceed();
     }
 
     /**
