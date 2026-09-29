@@ -1459,17 +1459,18 @@ public class MinionTaskTests {
     }
 
     /**
-     * Every word of the tasks, the screen (what each task's fitness makes of its work too) and the status line, and the
-     * surgery screen's surgeon and stump prices, reads right in bloodless mode (rule 4): its own bloodless wording where it
-     * has one (the butcher a Dismantler), else the usual rewording; none of it says blood, carcass, butcher, flesh, organ,
-     * gore or minion.
+     * Every word of the tasks, the screen (what each task's fitness makes of its work too) and the status line, the surgery
+     * screen's surgeon and stump prices, what a part brings to a minion's tasks (JEI and a piece's tooltip) and the fitness
+     * command, reads right in bloodless mode (rule 4): its own bloodless wording where it has one (the butcher a
+     * Dismantler), else the usual rewording; none of it says blood, carcass, butcher, flesh, organ, gore or minion.
      */
     @GameTest(template = "empty", timeoutTicks = 20)
     public static void taskWordsReadBloodless(GameTestHelper helper) {
         java.util.regex.Pattern bloody = java.util.regex.Pattern.compile(
                 "(?i)(?<![a-z])(carcass(es)?|blood|bleed\\w*|butcher\\w*|flesh|organs?|gore|guts?|minions?)(?![a-z])");
         List<String> prefixes = List.of("task.", "screen.", "fit.", "where.", "idle.", "factor", "stat.", "value.", "rule.", "at_work", "woke", "lost",
-                "wants.", "cannot.", "tool.", "with_tool", "grip.", "part", "knack", "disposition", "doing", "status", "source.", "frame_stats", "lever.");
+                "wants.", "cannot.", "tool.", "with_tool", "grip.", "part", "knack", "disposition", "doing", "status", "source.", "frame_stats", "lever.",
+                "facts.");
         // the surgery screen's words for the surgeon and a stump's price (docs/NEXT.md 1.5)
         List<String> surgery = List.of("surgeon", "no_surgeon", "bucket", "needs_blood", "state.ragged");
         int checked = 0;
@@ -1477,7 +1478,7 @@ public class MinionTaskTests {
             var json = com.google.gson.JsonParser.parseReader(new java.io.InputStreamReader(in)).getAsJsonObject();
             for (String key : json.keySet()) {
                 if (!(key.startsWith("bloodandbones.minion.") && prefixes.stream().anyMatch(p -> key.startsWith("bloodandbones.minion." + p))
-                        || surgery.stream().anyMatch(p -> key.startsWith("bloodandbones.surgery." + p)))) {
+                        || surgery.stream().anyMatch(p -> key.startsWith("bloodandbones.surgery." + p)) || key.startsWith("bloodandbones.command.minion."))) {
                     continue;
                 }
                 String reads = json.has("bloodless." + key) ? json.get("bloodless." + key).getAsString()
@@ -1912,5 +1913,49 @@ public class MinionTaskTests {
             helper.assertTrue(level.getEntitiesOfClass(ItemEntity.class, area).isEmpty(), "what it chopped should never be on the ground");
             helper.assertTrue(butcher.getMainHandItem().get(BBDataComponents.BLOODIED_AT.get()) != null, "its Cleaver should be bloody");
         });
+    }
+
+    /**
+     * {@code /bloodandbones minion fitness} (docs/NEXT.md 1.4): the minion its maker looks at, and not when they look away;
+     * for it, what it is doing, then every task's full breakdown in the screen's order, with the number before it was held
+     * where the cap took some off (a cow on rabbit legs herds at 200%, 214% before).
+     */
+    @GameTest(template = "empty", timeoutTicks = 20)
+    public static void fitnessCommandShowsEveryTask(GameTestHelper helper) {
+        Maker maker = new Maker(helper, new BlockPos(2, 2, 5));
+        MinionEntity minion = minion(helper, new BlockPos(5, 2, 5), cowOnRabbitLegs(), maker);
+        maker.lookAt(net.minecraft.commands.arguments.EntityAnchorArgument.Anchor.EYES, minion.position().add(0.0, minion.getBbHeight() / 2.0, 0.0));
+        if (com.avicagan.bloodandbones.minion.MinionCommand.lookedAt(maker, com.avicagan.bloodandbones.minion.MinionCommand.REACH) != minion) {
+            helper.fail("Its maker is looking right at it");
+            return;
+        }
+        // a player looks where its head turns
+        maker.setYRot(maker.getYRot() + 180.0F);
+        maker.setYHeadRot(maker.getYRot());
+        if (com.avicagan.bloodandbones.minion.MinionCommand.lookedAt(maker, com.avicagan.bloodandbones.minion.MinionCommand.REACH) != null) {
+            helper.fail("Looking away, its maker sees no minion");
+            return;
+        }
+        List<Component> lines = com.avicagan.bloodandbones.minion.MinionCommand.fitness(minion);
+        if (lines.isEmpty() || !names(lines.get(0), "bloodandbones.command.minion.title")) {
+            helper.fail("It should begin with what the minion is doing: " + lines);
+            return;
+        }
+        for (MinionTask task : MinionTask.values()) {
+            // each task's first line is its name (Idle's), or its name with its fitness or "Cannot"
+            if (lines.stream().noneMatch(line -> line.getContents() instanceof TranslatableContents t && (t.getKey().equals(task.nameKey())
+                    || t.getArgs().length > 0 && t.getArgs()[0] instanceof Component name && names(name, task.nameKey())))) {
+                helper.fail("Every task has its lines, not " + task);
+                return;
+            }
+        }
+        if (lines.stream().noneMatch(line -> names(line, MinionTask.HERDER.nameKey()) && names(line, "bloodandbones.command.minion.raw"))
+                || lines.stream().noneMatch(line -> names(line, "bloodandbones.minion.cannot.hand"))
+                || lines.stream().noneMatch(line -> names(line, "bloodandbones.minion.factor"))) {
+            helper.fail("Herder should show what the cap took off, Surgeon why it cannot, and the stats each reads: " + lines.size() + " lines");
+            return;
+        }
+        minion.discard();
+        helper.succeed();
     }
 }

@@ -342,6 +342,17 @@ public class BBLang {
         }
         bloodless("bloodandbones.minion.lever.surgeon_stump", "An open socket it leaves costs %s of essence to fit");
         bloodless("bloodandbones.minion.lever.surgeon_no_cut", "It tends, but only a surgeon's head may do the ritual's work");
+        // what a part brings to a minion's tasks, on JEI's Body Parts page and a piece's tooltip (docs/NEXT.md 1.4)
+        BloodAndBones.REGISTRATE.addRawLang("bloodandbones.minion.facts.knacks", "Knacks: %s");
+        BloodAndBones.REGISTRATE.addRawLang("bloodandbones.minion.facts.knack", "%s ×%s");
+        BloodAndBones.REGISTRATE.addRawLang("bloodandbones.minion.facts.grip", "Holds with: %s");
+        BloodAndBones.REGISTRATE.addRawLang("bloodandbones.minion.facts.grip_pair", "Holds with: %s, %s of them");
+        BloodAndBones.REGISTRATE.addRawLang("bloodandbones.minion.facts.leg_grip", "Holds with: %s, on a body with %s legs or more");
+        BloodAndBones.REGISTRATE.addRawLang("bloodandbones.minion.facts.disposition", "Disposition: %s");
+        BloodAndBones.REGISTRATE.addRawLang("bloodandbones.minion.facts.surgeon", "A surgeon's head: it may always do the ritual's cutting");
+        bloodless("bloodandbones.minion.facts.surgeon", "A surgeon's head: it may always do the ritual's work");
+        BloodAndBones.REGISTRATE.addRawLang("bloodandbones.minion.facts.in_minion", "In a minion:");
+        BloodAndBones.REGISTRATE.addRawLang("bloodandbones.minion.facts.hold_ctrl", "Hold Ctrl for what it brings to a minion's tasks");
         BloodAndBones.REGISTRATE.addRawLang("bloodandbones.minion.at_work", "At work: %s mB of blood a minute");
         BloodAndBones.REGISTRATE.addRawLang("bloodandbones.minion.at_work_brass", "At work: %s mB of soul blood a minute");
         // the task screen (docs/NEXT.md 1.3)
@@ -934,6 +945,11 @@ public class BBLang {
         BloodAndBones.REGISTRATE.addRawLang("bloodandbones.command.explain.nothing", "nothing");
         BloodAndBones.REGISTRATE.addRawLang("bloodandbones.command.dump.done", "Wrote %s traits of %s mobs to %s");
         BloodAndBones.REGISTRATE.addRawLang("bloodandbones.command.dump.failed", "Could not write the traits: %s");
+        // /bloodandbones minion fitness (docs/NEXT.md 1.4)
+        BloodAndBones.REGISTRATE.addRawLang("bloodandbones.command.minion.title", "%s, now %s");
+        BloodAndBones.REGISTRATE.addRawLang("bloodandbones.command.minion.raw", "(%s before it was held)");
+        BloodAndBones.REGISTRATE.addRawLang("bloodandbones.command.minion.none", "Look at a minion within 16 blocks to see how fit it is at each task");
+        BloodAndBones.REGISTRATE.addRawLang("bloodandbones.command.minion.not_yours", "Only its maker, or an operator, may see that");
         // JEI's Body Parts pages and the organ fitting
         BloodAndBones.REGISTRATE.addRawLang("bloodandbones.jei.category.body_parts", "Body Parts");
         bloodless("bloodandbones.jei.category.body_parts", "Parts and Cores");

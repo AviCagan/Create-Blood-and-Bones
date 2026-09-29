@@ -104,6 +104,60 @@ public final class TaskWords {
         return minion.idleReason();
     }
 
+    // ---- what a part brings, for JEI's Body Parts page and a piece's tooltip (docs/NEXT.md 1.4)
+
+    /**
+     * What a part brings to a minion's tasks, from its mob's data: its knacks ("Knacks: Surgeon ×1.5, Farmer ×1.25"), what it
+     * holds things with (an arm's grip, and a front leg's, which works by hand on a body of four legs or more) and, for a
+     * head, its disposition and whether it is a surgeon's head. These are the part's own facts: a fitness needs a whole
+     * build. Knacks of 1 change nothing and are left out. {@code traits} are what the carcass kept (a villager's
+     * profession), which its data's variants read; none reads the part as its mob has it.
+     */
+    public static List<Component> partFacts(com.avicagan.bloodandbones.parts.ResolvedMob mob, java.util.Map<String, String> traits, String key) {
+        List<Component> out = new ArrayList<>();
+        List<Component> knacks = new ArrayList<>();
+        MinionData.knacks(mob, traits, key).forEach((id, value) -> {
+            if (Math.abs(value - 1.0F) > 1.0E-3F) {
+                MinionTask task = MinionTask.byId(id);
+                knacks.add(Component.translatable("bloodandbones.minion.facts.knack", task == null ? Component.literal(id.toString()) : name(task), number(value)));
+            }
+        });
+        if (!knacks.isEmpty()) {
+            out.add(Component.translatable("bloodandbones.minion.facts.knacks", join(knacks)));
+        }
+        String base = key.contains(".") ? key.substring(0, key.indexOf('.')) : key;
+        switch (base) {
+            case "arm" -> {
+                String grip = MinionData.field(mob, traits, key, "grip").filter(com.google.gson.JsonElement::isJsonPrimitive)
+                        .map(com.google.gson.JsonElement::getAsString).orElse("hand");
+                int hands = Math.max(1, Math.round(MinionData.scalar(mob, traits, key, "hands", 1.0F)));
+                if (!"none".equals(grip)) {
+                    out.add(Component.translatable(hands > 1 ? "bloodandbones.minion.facts.grip_pair" : "bloodandbones.minion.facts.grip", grip(grip), hands));
+                }
+            }
+            case "leg" -> MinionData.field(mob, traits, key, "grip").filter(com.google.gson.JsonElement::isJsonPrimitive)
+                    .map(com.google.gson.JsonElement::getAsString).filter(g -> !"none".equals(g))
+                    .ifPresent(g -> out.add(Component.translatable("bloodandbones.minion.facts.leg_grip", grip(g), MinionStats.GRIPPING_LEGS)));
+            case "head" -> {
+                String disposition = MinionData.field(mob, traits, "head", "disposition").filter(com.google.gson.JsonElement::isJsonPrimitive)
+                        .map(com.google.gson.JsonElement::getAsString).orElse("none");
+                out.add(Component.translatable("bloodandbones.minion.facts.disposition", Component.translatable(MinionDisposition.nameKey(disposition))));
+                if (MinionData.field(mob, traits, "head", "surgeon").filter(com.google.gson.JsonElement::isJsonPrimitive)
+                        .map(com.google.gson.JsonElement::getAsBoolean).orElse(false)) {
+                    out.add(Component.translatable("bloodandbones.minion.facts.surgeon"));
+                }
+            }
+            default -> {
+            }
+        }
+        return out;
+    }
+
+    /** A grip's name: "hand", "paw"; one the mod has no words for as its data names it. */
+    private static Component grip(String grip) {
+        return Component.translatableWithFallback("bloodandbones.minion.grip." + grip, grip);
+    }
+
     // ---- a row's reasons, for the task screen's hover (docs/NEXT.md 1.3)
 
     /**

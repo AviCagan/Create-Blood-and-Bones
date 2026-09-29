@@ -4,6 +4,7 @@ import com.avicagan.bloodandbones.BloodAndBones;
 import com.avicagan.bloodandbones.carcass.butchery.ButcheryManager;
 import com.avicagan.bloodandbones.carcass.butchery.Yield;
 import com.avicagan.bloodandbones.minion.MinionData;
+import com.avicagan.bloodandbones.minion.TaskWords;
 import com.avicagan.bloodandbones.parts.Hides;
 import com.avicagan.bloodandbones.parts.Organs;
 import com.avicagan.bloodandbones.parts.PartsData;
@@ -40,7 +41,8 @@ import java.util.Set;
 
 /**
  * A mob's Body Parts page (docs/PARTS-AND-TRAITS.md section 7.9), beside its Butchery page: what each of its parts gives
- * fitted into a minion and in carcass armour, its hide, and its organs (the items the Surgical Rig cuts out of it, shown
+ * fitted into a minion (its traits, and what it brings to a minion's tasks: its knacks, what it holds with, a head's
+ * disposition; docs/NEXT.md 1.4) and in carcass armour, its hide, and its organs (the items the Surgical Rig cuts out of it, shown
  * so JEI finds this page from a Gland) and what each of them gives, and a full set of it. Read from the parts data the
  * server sent, so a datapack's changes show.
  */
@@ -115,12 +117,17 @@ public class BodyPartsCategory extends AbstractRecipeCategory<BodyPartsCategory.
         for (String key : keys) {
             List<TraitList.Resolved> minion = MinionData.traits(resolved, key);
             ResolvedMob.Part part = resolved.parts().get(key);
-            if (minion.isEmpty() && (part == null || part.armour().isEmpty() && part.pieces().isEmpty())) {
+            // what the part brings to a minion's tasks: its knacks, what it holds with, a head's disposition
+            List<Component> facts = TaskWords.partFacts(resolved, Map.of(), key);
+            if (minion.isEmpty() && facts.isEmpty() && (part == null || part.armour().isEmpty() && part.pieces().isEmpty())) {
                 continue;
             }
             out.add(partName(key).withStyle(ChatFormatting.DARK_RED, ChatFormatting.BOLD));
             if (!minion.isEmpty()) {
                 out.add(Component.translatable("bloodandbones.jei.body_parts.minion", list(store, minion)).withStyle(ChatFormatting.DARK_GRAY));
+            }
+            for (Component fact : facts) {
+                out.add(Component.literal(" ").append(fact).withStyle(ChatFormatting.DARK_GRAY));
             }
             if (part != null && !part.armour().isEmpty()) {
                 out.add(Component.translatable("bloodandbones.jei.body_parts.armour", list(store, part.armour())).withStyle(ChatFormatting.DARK_GRAY));

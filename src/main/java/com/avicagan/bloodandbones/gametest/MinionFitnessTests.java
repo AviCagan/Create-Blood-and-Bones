@@ -12,6 +12,7 @@ import com.avicagan.bloodandbones.minion.MinionEntity;
 import com.avicagan.bloodandbones.minion.MinionFitness;
 import com.avicagan.bloodandbones.minion.MinionStats;
 import com.avicagan.bloodandbones.minion.MinionTask;
+import com.avicagan.bloodandbones.minion.TaskWords;
 import com.avicagan.bloodandbones.minion.PieceRef;
 import com.avicagan.bloodandbones.parts.CarcassArmour;
 import com.avicagan.bloodandbones.parts.MobGroup;
@@ -771,6 +772,59 @@ public class MinionFitnessTests {
         }
         if (with.get(MinionTask.DIGGER).knackFrom().stream().noneMatch(p -> p.from().equals(bb("truffle_nose")))) {
             helper.fail("Its knack should say where it came from: " + with.get(MinionTask.DIGGER).knackFrom());
+            return;
+        }
+        helper.succeed();
+    }
+
+    /**
+     * What a part brings to a minion's tasks, as JEI's Body Parts page and a piece's tooltip (with Ctrl) show it
+     * (docs/NEXT.md 1.4): a farmer villager's head has its knacks (Surgeon and Farmer ×1.5, the biped's Courier ×1.25; its
+     * family's Guard of 1 is left out), the meek disposition and a surgeon's head; a nitwit's is dim; a cow's head has
+     * Herder and Courier ×1.25 and is docile, and no surgeon's; a zombie's arm holds with a hand, a villager's folded pair
+     * with two, and a wolf's front leg with a paw on a body of four legs or more. A carried piece's tooltip reads the same
+     * facts, by the part its bone is.
+     */
+    @GameTest(template = "empty", timeoutTicks = 20)
+    public static void partFactsShowKnacksGripsAndDispositions(GameTestHelper helper) {
+        PartsData.Store store = PartsData.SERVER;
+        List<net.minecraft.network.chat.Component> farmer = TaskWords.partFacts(store.resolve(mob("villager"), false), Map.of("profession", "farmer"), "head");
+        net.minecraft.network.chat.Component knacks = farmer.isEmpty() ? net.minecraft.network.chat.Component.empty() : farmer.get(0);
+        if (!MinionTaskTests.names(knacks, "bloodandbones.minion.facts.knacks") || !MinionTaskTests.names(knacks, MinionTask.SURGEON.nameKey())
+                || !MinionTaskTests.names(knacks, MinionTask.FARMER.nameKey()) || !MinionTaskTests.names(knacks, MinionTask.COURIER.nameKey())
+                || MinionTaskTests.names(knacks, MinionTask.GUARD.nameKey())) {
+            helper.fail("A farmer's head has knacks for Surgeon, Farmer and Courier, and none shown for Guard (1): " + farmer);
+            return;
+        }
+        if (farmer.stream().noneMatch(line -> MinionTaskTests.names(line, "bloodandbones.minion.disposition.meek"))
+                || farmer.stream().noneMatch(line -> MinionTaskTests.names(line, "bloodandbones.minion.facts.surgeon"))) {
+            helper.fail("A villager's head is meek, and a surgeon's: " + farmer);
+            return;
+        }
+        List<net.minecraft.network.chat.Component> nitwit = TaskWords.partFacts(store.resolve(mob("villager"), false), Map.of("profession", "nitwit"), "head");
+        List<net.minecraft.network.chat.Component> cow = TaskWords.partFacts(store.resolve(mob("cow"), false), Map.of(), "head");
+        if (nitwit.stream().noneMatch(line -> MinionTaskTests.names(line, "bloodandbones.minion.disposition.dim"))
+                || cow.stream().noneMatch(line -> MinionTaskTests.names(line, "bloodandbones.minion.disposition.docile"))
+                || cow.stream().noneMatch(line -> MinionTaskTests.names(line, MinionTask.HERDER.nameKey()) && MinionTaskTests.names(line, MinionTask.COURIER.nameKey()))
+                || cow.stream().anyMatch(line -> MinionTaskTests.names(line, "bloodandbones.minion.facts.surgeon"))) {
+            helper.fail("A nitwit's head is dim; a cow's docile, with Herder and Courier, and no surgeon's: " + nitwit + " / " + cow);
+            return;
+        }
+        List<net.minecraft.network.chat.Component> arm = TaskWords.partFacts(store.resolve(mob("zombie"), false), Map.of(), "arm");
+        List<net.minecraft.network.chat.Component> pair = TaskWords.partFacts(store.resolve(mob("villager"), false), Map.of(), "arm.pair");
+        List<net.minecraft.network.chat.Component> paw = TaskWords.partFacts(store.resolve(mob("wolf"), false), Map.of(), "leg.front");
+        if (arm.stream().noneMatch(line -> MinionTaskTests.names(line, "bloodandbones.minion.facts.grip") && MinionTaskTests.names(line, "bloodandbones.minion.grip.hand"))
+                || pair.stream().noneMatch(line -> MinionTaskTests.names(line, "bloodandbones.minion.facts.grip_pair"))
+                || paw.stream().noneMatch(line -> MinionTaskTests.names(line, "bloodandbones.minion.facts.leg_grip") && MinionTaskTests.names(line, "bloodandbones.minion.grip.paw"))) {
+            helper.fail("A zombie's arm holds with a hand, a villager's pair with two, a wolf's front leg with a paw: " + arm + " / " + pair + " / " + paw);
+            return;
+        }
+        ItemStack head = new ItemStack(com.avicagan.bloodandbones.registry.BBItems.CARCASS_PIECE.get());
+        head.set(com.avicagan.bloodandbones.registry.BBDataComponents.PIECE.get(), new com.avicagan.bloodandbones.item.CarcassPieceItem.Piece(mob("villager"), "head",
+                ResourceLocation.withDefaultNamespace("textures/entity/villager/villager.png"), List.of(), 1.0F, false, Map.of("profession", "farmer"), 0.0F, 0.0F, 0.0F, false));
+        List<net.minecraft.network.chat.Component> tooltip = com.avicagan.bloodandbones.item.CarcassPieceItem.facts(com.avicagan.bloodandbones.item.CarcassPieceItem.piece(head));
+        if (!tooltip.equals(farmer)) {
+            helper.fail("A farmer villager's head piece should show its head's facts: " + tooltip);
             return;
         }
         helper.succeed();
