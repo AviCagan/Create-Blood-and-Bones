@@ -298,16 +298,34 @@ public class ShackleHookBlockEntity extends BlockEntity implements com.simibubi.
 
     /** True if any loaded hook in the level holds this carcass. */
     public static boolean isHanging(ServerLevel level, UUID carcassId) {
+        return holding(level, carcassId) != null;
+    }
+
+    /** The loaded hook in the level that holds this carcass, or null. */
+    @Nullable
+    public static ShackleHookBlockEntity holding(ServerLevel level, UUID carcassId) {
         java.util.Set<ShackleHookBlockEntity> hooks = ACTIVE.get(level);
         if (hooks == null) {
-            return false;
+            return null;
         }
         for (ShackleHookBlockEntity hook : hooks) {
             if (!hook.isRemoved() && carcassId.equals(hook.carcassId)) {
-                return true;
+                return hook;
             }
         }
-        return false;
+        return null;
+    }
+
+    /**
+     * Read back holding a carcass, it counts as holding it from the start (isHanging, holding), not only once its first
+     * tick has joined the body again: a contraption put together in that same tick finds it.
+     */
+    @Override
+    public void onLoad() {
+        super.onLoad();
+        if (level instanceof ServerLevel serverLevel && isOccupied()) {
+            activate(serverLevel);
+        }
     }
 
     private void activate(ServerLevel level) {

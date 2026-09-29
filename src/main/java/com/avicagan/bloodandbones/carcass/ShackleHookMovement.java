@@ -5,7 +5,6 @@ import com.simibubi.create.content.contraptions.behaviour.MovementContext;
 import com.simibubi.create.content.contraptions.render.ContraptionMatrices;
 import com.simibubi.create.foundation.virtualWorld.VirtualRenderWorld;
 import net.minecraft.client.renderer.MultiBufferSource;
-import net.minecraft.core.BlockPos;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.world.item.ItemStack;
@@ -40,10 +39,18 @@ public class ShackleHookMovement implements MovementBehaviour {
         if (packed == null) {
             return;
         }
+        // The hook still in the world, if it is: found by its carcass, not worked out from where the contraption keeps it (a
+        // piston with poles out keeps its blocks shifted back by them, so that lookup landed on a pole). Create starts the
+        // actors before it checks whether the contraption can move at all (a piston already at its limit, or blocked,
+        // gives up after this), so the hook must keep the carcass too, to hang again if it does not; otherwise the
+        // carcass was taken away with nothing to bring it back.
+        ShackleHookBlockEntity hook = ShackleHookBlockEntity.holding(level, id);
+        if (hook == null && level.getBlockEntity(context.contraption.anchor.offset(context.localPos)) instanceof ShackleHookBlockEntity at
+                && id.equals(at.hookedCarcass())) {
+            hook = at;
+        }
         CarcassButchery.takeAway(level, carcass);
-        BlockPos at = context.contraption.anchor.offset(context.localPos);
-        if (level.getBlockEntity(at) instanceof ShackleHookBlockEntity hook && id.equals(hook.hookedCarcass())) {
-            // still in the world: it keeps the carcass too, and hangs it again if the contraption does not move after all
+        if (hook != null) {
             hook.keepPacked(level, packed.copy());
         }
         data.remove("Carcass");

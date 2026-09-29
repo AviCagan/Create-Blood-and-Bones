@@ -68,25 +68,35 @@ public final class CarcassRest {
             return;
         }
         SubLevelPhysicsSystem physics = container.physicsSystem();
-        Vector3d linear = new Vector3d();
-        Vector3d angular = new Vector3d();
-        boolean still = true;
+        List<ServerSubLevel> bodies = new ArrayList<>();
         for (UUID id : carcass.bones.values()) {
             SubLevel subLevel = container.getSubLevel(id);
             if (!(subLevel instanceof ServerSubLevel serverSubLevel) || serverSubLevel.isRemoved()) {
                 carcass.stillTicks = 0;
                 return;
             }
-            RigidBodyHandle handle = physics.getPhysicsHandle(serverSubLevel);
-            handle.getLinearVelocity(linear);
-            handle.getAngularVelocity(angular);
-            if (linear.length() > STILL_LINEAR || angular.length() > STILL_ANGULAR) {
-                still = false;
+            bodies.add(serverSubLevel);
+        }
+        boolean still = still(physics, bodies, null);
+        // Lying on a deck that moves (a ship under way), it is still when it keeps still on the deck, and stays put where
+        // it lies on it: measured in the world, a carcass dragged onto a moving ship never rested there, and stayed a
+        // whole ragdoll held on by friction for as long as the ship moved. The deck is only looked for while it moves in
+        // the world; kept still, it is measured on the deck it was measured on before.
+        ServerSubLevel deck = null;
+        if (!still) {
+            UUID torsoId = carcass.bones.get(carcass.rootBone);
+            if (torsoId != null && container.getSubLevel(torsoId) instanceof ServerSubLevel torso) {
+                deck = deckUnder(level, carcass, torso);
             }
+            if (deck != null) {
+                still = still(physics, bodies, deck);
+            }
+        } else if (carcass.settledDeck != null && container.getSubLevel(carcass.settledDeck) instanceof ServerSubLevel before && !before.isRemoved()) {
+            deck = before;
         }
         // thin, light limbs (a spider's legs) can twitch against the ground for ever without going anywhere: a carcass
         // that has stayed where it lies for a while rests all the same
-        boolean stayedPut = stayedPut(container, carcass);
+        boolean stayedPut = stayedPut(container, carcass, deck);
         if (!still && !stayedPut) {
             carcass.stillTicks = 0;
             return;
@@ -116,16 +126,49 @@ public final class CarcassRest {
     public static final int TWITCH_TICKS = 100;
 
     /**
-     * Whether every body of the carcass has stayed near where it was {@link #TWITCH_TICKS} ago. The count starts
-     * again from where the bodies are now whenever one goes further.
+     * Whether every body keeps under the still speeds: in the world, or on {@code deck}, less the speed the deck itself
+     * has where the body is.
      */
-    private static boolean stayedPut(ServerSubLevelContainer container, CarcassSavedData.Carcass carcass) {
-        boolean near = carcass.settledAt.keySet().equals(carcass.bones.keySet());
+    private static boolean still(SubLevelPhysicsSystem physics, List<ServerSubLevel> bodies, @Nullable ServerSubLevel deck) {
+        Vector3d deckLinear = new Vector3d();
+        Vector3d deckAngular = new Vector3d();
+        if (deck != null) {
+            RigidBodyHandle handle = physics.getPhysicsHandle(deck);
+            handle.getLinearVelocity(deckLinear);
+            handle.getAngularVelocity(deckAngular);
+        }
+        Vector3d linear = new Vector3d();
+        Vector3d angular = new Vector3d();
+        for (ServerSubLevel body : bodies) {
+            RigidBodyHandle handle = physics.getPhysicsHandle(body);
+            handle.getLinearVelocity(linear);
+            handle.getAngularVelocity(angular);
+            if (deck != null) {
+                // the deck's speed at the body, as Sable works out a point's (SubLevelHelper#getVelocity)
+                Vector3d carried = new Vector3d(deckAngular).cross(new Vector3d(body.logicalPose().position()).sub(deck.logicalPose().position())).add(deckLinear);
+                linear.sub(carried);
+                angular.sub(deckAngular);
+            }
+            if (linear.length() > STILL_LINEAR || angular.length() > STILL_ANGULAR) {
+                return false;
+            }
+        }
+        return true;
+    }
+
+    /**
+     * Whether every body of the carcass has stayed near where it was {@link #TWITCH_TICKS} ago: in the world, or where it
+     * lies on {@code deck}, in the deck's plot. The count starts again from where the bodies are now whenever one goes
+     * further, or the deck it is measured on changes.
+     */
+    private static boolean stayedPut(ServerSubLevelContainer container, CarcassSavedData.Carcass carcass, @Nullable ServerSubLevel deck) {
+        UUID deckId = deck == null ? null : deck.getUniqueId();
+        boolean near = carcass.settledAt.keySet().equals(carcass.bones.keySet()) && java.util.Objects.equals(deckId, carcass.settledDeck);
         for (Map.Entry<String, UUID> entry : carcass.bones.entrySet()) {
             Vector3d from = carcass.settledAt.get(entry.getKey());
             double reach = entry.getKey().equals(carcass.rootBone) ? TWITCH_TORSO : TWITCH_REACH;
             if (!near || from == null || !(container.getSubLevel(entry.getValue()) instanceof ServerSubLevel body)
-                    || body.logicalPose().position().distance(from) > reach) {
+                    || settledPosition(body, deck).distance(from) > reach) {
                 near = false;
                 break;
             }
@@ -133,14 +176,21 @@ public final class CarcassRest {
         if (!near) {
             carcass.settledAt.clear();
             carcass.settledTicks = 0;
+            carcass.settledDeck = deckId;
             for (Map.Entry<String, UUID> entry : carcass.bones.entrySet()) {
                 if (container.getSubLevel(entry.getValue()) instanceof ServerSubLevel body) {
-                    carcass.settledAt.put(entry.getKey(), new Vector3d(body.logicalPose().position()));
+                    carcass.settledAt.put(entry.getKey(), settledPosition(body, deck));
                 }
             }
             return false;
         }
         return ++carcass.settledTicks >= TWITCH_TICKS;
+    }
+
+    /** Where a body is: in the world, or in the plot of the deck it lies on. */
+    private static Vector3d settledPosition(ServerSubLevel body, @Nullable ServerSubLevel deck) {
+        Vector3d at = new Vector3d(body.logicalPose().position());
+        return deck == null ? at : deck.logicalPose().transformPositionInverse(at);
     }
 
     /** Carcasses that have earned their rest this tick, folded from the level tick. */
@@ -391,6 +441,16 @@ public final class CarcassRest {
             BloodAndBones.LOGGER.debug("Carcass {} lost its support, unfolding", carcass.id);
             carcass.unfoldedUnsupported = new Vector3d(torso.logicalPose().position());
             PENDING_SPLIT.computeIfAbsent(level, l -> new java.util.LinkedHashSet<>()).add(carcass.id);
+            return;
+        }
+        // Pinned to what it lies on now, not to what it lay on when it was pinned: a ship built out of the floor under it
+        // (or assembled again at a dock) takes it along, and a deck that was not there when the pin was made again (its
+        // sub-level unloaded a while, or not yet loaded after a reload) has it back. Pinned to the world, it hung in the
+        // air while the deck moved out from under it.
+        ServerSubLevel deck = deckUnder(level, carcass, torso);
+        if (!java.util.Objects.equals(deck == null ? null : deck.getUniqueId(), carcass.restDeck)) {
+            BloodAndBones.LOGGER.debug("Carcass {} pinned again, to {}", carcass.id, deck == null ? "the world" : deck.getUniqueId());
+            lock(level, carcass, torso, deck);
         }
     }
 
@@ -456,7 +516,29 @@ public final class CarcassRest {
         if (container == null) {
             return null;
         }
-        for (Vector3d corner : corners(carcass, torso)) {
+        List<Vector3d> corners = corners(carcass, torso);
+        if (corners.isEmpty()) {
+            return null;
+        }
+        // one look over all of it first: lying in a field, nothing but its own bodies is near, and that is all it costs
+        Vector3d lo = new Vector3d(corners.get(0));
+        Vector3d hi = new Vector3d(corners.get(0));
+        for (Vector3d corner : corners) {
+            lo.min(corner);
+            hi.max(corner);
+        }
+        boolean near = false;
+        for (SubLevel other : container.queryIntersecting(new dev.ryanhcode.sable.companion.math.BoundingBox3d(
+                lo.x - 0.05, lo.y - SUPPORT_REACH - 0.05, lo.z - 0.05, hi.x + 0.05, hi.y + 0.05, hi.z + 0.05))) {
+            if (!other.isRemoved() && !carcass.bones.containsValue(other.getUniqueId())) {
+                near = true;
+                break;
+            }
+        }
+        if (!near) {
+            return null;
+        }
+        for (Vector3d corner : corners) {
             ServerSubLevel deck = underIn(level, container, corner, torso, false);
             if (deck != null) {
                 return deck;
@@ -592,6 +674,11 @@ public final class CarcassRest {
      * while the deck moved on under it).
      */
     public static void lock(ServerLevel level, CarcassSavedData.Carcass carcass, ServerSubLevel torso) {
+        lock(level, carcass, torso, deckUnder(level, carcass, torso));
+    }
+
+    /** As above, to {@code deck} (null for the world), already looked up. */
+    private static void lock(ServerLevel level, CarcassSavedData.Carcass carcass, ServerSubLevel torso, @Nullable ServerSubLevel deck) {
         ServerSubLevelContainer container = SubLevelContainer.getContainer(level);
         if (container == null || torso.isRemoved()) {
             return;
@@ -604,7 +691,6 @@ public final class CarcassRest {
         Vector3d plotPoint = new Vector3d(center.getX(), center.getY(), center.getZ());
         Pose3d pose = torso.logicalPose();
         Vector3d worldPoint = pose.transformPosition(plotPoint, new Vector3d());
-        ServerSubLevel deck = deckUnder(level, carcass, torso);
         carcass.restDeck = deck == null ? null : deck.getUniqueId();
         // the same point and turn, in the deck's own plot and frame when it lies on one
         Vector3d deckPoint = deck == null ? worldPoint : deck.logicalPose().transformPositionInverse(worldPoint, new Vector3d());
