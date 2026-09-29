@@ -188,14 +188,16 @@ Everything below is in development builds only; the art is placeholder (see the 
   spur it on; the stick wears as on a pig or strider). A camel carries its maker and one more behind; a whole ravager takes
   a saddle and two riders too.
 - A carcass remembers more of its mob: a charged creeper, a fox's, frog's or rabbit's kind, a panda's gene, a name. A
-  charged creeper's sac blows twice as hard, a snow fox's hide shrugs off freezing, a warm frog's legs are fireproof and a
-  cold one's frost-guarded, the killer bunny's head is a berserk bodyguard biting for 8, as is a vindicator named Johnny's
-  and a zoglin's, a lazy panda's head keeps watch and a weak one's sneezes slime. More of the mobs' own specials are wired:
-  cod and salmon heads fish with their mouths, allay and fox heads fetch, an axolotl's hunts what axolotls hunt, a
-  pillager's arms draw bows twice as fast, a zombie's arms grab, a zombie villager's head is a shaky surgeon.
+  charged creeper's sac blows twice as hard (cut out, it stays charged, and does not stack with a plain one), a snow
+  fox's hide shrugs off freezing, a warm frog's legs are fireproof and a cold one's frost-guarded, the killer bunny's
+  head is a berserk bodyguard biting for 8, as is a vindicator named Johnny's and a zoglin's, a lazy panda's head keeps
+  watch and a weak one's sneezes slime. More of the mobs' own specials are wired: cod and salmon heads fish with their
+  mouths, allay and fox heads fetch, an axolotl's hunts what axolotls hunt, a pillager's arms draw bows twice as fast, a
+  zombie's arms grab, a zombie villager's head is a shaky surgeon.
 - Fixed: a creature's random blink could land where it already stood. A hauler sometimes left a body lying across a
-  Bleeding Rack's rim, where it rocked or slid off without bleeding; it now lays it in the middle of the tray and steadies
-  it until it lies still there.
+  Bleeding Rack's rim, where it rocked or slid off without bleeding; it now lays it in the middle of the tray and
+  steadies it until it lies still there. A minion fighting by a wall or in a corner could stop a block or two short of
+  what it went for and never strike.
 - A minion with a head wears a helmet (or a pumpkin) its maker puts on it; a zombie's torso in one does not burn by day,
   the helmet wearing for it instead.
 - Fixed: a lava-walking minion standing on lava hung the server as soon as it set off anywhere.

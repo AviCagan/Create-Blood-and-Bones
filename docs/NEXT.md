@@ -70,12 +70,13 @@ not on main.
 **Found along the way, to fix either way:** a wolf hung on a Shackle Hook hangs from its right hind hip, and by the same
 code a ravager would hang from its right front shoulder (docs/ARCHITECTURE-PROPOSAL.md 15.18 on that branch).
 
+## 3. Already on the list
 
 - **Open questions answered with the design's defaults** (docs/ARCHITECTURE-PROPOSAL.md 15.1). All fourteen are still
   open for the owner to confirm or overturn.
 - **Known gaps:**
-  - A lava-walking minion stands on lava but cannot walk across it. This is being built now.
-  - Held items and helmets are not drawn on minions yet. This is also being built now.
+  - A torso's empty arm socket shows its raw stump as a flat square beside the shoulder (the space the arm's top left,
+    as a carcass's cut arm shows it), which from behind reads as a thin plate sticking out.
   - `meatHookDragsByLeg` failed once in more than 50 runs (the drag physics under load); it is being watched.
 - **Later slices** (docs/PARTS-AND-TRAITS.md section 9):
   - the balance pass and Ponder scenes (slice 9);

@@ -2555,7 +2555,7 @@ in survival nobody could cut a rumen or a powder sac out and fit it.
   `compat/jei/BBJeiPlugin`, `client/DevShowcase` (the Gland in the hotbar, and the creeper's Body Parts and fitting pages
   photographed), `gametest/PatientTests` (the rumen and the marrow). No file in `minion/` changed: the Assembly Frame's
   organ slot takes a Gland through `CarcassArmourFittingRecipe.organ`, which it already called.
-- **Found on the way, not fixed here (the minion jobs are another branch's)**: two job tests fail now and then on the
+- **Found on the way, not fixed here (the minion jobs are another branch's; both fixed since, 15.17 and 15.17a)**: two job tests fail now and then on the
   starting commit as well, shown by running many copies of each at once there (`haulerLaysCarcassOnRack` once in 50 to
   100 copies, `hunterWithMeatHookLeavesCarcass` twice in 50); one or the other failed in 2 of the 19 full runs made for
   this slice. The hauler lets a body down when its torso is within 0.8 of the tray's middle (`Haul.ON_TRAY`), which is
@@ -2685,10 +2685,58 @@ now reach.
   jump (`PlayerRideableJumping`, and so Centaur's Jump Boost for your mount); armour trims and other mods' custom armour
   models on a helmet (the vanilla helmet shape is stretched instead); dispositions other than berserk (still only data);
   armour-side variants (a hide or scraps carry no traits of their mob, so a snow fox hide fitted to armour is a plain fox's)
-  and organs cut out in play carrying their carcass's traits (organ harvesting's, 15.16, to fill `Organ.traits`); the
+  and organs cut out in play carrying their carcass's traits (organ harvesting's, 15.16, to fill `Organ.traits`: done in 15.17a); the
   playful panda's tumbles and the worried one's flight from thunder; and the other waits the signature lint logs (the sting
   that spends a limb, carrying blocks, the row of fangs, the caravan, trader's guard and homing jobs, the mimic alarm,
   skull-firing heads, rolling, being scooped into a bucket, froglights, the Gold Gizzard's double roll, and the rest), each a
   mechanism of its own rather than wiring.
 - The suite is 431 tests (417 before, and fourteen new: `MinionMovementTests`, 8, and `MinionVariantTests`, 6), and passed
   three runs in a row.
+
+### 15.17a Organs and the minion leftovers together, with main's hauler fix (verified)
+
+15.16 and 15.17 were built apart from the same starting point and merged; the session doing it restarted part way, so
+the merge was saved unbuilt and untested. It was then gone over, main's own hauler fix merged in, and all of it run.
+
+- **What the merge joined** (both halves' intent kept): a mob file's layers carry both organ lists and variants
+  (`MobGroup`, `ResolvedMob`, `PartsData`). An organ cut out now keeps what its carcass kept, the gap 15.17 left for
+  15.16: `Surgery.harvest` passes the piece's or the heavy carcass's traits to `Organs.stack`, which keeps only those a
+  variant of that organ reads and that match (`ResolvedMob.organTraitsKept`: a charged creeper's sac keeps
+  `{charged: true}`; its name, or a plain creeper, keeps nothing), in a new component, `bloodandbones:organ_traits`, set
+  only when there is something, so plain sacs still stack. `Organs.of` reads it back, the tooltip and the fitting use the
+  variant's traits, and the fitting and the Assembly Frame give it back as it went in (`Organs.stack(store, organ)`).
+  `/bloodandbones traits explain` lists each variant ("One whose carcass kept charged = true adds: ..."), and the dump
+  gives its rows the facet `variant[charged = true]:organ:...`. `chargedSacKeepsItsCharge` (cut out of a charged torso,
+  it blasts at 2 in a chestplate and self-destructs at 2 in a minion, and comes back out of each still charged).
+- **Left half-done by the interruption, and cleared**: a test class that ran the hunter's and the hauler's tests 140
+  times over (`TmpMergeRepro`), and a debug log in the bite goal. No conflict markers were left, nothing is registered
+  twice, and no method is there in both halves' versions. (13.5 is numbered twice, as it already was on main.)
+- **Main merged in** (the hauler fix, `-Dbloodandbones.debug.only` and `.repeat` for the test server, docs/NEXT.md): main
+  and 15.17 had each fixed the hauler dropping a body off a rack, in the same lines. Both are kept: from main, standing
+  still counts as having got there only once it has walked a moment since taking hold, a body let down short keeps its
+  pass's line, it is let down once past the middle along the line it is towed, it stands still while the body settles,
+  and a body over a rack is supported by any corner (`CarcassRest`); from 15.17, it is let down where it passes nearest
+  the middle, steadied every second while it settles, and done only once the body has come to rest in the tray. Its
+  settling time is main's two waits added up.
+- **Found running it, and fixed**:
+  - `haulerLaysCarcassOnRack` failed twice in a hundred copies run at once, both the same way (every decision logged): the
+    cow lies off to the side of the line the hauler walks, cuts the corner as it is towed and passed the tray 1.2 to 1.5
+    wide of the middle; the merged rule let a body down at a pass's end only within 1.2, so it took another pass, and
+    standing past the rack by the pen's wall, with the body between it and the rack, it walked into the body, stalled
+    and gave up, over and over. At a pass's end it now lets the body down wherever the bleeding finds this rack under
+    it (main's rule; the tray catches a little wide), and does the same when it stalls over the rack. 150 copies passed
+    after, none taking a second pass.
+  - `hunterWithMeatHookLeavesCarcass` (15.16's finding, what the debug log was chasing): a body a block wide is pathed as
+    two blocks wide, so by a wall or in a corner, where a hurt cow runs, the bite goal's path stops a block or two short,
+    and vanilla's melee goal paths again only once the target moves, each new path ending where it stood. With its path
+    done and what it goes for within 4 blocks and in sight, a minion now walks straight at it (`MinionGoals.Bite`).
+  - On screen: a carved pumpkin on a pig's head flickered where the snout, a pixel proud of the head, met the pumpkin's
+    front; what a minion wears on its head now has 4% more room than vanilla gives a humanoid's (`ROOM`), and the snout
+    stays inside. The showcase's hand shot now holds the powder sac (the client is told the hotbar slot).
+- **The showcase** photographs the new things close: the bowman from in front (a cow's head in an iron helmet stretched
+  to it, its horns poking through the top, a bow in its right hand at its side), the cow on phantom wings from below
+  (wings raised, raw stitched shoulders, hind legs dangling), and the pig's head in its pumpkin (`minions_2` to `4`).
+- **Not done**: a torso's empty arm socket shows its raw stump as a flat square beside the shoulder (the face of the
+  space the arm's top left, as `WoundCaps` draws a carcass's), which from behind reads as a thin plate sticking out; it
+  is on docs/NEXT.md. docs/NEXT.md lost its "Already on the list" heading on main, and has it back.
+- The suite is 443 tests (431, eleven from 15.16, and `chargedSacKeepsItsCharge`), and passed three runs in a row.
