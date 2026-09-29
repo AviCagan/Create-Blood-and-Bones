@@ -2560,7 +2560,7 @@ public class MinionTaskTests {
         pen(helper);
         Maker maker = new Maker(helper, new BlockPos(2, 2, 2));
         MinionEntity guard = minion(helper, new BlockPos(2, 2, 3), armed(ref("zombie", "head")), maker);
-        MinionEntity idle = minion(helper, new BlockPos(3, 2, 2), armed(ref("zombie", "head")), maker);
+        MinionEntity idle = minion(helper, new BlockPos(2, 2, 1), armed(ref("zombie", "head")), maker);
         if (!guard.setTask(MinionTask.GUARD, MinionTask.Anchor.MAKER, 4) || !idle.setTask(MinionTask.IDLE, MinionTask.Anchor.MAKER, 0)) {
             helper.fail("A zombie should take guarding and Idle with its maker");
             return;
