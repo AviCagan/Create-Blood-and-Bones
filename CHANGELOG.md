@@ -43,7 +43,8 @@ Everything below is in development builds only; the art is placeholder (see the 
   and skin as far as they can be found. Babies of kinds with no baby shape of their own are the grown carcass at half
   size. The ender dragon still dies whole.
 - Weight classes, from tiny to colossal: light carcasses float and heavy ones sink. Small carcasses no longer shake
-  themselves apart in water.
+  themselves apart in water. A carcass lying still in or beside water costs the server nothing, and one in a ship's dry
+  hold below the waterline lies as on land.
 - A carcass in the air of a Create: Dragons Plus freezing fan (a fan blowing through powder snow) does not
   rot. Other addons' freezing fans and freezers join through Dragons Plus or a tag.
 
@@ -76,8 +77,10 @@ Everything below is in development builds only; the art is placeholder (see the 
   before the hide (a cow's rumen as well as its heart, lungs, stomach and eyes; a skeleton's marrow, dry), and a
   carcass folded to rest on the table gives them up without being unfolded.
 
-- A mob with no butchery table of its own gets one from its groups (rotten flesh from anything rotting, bones from
-  skeletons, feathers from fowl...), and a mod or datapack can give any group or mob its own.
+- What butchering gives comes from the mob's groups (rotten flesh from anything rotting, bones from skeletons, feathers
+  from fowl...), with a mob's own file saying only what it does differently, so a datapack retuning a group retunes
+  every mob in it, vanilla ones too. Every vanilla mob gives what it gave. A datapack can still give one mob a table of
+  its own.
 - The Beheader's skulls are data (another mod's mob can have its head kept whole).
 
 ### Blood

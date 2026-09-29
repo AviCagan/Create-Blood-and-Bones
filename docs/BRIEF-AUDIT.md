@@ -148,7 +148,8 @@ The packages are in order of how much their gap hurts the brief:
 Built (ARCHITECTURE 15.29, docs/MODDED-MOBS.md): a generic body for any mob with no rig, from its archetype, scaled to its
 hitbox and wearing its own model's parts and skin on the client; the archetypes' match rules read at last; babies with no
 baby shape; weight classes as data (listed in 15.29 for the owner), driving drag, blood, floating or sinking and rot time;
-rot time and butchery by group, a mob's own file or table as the override; the constants below moved into the server
+rot time and butchery by group for every mob, vanilla ones too (a mob's own file says only what it does differently; a
+butchery table file is a datapack's optional override, and the mod ships none); the constants below moved into the server
 config or data at today's figures; naming rules in place of most rig-target overrides; the guide for model authors.
 Found on the way, for package 1: `hindLegHookComesRoundRearFirst` fails about once in 80 runs on main too.
 Left for the owner: whether a size-2 slime should leave a carcass (4.4 says it splits), the class list and whether a

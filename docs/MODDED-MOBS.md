@@ -18,7 +18,9 @@ A mob Blood & Bones has never heard of still becomes a carcass (docs/ARCHITECTUR
    head and limbs, laid out against the hitbox, so they scale with it. A quadruped is a body, a head, four legs and a
    tail; a biped a body, a head, two arms and two legs; a fish a body, a head and a tail; and so on for all eleven
    archetypes. It weighs what its boxes hold, bleeds, drags, hangs, rots and is butchered like any other carcass. A baby
-   is the same body at half size about its feet.
+   is the same body at half size about its feet. Its joints come from its parts' names (below); a generic rig file may
+   give any of its bones a `"joint"` of its own (`min_degrees`, `max_degrees`, `damping`, `stiffness`, `contacts`, as
+   a rig file's joints), and that wins.
 3. **Its look.** On the client, each part of the generic body looks for a part of your model with its name ("head",
    "body", "right_front_leg", "tail"...), and draws it stretched to fit, in the skin your renderer gives a plain one of
    your mob. The model is found under the layer named after your mob (`<your ns>:<mob>`, layer `main`, as the game
@@ -119,7 +121,8 @@ wings, a blaze's rods, a magma cube's layers).
 - `rot_time`: ticks from fresh to rotten in a temperate place (a rig's own `rot_time` beats it).
 - `butchery`: any of `meat`, `meat_per_block`, `hide`, `hide_per_weight`, `bone`, `bone_per_block`, `bone_min`,
   `offal_per_weight`, `fat_per_weight`, `hide_extras`, `part_extras` (by body name). Each group can set some, and the
-  last to set a field wins. A table of your own (`data/<ns>/butchery/<your ns>/<mob>.json`) beats all of them.
+  last to set a field wins, so a mob's own file need say only what it does differently (the vanilla mobs' files do
+  just that). A table of your own (`data/<ns>/butchery/<your ns>/<mob>.json`) beats all of them.
 - `baby_yield`: a baby's share of the grown one's yields; by default its share of the size.
 - `tissue`: `flesh`, `bone` or `plate`, which sets how heavy its bodies are.
 
