@@ -241,6 +241,8 @@ public class BBGameTests {
             // (let go, it lay against their back up to 1.4 blocks short, 5 runs in 60). So the leg must reach the point it
             // is pulled to, however it lies.
             double allowed = grabBone.equals("body") ? 0.5 : 1.25;
+            BloodAndBones.LOGGER.info("[drag] by the {}: the hooked point {} from its target (middle of the last second; farthest {}), started {} from the player",
+                    grabBone, gap, sorted.get(sorted.size() - 1), hookedDistance[0]);
             if (gap > allowed) {
                 helper.fail("Hooked point did not reach the tether target: still " + gap + " blocks away (started " + hookedDistance[0] + " from the player)");
             }
@@ -429,6 +431,9 @@ public class BBGameTests {
             // head end (part-local -y) up, belly (part-local -z) horizontal
             org.joml.Vector3d headEnd = body.logicalPose().orientation().transform(new org.joml.Vector3d(0, -1, 0));
             org.joml.Vector3d belly = body.logicalPose().orientation().transform(new org.joml.Vector3d(0, 0, -1));
+            ServerSubLevel headBody = bones.get("head");
+            BloodAndBones.LOGGER.info("[hang] hung cow: head end {}, belly {}, its head's middle {} in the torso's frame", headEnd, belly,
+                    headBody == null ? null : body.logicalPose().transformPositionInverse(headBody.logicalPose().position(), new org.joml.Vector3d()));
             if (headEnd.y < 0.7) {
                 helper.fail("Body should hang head-up; head end direction is " + headEnd);
             }
