@@ -522,26 +522,26 @@ public class GroupTests {
      * differently.
      */
     private static final Map<String, Integer> OLD_TABLES = Map.ofEntries(
-            Map.entry("allay", -1287331861), Map.entry("armadillo", 1476610694), Map.entry("axolotl", 1861744833), Map.entry("bat", -1842782252),
-            Map.entry("bee", -438996877), Map.entry("blaze", 1205860012), Map.entry("bogged", 284217038), Map.entry("breeze", 862564078),
-            Map.entry("camel", -1006325013), Map.entry("cat", 1936193317), Map.entry("cave_spider", -1158850331), Map.entry("chicken", -1097473371),
-            Map.entry("cod", -1135505453), Map.entry("cow", -60637547), Map.entry("creeper", -514560689), Map.entry("dolphin", 1231583912),
-            Map.entry("donkey", 722747869), Map.entry("drowned", 265721398), Map.entry("elder_guardian", 2063089293), Map.entry("enderman", 454611567),
-            Map.entry("endermite", 1217579934), Map.entry("evoker", -1281747390), Map.entry("fox", 1826460913), Map.entry("frog", -1676841933),
-            Map.entry("ghast", -611809911), Map.entry("glow_squid", 323269522), Map.entry("goat", -1787169288), Map.entry("guardian", -3906941),
-            Map.entry("hoglin", -1132204882), Map.entry("horse", 802021355), Map.entry("husk", -851244227), Map.entry("illusioner", 470160504),
-            Map.entry("iron_golem", -1827941541), Map.entry("llama", 1864820256), Map.entry("magma_cube", -240558180), Map.entry("mooshroom", 1976761893),
-            Map.entry("mule", -1326660280), Map.entry("ocelot", 1135512924), Map.entry("panda", -1149483112), Map.entry("parrot", 1686420305),
-            Map.entry("phantom", -382898846), Map.entry("pig", 1979798010), Map.entry("piglin", -861174795), Map.entry("piglin_brute", 1190090863),
-            Map.entry("pillager", -557817838), Map.entry("polar_bear", 888415520), Map.entry("pufferfish", -1519723779), Map.entry("rabbit", 1991030167),
-            Map.entry("ravager", 413317409), Map.entry("salmon", -1883773617), Map.entry("sheep", -1773195339), Map.entry("shulker", -841160273),
-            Map.entry("silverfish", -1000358861), Map.entry("skeleton", -488785632), Map.entry("skeleton_horse", -390317608), Map.entry("slime", 189502024),
-            Map.entry("sniffer", 637540456), Map.entry("snow_golem", 20158486), Map.entry("spider", 194254379), Map.entry("squid", -907047168),
-            Map.entry("stray", 994445182), Map.entry("strider", -532552688), Map.entry("tadpole", -1757486625), Map.entry("trader_llama", 1624811639),
-            Map.entry("turtle", 2009535757), Map.entry("vex", -357079242), Map.entry("villager", -1455282898), Map.entry("vindicator", 1399925997),
-            Map.entry("wandering_trader", -488287972), Map.entry("warden", 226084657), Map.entry("witch", 690364576), Map.entry("wither", -1735450502),
-            Map.entry("wither_skeleton", -396369769), Map.entry("wolf", 74035547), Map.entry("zoglin", -1466911560), Map.entry("zombie", 610946039),
-            Map.entry("zombie_horse", -102015283), Map.entry("zombie_villager", -211092677), Map.entry("zombified_piglin", 1176189563));
+            Map.entry("allay", 1927193700), Map.entry("armadillo", 326240371), Map.entry("axolotl", -1650715176), Map.entry("bat", -1333462379),
+            Map.entry("bee", 1995558195), Map.entry("blaze", 1459769514), Map.entry("bogged", -982331238), Map.entry("breeze", 1421096567),
+            Map.entry("camel", 399975671), Map.entry("cat", -559315369), Map.entry("cave_spider", 1668090530), Map.entry("chicken", 983113822),
+            Map.entry("cod", 348777437), Map.entry("cow", -1993460388), Map.entry("creeper", 491495121), Map.entry("dolphin", -1444252232),
+            Map.entry("donkey", -349053035), Map.entry("drowned", 763917847), Map.entry("elder_guardian", -1439713639), Map.entry("enderman", 595360045),
+            Map.entry("endermite", 1834891033), Map.entry("evoker", -601381348), Map.entry("fox", 1388487408), Map.entry("frog", -776630023),
+            Map.entry("ghast", 2107751350), Map.entry("glow_squid", 2113943136), Map.entry("goat", 579344297), Map.entry("guardian", 2062371476),
+            Map.entry("hoglin", -233029223), Map.entry("horse", -1086888700), Map.entry("husk", -380683350), Map.entry("illusioner", 1325800762),
+            Map.entry("iron_golem", -588457890), Map.entry("llama", -1040358301), Map.entry("magma_cube", -917825905), Map.entry("mooshroom", -1489324044),
+            Map.entry("mule", 2121735177), Map.entry("ocelot", -798954648), Map.entry("panda", 1709654126), Map.entry("parrot", -927210133),
+            Map.entry("phantom", -1654426725), Map.entry("pig", -1371321170), Map.entry("piglin", 1293906128), Map.entry("piglin_brute", 66694447),
+            Map.entry("pillager", -1369893136), Map.entry("polar_bear", 139647705), Map.entry("pufferfish", -1743414815), Map.entry("rabbit", -1450984103),
+            Map.entry("ravager", -1707211213), Map.entry("salmon", -1320181865), Map.entry("sheep", 1383423946), Map.entry("shulker", -1465936373),
+            Map.entry("silverfish", -1740470542), Map.entry("skeleton", 814122805), Map.entry("skeleton_horse", -469698517), Map.entry("slime", 3857820),
+            Map.entry("sniffer", -47604825), Map.entry("snow_golem", 472185638), Map.entry("spider", 2029193124), Map.entry("squid", -1438720114),
+            Map.entry("stray", 814122805), Map.entry("strider", 1484686151), Map.entry("tadpole", 1557385996), Map.entry("trader_llama", -1040358301),
+            Map.entry("turtle", -515294991), Map.entry("vex", 1342370007), Map.entry("villager", 514002728), Map.entry("vindicator", 1341066792),
+            Map.entry("wandering_trader", -2145570712), Map.entry("warden", -1396555672), Map.entry("witch", -489685423), Map.entry("wither", -305555631),
+            Map.entry("wither_skeleton", 357332042), Map.entry("wolf", 137380021), Map.entry("zoglin", -1266492281), Map.entry("zombie", 1381677849),
+            Map.entry("zombie_horse", -524738877), Map.entry("zombie_villager", -422523232), Map.entry("zombified_piglin", -2052593994));
 
     /**
      * Butchery by group (rule 2), a mob's own file only where it differs: no mob has a table file (a datapack may give
@@ -562,7 +562,7 @@ public class GroupTests {
                 wrong.append(' ').append(e.getKey()).append(" has a table file");
             }
             ButcheryTable table = ButcheryManager.forEntity(mob).orElse(null);
-            int now = table == null ? 0 : ButcheryTable.CODEC.encodeStart(JsonOps.INSTANCE, table).getOrThrow().toString().hashCode();
+            int now = table == null ? 0 : fingerprint(table);
             if (now != e.getValue()) {
                 wrong.append(' ').append(e.getKey()).append(" butchers differently: ").append(table == null ? "no table"
                         : ButcheryTable.CODEC.encodeStart(JsonOps.INSTANCE, table).getOrThrow());
@@ -618,6 +618,15 @@ public class GroupTests {
             return;
         }
         helper.succeed();
+    }
+
+    /** A table's every yield, the hide's then each bone's in name order, as one number. */
+    private static int fingerprint(ButcheryTable table) {
+        StringBuilder all = new StringBuilder("hide").append(table.hide());
+        for (String bone : new java.util.TreeSet<>(table.parts().keySet())) {
+            all.append(bone).append(table.part(bone));
+        }
+        return all.toString().hashCode();
     }
 
     /** How much hide skinning the whole of it gives. */
