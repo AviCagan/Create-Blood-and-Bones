@@ -4,7 +4,6 @@ import com.avicagan.bloodandbones.parts.effect.FlagEffect;
 import com.avicagan.bloodandbones.parts.effect.MotionEffects;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.registries.BuiltInRegistries;
-import net.minecraft.sounds.SoundEvents;
 import net.minecraft.sounds.SoundSource;
 import net.minecraft.tags.FluidTags;
 import net.minecraft.world.InteractionResult;
@@ -113,8 +112,9 @@ public final class MinionMoves {
             if (left != stick) {
                 player.setItemInHand(event.getHand(), left);
             }
-            // a wet slap on the flank
-            minion.level().playSound(null, minion.getX(), minion.getY(), minion.getZ(), SoundEvents.SLIME_SQUISH, SoundSource.NEUTRAL, 0.8F, 0.7F);
+            // a wet slap on the flank (bloodless, a bang on the plating: BBSounds' twin)
+            minion.level().playSound(null, minion.getX(), minion.getY(), minion.getZ(), com.avicagan.bloodandbones.registry.BBSounds.FLESH_SLAP.get(),
+                    SoundSource.NEUTRAL, 0.8F, 0.7F);
         }
     }
 }

@@ -19,7 +19,6 @@ import net.minecraft.resources.ResourceKey;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.sounds.SoundEvent;
-import net.minecraft.sounds.SoundEvents;
 import net.minecraft.world.InteractionHand;
 import net.minecraft.world.InteractionResult;
 import net.minecraft.world.entity.LivingEntity;
@@ -221,7 +220,7 @@ public record ProduceEffect(Optional<Item> item, Optional<ResourceKey<LootTable>
     /** Out it comes: its own sound (an egg's plop, a squirt of ink), a wet squelch under it and a drop or two of blood. */
     private void squelch(ServerLevel level, LivingEntity host) {
         sound.ifPresent(s -> level.playSound(null, host.getX(), host.getY(), host.getZ(), s, host.getSoundSource(), 0.8F, 0.9F + level.random.nextFloat() * 0.2F));
-        level.playSound(null, host.getX(), host.getY(), host.getZ(), SoundEvents.SLIME_SQUISH_SMALL, host.getSoundSource(), 0.6F, 0.5F + level.random.nextFloat() * 0.2F);
+        level.playSound(null, host.getX(), host.getY(), host.getZ(), com.avicagan.bloodandbones.registry.BBSounds.FLESH_SQUISH_SMALL.get(), host.getSoundSource(), 0.6F, 0.5F + level.random.nextFloat() * 0.2F);
         if (Blood.bleeds(host)) {
             Blood.burst(level, new Vector3d(host.getX(), host.getY(0.4), host.getZ()), 2, Blood.soul(BuiltInRegistries.ENTITY_TYPE.getKey(host.getType())));
         }

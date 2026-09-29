@@ -35,6 +35,8 @@ public final class BBClientSetup {
     @SubscribeEvent
     public static void onClientSetup(FMLClientSetupEvent event) {
         net.createmod.ponder.foundation.PonderIndex.addPlugin(new com.avicagan.bloodandbones.client.ponder.BBPonderPlugin());
+        // a backtank's item bar in the colour of what it holds
+        com.avicagan.bloodandbones.backtank.FluidBacktankItem.barColour = BacktankGauge::colour;
         event.enqueueWork(() -> {
             // scraps show their part; scraps, carcass armour and a folded minion lose their gore in bloodless mode
             ItemProperties.register(BBItems.SCRAPS.get(), BloodAndBones.asResource("part"), (stack, level, entity, seed) -> {
@@ -42,7 +44,9 @@ public final class BBClientSetup {
                 return source == null ? 0.25F : java.util.List.of("head", "torso", "arm", "leg", "tail").indexOf(source.part()) * 0.25F;
             });
             for (net.minecraft.world.item.Item item : java.util.List.of(BBItems.SCRAPS.get(), BBItems.CARCASS_HELMET.get(), BBItems.CARCASS_CHESTPLATE.get(),
-                    BBItems.CARCASS_LEGGINGS.get(), BBItems.CARCASS_BOOTS.get(), BBItems.DORMANT_MINION.get())) {
+                    BBItems.CARCASS_LEGGINGS.get(), BBItems.CARCASS_BOOTS.get(), BBItems.DORMANT_MINION.get(), BBItems.CONGEALED_BLOOD.get(),
+                    BBItems.SOUL_CLOT.get(), BBItems.INCOMPLETE_BLOOD_DIAMOND.get(), BBItems.FLESH_ARM.get(), BBItems.SINEW_LEG.get(),
+                    BBItems.SEVERED_ARM.get(), BBItems.SEVERED_LEG.get(), BBItems.EYE.get(), BBItems.HEART.get(), BBItems.LUNGS.get(), BBItems.STOMACH.get())) {
                 ItemProperties.register(item, BloodAndBones.asResource("bloodless"), (stack, level, entity, seed) -> com.avicagan.bloodandbones.config.BBClientConfig.bloodless() ? 1.0F : 0.0F);
             }
             ItemProperties.register(BBItems.MEAT_HOOK.get(), BloodAndBones.asResource("dragging"),
@@ -151,6 +155,11 @@ public final class BBClientSetup {
         // the brass and copper casings the same way; ribs and bone piles bleached
         swap(event, com.avicagan.bloodandbones.registry.BBBlocks.BLOODY_BRASS_CASING, BloodlessSwap.CLADDING);
         swap(event, com.avicagan.bloodandbones.registry.BBBlocks.BLOODY_COPPER_CASING, BloodlessSwap.CLADDING);
+        swap(event, com.avicagan.bloodandbones.registry.BBBlocks.BLOODY_RAILWAY_CASING, BloodlessSwap.RAILWAY);
+        for (com.tterrag.registrate.util.entry.BlockEntry<?> block : com.avicagan.bloodandbones.registry.BBBlocks.stainedPalette()) {
+            swap(event, block, BloodlessSwap.PALETTE);
+        }
+        swap(event, com.avicagan.bloodandbones.registry.BBBlocks.CARCASS_PART, BloodlessSwap.CARCASS);
         swap(event, com.avicagan.bloodandbones.registry.BBBlocks.RIBCAGE_ARCH, BloodlessSwap.BONES);
         swap(event, com.avicagan.bloodandbones.registry.BBBlocks.BONE_PILE, BloodlessSwap.BONES);
     }
@@ -194,6 +203,22 @@ public final class BBClientSetup {
                                                                                           @org.jetbrains.annotations.Nullable net.minecraft.client.renderer.RenderType renderType) {
             return com.avicagan.bloodandbones.config.BBClientConfig.bloodless() ? java.util.List.of() : super.getQuads(state, side, rand, data, renderType);
         }
+
+        /** A stain scuffed away in bloodless mode leaves specks of something damp (its sound's twin says so), not blood. */
+        @Override
+        public net.minecraft.client.renderer.texture.TextureAtlasSprite getParticleIcon() {
+            return com.avicagan.bloodandbones.config.BBClientConfig.bloodless() ? damp() : super.getParticleIcon();
+        }
+
+        @Override
+        public net.minecraft.client.renderer.texture.TextureAtlasSprite getParticleIcon(net.neoforged.neoforge.client.model.data.ModelData data) {
+            return com.avicagan.bloodandbones.config.BBClientConfig.bloodless() ? damp() : super.getParticleIcon(data);
+        }
+
+        private static net.minecraft.client.renderer.texture.TextureAtlasSprite damp() {
+            return net.minecraft.client.Minecraft.getInstance().getModelManager().getAtlas(net.minecraft.client.renderer.texture.TextureAtlas.LOCATION_BLOCKS)
+                    .getSprite(net.minecraft.resources.ResourceLocation.withDefaultNamespace("block/mud"));
+        }
     }
 
     /** Scraps and carcass armour are tinted with their family's colour (the gore layer on top is not). */
@@ -220,11 +245,21 @@ public final class BBClientSetup {
         event.register(OrganAbilityClient.ORGAN_ABILITY);
     }
 
-    /** The throttle's gauge by the crosshair, and what the Analytical Lens sees through walls. */
+    /**
+     * The backtank's gauge where Create shows its air, the throttle's gauge by the crosshair, and what the Analytical
+     * Lens sees through walls.
+     */
     @SubscribeEvent
     public static void onGuiLayers(net.neoforged.neoforge.client.event.RegisterGuiLayersEvent event) {
+        event.registerAbove(net.neoforged.neoforge.client.gui.VanillaGuiLayers.AIR_LEVEL, BloodAndBones.asResource("backtank_gauge"), BacktankGauge::render);
         event.registerAbove(net.neoforged.neoforge.client.gui.VanillaGuiLayers.CROSSHAIR, BloodAndBones.asResource("throttle_gauge"), CyberClient::renderGauge);
         event.registerAbove(net.neoforged.neoforge.client.gui.VanillaGuiLayers.CROSSHAIR, BloodAndBones.asResource("analytical_lens"), CyberClient::renderLens);
+    }
+
+    /** Plated copies of mob textures are made again after a resource reload, from the textures as they are now. */
+    @SubscribeEvent
+    public static void onReloadListeners(net.neoforged.neoforge.client.event.RegisterClientReloadListenersEvent event) {
+        event.registerReloadListener((net.minecraft.server.packs.resources.ResourceManagerReloadListener) manager -> ConstructPlating.clear());
     }
 
     @SubscribeEvent

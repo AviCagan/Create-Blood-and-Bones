@@ -40,6 +40,7 @@ public class BloodAndBones {
         BBBlockEntities.register();
         com.avicagan.bloodandbones.registry.BBEntities.register();
         BBLang.register();
+        com.avicagan.bloodandbones.datagen.BBRecipeGen.register();
         com.avicagan.bloodandbones.registry.BBGameRules.register();
         com.avicagan.bloodandbones.registry.BBMovementChecks.register();
 

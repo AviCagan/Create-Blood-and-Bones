@@ -176,7 +176,7 @@ The packages are in order of how much their gap hurts the brief:
   - the necrosis rates.
 - **Organ lists are code on main** (`Surgery.harvest`); `bb-organs` makes them data.
 - **The naming rules are undocumented.** They live in code (`RigDerivation.jointFor`) and in `bone_slot_rules`. There is no guide for someone making a modded mob's model.
-- **Recipes are hand-written.** Section 8 decided recipe JSON would be generated, because Create's fluid ingredient format is due to change. In fact 78 recipe files are hand-written and 3 are generated.
+- **Recipes are hand-written.** Section 8 decided recipe JSON would be generated, because Create's fluid ingredient format is due to change. In fact 78 recipe files are hand-written and 3 are generated. (Done 29 September 2026, `bb-materials`: every recipe comes from datagen, ARCHITECTURE 15.20.1.)
 
 **What to build.**
 - A fallback body for any mob with no rig: its archetype's generic rig scaled to the mob's hitbox, wearing its own texture as far as possible. The other option is reading the model on the client, as section 4.1 proposed. Add a test with a mob that has no rig file.
@@ -409,7 +409,9 @@ Two things stay open there: bloodless sounds (package 9), and both of a rabbit's
 
 **Owner first.** No.
 
-### 9. Rule 4: finish bloodless mode
+### 9. Rule 4: finish bloodless mode (done 29 September 2026, `bb-materials`)
+
+**Done.** ARCHITECTURE 15.20.3 has the details. The rest of this section is kept as it was written.
 
 **Why.** Bloodless mode "reframes the whole mod as mechanical rather than organic: 'replacement' not 'amputation', clean plating not grafted flesh, essence not blood, constructs not corpses. Identical mechanics, presentation only … Wire it in from the first feature."
 
@@ -552,7 +554,9 @@ That comparison belongs in the balance pass (PARTS-AND-TRAITS slice 9).
 
 **Owner first.** Yes.
 
-### 14. Blood, Soul Blood and the materials as written
+### 14. Blood, Soul Blood and the materials as written (done 29 September 2026, `bb-materials`)
+
+**Done.** ARCHITECTURE 15.20.2 has the details; it leaves the owner one question (a press as a second way to congeal). The rest of this section is kept as it was written.
 
 **Why.** The brief says:
 - Soul Blood "is the expensive tier, made through a congeal, haunt, re-melt chain using Create's own heating, pressing, haunting and mixing … the full line is what makes the late game viable. Tagged separately from normal blood."
@@ -641,7 +645,9 @@ section is kept as it was written.
 
 **Owner first.** No.
 
-### 17. Decoration leftovers
+### 17. Decoration leftovers (done 29 September 2026, `bb-materials`, but heavy carcasses on the wall hook)
+
+**Done** but whole carcasses on the wall hook, which wait for decision 9. ARCHITECTURE 15.20.4 has the details. The rest of this section is kept as it was written.
 
 **Why.**
 - "Wall-mounted Meat Hook: accepts any carcass or body part as a rendered attachment."

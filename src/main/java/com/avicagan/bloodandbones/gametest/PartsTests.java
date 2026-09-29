@@ -127,7 +127,10 @@ public class PartsTests {
         helper.succeed();
     }
 
-    /** Four cow leg scraps make Cow Hide Boots: hide plate's armour, durability 12 x 13, the cow's boot traits. */
+    /**
+     * Four cow leg scraps make Cow Brawn Boots: hide plate's armour, durability 12 x 13, the cow's boot traits. Named for
+     * the grazers' material, never "Hide": no hide is fitted to them yet (docs/BRIEF-AUDIT.md package 17).
+     */
     @GameTest(template = "empty", timeoutTicks = 20)
     public static void craftCowBoots(GameTestHelper helper) {
         Optional<ItemStack> boots = craft(helper, new String[]{"L.L", "L.L"}, java.util.Map.of('L', scraps(COW, "leg")));
@@ -149,6 +152,11 @@ public class PartsTests {
         });
         if (armourPoints[0] != 1.0 || health[0] != 0.5) {
             helper.fail("Hide plate boots should give 1 armour and the quirk's half heart: " + armourPoints[0] + ", " + health[0]);
+            return;
+        }
+        String name = boots.get().getHoverName().getString();
+        if (!name.equals("Cow Brawn Boots")) {
+            helper.fail("Cow boots of scraps alone should read Cow Brawn Boots, not " + name);
             return;
         }
         helper.succeed();

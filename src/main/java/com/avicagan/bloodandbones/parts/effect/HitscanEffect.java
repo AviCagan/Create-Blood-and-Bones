@@ -95,7 +95,7 @@ public record HitscanEffect(float range, LevelBasedValue damage, ResourceKey<Dam
         switch (beam) {
             case "guardian_beam" -> level.playSound(null, host.getX(), host.getY(), host.getZ(), SoundEvents.GUARDIAN_ATTACK, host.getSoundSource(), 1.0F, 0.8F);
             case "sonic_boom" -> level.playSound(null, host.getX(), host.getY(), host.getZ(), SoundEvents.WARDEN_SONIC_CHARGE, host.getSoundSource(), 3.0F, 1.0F);
-            default -> level.playSound(null, host.getX(), host.getY(), host.getZ(), SoundEvents.SLIME_SQUISH_SMALL, host.getSoundSource(), 0.6F, 0.5F);
+            default -> level.playSound(null, host.getX(), host.getY(), host.getZ(), com.avicagan.bloodandbones.registry.BBSounds.FLESH_SQUISH_SMALL.get(), host.getSoundSource(), 0.6F, 0.5F);
         }
         CHARGING.add(new Charging(this, ctx, locked, level.getGameTime() + windup));
     }
@@ -159,7 +159,7 @@ public record HitscanEffect(float range, LevelBasedValue damage, ResourceKey<Dam
             ResourceLocation type = BuiltInRegistries.ENTITY_TYPE.getKey(victim.getType());
             Blood.burst(level, new Vector3d(landed.x, landed.y, landed.z), 4, Blood.soul(type));
         }
-        level.playSound(null, victim.getX(), victim.getY(), victim.getZ(), SoundEvents.SLIME_SQUISH, victim.getSoundSource(), 0.6F, 0.7F);
+        level.playSound(null, victim.getX(), victim.getY(), victim.getZ(), com.avicagan.bloodandbones.registry.BBSounds.FLESH_SQUISH.get(), victim.getSoundSource(), 0.6F, 0.7F);
     }
 
     /** What the line looks like as it lands: the warden's rings, a flick of silk, nothing for the others (theirs is the beam). */
@@ -195,9 +195,9 @@ public record HitscanEffect(float range, LevelBasedValue damage, ResourceKey<Dam
             case "guardian_beam" -> level.playSound(null, host.getX(), host.getY(), host.getZ(), SoundEvents.GUARDIAN_FLOP, host.getSoundSource(), 1.0F, 0.6F);
             case "strand" -> {
                 level.playSound(null, host.getX(), host.getY(), host.getZ(), SoundEvents.SPIDER_AMBIENT, host.getSoundSource(), 0.5F, 1.8F);
-                level.playSound(null, host.getX(), host.getY(), host.getZ(), SoundEvents.HONEY_BLOCK_SLIDE, host.getSoundSource(), 0.8F, 1.2F);
+                level.playSound(null, host.getX(), host.getY(), host.getZ(), com.avicagan.bloodandbones.registry.BBSounds.FLESH_SLIDE.get(), host.getSoundSource(), 0.8F, 1.2F);
             }
-            default -> level.playSound(null, host.getX(), host.getY(), host.getZ(), SoundEvents.SLIME_SQUISH_SMALL, host.getSoundSource(), 0.6F, 0.6F);
+            default -> level.playSound(null, host.getX(), host.getY(), host.getZ(), com.avicagan.bloodandbones.registry.BBSounds.FLESH_SQUISH_SMALL.get(), host.getSoundSource(), 0.6F, 0.6F);
         }
     }
 }

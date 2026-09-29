@@ -172,9 +172,9 @@ public record TeleportEffect(String mode, LevelBasedValue radius, String who, fl
         mover.resetFallDistance();
         MotionEffects.gore(level, mover, from.add(0.0, mover.getBbHeight() * 0.5, 0.0), 10);
         level.playSound(null, from.x, from.y, from.z, SoundEvents.CHORUS_FRUIT_TELEPORT, mover.getSoundSource(), 1.0F, 0.6F);
-        level.playSound(null, from.x, from.y, from.z, SoundEvents.SLIME_BLOCK_BREAK, mover.getSoundSource(), 0.8F, 0.5F);
+        level.playSound(null, from.x, from.y, from.z, com.avicagan.bloodandbones.registry.BBSounds.FLESH_BREAK.get(), mover.getSoundSource(), 0.8F, 0.5F);
         level.playSound(null, mover.getX(), mover.getY(), mover.getZ(), SoundEvents.ENDERMAN_TELEPORT, mover.getSoundSource(), 0.8F, 0.7F);
-        level.playSound(null, mover.getX(), mover.getY(), mover.getZ(), SoundEvents.SLIME_SQUISH, mover.getSoundSource(), 1.0F, 0.5F);
+        level.playSound(null, mover.getX(), mover.getY(), mover.getZ(), com.avicagan.bloodandbones.registry.BBSounds.FLESH_SQUISH.get(), mover.getSoundSource(), 1.0F, 0.5F);
         return true;
     }
 }

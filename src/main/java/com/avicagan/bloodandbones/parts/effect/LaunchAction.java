@@ -3,7 +3,6 @@ package com.avicagan.bloodandbones.parts.effect;
 import com.mojang.serialization.MapCodec;
 import com.mojang.serialization.codecs.RecordCodecBuilder;
 import net.minecraft.server.level.ServerLevel;
-import net.minecraft.sounds.SoundEvents;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.entity.ai.attributes.Attributes;
@@ -40,7 +39,7 @@ public record LaunchAction(LevelBasedValue up, LevelBasedValue away) implements 
                 entity.hurtMarked = true;
             }
         });
-        level.playSound(null, entity.getX(), entity.getY(), entity.getZ(), SoundEvents.SLIME_JUMP, entity.getSoundSource(), 0.7F, 0.5F);
+        level.playSound(null, entity.getX(), entity.getY(), entity.getZ(), com.avicagan.bloodandbones.registry.BBSounds.FLESH_FLING.get(), entity.getSoundSource(), 0.7F, 0.5F);
     }
 
     @Override

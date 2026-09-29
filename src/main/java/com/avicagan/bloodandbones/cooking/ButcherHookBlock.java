@@ -1,7 +1,6 @@
 package com.avicagan.bloodandbones.cooking;
 
 import com.avicagan.bloodandbones.registry.BBBlockEntities;
-import com.avicagan.bloodandbones.registry.BBItems;
 import com.mojang.serialization.MapCodec;
 import com.simibubi.create.foundation.block.IBE;
 import net.minecraft.core.BlockPos;
@@ -28,8 +27,9 @@ import net.minecraft.world.phys.shapes.VoxelShape;
 import org.jetbrains.annotations.Nullable;
 
 /**
- * A butcher's hook on a wall. Hang a carried carcass piece on it to show it off (it keeps, like a piece in
- * a Specimen Jar); an empty hand takes it down. Facing is the way the hook points, away from the wall.
+ * A butcher's hook on a wall. Hang any body part on it to show it off: a carried carcass piece (it keeps, like a
+ * piece in a Specimen Jar), a severed limb, an organ, scraps, meat (ButcherHookBlockEntity#HANGS); an empty hand
+ * takes it down. Facing is the way the hook points, away from the wall.
  */
 public class ButcherHookBlock extends HorizontalDirectionalBlock implements IBE<ButcherHookBlockEntity> {
     public static final MapCodec<ButcherHookBlock> CODEC = simpleCodec(ButcherHookBlock::new);
@@ -95,7 +95,7 @@ public class ButcherHookBlock extends HorizontalDirectionalBlock implements IBE<
     @Override
     protected ItemInteractionResult useItemOn(ItemStack stack, BlockState state, Level level, BlockPos pos, Player player,
                                               InteractionHand hand, BlockHitResult hit) {
-        if (!stack.isEmpty() && !stack.is(BBItems.CARCASS_PIECE.get())) {
+        if (!stack.isEmpty() && !ButcherHookBlockEntity.hangs(stack)) {
             return ItemInteractionResult.PASS_TO_DEFAULT_BLOCK_INTERACTION;
         }
         if (level.isClientSide) {

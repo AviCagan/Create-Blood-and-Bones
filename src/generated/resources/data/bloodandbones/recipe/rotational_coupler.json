@@ -1,0 +1,27 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "category": "equipment",
+  "key": {
+    "G": {
+      "item": "create:cogwheel"
+    },
+    "M": {
+      "item": "create:precision_mechanism"
+    },
+    "P": {
+      "tag": "c:plates/brass"
+    },
+    "S": {
+      "item": "create:shaft"
+    }
+  },
+  "pattern": [
+    "PSP",
+    "PMP",
+    " G "
+  ],
+  "result": {
+    "count": 1,
+    "id": "bloodandbones:rotational_coupler"
+  }
+}

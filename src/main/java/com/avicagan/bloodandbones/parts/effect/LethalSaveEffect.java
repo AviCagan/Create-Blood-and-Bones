@@ -64,7 +64,7 @@ public record LethalSaveEffect(LevelBasedValue chance, float health, int costMb)
     private static void gasp(ServerLevel level, LivingEntity host) {
         level.playSound(null, host.getX(), host.getY(), host.getZ(), SoundEvents.WARDEN_HEARTBEAT, host.getSoundSource(), 1.0F, 0.7F);
         level.playSound(null, host.getX(), host.getY(), host.getZ(), SoundEvents.TOTEM_USE, host.getSoundSource(), 0.5F, 0.5F);
-        level.playSound(null, host.getX(), host.getY(), host.getZ(), SoundEvents.SLIME_SQUISH, host.getSoundSource(), 0.8F, 0.5F);
+        level.playSound(null, host.getX(), host.getY(), host.getZ(), com.avicagan.bloodandbones.registry.BBSounds.FLESH_SQUISH.get(), host.getSoundSource(), 0.8F, 0.5F);
         level.sendParticles(ParticleTypes.TOTEM_OF_UNDYING, host.getX(), host.getY(0.6), host.getZ(), 30, 0.3, 0.4, 0.3, 0.4);
         if (Blood.bleeds(host) && !(host instanceof MinionEntity minion && minion.cybernetic())) {
             Blood.burst(level, new Vector3d(host.getX(), host.getY(0.6), host.getZ()), 14, Blood.soul(BuiltInRegistries.ENTITY_TYPE.getKey(host.getType())));

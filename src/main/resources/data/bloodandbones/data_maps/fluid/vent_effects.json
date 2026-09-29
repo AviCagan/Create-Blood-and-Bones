@@ -9,6 +9,9 @@
     "#c:experience": {
       "effect": "experience"
     },
+    "#bloodandbones:liquid_experience": {
+      "effect": "experience"
+    },
     "#c:milk": {
       "effect": "cleanse"
     }

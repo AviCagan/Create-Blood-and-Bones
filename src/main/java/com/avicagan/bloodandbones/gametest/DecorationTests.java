@@ -595,6 +595,9 @@ public class DecorationTests {
         helper.setBlock(new BlockPos(5, y, z), BBBlocks.RIBCAGE_ARCH.getDefaultState().setValue(HorizontalDirectionalBlock.FACING, Direction.NORTH));
         helper.setBlock(new BlockPos(6, y, z), BBBlocks.BLOODY_BRASS_CASING.getDefaultState());
         helper.setBlock(new BlockPos(7, y, z), BBBlocks.BLOODY_COPPER_CASING.getDefaultState());
+        // the train casing, and a stair of the stained palette on it
+        helper.setBlock(new BlockPos(8, y, z), BBBlocks.BLOODY_RAILWAY_CASING.getDefaultState());
+        helper.setBlock(new BlockPos(8, y + 1, z), BBBlocks.BLOODY_CUT_CALCITE_BRICK_STAIRS.getDefaultState());
         // a pile the stone in front of it runs into unless the pile pushes it (Create would count a brittle
         // block as holding nothing up on any side), and a single layer on that stone
         helper.setBlock(new BlockPos(6, y + 1, z), BBBlocks.BONE_PILE.getDefaultState().setValue(BonePileBlock.LAYERS, 3));
@@ -630,6 +633,8 @@ public class DecorationTests {
             helper.assertBlockProperty(new BlockPos(9, y + 2, z), BonePileBlock.LAYERS, 1);
             helper.assertBlockNotPresent(BBBlocks.BONE_PILE.get(), new BlockPos(6, y + 1, z));
             helper.assertBlockNotPresent(BBBlocks.BONE_PILE.get(), new BlockPos(7, y + 2, z));
+            helper.assertBlockPresent(BBBlocks.BLOODY_RAILWAY_CASING.get(), new BlockPos(10, y, z));
+            helper.assertBlockPresent(BBBlocks.BLOODY_CUT_CALCITE_BRICK_STAIRS.get(), new BlockPos(10, y + 1, z));
             SteelTableBlockEntity table = (SteelTableBlockEntity) level.getBlockEntity(helper.absolutePos(new BlockPos(5, y, z)));
             SteelRackBlockEntity moved = (SteelRackBlockEntity) level.getBlockEntity(helper.absolutePos(new BlockPos(6, y, z)));
             helper.assertTrue(table != null && ItemStack.isSameItemSameComponents(table.specimen(), head), "the table lost its piece on the way");
@@ -639,11 +644,90 @@ public class DecorationTests {
         });
     }
 
+    /**
+     * The wall hook takes every body part (brief § Decoration: "accepts any carcass or body part"): a severed limb, an
+     * organ, scraps, meat, a head, a bone, a raw hide, by hand or put there; not a diamond, stone or a blade. A fresh
+     * heart drips blood on the floor; a bone does not, nor a skeleton's heart or its scraps (a skeleton has no blood);
+     * a piglin's scraps and a hoglin's hide drip soul blood. Scraps and hides say where they came from only by their
+     * stamp, so this is what shows the hook reads it. A special organ (a Gland: a cow's rumen) hangs and drips too.
+     */
+    @GameTest(template = "empty", timeoutTicks = 140)
+    public static void butcherHookTakesEveryBodyPart(GameTestHelper helper) {
+        net.minecraft.resources.ResourceLocation cow = net.minecraft.resources.ResourceLocation.withDefaultNamespace("cow");
+        net.minecraft.resources.ResourceLocation skeleton = net.minecraft.resources.ResourceLocation.withDefaultNamespace("skeleton");
+        net.minecraft.resources.ResourceLocation piglin = net.minecraft.resources.ResourceLocation.withDefaultNamespace("piglin");
+        net.minecraft.resources.ResourceLocation hoglin = net.minecraft.resources.ResourceLocation.withDefaultNamespace("hoglin");
+        List<ItemStack> parts = List.of(new ItemStack(BBItems.SEVERED_ARM.get()), BBItems.HEART.get().of(cow, false),
+                com.avicagan.bloodandbones.parts.ScrapsItem.of(new com.avicagan.bloodandbones.parts.Source(cow, "leg", false), 1),
+                new ItemStack(Items.BEEF), new ItemStack(Items.ZOMBIE_HEAD), new ItemStack(Items.BONE), BBItems.HEART.get().of(skeleton, false),
+                com.avicagan.bloodandbones.parts.ScrapsItem.of(new com.avicagan.bloodandbones.parts.Source(skeleton, "leg", false), 1),
+                com.avicagan.bloodandbones.parts.ScrapsItem.of(new com.avicagan.bloodandbones.parts.Source(piglin, "torso", false), 1),
+                com.avicagan.bloodandbones.parts.Hides.stamp(new ItemStack(BBItems.RAW_HIDE.get()), hoglin),
+                com.avicagan.bloodandbones.parts.Organs.stack(com.avicagan.bloodandbones.parts.PartsData.SERVER, BloodAndBones.asResource("rumen"), cow, false));
+        List<ItemStack> refused = List.of(new ItemStack(Items.DIAMOND), new ItemStack(Items.STONE), new ItemStack(BBItems.CLEAVER.get()));
+        List<com.avicagan.bloodandbones.cooking.ButcherHookBlockEntity> hooks = new java.util.ArrayList<>();
+        // the parts along one wall, what is refused along another, all inside the test's own ground
+        for (int i = 0; i < parts.size() + refused.size(); i++) {
+            BlockPos wall = i < parts.size() ? new BlockPos(1, 3, i) : new BlockPos(5, 3, i - parts.size());
+            helper.setBlock(wall, Blocks.STONE);
+            helper.setBlock(wall.east(), BBBlocks.BUTCHER_HOOK.getDefaultState().setValue(HorizontalDirectionalBlock.FACING, Direction.EAST));
+            hooks.add((com.avicagan.bloodandbones.cooking.ButcherHookBlockEntity) helper.getLevel().getBlockEntity(helper.absolutePos(wall.east())));
+        }
+        // the heart by hand, the way a player hangs things; everything else put straight on
+        Player player = helper.makeMockPlayer(GameType.SURVIVAL);
+        player.setItemInHand(InteractionHand.MAIN_HAND, parts.get(1).copy());
+        helper.useBlock(new BlockPos(2, 3, 1), player);
+        if (!hooks.get(1).specimen().is(BBItems.HEART.get()) || !player.getMainHandItem().isEmpty()) {
+            helper.fail("A player should hang a heart on the hook by using it: " + hooks.get(1).specimen());
+            return;
+        }
+        for (int i = 0; i < parts.size(); i++) {
+            if (i != 1 && !hooks.get(i).put(parts.get(i).copy())) {
+                helper.fail("The hook should take " + parts.get(i).getHoverName().getString());
+                return;
+            }
+        }
+        for (int i = 0; i < refused.size(); i++) {
+            if (hooks.get(parts.size() + i).put(refused.get(i).copy())) {
+                helper.fail("The hook should not take " + refused.get(i).getHoverName().getString());
+                return;
+            }
+        }
+        if (!hooks.get(1).dripping() || hooks.get(5).dripping() || hooks.get(6).dripping()) {
+            helper.fail("A cow's heart should drip; a bone and a skeleton's heart should not");
+            return;
+        }
+        if (hooks.get(7).dripping() || !hooks.get(8).dripping() || !hooks.get(9).dripping()) {
+            helper.fail("A skeleton's scraps should not drip; a piglin's scraps and a hoglin's hide should");
+            return;
+        }
+        if (!hooks.get(10).specimen().is(BBItems.GLAND.get()) || !hooks.get(10).dripping()) {
+            helper.fail("A cow's rumen, a Gland, should hang and drip: " + hooks.get(10).specimen());
+            return;
+        }
+        helper.runAfterDelay(125, () -> {
+            helper.assertBlockPresent(BBBlocks.BLOOD_STAIN.get(), new BlockPos(2, 2, 1));
+            helper.assertBlockProperty(new BlockPos(2, 2, 1), com.avicagan.bloodandbones.bleeding.BloodStainBlock.SOUL, false);
+            for (int i : new int[]{5, 6, 7}) {
+                helper.assertBlockNotPresent(BBBlocks.BLOOD_STAIN.get(), new BlockPos(2, 2, i));
+            }
+            // the rumen's is red
+            helper.assertBlockPresent(BBBlocks.BLOOD_STAIN.get(), new BlockPos(2, 2, 10));
+            helper.assertBlockProperty(new BlockPos(2, 2, 10), com.avicagan.bloodandbones.bleeding.BloodStainBlock.SOUL, false);
+            // soul blood from a nether mob's scraps and hide, not red
+            for (int i : new int[]{8, 9}) {
+                helper.assertBlockPresent(BBBlocks.BLOOD_STAIN.get(), new BlockPos(2, 2, i));
+                helper.assertBlockProperty(new BlockPos(2, 2, i), com.avicagan.bloodandbones.bleeding.BloodStainBlock.SOUL, true);
+            }
+            helper.succeed();
+        });
+    }
+
     /** The brass and copper casings take blood from a Spout, as the andesite one does. */
     @GameTest(template = "empty", timeoutTicks = 20)
     public static void bloodyCladdingRecipes(GameTestHelper helper) {
         for (String metal : List.of("brass", "copper")) {
-            var recipe = helper.getLevel().getRecipeManager().byKey(BloodAndBones.asResource("bloody_" + metal + "_casing_filling"));
+            var recipe = helper.getLevel().getRecipeManager().byKey(BloodAndBones.asResource("filling/bloody_" + metal + "_casing"));
             if (recipe.isEmpty() || !(recipe.get().value() instanceof com.simibubi.create.content.fluids.transfer.FillingRecipe filling)) {
                 helper.fail("No spout filling recipe for the bloody " + metal + " casing");
                 return;

@@ -1,0 +1,18 @@
+{
+  "type": "create:filling",
+  "ingredients": [
+    {
+      "item": "create:railway_casing"
+    },
+    {
+      "type": "neoforge:tag",
+      "amount": 250,
+      "tag": "c:blood"
+    }
+  ],
+  "results": [
+    {
+      "id": "bloodandbones:bloody_railway_casing"
+    }
+  ]
+}

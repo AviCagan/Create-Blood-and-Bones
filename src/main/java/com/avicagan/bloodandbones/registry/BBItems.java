@@ -60,6 +60,29 @@ public class BBItems {
             .lang("Blood Diamond")
             .register();
 
+    /** The Blood Diamond partway through its sequence: a diamond with blood in it, waiting for its experience. */
+    public static final ItemEntry<com.simibubi.create.content.processing.sequenced.SequencedAssemblyItem> INCOMPLETE_BLOOD_DIAMOND = BloodAndBones.REGISTRATE
+            .item("incomplete_blood_diamond", com.simibubi.create.content.processing.sequenced.SequencedAssemblyItem::new)
+            .removeTab(BBCreativeTabs.MAIN.getKey())
+            .model(bloodlessModel())
+            .lang("Incomplete Blood Diamond")
+            .register();
+
+    // ---- the soul blood line (brief § Blood and materials: congeal, haunt, re-melt; the congealing under a Basin Lid, section 8)
+    /** Blood set under a Basin Lid: the first step to soul blood. */
+    public static final ItemEntry<net.minecraft.world.item.Item> CONGEALED_BLOOD = BloodAndBones.REGISTRATE
+            .item("congealed_blood", net.minecraft.world.item.Item::new)
+            .model(bloodlessModel())
+            .lang("Congealed Blood")
+            .register();
+    /** Congealed blood haunted under a fan blowing through soul fire; re-melted, it is soul blood. */
+    public static final ItemEntry<net.minecraft.world.item.Item> SOUL_CLOT = BloodAndBones.REGISTRATE
+            .item("soul_clot", net.minecraft.world.item.Item::new)
+            .properties(p -> p.rarity(net.minecraft.world.item.Rarity.UNCOMMON))
+            .model(bloodlessModel())
+            .lang("Soul Clot")
+            .register();
+
     public static final ItemEntry<net.minecraft.world.item.Item> RAW_HIDE = BloodAndBones.REGISTRATE
             .item("raw_hide", net.minecraft.world.item.Item::new)
             .lang("Raw Hide")
@@ -230,6 +253,20 @@ public class BBItems {
         }).get();
     }
 
+    /**
+     * A flat item drawn from its own texture, and in bloodless mode from its clean copy ({@code <name>_clean}),
+     * chosen by the {@code bloodandbones:bloodless} item property (BBClientSetup).
+     */
+    public static <T extends net.minecraft.world.item.Item> NonNullBiConsumer<com.tterrag.registrate.providers.DataGenContext<net.minecraft.world.item.Item, T>,
+            com.tterrag.registrate.providers.RegistrateItemModelProvider> bloodlessModel() {
+        return (ctx, prov) -> {
+            String name = ctx.getName();
+            var clean = prov.withExistingParent(name + "_clean", prov.mcLoc("item/generated")).texture("layer0", prov.modLoc("item/" + name + "_clean"));
+            prov.withExistingParent(name, prov.mcLoc("item/generated")).texture("layer0", prov.modLoc("item/" + name))
+                    .override().predicate(BloodAndBones.asResource("bloodless"), 1.0F).model(clean).end();
+        };
+    }
+
     private static net.minecraft.resources.ResourceLocation bodyTexture(String name) {
         return BloodAndBones.asResource("textures/entity/implant/" + name + ".png");
     }
@@ -242,12 +279,18 @@ public class BBItems {
     }
 
     private static ItemEntry<com.avicagan.bloodandbones.body.ImplantItem> implant(String id, String name, com.avicagan.bloodandbones.body.ImplantSpec spec) {
-        return BloodAndBones.REGISTRATE.item(id, p -> new com.avicagan.bloodandbones.body.ImplantItem(p, spec)).lang(name).register();
+        var builder = BloodAndBones.REGISTRATE.item(id, p -> new com.avicagan.bloodandbones.body.ImplantItem(p, spec)).lang(name);
+        // the ones bloodless mode renames (Plated Arm, Cabled Leg) are drawn plated too
+        if (id.equals("flesh_arm") || id.equals("sinew_leg")) {
+            builder.model(bloodlessModel());
+        }
+        return builder.register();
     }
 
     private static ItemEntry<com.avicagan.bloodandbones.body.SeveredLimbItem> part(String id, String name, String owned, com.avicagan.bloodandbones.body.BodyPart.Kind kind) {
         BloodAndBones.REGISTRATE.addRawLang("item.bloodandbones." + id + ".of", "%s's " + owned);
-        return BloodAndBones.REGISTRATE.item(id, p -> new com.avicagan.bloodandbones.body.SeveredLimbItem(p, kind)).lang(name).register();
+        // bloodless mode draws them as a construct's parts, as it names them (Detached Arm, Pump, Bellows...)
+        return BloodAndBones.REGISTRATE.item(id, p -> new com.avicagan.bloodandbones.body.SeveredLimbItem(p, kind)).model(bloodlessModel()).lang(name).register();
     }
 
     public static final ItemEntry<net.minecraft.world.item.Item> SOUL_NETHERITE_INGOT = BloodAndBones.REGISTRATE

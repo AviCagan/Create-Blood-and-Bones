@@ -1,0 +1,18 @@
+{
+  "type": "create:filling",
+  "ingredients": [
+    {
+      "item": "bloodandbones:empty_soul_canister"
+    },
+    {
+      "type": "neoforge:tag",
+      "amount": 1000,
+      "tag": "c:soul_blood"
+    }
+  ],
+  "results": [
+    {
+      "id": "bloodandbones:soul_canister"
+    }
+  ]
+}

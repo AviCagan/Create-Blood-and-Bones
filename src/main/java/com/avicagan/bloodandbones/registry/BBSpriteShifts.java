@@ -14,6 +14,12 @@ public final class BBSpriteShifts {
     public static final CTSpriteShiftEntry BLOODY_COPPER_CASING = CTSpriteShifter.getCT(AllCTTypes.OMNIDIRECTIONAL,
             BloodAndBones.asResource("block/bloody_copper_casing"), BloodAndBones.asResource("block/bloody_copper_casing_connected"));
 
+    /** Create's train casing, bloody: a side sheet and a top sheet, as Create's own (AllSpriteShifts.RAILWAY_CASING). */
+    public static final CTSpriteShiftEntry BLOODY_RAILWAY_CASING = CTSpriteShifter.getCT(AllCTTypes.OMNIDIRECTIONAL,
+            BloodAndBones.asResource("block/bloody_railway_casing"), BloodAndBones.asResource("block/bloody_railway_casing_connected"));
+    public static final CTSpriteShiftEntry BLOODY_RAILWAY_CASING_SIDE = CTSpriteShifter.getCT(AllCTTypes.OMNIDIRECTIONAL,
+            BloodAndBones.asResource("block/bloody_railway_casing_side"), BloodAndBones.asResource("block/bloody_railway_casing_side_connected"));
+
     private BBSpriteShifts() {
     }
 }

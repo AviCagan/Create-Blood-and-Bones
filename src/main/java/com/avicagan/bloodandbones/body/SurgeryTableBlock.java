@@ -151,7 +151,7 @@ public class SurgeryTableBlock extends Block implements IBE<SurgeryTableBlockEnt
         }
         ServerLevel server = (ServerLevel) level;
         // a bucket of blood wakes flesh, a soul canister brass
-        if (stack.is(com.avicagan.bloodandbones.registry.BBFluids.BLOOD.getBucket().get()) || stack.is(com.avicagan.bloodandbones.registry.BBItems.SOUL_CANISTER.get())) {
+        if (stack.is(com.avicagan.bloodandbones.registry.BBFluids.BLOOD_BUCKETS) || stack.is(com.avicagan.bloodandbones.registry.BBItems.SOUL_CANISTER.get())) {
             if (table.build().isEmpty()) {
                 return ItemInteractionResult.PASS_TO_DEFAULT_BLOCK_INTERACTION;
             }

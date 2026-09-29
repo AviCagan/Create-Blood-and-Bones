@@ -186,7 +186,7 @@ public final class BBScenes {
         scene.markAsFinished();
     }
 
-    /** A pillar of Bloody Casing with a Butcher's Hook on each side, each hung with a piece. */
+    /** A pillar of Bloody Casing with a Butcher's Hook on each side, each hung with a body part. */
     public static void butcherHook(SceneBuilder builder, SceneBuildingUtil util, List<ItemStack> pieces) {
         CreateSceneBuilder scene = new CreateSceneBuilder(builder);
         scene.title("butcher_hook", "Hanging Meat on the Butcher's Hook");
@@ -217,7 +217,7 @@ public final class BBScenes {
             scene.idle(5);
         }
         scene.overlay().showText(80).attachKeyFrame().colored(PonderPalette.GREEN)
-                .text("Right-click with a carcass piece to hang it up. It keeps there, like a piece in a Specimen Jar")
+                .text("Right-click with any body part to hang it up: a carcass piece, a severed limb, an organ, scraps or meat. A carcass piece keeps there, like a piece in a Specimen Jar")
                 .pointAt(util.vector().topOf(top)).placeNearTarget();
         scene.idle(90);
         scene.overlay().showText(90).attachKeyFrame()

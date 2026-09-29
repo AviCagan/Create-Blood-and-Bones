@@ -79,24 +79,6 @@
       }
     ]
   },
-  "cybernetic.spool": {
-    "subtitle": "subtitles.bloodandbones.cybernetic.spool",
-    "sounds": [
-      {
-        "name": "minecraft:block.beacon.ambient",
-        "type": "event"
-      }
-    ]
-  },
-  "cybernetic.choke": {
-    "subtitle": "subtitles.bloodandbones.cybernetic.choke",
-    "sounds": [
-      {
-        "name": "minecraft:block.fire.extinguish",
-        "type": "event"
-      }
-    ]
-  },
   "machine.grind": {
     "subtitle": "subtitles.bloodandbones.machine.grind",
     "sounds": [
@@ -118,8 +100,8 @@
       }
     ]
   },
-  "machine.grind_clean": {
-    "subtitle": "subtitles.bloodandbones.machine.grind_clean",
+  "bloodless.machine.grind": {
+    "subtitle": "subtitles.bloodandbones.bloodless.machine.grind",
     "sounds": [
       {
         "name": "minecraft:block.grindstone.use",
@@ -137,6 +119,495 @@
       {
         "name": "minecraft:block.tripwire.click_on",
         "type": "event"
+      }
+    ]
+  },
+  "cybernetic.spool": {
+    "subtitle": "subtitles.bloodandbones.cybernetic.spool",
+    "sounds": [
+      {
+        "name": "minecraft:block.beacon.ambient",
+        "type": "event"
+      }
+    ]
+  },
+  "cybernetic.choke": {
+    "subtitle": "subtitles.bloodandbones.cybernetic.choke",
+    "sounds": [
+      {
+        "name": "minecraft:block.fire.extinguish",
+        "type": "event"
+      }
+    ]
+  },
+  "flesh.squish": {
+    "subtitle": "subtitles.bloodandbones.flesh.squish",
+    "sounds": [
+      {
+        "name": "minecraft:entity.slime.squish",
+        "type": "event",
+        "pitch": 0.8
+      },
+      {
+        "name": "minecraft:block.honey_block.slide",
+        "type": "event",
+        "pitch": 0.7
+      }
+    ]
+  },
+  "flesh.squish_small": {
+    "subtitle": "subtitles.bloodandbones.flesh.squish_small",
+    "sounds": [
+      {
+        "name": "minecraft:entity.slime.squish_small",
+        "type": "event"
+      }
+    ]
+  },
+  "flesh.slide": {
+    "subtitle": "subtitles.bloodandbones.flesh.slide",
+    "sounds": [
+      {
+        "name": "minecraft:block.honey_block.slide",
+        "type": "event"
+      }
+    ]
+  },
+  "flesh.break": {
+    "subtitle": "subtitles.bloodandbones.flesh.break",
+    "sounds": [
+      {
+        "name": "minecraft:block.slime_block.break",
+        "type": "event",
+        "pitch": 0.8
+      },
+      {
+        "name": "minecraft:block.honey_block.break",
+        "type": "event",
+        "pitch": 0.7
+      }
+    ]
+  },
+  "flesh.step": {
+    "subtitle": "subtitles.bloodandbones.flesh.step",
+    "sounds": [
+      {
+        "name": "minecraft:block.slime_block.step",
+        "type": "event"
+      },
+      {
+        "name": "minecraft:block.honey_block.step",
+        "type": "event"
+      }
+    ]
+  },
+  "flesh.place": {
+    "subtitle": "subtitles.bloodandbones.flesh.place",
+    "sounds": [
+      {
+        "name": "minecraft:block.slime_block.place",
+        "type": "event",
+        "pitch": 0.9
+      }
+    ]
+  },
+  "flesh.hit": {
+    "subtitle": "subtitles.bloodandbones.flesh.hit",
+    "sounds": [
+      {
+        "name": "minecraft:block.slime_block.hit",
+        "type": "event"
+      }
+    ]
+  },
+  "flesh.fall": {
+    "subtitle": "subtitles.bloodandbones.flesh.fall",
+    "sounds": [
+      {
+        "name": "minecraft:block.slime_block.fall",
+        "type": "event"
+      }
+    ]
+  },
+  "flesh.lunge": {
+    "subtitle": "subtitles.bloodandbones.flesh.lunge",
+    "sounds": [
+      {
+        "name": "minecraft:entity.slime.jump",
+        "type": "event"
+      },
+      {
+        "name": "minecraft:block.honey_block.slide",
+        "type": "event",
+        "pitch": 0.6,
+        "volume": 0.6
+      }
+    ]
+  },
+  "flesh.fling": {
+    "subtitle": "subtitles.bloodandbones.flesh.fling",
+    "sounds": [
+      {
+        "name": "minecraft:entity.slime.jump",
+        "type": "event",
+        "pitch": 0.8
+      }
+    ]
+  },
+  "flesh.slap": {
+    "subtitle": "subtitles.bloodandbones.flesh.slap",
+    "sounds": [
+      {
+        "name": "minecraft:entity.slime.attack",
+        "type": "event"
+      },
+      {
+        "name": "minecraft:block.slime_block.fall",
+        "type": "event",
+        "pitch": 0.7
+      }
+    ]
+  },
+  "blood.drip": {
+    "subtitle": "subtitles.bloodandbones.blood.drip",
+    "sounds": [
+      {
+        "name": "minecraft:block.pointed_dripstone.drip_water",
+        "type": "event"
+      },
+      {
+        "name": "minecraft:entity.slime.squish_small",
+        "type": "event",
+        "pitch": 1.6,
+        "volume": 0.3
+      }
+    ]
+  },
+  "stain.step": {
+    "subtitle": "subtitles.bloodandbones.stain.step",
+    "sounds": [
+      {
+        "name": "minecraft:block.slime_block.step",
+        "type": "event",
+        "pitch": 1.2,
+        "volume": 0.6
+      },
+      {
+        "name": "minecraft:block.honey_block.step",
+        "type": "event",
+        "pitch": 1.1,
+        "volume": 0.6
+      }
+    ]
+  },
+  "stain.break": {
+    "subtitle": "subtitles.bloodandbones.stain.break",
+    "sounds": [
+      {
+        "name": "minecraft:block.slime_block.break",
+        "type": "event",
+        "pitch": 1.3,
+        "volume": 0.5
+      }
+    ]
+  },
+  "bloodless.rattle": {
+    "subtitle": "subtitles.bloodandbones.bloodless.rattle",
+    "sounds": [
+      {
+        "name": "minecraft:block.chain.fall",
+        "type": "event",
+        "pitch": 0.8,
+        "volume": 0.7
+      },
+      {
+        "name": "minecraft:block.chain.break",
+        "type": "event",
+        "pitch": 0.7,
+        "volume": 0.6
+      }
+    ]
+  },
+  "bloodless.carcass.thud": {
+    "subtitle": "subtitles.bloodandbones.bloodless.carcass.thud",
+    "sounds": [
+      {
+        "name": "minecraft:block.anvil.land",
+        "type": "event",
+        "pitch": 0.55,
+        "volume": 0.3
+      },
+      {
+        "name": "minecraft:block.netherite_block.fall",
+        "type": "event",
+        "pitch": 0.6
+      }
+    ]
+  },
+  "bloodless.carcass.cut": {
+    "subtitle": "subtitles.bloodandbones.bloodless.carcass.cut",
+    "sounds": [
+      {
+        "name": "minecraft:block.chain.break",
+        "type": "event",
+        "pitch": 1.4
+      },
+      {
+        "name": "minecraft:item.shield.block",
+        "type": "event",
+        "pitch": 1.7,
+        "volume": 0.5
+      }
+    ]
+  },
+  "bloodless.carcass.sever": {
+    "subtitle": "subtitles.bloodandbones.bloodless.carcass.sever",
+    "sounds": [
+      {
+        "name": "minecraft:block.anvil.break",
+        "type": "event",
+        "pitch": 1.5,
+        "volume": 0.5
+      },
+      {
+        "name": "minecraft:entity.iron_golem.damage",
+        "type": "event",
+        "pitch": 1.4
+      }
+    ]
+  },
+  "bloodless.carcass.skin": {
+    "subtitle": "subtitles.bloodandbones.bloodless.carcass.skin",
+    "sounds": [
+      {
+        "name": "minecraft:block.iron_trapdoor.open",
+        "type": "event",
+        "pitch": 1.5
+      },
+      {
+        "name": "minecraft:block.copper_trapdoor.open",
+        "type": "event",
+        "pitch": 1.3
+      }
+    ]
+  },
+  "bloodless.carcass.pick_up": {
+    "subtitle": "subtitles.bloodandbones.bloodless.carcass.pick_up",
+    "sounds": [
+      {
+        "name": "minecraft:block.chain.place",
+        "type": "event",
+        "pitch": 1.1
+      },
+      {
+        "name": "minecraft:item.armor.equip_iron",
+        "type": "event",
+        "pitch": 1.2
+      }
+    ]
+  },
+  "bloodless.carcass.clatter": {
+    "subtitle": "subtitles.bloodandbones.bloodless.carcass.clatter",
+    "sounds": [
+      {
+        "name": "minecraft:block.chain.fall",
+        "type": "event",
+        "pitch": 1.2
+      },
+      {
+        "name": "minecraft:block.metal.fall",
+        "type": "event",
+        "pitch": 1.1
+      }
+    ]
+  },
+  "bloodless.carcass.crumble": {
+    "subtitle": "subtitles.bloodandbones.bloodless.carcass.crumble",
+    "sounds": [
+      {
+        "name": "minecraft:entity.iron_golem.death",
+        "type": "event",
+        "pitch": 1.6,
+        "volume": 0.5
+      },
+      {
+        "name": "minecraft:block.anvil.destroy",
+        "type": "event",
+        "pitch": 1.3,
+        "volume": 0.6
+      }
+    ]
+  },
+  "bloodless.flesh.squish": {
+    "subtitle": "subtitles.bloodandbones.bloodless.flesh.squish",
+    "sounds": [
+      {
+        "name": "minecraft:block.chain.hit",
+        "type": "event",
+        "pitch": 1.3
+      },
+      {
+        "name": "minecraft:block.metal.hit",
+        "type": "event",
+        "pitch": 1.5
+      }
+    ]
+  },
+  "bloodless.flesh.squish_small": {
+    "subtitle": "subtitles.bloodandbones.bloodless.flesh.squish_small",
+    "sounds": [
+      {
+        "name": "minecraft:block.chain.step",
+        "type": "event",
+        "pitch": 1.6
+      }
+    ]
+  },
+  "bloodless.flesh.slide": {
+    "subtitle": "subtitles.bloodandbones.bloodless.flesh.slide",
+    "sounds": [
+      {
+        "name": "minecraft:block.grindstone.use",
+        "type": "event",
+        "pitch": 1.4,
+        "volume": 0.4
+      }
+    ]
+  },
+  "bloodless.flesh.break": {
+    "subtitle": "subtitles.bloodandbones.bloodless.flesh.break",
+    "sounds": [
+      {
+        "name": "minecraft:block.chain.break",
+        "type": "event"
+      },
+      {
+        "name": "minecraft:block.metal.break",
+        "type": "event",
+        "pitch": 1.2
+      }
+    ]
+  },
+  "bloodless.flesh.step": {
+    "subtitle": "subtitles.bloodandbones.bloodless.flesh.step",
+    "sounds": [
+      {
+        "name": "minecraft:block.chain.step",
+        "type": "event"
+      }
+    ]
+  },
+  "bloodless.flesh.place": {
+    "subtitle": "subtitles.bloodandbones.bloodless.flesh.place",
+    "sounds": [
+      {
+        "name": "minecraft:block.chain.place",
+        "type": "event"
+      },
+      {
+        "name": "minecraft:block.metal.place",
+        "type": "event",
+        "pitch": 1.2
+      }
+    ]
+  },
+  "bloodless.flesh.hit": {
+    "subtitle": "subtitles.bloodandbones.bloodless.flesh.hit",
+    "sounds": [
+      {
+        "name": "minecraft:block.chain.hit",
+        "type": "event"
+      }
+    ]
+  },
+  "bloodless.flesh.fall": {
+    "subtitle": "subtitles.bloodandbones.bloodless.flesh.fall",
+    "sounds": [
+      {
+        "name": "minecraft:block.chain.fall",
+        "type": "event"
+      }
+    ]
+  },
+  "bloodless.flesh.lunge": {
+    "subtitle": "subtitles.bloodandbones.bloodless.flesh.lunge",
+    "sounds": [
+      {
+        "name": "minecraft:block.piston.extend",
+        "type": "event",
+        "pitch": 1.6,
+        "volume": 0.5
+      },
+      {
+        "name": "minecraft:block.chain.fall",
+        "type": "event",
+        "pitch": 1.3,
+        "volume": 0.6
+      }
+    ]
+  },
+  "bloodless.flesh.fling": {
+    "subtitle": "subtitles.bloodandbones.bloodless.flesh.fling",
+    "sounds": [
+      {
+        "name": "minecraft:block.piston.extend",
+        "type": "event",
+        "pitch": 1.3,
+        "volume": 0.5
+      },
+      {
+        "name": "minecraft:block.chain.place",
+        "type": "event",
+        "pitch": 1.1
+      }
+    ]
+  },
+  "bloodless.flesh.slap": {
+    "subtitle": "subtitles.bloodandbones.bloodless.flesh.slap",
+    "sounds": [
+      {
+        "name": "minecraft:block.metal.hit",
+        "type": "event",
+        "pitch": 0.8
+      },
+      {
+        "name": "minecraft:block.anvil.land",
+        "type": "event",
+        "pitch": 1.6,
+        "volume": 0.2
+      }
+    ]
+  },
+  "bloodless.blood.drip": {
+    "subtitle": "subtitles.bloodandbones.bloodless.blood.drip",
+    "sounds": [
+      {
+        "name": "minecraft:block.pointed_dripstone.drip_lava",
+        "type": "event",
+        "pitch": 1.3,
+        "volume": 0.8
+      }
+    ]
+  },
+  "bloodless.stain.step": {
+    "subtitle": "subtitles.bloodandbones.bloodless.stain.step",
+    "sounds": [
+      {
+        "name": "minecraft:block.mud.step",
+        "type": "event",
+        "pitch": 1.5,
+        "volume": 0.3
+      }
+    ]
+  },
+  "bloodless.stain.break": {
+    "subtitle": "subtitles.bloodandbones.bloodless.stain.break",
+    "sounds": [
+      {
+        "name": "minecraft:block.mud.break",
+        "type": "event",
+        "pitch": 1.5,
+        "volume": 0.3
       }
     ]
   }

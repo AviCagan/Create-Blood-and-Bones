@@ -77,7 +77,7 @@ public record MendEffect(String mode, List<String> items, LevelBasedValue amount
                 // hammered and stitched back together
                 minion.level().playSound(null, minion.getX(), minion.getY(), minion.getZ(), SoundEvents.ANVIL_USE, minion.getSoundSource(), 0.4F, 1.4F);
                 if (!minion.cybernetic()) {
-                    minion.level().playSound(null, minion.getX(), minion.getY(), minion.getZ(), SoundEvents.SLIME_SQUISH, minion.getSoundSource(), 0.6F, 0.6F);
+                    minion.level().playSound(null, minion.getX(), minion.getY(), minion.getZ(), com.avicagan.bloodandbones.registry.BBSounds.FLESH_SQUISH.get(), minion.getSoundSource(), 0.6F, 0.6F);
                 }
             }
             return InteractionResult.sidedSuccess(minion.level().isClientSide);

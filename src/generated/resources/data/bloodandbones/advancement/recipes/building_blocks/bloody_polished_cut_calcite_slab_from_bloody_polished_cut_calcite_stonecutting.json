@@ -1,0 +1,32 @@
+{
+  "parent": "minecraft:recipes/root",
+  "criteria": {
+    "has_bloody_polished_cut_calcite": {
+      "conditions": {
+        "items": [
+          {
+            "items": "bloodandbones:bloody_polished_cut_calcite"
+          }
+        ]
+      },
+      "trigger": "minecraft:inventory_changed"
+    },
+    "has_the_recipe": {
+      "conditions": {
+        "recipe": "bloodandbones:bloody_polished_cut_calcite_slab_from_bloody_polished_cut_calcite_stonecutting"
+      },
+      "trigger": "minecraft:recipe_unlocked"
+    }
+  },
+  "requirements": [
+    [
+      "has_the_recipe",
+      "has_bloody_polished_cut_calcite"
+    ]
+  ],
+  "rewards": {
+    "recipes": [
+      "bloodandbones:bloody_polished_cut_calcite_slab_from_bloody_polished_cut_calcite_stonecutting"
+    ]
+  }
+}

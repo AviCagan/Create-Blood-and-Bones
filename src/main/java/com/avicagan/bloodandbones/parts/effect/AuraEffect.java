@@ -232,8 +232,8 @@ public record AuraEffect(String action, LevelBasedValue radius, int interval, Op
         if (sound.isPresent()) {
             level.playSound(null, host.getX(), host.getY(), host.getZ(), sound.get(), host.getSoundSource(), 0.8F, pitch * wobble);
         } else if ("pull_items".equals(action) && touched) {
-            level.playSound(null, host.getX(), host.getY(), host.getZ(), SoundEvents.SLIME_SQUISH_SMALL, host.getSoundSource(), 0.35F, 1.5F * wobble);
-            level.playSound(null, host.getX(), host.getY(), host.getZ(), SoundEvents.HONEY_BLOCK_SLIDE, host.getSoundSource(), 0.25F, 1.2F * wobble);
+            level.playSound(null, host.getX(), host.getY(), host.getZ(), com.avicagan.bloodandbones.registry.BBSounds.FLESH_SQUISH_SMALL.get(), host.getSoundSource(), 0.35F, 1.5F * wobble);
+            level.playSound(null, host.getX(), host.getY(), host.getZ(), com.avicagan.bloodandbones.registry.BBSounds.FLESH_SLIDE.get(), host.getSoundSource(), 0.25F, 1.2F * wobble);
         } else if ("bonemeal".equals(action) && touched) {
             level.playSound(null, host.getX(), host.getY(), host.getZ(), SoundEvents.BONE_MEAL_USE, host.getSoundSource(), 0.6F, 0.8F * wobble);
         }

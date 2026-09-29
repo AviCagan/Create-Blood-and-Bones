@@ -81,8 +81,8 @@ public class BrassMinionTests {
     @GameTest(template = "empty", timeoutTicks = 200)
     public static void spoutFillsCanister(GameTestHelper helper) {
         var recipes = helper.getLevel().getRecipeManager();
-        var filling = recipes.byKey(BloodAndBones.asResource("soul_canister_filling"));
-        var emptying = recipes.byKey(BloodAndBones.asResource("soul_canister_emptying"));
+        var filling = recipes.byKey(BloodAndBones.asResource("filling/soul_canister"));
+        var emptying = recipes.byKey(BloodAndBones.asResource("emptying/soul_canister"));
         if (filling.isEmpty() || filling.get().value().getType() != AllRecipeTypes.FILLING.getType()
                 || !filling.get().value().getResultItem(helper.getLevel().registryAccess()).is(BBItems.SOUL_CANISTER.get())) {
             helper.fail("A Spout should fill the empty canister into a Soul Canister");

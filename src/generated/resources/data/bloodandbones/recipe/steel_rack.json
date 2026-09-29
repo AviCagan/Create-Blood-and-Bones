@@ -1,0 +1,21 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "category": "building",
+  "key": {
+    "B": {
+      "item": "minecraft:iron_bars"
+    },
+    "P": {
+      "tag": "c:plates/iron"
+    }
+  },
+  "pattern": [
+    "BPB",
+    "B B",
+    "BPB"
+  ],
+  "result": {
+    "count": 1,
+    "id": "bloodandbones:steel_rack"
+  }
+}

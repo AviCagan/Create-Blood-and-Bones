@@ -81,7 +81,8 @@ public final class Necrosis {
             if (!(implant.getItem() instanceof ImplantItem item) || !item.organic() || of(implant) <= 0) {
                 continue;
             }
-            if (!FluidBacktankItem.fluid(FluidBacktankItem.wornBy(wearer)).is(BBFluids.blood())) {
+            // any blood perfuses: ours, or another mod's in c:blood
+            if (!BBFluids.isBlood(FluidBacktankItem.fluid(FluidBacktankItem.wornBy(wearer)))) {
                 continue;
             }
             if (BodyEffects.take(wearer, PERFUSE_MB) < PERFUSE_MB) {

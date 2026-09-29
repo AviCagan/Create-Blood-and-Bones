@@ -235,7 +235,7 @@ public final class Surgery {
                 table.take();
                 body.restore(part);
                 com.avicagan.bloodandbones.carcass.Blood.burst(level, at, 4);
-                level.playSound(null, pos, SoundEvents.SLIME_BLOCK_PLACE, SoundSource.PLAYERS, 1.0F, 0.8F);
+                level.playSound(null, pos, com.avicagan.bloodandbones.registry.BBSounds.FLESH_PLACE.get(), SoundSource.PLAYERS, 1.0F, 0.8F);
             }
             case UNCLIP -> {
                 give(surgeon, body.unclip(part), pos, level);
@@ -414,8 +414,8 @@ public final class Surgery {
             com.avicagan.bloodandbones.carcass.Blood.burst(level, at, 8, com.avicagan.bloodandbones.carcass.Blood.soul(entity));
             com.avicagan.bloodandbones.carcass.Blood.gibs(level, at, 2);
             level.playSound(null, pos, com.avicagan.bloodandbones.registry.BBSounds.CARCASS_CUT.get(), SoundSource.PLAYERS, 1.0F, 1.1F);
-            level.playSound(null, pos, SoundEvents.SLIME_SQUISH_SMALL, SoundSource.PLAYERS, 0.9F, 0.6F);
-            level.playSound(null, pos, SoundEvents.HONEY_BLOCK_SLIDE, SoundSource.PLAYERS, 0.6F, 0.7F);
+            level.playSound(null, pos, com.avicagan.bloodandbones.registry.BBSounds.FLESH_SQUISH_SMALL.get(), SoundSource.PLAYERS, 0.9F, 0.6F);
+            level.playSound(null, pos, com.avicagan.bloodandbones.registry.BBSounds.FLESH_SLIDE.get(), SoundSource.PLAYERS, 0.6F, 0.7F);
         } else {
             level.sendParticles(new net.minecraft.core.particles.ItemParticleOption(net.minecraft.core.particles.ParticleTypes.ITEM,
                     new ItemStack(net.minecraft.world.item.Items.BONE_MEAL)), at.x, at.y, at.z, 8, 0.1, 0.05, 0.1, 0.06);
