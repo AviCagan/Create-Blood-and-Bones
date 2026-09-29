@@ -1120,8 +1120,8 @@ public final class DevShowcase {
                 }
             });
         } else if (groupsStep == 2 && age < 330) {
-            // the tank, from the side, through its glass
-            groupsView(server, -1.5, 1.2, 14.5, -90.0F, 5.0F);
+            // the tank, from above its north wall, looking down through the water
+            groupsView(server, 6.5, 6.0, 8.5, 0.0F, 55.0F);
         } else if (groupsStep == 2) {
             groupsStep = 3;
             Screenshot.grab(mc.gameDirectory, PREFIX + "groups_1.png", mc.getMainRenderTarget(), message -> {
@@ -1157,12 +1157,13 @@ public final class DevShowcase {
         // the row, facing the camera (north), a stride apart: none has a rig file of its own now
         List<EntityType<?>> row = List.of(EntityType.POLAR_BEAR, EntityType.ZOMBIE_VILLAGER, EntityType.CAVE_SPIDER, EntityType.TROPICAL_FISH, EntityType.BAT);
         for (int i = 0; i < row.size(); i++) {
-            CarcassSavedData.Carcass carcass = carcass(level, row.get(i), y.offset(i * 2 + 1, 0, 2), false, false, 180.0F);
+            // knocked down as a kill knocks them
+            CarcassSavedData.Carcass carcass = carcass(level, row.get(i), y.offset(i * 2 + 1, 0, 2), true, false, 180.0F);
             if (carcass != null) {
                 GENERIC_SHOWN.add(carcass);
             }
         }
-        CarcassSavedData.Carcass baby = carcass(level, EntityType.WANDERING_TRADER, y.offset(11, 0, 2), false, true, 180.0F);
+        CarcassSavedData.Carcass baby = carcass(level, EntityType.WANDERING_TRADER, y.offset(11, 0, 2), true, true, 180.0F);
         if (baby != null) {
             GENERIC_SHOWN.add(baby);
         }
