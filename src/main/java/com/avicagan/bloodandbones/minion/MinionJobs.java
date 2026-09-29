@@ -1679,11 +1679,6 @@ public final class MinionJobs {
          */
         private static final double ON_TRAY = 0.8;
         /**
-         * How near, with its path ended short, the torso must be to be let down anyway: still over the tray's edge, not
-         * past it (lying across the rim, it slid off beyond the tray's reach).
-         */
-        private static final double NEAR_TRAY = 1.2;
-        /**
          * Ticks a body let down on a rack has to come to rest in the tray (to lie still and fold, as the bleeding waits for)
          * before it is taken up again for another pass: until it rests it may still slide off the rim, and a body lying on a
          * rack only bleeds into it once at rest. It stands still meanwhile: walking home through the body shoved it off.
@@ -2005,6 +2000,8 @@ public final class MinionJobs {
                 return;
             }
             Vec3 over;
+            // whether the bleeding finds this rack under the body where it is now
+            boolean overRack = false;
             boolean hook = level.getBlockEntity(to) instanceof ShackleHookBlockEntity;
             if (hook) {
                 ShackleHookBlockEntity shackle = (ShackleHookBlockEntity) level.getBlockEntity(to);
@@ -2030,19 +2027,18 @@ public final class MinionJobs {
                 boolean levelled = torso.y > tray.y - 0.5 && torso.y < tray.y + 2.0;
                 // over the tray once it has reached the middle along the line it is towed, or as near it as this pass brings it
                 // (it has begun to draw away again): let down any sooner, the body drops back the way it came as it settles (up
-                // to a block), and off the tray. With its path ended short, it is let down only still over the tray's edge
+                // to a block), and off the tray. With its path ended and the body wide of the middle (a body lying off to the
+                // side of the line it walks cuts the corner), it is let down wherever the bleeding finds this rack under it:
+                // taking it up again to fetch it back could leave it boxed in between the body and a wall
                 boolean passing = off > lastOff + 1.0e-3;
                 lastOff = off;
                 boolean overTray = levelled && off < ON_TRAY
                         && (through.lengthSqr() < 1.0e-4 || passing || (torso.x - tray.x) * through.x + (torso.z - tray.z) * through.z >= 0.0);
-                if (under != null && under.getBlockPos().equals(to) && (overTray || stood && off < NEAR_TRAY && levelled)) {
+                overRack = under != null && under.getBlockPos().equals(to) && levelled;
+                if (overRack && (overTray || stood)) {
                     // over the tray, where the bleeding finds this rack under the body: it lets it down there, gently (not
                     // flung on at a walk), and waits
-                    CarcassDrag.stop(level, minion);
-                    minion.getNavigation().stop();
-                    layDown(level, c);
-                    settleUntil = minion.tickCount + SETTLE;
-                    stuckSince = -1;
+                    letDown(level, c);
                     return;
                 }
                 if (!stood) {
@@ -2071,8 +2067,23 @@ public final class MinionJobs {
             }
             minion.getLookControl().setLookAt(over);
             if (!approach.step(minion, stand, MinionGoals.accuracy(minion), 0.9)) {
-                giveUp();
+                if (overRack) {
+                    // it can get no further (turning back from a wall past the rack, it walks into the body it tows): where
+                    // the bleeding finds the rack under the body, it lets it down there rather than give it up
+                    letDown(level, c);
+                } else {
+                    giveUp();
+                }
             }
+        }
+
+        /** Lets the body down where it is over the rack, gently (not flung on at a walk), and waits for it to settle. */
+        private void letDown(ServerLevel level, CarcassSavedData.Carcass c) {
+            CarcassDrag.stop(level, minion);
+            minion.getNavigation().stop();
+            layDown(level, c);
+            settleUntil = minion.tickCount + SETTLE;
+            stuckSince = -1;
         }
     }
 
