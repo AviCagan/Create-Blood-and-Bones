@@ -4595,5 +4595,21 @@ edge, and flung off at 6 and at 16 blocks a second across chunks. In 32 tries ev
 **Rule 4.** Nothing new is said to the player. The carcass drawn on a moving hook is drawn by `CarcassModels.drawBone`,
 which gives the plated wreck in bloodless mode.
 
+**The chain on a ship's hook.** Looking at the showcase found one more: the chain a hook draws down to its hanging body
+was drawn from the tip in the ship's plot to the body in the world, across the whole plot grid, and so many links
+overran the vertex buffer and crashed the game (a hook on a ship had never held a body before). The body is brought
+into the ship's plot first, and no chain longer than a hook hoists from is drawn.
+
+**Showcase** (a new step after the physics yard, before the Ponder scenes). `docs/screenshots/contraption_hook_moving.png`:
+a Mechanical Piston half way through pushing a stone block with a Shackle Hook under it, the cow drawn hanging from the
+hook while it rides in the hook's data (the log says one contraption and no cow in the world at that moment).
+`contraption_hook_set_down.png`: two blocks on, set down, the cow hanging there again as a body, as it hung before.
+`ship_moving_carcasses.png`: a spruce ship, a deck with a gallows, driven east with a cow hung from the gallows' hook
+and a cow resting on the deck, the camera following it. In bloodless mode (`bloodless_contraption_hook_moving.png`) the
+cow on the moving hook is drawn as the plated wreck every carcass is there, and no blood lies under it.
+
 **Tests.** 16 new, all in `ContraptionTests`: ten for the blocks, one for building them into a ship, two for a hook on a
-contraption and three for decks and ships. The suite is 594 tests (the switched-on-only `VoidLegTests` are not in it).
+contraption and three for decks and ships. The suite is 594 tests (the switched-on-only `VoidLegTests` are not in it),
+and passed three times in a row on the final code (and once before the chain fix). Each new test that checks a fix was
+also run with its fix taken out, and failed: the hook's actor, the deck's support and pin, the hook's joint to the ship,
+the Surgery Table's attachment and Sable's quiet removal. Datagen run after the last change changed nothing.
