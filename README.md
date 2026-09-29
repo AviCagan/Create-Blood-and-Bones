@@ -115,9 +115,17 @@ incremental. `./gradlew runClient` / `runServer` / `runData` are configured by M
 
 ### Development aids
 
-- `./gradlew runGameTestServer` runs the game tests headless (451: every rigged mob and baby,
+- `./gradlew runGameTestServer` runs the game tests headless (462: every rigged mob and baby,
   butchery, rot, bleeding, machines and their filters, cooking and display, decoration, surgery, organs, implants, backtanks, carcass armour and its traits, trait effects, minions and their jobs, movement and mounts, chains, recipes,
-  advancements and sounds).
+  advancements and sounds, and what a dozen carcasses at once cost the server).
+  `-Dbloodandbones.debug.only=name,name` runs only those tests, and `-Dbloodandbones.debug.repeat=N` runs them N times;
+  `-Dbloodandbones.debug.only=dozenCarcasses` on its own prints the server's tick times with a dozen carcasses awake and
+  resting.
+- The two-client check: with `-Dbloodandbones.multiplayer=true`, run `runMpServer`, then `runMpButcher` and
+  `runMpWatcher`, each in its own terminal. The server makes a fresh flat world in `run/mp-server`; the Butcher kills,
+  drags, hangs, cuts and skins a cow with real clicks while the Watcher photographs it into
+  `run/mp-watcher/screenshots/mp_watcher_*.png`. Both clients log where they draw every carcass body, and the server
+  where it really is (the `[mp]` lines of each `logs/latest.log`). All three quit after about forty seconds of play.
 - `./gradlew runData -Dbloodandbones.dump_layers=minecraft:goat#main,...` writes those vanilla
   models' part trees to `run/build/layer-dump.txt`, for writing new rig targets in
   `src/main/rig_targets`.

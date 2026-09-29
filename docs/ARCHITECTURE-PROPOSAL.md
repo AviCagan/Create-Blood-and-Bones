@@ -2815,3 +2815,173 @@ fix undone, and failed there.
   head offers no sentry)", which nothing had built, and has it back. The aggressive panda's head lacked spec 8.2's
   Brawler II; its variant now gives it (`carcassKeepsVariants` checks it), so "the other genes are wired" is true.
 - The suite is 450 tests (443 and the seven named above), and passed three runs in a row.
+
+### 15.18 Checks nobody had run (verified)
+
+Brief audit package 18. Three things the brief asks for had never been run: "verify things by running them … actually
+look at anything visual on screen", "cheap enough that a dozen at once is fine", and "it has to look right in
+multiplayer". Each check is now built and has been run, and each turned something up.
+
+**Two clients on a dedicated server** (section 11, slice 1's "looks right with two clients", never recorded as done):
+
+- **How to run it.** `-Dbloodandbones.multiplayer=true` adds three Gradle runs, each in its own folder under `run/`:
+  - `runMpServer`: a dedicated server. Every start makes a fresh flat creative world, lets offline development clients
+    in, and accepts the game's EULA in that folder (a development server will not start until it is accepted).
+  - `runMpButcher` and `runMpWatcher`: two clients called Butcher and Watcher. Each joins `localhost:25565` (or the
+    address in `-Dbloodandbones.multiplayer.server`), retrying until the server is up.
+
+  Start the server, then the two clients, each in its own terminal (`gradlew.bat` on Windows). All three stop by
+  themselves after about forty seconds of play.
+- **What happens.** Once both players are in, the server (`gametest/MultiplayerCheck`) waits twenty seconds more, since
+  a client drawing in software is slow to load. Then it:
+  - clears a patch of the flat world;
+  - puts a cow three blocks in front of the Butcher;
+  - puts a Shackle Hook four blocks up and six to the side, with a Bleeding Rack under it;
+  - gives the Butcher a Meat Hook, a Cleaver and a Flensing Knife;
+  - tells both clients when the clock starts.
+
+  The Butcher's client (`client/MultiplayerShowcase`) then plays with real clicks, each aimed at what its own client
+  draws: two blows of the Meat Hook, a click on a leg, a walk of six blocks facing the carcass, a click on the hook,
+  three Cleaver strokes through a front leg, and four Flensing Knife strokes down the body. The Watcher hovers and takes
+  29 pictures (`run/mp-watcher/screenshots/mp_watcher_*.png`); 21 of them are a film of the drag, one every six ticks.
+  The Butcher takes three of its own.
+- **What is compared.** The `[mp]` lines in each `logs/latest.log`:
+  - the server writes, every tick, where every carcass body is, where the Butcher stands, the rack's blood and the
+    stains on the ground;
+  - the Watcher writes where it draws every body, every tick and every frame, whether it sees the cow, and its own count
+    of the rack's blood and of the stains.
+- **Where it ran.** The server and both clients on one four-core machine with no graphics card (xvfb, software
+  drawing, 854×480). There were seven runs. The numbers below are from the fifth, the first with the fixes below; the
+  seventh, the same again, found the cut leg falling through the ground (item 4).
+
+What the Watcher's pictures show (four from the seventh run are in `docs/screenshots/multiplayer_*.png`):
+
+- after the kill, the cow falls and lies where the server has it;
+- the drag: the Butcher steps back and sideways, the cow hooked by a front leg. The Meat Hook is stuck in the leg with a
+  line to the Butcher's hand, and a trail of drops and stains is left behind;
+- the cow hangs head-up from the hook by the neck, and blood drops into the rack below. The tray's blood rises;
+- after the cut, the front leg lies on the ground by the rack with its wound, blood splashed and stained around it, and
+  the Butcher holds a bloody Cleaver;
+- after skinning, the hanging body is bare flesh, the raw hide lies on the ground, and the cut leg still has its hide;
+- from the side at the end: the rack, the stains and the leg.
+
+What the numbers show:
+
+- **Where bodies are drawn.** The Watcher draws each body 3.5 cm on average from where the server had it a tick earlier
+  (its interpolation delay). That is 12 cm over the drag, 3 cm while hanging, and under a millimetre once still.
+- **Nothing went missing.** Every tick of the handover, either the frozen cow or its carcass was on the Watcher's
+  screen. Every body the server had, the Watcher had, except in the first ticks of the carcass while the frozen cow still
+  stood. Its count of the rack's blood and of the stains matched the server's every second (at twenty seconds: 132 mB
+  and 8 stains on both sides).
+- **Smoothness.** The Watcher drew about 20 frames a second over the drag. On most ticks it moved the carcass at the
+  server's speed (2 to 9 blocks a second), with no frame jumping back. A few times its drawing stood still for one to
+  three ticks (once about seven, at the start of the drag) and then caught up exactly. These match the Watcher's own
+  frame stalls of up to 0.3 seconds (software drawing, three games on four cores, screenshots being written). They are
+  not something the mod sends: the server kept 20 ticks a second throughout.
+
+What it turned up:
+
+1. **Hanging a carcass threw the player standing by it** (fixed).
+   - The Shackle Hook held its body with a ball joint made at once. A body lying a few blocks off went up to the tip in
+     one tick, at about 80 blocks a second.
+   - Sable gives a player the motion of any moving body that pushes them. The Butcher, standing beside the body, was
+     thrown about 110 blocks up and 220 along. A single-player game does the same, because the push happens on the
+     client.
+   - The hook now hoists the body up at 3 blocks a second (`ShackleHookBlockEntity.hoist`: a push at the hooked point
+     that carries the whole carcass's weight). It makes the joint once the hooked point is within 0.3 blocks of the tip,
+     or after four seconds. A hook on a ship still holds at once.
+   - `shackleHookHoistsWithoutFlinging`: a cow hung from four blocks away rises at no more than 3.6 blocks a second and
+     hangs from the tip. With the old snap it fails, at 89 blocks a second.
+2. **Walking forward while dragging carries you off** (not fixed; for package 1).
+   - The drag pulls the hooked point to 1.1 blocks in front of where the player looks. Walking forward, facing where
+     you go, pulls the carcass into your path. You walk into it and it pushes you, which moves the point it is pulled
+     to, and so on.
+   - In the second run the Butcher stopped walking and was still carried about 20 blocks over four and a half seconds,
+     the drag holding throughout.
+   - Walking backwards and sideways facing the carcass, as the later runs do, works. A hauler holds its carcass
+     behind it; whether a player's drag should too is a question for package 1.
+3. **A client failed to start once** in fourteen starts, with Registrate's "Found unused register callbacks" while
+   loading mods. It did not happen again.
+4. **A cut leg fell through the ground** (not fixed; not reproduced).
+   - In the seventh run the front leg, cut off the hanging cow, fell four blocks, touched the grass, and went on
+     falling through it into the void as if there were no ground at all (it fell at the rate of gravity, 250 blocks
+     down within eight seconds). Both the server and the Watcher had it so: the Watcher's picture after the cut shows the
+     blood but no leg (`docs/screenshots/multiplayer_cut.png`). In the fifth run the same cut left the leg lying on the
+     grass.
+   - Game tests of the same thing did not reproduce it in 42 runs, over a hundred legs: a hung cow's leg cut off over
+     stone and over grass, legs dropped from four blocks onto chunk borders, and legs with blood stains put down under
+     them. Every leg stayed on the floor.
+   - So it happens on a dedicated server, sometimes. Sable only builds the ground a body can hit in the chunk sections
+     near a body (`PhysicsChunkTicketManager`), so that is where to look first. Until it is found, a cut limb can be
+     lost now and then.
+
+**A dozen carcasses at once.**
+
+- **The test.** `dozenCarcassesAtOnce` (`CostTests`) drops twelve fresh carcasses of every size from up to three
+  blocks: chicken, rabbit, pig, sheep, cow, wolf, villager, zombie, spider, horse, llama and polar bear, 79 bodies in
+  all. Each is knocked over as a kill knocks it. The test times every server tick: with none, awake (the first five
+  seconds), settling, and all resting.
+- **Measuring.** It was run on its own (`-Dbloodandbones.debug.only=dozenCarcasses`; `-Dbloodandbones.debug.repeat=N`
+  runs N copies side by side), on the same four-core machine. In the full suite it only checks that all twelve come to
+  rest on the floor.
+
+| Carcasses | Empty arena, mean | Awake, first 5 s: mean / 95th percentile | All resting, mean | All at rest after |
+|---|---|---|---|---|
+| 12 (two runs) | 1.9 and 2.9 ms | 9.3 / 12.6 ms and 10.9 / 18.7 ms | 1.7 and 2.1 ms | 14 s and 9 s |
+| 24 (two side by side) | 2.2 ms | 15.6 to 17.8 / 20.7 to 23.2 ms | 2.0 to 2.2 ms | 9 to 11 s |
+| 48 (four side by side) | 2.5 ms | 29.8 to 34.1 / 36.8 to 41.3 ms | 2.9 to 3.1 ms | 9 to 10 s |
+
+These are milliseconds of a server tick, whose budget is 50.
+
+- The tick in which twelve are made at once costs 49 to 58 ms, because twelve are assembled in one tick. A kill makes
+  one.
+- Awake, a carcass costs about 0.6 ms of server tick. Resting ones cost nothing that could be measured: the 79 bodies
+  become 12.
+- **The per-dimension cap of section 3.4 is not needed, and was not built.** A dozen awake use a fifth of a tick for the
+  ten seconds or so before they rest, and resting ones cost nothing. Even four dozen awake leave a third of the tick
+  free, and only briefly. A cap would matter only if many carcasses were made at once and kept awake. That is what
+  decision 3 (every kill leaving a damaged carcass) would bring, so the cap should be settled together with it.
+
+**A spider never rested** (fixed; found by the dozen).
+
+- Its eight thin, light legs twitched against the ground for ever: 0.1 to 1.5 radians a second, a leg's tip wandering
+  up to a tenth of a block in three seconds. That is above the stillness bar, so a dead spider kept eleven bodies of
+  physics running for good, and the whole dozen never all came to rest.
+- A carcass now also rests once all its bodies have stayed where they lie for five seconds, however they twitch: each
+  within a quarter of a block, the torso within a tenth (`CarcassRest.stayedPut`).
+- Spiders and cave spiders now rest in under six seconds, and the dozen in 9 to 14. Without this, `dozenCarcassesAtOnce`
+  fails with the spider still awake.
+
+**Tests for what was built but unproven** (`UnprovenTests`). Each was also run with its feature taken out, and failed:
+
+| Test | What it shows | Taken out to prove it |
+|---|---|---|
+| `fanSpeedsUpBleeding` | a hung cow bleeds 110 mB in five seconds with no fan, and 310 mB with a fan at 128 RPM under it | the fan's boost in `CarcassBleeding.tick` |
+| `skeletonCannotBeSkinned` | eight Flensing Knife strokes do nothing to a skeleton: no hide, no bare flesh | the no-hide check in `CarcassButchery.skin` |
+| `bloodNeverMakesASourceBlock` | a gap between two sources of blood (and of Soul Blood) fills with flowing blood, never a new source | blood and Soul Blood made able to form sources |
+| `degloverSkinsASingleLimb` | a cow's leg put down on its own on a turning Deglover comes off skinned | the Deglover limited to whole carcasses |
+| `guillotineLimbGoesToAMinionAndAWallHook` | a Guillotine takes two legs off a cow, never its head; both are picked up; one hangs on a Butcher's Hook, and the other is fitted to a cow's frame and the minion wakes walking on it | the Guillotine's cut |
+| `killWithoutTheMeatHookLeavesNoCarcass` | pigs killed with a sword, with a bare hand and by plain damage die and drop pork, with no carcass | the Meat Hook check in `CarcassEvents.onDeath` |
+| `pieceRidesABelt` | a leg cut off a cow is picked up and dropped on a running belt; it rides to the end and falls off, the same piece | pieces becoming items (`CarcassButchery.pickUp`) |
+| `magnetCoilAtHighSpoolDrawsInACarcass` | a cow seven blocks off stays put below three quarters of full spool; at full spool it is drawn to 3.9 blocks in two seconds | the coil's carcass pull |
+| `grapplingSpoolHandsACarcassToTheDrag` | a cow lying still six blocks ahead is hit by the spool, reeled in, and then held by the Meat Hook's drag | the hand-off to `CarcassDrag.start` |
+| `shackleHookHoistsWithoutFlinging` | see above | the hoist |
+
+The Grappling Spool test turned something up too. Run in the full suite, and then 30 times on its own, it failed 7
+times in 30. The spool gave a carcass it reeled in the time it gives a mob (54 ticks for a spool fired at once), but a
+carcass is dragged along the ground, far slower than a mob is yanked through the air: a cow six blocks off came within
+reach just as the time ran out, or just after, and was then never handed to the Meat Hook's drag. A carcass now has 100
+ticks more (`ModuleActions.CARCASS_HAUL_TICKS`). The cow arrives in about 58 ticks of its 154, and the test passed 30
+times in 30, and the ten new tests 10 times each.
+
+What is not built of these: the Guillotine leaves the limbs it cuts on the floor, as bodies, and nothing but a player
+takes them further. It has no output to a belt or funnel, and nothing puts a piece on a wall hook or a minion frame by
+itself (package 4 and decision 9). Nor does it "wind up and drop on a redstone edge": it cuts on a timer while it turns
+(package 15).
+
+**On screen.** The showcase gains a slow belt east of the decoration row, with a Depot at each end and three carcass
+pieces dropped on it. In `showcase_17.png` (enlarged in `docs/screenshots/showcase_belt.png`) a pig's leg stands on the
+Depot at the end the belt runs to, and a cow's head and a cow's leg wait behind it on the belt, each drawn as the part it
+is.
+
+The suite is 462 tests (the 451 on main and the eleven above), and passed three runs in a row.

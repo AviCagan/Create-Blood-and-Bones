@@ -59,8 +59,74 @@ public class ShackleHookBlockEntity extends BlockEntity {
             if (!(subLevel instanceof ServerSubLevel body) || body.isRemoved()) {
                 continue;
             }
+            if (hook.hoisting >= 0) {
+                hook.hoist(level, body, physics, timeStep);
+            }
             hook.turn(body, physics, timeStep);
         }
+    }
+
+    /** Blocks a second the hook hoists a body up to its tip before holding it fast. */
+    public static final double HOIST_SPEED = 3.0;
+    /** How near the tip the hooked point must come before the hook holds it fast. */
+    private static final double HOIST_REACH = 0.3;
+    /** Ticks a hoist may take: a body caught under something is held fast from wherever it got to. */
+    private static final int HOIST_TICKS = 80;
+    /** How hard the hoist corrects the hooked point's speed, per second, and the most it pulls, as accelerations. */
+    private static final double HOIST_GAIN = 12.0;
+    private static final double HOIST_MAX = 40.0;
+
+    /**
+     * Draw the hooked point toward the tip at no more than {@link #HOIST_SPEED}, carrying the whole carcass's weight: a
+     * push at the hooked point, as a local impulse over this substep. (A ball joint made straight away snapped a body
+     * lying a few blocks off up to the tip in a tick, and threw anyone standing by it tens of blocks.)
+     */
+    private void hoist(ServerLevel level, ServerSubLevel body, dev.ryanhcode.sable.sublevel.system.SubLevelPhysicsSystem physics, double timeStep) {
+        Vec3 tip = ShackleHookBlock.tip(worldPosition, getBlockState());
+        dev.ryanhcode.sable.companion.math.Pose3d pose = body.logicalPose();
+        Vector3d anchor = pose.transformPosition(new Vector3d(anchorPlot), new Vector3d());
+        Vector3d toTip = new Vector3d(tip.x, tip.y, tip.z).sub(anchor);
+        double gap = toTip.length();
+        Vector3d wanted = gap < 1.0e-6 ? new Vector3d() : toTip.mul(Math.min(HOIST_SPEED, gap * 6.0) / gap);
+        dev.ryanhcode.sable.api.physics.handle.RigidBodyHandle handle = physics.getPhysicsHandle(body);
+        Vector3d linear = handle.getLinearVelocity(new Vector3d());
+        Vector3d angular = handle.getAngularVelocity(new Vector3d());
+        Vector3d pointVelocity = new Vector3d(angular).cross(new Vector3d(anchor).sub(pose.position())).add(linear);
+        double mass = hoistedMass(level, body);
+        Vector3d force = wanted.sub(pointVelocity).mul(HOIST_GAIN * mass)
+                .sub(dev.ryanhcode.sable.physics.config.dimension_physics.DimensionPhysicsData.getGravity(level).mul(mass));
+        if (force.length() > HOIST_MAX * mass) {
+            force.normalize(HOIST_MAX * mass);
+        }
+        Vector3d impulse = force.mul(timeStep);
+        pose.orientation().transformInverse(impulse);
+        body.getOrCreateQueuedForceGroup(dev.ryanhcode.sable.api.physics.force.ForceGroups.PROPULSION.get()).applyAndRecordPointForce(anchorPlot, impulse);
+        physics.getPipeline().wakeUp(body);
+    }
+
+    /** The weight the hook lifts: every body of the carcass, which hang from the torso it holds. */
+    private double hoistedMass(ServerLevel level, ServerSubLevel torso) {
+        CarcassSavedData.Carcass carcass = carcassId == null ? null : CarcassSavedData.get(level).carcass(carcassId);
+        ServerSubLevelContainer container = SubLevelContainer.getContainer(level);
+        double total = 0.0;
+        if (carcass != null && container != null) {
+            for (UUID id : carcass.bones.values()) {
+                if (container.getSubLevel(id) instanceof ServerSubLevel body && !body.isRemoved()) {
+                    total += body.getMassTracker().getMass();
+                }
+            }
+        }
+        return Math.max(total, Math.max(0.05, torso.getMassTracker().getMass()));
+    }
+
+    /** Whether the hooked point has come up near enough to the tip to be held fast. */
+    private boolean hoisted(ServerLevel level) {
+        ServerSubLevelContainer container = SubLevelContainer.getContainer(level);
+        if (container == null || subLevelId == null || !(container.getSubLevel(subLevelId) instanceof ServerSubLevel body) || body.isRemoved()) {
+            return true;
+        }
+        Vec3 tip = ShackleHookBlock.tip(worldPosition, getBlockState());
+        return body.logicalPose().transformPosition(new Vector3d(anchorPlot), new Vector3d()).distance(tip.x, tip.y, tip.z) <= HOIST_REACH;
     }
 
     /** Spring torque toward the hanging orientation, as a local angular impulse over this substep. */
@@ -127,6 +193,8 @@ public class ShackleHookBlockEntity extends BlockEntity {
     private double outZ = 1.0;
     @Nullable
     private GenericConstraintHandle joint;
+    /** Ticks since the hook began hoisting its body up to the tip, or -1 once it holds it fast (or holds nothing). Not saved. */
+    private int hoisting = -1;
 
     /**
      * The torso-side anchor of the head joint: where the neck meets the body. When the head hangs off the torso through
@@ -258,11 +326,21 @@ public class ShackleHookBlockEntity extends BlockEntity {
         outZ = out.z;
         setChanged();
         level.sendBlockUpdated(worldPosition, getBlockState(), getBlockState(), 3);
-        attach(level, false);
+        // a hook in the world hoists the body up before it holds it fast; one on a ship holds it at once
+        Vec3 tip = ShackleHookBlock.tip(worldPosition, getBlockState());
+        if (dev.ryanhcode.sable.Sable.HELPER.getContaining(level, worldPosition) == null
+                && torso.logicalPose().transformPosition(new Vector3d(anchorPlot), new Vector3d()).distance(tip.x, tip.y, tip.z) > HOIST_REACH) {
+            hoisting = 0;
+            activate(level);
+            container.physicsSystem().getPipeline().wakeUp(torso);
+        } else {
+            attach(level, false);
+        }
         return true;
     }
 
     public void release(ServerLevel level) {
+        hoisting = -1;
         deactivate();
         if (joint != null && joint.isValid()) {
             joint.remove();
@@ -278,6 +356,13 @@ public class ShackleHookBlockEntity extends BlockEntity {
     /** Server tick: keep the joint alive while the limb is loaded. */
     public static void tick(Level level, BlockPos pos, BlockState state, ShackleHookBlockEntity hook) {
         if (!(level instanceof ServerLevel serverLevel) || !hook.isOccupied()) {
+            return;
+        }
+        if (hook.hoisting >= 0) {
+            if (hook.hoisted(serverLevel) || ++hook.hoisting > HOIST_TICKS) {
+                hook.hoisting = -1;
+                hook.attach(serverLevel, false);
+            }
             return;
         }
         if (hook.joint != null && hook.joint.isValid()) {

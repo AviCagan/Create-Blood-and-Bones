@@ -18,6 +18,8 @@ Everything below is in development builds only; the art is placeholder (see the 
   ship's deck; a hard landing splats blood.
 - Flies gather over rotting carcasses, and maggots squirm over ones nearly gone. Rotten carcasses
   fall apart after a day.
+- A dead spider lies still at last: a carcass whose limbs only twitch where it lies now folds into its resting form
+  after five seconds, as a still one does, so it stops costing the server anything.
 
 ### Butchery
 
@@ -45,6 +47,8 @@ Everything below is in development builds only; the art is placeholder (see the 
 - Mangler, Guillotine, Beheader and Deglover kinetic machines, each with a filter slot on its top
   edge: a spawn egg, a carcass piece or a Create filter picks which carcasses it works on.
 - Shackle Hook and Shackle Trolley on Create chain conveyors; trolleys queue a body's length apart.
+- The Shackle Hook hoists a carcass up to its tip at a walking pace. It used to snap it there in a tick, which threw
+  anyone standing beside it a couple of hundred blocks.
 - Carcass pieces in Create's Attribute Filter: sort by mob, by part (head, body, limb, tail), fresh
   or rotting, skinned, or from a baby.
 - Both hooks ride Create contraptions with the block they hang from.
@@ -128,6 +132,8 @@ Everything below is in development builds only; the art is placeholder (see the 
   (items drift to you; held, from further, and carcasses too near the top), Analytical Lens (counts as
   Create's goggles and reads machines through walls), Gyroscopic Stabilizer (no fall damage, paid in
   soul blood by the block) and Barometric Vent (a puff up and a slow hover).
+- The Grappling Spool gives a carcass it reels in time to arrive. One six blocks off often stopped a step short and
+  was never handed to the Meat Hook.
 - Set bonuses: four or more flesh grafts heal you from what you hit and rot half as fast; four or more
   brass modules make the throttle a quarter cheaper and you hard to shove. Both kinds in one body get
   neither, and nothing worse.
@@ -392,6 +398,10 @@ Everything below is in development builds only; the art is placeholder (see the 
 - Not rigged: the ender dragon and tropical fish.
 - Trolleys cannot ride chain conveyors that sit on a Sable sub-level (a moving ship).
 - A carcass hanging from a hook that a Create contraption moves falls off rather than going along.
+- The Meat Hook holds a dragged carcass just in front of you. Walk forward and you walk into it, and it can carry you
+  along; step back or sideways while facing it.
+- Now and then on a server, a cut-off limb falls through the ground and is lost. It has been seen once and not yet
+  reproduced.
 - The drag tests used to miss their mark by a hair about once in thirty runs (a body still swinging
   at the one tick they looked). They now judge the middle value over the last second; the whole
   suite has passed every run made with that check (at least eleven), which is encouraging but not

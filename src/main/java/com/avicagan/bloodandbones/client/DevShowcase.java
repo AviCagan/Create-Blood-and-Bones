@@ -830,6 +830,8 @@ public final class DevShowcase {
         // row E, the brief's decoration: morgue furniture, a ribcage, bone piles, bloody cladding, gut chain on a conveyor
         int decoZ = o.getZ() + 34;
         decoration(level, o, decoZ, jarPig, roastCow);
+        // beside it, carcass pieces riding a belt to a Depot (the brief: off the carcass, they behave as ordinary items)
+        belt(level, o, decoZ, jarPig, roastCow);
 
         double eye = o.getY();
         views = List.of(
@@ -867,6 +869,8 @@ public final class DevShowcase {
                 new View(o.getX() + 3.0, eye + 0.2, decoZ - 3.0, 0, 5),
                 // bone piles and the bloody brass and copper casings
                 new View(o.getX() + 10.0, eye + 1.2, decoZ - 4.0, 0, 18),
+                // carcass pieces on a belt and on the Depots at its ends
+                new View(o.getX() + 17.5, eye + 2.2, decoZ - 2.5, 0, 38),
                 // the bits that fly off the bloody blocks when broken, thrown in mid-air just before the shot
                 new View(o.getX() + 0.5, eye, decoZ + 8.0, 0, 0),
                 // gut chains riding the chain conveyor
@@ -974,6 +978,35 @@ public final class DevShowcase {
             for (int i = 0; i < along.length; i++) {
                 var cursor = new com.avicagan.bloodandbones.carcass.trolley.ChainCursor(a, b.subtract(a), along[i], aBe.reversed);
                 level.addFreshEntity(com.avicagan.bloodandbones.decoration.HangingGutChainEntity.create(level, cursor, links[i]));
+            }
+        }
+    }
+
+    /**
+     * A slow belt east of the decoration row with a Depot at each end, and three carcass pieces dropped on it: by the
+     * time it is photographed they have ridden it to whichever end it runs to, one on the Depot, the rest waiting behind.
+     */
+    private static void belt(ServerLevel level, BlockPos o, int z, CarcassSavedData.Carcass pig, CarcassSavedData.Carcass cow) {
+        BlockPos start = new BlockPos(o.getX() + 15, o.getY(), z + 1);
+        BlockPos end = start.east(5);
+        for (BlockPos pulley : new BlockPos[]{start, end}) {
+            level.setBlockAndUpdate(pulley, AllBlocks.SHAFT.getDefaultState().setValue(com.simibubi.create.content.kinetics.simpleRelays.ShaftBlock.AXIS, Direction.Axis.Z));
+        }
+        com.simibubi.create.content.kinetics.belt.item.BeltConnectorItem.createBelts(level, start, end);
+        level.setBlockAndUpdate(start.north(), AllBlocks.CREATIVE_MOTOR.getDefaultState().setValue(DirectionalKineticBlock.FACING, Direction.SOUTH));
+        if (level.getBlockEntity(start.north()) instanceof CreativeMotorBlockEntity motor) {
+            motor.generatedSpeed.setValue(16);
+        }
+        level.setBlockAndUpdate(start.west(), AllBlocks.DEPOT.getDefaultState());
+        level.setBlockAndUpdate(end.east(), AllBlocks.DEPOT.getDefaultState());
+        ItemStack[] pieces = {pig == null ? ItemStack.EMPTY : CarcassPieceItem.of(pig, "left_front_leg"),
+                cow == null ? ItemStack.EMPTY : CarcassPieceItem.of(cow, "head"), cow == null ? ItemStack.EMPTY : CarcassPieceItem.of(cow, "left_front_leg")};
+        for (int i = 0; i < pieces.length; i++) {
+            if (!pieces[i].isEmpty()) {
+                net.minecraft.world.entity.item.ItemEntity item = new net.minecraft.world.entity.item.ItemEntity(level, start.getX() + 1.5 + i * 1.5,
+                        start.getY() + 0.8, start.getZ() + 0.5, pieces[i]);
+                item.setDeltaMovement(net.minecraft.world.phys.Vec3.ZERO);
+                level.addFreshEntity(item);
             }
         }
     }

@@ -644,7 +644,28 @@ That comparison belongs in the balance pass (PARTS-AND-TRAITS slice 9).
 
 **Owner first.** Only decision 9.
 
-### 18. Checks nobody has run
+### 18. Checks nobody has run (done 29 September 2026)
+
+**Done.** ARCHITECTURE 15.18 has the details and the numbers. The rest of this section is kept as it was written.
+- **Two clients** on a dedicated server (`-Dbloodandbones.multiplayer=true`: `runMpServer`, `runMpButcher`,
+  `runMpWatcher`). One client kills, drags, hangs, cuts and skins a cow with real clicks; the other photographs it and
+  logs where it draws every body.
+  - The Watcher sees it right. Bodies are drawn 3.5 cm on average from where the server has them. The rack's blood and
+    the stains match every second, and the handover never leaves a gap.
+  - Hanging a carcass threw the player beside it about 220 blocks. Fixed: the hook now hoists the body up at 3 blocks a
+    second.
+  - Walking forward while dragging, your own carcass pushes you along. Not fixed; left for package 1.
+  - Once in three runs a cut leg fell through the ground into the void. Not fixed: game tests could not reproduce it.
+- **A dozen at once.** Twelve awake cost 9 to 11 ms of the 50 ms server tick for about ten seconds; resting, nothing
+  measurable. Four dozen awake cost about 32 ms. ARCHITECTURE 3.4's cap is not needed, and was not built; settle it with
+  decision 3.
+  - It found that a spider carcass never rested (its legs twitched for ever). Fixed: a carcass that stays where it lies
+    for five seconds rests, however it twitches.
+- **Nine tests** for what was built but unproven, and one for the hanging fix. Each was also run with its feature taken
+  out, and failed.
+  - The Grappling Spool test found that a reeled-in carcass often ran out of time a step short of your hand and was
+    never handed to the drag. Fixed: a carcass has five seconds more to arrive.
+  - Not built: the Guillotine's limbs reach a minion or a wall hook only through a player's hands (package 4, decision 9).
 
 **Why.**
 - "Verify things by running them, not by reasoning about them … actually look at anything visual on screen."
@@ -732,6 +753,8 @@ One line each. Details and test names are in ARCHITECTURE sections 13 to 15.
   - an organ adds a special.
 - **Power:** flesh minions drink at a Blood Trough they can reach; brass minions run on Soul Canisters swapped by the Charging Cradle; each kind has something the other lacks.
 - **Never destroyed:** a neglected or beaten minion powers down and lies where it is. The minion cap defaults to none.
+- **Checked by running it:** two clients on a dedicated server see the same carcass, and a dozen carcasses at once cost
+  a fifth of a server tick until they rest (package 18).
 
 ## Different from the brief by recorded decision (not gaps)
 
