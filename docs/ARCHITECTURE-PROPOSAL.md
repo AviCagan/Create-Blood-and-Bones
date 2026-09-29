@@ -4121,3 +4121,5 @@ body by `byHand` at the butcher's share, the table's `chop` in its hands) agains
 6% (six times the spread). `butcherChopsAtTheTable` counts all four things a cow's body gives in the chest, since by
 hand any one of them can be botched away.
 
+
+**Suite:** 557 in all (504 here and 504 on the integration branch, 451 of them shared), passing three full runs in a row.
