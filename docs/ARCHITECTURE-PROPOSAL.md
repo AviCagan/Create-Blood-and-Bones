@@ -3339,4 +3339,6 @@ put right its runs took 239 to 650 ticks (38 runs); the test has 3000.
 `taskFileKindAndAnchorsInPlay` and `badMinionDataLeftOutAsItLoads`; `headlessFightsOnlyWhatTouchesIt`,
 `sentryWithNoBowHoldsItsPost`, `cannotOnlyWhenTheBodyCannot`, `villagerArmsArePacifist` and
 `partFactsShowKnacksGripsAndDispositions` were strengthened. The new and strengthened tests and `tenderWakesAFallenMinion`
-passed twenty times over, all in one world, and the suite passed three full runs in a row.
+passed twenty times over, all in one world; `tenderWakesAFallenMinion` passed 60 times more in batches shared with the
+other Tender, butcher, courier and hunter tests, where it had failed 2 times in 60; and the suite passed three full runs in
+a row.
