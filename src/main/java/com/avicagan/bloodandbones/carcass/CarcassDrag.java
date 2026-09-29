@@ -72,6 +72,11 @@ public final class CarcassDrag {
          * flung together, blocks off the line it was towing along.
          */
         double groundY = Double.NaN;
+        /** Where its dragger stood at the last game tick seen, and how many ticks in a row they have stood there. */
+        @Nullable
+        Vec3 stoodAt;
+        long stoodSeen = Long.MIN_VALUE;
+        int stoodTicks;
 
         Drag(UUID player, UUID carcass, String bone, UUID subLevel, Vector3d anchorPlot, float weight) {
             this.player = player;
@@ -345,6 +350,11 @@ public final class CarcassDrag {
         if (!(player instanceof Player) && player.onGround() && !isStandingOnCarcass(level, player, drag)) {
             drag.groundY = player.getY();
         }
+        if (drag.stoodSeen != level.getGameTime()) {
+            drag.stoodSeen = level.getGameTime();
+            drag.stoodTicks = drag.stoodAt != null && drag.stoodAt.distanceToSqr(player.position()) < STOOD_STILL * STOOD_STILL ? drag.stoodTicks + 1 : 0;
+            drag.stoodAt = player.position();
+        }
         Vector3d hookWorld = subLevel.logicalPose().transformPosition(drag.anchorPlot, new Vector3d());
         Vector3d target = target(drag, player, hookWorld, 1.0);
         if (hookWorld.distance(target) > MAX_DISTANCE) {
@@ -536,7 +546,12 @@ public final class CarcassDrag {
      * While the hooked body touches its dragger ({@code against}), the spring never pulls it further into them, which
      * would only shove them; but its damping stays, and so does a spring that pushes it back out to arm's length. With
      * everything let go the moment it touched, a carcass pulled in towards a dragger who had stopped slid on into them
-     * and lay against them short of where it was pulled to (meatHookDragsByLeg, about 1 run in 10).
+     * and lay against them short of where it was pulled to (meatHookDragsByLeg, about 1 run in 10). Since what someone
+     * drags no longer collides with them, it can slide on into them, and with only the damping left it then lay there,
+     * in them, for good (meatHookDragsByBody, 0.76 blocks short, about 1 run in 25): so once they have stood still a
+     * moment, the spring draws it back out to arm's length. Not while they move: drawn out from someone walking past it,
+     * a cow dragged by a hind leg the way its head points was pushed off round the wrong way and did not come round
+     * rear first (hindLegHookComesRoundRearFirst, 4 runs in 30).
      */
     private static void pull(Drag drag, ServerSubLevel subLevel, LivingEntity player, double partial, double timeStep, SubLevelPhysicsSystem physics,
                              boolean against) {
@@ -559,7 +574,12 @@ public final class CarcassDrag {
             damping *= 2.0; // settle instead of overshooting into the player
         }
         Vector3d force;
-        if (against) {
+        Vector3d fromDragger = new Vector3d(hook.x - player.getX(), 0.0, hook.z - player.getZ());
+        Vector3d out = new Vector3d(target).sub(hook);
+        if (against && drag.stoodTicks >= STILL_BEFORE_OUT && out.x * fromDragger.x + out.z * fromDragger.z > 0.0) {
+            // lying in someone standing still: back out to arm's length, away from them
+            force = out.mul(stiffness).sub(new Vector3d(hookVelocity).mul(damping));
+        } else if (against) {
             // no pull at all, only the damping, of how fast it closes on its dragger as they move (a tick's step, a second's worth)
             Vector3d dragger = new Vector3d(player.getX() - player.xo, player.getY() - player.yo, player.getZ() - player.zo).mul(20.0);
             force = new Vector3d(hookVelocity).sub(dragger).mul(-damping);
@@ -627,6 +647,10 @@ public final class CarcassDrag {
         pose.orientation().transformInverse(impulse); // local frame
         handle.applyLinearAndAngularImpulse(new Vector3d(), impulse);
     }
+
+    /** How little a dragger may move in a tick and still stand still, and how many ticks before a body in them is drawn out. */
+    private static final double STOOD_STILL = 0.01;
+    private static final int STILL_BEFORE_OUT = 10;
 
     /** How far round from straight ahead a hook may be and still be held along the look, and past which it trails. */
     private static final double HELD_AHEAD = 0.5;
