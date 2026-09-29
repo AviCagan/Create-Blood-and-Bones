@@ -49,7 +49,7 @@ public record CarcassLook(ResourceLocation texture, List<Coat> passes) {
     /**
      * Facts about the living mob that butchery yields and minion data can name (docs/PARTS-AND-TRAITS.md section 9,
      * slice 3): {wool} for an unsheared sheep's colour, a villager's (or zombie villager's) {profession}, which sets the
-     * jobs its head offers ("farmer"; a modded one by its full id), the {variant} of any mob that has one (a snow fox, a
+     * knacks its head has ("farmer"; a modded one by its full id), the {variant} of any mob that has one (a snow fox, a
      * warm frog, the killer bunny "evil"; a modded one by its full id), a panda's {gene} (the one it shows), a creeper's
      * {charged}, and the {name} it was given (a vindicator named Johnny).
      */

@@ -20,11 +20,6 @@
   "parts": {
     "head": {
       "minion": {
-        "jobs": [
-          "bloodandbones:surgeon",
-          "bloodandbones:farmer",
-          "bloodandbones:courier"
-        ],
         "knacks": {
           "bloodandbones:surgeon": 1.5,
           "bloodandbones:farmer": 1.25,
@@ -36,10 +31,6 @@
             "if": {
               "trait": "profession"
             },
-            "jobs": [
-              "bloodandbones:surgeon",
-              "bloodandbones:courier"
-            ],
             "knacks": {
               "bloodandbones:farmer": 1.0
             }
@@ -63,10 +54,6 @@
               "trait": "profession",
               "equals": "farmer"
             },
-            "jobs": [
-              "bloodandbones:surgeon",
-              "bloodandbones:farmer"
-            ],
             "knacks": {
               "bloodandbones:farmer": 1.5
             }
@@ -76,10 +63,6 @@
               "trait": "profession",
               "equals": "fisherman"
             },
-            "jobs": [
-              "bloodandbones:surgeon",
-              "bloodandbones:fisher"
-            ],
             "knacks": {
               "bloodandbones:fisher": 1.5
             }
@@ -89,10 +72,6 @@
               "trait": "profession",
               "equals": "butcher"
             },
-            "jobs": [
-              "bloodandbones:surgeon",
-              "bloodandbones:butcher"
-            ],
             "knacks": {
               "bloodandbones:butcher": 1.5
             }
@@ -102,10 +81,6 @@
               "trait": "profession",
               "equals": "cleric"
             },
-            "jobs": [
-              "bloodandbones:surgeon",
-              "bloodandbones:medic"
-            ],
             "knacks": {
               "bloodandbones:medic": 1.5
             }
@@ -115,10 +90,6 @@
               "trait": "profession",
               "equals": "shepherd"
             },
-            "jobs": [
-              "bloodandbones:surgeon",
-              "bloodandbones:herder"
-            ],
             "knacks": {
               "bloodandbones:herder": 1.5
             }
@@ -128,10 +99,6 @@
               "trait": "profession",
               "equals": "fletcher"
             },
-            "jobs": [
-              "bloodandbones:surgeon",
-              "bloodandbones:sentry"
-            ],
             "knacks": {
               "bloodandbones:sentry": 1.5
             }
@@ -141,10 +108,6 @@
               "trait": "profession",
               "equals": "leatherworker"
             },
-            "jobs": [
-              "bloodandbones:surgeon",
-              "bloodandbones:hauler"
-            ],
             "knacks": {
               "bloodandbones:hauler": 1.5
             }
@@ -158,10 +121,6 @@
                 "toolsmith"
               ]
             },
-            "jobs": [
-              "bloodandbones:surgeon",
-              "bloodandbones:guard"
-            ],
             "knacks": {
               "bloodandbones:guard": 1.5
             }
@@ -171,9 +130,6 @@
               "trait": "profession",
               "equals": "nitwit"
             },
-            "jobs": [
-              "bloodandbones:companion"
-            ],
             "knacks": {
               "bloodandbones:surgeon": 1.0
             },

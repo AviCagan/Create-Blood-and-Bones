@@ -258,7 +258,7 @@ public class MinionFitnessTests {
         MinionBuild build = armed(ref("zombie", "head"));
         MinionStats real = MinionStats.of(store, build);
         MinionStats stats = new MinionStats(20.0F, real.knockbackResistance(), 9, real.reservoir(), "walk", 0.25F, real.biteDamage(), 0.0F, real.strikes(),
-                real.jobs(), false, false, false, false, real.width(), real.height(), real.lyingWidth(), real.lyingHeight(), 16.0F, 0.0F,
+                false, false, false, false, real.width(), real.height(), real.lyingWidth(), real.lyingHeight(), 16.0F, 0.0F,
                 MinionStats.Mount.SADDLE, false, real.holders(), 0.8F, Map.of(), "none");
         MinionFitness.Body body = MinionFitness.body(store, build, stats);
         MinionFitness.Body standIn = new MinionFitness.Body(stats, 0.25F, List.of(), 20.0F, List.of(), 2.5F, List.of(), 2, 1.0F, true, true, Optional.empty(),

@@ -115,7 +115,7 @@ public class MinionTests {
                 .with("left_leg", ref("zombie", "left_leg")).with("right_leg", ref("zombie", "right_leg"));
         MinionEntity minion = minion(helper, pos, build, 1000.0F);
         minion.setNoAi(true);
-        minion.setJob(BloodAndBones.asResource("surgeon"));
+        minion.setTask(com.avicagan.bloodandbones.minion.MinionTask.SURGEON);
         return minion;
     }
 
@@ -192,8 +192,9 @@ public class MinionTests {
         }
         MinionStats stats = MinionStats.of(PartsData.SERVER, table.build().orElseThrow());
         if (Math.abs(stats.health() - 15.0F) > 0.01F || Math.abs(stats.speed() - 0.325F) > 0.001F || !"hop".equals(stats.mode())
-                || !stats.jobs().get(0).equals(BloodAndBones.asResource("herder")) || stats.mindless()) {
-            helper.fail("A cow on rabbit legs should be 15 health, hop at 0.325 and start as a herder: " + stats);
+                || best(table.build().orElseThrow(), stats) != com.avicagan.bloodandbones.minion.MinionTask.HERDER || stats.mindless()) {
+            helper.fail("A cow on rabbit legs should be 15 health, hop at 0.325 and be best at herding: " + stats + ", best "
+                    + best(table.build().orElseThrow(), stats));
             return;
         }
         MinionEntity minion = MinionAssembly.wake(level, maker, table, new ItemStack(BBFluids.BLOOD.getBucket().get()));
@@ -421,6 +422,20 @@ public class MinionTests {
     }
 
     /** A minion saved and loaded again, as a chunk unloading and loading does. */
+    /** The task this build does best, by its fitness at home holding nothing (ties in the list's order). */
+    private static com.avicagan.bloodandbones.minion.MinionTask best(MinionBuild build, MinionStats stats) {
+        com.avicagan.bloodandbones.minion.MinionTask best = com.avicagan.bloodandbones.minion.MinionTask.IDLE;
+        float fittest = 0.0F;
+        for (var row : com.avicagan.bloodandbones.minion.MinionFitness.rows(PartsData.SERVER, build, stats,
+                com.avicagan.bloodandbones.minion.MinionFitness.Context.NONE)) {
+            if (row.task().rated() && row.can() && row.fitness() > fittest) {
+                best = row.task();
+                fittest = row.fitness();
+            }
+        }
+        return best;
+    }
+
     private static MinionEntity reload(GameTestHelper helper, MinionEntity minion) {
         net.minecraft.nbt.CompoundTag tag = new net.minecraft.nbt.CompoundTag();
         minion.saveWithoutId(tag);
@@ -429,14 +444,22 @@ public class MinionTests {
         return loaded;
     }
 
-    /** Saved and loaded, it keeps its build, job, blood, being awake or down, maker, home, what it carries, its saddle and its module. */
+    /**
+     * Saved and loaded, it keeps its build, task (where it works and how far it reaches), blood, being awake or down, maker,
+     * home, what it carries, its saddle and its module.
+     */
     @GameTest(template = "empty", timeoutTicks = 20)
     public static void minionSavedAndLoaded(GameTestHelper helper) {
         MinionEntity minion = minion(helper, new BlockPos(2, 2, 2), cowOnRabbitLegs(), 321.0F);
         minion.inventory.addItem(new ItemStack(Items.WHEAT, 5));
+        if (!minion.setTask(com.avicagan.bloodandbones.minion.MinionTask.COURIER, com.avicagan.bloodandbones.minion.MinionTask.Anchor.MAKER, 7)) {
+            helper.fail("A cow on rabbit legs should take carrying with its maker, reaching 7");
+            return;
+        }
         MinionEntity loaded = reload(helper, minion);
         if (!loaded.build().equals(minion.build()) || !loaded.home().equals(minion.home()) || loaded.inventory.countItem(Items.WHEAT) != 5
-                || !loaded.job().equals(minion.job()) || loaded.poweredDown() || loaded.power() != 321.0F || loaded.makerId() == null
+                || loaded.task() != minion.task() || loaded.anchor() != minion.anchor() || loaded.reachSet() != 7
+                || loaded.poweredDown() || loaded.power() != 321.0F || loaded.makerId() == null
                 || !loaded.makerId().equals(minion.makerId()) || Math.abs(loaded.getMaxHealth() - 15.0F) > 0.01F) {
             helper.fail("A saved minion should come back the same, awake with its 321 mB: " + loaded.power() + " " + loaded.poweredDown());
             return;
@@ -559,17 +582,20 @@ public class MinionTests {
     public static void courierCarries(GameTestHelper helper) {
         helper.setBlock(new BlockPos(1, 2, 1), Blocks.CHEST);
         MinionEntity minion = minion(helper, new BlockPos(3, 2, 3), wholeCow(), 1000.0F);
-        // a cow's head starts as a herder; it also offers courier
-        minion.setJob(BloodAndBones.asResource("courier"));
+        minion.setTask(com.avicagan.bloodandbones.minion.MinionTask.COURIER);
         BlockPos drop = helper.absolutePos(new BlockPos(8, 2, 8));
         helper.getLevel().addFreshEntity(new ItemEntity(helper.getLevel(), drop.getX() + 0.5, drop.getY() + 0.2, drop.getZ() + 0.5, new ItemStack(Items.BONE, 3)));
         helper.succeedWhen(() -> {
             ChestBlockEntity chest = (ChestBlockEntity) helper.getBlockEntity(new BlockPos(1, 2, 1));
-            helper.assertTrue(minion.hasJob("courier") && chest.countItem(Items.BONE) == 3, "the courier has not put the bones in the chest yet");
+            helper.assertTrue(minion.hasTask(com.avicagan.bloodandbones.minion.MinionTask.COURIER) && chest.countItem(Items.BONE) == 3,
+                    "the courier has not put the bones in the chest yet");
         });
     }
 
-    /** A villager's head makes a farmer: it reaps ripe wheat by home, plants it again, and puts the wheat in the chest. */
+    /**
+     * A villager's head with a zombie's hands wakes as a surgeon (its fittest task: docs/NEXT.md 1.3); set to farming, it reaps
+     * ripe wheat by home, plants it again, and puts the wheat in the chest.
+     */
     @GameTest(template = "empty", timeoutTicks = 400)
     public static void farmerReaps(GameTestHelper helper) {
         helper.setBlock(new BlockPos(1, 2, 1), Blocks.CHEST);
@@ -580,15 +606,15 @@ public class MinionTests {
                 .with("right_leg", ref("zombie", "right_leg")).with("left_leg", ref("zombie", "left_leg"))
                 .with("right_arm", ref("zombie", "right_arm")).with("left_arm", ref("zombie", "left_arm"));
         MinionEntity minion = minion(helper, new BlockPos(3, 2, 3), build, 1000.0F);
-        // a villager's head starts as a surgeon; its maker puts it to farming
-        if (!minion.hasJob("surgeon") || !minion.setJob(BloodAndBones.asResource("farmer"))) {
-            helper.fail("A villager's head should start as a surgeon and offer farming");
+        // a villager's head wakes as a surgeon; its maker puts it to farming
+        if (!minion.hasTask(com.avicagan.bloodandbones.minion.MinionTask.SURGEON) || !minion.setTask(com.avicagan.bloodandbones.minion.MinionTask.FARMER)) {
+            helper.fail("A villager's head should wake as a surgeon and take farming: " + minion.task());
             return;
         }
         helper.succeedWhen(() -> {
             ChestBlockEntity chest = (ChestBlockEntity) helper.getBlockEntity(new BlockPos(1, 2, 1));
             var crop = helper.getBlockState(field.above());
-            helper.assertTrue(minion.hasJob("farmer") && chest.countItem(Items.WHEAT) >= 1
+            helper.assertTrue(minion.hasTask(com.avicagan.bloodandbones.minion.MinionTask.FARMER) && chest.countItem(Items.WHEAT) >= 1
                     && crop.is(Blocks.WHEAT) && crop.getValue(CropBlock.AGE) < 7, "the farmer has not reaped, replanted and stored the wheat yet");
         });
     }

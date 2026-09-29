@@ -26,18 +26,18 @@ import org.jetbrains.annotations.Nullable;
 import java.util.EnumSet;
 
 /**
- * The sapper (docs/PARTS-AND-TRAITS.md section 6.9): a head that offers it (a creeper's, by data) and an organ that
- * detonates (the creeper's Powder Sac) make a minion that walks to its target, or to the block its maker marked, and
- * blows itself up there through its organ, sparing itself and its side; then it lies powered down where it stands until
- * it gets blood again, never destroyed (the detonate effect powers it down). Its targets are a guard's (monsters near
- * home it can see) and whatever hurts it. The mark is a banner: handed a banner, it goes for the nearest banner of that
- * colour standing within {@link #MARK_RANGE} of home, as a sapper goes for the flag its side planted. Blocks break only
- * where the organ's blast may break them, the server's {@code minion_block_damage} and mobGriefing all allow it.
+ * The sapper (docs/PARTS-AND-TRAITS.md section 6.9; docs/NEXT.md 1.1): any minion with an organ that detonates (the
+ * creeper's Powder Sac) can be set to it, and a creeper's head has a knack for it. It walks to its target, or to the block
+ * its maker marked, and blows itself up there through its organ, sparing itself and its side; then it lies powered down
+ * where it stands until it gets blood again, never destroyed (the detonate effect powers it down). Its targets are a
+ * guard's (monsters within its reach of home that it can see) and whatever hurts it. The mark is a banner: handed a banner,
+ * it goes for the nearest banner of that colour standing within its reach of home (16), as a sapper goes for the flag its
+ * side planted. Blocks break only where the organ's blast may break them, the server's {@code minion_block_damage} and
+ * mobGriefing all allow it. With no detonating organ a body cannot be a sapper at all ({@link #hasDetonator}, the task's
+ * test of its body).
  */
 public final class MinionSapper {
     public static final ResourceLocation SAPPER = BloodAndBones.asResource("sapper");
-    /** How far from home a sapper looks for the banner it was shown. */
-    public static final int MARK_RANGE = 16;
 
     private MinionSapper() {
     }
@@ -97,7 +97,7 @@ public final class MinionSapper {
 
         @Override
         public boolean canUse() {
-            if (!minion.hasJob("sapper") || minion.poweredDown() || minion.stats().mindless() || detonator(minion) == null && !DetonateEffect.lit(minion)) {
+            if (!minion.hasTask(MinionTask.SAPPER) || minion.poweredDown() || minion.stats().mindless() || detonator(minion) == null && !DetonateEffect.lit(minion)) {
                 return false;
             }
             LivingEntity target = minion.getTarget();
@@ -111,7 +111,7 @@ public final class MinionSapper {
 
         @Override
         public boolean canContinueToUse() {
-            if (!minion.hasJob("sapper") || minion.poweredDown()) {
+            if (!minion.hasTask(MinionTask.SAPPER) || minion.poweredDown()) {
                 return false;
             }
             if (DetonateEffect.lit(minion)) {
@@ -178,7 +178,7 @@ public final class MinionSapper {
                     && banner.getBaseColor() == colour;
         }
 
-        /** The nearest banner of the colour it holds within reach of home, in loaded chunks only (none loaded to look). */
+        /** The nearest banner of the colour it holds within its reach of home, in loaded chunks only (none loaded to look). */
         @Nullable
         private BlockPos findMark() {
             DyeColor colour = shown();
@@ -186,16 +186,17 @@ public final class MinionSapper {
                 return null;
             }
             BlockPos home = minion.home();
+            int reach = minion.reach();
             BlockPos best = null;
-            for (int cx = (home.getX() - MARK_RANGE) >> 4; cx <= (home.getX() + MARK_RANGE) >> 4; cx++) {
-                for (int cz = (home.getZ() - MARK_RANGE) >> 4; cz <= (home.getZ() + MARK_RANGE) >> 4; cz++) {
+            for (int cx = (home.getX() - reach) >> 4; cx <= (home.getX() + reach) >> 4; cx++) {
+                for (int cz = (home.getZ() - reach) >> 4; cz <= (home.getZ() + reach) >> 4; cz++) {
                     LevelChunk chunk = level.getChunkSource().getChunkNow(cx, cz);
                     if (chunk == null) {
                         continue;
                     }
                     for (BlockEntity be : chunk.getBlockEntities().values()) {
                         BlockPos pos = be.getBlockPos();
-                        if (be instanceof BannerBlockEntity banner && banner.getBaseColor() == colour && pos.closerThan(home, MARK_RANGE)
+                        if (be instanceof BannerBlockEntity banner && banner.getBaseColor() == colour && pos.closerThan(home, reach)
                                 && !unreachable.contains(minion, pos) && (best == null || pos.distSqr(minion.blockPosition()) < best.distSqr(minion.blockPosition()))) {
                             best = pos.immutable();
                         }

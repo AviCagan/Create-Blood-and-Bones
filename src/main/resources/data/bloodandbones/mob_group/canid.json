@@ -18,11 +18,6 @@
   "parts": {
     "head": {
       "minion": {
-        "jobs": [
-          "bloodandbones:hunter",
-          "bloodandbones:guard",
-          "bloodandbones:herder"
-        ],
         "knacks": {
           "bloodandbones:hunter": 1.5,
           "bloodandbones:herder": 1.5,

@@ -97,7 +97,7 @@ public class MinionMovementTests {
         MinionBuild build = cowOn(ref("strider", "right_leg"), ref("strider", "left_leg"), ref("strider", "right_leg"), ref("strider", "left_leg"));
         Player maker = makerAt(helper, new Vec3(9.5, 3.0, 5.5));
         MinionEntity walker = minion(helper, new Vec3(1.5, 3.0, 5.5), build, maker);
-        walker.setJob(MinionStats.COMPANION);
+        walker.setTask(com.avicagan.bloodandbones.minion.MinionTask.IDLE, com.avicagan.bloodandbones.minion.MinionTask.Anchor.MAKER, 0);
         ActiveTraits.of(walker);
         float health = walker.getHealth();
         double surface = helper.absoluteVec(new Vec3(0.0, 2.5, 0.0)).y;
@@ -127,7 +127,7 @@ public class MinionMovementTests {
             helper.assertTrue(walker.getPathfindingMalus(PathType.DAMAGE_FIRE) == PathType.DAMAGE_FIRE.getMalus()
                     && walker.getPathfindingMalus(PathType.DANGER_FIRE) == PathType.DANGER_FIRE.getMalus(), "fire should cost a lava walker what it costs anyone");
             Vec3 local = helper.relativeVec(walker.position());
-            // a companion stops three blocks short of its maker: on the stone past the lava
+            // following its maker (Idle with it), it stops three blocks short of them: on the stone past the lava
             helper.assertTrue(crossed[0] && local.x > 6.0 && walker.distanceToSqr(maker) < 3.5 * 3.5,
                     "it has not crossed the lava to its maker yet: at " + local);
             walker.discard();
@@ -220,7 +220,7 @@ public class MinionMovementTests {
         }
         Player maker = makerAt(helper, new Vec3(9.5, 2.0, 5.5));
         MinionEntity sinker = minion(helper, new Vec3(1.5, 2.0, 5.5), build, maker);
-        sinker.setJob(MinionStats.COMPANION);
+        sinker.setTask(com.avicagan.bloodandbones.minion.MinionTask.IDLE, com.avicagan.bloodandbones.minion.MinionTask.Anchor.MAKER, 0);
         double bottom = helper.absoluteVec(new Vec3(0.0, 2.0, 0.0)).y;
         double[] highest = {0.0};
         long started = helper.getTick();
@@ -231,7 +231,7 @@ public class MinionMovementTests {
                 sinker.discard();
                 helper.fail("A sinker should keep to the bottom, but it rose " + highest[0] + " off it");
             }
-            // a companion stops three blocks short of its maker
+            // following its maker (Idle with it), it stops three blocks short of them
             helper.assertTrue(sinker.distanceToSqr(maker) < 3.5 * 3.5, "it has not walked the seabed to its maker yet: at " + helper.relativeVec(sinker.position()));
             long took = helper.getTick() - started;
             sinker.discard();
@@ -489,7 +489,7 @@ public class MinionMovementTests {
         MinionBuild build = cowOn(ref("strider", "right_leg"), ref("strider", "left_leg"), ref("strider", "right_leg"), ref("strider", "left_leg"));
         Player maker = makerAt(helper, new Vec3(9.5, 3.0, 3.5));
         MinionEntity walker = minion(helper, new Vec3(1.5, 3.0, 3.5), build, maker);
-        walker.setJob(MinionStats.COMPANION);
+        walker.setTask(com.avicagan.bloodandbones.minion.MinionTask.IDLE, com.avicagan.bloodandbones.minion.MinionTask.Anchor.MAKER, 0);
         ActiveTraits.of(walker);
         float health = walker.getHealth();
         String[] wrong = {null};
@@ -505,7 +505,7 @@ public class MinionMovementTests {
             }
             helper.assertTrue(walker.getPathfindingMalus(PathType.LAVA) == 0.0F, "strider legs should still path over lava");
             Vec3 local = helper.relativeVec(walker.position());
-            // a companion stops three blocks short of its maker: past the magma
+            // following its maker (Idle with it), it stops three blocks short of them: past the magma
             helper.assertTrue(local.x > 5.8 && walker.distanceToSqr(maker) < 3.5 * 3.5, "it has not got round the magma to its maker yet: at " + local);
             walker.discard();
         });
@@ -526,7 +526,7 @@ public class MinionMovementTests {
         MinionBuild build = cowOn(ref("cow", "right_front_leg"), ref("cow", "left_front_leg"), ref("cow", "right_hind_leg"), ref("cow", "left_hind_leg"));
         Player maker = makerAt(helper, new Vec3(2.5, 3.0, 5.5));
         MinionEntity biter = minion(helper, new Vec3(3.3, 3.0, 5.5), build, maker);
-        biter.setJob(MinionStats.COMPANION);
+        biter.setTask(com.avicagan.bloodandbones.minion.MinionTask.IDLE, com.avicagan.bloodandbones.minion.MinionTask.Anchor.MAKER, 0);
         net.minecraft.world.entity.monster.Husk husk = helper.spawn(net.minecraft.world.entity.EntityType.HUSK, new BlockPos(6, 3, 5));
         husk.setNoAi(true);
         float health = biter.getHealth();
@@ -572,7 +572,7 @@ public class MinionMovementTests {
         // its maker stands where it does, so it has no call to follow
         Player maker = makerAt(helper, new Vec3(5.5, 2.0, 5.5));
         MinionEntity sinker = minion(helper, new Vec3(5.5, 2.0, 5.5), build, maker);
-        sinker.setJob(MinionStats.COMPANION);
+        sinker.setTask(com.avicagan.bloodandbones.minion.MinionTask.IDLE, com.avicagan.bloodandbones.minion.MinionTask.Anchor.MAKER, 0);
         // nearly out of breath already
         sinker.setAirSupply(110);
         double bottom = helper.absoluteVec(new Vec3(0.0, 2.0, 0.0)).y;

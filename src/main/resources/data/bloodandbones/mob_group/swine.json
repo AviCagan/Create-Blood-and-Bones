@@ -20,10 +20,6 @@
     },
     "head": {
       "minion": {
-        "jobs": [
-          "bloodandbones:hunter",
-          "bloodandbones:courier"
-        ],
         "knacks": {
           "bloodandbones:hunter": 1.25,
           "bloodandbones:digger": 1.25

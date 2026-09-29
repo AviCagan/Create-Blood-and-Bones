@@ -33,11 +33,6 @@
     },
     "head": {
       "minion": {
-        "jobs": [
-          "bloodandbones:scavenger",
-          "bloodandbones:companion",
-          "bloodandbones:courier"
-        ],
         "knacks": {
           "bloodandbones:courier": 1.5
         },

@@ -39,8 +39,8 @@ public final class MinionData {
 
     /**
      * A field of a part's minion data for one particular piece: a layer's "variants" the piece's captured traits
-     * match (docs/PARTS-AND-TRAITS.md section 4.2) come before that layer's own value, so a villager's head offers its
-     * profession's jobs. A variant is {"if": {"trait": "profession", "equals": "farmer"}, "jobs": [...]} ("in": [...]
+     * match (docs/PARTS-AND-TRAITS.md section 4.2) come before that layer's own value, so a villager's head takes its
+     * profession's disposition. A variant is {"if": {"trait": "profession", "equals": "nitwit"}, "disposition": "dim"} ("in": [...]
      * for several values, neither for any value at all); the last one that matches wins, and a later layer (a mob's
      * own file) still comes before the variants of the layers under it.
      */
@@ -125,7 +125,7 @@ public final class MinionData {
         return ids(mob, Map.of(), key, field);
     }
 
-    /** A list of ids in a part's minion object, for one piece (its variants first): a head's jobs. */
+    /** A list of ids in a part's minion object, for one piece (its variants first): a head's senses. */
     public static List<ResourceLocation> ids(ResolvedMob mob, Map<String, String> traits, String key, String field) {
         List<ResourceLocation> out = new ArrayList<>();
         field(mob, traits, key, field).filter(JsonElement::isJsonArray).ifPresent(a -> a.getAsJsonArray().forEach(e -> out.add(ResourceLocation.parse(e.getAsString()))));

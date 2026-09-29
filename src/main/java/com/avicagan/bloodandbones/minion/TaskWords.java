@@ -1,0 +1,239 @@
+package com.avicagan.bloodandbones.minion;
+
+import com.avicagan.bloodandbones.parts.PartsData;
+import com.avicagan.bloodandbones.parts.TraitList;
+import com.avicagan.bloodandbones.parts.Traits;
+import net.minecraft.ChatFormatting;
+import net.minecraft.core.registries.BuiltInRegistries;
+import net.minecraft.network.chat.Component;
+import net.minecraft.network.chat.MutableComponent;
+import org.jetbrains.annotations.Nullable;
+
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Locale;
+
+/**
+ * The words a minion's fitness is shown in (docs/NEXT.md 1.3 and 1.4): a task's name and how fit it is ("Farmer 120%,
+ * Able"), where it works, what it waits for, and each part of a row with where it came from ({@link MinionFitness.Source}
+ * in the screen's words: "Hands ×1.3: hand, 4 of them: Zombie arm"). Built on the server as translatable text, so each
+ * client reads it in its own language, reworded in bloodless mode.
+ */
+public final class TaskWords {
+    /** The words for how fit it is, from the bottom: Hopeless under 50%, Fair to 90%, Able to 130%, Good to 170%, Born to it above. */
+    private static final float[] BANDS = {0.5F, 0.9F, 1.3F, 1.7F};
+    private static final String[] WORDS = {"hopeless", "fair", "able", "good", "born"};
+
+    private TaskWords() {
+    }
+
+    /** Which of the five words a fitness is: 0 (Hopeless) to 4 (Born to it). */
+    public static int band(float fitness) {
+        int band = 0;
+        while (band < BANDS.length && fitness >= BANDS[band] - 1.0E-4F) {
+            band++;
+        }
+        return band;
+    }
+
+    /** The key of its word: "bloodandbones.minion.fit.able". */
+    public static String wordKey(float fitness) {
+        return "bloodandbones.minion.fit." + WORDS[band(fitness)];
+    }
+
+    public static Component name(MinionTask task) {
+        return Component.translatable(task.nameKey());
+    }
+
+    /** "142%". */
+    public static String percent(float fitness) {
+        return Math.round(fitness * 100.0F) + "%";
+    }
+
+    /** A number as the screen shows it: whole if it is, else to two places ("1.5", "0.33"). */
+    public static String number(float value) {
+        if (Math.abs(value - Math.round(value)) < 0.005F) {
+            return Integer.toString(Math.round(value));
+        }
+        String out = String.format(Locale.ROOT, "%.2f", value);
+        return out.endsWith("0") ? out.substring(0, out.length() - 1) : out;
+    }
+
+    /**
+     * Where it works now: at home (a sentry at its post, a surgeon at its table), with its maker, or at home while its maker
+     * is away (docs/NEXT.md 1.1).
+     */
+    public static Component where(MinionEntity minion) {
+        if (minion.anchor() == MinionTask.Anchor.MAKER && PartsData.of(minion.level()).task(minion.task()).allows(MinionTask.Anchor.MAKER)) {
+            return Component.translatable(minion.withMaker() ? "bloodandbones.minion.where.maker" : "bloodandbones.minion.where.maker_away");
+        }
+        return Component.translatable(switch (minion.task()) {
+            case SENTRY -> "bloodandbones.minion.where.post";
+            case SURGEON -> "bloodandbones.minion.where.table";
+            default -> "bloodandbones.minion.where.home";
+        });
+    }
+
+    /** What it is doing, for its status line: "Farmer 120% at home", "Idle with its maker". */
+    public static Component doing(MinionEntity minion) {
+        MinionTask task = minion.task();
+        if (!task.rated()) {
+            return Component.translatable("bloodandbones.minion.doing_idle", name(task), where(minion));
+        }
+        return Component.translatable("bloodandbones.minion.doing", name(task), percent(minion.fitness(task)), where(minion));
+    }
+
+    /**
+     * What stands in its way, for its status line: the tool or rule it waits for ("waiting for a Cleaver or a Flensing
+     * Knife"), what its work waits on in the world ("no still water within 8 of home"), or why a data reload took its task.
+     * Null for nothing.
+     */
+    @Nullable
+    public static Component waiting(MinionEntity minion) {
+        MinionTask lost = minion.lostTask();
+        if (lost != null && minion.lostReason() != null) {
+            return Component.translatable("bloodandbones.minion.lost", name(lost), Component.translatable(minion.lostReason()));
+        }
+        MinionTask task = minion.task();
+        if (task.rated()) {
+            MinionFitness.Row row = minion.row(task, minion.anchor());
+            if (row.waitsFor().isPresent()) {
+                return Component.translatable(row.waitsFor().get());
+            }
+        }
+        return minion.idleReason();
+    }
+
+    // ---- a row's reasons, for the task screen's hover (docs/NEXT.md 1.3)
+
+    /**
+     * A row's lines, as the task screen shows them over the row: its name and fitness and word (or why it cannot), what it
+     * does, what it waits for and what a tool it lacks would make of it, then each stat it reads with its value and where
+     * that came from, its knack, its disposition, and the blood it uses at work.
+     */
+    public static List<Component> lines(PartsData.Store store, MinionEntity minion, MinionFitness.Row row, MinionTask.Anchor at) {
+        List<Component> out = new ArrayList<>();
+        MinionTask task = row.task();
+        if (!task.rated()) {
+            out.add(name(task).copy().withStyle(ChatFormatting.WHITE));
+        } else if (!row.can()) {
+            out.add(Component.translatable("bloodandbones.minion.screen.cannot_line", name(task), Component.translatable("bloodandbones.minion.screen.cannot"))
+                    .withStyle(ChatFormatting.WHITE));
+            out.add(Component.translatable(row.cannot().get()).withStyle(ChatFormatting.RED));
+        } else {
+            out.add(Component.translatable("bloodandbones.minion.screen.fit_line", name(task), percent(row.fitness()), Component.translatable(wordKey(row.fitness())))
+                    .withStyle(ChatFormatting.WHITE));
+        }
+        out.add(Component.translatable(task.nameKey() + ".desc").withStyle(ChatFormatting.GRAY));
+        if (!task.rated() || !row.can()) {
+            return out;
+        }
+        row.waitsFor().ifPresent(key -> out.add(Component.translatable(key).withStyle(ChatFormatting.GOLD)));
+        row.withTool().ifPresent(with -> out.add(Component.translatable("bloodandbones.minion.with_tool",
+                Component.translatable("bloodandbones.minion.tool." + task.id.getPath()), percent(with)).withStyle(ChatFormatting.GOLD)));
+        row.main().ifPresent(f -> out.add(factor(store, f, false)));
+        row.second().ifPresent(f -> out.add(factor(store, f, true)));
+        if (Math.abs(row.knack() - 1.0F) > 1.0E-3F) {
+            List<Component> from = new ArrayList<>();
+            for (MinionStats.KnackPart part : row.knackFrom()) {
+                from.add(Component.translatable("bloodandbones.minion.knack_part", knackSource(store, part), "×" + number(part.value())));
+            }
+            out.add(line("bloodandbones.minion.knack", number(row.knack()), join(from)));
+        }
+        if (Math.abs(row.disposition() - 1.0F) > 1.0E-3F) {
+            out.add(line("bloodandbones.minion.disposition_line", number(row.disposition()),
+                    Component.translatable(MinionDisposition.nameKey(row.dispositionName()))));
+        }
+        float drain = MinionFitness.workingDrain(row.fitness()) * (minion.cybernetic() ? MinionEntity.BRASS_DRAIN : 1.0F);
+        out.add(Component.translatable(minion.cybernetic() ? "bloodandbones.minion.at_work_brass" : "bloodandbones.minion.at_work", number(drain))
+                .withStyle(ChatFormatting.DARK_GRAY));
+        if (at == MinionTask.Anchor.MAKER) {
+            out.add(Component.translatable("bloodandbones.minion.screen.row_with_me").withStyle(ChatFormatting.DARK_GRAY));
+        }
+        return out;
+    }
+
+    private static Component line(String key, String multiplier, Component detail) {
+        return Component.translatable(key, multiplier, detail).withStyle(ChatFormatting.GRAY);
+    }
+
+    /** "Hands ×1.3: hand, 4 of them: Zombie arm"; the second stat counts at half weight, and says so. */
+    private static Component factor(PartsData.Store store, MinionFitness.Factor factor, boolean second) {
+        float counts = second ? (float) Math.sqrt(factor.value()) : factor.value();
+        List<Component> parts = new ArrayList<>();
+        parts.add(value(factor));
+        for (MinionFitness.Source source : factor.from()) {
+            Component said = source(store, source);
+            if (said != null) {
+                parts.add(said);
+            }
+        }
+        return Component.translatable(second ? "bloodandbones.minion.factor_second" : "bloodandbones.minion.factor",
+                Component.translatable("bloodandbones.minion.stat." + factor.of().key()), number(counts), join(parts)).withStyle(ChatFormatting.GRAY);
+    }
+
+    /** What a stat was: "speed 0.34", "48 blocks", "hand", "2.5 a blow", "15 health", "9 slots", "weight 0.8". */
+    private static Component value(MinionFitness.Factor factor) {
+        return switch (factor.of()) {
+            case PACE -> Component.translatable("bloodandbones.minion.value.pace", number(factor.stat()));
+            case SIGHT -> Component.translatable("bloodandbones.minion.value.sight", number(factor.stat()));
+            case HANDS -> {
+                String grip = factor.from().stream().filter(s -> s.type() == MinionFitness.Source.Type.PIECE && s.detail().contains(":"))
+                        .map(s -> s.detail().substring(s.detail().indexOf(':') + 1)).findFirst().orElse("none");
+                yield Component.translatable("bloodandbones.minion.grip." + grip);
+            }
+            case BLOW -> Component.translatable("bloodandbones.minion.value.blow", number(factor.stat()));
+            case RANGED -> Component.translatable(factor.stat() > 0.0F ? "bloodandbones.minion.value.ranged" : "bloodandbones.minion.value.no_ranged");
+            case TOUGHNESS -> Component.translatable("bloodandbones.minion.value.toughness", number(factor.stat()));
+            case CARRY -> Component.translatable("bloodandbones.minion.value.carry", number(factor.stat()));
+            case PULL -> Component.translatable("bloodandbones.minion.value.pull", number(factor.stat()));
+        };
+    }
+
+    /** Where part of a number came from, in words; null for what the value already says (no ranged attack). */
+    @Nullable
+    private static Component source(PartsData.Store store, MinionFitness.Source source) {
+        return switch (source.type()) {
+            case PIECE -> {
+                String part = source.detail().contains(":") ? source.detail().substring(0, source.detail().indexOf(':')) : source.detail();
+                yield Component.translatable("bloodandbones.minion.source.piece", mob(source.id()), Component.translatable("bloodandbones.minion.part." + part));
+            }
+            case TRAIT -> Traits.describe(store, new TraitList.Resolved(source.id(), parse(source.detail())));
+            case ITEM -> BuiltInRegistries.ITEM.get(source.id()).getDescription();
+            case RULE -> "no_ranged".equals(source.id().getPath()) ? null
+                    : Component.translatable("bloodandbones.minion.rule." + source.id().getPath(), source.detail());
+        };
+    }
+
+    private static Component knackSource(PartsData.Store store, MinionStats.KnackPart part) {
+        if ("trait".equals(part.slot())) {
+            return Traits.describe(store, new TraitList.Resolved(part.from(), 1));
+        }
+        return Component.translatable("bloodandbones.minion.source.piece", mob(part.from()), Component.translatable("bloodandbones.minion.part." + part.slot()));
+    }
+
+    /** A mob's name, from its entity type (a mob no longer in the game by its id). */
+    private static Component mob(net.minecraft.resources.ResourceLocation id) {
+        return BuiltInRegistries.ENTITY_TYPE.getOptional(id).map(type -> (Component) type.getDescription()).orElse(Component.literal(id.toString()));
+    }
+
+    private static int parse(String level) {
+        try {
+            return Integer.parseInt(level);
+        } catch (NumberFormatException e) {
+            return 1;
+        }
+    }
+
+    /** These, with commas between. */
+    private static Component join(List<Component> parts) {
+        MutableComponent out = Component.empty();
+        for (int i = 0; i < parts.size(); i++) {
+            if (i > 0) {
+                out.append(", ");
+            }
+            out.append(parts.get(i));
+        }
+        return out;
+    }
+}

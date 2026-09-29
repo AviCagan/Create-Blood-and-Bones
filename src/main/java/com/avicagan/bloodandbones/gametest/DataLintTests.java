@@ -310,14 +310,14 @@ public class DataLintTests {
      */
     private static final Set<String> FAMILY_SIGNATURE = Set.of("horse", "guardian");
 
-    /** What each mob's signature (spec 8.2) still waits for: a job, a movement mode, a variant capture, a mount... */
+    /** What each mob's signature (spec 8.2) still waits for: a knack's work, a movement mode, a variant capture, a mount... */
     private static final Map<String, String> SIGNATURE_WAITS = Map.ofEntries(
             Map.entry("armadillo", "Scute Plating's durability x1.5 (a hide cannot change durability)"),
             Map.entry("axolotl", "its Regrowth Gland at twice the family's rate"),
             Map.entry("bee", "the sting strike that spends the limb for 60 s (the Stinger's on-hit poison stands in)"),
             Map.entry("bogged", "a held bow outside a sentry's post and poison-tipped arrows (it shoots plain innate arrows)"),
             Map.entry("dolphin", "the Melon sensing underwater only, to 32 blocks (Echo Sense II stands in)"),
-            Map.entry("drowned", "throwing a held trident in any fight (only a sentry throws one; its head offers none)"),
+            Map.entry("drowned", "throwing a held trident in any fight (only a sentry throws one)"),
             Map.entry("enderman", "carrying blocks; a minion arm's reach; Voidwalker's halved blink cooldowns"),
             Map.entry("evoker", "the row of fangs; the Totem Gland costing a minion half its power"),
             Map.entry("fox", "the pounce (Leap stands in)"),
@@ -325,12 +325,12 @@ public class DataLintTests {
             Map.entry("ghast", "slow falling only while sneaking (Featherfall stands in)"),
             Map.entry("illusioner", "a held bow outside a sentry's post and blindness arrows"),
             Map.entry("iron_golem", "crusher boots; Hardy V (capped at III)"),
-            Map.entry("llama", "the caravan job"),
+            Map.entry("llama", "a knack for caravans (following in a line)"),
             Map.entry("magma_cube", "a landing that sets what is within 2 alight (Searing stands in on the minion)"),
             Map.entry("panda", "the playful gene's tumbles and the worried gene's flight from thunder (the other genes are wired)"),
             Map.entry("parrot", "the mimic alarm"),
             Map.entry("phantom", "the pounce from above (Leap stands in)"),
-            Map.entry("piglin", "the Gold Gizzard's double roll for a barterer; a held crossbow outside a sentry's post (its head offers no sentry)"),
+            Map.entry("piglin", "the Gold Gizzard's double roll for a barterer; a held crossbow outside a sentry's post"),
             Map.entry("piglin_brute", "the brute guard (half again with an axe)"),
             Map.entry("salmon", "swimming up waterfalls"),
             Map.entry("skeleton", "a held bow outside a sentry's post (it shoots innate arrows)"),
@@ -339,8 +339,8 @@ public class DataLintTests {
             Map.entry("squid", "its head's underwater sense"),
             Map.entry("stray", "a held bow outside a sentry's post and Slowness-tipped arrows (it shoots plain innate arrows)"),
             Map.entry("tadpole", "being scooped into a bucket"),
-            Map.entry("trader_llama", "the trader's guard job"),
-            Map.entry("turtle", "the homing job; the helmet's Water Breathing; Thick Hide IV (capped at III); immunity to drying out"),
+            Map.entry("trader_llama", "a knack for guarding a trader"),
+            Map.entry("turtle", "a knack for coming home; the helmet's Water Breathing; Thick Hide IV (capped at III); immunity to drying out"),
             Map.entry("vex", "passing through its targets as it dashes"),
             Map.entry("vindicator", "the axeman (twice the damage with an axe)"),
             Map.entry("wither", "skull-firing heads (a minion's extra mouths)"),

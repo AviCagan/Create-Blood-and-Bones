@@ -18,11 +18,6 @@
         "traits": [
           "bloodandbones:thief"
         ],
-        "jobs": [
-          "bloodandbones:scavenger",
-          "bloodandbones:hunter",
-          "bloodandbones:guard"
-        ],
         "knacks": {
           "bloodandbones:courier": 1.5,
           "bloodandbones:hunter": 1.25

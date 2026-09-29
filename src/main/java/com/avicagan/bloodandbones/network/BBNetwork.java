@@ -52,6 +52,15 @@ public class BBNetwork {
                         OrganActivatePayload.handle(player);
                     }
                 }));
+        // a minion's task screen: opened (and kept up to date) by the server, its requests checked there
+        registrar.playToClient(MinionTaskPayload.Open.TYPE, MinionTaskPayload.Open.STREAM_CODEC,
+                (payload, context) -> context.enqueueWork(() -> com.avicagan.bloodandbones.client.MinionTaskScreen.receive(payload)));
+        registrar.playToServer(MinionTaskPayload.Set.TYPE, MinionTaskPayload.Set.STREAM_CODEC,
+                (payload, context) -> context.enqueueWork(() -> {
+                    if (context.player() instanceof net.minecraft.server.level.ServerPlayer player) {
+                        com.avicagan.bloodandbones.minion.MinionTasks.handle(player, payload);
+                    }
+                }));
         // the four groups of trait effects register their own
         com.avicagan.bloodandbones.parts.effect.MotionEffects.payloads(registrar);
         com.avicagan.bloodandbones.parts.effect.RangedEffects.payloads(registrar);

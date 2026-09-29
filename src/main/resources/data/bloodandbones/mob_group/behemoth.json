@@ -28,10 +28,6 @@
     },
     "head": {
       "minion": {
-        "jobs": [
-          "bloodandbones:guard",
-          "bloodandbones:hauler"
-        ],
         "knacks": {
           "bloodandbones:hauler": 1.5,
           "bloodandbones:guard": 1.25

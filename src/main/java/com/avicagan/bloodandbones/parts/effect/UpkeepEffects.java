@@ -93,7 +93,7 @@ public final class UpkeepEffects {
         modBus.addListener((EntityAttributeModificationEvent event) -> {
             event.add(EntityType.PLAYER, BLOOD_UPKEEP);
             event.add(BBEntities.MINION.get(), BLOOD_UPKEEP);
-            // a beast of burden's pull (hauler), for the jobs that drag carcasses
+            // a beast of burden's pull (hauler), for the tasks that drag carcasses
             event.add(BBEntities.MINION.get(), com.avicagan.bloodandbones.registry.BBAttributes.DRAG_STRENGTH);
         });
     }

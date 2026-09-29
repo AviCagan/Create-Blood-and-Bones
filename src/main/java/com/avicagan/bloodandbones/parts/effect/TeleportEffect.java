@@ -26,7 +26,7 @@ import net.neoforged.neoforge.event.entity.EntityTeleportEvent;
  *
  * @param mode   "random": anywhere within {@code radius}, sixteen tries as a chorus fruit; "look": up to {@code radius}
  *               along the host's look, short of what it looks at; "behind_target": behind the other; "to_owner": a
- *               minion that follows its maker (a companion or bodyguard) to beside them
+ *               minion working with its maker (a task done "with me") to beside them
  * @param radius how far, at the trait's level
  * @param who    "self", or "other": the attacker, victim or target is sent instead
  * @param beyond "to_owner" only goes when its maker is further than this
@@ -130,11 +130,13 @@ public record TeleportEffect(String mode, LevelBasedValue radius, String who, fl
         return true;
     }
 
-    /** A following minion too far from its maker (in the same world) blinks back to beside them, as a tamed wolf does. */
+    /**
+     * A minion working with its maker (its task done "with me", its maker in the same world within 64 blocks) that has
+     * fallen too far behind blinks back to beside them, as a tamed wolf does.
+     */
     public static boolean toOwner(MinionEntity minion, float beyond) {
-        Player maker = minion.maker();
-        if (maker == null || maker.level() != minion.level() || maker.isSpectator() || minion.isPassenger() || minion.isLeashed()
-                || !(minion.hasJob("companion") || minion.hasJob("bodyguard")) || minion.distanceToSqr(maker) <= beyond * beyond) {
+        Player maker = minion.workingMaker();
+        if (maker == null || minion.isPassenger() || minion.isLeashed() || minion.distanceToSqr(maker) <= beyond * beyond) {
             return false;
         }
         RandomSource random = minion.getRandom();

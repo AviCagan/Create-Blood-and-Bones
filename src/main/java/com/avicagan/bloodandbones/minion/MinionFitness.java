@@ -423,7 +423,7 @@ public final class MinionFitness {
             case BUTCHER -> stack.getItem() instanceof CleaverItem || stack.getItem() instanceof FlensingKnifeItem;
             case FISHER -> stack.getItem() instanceof FishingRodItem;
             case SENTRY -> weapon(stack);
-            case MEDIC -> MinionJobs.heals(stack);
+            case MEDIC -> MinionTasks.heals(stack);
             default -> true;
         };
     }

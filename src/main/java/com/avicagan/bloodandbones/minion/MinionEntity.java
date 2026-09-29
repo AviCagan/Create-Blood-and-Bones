@@ -45,14 +45,20 @@ import java.util.UUID;
 /**
  * A minion (docs/PARTS-AND-TRAITS.md section 6): a torso with pieces stitched into its sockets on the Surgery
  * Table, woken with blood. What it is comes from its build ({@link MinionStats}): its size, health, speed, how it
- * moves, how hard it bites, what jobs its head offers. It runs on the blood in it, a little all the time and more
- * when it moves, works or fights; low, it walks to a Blood Trough to drink; empty, it powers down where it is and
- * lies on its side, alive, until it gets blood again. Neglect never destroys it.
+ * moves, how hard it bites, how well it does each task ({@link MinionFitness}). Its maker gives it any task from one
+ * list ({@link MinionTask}), at home or with them, and how far it reaches (docs/NEXT.md 1.3). It runs on the blood in
+ * it, a little all the time and more when it moves, works or fights; low, it walks to a Blood Trough to drink; empty,
+ * it powers down where it is and lies on its side, alive, until it gets blood again. Neglect never destroys it.
  */
 public class MinionEntity extends PathfinderMob implements net.minecraft.world.entity.Saddleable, net.minecraft.world.entity.monster.RangedAttackMob,
         net.minecraft.world.entity.ItemSteerable {
     private static final EntityDataAccessor<Optional<MinionBuild>> BUILD = SynchedEntityData.defineId(MinionEntity.class, MinionSerializers.BUILD.get());
-    private static final EntityDataAccessor<String> JOB = SynchedEntityData.defineId(MinionEntity.class, EntityDataSerializers.STRING);
+    /** Its task, by id (docs/NEXT.md 1.1). */
+    private static final EntityDataAccessor<String> TASK = SynchedEntityData.defineId(MinionEntity.class, EntityDataSerializers.STRING);
+    /** Where its task is centred: 0 at home (a sentry's post, a surgeon's table), 1 with its maker. */
+    private static final EntityDataAccessor<Byte> ANCHOR = SynchedEntityData.defineId(MinionEntity.class, EntityDataSerializers.BYTE);
+    /** How far from there it works, as its maker set it; 0 for its task's own reach. */
+    private static final EntityDataAccessor<Integer> REACH = SynchedEntityData.defineId(MinionEntity.class, EntityDataSerializers.INT);
     private static final EntityDataAccessor<Boolean> DOWN = SynchedEntityData.defineId(MinionEntity.class, EntityDataSerializers.BOOLEAN);
     private static final EntityDataAccessor<Float> POWER = SynchedEntityData.defineId(MinionEntity.class, EntityDataSerializers.FLOAT);
     private static final EntityDataAccessor<Boolean> SADDLED = SynchedEntityData.defineId(MinionEntity.class, EntityDataSerializers.BOOLEAN);
@@ -64,8 +70,10 @@ public class MinionEntity extends PathfinderMob implements net.minecraft.world.e
     private static final EntityDataAccessor<Boolean> LAVA_WALKER = SynchedEntityData.defineId(MinionEntity.class, EntityDataSerializers.BOOLEAN);
     /** How long a spur from its rider's stick lasts (a pig's carrot, a strider's fungus), as theirs does. */
     private static final EntityDataAccessor<Integer> BOOST_TIME = SynchedEntityData.defineId(MinionEntity.class, EntityDataSerializers.INT);
-    /** How far from home it works. */
+    /** How far from home a farmer picks up what lies about. */
     public static final double RANGE = 10.0;
+    /** A task done with its maker is done round them while they are in the same world and this near; else at home. */
+    public static final double WITH_ME = 64.0;
     /** mB of blood a minute: idle, moving, working, fighting (docs/PARTS-AND-TRAITS.md section 6.7). */
     public static final float IDLE = 3.0F;
     public static final float MOVING = 15.0F;
@@ -99,6 +107,20 @@ public class MinionEntity extends PathfinderMob implements net.minecraft.world.e
     @Nullable
     private MinionStats stats;
     private int statsGeneration = -1;
+    /** What its build brings to every task (docs/NEXT.md 1.2), worked out once with its stats; server side. */
+    @Nullable
+    private MinionFitness.Body fitnessBody;
+    /** The task a data reload took from its body, and why (a lang key), for its status line until it is given another. */
+    @Nullable
+    private MinionTask lostTask;
+    @Nullable
+    private String lostReason;
+    /** Why its task's work stands still just now ("no still water within 8 of home"), and until when that holds. */
+    @Nullable
+    private Component idle;
+    private int idleUntil;
+    /** Its fitness at its task, read a second at a time for the blood it uses at work. */
+    private float workFitness = 1.0F;
     /** Where a rider sits, on its back where the saddle is drawn, before its turn: worked out with its stats. */
     private net.minecraft.world.phys.Vec3 seat = net.minecraft.world.phys.Vec3.ZERO;
     /** Where each of several riders sits, front first (a camel's two): the same frame. */
@@ -107,7 +129,7 @@ public class MinionEntity extends PathfinderMob implements net.minecraft.world.e
     private float owed;
     /** A minion saved before minions were built of carcass parts: it falls apart on its first tick. */
     private boolean legacy;
-    /** Set by job goals while they are doing something, for the drain. */
+    /** Set by task goals while they are doing something, for the drain. */
     boolean working;
     /** Which way of getting about its navigation is set up for: ground, climb, swim or fly. */
     private String movedBy = "";
@@ -138,7 +160,9 @@ public class MinionEntity extends PathfinderMob implements net.minecraft.world.e
     protected void defineSynchedData(SynchedEntityData.Builder builder) {
         super.defineSynchedData(builder);
         builder.define(BUILD, Optional.empty());
-        builder.define(JOB, MinionStats.COMPANION.toString());
+        builder.define(TASK, MinionTask.IDLE.id.toString());
+        builder.define(ANCHOR, (byte) 0);
+        builder.define(REACH, 0);
         builder.define(DOWN, false);
         builder.define(POWER, 0.0F);
         builder.define(SADDLED, false);
@@ -156,8 +180,14 @@ public class MinionEntity extends PathfinderMob implements net.minecraft.world.e
         setBuild(build);
         setHealth(getMaxHealth());
         entityData.set(POWER, Math.min(power, stats().reservoir()));
-        // the first job its head offers that it can do now, with nothing in hand (never straight to hunting)
-        entityData.set(JOB, MinionJobs.wakeJob(MinionJobs.offered(this)).toString());
+        // its fittest task that waits on nothing it lacks, at home (docs/NEXT.md 1.3), named on its maker's action bar
+        MinionTask woke = MinionTasks.wakeTask(this);
+        entityData.set(TASK, woke.id.toString());
+        entityData.set(ANCHOR, (byte) 0);
+        entityData.set(REACH, 0);
+        if (maker != null) {
+            maker.displayClientMessage(MinionTasks.woke(this), true);
+        }
     }
 
     public Optional<MinionBuild> build() {
@@ -182,6 +212,7 @@ public class MinionEntity extends PathfinderMob implements net.minecraft.world.e
         if (stats == null || statsGeneration != store.generation()) {
             MinionBuild build = build().orElse(null);
             stats = build == null ? MinionStats.NOTHING : MinionStats.of(store, build);
+            fitnessBody = null;
             // the saddle's place, turned into the frame a passenger's place is given in (the renderer turns it a half turn more)
             MinionBody.Layout layout = build == null ? null : MinionBody.layout(store, build);
             org.joml.Vector3f saddle = layout == null ? new org.joml.Vector3f(0.0F, stats.height(), 0.0F) : MinionBody.saddlePoint(layout);
@@ -618,22 +649,168 @@ public class MinionEntity extends PathfinderMob implements net.minecraft.world.e
         return poweredDown() ? EntityDimensions.scalable(s.lyingWidth(), s.lyingHeight()) : EntityDimensions.scalable(s.width(), s.height());
     }
 
-    public ResourceLocation job() {
-        ResourceLocation job = ResourceLocation.tryParse(entityData.get(JOB));
-        return job == null ? MinionStats.COMPANION : job;
+    /** Its task (docs/NEXT.md 1.1); Idle for one no longer known. */
+    public MinionTask task() {
+        MinionTask task = MinionTask.byId(ResourceLocation.tryParse(entityData.get(TASK)));
+        return task == null ? MinionTask.IDLE : task;
     }
 
-    /** Put it to one of the jobs its head offers and it can do now (a sentry needs its bow in hand); false if not. */
-    public boolean setJob(ResourceLocation job) {
-        if (!MinionJobs.offered(this).contains(job)) {
+    public boolean hasTask(MinionTask task) {
+        return task() == task;
+    }
+
+    /** Where its maker set its task to be centred: at home, or with them. */
+    public MinionTask.Anchor anchor() {
+        return entityData.get(ANCHOR) == 1 ? MinionTask.Anchor.MAKER : MinionTask.Anchor.HOME;
+    }
+
+    /** The reach its maker set, 0 for its task's own. */
+    public int reachSet() {
+        return entityData.get(REACH);
+    }
+
+    /** How far from where its task is centred it works: what its maker set, else its task's own reach (docs/NEXT.md 1.1). */
+    public int reach() {
+        MinionTask.Data data = PartsData.of(level()).task(task());
+        int set = reachSet();
+        return set <= 0 ? data.reach() : Math.max(MinionTasks.LEAST_REACH, Math.min(data.maxReach(), set));
+    }
+
+    /** At home, with its task's own reach: see {@link #setTask(MinionTask, MinionTask.Anchor, int)}. */
+    public boolean setTask(MinionTask task) {
+        return setTask(task, MinionTask.Anchor.HOME, 0);
+    }
+
+    /**
+     * Its maker's task for it (docs/NEXT.md 1.3): centred at home or on its maker, where the task allows it, reaching as far
+     * as {@code reach} (0 for the task's own; else from {@link MinionTasks#LEAST_REACH} to the task's most). False, and
+     * nothing changed, if its body cannot do the task, the task is not done there, or the reach is out of bounds. A new task
+     * (or a new anchor) is a fresh start; a sentry takes its post where it stands.
+     */
+    public boolean setTask(MinionTask task, MinionTask.Anchor anchor, int reach) {
+        MinionTask.Data data = PartsData.of(level()).task(task);
+        if (!data.allows(anchor) || reach != 0 && (reach < MinionTasks.LEAST_REACH || reach > data.maxReach()) || !row(task, anchor).can()) {
             return false;
         }
-        entityData.set(JOB, job.toString());
+        boolean fresh = task != task() || anchor != anchor();
+        boolean post = task == MinionTask.SENTRY && task != task();
+        entityData.set(TASK, task.id.toString());
+        entityData.set(ANCHOR, (byte) anchor.ordinal());
+        entityData.set(REACH, reach);
+        lostTask = null;
+        lostReason = null;
+        idle = null;
+        if (fresh) {
+            setTarget(null);
+            getNavigation().stop();
+        }
+        if (post) {
+            setHome(blockPosition());
+        }
         return true;
     }
 
-    public boolean hasJob(String name) {
-        return job().equals(BloodAndBones.asResource(name));
+    /** Its task taken from it (a data reload left its body unable to do it): Idle at home, remembering why for its status line. */
+    void loseTask(MinionTask task, String reason) {
+        entityData.set(TASK, MinionTask.IDLE.id.toString());
+        entityData.set(ANCHOR, (byte) 0);
+        entityData.set(REACH, 0);
+        lostTask = task;
+        lostReason = reason;
+        setTarget(null);
+        getNavigation().stop();
+    }
+
+    /** The task a data reload took from it, if it has not been given another since. */
+    @Nullable
+    public MinionTask lostTask() {
+        return lostTask;
+    }
+
+    @Nullable
+    String lostReason() {
+        return lostReason;
+    }
+
+    /**
+     * Its maker, while it works with them: its task is done with its maker and they are in the same world within
+     * {@link #WITH_ME} blocks (docs/NEXT.md 1.1). Null otherwise, and it works at home.
+     */
+    @Nullable
+    public Player workingMaker() {
+        if (anchor() != MinionTask.Anchor.MAKER || !PartsData.of(level()).task(task()).allows(MinionTask.Anchor.MAKER)) {
+            return null;
+        }
+        Player maker = maker();
+        return maker != null && maker.isAlive() && !maker.isSpectator() && maker.level() == level() && maker.distanceToSqr(this) <= WITH_ME * WITH_ME
+                ? maker : null;
+    }
+
+    public boolean withMaker() {
+        return workingMaker() != null;
+    }
+
+    /** Where its task is centred now: at its maker's feet while it works with them, else at home. */
+    public net.minecraft.world.phys.Vec3 centre() {
+        Player maker = workingMaker();
+        return maker != null ? maker.position() : net.minecraft.world.phys.Vec3.atBottomCenterOf(home);
+    }
+
+    // ---- how well it does each task (docs/NEXT.md 1.2), worked out on the server
+
+    /** What its build brings to every task, worked out again with its stats; null before it has a build. */
+    @Nullable
+    public MinionFitness.Body fitnessBody() {
+        MinionStats s = stats();
+        if (fitnessBody == null && build().isPresent()) {
+            fitnessBody = MinionFitness.body(PartsData.of(level()), build().get(), s);
+        }
+        return fitnessBody;
+    }
+
+    /**
+     * What it holds and carries, whether it is night, the mobGriefing rule and a fitted chest, for its fitness now at this
+     * anchor (the time of day and what it holds are read each time; docs/NEXT.md 1.4).
+     */
+    public MinionFitness.Context fitnessContext(MinionTask.Anchor at) {
+        List<ItemStack> carried = new java.util.ArrayList<>();
+        for (int i = 0; i < slots(); i++) {
+            if (!inventory.getItem(i).isEmpty()) {
+                carried.add(inventory.getItem(i));
+            }
+        }
+        boolean griefing = level().isClientSide || net.neoforged.neoforge.event.EventHooks.canEntityGrief(level(), this);
+        return new MinionFitness.Context(getMainHandItem(), carried, level().isNight(), at, griefing,
+                com.avicagan.bloodandbones.parts.effect.StorageEffect.hasChest(this));
+    }
+
+    /** Its row for a task done at this anchor (at home if the task is not done there). */
+    public MinionFitness.Row row(MinionTask task, MinionTask.Anchor at) {
+        MinionFitness.Body body = fitnessBody();
+        MinionTask.Anchor where = PartsData.of(level()).task(task).allows(at) ? at : MinionTask.Anchor.HOME;
+        if (body == null) {
+            // no build (one saved before minions were built of parts): it can do nothing but stand
+            return new MinionFitness.Row(task, 1.0F, 1.0F, task.rated() ? Optional.ofNullable(task.cannotKey()) : Optional.empty(), Optional.empty(),
+                    Optional.empty(), Optional.empty(), Optional.empty(), 1.0F, List.of(), 1.0F, MinionDisposition.MINDLESS);
+        }
+        return MinionFitness.row(PartsData.of(level()), body, task, fitnessContext(where));
+    }
+
+    /** How well it does a task now: its own at the anchor it works at, any other at home (docs/NEXT.md 1.2). */
+    public float fitness(MinionTask task) {
+        return row(task, task == task() && withMaker() ? MinionTask.Anchor.MAKER : MinionTask.Anchor.HOME).fitness();
+    }
+
+    /** Why its task's work stands still (nothing to do there), said by its goal for its status line, for the next few seconds. */
+    public void idle(Component why) {
+        idle = why;
+        idleUntil = tickCount + 100;
+    }
+
+    /** What its task's work waits on in the world just now, if anything. */
+    @Nullable
+    public Component idleReason() {
+        return idle != null && tickCount < idleUntil ? idle : null;
     }
 
     public BlockPos home() {
@@ -671,13 +848,13 @@ public class MinionEntity extends PathfinderMob implements net.minecraft.world.e
      * section 6.4). Innate shots from its traits join this when they come.
      */
     public boolean hasRangedAttack() {
-        return MinionJobs.heldWeapon(this) != null;
+        return MinionTasks.heldWeapon(this) != null;
     }
 
     /** Arrows (or rockets) for the bow or crossbow in its hand, from what it carries: the stack itself, so a shot uses one up. */
     @Override
     public ItemStack getProjectile(ItemStack weapon) {
-        return MinionJobs.ammo(this, weapon);
+        return MinionTasks.ammo(this, weapon);
     }
 
     public boolean isMaker(Player player) {
@@ -821,7 +998,8 @@ public class MinionEntity extends PathfinderMob implements net.minecraft.world.e
         if (getTarget() != null) {
             rate = FIGHTING;
         } else if (working || com.avicagan.bloodandbones.cyber.Coupler.coupled(this)) {
-            rate = WORKING;
+            // 25 mB a minute at 100%, less for a fitter minion and more for a poorer one (docs/NEXT.md 1.2)
+            rate = working ? MinionFitness.workingDrain(workFitness) : WORKING;
         } else if (getDeltaMovement().horizontalDistanceSqr() > 1.0E-4 || !getNavigation().isDone() || steered()) {
             // keeping itself up in the air costs twice as much
             rate = stats().flies() ? MOVING * 2.0F : MOVING;
@@ -872,8 +1050,9 @@ public class MinionEntity extends PathfinderMob implements net.minecraft.world.e
             // they may change: lava walking)
             com.avicagan.bloodandbones.parts.ActiveTraits.of(this);
             applyStats();
-            // a job it can no longer do (its bow broke, a data reload took it from its head) gives way to one it can
-            MinionJobs.keepValid(this);
+            // a task a data reload took from its body gives way to Idle at home (a missing tool never does: it waits)
+            MinionTasks.keepPossible(this);
+            workFitness = fitness(task());
         }
         if ((tickCount + getId()) % 10 == 0) {
             // its traits' tick, staggered as players' are (tick effects wait while it is down)
@@ -886,6 +1065,10 @@ public class MinionEntity extends PathfinderMob implements net.minecraft.world.e
                 MinionGoals.drinkNearby(this);
             }
         } else {
+            if (working) {
+                // at work again: whatever it waited on in the world is there now
+                idle = null;
+            }
             drain();
             MinionModules.tick(this, module());
             // flesh mends itself on its blood; brass never does (a brass sheet, or a cradle stocked with them)
@@ -985,6 +1168,7 @@ public class MinionEntity extends PathfinderMob implements net.minecraft.world.e
         goalSelector.addGoal(1, new MinionGoals.SeekCradle(this));
         goalSelector.addGoal(2, new MinionGoals.UseOrgan(this));
         goalSelector.addGoal(2, new MinionGoals.Bite(this));
+        goalSelector.addGoal(2, new MinionGoals.Feel(this));
         goalSelector.addGoal(3, new MinionGoals.Farm(this));
         goalSelector.addGoal(3, new MinionGoals.AttendTable(this));
         goalSelector.addGoal(4, new MinionGoals.Deposit(this));
@@ -994,8 +1178,8 @@ public class MinionEntity extends PathfinderMob implements net.minecraft.world.e
         goalSelector.addGoal(8, new LookAtPlayerGoal(this, Player.class, 8.0F));
         goalSelector.addGoal(9, new RandomLookAroundGoal(this));
         MinionGoals.targets(this, targetSelector);
-        // the jobs of slice 7 (docs/PARTS-AND-TRAITS.md section 6.9): sentry, scavenger, herder, fisher, hunter...
-        MinionJobs.goals(this, goalSelector, targetSelector);
+        // each task's goals (docs/NEXT.md 1.1): sentry, courier, herder, fisher, hunter...
+        MinionTasks.goals(this, goalSelector, targetSelector);
         // what each group of trait effects adds (a ranged minion's keep-away, say)
         com.avicagan.bloodandbones.parts.effect.MotionEffects.minionGoals(this, goalSelector, targetSelector);
         com.avicagan.bloodandbones.parts.effect.RangedEffects.minionGoals(this, goalSelector, targetSelector);
@@ -1085,7 +1269,7 @@ public class MinionEntity extends PathfinderMob implements net.minecraft.world.e
         for (int i = 0; i < inventory.getContainerSize(); i++) {
             spawnAtLocation(inventory.removeItemNoUpdate(i));
         }
-        MinionJobs.dropHeld(this);
+        MinionTasks.dropHeld(this);
         if (isSaddled()) {
             spawnAtLocation(Items.SADDLE);
         }
@@ -1110,9 +1294,9 @@ public class MinionEntity extends PathfinderMob implements net.minecraft.world.e
 
     /**
      * A bucket of blood feeds flesh; a Soul Canister charges brass and a brass sheet mends it, from a hand or a Deployer
-     * (a machine does nothing else to it). Its maker, crouching with an empty hand: changes its job while it is up, and
-     * held for three seconds on it powered down, folds it into a Dormant Minion to carry; crouching with an item, sets a
-     * brass minion's filter. Anyone else: what it is.
+     * (a machine does nothing else to it). Its maker, crouching with an empty hand: opens its task screen while it is up
+     * (docs/NEXT.md 1.3), and held for three seconds on it powered down, folds it into a Dormant Minion to carry; crouching
+     * with an item, sets a brass minion's filter. Anyone's plain click: its status line.
      */
     @Override
     protected InteractionResult mobInteract(Player player, InteractionHand hand) {
@@ -1152,7 +1336,7 @@ public class MinionEntity extends PathfinderMob implements net.minecraft.world.e
         }
         if (player instanceof net.neoforged.neoforge.common.util.FakePlayer) {
             // a machine's stand-in (a Deployer's) only charges, feeds and mends it: whoever placed the machine, it never
-            // takes it apart, folds it, rides it, or changes its module, filter, job or what it holds
+            // takes it apart, folds it, rides it, or changes its module, filter, task or what it holds
             return InteractionResult.PASS;
         }
         if (cybernetic() && isMaker(player) && held.getItem() instanceof com.avicagan.bloodandbones.cyber.ModuleItem item && MinionModules.FITS.contains(item.module())) {
@@ -1189,8 +1373,8 @@ public class MinionEntity extends PathfinderMob implements net.minecraft.world.e
         if (filtered != null) {
             return filtered;
         }
-        // its maker hands it something to hold (a bow, a rod, a Cleaver, what a scavenger fetches), or takes it back
-        InteractionResult hands = MinionJobs.handInteract(this, player, hand);
+        // its maker hands it something to hold (a bow, a rod, a Cleaver, a courier's sample), or takes it back
+        InteractionResult hands = MinionTasks.handInteract(this, player, hand);
         if (hands != null) {
             return hands;
         }
@@ -1218,25 +1402,12 @@ public class MinionEntity extends PathfinderMob implements net.minecraft.world.e
                 }
                 return InteractionResult.CONSUME;
             }
-            // the jobs its head offers that it can do now, in turn
-            List<ResourceLocation> jobs = MinionJobs.offered(this);
-            ResourceLocation next = jobs.get((jobs.indexOf(job()) + 1) % jobs.size());
-            MinionJobs.startJob(this, next);
-            player.displayClientMessage(Component.translatable("bloodandbones.minion.job_now", Component.translatable(jobKey(next))), true);
+            // its task screen: every task, how well it does each and why, where it works and how far (docs/NEXT.md 1.3)
+            MinionTasks.showScreen(this, player);
             return InteractionResult.CONSUME;
         }
-        if (!poweredDown() && !filter.isEmpty()) {
-            player.displayClientMessage(Component.translatable("bloodandbones.minion.status_filtered", Component.translatable(jobKey(job())),
-                    Math.round(power()), stats().reservoir(), filter.stack().getHoverName()), true);
-            return InteractionResult.CONSUME;
-        }
-        player.displayClientMessage(Component.translatable(poweredDown() ? "bloodandbones.minion.status_down" : "bloodandbones.minion.status",
-                Component.translatable(jobKey(job())), Math.round(power()), stats().reservoir()), true);
+        player.displayClientMessage(MinionTasks.status(this), true);
         return InteractionResult.CONSUME;
-    }
-
-    public static String jobKey(ResourceLocation job) {
-        return "bloodandbones.minion.job." + job.getPath();
     }
 
     // ---- saving
@@ -1249,7 +1420,9 @@ public class MinionEntity extends PathfinderMob implements net.minecraft.world.e
         }
         tag.put("Home", NbtUtils.writeBlockPos(home));
         build().ifPresent(b -> MinionBuild.CODEC.encodeStart(NbtOps.INSTANCE, b).result().ifPresent(t -> tag.put("Build", t)));
-        tag.putString("Job", entityData.get(JOB));
+        tag.putString("Task", task().id.toString());
+        tag.putString("Anchor", anchor().key());
+        tag.putInt("Reach", reachSet());
         tag.putFloat("Power", power());
         tag.putBoolean("Down", poweredDown());
         tag.putBoolean("Saddled", isSaddled());
@@ -1269,13 +1442,22 @@ public class MinionEntity extends PathfinderMob implements net.minecraft.world.e
             return;
         }
         MinionBuild.CODEC.parse(NbtOps.INSTANCE, tag.get("Build")).result().ifPresent(b -> entityData.set(BUILD, Optional.of(b)));
-        entityData.set(JOB, tag.getString("Job"));
         entityData.set(POWER, tag.getFloat("Power"));
         entityData.set(DOWN, tag.getBoolean("Down"));
         entityData.set(SADDLED, tag.getBoolean("Saddled"));
         entityData.set(MODULE, tag.getString("Module"));
         filter.load(tag, registryAccess());
         stats = null;
+        if (tag.contains("Task")) {
+            MinionTask task = MinionTask.byId(ResourceLocation.tryParse(tag.getString("Task")));
+            MinionTask.Anchor anchor = MinionTask.Anchor.byKey(tag.getString("Anchor"));
+            entityData.set(TASK, (task == null ? MinionTask.IDLE : task).id.toString());
+            entityData.set(ANCHOR, (byte) (anchor == null ? 0 : anchor.ordinal()));
+            entityData.set(REACH, Math.max(0, tag.getInt("Reach")));
+        } else {
+            // saved before tasks: its old job becomes a task (docs/NEXT.md 1.8), its home kept
+            MinionTasks.fromJob(this, tag.getString("Job"));
+        }
         if (!level().isClientSide && tag.contains("Health", net.minecraft.nbt.Tag.TAG_ANY_NUMERIC)) {
             // its traits' health (a Golem Core's hardy) is not saved with it: back on first, so the health it was saved
             // with is not cut down to its torso's

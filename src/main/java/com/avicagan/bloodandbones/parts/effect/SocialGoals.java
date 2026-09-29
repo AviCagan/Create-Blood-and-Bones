@@ -1,6 +1,7 @@
 package com.avicagan.bloodandbones.parts.effect;
 
 import com.avicagan.bloodandbones.minion.MinionEntity;
+import com.avicagan.bloodandbones.minion.MinionTask;
 import com.avicagan.bloodandbones.parts.ActiveTraits;
 import com.avicagan.bloodandbones.parts.TraitEvents;
 import net.minecraft.resources.ResourceLocation;
@@ -16,22 +17,19 @@ import org.jetbrains.annotations.Nullable;
 
 import java.util.EnumSet;
 import java.util.List;
-import java.util.Set;
 
 /** The goals Social's effects hand out: a minion hunting by a sense, and mobs coming to the defence of a trait's carrier. */
 public final class SocialGoals {
-    /** The jobs that go after monsters on their own, and so hunt by a sense too. */
-    public static final Set<String> HUNTING_JOBS = Set.of("guard", "hunter", "sentry");
-    /** How far a guard goes from home for a monster, as its own targeting does. */
-    private static final double GUARD_REACH = 16.0;
 
     private SocialGoals() {
     }
 
     /**
-     * A minion that hunts (a guard) and senses by echolocation or tremor finds its monsters through walls
-     * (docs/PARTS-AND-TRAITS.md section 5.4, type 11): the nearest within the sense's range that it senses, whether it
-     * can see it or not, and keeps it while unseen. By tremor it feels only what moves; a guard still keeps near home.
+     * A minion on a task that goes after monsters on its own (a fight: Guard, Sentry, Hunter or Sapper, but a guard with its
+     * maker, which goes only for what its maker fights) that senses by echolocation or tremor finds its monsters through
+     * walls (docs/PARTS-AND-TRAITS.md section 5.4, type 11): the nearest within the sense's range that it senses, whether it
+     * can see it or not, and keeps it while unseen. By tremor it feels only what moves; it still keeps to its reach of where
+     * its task is centred (home, a sentry's post, or its maker).
      */
     public static class SenseTarget extends NearestAttackableTargetGoal<Mob> {
         private final MinionEntity minion;
@@ -55,22 +53,18 @@ public final class SocialGoals {
             for (ActiveTraits.Found<SenseEffect> found : senses) {
                 range = Math.max(range, found.effect().reach(found.entry().level()));
             }
-            boolean guard = minion.hasJob("guard");
-            Vec3 home = Vec3.atCenterOf(minion.home());
+            Vec3 centre = minion.centre();
+            double reach = minion.reach();
             targetConditions = TargetingConditions.forCombat().range(range).ignoreLineOfSight().selector(target ->
-                    target instanceof Enemy && !(target instanceof MinionEntity) && (!guard || target.distanceToSqr(home) < GUARD_REACH * GUARD_REACH)
+                    target instanceof Enemy && !(target instanceof MinionEntity) && target.distanceToSqr(centre) < reach * reach
                             && senses.stream().anyMatch(f -> f.effect().senses(minion, target, f.entry().level())));
             return super.canUse();
         }
 
-        /** Whether its job is one that hunts (asked often, so no stream). */
+        /** Whether its task goes after monsters on its own: a fight, but a guard with its maker. */
         private static boolean hunts(MinionEntity minion) {
-            for (String job : HUNTING_JOBS) {
-                if (minion.hasJob(job)) {
-                    return true;
-                }
-            }
-            return false;
+            MinionTask task = minion.task();
+            return task.kind == MinionTask.Kind.FIGHT && !(task == MinionTask.GUARD && minion.withMaker());
         }
 
         /** Its echolocation and tremor senses that work now, their conditions holding. */

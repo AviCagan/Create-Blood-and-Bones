@@ -460,8 +460,9 @@ public class SocialEffectTests {
         MinionBuild guardBody = MinionBuild.of(ref("zombie", "body")).with("head", ref("zombie", "head"));
         MinionEntity hearing = minion(helper, maker, new BlockPos(3, 2, 4), guardBody.withOrgan(organ(helper, "social_echo", echo)));
         MinionEntity deaf = minion(helper, maker, new BlockPos(3, 2, 8), guardBody);
-        if (!hearing.setJob(bb("guard")) || !deaf.setJob(bb("guard"))) {
-            helper.fail("A zombie's head should offer the guard job: " + hearing.stats().jobs());
+        if (!hearing.setTask(com.avicagan.bloodandbones.minion.MinionTask.GUARD) || !deaf.setTask(com.avicagan.bloodandbones.minion.MinionTask.GUARD)) {
+            helper.fail("A zombie's head should take guarding: " + hearing.row(com.avicagan.bloodandbones.minion.MinionTask.GUARD,
+                    com.avicagan.bloodandbones.minion.MinionTask.Anchor.HOME).cannot());
             return;
         }
         helper.succeedWhen(() -> {

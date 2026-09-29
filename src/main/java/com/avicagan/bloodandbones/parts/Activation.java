@@ -120,7 +120,7 @@ public final class Activation {
     /**
      * The first activate effect a minion can fire at this target now (in range, off cooldown, its condition holding,
      * affordable), or null. Never a detonation: only a sapper sets its organ off, walking up to its target first
-     * (MinionSapper), so a guard or companion with a creeper's sac in it keeps its blast rather than spending it on the
+     * (MinionSapper), so a guard or any other minion with a creeper's sac in it keeps its blast rather than spending it on the
      * first monster to come near.
      */
     @Nullable

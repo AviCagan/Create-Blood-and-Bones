@@ -36,11 +36,6 @@
     },
     "head": {
       "minion": {
-        "jobs": [
-          "bloodandbones:courier",
-          "bloodandbones:hauler",
-          "bloodandbones:companion"
-        ],
         "knacks": {
           "bloodandbones:hauler": 1.5,
           "bloodandbones:courier": 1.25

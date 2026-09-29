@@ -21,8 +21,8 @@ import java.util.Optional;
  * something to hold its work with); what can be retuned is its {@link Data}, from {@code data/<ns>/minion_task/<task>.json}
  * over the defaults below, which are today's constants, so a missing file changes nothing.
  * <p>
- * Stage A of the change (docs/NEXT.md 1.10): the list and its numbers are worked out without a world; the minion still
- * works by its head's jobs ({@link MinionJobs}) until stage B puts tasks in their place.
+ * Each task's goals, the task a minion wakes to and the task screen are {@link MinionTasks}'s; how well a minion does each
+ * task is {@link MinionFitness}'s.
  */
 public enum MinionTask {
     IDLE("idle", Kind.NONE, Need.NONE, null),

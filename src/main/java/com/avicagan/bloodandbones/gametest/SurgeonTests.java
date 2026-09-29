@@ -55,30 +55,10 @@ public class SurgeonTests {
         return player.getInventory().countItem(item);
     }
 
-    /** A villager's or a pillager's head, with an arm, can be a surgeon; a cow's cannot; a villager's head with no arm cannot either. */
-    @GameTest(template = "empty", timeoutTicks = 20)
-    public static void villagerAndPillagerHeadsOfferSurgeon(GameTestHelper helper) {
-        ResourceLocation surgeon = BloodAndBones.asResource("surgeon");
-        MinionBuild armed = MinionBuild.of(ref("zombie", "body")).with("right_arm", ref("zombie", "right_arm"));
-        MinionStats villager = MinionStats.of(PartsData.SERVER, armed.with("head", ref("villager", "head")));
-        MinionStats pillager = MinionStats.of(PartsData.SERVER, armed.with("head", ref("pillager", "head")));
-        MinionStats cow = MinionStats.of(PartsData.SERVER, armed.with("head", ref("cow", "head")));
-        MinionStats armless = MinionStats.of(PartsData.SERVER, MinionBuild.of(ref("cow", "body")).with("head", ref("villager", "head")));
-        if (!villager.jobs().get(0).equals(surgeon) || !pillager.jobs().contains(surgeon) || cow.jobs().contains(surgeon)) {
-            helper.fail("Villager and pillager heads should offer surgeon, a cow's not: " + villager.jobs() + " " + pillager.jobs() + " " + cow.jobs());
-            return;
-        }
-        if (armless.jobs().contains(surgeon) || armless.jobs().contains(BloodAndBones.asResource("farmer"))) {
-            helper.fail("With no hand to work with, a villager's head should not offer surgeon or farmer: " + armless.jobs());
-            return;
-        }
-        helper.succeed();
-    }
-
     /**
      * A Cleaver on the table does nothing to a player's arm with no surgeon there, nor with one out of blood, nor
-     * with one across the room; nor does a prosthetic swapped straight in for it. With a surgeon awake beside the
-     * table, the arm comes off and leaves a ragged stump.
+     * with one across the room, nor with a minion beside it on any other task; nor does a prosthetic swapped straight in for
+     * it. With a surgeon awake beside the table, the arm comes off and leaves a ragged stump.
      */
     @GameTest(template = "empty", timeoutTicks = 20)
     public static void amputationNeedsSurgeon(GameTestHelper helper) {
@@ -112,6 +92,12 @@ public class SurgeonTests {
         }
         BlockPos near = helper.absolutePos(new BlockPos(4, 2, 4));
         surgeon.moveTo(near.getX() + 0.5, near.getY(), near.getZ() + 0.5);
+        surgeon.setTask(com.avicagan.bloodandbones.minion.MinionTask.FARMER);
+        if (Surgery.operate(level, player, table, BodyPart.LEFT_ARM) != Surgery.Action.NONE) {
+            helper.fail("A minion by the table on another task (farming) is no surgeon");
+            return;
+        }
+        surgeon.setTask(com.avicagan.bloodandbones.minion.MinionTask.SURGEON);
         Body body;
         if (Surgery.operate(level, player, table, BodyPart.LEFT_ARM) != Surgery.Action.TAKE_OFF
                 || (body = BodyEffects.body(player)).state(BodyPart.LEFT_ARM) != Body.State.MISSING || !body.ragged(BodyPart.LEFT_ARM)

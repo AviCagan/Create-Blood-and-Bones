@@ -315,7 +315,7 @@ public class BrassMinionTests {
                 .with("right_hind_leg", ref("sheep", "right_hind_leg", false));
         MinionEntity many = minion(helper, new BlockPos(2, 2, 7), mixed, 500.0F);
         // a pig's head would hunt; kept to carrying, it leaves the other tests' animals alone
-        many.setJob(BloodAndBones.asResource("courier"));
+        many.setTask(com.avicagan.bloodandbones.minion.MinionTask.COURIER);
         ResourceLocation thickHide = BloodAndBones.asResource("thick_hide");
         helper.runAfterDelay(25, () -> {
             if (com.avicagan.bloodandbones.parts.ActiveTraits.of(flesh).level(thickHide) < 1
@@ -824,7 +824,7 @@ public class BrassMinionTests {
      */
     @GameTest(template = "empty", timeoutTicks = 500)
     public static void filteredCourierOnlyMovesIron(GameTestHelper helper) {
-        MinionJobTests.pen(helper);
+        MinionTaskTests.pen(helper);
         ServerLevel level = helper.getLevel();
         helper.setBlock(new BlockPos(1, 2, 1), net.minecraft.world.level.block.Blocks.CHEST);
         Player maker = helper.makeMockPlayer(GameType.SURVIVAL);
@@ -833,8 +833,8 @@ public class BrassMinionTests {
         minion.moveTo(at.getX() + 0.5, at.getY(), at.getZ() + 0.5, 0.0F, 0.0F);
         minion.setup(maker, at, brassCow(), 1000.0F);
         level.addFreshEntity(minion);
-        if (!minion.setJob(BloodAndBones.asResource("courier"))) {
-            helper.fail("A cow's head should offer courier");
+        if (!minion.setTask(com.avicagan.bloodandbones.minion.MinionTask.COURIER)) {
+            helper.fail("A brass cow should take carrying");
             return;
         }
         maker.setShiftKeyDown(true);

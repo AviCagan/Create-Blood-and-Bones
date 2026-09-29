@@ -23,10 +23,6 @@
   "parts": {
     "head": {
       "minion": {
-        "jobs": [
-          "bloodandbones:companion",
-          "bloodandbones:courier"
-        ],
         "knacks": {
           "bloodandbones:courier": 1.25
         },
@@ -37,10 +33,6 @@
               "trait": "gene",
               "equals": "aggressive"
             },
-            "jobs": [
-              "bloodandbones:bodyguard",
-              "bloodandbones:guard"
-            ],
             "knacks": {
               "bloodandbones:guard": 1.5
             },
@@ -61,10 +53,6 @@
               "trait": "gene",
               "equals": "lazy"
             },
-            "jobs": [
-              "bloodandbones:sentry",
-              "bloodandbones:companion"
-            ],
             "knacks": {
               "bloodandbones:sentry": 1.25
             }

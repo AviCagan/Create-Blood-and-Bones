@@ -4,6 +4,7 @@ import com.avicagan.bloodandbones.config.BBServerConfig;
 import net.minecraft.core.BlockPos;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.util.Mth;
+import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.entity.Mob;
 import net.minecraft.world.entity.ai.goal.Goal;
@@ -36,7 +37,7 @@ import java.util.Comparator;
 import java.util.EnumSet;
 import java.util.List;
 
-/** What a minion does, by job, and how it looks after its blood. */
+/** What a minion does whatever its task, by task where the goal is shared (docs/NEXT.md 1.1), and how it looks after its blood. */
 public final class MinionGoals {
     /** How fast it drinks at a trough, mB a second. */
     public static final int DRINK = 100;
@@ -45,25 +46,30 @@ public final class MinionGoals {
     }
 
     /**
-     * Who it fights: a companion or bodyguard what hurts it or its maker, and what its maker hits; a guard monsters near
-     * home. Never its maker (MinionEntity#canAttack), and a pacifist (no arm that hits) takes no target at all.
+     * Who it fights (docs/NEXT.md 1.1): on any task, what hurts it (Idle does no more); a guard at home the monsters within its
+     * reach of home, and a guard with its maker what hurts its maker and what its maker hits, as a tamed wolf does. Never its
+     * maker (MinionEntity#canAttack), and a pacifist (no arm that hits, no head to bite with) takes no target at all. A body
+     * with no head fights only what touches it ({@link #touches}).
      */
     static void targets(MinionEntity minion, GoalSelector targets) {
         berserk(minion, targets);
         targets.addGoal(1, new HurtByTargetGoal(minion) {
             @Override
             public boolean canUse() {
-                return minion.stats().mindless() == false && minion.stats().fights() && super.canUse();
+                return !minion.stats().mindless() && minion.stats().fights() && super.canUse();
             }
         });
-        targets.addGoal(2, new DefendMaker(minion));
+        targets.addGoal(1, new TouchTarget(minion));
+        targets.addGoal(2, new DefendMaker(minion, false));
+        targets.addGoal(2, new DefendMaker(minion, true));
         targets.addGoal(3, new NearestAttackableTargetGoal<>(minion, Mob.class, 10, true, false,
-                target -> target instanceof Enemy && !(target instanceof MinionEntity) && target.distanceToSqr(Vec3.atCenterOf(minion.home())) < 256.0
+                target -> target instanceof Enemy && !(target instanceof MinionEntity) && target.distanceToSqr(minion.centre()) < minion.reach() * minion.reach()
                         && minion.filter().allows(minion.level(), target)) {
-            /** A guard's, and a sapper's: what it walks up to and blows up beside. */
+            /** A guard's at home, and a sapper's: what it walks up to and blows up beside. */
             @Override
             public boolean canUse() {
-                return (minion.hasJob("guard") || minion.hasJob("sapper")) && minion.stats().fights() && super.canUse();
+                return (minion.hasTask(MinionTask.GUARD) && !minion.withMaker() || minion.hasTask(MinionTask.SAPPER)) && !minion.stats().mindless()
+                        && minion.stats().fights() && super.canUse();
             }
 
             /** No further than its head notices things (a blind head: 4 blocks); asked first while it is being made. */
@@ -72,14 +78,6 @@ public final class MinionGoals {
                 return minion.build().isEmpty() ? super.getFollowDistance() : Math.min(super.getFollowDistance(), minion.stats().sight());
             }
         });
-    }
-
-    /** A number from its head's minion data, for the very head it has (its variants first); the fallback with no head. */
-    static float headScalar(MinionEntity minion, String field, float fallback) {
-        MinionBuild build = minion.build().orElse(null);
-        com.avicagan.bloodandbones.parts.PartsData.Store store = com.avicagan.bloodandbones.parts.PartsData.of(minion.level());
-        PieceRef head = build == null ? null : MinionStats.head(store, build);
-        return head == null ? fallback : MinionData.scalar(store.resolve(head.entity(), head.baby()), head.traits(), "head", field, fallback);
     }
 
     /**
@@ -177,13 +175,86 @@ public final class MinionGoals {
         return minion.level().hasChunksAt(from, to);
     }
 
-    /** A companion or bodyguard goes for what hurts its maker, and what its maker goes for. */
+    /**
+     * A guard with its maker goes for what hurts its maker ({@code hit} false) or what its maker hits ({@code hit} true),
+     * each time anew, as a tamed wolf does (vanilla's OwnerHurtByTargetGoal and OwnerHurtTargetGoal): never its own side,
+     * someone's tamed animal or horse, a player its maker may not hurt, a creeper or an armour stand. It needs a head to
+     * see it by.
+     */
     static class DefendMaker extends TargetGoal {
+        /** A blow older than this is past: it is not taken up late, when the task was only just given. */
+        private static final int FRESH = 100;
         private final MinionEntity minion;
+        private final boolean hit;
         @Nullable
         private LivingEntity enemy;
+        private int timestamp;
 
-        DefendMaker(MinionEntity minion) {
+        DefendMaker(MinionEntity minion, boolean hit) {
+            super(minion, false);
+            this.minion = minion;
+            this.hit = hit;
+            setFlags(EnumSet.of(Flag.TARGET));
+        }
+
+        @Override
+        public boolean canUse() {
+            if (!minion.hasTask(MinionTask.GUARD) || minion.stats().mindless() || !minion.stats().fights()) {
+                return false;
+            }
+            Player maker = minion.workingMaker();
+            if (maker == null) {
+                return false;
+            }
+            enemy = hit ? maker.getLastHurtMob() : maker.getLastHurtByMob();
+            int when = hit ? maker.getLastHurtMobTimestamp() : maker.getLastHurtByMobTimestamp();
+            return enemy != null && when != timestamp && maker.tickCount - when < FRESH && wantsToAttack(enemy, maker)
+                    && canAttack(enemy, TargetingConditions.DEFAULT);
+        }
+
+        @Override
+        public void start() {
+            mob.setTarget(enemy);
+            Player maker = minion.workingMaker();
+            if (maker != null) {
+                timestamp = hit ? maker.getLastHurtMobTimestamp() : maker.getLastHurtByMobTimestamp();
+            }
+            super.start();
+        }
+
+        /** What a tamed wolf will go for on its owner's behalf (Wolf#wantsToAttack), and never the maker's own side. */
+        private boolean wantsToAttack(LivingEntity target, Player maker) {
+            if (target instanceof MinionEntity || target instanceof net.minecraft.world.entity.monster.Creeper
+                    || target instanceof net.minecraft.world.entity.decoration.ArmorStand || target == maker) {
+                return false;
+            }
+            if (target instanceof Player player && !maker.canHarmPlayer(player)) {
+                return false;
+            }
+            return !(target instanceof net.minecraft.world.entity.animal.horse.AbstractHorse horse && horse.isTamed())
+                    && !(target instanceof net.minecraft.world.entity.TamableAnimal tame && tame.isTame());
+        }
+    }
+
+    /** How near something must come to a body with no head for it to feel it: against it, or all but. */
+    static final double TOUCH = 0.5;
+
+    /** Whether this touches it: a body with no head knows only what it feels (docs/NEXT.md 1.1). */
+    static boolean touches(MinionEntity minion, Entity other) {
+        return other.getBoundingBox().intersects(minion.getBoundingBox().inflate(TOUCH));
+    }
+
+    /**
+     * A body with no head strikes only what touches it: what hurt it, and on a task that goes for monsters (Guard, Sentry)
+     * any monster against it, and a hunter's prey there (where mobs may do harm). Idle only fights back. It drops what
+     * moves away.
+     */
+    static class TouchTarget extends TargetGoal {
+        private final MinionEntity minion;
+        @Nullable
+        private LivingEntity felt;
+
+        TouchTarget(MinionEntity minion) {
             super(minion, false);
             this.minion = minion;
             setFlags(EnumSet.of(Flag.TARGET));
@@ -191,24 +262,89 @@ public final class MinionGoals {
 
         @Override
         public boolean canUse() {
-            if (!(minion.hasJob("companion") || minion.hasJob("bodyguard")) || minion.stats().mindless() || !minion.stats().fights()) {
+            if (!minion.stats().mindless() || !minion.stats().fights() || minion.poweredDown() || minion.tickCount % 5 != 0) {
                 return false;
             }
-            Player maker = minion.maker();
-            if (maker == null) {
+            felt = null;
+            LivingEntity hurtBy = minion.getLastHurtByMob();
+            if (hurtBy != null && hurtBy.isAlive() && touches(minion, hurtBy) && minion.canAttack(hurtBy)) {
+                felt = hurtBy;
+                return true;
+            }
+            MinionTask task = minion.task();
+            boolean monsters = task == MinionTask.GUARD || task == MinionTask.SENTRY;
+            boolean hunts = task == MinionTask.HUNTER && net.neoforged.neoforge.event.EventHooks.canEntityGrief(minion.level(), minion);
+            if (!monsters && !hunts) {
                 return false;
             }
-            LivingEntity attacker = maker.getLastHurtByMob();
-            LivingEntity attacked = maker.getLastHurtMob();
-            enemy = attacker != null && maker.tickCount - maker.getLastHurtByMobTimestamp() < 100 ? attacker
-                    : minion.hasJob("bodyguard") && attacked != null && maker.tickCount - maker.getLastHurtMobTimestamp() < 100 ? attacked : null;
-            return enemy != null && !(enemy instanceof MinionEntity) && canAttack(enemy, TargetingConditions.DEFAULT);
+            List<String> prey = hunts ? MinionTasks.prey(minion) : List.of();
+            for (LivingEntity other : minion.level().getEntitiesOfClass(LivingEntity.class, minion.getBoundingBox().inflate(TOUCH),
+                    e -> e != minion && e.isAlive() && minion.canAttack(e))) {
+                if (monsters && other instanceof Enemy && !(other instanceof MinionEntity) && minion.filter().allows(minion.level(), other)
+                        || hunts && other instanceof net.minecraft.world.entity.PathfinderMob mob && MinionTasks.isPrey(minion, mob, prey)) {
+                    felt = other;
+                    return true;
+                }
+            }
+            return false;
+        }
+
+        @Override
+        public boolean canContinueToUse() {
+            LivingEntity target = minion.getTarget();
+            return target != null && target.isAlive() && touches(minion, target) && minion.stats().mindless();
         }
 
         @Override
         public void start() {
-            mob.setTarget(enemy);
+            mob.setTarget(felt);
             super.start();
+        }
+    }
+
+    /**
+     * A body with no head strikes what it holds for its target while that touches it, a blow as often as a melee goal lands
+     * one, and never goes after it.
+     */
+    public static class Feel extends Goal {
+        private static final int EVERY = 20;
+        private final MinionEntity minion;
+        private int cooldown;
+
+        public Feel(MinionEntity minion) {
+            this.minion = minion;
+            setFlags(EnumSet.of(Flag.MOVE, Flag.LOOK));
+        }
+
+        @Override
+        public boolean requiresUpdateEveryTick() {
+            return true;
+        }
+
+        @Override
+        public boolean canUse() {
+            LivingEntity target = minion.getTarget();
+            return minion.stats().mindless() && minion.stats().fights() && target != null && target.isAlive() && touches(minion, target);
+        }
+
+        @Override
+        public void start() {
+            minion.getNavigation().stop();
+        }
+
+        @Override
+        public void tick() {
+            LivingEntity target = minion.getTarget();
+            if (target == null) {
+                return;
+            }
+            minion.getNavigation().stop();
+            minion.getLookControl().setLookAt(target, 30.0F, 30.0F);
+            cooldown = Math.max(0, cooldown - 1);
+            if (cooldown == 0) {
+                cooldown = EVERY;
+                minion.doHurtTarget(target);
+            }
         }
     }
 
@@ -226,9 +362,11 @@ public final class MinionGoals {
 
         @Override
         public boolean canUse() {
-            // a pacifist (a villager's pair of arms and no bite of its own worth using) never attacks, a sentry shoots
-            // from where it stands rather than closing in, and a sapper walks up and blows itself up instead
-            return !minion.stats().mindless() && minion.stats().fights() && !minion.hasJob("sentry") && !minion.hasJob("sapper") && super.canUse();
+            // a pacifist (a villager's pair of arms and no bite of its own worth using) never attacks, a sentry strikes or
+            // shoots from where it stands rather than closing in, a sapper walks up and blows itself up instead, and a body
+            // with no head only strikes what touches it (Feel)
+            return !minion.stats().mindless() && minion.stats().fights() && !minion.hasTask(MinionTask.SENTRY) && !minion.hasTask(MinionTask.SAPPER)
+                    && super.canUse();
         }
 
         /**
@@ -544,34 +682,52 @@ public final class MinionGoals {
         return hit.getType() == net.minecraft.world.phys.HitResult.Type.MISS || hit.getBlockPos().equals(trough);
     }
 
-    /** A companion keeps near its maker. */
+    /**
+     * On a task done with its maker, it keeps near them while they are in the same world within 64 blocks
+     * ({@link MinionEntity#workingMaker}), as a tamed wolf follows its owner (vanilla's FollowOwnerGoal): it sets off once
+     * they are six blocks off and stops three short, looking at them, its path worked out again every half second.
+     */
     public static class FollowMaker extends Goal {
+        private static final double START = 6.0;
+        private static final double STOP = 3.0;
         private final MinionEntity minion;
         @Nullable
         private Player maker;
+        private int repath;
 
         public FollowMaker(MinionEntity minion) {
             this.minion = minion;
-            setFlags(EnumSet.of(Flag.MOVE));
+            setFlags(EnumSet.of(Flag.MOVE, Flag.LOOK));
         }
 
         @Override
         public boolean canUse() {
-            if (!minion.hasJob("companion") && !minion.hasJob("bodyguard")) {
-                return false;
-            }
-            maker = minion.maker();
-            return maker != null && !maker.isSpectator() && minion.distanceToSqr(maker) > 36.0 && minion.getTarget() == null;
+            maker = minion.workingMaker();
+            return maker != null && minion.distanceToSqr(maker) > START * START && minion.getTarget() == null && canPath(minion);
         }
 
         @Override
         public boolean canContinueToUse() {
-            return maker != null && minion.distanceToSqr(maker) > 9.0 && !minion.getNavigation().isDone();
+            return maker != null && maker == minion.workingMaker() && minion.distanceToSqr(maker) > STOP * STOP && minion.getTarget() == null
+                    && !minion.getNavigation().isDone();
         }
 
         @Override
         public void start() {
+            repath = 0;
             if (maker != null) {
+                minion.getNavigation().moveTo(maker, 1.1);
+            }
+        }
+
+        @Override
+        public void tick() {
+            if (maker == null) {
+                return;
+            }
+            minion.getLookControl().setLookAt(maker, 10.0F, minion.getMaxHeadXRot());
+            if (--repath <= 0) {
+                repath = adjustedTickDelay(10);
                 minion.getNavigation().moveTo(maker, 1.1);
             }
         }
@@ -595,7 +751,7 @@ public final class MinionGoals {
         /** Its table out of its reach (a door shut): it tries again after this. */
         private int restUntil;
         private final Approach approach = new Approach();
-        /** Ticks between the hearts it heals: five seconds, longer for a shaky surgeon (a zombie villager's head). */
+        /** Ticks between the hearts it heals: five seconds at 100%, sooner for a fitter surgeon, later for a shaky one. */
         private int every = 100;
 
         public AttendTable(MinionEntity minion) {
@@ -610,7 +766,7 @@ public final class MinionGoals {
 
         @Override
         public boolean canUse() {
-            return minion.hasJob("surgeon") && minion.tickCount >= restUntil && table() != null;
+            return minion.hasTask(MinionTask.SURGEON) && minion.tickCount >= restUntil && table() != null;
         }
 
         @Override
@@ -621,8 +777,9 @@ public final class MinionGoals {
         @Override
         public void start() {
             approach.reset(minion);
-            // its head's pace ("pace", 1 by default): a shaky surgeon's hands are slow
-            every = Math.max(20, Math.round(100.0F / Math.max(0.1F, headScalar(minion, "pace", 1.0F))));
+            // a heart every 5 s at 100%, ÷ its fitness, never under 2 s (docs/NEXT.md 1.5): a zombie villager's shaky hands are slow
+            every = MinionFitness.tendTicks(com.avicagan.bloodandbones.parts.PartsData.of(minion.level()).task(MinionTask.SURGEON),
+                    minion.fitness(MinionTask.SURGEON));
         }
 
         @Nullable
@@ -673,7 +830,7 @@ public final class MinionGoals {
             net.minecraft.world.entity.LivingEntity patient = com.avicagan.bloodandbones.body.Surgery.patientAt(minion.level(), table);
             if (patient != null) {
                 minion.getLookControl().setLookAt(patient);
-                // it tends them: a heart every five seconds (a shaky surgeon slower) while they lie there hurt
+                // it tends them: a heart every five seconds at 100% while they lie there hurt
                 if (minion.tickCount % every == 0 && patient.getHealth() < patient.getMaxHealth()) {
                     patient.heal(1.0F);
                     minion.swing(net.minecraft.world.InteractionHand.MAIN_HAND);
@@ -684,7 +841,10 @@ public final class MinionGoals {
         }
     }
 
-    /** Minions with work at home wander back there when idle (a sentry to its post). */
+    /**
+     * Working at home (not with its maker, or its maker away), it goes back there when it has wandered off with nothing to
+     * do: more than 4 blocks, or Idle further than its reach (a sentry to its post).
+     */
     public static class StayNearHome extends Goal {
         private final MinionEntity minion;
 
@@ -695,7 +855,8 @@ public final class MinionGoals {
 
         @Override
         public boolean canUse() {
-            return MinionJobs.HOMEBODIES.contains(minion.job()) && minion.distanceToSqr(Vec3.atCenterOf(minion.home())) > 16.0;
+            double keep = minion.hasTask(MinionTask.IDLE) ? minion.reach() : 4.0;
+            return !minion.withMaker() && minion.distanceToSqr(Vec3.atCenterOf(minion.home())) > keep * keep;
         }
 
         @Override
@@ -710,7 +871,10 @@ public final class MinionGoals {
         }
     }
 
-    /** A courier or farmer picks up what lies about near home, while it has room (and, brass, what its filter passes). */
+    /**
+     * A farmer picks up what lies about near home, what it reaped that fell short, while it has room (and, brass, what its
+     * filter passes). A courier fetches with its own goal (MinionTasks.Fetch).
+     */
     public static class Collect extends Goal {
         private final MinionEntity minion;
         @Nullable
@@ -737,7 +901,7 @@ public final class MinionGoals {
 
         @Override
         public boolean canUse() {
-            if (!minion.hasJob("courier") && !minion.hasJob("farmer") || minion.getRandom().nextInt(10) != 0 || full()) {
+            if (!minion.hasTask(MinionTask.FARMER) || minion.getRandom().nextInt(10) != 0 || full()) {
                 return false;
             }
             if (minion.tickCount - forgotAt > 600) {
@@ -799,7 +963,10 @@ public final class MinionGoals {
         }
     }
 
-    /** A courier, farmer, fisher, butcher, digger or barterer carries what it holds to a container by home. */
+    /**
+     * A task whose takings are stored (its data's "stores": the courier, farmer, fisher, butcher, digger and barterer)
+     * carries what it has to the container nearest home, working at home.
+     */
     public static class Deposit extends Goal {
         private final MinionEntity minion;
         @Nullable
@@ -842,10 +1009,14 @@ public final class MinionGoals {
 
         @Override
         public boolean canUse() {
-            if (!MinionJobs.STORERS.contains(minion.job()) || minion.inventory.isEmpty() || minion.getRandom().nextInt(10) != 0) {
+            if (minion.inventory.isEmpty() || minion.getRandom().nextInt(10) != 0 || minion.withMaker()
+                    || !com.avicagan.bloodandbones.parts.PartsData.of(minion.level()).task(minion.task()).stores()) {
                 return false;
             }
             container = findContainer();
+            if (container == null) {
+                minion.idle(net.minecraft.network.chat.Component.translatable("bloodandbones.minion.idle.container"));
+            }
             return container != null;
         }
 
@@ -890,7 +1061,10 @@ public final class MinionGoals {
         }
     }
 
-    /** A farmer harvests ripe crops near home (brass: those its filter passes) and plants them again from what it reaped. */
+    /**
+     * A farmer harvests ripe crops within its reach of home (brass: those its filter passes) and plants them again from what
+     * it reaped.
+     */
     public static class Farm extends Goal {
         private final MinionEntity minion;
         @Nullable
@@ -908,10 +1082,11 @@ public final class MinionGoals {
             BlockPos home = minion.home();
             BlockPos best = null;
             double bestDistance = Double.MAX_VALUE;
-            if (!loaded(minion, home.offset(-8, -2, -8), home.offset(8, 2, 8))) {
+            int reach = minion.reach();
+            if (!loaded(minion, home.offset(-reach, -2, -reach), home.offset(reach, 2, reach))) {
                 return null;
             }
-            for (BlockPos pos : BlockPos.betweenClosed(home.offset(-8, -2, -8), home.offset(8, 2, 8))) {
+            for (BlockPos pos : BlockPos.betweenClosed(home.offset(-reach, -2, -reach), home.offset(reach, 2, reach))) {
                 BlockState state = minion.level().getBlockState(pos);
                 if (state.getBlock() instanceof CropBlock crop && crop.isMaxAge(state) && !unreachable.contains(minion, pos)
                         && minion.filter().allowsCrop(minion.level(), state, pos)) {
@@ -933,7 +1108,7 @@ public final class MinionGoals {
 
         @Override
         public boolean canUse() {
-            if (!minion.hasJob("farmer") || minion.getRandom().nextInt(10) != 0) {
+            if (!minion.hasTask(MinionTask.FARMER) || minion.getRandom().nextInt(10) != 0) {
                 return false;
             }
             crop = findRipe();

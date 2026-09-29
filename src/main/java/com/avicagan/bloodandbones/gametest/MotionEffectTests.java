@@ -318,9 +318,9 @@ public class MotionEffectTests {
             }
         }
         MinionEntity minion = minion(helper, new BlockPos(4, 2, 5), build);
-        if (!minion.setJob(com.avicagan.bloodandbones.minion.MinionJobs.SAPPER)) {
+        if (!minion.setTask(com.avicagan.bloodandbones.minion.MinionTask.SAPPER)) {
             minion.discard();
-            helper.fail("A creeper's head with the sac in should take the sapper's job");
+            helper.fail("A body with the sac in should take the sapper's task");
             return;
         }
         Pig pig = helper.spawn(EntityType.PIG, new BlockPos(6, 2, 5));

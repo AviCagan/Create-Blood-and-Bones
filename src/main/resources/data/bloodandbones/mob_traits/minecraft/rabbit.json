@@ -44,10 +44,6 @@
               "trait": "variant",
               "equals": "evil"
             },
-            "jobs": [
-              "bloodandbones:bodyguard",
-              "bloodandbones:guard"
-            ],
             "knacks": {
               "bloodandbones:guard": 1.5
             },

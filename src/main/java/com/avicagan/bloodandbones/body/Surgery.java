@@ -45,12 +45,19 @@ public final class Surgery {
     /** What fitting into a ragged stump costs on top, in mB of blood. */
     public static final int RAGGED_BLOOD = 1000;
 
-    /** An awake surgeon minion by this table, if there is one. */
+    /**
+     * An awake minion on the Surgeon task by this table that may do the ritual's cutting, if there is one (docs/NEXT.md 1.5:
+     * by default any with a hand; with the surgeon task's {@code "needs_surgeon_head"}, only a surgeon's head). A minion by
+     * the table on any other task does not count.
+     */
     @org.jetbrains.annotations.Nullable
     public static com.avicagan.bloodandbones.minion.MinionEntity surgeonAt(net.minecraft.world.level.Level level, BlockPos table) {
+        var surgeon = com.avicagan.bloodandbones.parts.PartsData.of(level).task(com.avicagan.bloodandbones.minion.MinionTask.SURGEON);
         for (com.avicagan.bloodandbones.minion.MinionEntity minion : level.getEntitiesOfClass(com.avicagan.bloodandbones.minion.MinionEntity.class,
                 new net.minecraft.world.phys.AABB(table).inflate(SURGEON_REACH))) {
-            if (minion.isAlive() && !minion.poweredDown() && minion.hasJob("surgeon")) {
+            var body = minion.fitnessBody();
+            if (minion.isAlive() && !minion.poweredDown() && minion.hasTask(com.avicagan.bloodandbones.minion.MinionTask.SURGEON) && body != null
+                    && com.avicagan.bloodandbones.minion.MinionFitness.mayCut(surgeon, body)) {
                 return minion;
             }
         }

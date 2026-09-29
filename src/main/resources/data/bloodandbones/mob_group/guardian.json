@@ -35,9 +35,6 @@
     },
     "head": {
       "minion": {
-        "jobs": [
-          "bloodandbones:sentry"
-        ],
         "knacks": {
           "bloodandbones:sentry": 1.5
         }

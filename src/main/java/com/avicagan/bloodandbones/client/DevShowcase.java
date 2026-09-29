@@ -72,6 +72,8 @@ public final class DevShowcase {
     private static int moved;
     /** The minions of the minion shots, what each is, for the fitness shot's lines (server side). */
     private static final List<java.util.Map.Entry<String, com.avicagan.bloodandbones.minion.MinionBuild>> SHOWN = new java.util.concurrent.CopyOnWriteArrayList<>();
+    /** The cow on rabbit legs of the minion shots, whose task screen is photographed (server side). */
+    private static volatile java.util.UUID taskMinion;
     /** Logged at each shot: the wither is the biggest, oddest body in the scene. */
     private static CarcassSavedData.Carcass witherShown;
     private static long moveAt;
@@ -484,6 +486,9 @@ public final class DevShowcase {
                                 minion.setItemSlot(net.minecraft.world.entity.EquipmentSlot.HEAD, new ItemStack(net.minecraft.world.item.Items.ZOMBIE_HEAD));
                             }
                             player.serverLevel().addFreshEntity(minion);
+                            if (m == 0) {
+                                taskMinion = minion.getUUID();
+                            }
                             if (m == 3) {
                                 minion.powerDown();
                             }
@@ -587,6 +592,32 @@ public final class DevShowcase {
                 } else if (t == 206) {
                     Screenshot.grab(mc.gameDirectory, PREFIX + "tasks_0.png", mc.getMainRenderTarget(), message -> {
                     });
+                    // the cow on rabbit legs' task screen, opened as its maker's crouching empty hand opens it (docs/NEXT.md 1.3)
+                    server.execute(() -> {
+                        ServerPlayer player = server.getPlayerList().getPlayers().get(0);
+                        if (taskMinion != null && player.serverLevel().getEntity(taskMinion) instanceof com.avicagan.bloodandbones.minion.MinionEntity minion) {
+                            com.avicagan.bloodandbones.minion.MinionTasks.showScreen(minion, player);
+                            BloodAndBones.LOGGER.info("[showcase] task screen on the cow on rabbit legs: {}", com.avicagan.bloodandbones.minion.MinionTasks.status(minion).getString());
+                        }
+                    });
+                } else if (t == 210) {
+                    // its reasons for herding shown over its row, as a hovering mouse shows them
+                    if (mc.screen instanceof MinionTaskScreen screen) {
+                        screen.pinHover(com.avicagan.bloodandbones.minion.MinionTask.HERDER);
+                    }
+                } else if (t == 213) {
+                    Screenshot.grab(mc.gameDirectory, PREFIX + "tasks_1.png", mc.getMainRenderTarget(), message -> {
+                    });
+                    BloodAndBones.LOGGER.info("[showcase] took task screen shot; screen {}", mc.screen == null ? "none" : mc.screen.getClass().getSimpleName());
+                    // and the rest of the list, scrolled to its end
+                    if (mc.screen instanceof MinionTaskScreen screen) {
+                        screen.pinHover(null);
+                        screen.scrollToEnd();
+                    }
+                } else if (t == 216) {
+                    Screenshot.grab(mc.gameDirectory, PREFIX + "tasks_2.png", mc.getMainRenderTarget(), message -> {
+                    });
+                    mc.setScreen(null);
                     mc.options.hideGui = true;
                 } else if (t == 220) {
                     Screenshot.grab(mc.gameDirectory, PREFIX + "minions_1.png", mc.getMainRenderTarget(), message -> {

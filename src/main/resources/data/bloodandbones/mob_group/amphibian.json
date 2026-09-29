@@ -19,10 +19,6 @@
   "parts": {
     "head": {
       "minion": {
-        "jobs": [
-          "bloodandbones:companion",
-          "bloodandbones:hunter"
-        ],
         "knacks": {
           "bloodandbones:hunter": 1.25
         },
