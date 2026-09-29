@@ -34,6 +34,33 @@ public class PartFilteringBehaviour extends FilteringBehaviour {
         return PartFilter.takes(getWorld(), filter, part);
     }
 
+    /** Whether its filter picks organs rather than parts ({@link PartFilter#namesOrgans}): a heart in it, say. */
+    public boolean namesOrgans() {
+        return PartFilter.namesOrgans(filter);
+    }
+
+    /**
+     * What organs of this part of a carcass it lets its station take out, each asked about as the item it comes out as:
+     * with a filter that picks organs, those it passes, whichever part they are in; with one that picks parts, all of a
+     * part it passes and none of one it does not.
+     */
+    public java.util.function.Predicate<ItemStack> organs(com.avicagan.bloodandbones.carcass.CarcassSavedData.Carcass carcass, String bone) {
+        if (namesOrgans()) {
+            return this::takes;
+        }
+        boolean part = takes(carcass, bone);
+        return organ -> part;
+    }
+
+    /** The same for a carried piece, given as its item. */
+    public java.util.function.Predicate<ItemStack> organs(ItemStack piece) {
+        if (namesOrgans()) {
+            return this::takes;
+        }
+        boolean part = takes(piece);
+        return organ -> part;
+    }
+
     /**
      * A Deployer's stand-in player is let through Create's slot hit test: it would set the filter instead of putting a
      * piece on the station or taking its output.

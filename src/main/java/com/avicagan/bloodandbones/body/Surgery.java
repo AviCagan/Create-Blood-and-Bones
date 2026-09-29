@@ -620,6 +620,18 @@ public final class Surgery {
      * @return whether an organ came out
      */
     public static boolean harvest(ServerLevel level, Player surgeon, SurgeryTableBlockEntity table, ItemStack blade) {
+        return harvest(level, surgeon, table, blade, organ -> true);
+    }
+
+    /**
+     * As {@link #harvest(ServerLevel, Player, SurgeryTableBlockEntity, ItemStack)}, taking only an organ that {@code wanted}
+     * lets through, asked of each organ as the item it comes out as (the rig's filter set to a heart takes only hearts):
+     * the first one wanted, which need not be the first left.
+     *
+     * @return whether an organ came out
+     */
+    public static boolean harvest(ServerLevel level, Player surgeon, SurgeryTableBlockEntity table, ItemStack blade,
+                                  java.util.function.Predicate<ItemStack> wanted) {
         com.avicagan.bloodandbones.parts.PartsData.Store store = com.avicagan.bloodandbones.parts.PartsData.SERVER;
         ItemStack stack = table.item();
         com.avicagan.bloodandbones.item.CarcassPieceItem.Piece piece = com.avicagan.bloodandbones.item.CarcassPieceItem.piece(stack);
@@ -633,23 +645,33 @@ public final class Surgery {
                 surgeon.displayClientMessage(Component.translatable("bloodandbones.surgery.no_organs"), true);
                 return false;
             }
-            return harvest(level, surgeon, table, blade, carcass, bone);
+            for (String each : organBones(carcass)) {
+                if (organsLeft(store, carcass, each) > 0 && harvest(level, surgeon, table, blade, carcass, each, wanted)) {
+                    return true;
+                }
+            }
+            return false;
         }
         java.util.List<net.minecraft.resources.ResourceLocation> held = com.avicagan.bloodandbones.parts.Organs.held(store, piece.entity(), piece.baby(), piece.bone());
-        int taken = organsTaken(piece);
-        if (taken >= held.size()) {
+        java.util.BitSet taken = taken(piece);
+        if (taken.cardinality() >= held.size()) {
             surgeon.displayClientMessage(Component.translatable("bloodandbones.surgery.no_organs"), true);
             return false;
         }
+        int at = nextWanted(held, taken, i -> wanted.test(com.avicagan.bloodandbones.parts.Organs.stack(store, held.get(i), piece.entity(), piece.baby(), piece.traits())));
+        if (at < 0) {
+            return false;
+        }
+        taken.set(at);
         java.util.Map<String, String> traits = new java.util.HashMap<>(piece.traits());
-        traits.put(ORGANS_TAKEN, Integer.toString(taken + 1));
+        traits.put(ORGANS_TAKEN, write(taken));
         stack.set(com.avicagan.bloodandbones.registry.BBDataComponents.PIECE.get(), new com.avicagan.bloodandbones.item.CarcassPieceItem.Piece(
                 piece.entity(), piece.bone(), piece.texture(), piece.coats(), piece.freshness(), piece.skinned(), java.util.Map.copyOf(traits),
                 piece.blood(), piece.bloodMax(), piece.decay(), piece.baby()));
         table.notifyUpdate();
         BlockPos pos = table.getBlockPos();
-        Vector3d at = new Vector3d(pos.getX() + 0.5, pos.getY() + 1.1, pos.getZ() + 0.5);
-        cutOrgan(level, surgeon, pos, at, blade, held.get(taken), piece.entity(), piece.baby(), piece.traits());
+        Vector3d where = new Vector3d(pos.getX() + 0.5, pos.getY() + 1.1, pos.getZ() + 0.5);
+        cutOrgan(level, surgeon, pos, where, blade, held.get(at), piece.entity(), piece.baby(), piece.traits());
         return true;
     }
 
@@ -661,20 +683,34 @@ public final class Surgery {
      */
     public static boolean harvest(ServerLevel level, Player surgeon, SurgeryTableBlockEntity table, ItemStack blade,
                                   com.avicagan.bloodandbones.carcass.CarcassSavedData.Carcass carcass, String bone) {
+        return harvest(level, surgeon, table, blade, carcass, bone, organ -> true);
+    }
+
+    /**
+     * As {@link #harvest(ServerLevel, Player, SurgeryTableBlockEntity, ItemStack, com.avicagan.bloodandbones.carcass.CarcassSavedData.Carcass,
+     * String)}, taking only an organ that {@code wanted} lets through, asked of it as the item it comes out as.
+     *
+     * @return whether an organ came out (false if that bone has none left that is wanted)
+     */
+    public static boolean harvest(ServerLevel level, Player surgeon, SurgeryTableBlockEntity table, ItemStack blade,
+                                  com.avicagan.bloodandbones.carcass.CarcassSavedData.Carcass carcass, String bone,
+                                  java.util.function.Predicate<ItemStack> wanted) {
         com.avicagan.bloodandbones.parts.PartsData.Store store = com.avicagan.bloodandbones.parts.PartsData.SERVER;
         java.util.List<net.minecraft.resources.ResourceLocation> held = com.avicagan.bloodandbones.parts.Organs.held(store, carcass.entity, carcass.baby, bone);
-        int taken = organsTaken(carcass.traits, bone, bone.equals(carcass.rootBone));
-        if (taken >= held.size()) {
+        java.util.BitSet taken = taken(carcass.traits, bone, bone.equals(carcass.rootBone));
+        int next = nextWanted(held, taken, i -> wanted.test(com.avicagan.bloodandbones.parts.Organs.stack(store, held.get(i), carcass.entity, carcass.baby, carcass.traits)));
+        if (next < 0) {
             return false;
         }
-        carcass.traits.put(ORGANS_TAKEN + ":" + bone, Integer.toString(taken + 1));
+        taken.set(next);
+        carcass.traits.put(ORGANS_TAKEN + ":" + bone, write(taken));
         com.avicagan.bloodandbones.carcass.CarcassSavedData.get(level).setDirty();
         BlockPos pos = table.getBlockPos();
         Vector3d at = com.avicagan.bloodandbones.carcass.CarcassAssembler.boneWorldPosition(level, carcass, bone);
         if (at == null) {
             at = new Vector3d(pos.getX() + 0.5, pos.getY() + 1.1, pos.getZ() + 0.5);
         }
-        cutOrgan(level, surgeon, pos, at, blade, held.get(taken), carcass.entity, carcass.baby, carcass.traits);
+        cutOrgan(level, surgeon, pos, at, blade, held.get(next), carcass.entity, carcass.baby, carcass.traits);
         return true;
     }
 
@@ -779,19 +815,34 @@ public final class Surgery {
 
     /**
      * The trait on a carcass piece counting the organs already taken from it. A carcass lying whole counts each bone's
-     * under its own key ("organs_taken:head"), which a piece cut off it still reads.
+     * under its own key ("organs_taken:head"), which a piece cut off it still reads. Taken in order it is a count ("2":
+     * the first two of its list); once a filter has taken one out of order (a heart and not the lungs before it) it is
+     * the places in the list that were taken ("0,2").
      */
     public static final String ORGANS_TAKEN = "organs_taken";
 
     public static int organsTaken(com.avicagan.bloodandbones.item.CarcassPieceItem.Piece piece) {
+        return taken(piece).cardinality();
+    }
+
+    /** Which of a carried piece's organs (their places in its list) were taken out. */
+    public static java.util.BitSet taken(com.avicagan.bloodandbones.item.CarcassPieceItem.Piece piece) {
         String own = piece.traits().get(ORGANS_TAKEN);
-        return count(own != null ? own : piece.traits().get(ORGANS_TAKEN + ":" + piece.bone()));
+        return taken(own != null ? own : piece.traits().get(ORGANS_TAKEN + ":" + piece.bone()));
     }
 
     /** How many organs were taken out of one bone of a carcass (a piece put down counted its own under the plain key). */
     public static int organsTaken(java.util.Map<String, String> traits, String bone, boolean root) {
-        int own = count(traits.get(ORGANS_TAKEN + ":" + bone));
-        return root ? Math.max(own, count(traits.get(ORGANS_TAKEN))) : own;
+        return taken(traits, bone, root).cardinality();
+    }
+
+    /** Which organs (their places in its list) were taken out of one bone of a carcass. */
+    public static java.util.BitSet taken(java.util.Map<String, String> traits, String bone, boolean root) {
+        java.util.BitSet own = taken(traits.get(ORGANS_TAKEN + ":" + bone));
+        if (root) {
+            own.or(taken(traits.get(ORGANS_TAKEN)));
+        }
+        return own;
     }
 
     /** A carried piece put down whole: what was taken out of it is its bone's own count now, not the whole carcass's. */
@@ -802,12 +853,56 @@ public final class Surgery {
         }
     }
 
-    private static int count(@org.jetbrains.annotations.Nullable String value) {
-        try {
-            return value == null ? 0 : Integer.parseInt(value);
-        } catch (NumberFormatException e) {
-            return 0;
+    /** The places taken, from a count ("2": the first two) or a list ("0,2"); nothing for none or a value that is neither. */
+    static java.util.BitSet taken(@org.jetbrains.annotations.Nullable String value) {
+        java.util.BitSet out = new java.util.BitSet();
+        if (value == null || value.isEmpty()) {
+            return out;
         }
+        try {
+            if (value.indexOf(',') < 0 && !value.startsWith("[")) {
+                out.set(0, Math.max(0, Integer.parseInt(value.trim())));
+                return out;
+            }
+            for (String at : value.replace("[", "").replace("]", "").split(",")) {
+                if (!at.isBlank()) {
+                    out.set(Integer.parseInt(at.trim()));
+                }
+            }
+        } catch (NumberFormatException | IndexOutOfBoundsException e) {
+            return new java.util.BitSet();
+        }
+        return out;
+    }
+
+    /**
+     * The places taken as the trait keeps them: a count while they are the first ones in order (as every organ taken without
+     * a filter is), else the list of them. A single place other than the first is written "[1]", so it never reads as a count.
+     */
+    static String write(java.util.BitSet taken) {
+        int count = taken.cardinality();
+        if (taken.nextClearBit(0) == count) {
+            return Integer.toString(count);
+        }
+        StringBuilder out = new StringBuilder();
+        for (int at = taken.nextSetBit(0); at >= 0; at = taken.nextSetBit(at + 1)) {
+            out.append(out.isEmpty() ? "" : ",").append(at);
+        }
+        return count == 1 ? "[" + out + "]" : out.toString();
+    }
+
+    /**
+     * The next organ out of a list, whatever the filter lets through: its place in the list, or -1. Nothing taken out of
+     * order when every one is wanted: the first left.
+     */
+    static int nextWanted(java.util.List<net.minecraft.resources.ResourceLocation> held, java.util.BitSet taken,
+                          java.util.function.IntPredicate wanted) {
+        for (int at = taken.nextClearBit(0); at < held.size(); at = taken.nextClearBit(at + 1)) {
+            if (wanted.test(at)) {
+                return at;
+            }
+        }
+        return -1;
     }
 
     /** The server tells a surgeon to show the surgery screen for whoever lies on the table (themselves, or another). */

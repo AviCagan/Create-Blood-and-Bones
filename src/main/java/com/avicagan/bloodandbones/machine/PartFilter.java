@@ -21,7 +21,11 @@ import org.jetbrains.annotations.Nullable;
  * <li>A list filter: each entry asked the same way, as a whitelist or a blacklist.</li>
  * <li>An attribute filter: asked about the part as Create asks it about an item, so "is a carcass hind leg" takes
  * only hind legs (BBItemAttributes), "is a piece of Cow" only a cow's.</li>
+ * <li>An organ (a heart, a Gland, a Spider Eye): that organ, out of any mob; no part that is not one.</li>
  * </ul>
+ * A filter that names an organ ({@link #namesOrgans}: an organ in it, in its list, or "is the organ ..." among its
+ * attributes) picks organs: the Surgical Rig asks it about each organ it could take, as the item that organ comes out as,
+ * so one set to a heart takes only hearts. A filter that names only mobs and parts takes a part's organs with the part.
  */
 public final class PartFilter {
     private PartFilter() {
@@ -31,7 +35,31 @@ public final class PartFilter {
     public static boolean allowed(ItemStack stack) {
         return stack.getItem() instanceof SpawnEggItem
                 || stack.is(com.avicagan.bloodandbones.registry.BBItems.CARCASS_PIECE.get())
-                || stack.getItem() instanceof FilterItem;
+                || stack.getItem() instanceof FilterItem
+                || organ(stack) != null;
+    }
+
+    /** The organ an item in the slot (or in a list) names, whoever it came out of; null for none. */
+    @Nullable
+    static ResourceLocation organ(ItemStack stack) {
+        return com.avicagan.bloodandbones.parts.Organs.idOf(stack, com.avicagan.bloodandbones.parts.CarcassArmourItem.store());
+    }
+
+    /**
+     * Whether a filter picks organs rather than parts: an organ, a list with one in it, or an Attribute Filter asking which
+     * organ an item is. The rig then asks it about each organ as itself; otherwise about the part the organ is in.
+     */
+    public static boolean namesOrgans(FilterItemStack filter) {
+        if (filter.item().isEmpty()) {
+            return false;
+        }
+        if (filter instanceof FilterItemStack.ListFilterItemStack list) {
+            return list.containedItems.stream().anyMatch(PartFilter::namesOrgans);
+        }
+        if (filter instanceof FilterItemStack.AttributeFilterItemStack attributes) {
+            return attributes.attributeTests.stream().anyMatch(test -> test.getFirst() instanceof com.avicagan.bloodandbones.registry.BBItemAttributes.OrganIs);
+        }
+        return !filter.isFilterItem() && organ(filter.item()) != null;
     }
 
     /** Whether a filter lets a station take this part of a carcass. */
@@ -62,6 +90,10 @@ public final class PartFilter {
         if (item.is(com.avicagan.bloodandbones.registry.BBItems.CARCASS_PIECE.get())) {
             CarcassPieceItem.Piece piece = CarcassPieceItem.piece(item);
             return piece == null || piece.entity().equals(mobOf(part));
+        }
+        ResourceLocation organ = item.getItem() instanceof FilterItem ? null : organ(item);
+        if (organ != null) {
+            return organ.equals(com.avicagan.bloodandbones.parts.Organs.idOf(part, com.avicagan.bloodandbones.parts.PartsData.of(level)));
         }
         if (filter instanceof FilterItemStack.ListFilterItemStack list) {
             for (FilterItemStack entry : list.containedItems) {
