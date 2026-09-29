@@ -157,6 +157,28 @@ public final class BodyEffects {
         }
     }
 
+    /** How far a player sees with one working eye, as a share of what they would see with two. */
+    public static final float ONE_EYE_SIGHT = 0.5F;
+    /** How far, in blocks, a player sees with no working eye. */
+    public static final float NO_EYE_SIGHT = 6.0F;
+
+    /**
+     * Reduced vision, which the client draws as fog: how far this wearer sees, given how far they would see with both eyes.
+     * Both eyes working (their own, or implants that are working), no change; one, half as far; none, a few blocks.
+     */
+    public static float sight(Body body, LivingEntity wearer, float far) {
+        int eyes = (body.works(BodyPart.LEFT_EYE, wearer) ? 1 : 0) + (body.works(BodyPart.RIGHT_EYE, wearer) ? 1 : 0);
+        return eyes == 2 ? far : Math.min(far, eyes == 1 ? far * ONE_EYE_SIGHT : NO_EYE_SIGHT);
+    }
+
+    /**
+     * Whether what this player holds on that side, and the armour over a limb there, is drawn: not where the limb is gone.
+     * Only a player's: a mob's missing limbs are still drawn, so is what they hold.
+     */
+    public static boolean shows(LivingEntity entity, BodyPart part) {
+        return !(entity instanceof Player) || !altered(entity) || body(entity).state(part) != Body.State.MISSING;
+    }
+
     /** Whether the body can see: at least one working eye. */
     public static boolean sees(Body body, LivingEntity wearer) {
         return body.works(BodyPart.LEFT_EYE, wearer) || body.works(BodyPart.RIGHT_EYE, wearer);

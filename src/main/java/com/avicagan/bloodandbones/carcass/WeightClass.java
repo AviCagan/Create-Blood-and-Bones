@@ -9,7 +9,7 @@ import java.util.Optional;
  * How heavy a kind of carcass is to deal with, as the brief's "weight classes" (data/&lt;ns&gt;/weight_class/&lt;id&gt;.json).
  * A mob's groups name its class ({@code "weight_class"}, the last layer that names one winning, a mob's own file last);
  * a mob none names is put in the smallest class whose {@code up_to} its size fits, so a modded mob has one on day one.
- * The mod's classes, and which vanilla mobs fall in each, are listed in docs/ARCHITECTURE-PROPOSAL.md 15.29.
+ * The mod's classes, and which vanilla mobs fall in each, are listed in docs/ARCHITECTURE-PROPOSAL.md 15.31.
  *
  * @param upTo           the largest size, in blocks of animal (its rig's weight as flesh), this class takes by size; a class
  *                       with none is only ever named

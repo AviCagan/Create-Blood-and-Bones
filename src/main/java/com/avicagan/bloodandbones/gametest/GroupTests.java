@@ -388,7 +388,7 @@ public class GroupTests {
     }
 
     /**
-     * Weight classes (package 2, for the owner: the list is in ARCHITECTURE 15.29): by size for any mob no group names one
+     * Weight classes (package 2, for the owner: the list is in ARCHITECTURE 15.31): by size for any mob no group names one
      * for, so a modded mob has one on day one; a group or a mob's own file can name one, and then its figures drive the
      * drag, the blood, the floating and the rot time. Checked on a copy of the server's data with one class and one mob file
      * added, so no other test sees them.

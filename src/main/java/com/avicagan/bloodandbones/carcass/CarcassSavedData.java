@@ -68,6 +68,9 @@ public class CarcassSavedData extends SavedData {
         /** where each body lay when the carcass last settled, however it twitches, and for how many ticks (CarcassRest); not saved */
         public final Map<String, org.joml.Vector3d> settledAt = new java.util.HashMap<>();
         public int settledTicks;
+        /** the deck (a sub-level) settledAt is measured on, in its plot; null for the world; not saved */
+        @Nullable
+        public UUID settledDeck;
         /** each bone's vertical speed last tick, to hear it land (CarcassThuds); not saved */
         public final Map<String, Double> fallSpeeds = new java.util.HashMap<>();
         /** ticks until this carcass may thud again, and how many times it has; not saved */
@@ -92,6 +95,9 @@ public class CarcassSavedData extends SavedData {
         /** resting form: the world joint that pins the merged body in place, not saved */
         @Nullable
         public PhysicsConstraintHandle restLock;
+        /** resting form: the deck (a sub-level) that joint pins it to, or null for the world; not saved */
+        @Nullable
+        public UUID restDeck;
         /** what the mob wore, so re-assembled limbs draw the same */
         public CarcassLook look = new CarcassLook(ResourceLocation.withDefaultNamespace("textures/entity/cow/cow.png"), List.of());
         /** rot: 1.0 fresh, 0.0 rotten */

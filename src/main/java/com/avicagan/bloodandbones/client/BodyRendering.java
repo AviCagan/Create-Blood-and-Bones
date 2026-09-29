@@ -29,7 +29,8 @@ import java.util.List;
 /**
  * Drawing a body on a player: a part that is gone is not drawn (nor its sleeve or trouser leg), and an
  * implant is drawn in its place, in third person and first person. What is held in a hand with no arm is
- * not drawn in first person either.
+ * not drawn, in first person or third, nor is armour over a limb that is gone (the mixins
+ * {@code ItemInHandLayerMixin} and {@code HumanoidArmorLayerMixin}, by {@link BodyEffects#shows}).
  */
 @EventBusSubscriber(modid = BloodAndBones.MOD_ID, value = Dist.CLIENT)
 public final class BodyRendering {
@@ -139,12 +140,7 @@ public final class BodyRendering {
         if (player == null || event.getCamera().getEntity() != player || !BodyEffects.altered(player)) {
             return;
         }
-        Body body = BodyEffects.body(player);
-        int eyes = (body.works(BodyPart.LEFT_EYE, player) ? 1 : 0) + (body.works(BodyPart.RIGHT_EYE, player) ? 1 : 0);
-        if (eyes == 2) {
-            return;
-        }
-        float far = eyes == 1 ? event.getFarPlaneDistance() * 0.5F : 6.0F;
+        float far = BodyEffects.sight(BodyEffects.body(player), player, event.getFarPlaneDistance());
         if (far < event.getFarPlaneDistance()) {
             event.setNearPlaneDistance(Math.min(event.getNearPlaneDistance(), far * 0.25F));
             event.setFarPlaneDistance(far);

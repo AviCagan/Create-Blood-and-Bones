@@ -18,6 +18,9 @@ import org.joml.Vector3d;
 
 /** Draws the short chain from the hook's tip to the limb hanging on it. */
 public class ShackleHookRenderer implements BlockEntityRenderer<ShackleHookBlockEntity> {
+    /** The longest chain drawn, in blocks: a hook hoists from no further than this (ShackleHookBlockEntity.REJOIN_REACH). */
+    private static final double MAX_CHAIN = ShackleHookBlockEntity.REJOIN_REACH;
+
     public ShackleHookRenderer(BlockEntityRendererProvider.Context context) {
     }
 
@@ -34,9 +37,16 @@ public class ShackleHookRenderer implements BlockEntityRenderer<ShackleHookBlock
         Pose3dc pose = ((LevelPoseProviderExtension) level).sable$getPose(subLevel);
         Vector3d limb = pose.transformPosition(hook.hookedAnchor(), new Vector3d());
         BlockPos pos = hook.getBlockPos();
+        // a hook on a ship is drawn in the ship's own plot: the limb is brought into it (drawn from the plot to the world, the
+        // chain ran across the whole plot grid, and so many links overran the vertex buffer and crashed the game)
+        SubLevel ship = dev.ryanhcode.sable.Sable.HELPER.getContaining(level, pos);
+        if (ship != null && !ship.isRemoved()) {
+            ((LevelPoseProviderExtension) level).sable$getPose(ship).transformPositionInverse(limb);
+        }
         Vec3 tip = ShackleHookBlock.tip(pos, hook.getBlockState());
-        if (tip.distanceToSqr(limb.x, limb.y, limb.z) < 0.3 * 0.3) {
-            return; // the neck sits on the hook itself; no chain to draw
+        double gap = tip.distanceToSqr(limb.x, limb.y, limb.z);
+        if (gap < 0.3 * 0.3 || gap > MAX_CHAIN * MAX_CHAIN) {
+            return; // the neck sits on the hook itself (no chain to draw), or the body is not where a chain could reach
         }
         poseStack.pushPose();
         poseStack.translate(-pos.getX(), -pos.getY(), -pos.getZ());

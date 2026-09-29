@@ -142,7 +142,7 @@ public class BBServerConfig {
                 .comment("Necrosis (out of 100) an organic arm takes from each swing.")
                 .defineInRange("per_swing", 1, 0, 100);
         NECROSIS_BLOCKS = builder
-                .comment("Blocks an organic leg walks for each point of necrosis.")
+                .comment("An organic leg takes a point of necrosis each time this many blocks of wear add up. Each block sprinted counts as 1.5; walking does not count.")
                 .defineInRange("blocks_per_point", 4.0, 0.01, 100000.0);
         NECROSIS_MEAL = builder
                 .comment("Necrosis an organic stomach takes from each meal.")

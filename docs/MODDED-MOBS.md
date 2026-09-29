@@ -6,7 +6,7 @@ is how that works, and what you can do to make it better.
 
 ## With no files at all
 
-A mob Blood & Bones has never heard of still becomes a carcass (docs/ARCHITECTURE-PROPOSAL.md 15.29).
+A mob Blood & Bones has never heard of still becomes a carcass (docs/ARCHITECTURE-PROPOSAL.md 15.31).
 
 1. **Its group.** The mod decides what shape of animal it is (its *archetype*) from:
    - your mob's own file, if you ship one (`data/<ns>/mob_traits/<your ns>/<mob>.json`, `"archetype"`);
@@ -95,7 +95,7 @@ drawn (`"boxes"`: a ghast's tentacles collide shorter than they are drawn), a di
 the rules do not find (`"torso"`), parts hidden outright (`"hidden"`), and how a baby is drawn (`"baby"`). Every name
 in a target must be a real part; a typo stops the data run.
 
-The mod's own targets keep these on purpose (ARCHITECTURE 15.29 lists them): the zombies' and skeletons' limbs and
+The mod's own targets keep these on purpose (ARCHITECTURE 15.31 lists them): the zombies' and skeletons' limbs and
 heads, the horse family's necks and tails, the wither, the ghast's tentacles, the turtle's flippers, seven heads that sit
 on top of their bodies but must not collide with them, and the parts of a few mobs drawn as one piece (a bee's legs and
 wings, a blaze's rods, a magma cube's layers).

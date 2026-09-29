@@ -335,6 +335,16 @@ public final class DevShowcase {
                     mc.player.setYHeadRot(yaw);
                     mc.player.yHeadRotO = yaw;
                 }
+                // the missing-limb shot: square on to the camera, looking level
+                if (mc.player != null && t >= 181 && t <= 188) {
+                    float yaw = mc.player.getYRot();
+                    mc.player.setYBodyRot(yaw);
+                    mc.player.yBodyRotO = yaw;
+                    mc.player.setYHeadRot(yaw);
+                    mc.player.yHeadRotO = yaw;
+                    mc.player.setXRot(0.0F);
+                    mc.player.xRotO = 0.0F;
+                }
                 if (t == 0) {
                     mc.options.setCameraType(net.minecraft.client.CameraType.THIRD_PERSON_FRONT);
                     mc.options.hideGui = true;
@@ -441,10 +451,38 @@ public final class DevShowcase {
                         player.serverLevel().addFreshEntity(surgeon);
                         com.avicagan.bloodandbones.body.BodyEffects.body(player).lose(com.avicagan.bloodandbones.body.BodyPart.LEFT_ARM, 2);
                         com.avicagan.bloodandbones.body.BodyEffects.changed(player);
+                        // what the screen offers is what they carry: prosthetics, grafts, a module, their own arm, and blood to pay with
+                        var inventory = player.getInventory();
+                        inventory.setItem(1, new ItemStack(BBItems.HOOK_HAND.get()));
+                        inventory.setItem(2, new ItemStack(BBItems.FLESH_ARM.get()));
+                        inventory.setItem(3, new ItemStack(BBItems.PEG_LEG.get()));
+                        inventory.setItem(4, new ItemStack(BBItems.CRUDE_HEART.get()));
+                        inventory.setItem(5, new ItemStack(BBItems.GLASS_EYE.get()));
+                        inventory.setItem(6, new ItemStack(BBItems.module(com.avicagan.bloodandbones.cyber.Module.MAGNET_COIL)));
+                        inventory.setItem(7, BBItems.partItem(com.avicagan.bloodandbones.body.BodyPart.Kind.ARM).of(player));
+                        // and a Cleaver of their own, which fits nothing: no green mark from it, and not in the carried row
+                        inventory.setItem(8, new ItemStack(BBItems.CLEAVER.get()));
+                        inventory.setItem(9, new ItemStack(com.avicagan.bloodandbones.registry.BBFluids.BLOOD.getBucket().get()));
                         if (com.avicagan.bloodandbones.body.SurgeryTableBlock.lieDown(player.serverLevel(), at, player)) {
                             net.neoforged.neoforge.network.PacketDistributor.sendToPlayer(player, new com.avicagan.bloodandbones.body.Surgery.OpenPayload(at, player.getId()));
                         }
                     });
+                } else if (t == 118) {
+                    // first the brass arm picked: unclip it, swap it, fit the carried module; a slot on the doll hovered
+                    if (mc.screen instanceof SurgeryScreen surgery) {
+                        surgery.select(com.avicagan.bloodandbones.body.BodyPart.RIGHT_ARM);
+                        surgery.pinHover(com.avicagan.bloodandbones.body.BodyPart.LEFT_EYE);
+                    }
+                    mc.getToasts().clear();
+                } else if (t == 124) {
+                    Screenshot.grab(mc.gameDirectory, PREFIX + "surgery_1.png", mc.getMainRenderTarget(), message -> {
+                    });
+                } else if (t == 126) {
+                    // then the ragged stump: what fits it, and what it costs
+                    if (mc.screen instanceof SurgeryScreen surgery) {
+                        surgery.select(com.avicagan.bloodandbones.body.BodyPart.LEFT_ARM);
+                        surgery.pinHover(null);
+                    }
                 } else if (t == 137) {
                     // the advancement toasts would cover the screen's corner
                     mc.getToasts().clear();
@@ -646,6 +684,38 @@ public final class DevShowcase {
                     });
                     mc.options.setCameraType(net.minecraft.client.CameraType.FIRST_PERSON);
                     mc.options.hideGui = true;
+                } else if (t == 178) {
+                    // a missing limb holds and wears nothing: the left arm gone with a shield in that hand, the right leg gone in
+                    // iron leggings and boots; the shield and that leg's armour are not drawn, the sword and the rest are
+                    server.execute(() -> {
+                        ServerPlayer player = server.getPlayerList().getPlayers().get(0);
+                        var body = com.avicagan.bloodandbones.body.BodyEffects.body(player);
+                        body.lose(com.avicagan.bloodandbones.body.BodyPart.LEFT_ARM);
+                        body.lose(com.avicagan.bloodandbones.body.BodyPart.RIGHT_LEG, 3);
+                        com.avicagan.bloodandbones.body.BodyEffects.changed(player);
+                        player.setItemSlot(net.minecraft.world.entity.EquipmentSlot.CHEST, new ItemStack(net.minecraft.world.item.Items.IRON_CHESTPLATE));
+                        player.setItemSlot(net.minecraft.world.entity.EquipmentSlot.LEGS, new ItemStack(net.minecraft.world.item.Items.IRON_LEGGINGS));
+                        player.setItemSlot(net.minecraft.world.entity.EquipmentSlot.FEET, new ItemStack(net.minecraft.world.item.Items.IRON_BOOTS));
+                        player.setItemInHand(InteractionHand.MAIN_HAND, new ItemStack(net.minecraft.world.item.Items.IRON_SWORD));
+                        player.setItemInHand(InteractionHand.OFF_HAND, new ItemStack(net.minecraft.world.item.Items.SHIELD));
+                        // turned away from the minions, so the camera in front has open ground behind it
+                        player.teleportTo(player.serverLevel(), player.getX(), player.getY(), player.getZ(), 180.0F, 0.0F);
+                    });
+                    mc.options.setCameraType(net.minecraft.client.CameraType.THIRD_PERSON_FRONT);
+                } else if (t == 188) {
+                    Screenshot.grab(mc.gameDirectory, PREFIX + "body_5.png", mc.getMainRenderTarget(), message -> {
+                    });
+                    server.execute(() -> {
+                        ServerPlayer player = server.getPlayerList().getPlayers().get(0);
+                        player.setData(com.avicagan.bloodandbones.body.BBAttachments.BODY, new com.avicagan.bloodandbones.body.Body());
+                        com.avicagan.bloodandbones.body.BodyEffects.changed(player);
+                        for (var slot : net.minecraft.world.entity.EquipmentSlot.values()) {
+                            player.setItemSlot(slot, ItemStack.EMPTY);
+                        }
+                        // facing the minions again, as their shots want
+                        player.teleportTo(player.serverLevel(), player.getX(), player.getY(), player.getZ(), 0.0F, 20.0F);
+                    });
+                    mc.options.setCameraType(net.minecraft.client.CameraType.FIRST_PERSON);
                 } else if (t == 200) {
                     Screenshot.grab(mc.gameDirectory, PREFIX + "minions_0.png", mc.getMainRenderTarget(), message -> {
                     });
@@ -912,7 +982,8 @@ public final class DevShowcase {
                 }
             }
             case 7 -> physics(mc);
-            case 8 -> groups(mc);
+            case 8 -> contraptions(mc);
+            case 9 -> groups(mc);
             default -> {
             }
         }
@@ -1056,16 +1127,219 @@ public final class DevShowcase {
                         BloodAndBones.LOGGER.info("[showcase] hung cow {}: bodies {}, head end {}", i, cow.bones.size(), up);
                     }
                 }
-                ServerPlayer player = server.getPlayerList().getPlayers().get(0);
-                player.teleportTo(level, origin.getX() + 0.5, origin.getY(), origin.getZ() + 0.5, 0.0F, 0.0F);
             });
-            // then the groups yard, which goes on to the Ponder scenes
+            // then the carcasses on contraptions and ships, which go on to the Ponder scenes
             stage = 8;
             ticks = 0;
         }
     }
 
-    // ---------------------------------------------------------------- the groups yard (docs/ARCHITECTURE-PROPOSAL.md 15.29)
+    // ---------------------------------------------------------------- carcasses on contraptions and ships (15.30)
+
+    /** Server time the contraption yard was started, -1 before; its corner; how far through its steps it is. */
+    private static long rideAt = -1;
+    private static BlockPos ride;
+    private static int rideStep;
+    private static dev.ryanhcode.sable.sublevel.ServerSubLevel rideShip;
+    private static boolean rideShipShot;
+    /** Where on the ship's deck (in its plot) a cow is dropped while it flies, and that cow. */
+    private static org.joml.Vector3d rideDrop;
+    private static CarcassSavedData.Carcass rideDropped;
+
+    /**
+     * Rule 5, photographed: a cow hung on a Shackle Hook under a stone block that a Mechanical Piston pushes, seen while it
+     * moves (the cow rides in the hook's data and the hook's actor draws it hanging there) and once set down (hung again,
+     * a body); and a Sable ship, a deck with a gallows, carrying a cow resting on its deck and one hung from its hook, seen
+     * as it lifts off the ground and flies along; then, flying on more slowly, a third cow dropped on its deck, seen once
+     * it has come to rest there, pinned to the moving deck. Timed on the server's clock.
+     */
+    private static void contraptions(Minecraft mc) {
+        MinecraftServer server = mc.getSingleplayerServer();
+        if (server == null) {
+            return;
+        }
+        long now = server.overworld().getGameTime();
+        if (rideAt < 0) {
+            rideAt = now;
+            ride = origin.offset(-60, 0, 45);
+            mc.options.setCameraType(net.minecraft.client.CameraType.FIRST_PERSON);
+            mc.options.hideGui = true;
+            server.execute(() -> {
+                ServerPlayer player = server.getPlayerList().getPlayers().get(0);
+                player.teleportTo(player.serverLevel(), ride.getX() + 0.5, ride.getY(), ride.getZ() - 4.5, 0.0F, 20.0F);
+            });
+            return;
+        }
+        long age = now - rideAt;
+        if (rideStep == 0 && age >= 10) {
+            rideStep = 1;
+            server.execute(() -> rideBuild(server.overworld(), server.getPlayerList().getPlayers().get(0)));
+        } else if (rideStep == 1 && age < 200) {
+            // the piston's row from the north, back far enough to see where the hook starts and where it stops
+            rideView(server, 4.5, 1.5, -6.5, 0.0F, -8.0F);
+        } else if (rideStep == 1) {
+            rideStep = 2;
+            // the piston starts, slowly: two blocks east in a few seconds
+            server.execute(() -> {
+                if (server.overworld().getBlockEntity(ride.offset(2, 3, 0)) instanceof CreativeMotorBlockEntity motor) {
+                    motor.generatedSpeed.setValue(-16);
+                }
+            });
+        } else if (rideStep == 2 && age >= 230) {
+            rideStep = 3;
+            Screenshot.grab(mc.gameDirectory, PREFIX + "contraption_0.png", mc.getMainRenderTarget(), message -> {
+            });
+            server.execute(() -> BloodAndBones.LOGGER.info("[showcase] moving hook: contraptions {}, cow in the world {}",
+                    server.overworld().getEntitiesOfClass(com.simibubi.create.content.contraptions.AbstractContraptionEntity.class,
+                            new net.minecraft.world.phys.AABB(ride).inflate(8)).size(),
+                    CarcassSavedData.get(server.overworld()).all().stream().filter(c -> {
+                        org.joml.Vector3d at = CarcassAssembler.boneWorldPosition(server.overworld(), c, c.rootBone);
+                        return at != null && at.distance(ride.getX(), ride.getY(), ride.getZ()) < 8;
+                    }).count()));
+        } else if (rideStep == 3 && age >= 360) {
+            rideStep = 4;
+            Screenshot.grab(mc.gameDirectory, PREFIX + "contraption_1.png", mc.getMainRenderTarget(), message -> {
+            });
+        } else if (rideStep == 4 && age < 380) {
+            // the ship from the south
+            rideView(server, 5.0, 2.0, 23.0, 180.0F, 12.0F);
+        } else if (rideStep == 4 && age < 440) {
+            // it lifts clear of the ground and flies east, kept level, set before every physics substep so it goes
+            // smoothly; follow it
+            double dx = (age - 380) * 0.07;
+            rideView(server, 5.0 + dx, 2.0, 23.0, 180.0F, 12.0F);
+            if (age == 380) {
+                server.execute(() -> {
+                    if (rideShip != null && !rideShip.isRemoved()) {
+                        com.avicagan.bloodandbones.gametest.ContraptionTests.cruise(rideShip, new org.joml.Vector3d(1.4, 0.0, 0.0), 0.25);
+                    }
+                });
+            }
+            if (age >= 430 && !rideShipShot) {
+                rideShipShot = true;
+                Screenshot.grab(mc.gameDirectory, PREFIX + "contraption_2.png", mc.getMainRenderTarget(), message -> {
+                });
+                server.execute(() -> BloodAndBones.LOGGER.info("[showcase] ship at {}", rideShip == null ? null : rideShip.logicalPose().position()));
+            }
+        } else if (rideStep == 4) {
+            // slower now, and a cow dropped on its deck as it goes: it comes to rest on the moving deck, pinned to it
+            rideStep = 5;
+            server.execute(() -> {
+                if (rideShip != null && !rideShip.isRemoved()) {
+                    com.avicagan.bloodandbones.gametest.ContraptionTests.cruise(rideShip, new org.joml.Vector3d(0.6, 0.0, 0.0));
+                    org.joml.Vector3d over = rideShip.logicalPose().transformPosition(rideDrop, new org.joml.Vector3d()).add(0.0, 1.5, 0.0);
+                    rideDropped = carcass(server.overworld(), EntityType.COW, BlockPos.containing(over.x, over.y, over.z), false, false, 0.0F);
+                }
+            });
+        } else if (rideStep == 5 && age < 620) {
+            rideView(server, 5.0 + 4.2 + (age - 440) * 0.03, 2.0, 23.0, 180.0F, 12.0F);
+        } else if (rideStep == 5) {
+            rideStep = 6;
+            Screenshot.grab(mc.gameDirectory, PREFIX + "contraption_3.png", mc.getMainRenderTarget(), message -> {
+            });
+            server.execute(() -> BloodAndBones.LOGGER.info("[showcase] cow dropped on the flying ship: resting {}, pinned to the ship {}, ship going {}",
+                    rideDropped != null && rideDropped.resting, rideDropped != null && rideShip != null && rideShip.getUniqueId().equals(rideDropped.restDeck),
+                    rideShip == null ? null : dev.ryanhcode.sable.api.physics.handle.RigidBodyHandle.of(rideShip).getLinearVelocity(new org.joml.Vector3d())));
+        } else if (rideStep == 6) {
+            rideStep = 7;
+            server.execute(() -> {
+                if (rideShip != null) {
+                    com.avicagan.bloodandbones.gametest.ContraptionTests.stopCruising(rideShip);
+                }
+                ServerPlayer player = server.getPlayerList().getPlayers().get(0);
+                player.teleportTo(player.serverLevel(), origin.getX() + 0.5, origin.getY(), origin.getZ() + 0.5, 0.0F, 0.0F);
+            });
+            // then the groups yard, which goes on to the Ponder scenes
+            stage = 9;
+            ticks = 0;
+        }
+    }
+
+    /** Hold the player (the camera) at a spot of the contraption yard, looking one way. */
+    private static void rideView(MinecraftServer server, double x, double y, double z, float yaw, float pitch) {
+        server.execute(() -> {
+            ServerPlayer player = server.getPlayerList().getPlayers().get(0);
+            player.teleportTo(player.serverLevel(), ride.getX() + x, ride.getY() + y, ride.getZ() + z, yaw, pitch);
+        });
+    }
+
+    /**
+     * The contraption yard: a Mechanical Piston two poles long pushing a stone block with a Shackle Hook under it, a cow hung
+     * on the hook (its motor still until the picture); and to the south a ship, a deck of stone lying on the ground with a
+     * gallows at its back, a cow hung from the gallows' hook and one lying on the deck.
+     */
+    private static void rideBuild(ServerLevel level, ServerPlayer player) {
+        BlockPos y = ride;
+        for (int x = 0; x <= 1; x++) {
+            level.setBlockAndUpdate(y.offset(x, 4, 0), AllBlocks.PISTON_EXTENSION_POLE.getDefaultState()
+                    .setValue(net.minecraft.world.level.block.DirectionalBlock.FACING, Direction.EAST));
+        }
+        level.setBlockAndUpdate(y.offset(2, 4, 0), AllBlocks.MECHANICAL_PISTON.getDefaultState().setValue(DirectionalKineticBlock.FACING, Direction.EAST)
+                .setValue(com.simibubi.create.content.kinetics.base.DirectionalAxisKineticBlock.AXIS_ALONG_FIRST_COORDINATE, true));
+        level.setBlockAndUpdate(y.offset(2, 3, 0), AllBlocks.CREATIVE_MOTOR.getDefaultState()
+                .setValue(com.simibubi.create.content.kinetics.motor.CreativeMotorBlock.FACING, Direction.UP));
+        if (level.getBlockEntity(y.offset(2, 3, 0)) instanceof CreativeMotorBlockEntity motor) {
+            motor.generatedSpeed.setValue(0);
+        }
+        level.setBlockAndUpdate(y.offset(3, 4, 0), Blocks.STONE.defaultBlockState());
+        BlockPos hook = y.offset(3, 3, 0);
+        level.setBlockAndUpdate(hook, BBBlocks.SHACKLE_HOOK.getDefaultState().setValue(ShackleHookBlock.FACING, Direction.UP));
+        CarcassSavedData.Carcass onPiston = carcass(level, EntityType.COW, hook.below(3), false);
+        if (onPiston != null) {
+            hang(level, player, onPiston, hook);
+        }
+        // the ship: a deck on the ground, a gallows at its back (north) with a hook under its beam
+        int z0 = 12;
+        List<BlockPos> blocks = new java.util.ArrayList<>();
+        for (int x = 2; x <= 7; x++) {
+            for (int z = z0; z <= z0 + 5; z++) {
+                blocks.add(y.offset(x, 0, z));
+            }
+        }
+        for (int h = 1; h <= 3; h++) {
+            blocks.add(y.offset(2, h, z0));
+            blocks.add(y.offset(7, h, z0));
+        }
+        for (int x = 2; x <= 7; x++) {
+            blocks.add(y.offset(x, 4, z0));
+        }
+        for (BlockPos at : blocks) {
+            level.setBlockAndUpdate(at, Blocks.STRIPPED_SPRUCE_LOG.defaultBlockState());
+        }
+        BlockPos shipHook = y.offset(4, 3, z0);
+        level.setBlockAndUpdate(shipHook, BBBlocks.SHACKLE_HOOK.getDefaultState().setValue(ShackleHookBlock.FACING, Direction.UP));
+        blocks.add(shipHook);
+        BlockPos min = y.offset(2, 0, z0);
+        BlockPos max = y.offset(7, 4, z0 + 5);
+        rideShip = dev.ryanhcode.sable.api.SubLevelAssemblyHelper.assembleBlocks(level, blocks.get(0), blocks,
+                new dev.ryanhcode.sable.companion.math.BoundingBox3i(min, max));
+        if (rideShip == null) {
+            BloodAndBones.LOGGER.warn("[showcase] the contraption yard's ship was not made");
+            return;
+        }
+        CarcassAssembler.bindColliders(level, rideShip);
+        // the free part of the deck, beside the lying cow, where the cow dropped as it flies lands
+        rideDrop = rideShip.logicalPose().transformPositionInverse(new org.joml.Vector3d(y.getX() + 3.5, y.getY() + 1.0, y.getZ() + z0 + 3.5), new org.joml.Vector3d());
+        carcass(level, EntityType.COW, y.offset(5, 2, z0 + 3), false);
+        CarcassSavedData.Carcass onShip = carcass(level, EntityType.COW, y.offset(4, 2, z0 + 1), false);
+        ShackleHookBlockEntity shackle = null;
+        for (var holder : rideShip.getPlot().getLoadedChunks()) {
+            for (var be : holder.getChunk().getBlockEntities().values()) {
+                if (be instanceof ShackleHookBlockEntity found) {
+                    shackle = found;
+                }
+            }
+        }
+        var container = dev.ryanhcode.sable.api.sublevel.SubLevelContainer.getContainer(level);
+        if (onShip != null && shackle != null && container.getSubLevel(onShip.bones.get("right_hind_leg")) instanceof dev.ryanhcode.sable.sublevel.ServerSubLevel leg) {
+            player.teleportTo(level, shipHook.getX() + 0.5, shipHook.getY() - 2.0, shipHook.getZ() + 3.5, 180.0F, 0.0F);
+            if (CarcassDrag.start(level, player, leg.getPlot().getCenterBlock(), null)) {
+                shackle.toggle(level, player);
+            }
+        }
+    }
+
+    // ---------------------------------------------------------------- the groups yard (docs/ARCHITECTURE-PROPOSAL.md 15.31)
 
     private static long groupsAt = -1;
     private static BlockPos groupsYard;
@@ -1091,7 +1365,8 @@ public final class DevShowcase {
         long now = server.overworld().getGameTime();
         if (groupsAt < 0) {
             groupsAt = now;
-            groupsYard = origin.offset(-60, 0, 40);
+            // south of the contraption yard, clear of its ship's deck and the way it flies
+            groupsYard = origin.offset(-60, 0, 80);
             server.execute(() -> {
                 ServerPlayer player = server.getPlayerList().getPlayers().get(0);
                 player.teleportTo(player.serverLevel(), groupsYard.getX() + 0.5, groupsYard.getY(), groupsYard.getZ() - 4.5, 0.0F, 20.0F);

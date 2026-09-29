@@ -145,13 +145,13 @@ The packages are in order of how much their gap hurts the brief:
 
 ### 2. Groups first: any mob works on day one, and everything retunes by data (built 29 September 2026, `bb-groups`, but what waits on the owner)
 
-Built (ARCHITECTURE 15.29, docs/MODDED-MOBS.md): a generic body for any mob with no rig, from its archetype, scaled to its
+Built (ARCHITECTURE 15.31, docs/MODDED-MOBS.md): a generic body for any mob with no rig, from its archetype, scaled to its
 hitbox and wearing its own model's parts and skin on the client; the archetypes' match rules read at last; babies with no
-baby shape; weight classes as data (listed in 15.29 for the owner), driving drag, blood, floating or sinking and rot time;
+baby shape; weight classes as data (listed in 15.31 for the owner), driving drag, blood, floating or sinking and rot time;
 rot time and butchery by group for every mob, vanilla ones too (a mob's own file says only what it does differently; a
 butchery table file is a datapack's optional override, and the mod ships none); the constants below moved into the server
 config or data at today's figures; naming rules in place of most rig-target overrides; the guide for model authors.
-Found on the way (15.29): `hindLegHookComesRoundRearFirst` failed about once in 60 to 80 runs, on main too (a dragged
+Found on the way (15.31): `hindLegHookComesRoundRearFirst` failed about once in 60 to 80 runs, on main too (a dragged
 carcass's turn was all but undamped); now about once in 500, a rarer way left open. `grapplingSpoolHandsACarcassToTheDrag`
 failed about once in 80 (the spool handed a carcass over only nearer than the ground let it come); put right.
 Left for the owner: whether a size-2 slime should leave a carcass (4.4 says it splits), the class list and whether a
@@ -384,7 +384,27 @@ Two things stay open there: bloodless sounds (package 9), and both of a rabbit's
 
 **Owner first.** No.
 
-### 8. Rule 5: every block and every carcass on contraptions
+### 8. Rule 5: every block and every carcass on contraptions (done 29 September 2026, `bb-contraptions`)
+
+**Done.** ARCHITECTURE 15.30 has the details. The rest of this section is kept as it was written.
+- A contraption test for every block listed below (`ContraptionTests`), and one for building the blocks that hold things
+  into a Sable ship. Two blocks doubled what they held and are fixed: the Surgery Table dropped its attachment when a
+  contraption moved it, and every block that drops its contents when removed dropped them when a ship was built round it.
+- A hung carcass rides in its Shackle Hook's data while a contraption moves the hook, is drawn hanging there, and hangs
+  again, turned as the contraption turned, where it is set down (ARCHITECTURE 3.5's plan).
+- A resting carcass on a deck counts the deck's blocks as holding it up and is pinned to the deck, not the world; it
+  looks again once a second at what it lies on, so a ship built under it takes it along. A carcass dropped onto a
+  moving deck is still when it keeps still on the deck, so it rests there while the ship moves.
+- A Shackle Hook on a ship is joined to the ship. The checks were right: it could not hold a carcass at all (Sable refused
+  its joint). It now hoists the carcass up to where the ship has carried its tip and holds it there.
+- Tests on moving decks: a ship driven four blocks with a cow resting on its deck and one hung from its gallows; a
+  ship built round a hook already holding a cow, and under a cow already resting, each then driven; a cow dropped on a
+  ship flying along. A review's findings are put right (ARCHITECTURE 15.30, "Review findings put right").
+- **Not done:**
+  - the cut leg that fell into the void was not made to happen again, in 32 tries (`VoidLegTests`, switched on only);
+  - chain conveyors on sub-levels (13.11), which this section named but did not ask to be built;
+  - a patient on a moved Surgery Table gets up where the table was (only Create's own seats carry a rider);
+  - a carcass kept in a hook's data is lost if the contraption is broken up and its blocks drop.
 
 **Why.**
 - "Every block moves on a gantry and glues to a contraption … Carcasses ride contraptions correctly too."
@@ -474,7 +494,7 @@ An attribute filter set to a part is asked about the whole body, so it never mat
 
 **Owner first.** No.
 
-### 11. Self-augmentation: the ritual and the proofs
+### 11. Self-augmentation: the ritual and the proofs (built 29 September 2026, `bb-surgery`, but decision 11's two parts)
 
 **Why.** This is the brief's highest-risk system. The safety floor holds and is tested. What is left is the ritual's screen, two rules, and missing proofs.
 
@@ -503,6 +523,19 @@ An attribute filter set to a part is asked about the whole body, so it never mat
 **Touches.** `client/SurgeryScreen`, `body/Surgery`, `Necrosis`, `BodyRendering`, and game tests.
 
 **Owner first.** Partly: decision 11.
+
+**Built** (ARCHITECTURE 15.29, with 12 new tests in `RitualTests`):
+- The surgery screen: a paper doll of the body and the picked slot's choices in two panels at the sides, nothing over
+  the body, every implant, prosthetic, limb and module you carry offered (and what is on the table, and unclipping by
+  hand), the surgeon, its fitness and the stump's price before any cut. The payload names where the item comes from,
+  what the card said it would do and with what, so a stale second click is refused. The green mark and the carried row
+  count only what goes in, never a blade or a wrench.
+- A missing arm holds nothing and a missing limb wears no armour in third person.
+- Walking no longer wears the legs; only a sprint does.
+- Every proof listed above, and the balance check: six brass limbs cost 36 buckets of soul blood an hour, 45 of blood
+  through the full line, about 56 cows an hour and half a Basin Lid. A serious farm, not an impossible one.
+
+**Left for decision 11:** the one-step swap that avoids the ragged stump, and what restoring a rotted limb should cost.
 
 ### 12. Cybernetics: different from flesh, not better
 
@@ -788,7 +821,8 @@ One line each. Details and test names are in ARCHITECTURE sections 13 to 15.
 - **The body:** a set of slots, with crude prosthetics that give back exactly what flesh does. The safety floor never needs a surgeon or blood.
 - **Amputation:** only at the table, with a surgeon minion (villager or pillager head). A ragged stump costs a bucket of blood to fit; the heart can only be swapped. (Since tasks' stage D: any minion with a hand set to Surgeon may cut by default, the owner's call in docs/NEXT.md 1.5, and its stump costs one to three buckets by its fitness.)
 - **Empty-slot penalties:** a missing arm means no off-hand and slow swings; a missing leg means no sprinting.
-- **Necrosis:** on organic implants, cleared by blood perfusion. At the maximum the limb stops working, but never falls off or kills.
+- **Necrosis:** on organic implants, from swinging, mining and sprinting (not walking), cleared by blood perfusion. At the maximum the limb stops working, but never falls off or kills.
+- **The surgery screen:** a paper doll of the body and every augment you carry that fits, with nothing over the body in the outside view (package 11).
 - **Cybernetics:** the throttle (gauge, pitch, glow), all seven modules, no redstone-link module, and both set bonuses.
 - **Minions from carcass parts:**
   - the torso sets size and health;
@@ -797,6 +831,8 @@ One line each. Details and test names are in ARCHITECTURE sections 13 to 15.
   - an organ adds a special.
 - **Power:** flesh minions drink at a Blood Trough they can reach; brass minions run on Soul Canisters swapped by the Charging Cradle; each kind has something the other lacks.
 - **Never destroyed:** a neglected or beaten minion powers down and lies where it is. The minion cap defaults to none.
+- **Contraptions and ships:** every block moves on a Create contraption keeping what it holds; a hung carcass rides in its
+  hook; on a Sable ship a hook holds its carcass and a resting carcass stays pinned to the deck as it moves (package 8).
 - **Checked by running it:** two clients on a dedicated server see the same carcass, and a dozen carcasses at once cost
   a sixth of a server tick until they rest (package 18). Hung carcasses do not rest; a line of them needs the cap
   (package 18, decision 3).

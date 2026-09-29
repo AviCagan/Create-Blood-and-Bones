@@ -10,6 +10,8 @@ public final class BBTags {
     public static final TagKey<Block> CHILLS = TagKey.create(Registries.BLOCK, BloodAndBones.asResource("chills"));
     /** Blocks that stop rot entirely when near a carcass: the deep-cold ices. */
     public static final TagKey<Block> PRESERVES = TagKey.create(Registries.BLOCK, BloodAndBones.asResource("preserves"));
+    /** Sable's: blocks whose block entity it removes quietly before it takes the block out of the world for a ship. */
+    public static final TagKey<Block> SILENT_ASSEMBLY_REMOVAL = dev.ryanhcode.sable.index.SableTags.SILENT_ASSEMBLY_REMOVAL;
 
     /**
      * Encased fan air that keeps a carcass in its current cold, as the block tags of the same names do: a Create: Dragons

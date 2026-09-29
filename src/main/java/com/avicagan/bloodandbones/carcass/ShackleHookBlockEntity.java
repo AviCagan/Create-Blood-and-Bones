@@ -29,10 +29,12 @@ import java.util.EnumSet;
 import java.util.UUID;
 
 /**
- * Holds one carcass limb on the hook with a ball joint to the world. The joint lives only in memory and
- * is rebuilt every tick it is missing, so hanging survives reloads and chunk unloads.
+ * Holds one carcass limb on the hook with a ball joint to the world, or to the ship the hook is built on. The joint
+ * lives only in memory and is rebuilt every tick it is missing, so hanging survives reloads and chunk unloads. Picked up
+ * by a Create contraption, the hook keeps its carcass in its data while it moves and hangs it again where it is set
+ * down (HookedCarcass, ShackleHookMovement).
  */
-public class ShackleHookBlockEntity extends BlockEntity {
+public class ShackleHookBlockEntity extends BlockEntity implements com.simibubi.create.api.contraption.transformable.TransformableBlockEntity {
     /** Occupied, loaded hooks per level, driven every physics substep. */
     private static final java.util.Map<ServerLevel, java.util.Set<ShackleHookBlockEntity>> ACTIVE = new java.util.WeakHashMap<>();
     /**
@@ -72,7 +74,8 @@ public class ShackleHookBlockEntity extends BlockEntity {
             }
             if (hook.hoisting >= 0) {
                 hook.hoist(level, body, physics, timeStep);
-                hoistTurn(body, physics, timeStep, hook.outX, hook.outZ);
+                Vector3d out = hook.outWorld();
+                hoistTurn(body, physics, timeStep, out.x, out.z);
             } else {
                 hook.turn(body, physics, timeStep);
             }
@@ -118,8 +121,29 @@ public class ShackleHookBlockEntity extends BlockEntity {
     private static final double HOIST_MAX = 40.0;
 
     private void hoist(ServerLevel level, ServerSubLevel body, dev.ryanhcode.sable.sublevel.system.SubLevelPhysicsSystem physics, double timeStep) {
+        Vector3d tip = tipWorld(level);
+        ServerSubLevel ship = ship(level);
+        // on a ship the tip goes where the ship goes: the hoist draws the body up to it as it moves
+        Vector3d carried = new Vector3d();
+        if (ship != null) {
+            dev.ryanhcode.sable.api.physics.handle.RigidBodyHandle handle = physics.getPhysicsHandle(ship);
+            carried.set(handle.getAngularVelocity(new Vector3d()).cross(new Vector3d(tip).sub(ship.logicalPose().position()))).add(handle.getLinearVelocity(new Vector3d()));
+        }
+        hoist(level, body, anchorPlot, tip, carried, hoistedMass(level, carcassId, body), physics, timeStep);
+    }
+
+    /** The ship (a Sable sub-level) this hook is built on, or null for a hook in the world. */
+    @Nullable
+    public ServerSubLevel ship(ServerLevel level) {
+        return dev.ryanhcode.sable.Sable.HELPER.getContaining(level, worldPosition) instanceof ServerSubLevel ship && !ship.isRemoved() ? ship : null;
+    }
+
+    /** Where the tip is in the world now: on a ship, where the ship has carried it. */
+    public Vector3d tipWorld(ServerLevel level) {
         Vec3 tip = ShackleHookBlock.tip(worldPosition, getBlockState());
-        hoist(level, body, anchorPlot, new Vector3d(tip.x, tip.y, tip.z), hoistedMass(level, carcassId, body), physics, timeStep);
+        Vector3d at = new Vector3d(tip.x, tip.y, tip.z);
+        ServerSubLevel ship = ship(level);
+        return ship == null ? at : ship.logicalPose().transformPosition(at);
     }
 
     /**
@@ -130,11 +154,17 @@ public class ShackleHookBlockEntity extends BlockEntity {
      */
     public static void hoist(ServerLevel level, ServerSubLevel body, Vector3d anchorPlot, Vector3d to, double mass,
                              dev.ryanhcode.sable.sublevel.system.SubLevelPhysicsSystem physics, double timeStep) {
+        hoist(level, body, anchorPlot, to, new Vector3d(), mass, physics, timeStep);
+    }
+
+    /** As above, toward a point moving at {@code toVelocity} (a hook on a moving ship): the hoist's speed is on top of it. */
+    public static void hoist(ServerLevel level, ServerSubLevel body, Vector3d anchorPlot, Vector3d to, Vector3d toVelocity, double mass,
+                             dev.ryanhcode.sable.sublevel.system.SubLevelPhysicsSystem physics, double timeStep) {
         dev.ryanhcode.sable.companion.math.Pose3d pose = body.logicalPose();
         Vector3d anchor = pose.transformPosition(new Vector3d(anchorPlot), new Vector3d());
         Vector3d toTip = new Vector3d(to).sub(anchor);
         double gap = toTip.length();
-        Vector3d wanted = gap < 1.0e-6 ? new Vector3d() : toTip.mul(Math.min(HOIST_SPEED, gap * 6.0) / gap);
+        Vector3d wanted = (gap < 1.0e-6 ? new Vector3d() : toTip.mul(Math.min(HOIST_SPEED, gap * 6.0) / gap)).add(toVelocity);
         dev.ryanhcode.sable.api.physics.handle.RigidBodyHandle handle = physics.getPhysicsHandle(body);
         Vector3d linear = handle.getLinearVelocity(new Vector3d());
         Vector3d angular = handle.getAngularVelocity(new Vector3d());
@@ -177,7 +207,19 @@ public class ShackleHookBlockEntity extends BlockEntity {
 
     /** Spring torque toward the hanging orientation, as a local angular impulse over this substep. */
     private void turn(ServerSubLevel body, dev.ryanhcode.sable.sublevel.system.SubLevelPhysicsSystem physics, double timeStep) {
-        hangTurn(body, physics, timeStep, outX, outZ);
+        Vector3d out = outWorld();
+        hangTurn(body, physics, timeStep, out.x, out.z);
+    }
+
+    /** The way the belly is to face, in the world: on a ship it turns as the ship turns. */
+    private Vector3d outWorld() {
+        Vector3d out = new Vector3d(outX, 0.0, outZ);
+        ServerSubLevel ship = level instanceof ServerLevel serverLevel ? ship(serverLevel) : null;
+        if (ship != null) {
+            ship.logicalPose().orientation().transform(out);
+            out.y = 0.0;
+        }
+        return out;
     }
 
     /** Torque gains per unit of torso mass while a body is hoisted: the belly-out spring, and the drag on every turn. */
@@ -256,16 +298,34 @@ public class ShackleHookBlockEntity extends BlockEntity {
 
     /** True if any loaded hook in the level holds this carcass. */
     public static boolean isHanging(ServerLevel level, UUID carcassId) {
+        return holding(level, carcassId) != null;
+    }
+
+    /** The loaded hook in the level that holds this carcass, or null. */
+    @Nullable
+    public static ShackleHookBlockEntity holding(ServerLevel level, UUID carcassId) {
         java.util.Set<ShackleHookBlockEntity> hooks = ACTIVE.get(level);
         if (hooks == null) {
-            return false;
+            return null;
         }
         for (ShackleHookBlockEntity hook : hooks) {
             if (!hook.isRemoved() && carcassId.equals(hook.carcassId)) {
-                return true;
+                return hook;
             }
         }
-        return false;
+        return null;
+    }
+
+    /**
+     * Read back holding a carcass, it counts as holding it from the start (isHanging, holding), not only once its first
+     * tick has joined the body again: a contraption put together in that same tick finds it.
+     */
+    @Override
+    public void onLoad() {
+        super.onLoad();
+        if (level instanceof ServerLevel serverLevel && isOccupied()) {
+            activate(serverLevel);
+        }
     }
 
     private void activate(ServerLevel level) {
@@ -370,6 +430,36 @@ public class ShackleHookBlockEntity extends BlockEntity {
         return subLevelId != null;
     }
 
+    /** Whether the hook holds its carcass fast by a joint (not hoisting it, not waiting for its body to load). */
+    public boolean holdsFast() {
+        return joint != null && joint.isValid();
+    }
+
+    /** The carcass on the hook, or null. */
+    @Nullable
+    public UUID hookedCarcass() {
+        return carcassId;
+    }
+
+    /** A carcass kept in the hook's data while a contraption moves it, to be hung again (HookedCarcass); null if none. */
+    @Nullable
+    private CompoundTag packed;
+
+    /** Whether it keeps a carcass in its data, to hang again on its next tick. */
+    public boolean holdsPacked() {
+        return packed != null;
+    }
+
+    /**
+     * A contraption has taken this hook's carcass into its data (ShackleHookMovement) while the hook is still in the world:
+     * it keeps it too, in case the contraption does not move after all, and lets go of the bodies, which are gone.
+     */
+    void keepPacked(ServerLevel level, CompoundTag tag) {
+        release(level);
+        packed = tag;
+        setChanged();
+    }
+
     @Nullable
     public UUID hookedSubLevel() {
         return subLevelId;
@@ -423,18 +513,24 @@ public class ShackleHookBlockEntity extends BlockEntity {
         if (mount.getAxis().isHorizontal()) {
             out = Vec3.atLowerCornerOf(mount.getOpposite().getNormal());
         } else {
-            Vec3 toPlayer = new Vec3(player.getX() - worldPosition.getX() - 0.5, 0.0, player.getZ() - worldPosition.getZ() - 0.5);
-            out = toPlayer.lengthSqr() < 1.0e-4 ? new Vec3(0, 0, 1) : toPlayer.normalize();
+            // toward whoever hung it, in the hook's own space (a ship's plot, for a hook on a ship)
+            Vector3d tipAt = tipWorld(level);
+            Vector3d toPlayer = new Vector3d(player.getX() - tipAt.x, 0.0, player.getZ() - tipAt.z);
+            ServerSubLevel ship = ship(level);
+            if (ship != null) {
+                ship.logicalPose().orientation().transformInverse(toPlayer);
+                toPlayer.y = 0.0;
+            }
+            out = toPlayer.lengthSquared() < 1.0e-4 ? new Vec3(0, 0, 1) : new Vec3(toPlayer.x, 0.0, toPlayer.z).normalize();
         }
         outX = out.x;
         outZ = out.z;
         setChanged();
         level.sendBlockUpdated(worldPosition, getBlockState(), getBlockState(), 3);
-        // a hook in the world hoists the body up before it holds it fast; one on a ship holds it at once. Hoisted by its
-        // neck junction with nothing holding its tilt (hangTurn), it comes up hanging from that point as its weight takes it.
-        Vec3 tip = ShackleHookBlock.tip(worldPosition, getBlockState());
-        if (dev.ryanhcode.sable.Sable.HELPER.getContaining(level, worldPosition) == null
-                && torso.logicalPose().transformPosition(new Vector3d(anchorPlot), new Vector3d()).distance(tip.x, tip.y, tip.z) > HOLD_REACH) {
+        // the hook hoists the body up before it holds it fast, on a ship too (up to where the ship has carried the tip).
+        // Hoisted by its neck junction with nothing holding its tilt (hangTurn), it comes up hanging from that point as its
+        // weight takes it.
+        if (torso.logicalPose().transformPosition(new Vector3d(anchorPlot), new Vector3d()).distance(tipWorld(level)) > HOLD_REACH) {
             startHoist(level, torso);
         } else {
             attach(level, false, null);
@@ -466,16 +562,23 @@ public class ShackleHookBlockEntity extends BlockEntity {
 
     /** Server tick: keep the joint alive while the limb is loaded. */
     public static void tick(Level level, BlockPos pos, BlockState state, ShackleHookBlockEntity hook) {
-        if (!(level instanceof ServerLevel serverLevel) || !hook.isOccupied()) {
+        if (!(level instanceof ServerLevel serverLevel)) {
+            return;
+        }
+        if (hook.packed != null) {
+            hook.unpack(serverLevel);
+            return;
+        }
+        if (!hook.isOccupied()) {
             return;
         }
         if (hook.hoisting >= 0) {
             Vector3d at = hook.hookedPoint(serverLevel);
-            Vec3 tip = ShackleHookBlock.tip(pos, state);
+            Vector3d tip = hook.tipWorld(serverLevel);
             if (at == null) {
                 // its body is not loaded: taken back up (or let go) once it is, below
                 hook.hoisting = -1;
-            } else if (hoistedUp(at.distance(tip.x, tip.y, tip.z), hook.hoistBest)) {
+            } else if (hoistedUp(at.distance(tip), hook.hoistBest)) {
                 hook.hoisting = -1;
                 hook.attach(serverLevel, false, null);
             } else if (++hook.hoisting > HOIST_TICKS) {
@@ -489,9 +592,12 @@ public class ShackleHookBlockEntity extends BlockEntity {
             return;
         }
         hook.joint = null;
-        if (hook.loadedAt != null && !hook.loadedAt.equals(pos)) {
-            // saved somewhere else: a Create contraption carried the hook's data but not the body, which
-            // fell where the hook was. Let it go rather than yank it across to the hook's new place.
+        Vector3d at = hook.hookedPoint(serverLevel);
+        Vector3d tip = hook.tipWorld(serverLevel);
+        if (hook.loadedAt != null && !hook.loadedAt.equals(pos) && (at == null || at.distance(tip) > MOVED_REACH)) {
+            // saved somewhere else, away from its body: the data was carried without the body (an older world's
+            // contraption, or a copy). Let it go rather than yank it across to the hook's new place. A hook whose body
+            // hangs where its tip still is was only moved into a ship's plot (or back out) as the ship was built round it.
             hook.loadedAt = null;
             hook.release(serverLevel);
             return;
@@ -499,10 +605,7 @@ public class ShackleHookBlockEntity extends BlockEntity {
         hook.loadedAt = null;
         // Taking back a body it held before: the hook was saved or unloaded part way up, or the body was held where it
         // got to, or swung while its hook was unloaded. One off the tip is hoisted up again, not snapped there.
-        Vector3d at = hook.hookedPoint(serverLevel);
-        Vec3 tip = ShackleHookBlock.tip(pos, state);
-        if (at != null && dev.ryanhcode.sable.Sable.HELPER.getContaining(serverLevel, pos) == null
-                && at.distance(tip.x, tip.y, tip.z) > HOLD_REACH && at.distance(tip.x, tip.y, tip.z) <= REJOIN_REACH
+        if (at != null && at.distance(tip) > HOLD_REACH && at.distance(tip) <= REJOIN_REACH
                 && SubLevelContainer.getContainer(serverLevel).getSubLevel(hook.subLevelId) instanceof ServerSubLevel torso) {
             hook.startHoist(serverLevel, torso);
             return;
@@ -512,6 +615,56 @@ public class ShackleHookBlockEntity extends BlockEntity {
 
     /** Farthest a hung body may have swung while its hook was unloaded and still be taken back, in blocks. */
     public static final double REJOIN_REACH = 8.0;
+    /** How near its tip a moved hook must find its body to keep it (a ship built round it), in blocks. */
+    public static final double MOVED_REACH = 1.0;
+
+    /** Hang again the carcass kept in the hook's data (a contraption set it down, or never moved it). */
+    private void unpack(ServerLevel level) {
+        CompoundTag tag = packed;
+        packed = null;
+        loadedAt = null;
+        setChanged();
+        if (isOccupied()) {
+            release(level);
+        }
+        HookedCarcass.Hung hung = HookedCarcass.unpack(level, tag, tipWorld(level));
+        if (hung == null) {
+            return;
+        }
+        carcassId = hung.carcass().id;
+        subLevelId = hung.torso().getUniqueId();
+        bone = hung.carcass().rootBone;
+        anchorPlot.set(hung.anchorPlot());
+        attach(level, false, null);
+        level.sendBlockUpdated(worldPosition, getBlockState(), getBlockState(), 3);
+    }
+
+    /**
+     * Set down turned by a contraption (a bearing, a gantry's pinion on its side): the carcass kept in its data turns as
+     * the hook did, and so does the way its belly faces.
+     */
+    @Override
+    public void transform(BlockEntity blockEntity, com.simibubi.create.content.contraptions.StructureTransform transform) {
+        Vec3 x = transform.applyWithoutOffsetUncentered(new Vec3(1, 0, 0));
+        Vec3 y = transform.applyWithoutOffsetUncentered(new Vec3(0, 1, 0));
+        Vec3 z = transform.applyWithoutOffsetUncentered(new Vec3(0, 0, 1));
+        org.joml.Matrix3d m = new org.joml.Matrix3d(x.x, x.y, x.z, y.x, y.y, y.z, z.x, z.y, z.z);
+        if (Math.abs(m.determinant() - 1.0) > 1.0e-3) {
+            // a mirror is not a turn: leave it as it was
+            return;
+        }
+        Quaterniond turn = new Quaterniond().setFromNormalized(m);
+        if (packed != null) {
+            HookedCarcass.turned(packed, turn);
+        }
+        Vector3d out = turn.transform(new Vector3d(outX, 0.0, outZ));
+        if (out.x * out.x + out.z * out.z > 1.0e-4) {
+            double length = Math.sqrt(out.x * out.x + out.z * out.z);
+            outX = out.x / length;
+            outZ = out.z / length;
+        }
+        setChanged();
+    }
 
     /** Where the hook was when it was saved, as read back; null once checked. */
     @Nullable
@@ -531,22 +684,28 @@ public class ShackleHookBlockEntity extends BlockEntity {
             return;
         }
         Vec3 tip = ShackleHookBlock.tip(worldPosition, getBlockState());
+        ServerSubLevel ship = ship(level);
         // a body that swung far off while the hook was unloaded is let go, not pulled back through walls
-        // (only for a hook in the world: on a ship the tip is in the ship's own coordinates)
-        if (rejoin && dev.ryanhcode.sable.Sable.HELPER.getContaining(level, worldPosition) == null) {
+        if (rejoin) {
             Vector3d anchorWorld = serverSubLevel.logicalPose().transformPosition(new Vector3d(anchorPlot), new Vector3d());
-            if (anchorWorld.distance(tip.x, tip.y, tip.z) > REJOIN_REACH) {
+            if (anchorWorld.distance(tipWorld(level)) > REJOIN_REACH) {
                 release(level);
                 return;
             }
         }
         // A ball joint pinning the neck junction to the hook tip; the belly-out turn is a torque spring
-        // applied every physics substep (see physicsTick), not a joint motor.
+        // applied every physics substep (see physicsTick), not a joint motor. On a ship the joint is to the ship's own body,
+        // at the tip in its plot, so the carcass goes where the ship goes (joined to the world at the tip's plot position,
+        // far out in the plot grid, it could not hang at all: Sable refuses a world joint at a plot position).
+        Vector3d hold = new Vector3d(tip.x, tip.y, tip.z);
+        if (at != null) {
+            hold.set(ship == null ? at : ship.logicalPose().transformPositionInverse(new Vector3d(at)));
+        }
         GenericConstraintConfiguration config = new GenericConstraintConfiguration(
-                at != null ? new Vector3d(at) : new Vector3d(tip.x, tip.y, tip.z), new Vector3d(anchorPlot), new Quaterniond(), new Quaterniond(),
+                hold, new Vector3d(anchorPlot), new Quaterniond(), new Quaterniond(),
                 EnumSet.of(ConstraintJointAxis.LINEAR_X, ConstraintJointAxis.LINEAR_Y, ConstraintJointAxis.LINEAR_Z));
         try {
-            joint = container.physicsSystem().getPipeline().addConstraint(null, serverSubLevel, config);
+            joint = container.physicsSystem().getPipeline().addConstraint(ship, serverSubLevel, config);
         } catch (IllegalArgumentException e) {
             BloodAndBones.LOGGER.warn("Shackle hook at {} could not hang limb: {}", worldPosition, e.getMessage());
             return;
@@ -584,6 +743,9 @@ public class ShackleHookBlockEntity extends BlockEntity {
         tag.putDouble("AnchorZ", anchorPlot.z);
         tag.putDouble("OutX", outX);
         tag.putDouble("OutZ", outZ);
+        if (packed != null) {
+            tag.put("Packed", packed);
+        }
     }
 
     @Override
@@ -596,6 +758,7 @@ public class ShackleHookBlockEntity extends BlockEntity {
         loadedAt = tag.contains("HookPos") ? BlockPos.of(tag.getLong("HookPos")) : null;
         outX = tag.getDouble("OutX");
         outZ = tag.contains("OutZ") ? tag.getDouble("OutZ") : 1.0;
+        packed = tag.contains("Packed") ? tag.getCompound("Packed") : null;
     }
 
     @Override

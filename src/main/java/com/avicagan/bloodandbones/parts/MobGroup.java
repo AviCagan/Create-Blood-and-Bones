@@ -44,7 +44,7 @@ public record MobGroup(ResourceLocation id, Kind kind, int priority, List<String
     public static final java.util.concurrent.atomic.AtomicInteger OLD_JOBS = new java.util.concurrent.atomic.AtomicInteger();
 
     /**
-     * What one layer says about its mobs' carcasses (docs/ARCHITECTURE-PROPOSAL.md 15.29). Every field is a scalar the last
+     * What one layer says about its mobs' carcasses (docs/ARCHITECTURE-PROPOSAL.md 15.31). Every field is a scalar the last
      * layer naming it wins, as scrap_material, except the butchery settings, which merge field by field.
      *
      * @param genericRig  the generic body (data/&lt;ns&gt;/generic_rig/&lt;id&gt;.json) a mob with no rig file is built from; an
