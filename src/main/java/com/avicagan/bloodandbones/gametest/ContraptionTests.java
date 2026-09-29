@@ -516,6 +516,56 @@ public class ContraptionTests {
         });
     }
 
+    /**
+     * A contraption set down turned (a bearing a quarter round) turns the carcass in its hook's data with it: hung again,
+     * its belly faces the way the turn took it, not the way it faced before.
+     */
+    @GameTest(template = "empty", timeoutTicks = 300)
+    public static void turnedHookTurnsItsCarcass(GameTestHelper helper) {
+        ServerLevel level = helper.getLevel();
+        BlockPos hookAt = new BlockPos(5, 5, 5);
+        helper.setBlock(hookAt.above(), Blocks.STONE);
+        helper.setBlock(hookAt, BBBlocks.SHACKLE_HOOK.getDefaultState().setValue(ShackleHookBlock.FACING, Direction.UP));
+        Cow cow = helper.spawn(EntityType.COW, new BlockPos(5, 2, 5));
+        CarcassSavedData.Carcass carcass = CarcassAssembler.assemble(cow, null);
+        cow.discard();
+        helper.assertTrue(carcass != null, "Carcass assembly returned null");
+        helper.runAfterDelay(10, () -> hang(helper, carcass, be(helper, hookAt, ShackleHookBlockEntity.class), new BlockPos(5, 2, 8)));
+        Vector3d[] belly = {null};
+        helper.runAfterDelay(150, () -> {
+            ShackleHookBlockEntity hook = be(helper, hookAt, ShackleHookBlockEntity.class);
+            ServerSubLevel torso = bodies(helper, level, carcass).get(carcass.rootBone);
+            belly[0] = torso.logicalPose().orientation().transform(new Vector3d(0, 0, -1));
+            // what a contraption does: the carcass into the hook's data, the hook's data carried and set down turned
+            CompoundTag packed = com.avicagan.bloodandbones.carcass.HookedCarcass.pack(level, carcass, new Vector3d(hook.hookedAnchor()));
+            helper.assertTrue(packed != null, "the carcass could not be packed");
+            com.avicagan.bloodandbones.carcass.CarcassButchery.takeAway(level, carcass);
+            CompoundTag data = hook.saveWithFullMetadata(level.registryAccess());
+            data.remove("Carcass");
+            data.remove("SubLevel");
+            data.put("Packed", packed);
+            level.removeBlockEntity(helper.absolutePos(hookAt));
+            helper.setBlock(hookAt, Blocks.AIR);
+            helper.setBlock(hookAt, BBBlocks.SHACKLE_HOOK.getDefaultState().setValue(ShackleHookBlock.FACING, Direction.UP));
+            ShackleHookBlockEntity moved = be(helper, hookAt, ShackleHookBlockEntity.class);
+            moved.loadWithComponents(data, level.registryAccess());
+            moved.transform(moved, new com.simibubi.create.content.contraptions.StructureTransform(BlockPos.ZERO, Direction.Axis.Y,
+                    net.minecraft.world.level.block.Rotation.CLOCKWISE_90, net.minecraft.world.level.block.Mirror.NONE));
+            helper.assertTrue(moved.holdsPacked(), "the hook should keep the carcass in its data");
+        });
+        helper.runAfterDelay(170, () -> {
+            ShackleHookBlockEntity hook = be(helper, hookAt, ShackleHookBlockEntity.class);
+            CarcassSavedData.Carcass back = CarcassSavedData.get(level).carcass(carcass.id);
+            helper.assertTrue(back != null && hook.isOccupied(), "the hook should hang the carcass again");
+            Vector3d now = bodies(helper, level, back).get(back.rootBone).logicalPose().orientation().transform(new Vector3d(0, 0, -1));
+            Vec3 turned = new com.simibubi.create.content.contraptions.StructureTransform(BlockPos.ZERO, Direction.Axis.Y,
+                    net.minecraft.world.level.block.Rotation.CLOCKWISE_90, net.minecraft.world.level.block.Mirror.NONE).applyWithoutOffsetUncentered(vec(belly[0]));
+            double angle = Math.toDegrees(now.angle(new Vector3d(turned.x, turned.y, turned.z)));
+            helper.assertTrue(angle < 25.0, "its belly should face the way the turn took it; it is " + String.format("%.0f", angle) + " degrees off");
+            helper.succeed();
+        });
+    }
+
     /** How far the hooked point of the hook's carcass is from its tip in the world, or null. */
     private static Vector3d hookGap(ServerLevel level, ShackleHookBlockEntity hook, CarcassSavedData.Carcass carcass) {
         ServerSubLevelContainer container = SubLevelContainer.getContainer(level);
