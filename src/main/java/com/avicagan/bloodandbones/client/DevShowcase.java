@@ -375,10 +375,27 @@ public final class DevShowcase {
                         if (player.serverLevel().getBlockEntity(at) instanceof com.avicagan.bloodandbones.body.SurgeryTableBlockEntity table) {
                             table.put(new ItemStack(BBItems.CLEAVER.get()));
                         }
+                        // a surgeon by the table, a zombie's head on a zombie (docs/NEXT.md 1.5: 141%, its stumps two buckets), and
+                        // the stump its cutting left where the vent arm was: the screen names it and both prices before any cut
+                        var surgeon = com.avicagan.bloodandbones.registry.BBEntities.MINION.get().create(player.serverLevel());
+                        BlockPos by = at.south(2);
+                        surgeon.moveTo(by.getX() + 0.5, by.getY(), by.getZ() + 0.5, 180.0F, 0.0F);
+                        surgeon.setup(player, by, com.avicagan.bloodandbones.minion.MinionBuild.of(piece("zombie", "body")).with("head", piece("zombie", "head"))
+                                .with("right_arm", piece("zombie", "right_arm")).with("left_arm", piece("zombie", "left_arm"))
+                                .with("right_leg", piece("zombie", "right_leg")).with("left_leg", piece("zombie", "left_leg")), 1000.0F);
+                        surgeon.setNoAi(true);
+                        surgeon.setTask(com.avicagan.bloodandbones.minion.MinionTask.SURGEON);
+                        surgeon.setItemSlot(net.minecraft.world.entity.EquipmentSlot.HEAD, new ItemStack(net.minecraft.world.item.Items.LEATHER_HELMET));
+                        player.serverLevel().addFreshEntity(surgeon);
+                        com.avicagan.bloodandbones.body.BodyEffects.body(player).lose(com.avicagan.bloodandbones.body.BodyPart.LEFT_ARM, 2);
+                        com.avicagan.bloodandbones.body.BodyEffects.changed(player);
                         if (com.avicagan.bloodandbones.body.SurgeryTableBlock.lieDown(player.serverLevel(), at, player)) {
                             net.neoforged.neoforge.network.PacketDistributor.sendToPlayer(player, new com.avicagan.bloodandbones.body.Surgery.OpenPayload(at, player.getId()));
                         }
                     });
+                } else if (t == 137) {
+                    // the advancement toasts would cover the screen's corner
+                    mc.getToasts().clear();
                 } else if (t == 140) {
                     Screenshot.grab(mc.gameDirectory, PREFIX + "body_2.png", mc.getMainRenderTarget(), message -> {
                     });
@@ -617,9 +634,16 @@ public final class DevShowcase {
                 } else if (t == 216) {
                     Screenshot.grab(mc.gameDirectory, PREFIX + "tasks_2.png", mc.getMainRenderTarget(), message -> {
                     });
+                    // and what its fitness makes of a butcher's work (docs/NEXT.md 1.2): its strokes and how much of each cut it keeps
+                    if (mc.screen instanceof MinionTaskScreen screen) {
+                        screen.pinHover(com.avicagan.bloodandbones.minion.MinionTask.BUTCHER);
+                    }
+                } else if (t == 220) {
+                    Screenshot.grab(mc.gameDirectory, PREFIX + "tasks_3.png", mc.getMainRenderTarget(), message -> {
+                    });
                     mc.setScreen(null);
                     mc.options.hideGui = true;
-                } else if (t == 220) {
+                } else if (t == 224) {
                     Screenshot.grab(mc.gameDirectory, PREFIX + "minions_1.png", mc.getMainRenderTarget(), message -> {
                     });
                     // and near, from in front: the bowman's bow and helmet
@@ -627,7 +651,7 @@ public final class DevShowcase {
                         ServerPlayer player = server.getPlayerList().getPlayers().get(0);
                         player.teleportTo(player.serverLevel(), player.getX() + 2.0, player.getY(), player.getZ() - 3.8, -20.0F, 10.0F);
                     });
-                } else if (t == 235) {
+                } else if (t == 239) {
                     Screenshot.grab(mc.gameDirectory, PREFIX + "minions_2.png", mc.getMainRenderTarget(), message -> {
                     });
                     // then the flier's wings, from below and in front
@@ -635,7 +659,7 @@ public final class DevShowcase {
                         ServerPlayer player = server.getPlayerList().getPlayers().get(0);
                         player.teleportTo(player.serverLevel(), player.getX() + 7.0, player.getY(), player.getZ(), 0.0F, -20.0F);
                     });
-                } else if (t == 250) {
+                } else if (t == 254) {
                     Screenshot.grab(mc.gameDirectory, PREFIX + "minions_3.png", mc.getMainRenderTarget(), message -> {
                     });
                     // then the pig's head in its carved pumpkin, from in front (the row faces away from where it was made)
@@ -643,7 +667,7 @@ public final class DevShowcase {
                         ServerPlayer player = server.getPlayerList().getPlayers().get(0);
                         player.teleportTo(player.serverLevel(), player.getX(), player.getY(), player.getZ() + 1.5, 160.0F, 5.0F);
                     });
-                } else if (t == 265) {
+                } else if (t == 269) {
                     Screenshot.grab(mc.gameDirectory, PREFIX + "minions_4.png", mc.getMainRenderTarget(), message -> {
                     });
                     // then the whole cow beside it in its zombie's head, from in front the same way
@@ -651,21 +675,29 @@ public final class DevShowcase {
                         ServerPlayer player = server.getPlayerList().getPlayers().get(0);
                         player.teleportTo(player.serverLevel(), player.getX() - 3.0, player.getY(), player.getZ(), 160.0F, 5.0F);
                     });
-                } else if (t == 275) {
+                } else if (t == 279) {
                     Screenshot.grab(mc.gameDirectory, PREFIX + "minions_5.png", mc.getMainRenderTarget(), message -> {
                     });
-                    // stumps: a ragged one where a surgeon hacked the left arm off, a clean one for the right leg
+                    // stumps, raggeder the dearer (docs/NEXT.md 1.5): the right arm a fit surgeon's (a bucket), the left leg a fair
+                    // one's (two), the left arm a poor one's (three), and a clean cut for the right leg
                     server.execute(() -> {
                         ServerPlayer player = server.getPlayerList().getPlayers().get(0);
                         var body = com.avicagan.bloodandbones.body.BodyEffects.body(player);
-                        body.lose(com.avicagan.bloodandbones.body.BodyPart.LEFT_ARM, true);
-                        body.lose(com.avicagan.bloodandbones.body.BodyPart.RIGHT_LEG, false);
+                        body.lose(com.avicagan.bloodandbones.body.BodyPart.RIGHT_ARM, 1);
+                        body.lose(com.avicagan.bloodandbones.body.BodyPart.LEFT_LEG, 2);
+                        body.lose(com.avicagan.bloodandbones.body.BodyPart.LEFT_ARM, 3);
+                        body.lose(com.avicagan.bloodandbones.body.BodyPart.RIGHT_LEG, 0);
                         com.avicagan.bloodandbones.body.BodyEffects.changed(player);
-                        // back where the view from behind was taken, clear of the minions, for this and the night's effects
-                        player.teleportTo(player.serverLevel(), player.getX() - 6.0, player.getY(), player.getZ() + 2.3, 150.0F, 15.0F);
+                        // the carcass armour off, which is still drawn over a limb that is gone
+                        for (var slot : new net.minecraft.world.entity.EquipmentSlot[]{net.minecraft.world.entity.EquipmentSlot.HEAD,
+                                net.minecraft.world.entity.EquipmentSlot.LEGS, net.minecraft.world.entity.EquipmentSlot.FEET}) {
+                            player.setItemSlot(slot, ItemStack.EMPTY);
+                        }
+                        // back beyond where the view from behind was taken, clear of the minions, for this and the night's effects
+                        player.teleportTo(player.serverLevel(), player.getX() - 12.0, player.getY(), player.getZ() + 2.3, 150.0F, 15.0F);
                     });
                     mc.options.setCameraType(net.minecraft.client.CameraType.THIRD_PERSON_FRONT);
-                } else if (t == 285) {
+                } else if (t == 289) {
                     Screenshot.grab(mc.gameDirectory, PREFIX + "stumps.png", mc.getMainRenderTarget(), message -> {
                     });
                     server.execute(() -> {
@@ -701,15 +733,15 @@ public final class DevShowcase {
                     });
                     mc.options.setCameraType(net.minecraft.client.CameraType.THIRD_PERSON_FRONT);
                     mc.options.hideGui = true;
-                } else if (t == 295) {
+                } else if (t == 299) {
                     com.avicagan.bloodandbones.client.effect.RangedClient.receive(new com.avicagan.bloodandbones.parts.effect.BeamPayload(effectHost, effectTarget, 400, 16.0F, "guardian_beam"));
                     com.avicagan.bloodandbones.client.effect.SocialClient.receive(new com.avicagan.bloodandbones.parts.effect.SensePayload("reveal",
                             java.util.List.of(effectHost, effectTarget), 400));
-                } else if (t == 307) {
+                } else if (t == 311) {
                     Screenshot.grab(mc.gameDirectory, PREFIX + "effects_0.png", mc.getMainRenderTarget(), message -> {
                     });
                     mc.options.setCameraType(net.minecraft.client.CameraType.FIRST_PERSON);
-                } else if (t == 323) {
+                } else if (t == 327) {
                     Screenshot.grab(mc.gameDirectory, PREFIX + "effects_1.png", mc.getMainRenderTarget(), message -> {
                     });
                     server.execute(() -> {
@@ -725,6 +757,13 @@ public final class DevShowcase {
             default -> {
             }
         }
+    }
+
+    /** A piece of a vanilla mob, for a minion built here. */
+    private static com.avicagan.bloodandbones.minion.PieceRef piece(String mob, String bone) {
+        return new com.avicagan.bloodandbones.minion.PieceRef(net.minecraft.resources.ResourceLocation.withDefaultNamespace(mob), bone,
+                net.minecraft.resources.ResourceLocation.withDefaultNamespace("textures/entity/" + mob + "/" + mob + ".png"), List.of(), 1.0F, false,
+                java.util.Map.of(), false);
     }
 
     /**
