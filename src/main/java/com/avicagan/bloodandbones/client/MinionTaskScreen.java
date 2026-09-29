@@ -49,14 +49,17 @@ public class MinionTaskScreen extends AbstractSimiScreen {
     private static final int CARD_X = 25;
     private static final int CARD_WIDTH = 195;
     private static final int ROW = 12;
+    /** A row it cannot do is taller: its reason goes under its name, in small print. */
+    private static final int CANNOT_ROW = 19;
     private static final int GAP = 1;
     private static final int HEADING = 11;
     private static final int PAD = 5;
     // the columns of a row, from its card's left
-    private static final int BAR_X = 62;
-    private static final int BAR_WIDTH = 52;
-    private static final int PERCENT_RIGHT = 143;
-    private static final int WORD_X = 148;
+    private static final int BAR_X = 60;
+    private static final int BAR_WIDTH = 44;
+    private static final int PERCENT_RIGHT = 132;
+    private static final int WORD_X = 136;
+    private static final float SMALL = 0.75F;
     // Create's colours: card text, the brass of its strips, and labels on the light frame
     private static final int TEXT = 0xFFF2F2EE;
     private static final int DIM = 0xFF9A9A9A;
@@ -69,8 +72,9 @@ public class MinionTaskScreen extends AbstractSimiScreen {
 
     private MinionTaskPayload.Open data;
     private final LerpedFloat scroll = LerpedFloat.linear().startWithValue(0);
-    /** Each row's place down the list, by task, from the list's top. */
+    /** Each row's place down the list, by task, from the list's top, and its height. */
     private final int[] rowY = new int[MinionTask.values().length];
+    private final int[] rowHeight = new int[MinionTask.values().length];
     private final List<int[]> headings = new ArrayList<>();
     private int contentHeight;
     private IconButton atHome;
@@ -163,7 +167,8 @@ public class MinionTaskScreen extends AbstractSimiScreen {
                 y += HEADING;
             }
             rowY[task.ordinal()] = y;
-            y += ROW + GAP;
+            rowHeight[task.ordinal()] = data.rows().get(task.ordinal()).can() ? ROW : CANNOT_ROW;
+            y += rowHeight[task.ordinal()] + GAP;
         }
         contentHeight = y + PAD;
     }
@@ -175,6 +180,7 @@ public class MinionTaskScreen extends AbstractSimiScreen {
     /** New rows from the server: its task, anchor and reach now, and the numbers at that anchor. */
     private void update(MinionTaskPayload.Open open) {
         data = open;
+        layout();
         refreshWidgets();
     }
 
@@ -267,7 +273,7 @@ public class MinionTaskScreen extends AbstractSimiScreen {
         }
         int hovered = hovered(mouseX, mouseY);
         for (MinionTaskPayload.Row row : data.rows()) {
-            renderRow(graphics, row, guiLeft + CARD_X, guiTop + LIST_TOP + rowY[row.task()], row.task() == hovered);
+            renderRow(graphics, row, guiLeft + CARD_X, guiTop + LIST_TOP + rowY[row.task()], rowHeight[row.task()], row.task() == hovered);
         }
         pose.popPose();
         graphics.disableScissor();
@@ -284,20 +290,20 @@ public class MinionTaskScreen extends AbstractSimiScreen {
                 0x00000000, 0x77000000);
     }
 
-    /** One task's card: its name, then its bar, percentage and word, or "Cannot" and why. */
-    private void renderRow(GuiGraphics graphics, MinionTaskPayload.Row row, int x, int y, boolean hovered) {
+    /** One task's card: its name, then its bar, percentage and word, or "Cannot" with why under it. */
+    private void renderRow(GuiGraphics graphics, MinionTaskPayload.Row row, int x, int y, int h, boolean hovered) {
         boolean current = row.task() == data.task();
         AllGuiTextures light = AllGuiTextures.SCHEDULE_CARD_LIGHT;
         AllGuiTextures medium = AllGuiTextures.SCHEDULE_CARD_MEDIUM;
         AllGuiTextures dark = AllGuiTextures.SCHEDULE_CARD_DARK;
         // Create's schedule card: a light rim, a dark line inside it, and the card within
-        UIRenderHelper.drawStretched(graphics, x, y + 1, CARD_WIDTH, ROW - 2, 0, hovered && row.can() ? AllGuiTextures.SCHEDULE_STRIP_DARK : light);
-        UIRenderHelper.drawStretched(graphics, x + 1, y, CARD_WIDTH - 2, ROW, 0, hovered && row.can() ? AllGuiTextures.SCHEDULE_STRIP_DARK : light);
-        UIRenderHelper.drawStretched(graphics, x + 1, y + 1, CARD_WIDTH - 2, ROW - 2, 0, dark);
-        UIRenderHelper.drawStretched(graphics, x + 2, y + 2, CARD_WIDTH - 4, ROW - 4, 0, !row.can() ? dark : current ? light : medium);
+        UIRenderHelper.drawStretched(graphics, x, y + 1, CARD_WIDTH, h - 2, 0, hovered && row.can() ? AllGuiTextures.SCHEDULE_STRIP_DARK : light);
+        UIRenderHelper.drawStretched(graphics, x + 1, y, CARD_WIDTH - 2, h, 0, hovered && row.can() ? AllGuiTextures.SCHEDULE_STRIP_DARK : light);
+        UIRenderHelper.drawStretched(graphics, x + 1, y + 1, CARD_WIDTH - 2, h - 2, 0, dark);
+        UIRenderHelper.drawStretched(graphics, x + 2, y + 2, CARD_WIDTH - 4, h - 4, 0, !row.can() ? dark : current ? light : medium);
         if (current) {
             // the brass strip down its side, as the schedule marks its steps
-            UIRenderHelper.drawStretched(graphics, x + 2, y + 2, 2, ROW - 4, 0, AllGuiTextures.SCHEDULE_STRIP_LIGHT);
+            UIRenderHelper.drawStretched(graphics, x + 2, y + 2, 2, h - 4, 0, AllGuiTextures.SCHEDULE_STRIP_LIGHT);
         }
         MinionTask task = MinionTask.values()[row.task()];
         Component name = TaskWords.name(task);
@@ -310,13 +316,13 @@ public class MinionTaskScreen extends AbstractSimiScreen {
         if (!row.can()) {
             Component cannot = Component.translatable("bloodandbones.minion.screen.cannot");
             graphics.drawString(font, cannot, x + WORD_X, ty, CANNOT, false);
-            // why, small, where the bar would be
+            // why, in small print under its name
             Component why = row.lines().size() > 1 ? row.lines().get(1) : Component.empty();
             PoseStack pose = graphics.pose();
             pose.pushPose();
-            pose.translate(x + BAR_X, y + 3.5F, 0);
-            pose.scale(0.66F, 0.66F, 1.0F);
-            graphics.drawString(font, font.substrByWidth(why, Math.round((WORD_X - BAR_X - 4) / 0.66F)).getString(), 0, 0, DIM, false);
+            pose.translate(x + 6, y + 11, 0);
+            pose.scale(SMALL, SMALL, 1.0F);
+            graphics.drawString(font, font.substrByWidth(why, Math.round((CARD_WIDTH - 12) / SMALL)).getString(), 0, 0, DIM, false);
             pose.popPose();
             return;
         }
@@ -346,7 +352,7 @@ public class MinionTaskScreen extends AbstractSimiScreen {
         }
         float y = mouseY - guiTop - LIST_TOP + scroll.getValue(0);
         for (MinionTask task : MinionTask.values()) {
-            if (y >= rowY[task.ordinal()] && y < rowY[task.ordinal()] + ROW) {
+            if (y >= rowY[task.ordinal()] && y < rowY[task.ordinal()] + rowHeight[task.ordinal()]) {
                 return task.ordinal();
             }
         }
@@ -367,7 +373,7 @@ public class MinionTaskScreen extends AbstractSimiScreen {
             lines.add(Component.translatable("bloodandbones.minion.screen.now").withStyle(ChatFormatting.DARK_GRAY, ChatFormatting.ITALIC));
         }
         int x = pinnedHover >= 0 ? guiLeft + CARD_X + 60 : mouseX;
-        int y = pinnedHover >= 0 ? guiTop + LIST_TOP + rowY[hovered] - Math.round(scroll.getValue(partialTicks)) + ROW : mouseY;
+        int y = pinnedHover >= 0 ? guiTop + LIST_TOP + rowY[hovered] - Math.round(scroll.getValue(partialTicks)) + rowHeight[hovered] : mouseY;
         graphics.pose().pushPose();
         graphics.pose().translate(0, 0, 400);
         graphics.renderTooltip(font, lines, Optional.empty(), x, y);

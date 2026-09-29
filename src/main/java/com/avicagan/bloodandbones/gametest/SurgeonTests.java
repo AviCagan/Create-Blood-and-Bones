@@ -109,6 +109,49 @@ public class SurgeonTests {
     }
 
     /**
+     * The owner's call (docs/NEXT.md 1.5), at the table both ways. By default a zombie's head with a hand cuts as well as a
+     * villager's; with the surgeon task's {@code "needs_surgeon_head": true} only the villager's does, and the zombie's is
+     * passed over. The data is changed and set back within the one tick, since the tests share one world.
+     */
+    @GameTest(template = "empty", timeoutTicks = 20)
+    public static void surgeonHeadIsTheOwnersCall(GameTestHelper helper) {
+        ServerLevel level = helper.getLevel();
+        BlockPos tableAt = new BlockPos(3, 2, 3);
+        table(helper, tableAt);
+        BlockPos table = helper.absolutePos(tableAt);
+        MinionEntity zombie = MinionTests.surgeon(helper, new BlockPos(4, 2, 4));
+        zombie.setBuild(MinionBuild.of(ref("zombie", "body")).with("head", ref("zombie", "head")).with("right_arm", ref("zombie", "right_arm"))
+                .with("left_leg", ref("zombie", "left_leg")).with("right_leg", ref("zombie", "right_leg")));
+        zombie.setItemSlot(EquipmentSlot.HEAD, new ItemStack(Items.LEATHER_HELMET));
+        if (Surgery.surgeonAt(level, table) != zombie) {
+            helper.fail("By default a zombie's head with a hand should cut");
+            return;
+        }
+        PartsData.Store store = PartsData.of(level);
+        var any = store.task(com.avicagan.bloodandbones.minion.MinionTask.SURGEON);
+        store.setTestTask(com.avicagan.bloodandbones.minion.MinionTask.SURGEON,
+                any.read(com.google.gson.JsonParser.parseString("{\"needs_surgeon_head\": true}").getAsJsonObject()));
+        try {
+            if (Surgery.surgeonAt(level, table) != null) {
+                helper.fail("With needs_surgeon_head a zombie's head should not cut");
+                return;
+            }
+            MinionEntity villager = MinionTests.surgeon(helper, new BlockPos(2, 2, 4));
+            if (Surgery.surgeonAt(level, table) != villager) {
+                helper.fail("With needs_surgeon_head a villager's head should still cut");
+                return;
+            }
+        } finally {
+            store.setTestTask(com.avicagan.bloodandbones.minion.MinionTask.SURGEON, null);
+        }
+        if (Surgery.surgeonAt(level, table) == null) {
+            helper.fail("Set back, a surgeon should cut again");
+            return;
+        }
+        helper.succeed();
+    }
+
+    /**
      * Fitting anything but a crude prosthetic into a ragged stump takes a bucket of blood as well: without one nothing
      * happens; with one it goes on and the bucket comes back empty; the stump is dressed, so taking the implant out and
      * fitting again is free. Putting the limb itself back into a ragged stump costs the same.

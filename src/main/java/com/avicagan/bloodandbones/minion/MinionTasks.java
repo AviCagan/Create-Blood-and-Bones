@@ -251,7 +251,7 @@ public final class MinionTasks {
         if (!row.can()) {
             minion.loseTask(task, row.cannot().orElse("bloodandbones.minion.cannot.strike"));
         } else if (minion.anchor() == MinionTask.Anchor.MAKER && !PartsData.of(minion.level()).task(task).allows(MinionTask.Anchor.MAKER)) {
-            minion.setTask(task, MinionTask.Anchor.HOME, minion.reachSet());
+            minion.setTask(task, MinionTask.Anchor.HOME, 0);
         }
     }
 

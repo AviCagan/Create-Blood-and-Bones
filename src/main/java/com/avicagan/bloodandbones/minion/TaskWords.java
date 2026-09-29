@@ -146,7 +146,7 @@ public final class TaskWords {
         }
         float drain = MinionFitness.workingDrain(row.fitness()) * (minion.cybernetic() ? MinionEntity.BRASS_DRAIN : 1.0F);
         out.add(Component.translatable(minion.cybernetic() ? "bloodandbones.minion.at_work_brass" : "bloodandbones.minion.at_work", number(drain))
-                .withStyle(ChatFormatting.DARK_GRAY));
+                .withStyle(ChatFormatting.GRAY));
         if (at == MinionTask.Anchor.MAKER) {
             out.add(Component.translatable("bloodandbones.minion.screen.row_with_me").withStyle(ChatFormatting.DARK_GRAY));
         }

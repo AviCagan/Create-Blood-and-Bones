@@ -83,6 +83,7 @@ public final class PartsData {
         private final Map<ResourceLocation, Trait> testTraits = new ConcurrentHashMap<>();
         private final Map<ResourceLocation, MobGroup> testMobFiles = new ConcurrentHashMap<>();
         private final Map<ResourceLocation, OrganKind> testOrgans = new ConcurrentHashMap<>();
+        private final Map<com.avicagan.bloodandbones.minion.MinionTask, com.avicagan.bloodandbones.minion.MinionTask.Data> testTasks = new ConcurrentHashMap<>();
 
         /** Every file of one kind, as written, by id. */
         public Map<ResourceLocation, String> raw(Kind kind) {
@@ -288,8 +289,25 @@ public final class PartsData {
 
         /** A task's numbers: its file's over its defaults, or the defaults (today's constants) with no file. */
         public com.avicagan.bloodandbones.minion.MinionTask.Data task(com.avicagan.bloodandbones.minion.MinionTask task) {
+            var test = testTasks.get(task);
+            if (test != null) {
+                return test;
+            }
             var data = tasks.get(task);
             return data != null ? data : task.defaults();
+        }
+
+        /**
+         * For game tests: a task's numbers in place of its file's, until set back with null. Tests share one world, so a
+         * test sets it and sets it back within one tick.
+         */
+        public void setTestTask(com.avicagan.bloodandbones.minion.MinionTask task, @Nullable com.avicagan.bloodandbones.minion.MinionTask.Data data) {
+            if (data == null) {
+                testTasks.remove(task);
+            } else {
+                testTasks.put(task, data);
+            }
+            invalidate();
         }
 
         /**

@@ -1076,11 +1076,81 @@ public class MinionTaskTests {
         helper.succeed();
     }
 
+    /**
+     * A task changes only when its maker sets it, but for a data reload that leaves its body unable to do it (docs/NEXT.md
+     * 1.3): a made-up mob's hands make it a surgeon; its data changed to say they are wings, it is Idle at home, and its
+     * status line says why. Taking its tool away, by contrast, only makes it wait.
+     */
+    @GameTest(template = "empty", timeoutTicks = 100)
+    public static void reloadTakesAnImpossibleTask(GameTestHelper helper) {
+        ResourceLocation id = TestTraits.mob(helper, "reload_hands", "{\"archetype\": \"bloodandbones:biped\"}");
+        com.avicagan.bloodandbones.carcass.rig.Rig zombie = com.avicagan.bloodandbones.carcass.rig.RigManager.forEntity(mob("zombie")).orElseThrow();
+        com.avicagan.bloodandbones.carcass.rig.RigManager.addTestRig(new com.avicagan.bloodandbones.carcass.rig.Rig(id, zombie.model(), zombie.layer(),
+                zombie.texture(), zombie.variantNames(), zombie.passes(), zombie.scale(), zombie.weight(), zombie.rotTime(), zombie.bones(), zombie.baby()));
+        PartsData.SERVER.invalidate();
+        Maker maker = new Maker(helper, new BlockPos(3, 2, 3));
+        MinionBuild build = MinionBuild.of(new PieceRef(id, "body", ResourceLocation.withDefaultNamespace("textures/entity/zombie/zombie.png"), List.of(), 1.0F, false, Map.of(), false));
+        for (String part : new String[]{"head", "right_arm", "left_arm", "right_leg", "left_leg"}) {
+            build = build.with(part, new PieceRef(id, part, ResourceLocation.withDefaultNamespace("textures/entity/zombie/zombie.png"), List.of(), 1.0F, false, Map.of(), false));
+        }
+        MinionEntity minion = minion(helper, new BlockPos(5, 2, 5), build, maker);
+        minion.setNoAi(true);
+        if (!minion.setTask(MinionTask.SURGEON)) {
+            helper.fail("Its hands should make it a surgeon: " + minion.row(MinionTask.SURGEON, MinionTask.Anchor.HOME).cannot());
+            return;
+        }
+        // the data changes under it: its arms are wings now
+        TestTraits.mob(helper, "reload_hands", "{\"archetype\": \"bloodandbones:biped\", \"parts\": {\"arm\": {\"minion\": {\"grip\": \"wing\"}}}}");
+        helper.succeedWhen(() -> {
+            helper.assertTrue(minion.hasTask(MinionTask.IDLE) && minion.anchor() == MinionTask.Anchor.HOME, "it should be Idle at home: " + minion.task());
+            helper.assertTrue(statusSays(minion, "bloodandbones.minion.lost") && statusSays(minion, "bloodandbones.minion.cannot.hand"),
+                    "its status line should say why: " + MinionTasks.status(minion).getString());
+            minion.discard();
+        });
+    }
+
     /** The design's cow on four rabbit legs, with a cow's head (spec 6.5). */
     private static MinionBuild cowOnRabbitLegs() {
         return MinionBuild.of(ref("cow", "body")).with("head", ref("cow", "head")).with("right_front_leg", ref("rabbit", "right_front_leg"))
                 .with("left_front_leg", ref("rabbit", "left_front_leg")).with("right_hind_leg", ref("rabbit", "right_haunch"))
                 .with("left_hind_leg", ref("rabbit", "left_haunch"));
+    }
+
+    /**
+     * Every word of the tasks, the screen and the status line reads right in bloodless mode (rule 4): its own bloodless
+     * wording where it has one (the butcher a Dismantler), else the usual rewording; none of it says blood, carcass,
+     * butcher, flesh, organ, gore or minion.
+     */
+    @GameTest(template = "empty", timeoutTicks = 20)
+    public static void taskWordsReadBloodless(GameTestHelper helper) {
+        java.util.regex.Pattern bloody = java.util.regex.Pattern.compile(
+                "(?i)(?<![a-z])(carcass(es)?|blood|bleed\\w*|butcher\\w*|flesh|organs?|gore|guts?|minions?)(?![a-z])");
+        List<String> prefixes = List.of("task.", "screen.", "fit.", "where.", "idle.", "factor", "stat.", "value.", "rule.", "at_work", "woke", "lost",
+                "wants.", "cannot.", "tool.", "with_tool", "grip.", "part", "knack", "disposition", "doing", "status", "source.", "frame_stats");
+        int checked = 0;
+        try (var in = BloodAndBones.class.getResourceAsStream("/assets/bloodandbones/lang/en_us.json")) {
+            var json = com.google.gson.JsonParser.parseReader(new java.io.InputStreamReader(in)).getAsJsonObject();
+            for (String key : json.keySet()) {
+                if (!key.startsWith("bloodandbones.minion.") || prefixes.stream().noneMatch(p -> key.startsWith("bloodandbones.minion." + p))) {
+                    continue;
+                }
+                String reads = json.has("bloodless." + key) ? json.get("bloodless." + key).getAsString()
+                        : com.avicagan.bloodandbones.config.BloodlessWords.soften(json.get(key).getAsString());
+                if (bloody.matcher(reads).find()) {
+                    helper.fail("In bloodless mode " + key + " still reads \"" + reads + "\"");
+                    return;
+                }
+                checked++;
+            }
+            if (checked < 100 || !"Dismantler".equals(json.get("bloodless.bloodandbones.minion.task.butcher").getAsString())) {
+                helper.fail("The task words should all have been read, the butcher a Dismantler: " + checked);
+                return;
+            }
+        } catch (Exception e) {
+            helper.fail("Could not read the language file: " + e);
+            return;
+        }
+        helper.succeed();
     }
 
     // ---- with me (docs/NEXT.md 1.1)
