@@ -1,0 +1,22 @@
+{
+  "type": "bloodandbones:carcass_armour",
+  "category": "equipment",
+  "key": {
+    "S": {
+      "item": "bloodandbones:scraps"
+    },
+    "T": {
+      "item": "bloodandbones:scraps"
+    }
+  },
+  "pattern": [
+    "S S",
+    "TTT",
+    "TTT"
+  ],
+  "piece": "chestplate",
+  "result": {
+    "count": 1,
+    "id": "bloodandbones:carcass_chestplate"
+  }
+}

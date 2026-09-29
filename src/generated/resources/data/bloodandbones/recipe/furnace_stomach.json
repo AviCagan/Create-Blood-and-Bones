@@ -1,0 +1,24 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "category": "equipment",
+  "key": {
+    "B": {
+      "item": "minecraft:blast_furnace"
+    },
+    "M": {
+      "item": "create:precision_mechanism"
+    },
+    "P": {
+      "tag": "c:plates/brass"
+    }
+  },
+  "pattern": [
+    "PBP",
+    "PMP",
+    " P "
+  ],
+  "result": {
+    "count": 1,
+    "id": "bloodandbones:furnace_stomach"
+  }
+}

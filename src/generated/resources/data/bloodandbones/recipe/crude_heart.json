@@ -1,0 +1,24 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "category": "equipment",
+  "key": {
+    "B": {
+      "item": "minecraft:bone"
+    },
+    "I": {
+      "item": "minecraft:iron_nugget"
+    },
+    "L": {
+      "item": "minecraft:leather"
+    }
+  },
+  "pattern": [
+    "LIL",
+    "IBI",
+    "LIL"
+  ],
+  "result": {
+    "count": 1,
+    "id": "bloodandbones:crude_heart"
+  }
+}

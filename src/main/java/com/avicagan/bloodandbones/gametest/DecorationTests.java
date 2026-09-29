@@ -643,7 +643,7 @@ public class DecorationTests {
     @GameTest(template = "empty", timeoutTicks = 20)
     public static void bloodyCladdingRecipes(GameTestHelper helper) {
         for (String metal : List.of("brass", "copper")) {
-            var recipe = helper.getLevel().getRecipeManager().byKey(BloodAndBones.asResource("bloody_" + metal + "_casing_filling"));
+            var recipe = helper.getLevel().getRecipeManager().byKey(BloodAndBones.asResource("filling/bloody_" + metal + "_casing"));
             if (recipe.isEmpty() || !(recipe.get().value() instanceof com.simibubi.create.content.fluids.transfer.FillingRecipe filling)) {
                 helper.fail("No spout filling recipe for the bloody " + metal + " casing");
                 return;

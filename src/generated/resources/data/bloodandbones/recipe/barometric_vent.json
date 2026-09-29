@@ -1,0 +1,27 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "category": "equipment",
+  "key": {
+    "B": {
+      "item": "create:propeller"
+    },
+    "M": {
+      "item": "create:precision_mechanism"
+    },
+    "P": {
+      "tag": "c:plates/brass"
+    },
+    "T": {
+      "item": "create:fluid_pipe"
+    }
+  },
+  "pattern": [
+    "PBP",
+    "PMP",
+    " T "
+  ],
+  "result": {
+    "count": 1,
+    "id": "bloodandbones:barometric_vent"
+  }
+}

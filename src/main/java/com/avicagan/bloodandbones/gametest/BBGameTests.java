@@ -1465,15 +1465,15 @@ public class BBGameTests {
     /** Every recipe file parsed: a broken one only logs an error, so check they all loaded. */
     @GameTest(template = "empty", timeoutTicks = 20)
     public static void recipesLoad(GameTestHelper helper) {
-        for (String name : new String[]{"meat_hook", "cleaver", "flensing_knife", "shackle_hook", "bleeding_rack", "raw_hide_splashing",
-                "cooked_meat_from_raw_meat_smelting", "mangler", "guillotine", "beheader", "deglover", "blood_steel_ingot_filling", "blood_diamond_filling", "soul_blood_mixing",
-                "soul_blood_fermenting", "blood_steel_block", "blood_steel_ingot_from_block", "blood_steel_ingot_from_nuggets", "blood_steel_nugget",
-                "blood_steel_cleaver", "spit_roast", "specimen_jar", "butcher_table", "butcher_hook", "gut_chain", "bloody_casing_filling",
+        for (String name : new String[]{"meat_hook", "cleaver", "flensing_knife", "shackle_hook", "bleeding_rack", "splashing/raw_hide",
+                "cooked_meat_from_raw_meat_smelting", "mangler", "guillotine", "beheader", "deglover", "filling/blood_steel_ingot", "filling/blood_diamond", "mixing/soul_blood",
+                "basin_fermenting/soul_blood", "blood_steel_block", "blood_steel_ingot_from_block", "blood_steel_ingot_from_nuggets", "blood_steel_nugget",
+                "blood_steel_cleaver", "spit_roast", "specimen_jar", "butcher_table", "butcher_hook", "gut_chain", "filling/bloody_casing",
                 "surgery_table", "peg_leg", "hook_hand", "copper_fluid_backtank", "gold_fluid_backtank", "iron_fluid_backtank", "diamond_fluid_backtank",
-                "blood_steel_fluid_backtank", "blood_diamond_fluid_backtank", "soul_netherite_fluid_backtank", "soul_netherite_ingot",
+                "blood_steel_fluid_backtank", "blood_diamond_fluid_backtank", "soul_netherite_fluid_backtank", "sequenced_assembly/soul_netherite_ingot",
                 "flesh_arm", "sinew_leg", "hydraulic_arm", "piston_leg", "vent_arm", "port_arm", "optic_eye", "pump_heart", "bellows_lungs", "furnace_stomach",
                 "backtank_port", "glass_eye", "crude_heart", "crude_lungs", "crude_stomach", "surgical_rig", "assembly_frame",
-                "steel_table", "steel_rack", "ribcage_arch", "bone_pile", "bloody_brass_casing_filling", "bloody_copper_casing_filling"}) {
+                "steel_table", "steel_rack", "ribcage_arch", "bone_pile", "filling/bloody_brass_casing", "filling/bloody_copper_casing"}) {
             if (helper.getLevel().getRecipeManager().byKey(com.avicagan.bloodandbones.BloodAndBones.asResource(name)).isEmpty()) {
                 helper.fail("Recipe " + name + " did not load");
             }

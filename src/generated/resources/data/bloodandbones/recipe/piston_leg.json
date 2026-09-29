@@ -1,0 +1,24 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "category": "equipment",
+  "key": {
+    "M": {
+      "item": "create:mechanical_piston"
+    },
+    "P": {
+      "tag": "c:plates/brass"
+    },
+    "S": {
+      "item": "bloodandbones:blood_steel_ingot"
+    }
+  },
+  "pattern": [
+    "PSP",
+    "PMP",
+    "P P"
+  ],
+  "result": {
+    "count": 1,
+    "id": "bloodandbones:piston_leg"
+  }
+}

@@ -1,0 +1,21 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "category": "equipment",
+  "key": {
+    "E": {
+      "item": "create:electron_tube"
+    },
+    "G": {
+      "item": "minecraft:red_stained_glass_pane"
+    }
+  },
+  "pattern": [
+    " G ",
+    "GEG",
+    " G "
+  ],
+  "result": {
+    "count": 1,
+    "id": "bloodandbones:optic_eye"
+  }
+}

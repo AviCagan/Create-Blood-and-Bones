@@ -1,0 +1,26 @@
+{
+  "type": "createdieselgenerators:basin_fermenting",
+  "ingredients": [
+    {
+      "item": "minecraft:soul_soil"
+    },
+    {
+      "item": "minecraft:nether_wart"
+    },
+    {
+      "item": "minecraft:nether_wart"
+    },
+    {
+      "type": "neoforge:single",
+      "amount": 1000,
+      "fluid": "bloodandbones:blood"
+    }
+  ],
+  "processing_time": 600,
+  "results": [
+    {
+      "amount": 500,
+      "id": "bloodandbones:soul_blood"
+    }
+  ]
+}
