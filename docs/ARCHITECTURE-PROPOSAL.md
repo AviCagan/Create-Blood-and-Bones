@@ -3646,9 +3646,12 @@ it: that is decision 5, and it stays at the neck.
   holding its tilt any more the yank could throw it over the hook (`hangingCarcassBleedsIntoRack` failed 7 runs in 20):
   it was put up on the hook in its hanging pose first, every body moved as one and stilled (`liftOnto`). Merged with
   the checks' gentle hoist (15.18), that step is gone: the hook draws the neck junction up at 3 blocks a second and
-  only holds it fast within 0.3 of the tip, so there is no yank left to throw it, and the body comes up hanging from
-  that point as its weight takes it, loose, turned belly-out by `hangTurn` on the way. A hook mounted on a Sable ship
-  still joins at once, as before. Trolleys hoist and hang the same way. `legOffHangsLowerOnThatSide`.
+  only holds it fast within 0.3 of the tip, so there is no yank left to throw it. While it rises it is held in its
+  hanging pose, as `liftOnto` put it (`hoistTurn`, main's old spring on every axis), and once held it hangs loose
+  (`hangTurn`). Hoisted loose, a cow lifted from lying on its side came up twisting and settled into one of two hangs:
+  in 2 runs of 10 `legOffHangsLowerOnThatSide` measured its stump's side 0.5 degrees low instead of 1.8 high; held in
+  its pose on the way up, 10 of 10 came to 1.5 to 3.9 high. A hook mounted on a Sable ship still joins at once, as
+  before. Trolleys hoist and hang the same way. `legOffHangsLowerOnThatSide`.
 - **Still hung by the neck.** The hook still holds a carcass where its neck meets its body (255d386), not by one
   shoulder as the brief says: that is decision 5, the owner's.
 

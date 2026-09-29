@@ -332,7 +332,7 @@ public class ShackleTrolleyEntity extends Entity {
                 // the trolley waits while it hoists, so its chain point stands still
                 ShackleHookBlockEntity.hoist(level, body, trolley.anchorPlot, new Vector3d(trolley.anchor.x, trolley.anchor.y, trolley.anchor.z),
                         ShackleHookBlockEntity.hoistedMass(level, trolley.carcassId, body), physics, timeStep);
-                trolley.turn(body, physics, timeStep);
+                ShackleHookBlockEntity.hoistTurn(body, physics, timeStep, trolley.outX, trolley.outZ);
                 continue;
             }
             if (trolley.joint == null || !trolley.joint.isValid()) {
