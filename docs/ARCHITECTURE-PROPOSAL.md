@@ -3342,3 +3342,49 @@ put right its runs took 239 to 650 ticks (38 runs); the test has 3000.
 passed twenty times over, all in one world; `tenderWakesAFallenMinion` passed 60 times more in batches shared with the
 other Tender, butcher, courier and hunter tests, where it had failed 2 times in 60; and the suite passed three full runs in
 a row.
+
+### 15.23 Tasks: the second review's findings put right (verified)
+
+A second review, of 15.22's fixes, found eight things. All were real; all are put right here, and docs/NEXT.md 1.1, 1.6
+and 1.9 say so where the design is recorded.
+
+- **The farmer's bands ran the wrong way above 100%.** 15.22 sized each look's band as `FARM_SCAN` × the look's ticks, so
+  the quicker a farmer looked, the narrower its band, and a band moved on only when it held no ripe crop: a 200% farmer at
+  its own reach of 8 read its box in three looks (8, 8 and 1 columns), 30 ticks, where a 100% farmer read it whole every
+  20. `MinionGoals.farmColumns` now sizes a band by the longer of its look and a 100% farmer's, so a fitter farmer's band
+  is a 100% farmer's (the whole box at reach 8 or less) and it goes over its box as much sooner as it looks more often,
+  reading at most twice today's blocks a second; a poorer one's band is wider, keeping it to `FARM_SCAN` a tick.
+- **Wings.** A wing's strike style is "flap", damage 0, and `doHurtTarget` only knocked back with it, while Blow left it out
+  and read the head's bite; `fights()` and the Strike need counted it, so a headless body on wings was offered Guard and
+  flapped at what touched it for ever. `MinionStats.Strike.hurts` (not folded, not a flap, some damage) is now what Blow,
+  the Strike need (`MinionFitness.Body.canStrike` is `fights()`), `fights()`, the ranged goal's "arm that hits" and
+  `doHurtTarget` all ask. With no arm that hurts, the head bites and the wings throw back what it bites (0.8, the flap's
+  knockback); with no head either there is nothing to fight with.
+- **A task file's `required` and `carried`** changed only the row: a butcher's file making its blade optional left the
+  butcher standing, ready by its row, with no reason; a fisher's making its rod required showed an untranslated key while it
+  fished by hand; a medic's `carried` false had its row read the hand while it threw from what it carried. The goals decide
+  both, so `MinionTask.checked` keeps the code's and logs a file's word otherwise, and leaves out a tool given to a task
+  that works with none; the task files no longer write them. Where a file narrows the items, `TaskWords.waits` and
+  `TaskWords.tool` name them ("waiting for Flensing Knife", "With Crossbow"; a tag by its conventional name where it has
+  one), where the butcher's line said "a Cleaver or a Flensing Knife" whatever the file named.
+- **The maker's reach with them.** Idle with its maker followed at `FollowMaker`'s fixed 6 and 3 whatever its reach, and a
+  guard with its maker went for anything its maker hit or was hurt by, however far. Idle now sets off 2 blocks past its
+  reach and stops 1 short (never nearer than 3), so 6 and 3 at its own 4 as before; `DefendMaker` takes only what is within
+  its reach of the maker and gives up on one that gets further.
+- **The surgeon with no table** in reach said nothing, and its status line said "at its table". `AttendTable` says "no
+  Surgery Table within %s of where it stands" until it next looks (it looks every 5 s; the line is kept up in between) and
+  clears it once it has one; `TaskWords.where` says "at its table" only while its home is one.
+- **The docs** still had tasks unbuilt: BRIEF-AUDIT's package 13 is marked built and decision 12 narrowed to the surgeon
+  switch, and PARTS-AND-TRAITS says tasks where it said jobs.
+- **Untested:** the look chance, the farmer's bands, the Tender's many-block tank, and a reload that moves a task where it
+  is done. Each now has a test (below). `MinionEntity.looksTaken` counts the looks `MinionGoals.looks` takes, for the test;
+  `MinionTender.tanksFound` gives a Tender's look's tanks.
+
+Checked against the old code: with the old bands `fitFarmerFindsRipeCropsNoLater` failed every run at its sums and 5 runs in
+6 in the world (the 200% farmer took 17 to 25 ticks on average to start on a ripe crop); with the old one-in-n chance
+`looksComeAsOftenAsTheScreenSays` counted 102 to 131 looks for the 240 expected and failed every run.
+
+**Tests** (504 in all): `fitFarmerFindsRipeCropsNoLater`, `looksComeAsOftenAsTheScreenSays`, `wingsBuffetTheHeadBites`,
+`withMeKeepsToItsReach`, `surgeonWithNoTableSaysSo` and `reloadMovesATaskWhereItIsDone` are new;
+`tenderFillsTroughsAndCradles` fills from a tank of eight blocks, and `taskFileKindToolAndAnchorsCount` reads the tool's
+fixed fields and words. The new and changed tests passed ten times over in one world.

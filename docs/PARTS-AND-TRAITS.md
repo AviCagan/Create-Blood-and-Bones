@@ -31,7 +31,7 @@ The two judges picked different winners.
 - The other picked **engine**, for the effect engine and buildability.
 
 This spec is built from both:
-- **Structure from data:** the archetype → family → overlay → per-mob layering; tag-keyed overlays; items that store only their sources; variants read from carcass traits; heavy parts built physically on the table; every mob having a special organ; minion jobs tied back to butchery.
+- **Structure from data:** the archetype → family → overlay → per-mob layering; tag-keyed overlays; items that store only their sources; variants read from carcass traits; heavy parts built physically on the table; every mob having a special organ; minion tasks tied back to butchery.
 - **Engine from engine:** named, levelled trait files; vanilla `LevelBasedValue` and loot-condition requirements; a small set of effect types over NeoForge hooks; trait-id dedup; a pure `MinionStats`; two tests per effect; the cow-and-rabbit vertical slice first; the contraption-movable trough found through a per-level registry; Create Filter and Deployer repair for cybernetic minions.
 - **Grafted from diversity:**
   - a signature for all 79 mobs, with a content test that lists what is missing;
@@ -1295,7 +1295,7 @@ These are data (about 120 files), and each uses only the effect types above. Lev
 
 **Kept:**
 - `MinionEntity` as a persistent `PathfinderMob` with maker, home and inventory;
-- the Farm, Collect, Deposit, Melee, FollowMaker and StayNearHome goals, ported into jobs;
+- the Farm, Collect, Deposit, Melee, FollowMaker and StayNearHome goals, ported into tasks (jobs until 29 September 2026, docs/NEXT.md item 1);
 - the Surgery Table and its ASSEMBLY attachment;
 - `CarcassModels.drawBone` and `WoundCaps`.
 
@@ -2050,7 +2050,7 @@ Each slice ends with headless game tests (`runGameTestServer`, in the style of B
 10. **Class-matching through a throwaway instance.** A modded entity whose constructor has side effects or crashes. It is wrapped in try/catch and falls back to tags and archetype. A config deny list skips it.
 11. **Powered-down exploits.** Being ignored and invulnerable could make pack mules or mob-farm blockers. Pushability and "players can still hurt it" limit this; it needs review.
 12. **Performance.** No default cap means big farms of pathfinding mobs; document it and leave the cap to server owners. `ActiveTraits` is cached and trait ticks are staggered. Reaction goals are injected only into tagged entity types. Auras run at most once a second. Reveal is client-only.
-13. **Griefing.** Detonate, trample, ghast fireballs, the digger and hunter jobs all obey mobGriefing plus `minion_block_damage`.
+13. **Griefing.** Detonate, trample, ghast fireballs, the digger and hunter tasks all obey mobGriefing plus `minion_block_damage`.
 14. **Sync size.** It will probably be 100–200 KB, so it is split per file kind.
 15. **Translation volume.** About 120 traits, each needing a name, a description and a bloodless variant, plus organ names. Use lang datagen.
 16. **Boss parts.** Warden and wither parts rely on the boss overlay, the health cap and `boss_parts`.

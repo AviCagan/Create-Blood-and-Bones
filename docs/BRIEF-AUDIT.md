@@ -82,14 +82,8 @@ Each decision unblocks one or more work packages below; the package numbers are 
 11. **The ragged stump, and restoring rot.**
     - Swapping an implant straight in for flesh needs the surgeon but leaves no ragged stump (14.12). So a one-step swap always avoids the ragged-stump cost.
     - A fully rotted limb works again after 1 mB of blood and one second. How much more should restoring it from the maximum cost? [11]
-12. **Tasks instead of jobs (docs/NEXT.md item 1).** To settle:
-    - the task list;
-    - what makes a minion good at a task;
-    - whether anything is impossible or only done badly;
-    - how a task is given;
-    - whether the surgeon stays tied to villager and pillager heads;
-    - how a minion's fitness for a task is shown;
-    - how parts state their aptitude in data. [13]
+12. **Tasks instead of jobs (docs/NEXT.md item 1).** Designed and built on 29 September 2026: the task list, what makes a minion good at a task, what is impossible and what only done badly, how a task is given, how fitness is shown and how parts state their aptitude in data are settled in docs/NEXT.md 1.1 to 1.6. One question is left:
+    - whether the surgeon stays tied to villager and pillager heads (the surgeon switch, docs/NEXT.md 1.5). [13]
 13. **The fourteen defaults of ARCHITECTURE 15.1** are still unconfirmed (docs/NEXT.md). Two of them overlap with decisions above:
     - #5 (heavy pieces never become items) is decision 2;
     - #8 (other illagers and the witch also make surgeons) goes with decision 12.
@@ -520,23 +514,25 @@ An attribute filter set to a part is asked about the whole body, so it never mat
 - The owner decided on 24 September that there are no jobs. Any task can be given to any minion, which does it better or worse depending on its stats (docs/NEXT.md item 1).
 - The brief also says neither kind of minion "should be more OP than the other".
 
-**What is there.** A minion's head offers one to three of 17 jobs. Everything else in the brief's Minions section is built and tested (see below). Flesh and brass minions each have something the other lacks, but nothing compares them:
+**Built on 29 September 2026** (docs/NEXT.md 1.10; docs/ARCHITECTURE-PROPOSAL.md 15.18 to 15.23). Any minion can be given any of 16 tasks and does it better or worse by its parts: its fitness comes from its stats, its head's knacks and disposition, all in data, and is shown on the task screen, the status line, the Surgery Table, JEI and piece tooltips. Only the surgeon switch (decision 12, docs/NEXT.md 1.5) waits for the owner.
+
+**What is still open.** Flesh and brass minions each have something the other lacks, but nothing compares them:
 - brass drains a quarter as much blood, ignores poison, wither, hunger and drowning, and takes a module;
 - flesh mends itself.
 
 That comparison belongs in the balance pass (PARTS-AND-TRAITS slice 9).
 
-**What to build (after decision 12).**
-- Tasks, with aptitude coming from the parts and stored as data.
-- The task list.
-- A way to give a task.
-- A way to show how fit a minion is for each task.
+**What was built.**
+- Tasks, with aptitude coming from the parts and stored as data (`minion/MinionTask`, `MinionFitness`, the task files and head data).
+- The task list (docs/NEXT.md 1.1).
+- A way to give a task: the task screen (`MinionTaskScreen`), with anchor and reach.
+- A way to show how fit a minion is for each task (`TaskWords`, the status line, JEI, `/bloodandbones minion fitness`).
 
-**Size.** Large.
+**Size.** Large; done.
 
-**Touches.** `minion/MinionStats`, `MinionJobs`, head data, `body/Surgery.surgeonAt`, the Surgery Table's status line, and JEI.
+**Touched.** `minion/MinionStats`, `MinionTasks` (in `MinionJobs`' place), head data, `body/Surgery.surgeonAt`, the Surgery Table's status line, and JEI.
 
-**Owner first.** Yes.
+**Owner first.** Only the surgeon switch.
 
 ### 14. Blood, Soul Blood and the materials as written
 

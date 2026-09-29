@@ -56,7 +56,7 @@ and what is still to be settled together before any code is written.
 
   Old datapacks' `jobs` lists are read as knacks.
 
-**Where it stands: built.** All six stages of 1.10 are built: A (the numbers), B (tasks in the jobs' place, the screen, the wake rule, the status line and old saves), C (the levers: what fitness makes of the work in play), D (the surgeon: the fittest cuts, and its fitness prices the stump), E (the Tender, and the butcher at the Butcher's Table) and F (what is shown elsewhere: the Surgery Table's line, JEI and piece tooltips, `/bloodandbones minion fitness`, and the docs). What each stage does differently from the design, and why, is under "As built" in 1.1, 1.3, 1.4, 1.5, 1.9 and 1.10, and in docs/ARCHITECTURE-PROPOSAL.md 15.18 to 15.21; a review's findings are put right in 15.22. Only the surgeon question below is left, for the owner.
+**Where it stands: built.** All six stages of 1.10 are built: A (the numbers), B (tasks in the jobs' place, the screen, the wake rule, the status line and old saves), C (the levers: what fitness makes of the work in play), D (the surgeon: the fittest cuts, and its fitness prices the stump), E (the Tender, and the butcher at the Butcher's Table) and F (what is shown elsewhere: the Surgery Table's line, JEI and piece tooltips, `/bloodandbones minion fitness`, and the docs). What each stage does differently from the design, and why, is under "As built" in 1.1, 1.3, 1.4, 1.5, 1.9 and 1.10, and in docs/ARCHITECTURE-PROPOSAL.md 15.18 to 15.21; a review's findings are put right in 15.22, and a second review's in 15.23. Only the surgeon question below is left, for the owner.
 
 **The one question the owner must answer: the surgeon (1.5).** There are two choices:
 - any minion with a hand may do the ritual's cutting, badly unless it has a surgeon's head (recommended, and the default as built);
@@ -71,7 +71,7 @@ Either is one data switch: the surgeon task's file says `"needs_surgeon_head": f
 | Task | What it does | Where | The least it needs | From |
 |---|---|---|---|---|
 | **Idle** | "Stay" at home: keeps within 4 blocks of home. "Follow" with me: keeps near its maker. It only fights back. | home, or with me | nothing | companion's following |
-| **Guard** | At home: patrols its reach and attacks monsters there. With me: follows, and goes for what hurts its maker and what its maker hits, as a tamed wolf does. | home (16), or with me | something to strike with: an arm that is not folded, or a head to bite with | guard, bodyguard, companion's defending |
+| **Guard** | At home: patrols its reach and attacks monsters there. With me: follows, and goes for what hurts its maker and what its maker hits, as a tamed wolf does. | home (16), or with me | something to strike with: an arm that is not folded, or a head to bite with (a wing only buffets) | guard, bodyguard, companion's defending |
 | **Sentry** | Never leaves its post, and shoots what comes within range. With no ranged attack, it strikes only what comes within reach. | its post (where it stood when set) | something to strike with | sentry |
 | **Hunter** | Kills prey near home or near its maker. With a Meat Hook in hand it leaves intact carcasses. | home (12), or with me | something to strike with; the mobGriefing rule on | hunter |
 | **Sapper** | Walks to its target, or to the banner it was shown, and blows itself up through its organ. Then it lies powered down. | home (16) | a detonating organ | sapper (bb-organs) |
@@ -118,7 +118,13 @@ Either is one data switch: the surgeon task's file says `"needs_surgeon_head": f
 - **Nothing is picked up twice.** A courier's or farmer's pickup could copy a stack another had just taken (its maker walking over it, or a second courier), since a running goal is ticked between the times it is asked whether to go on. What a minion takes whole is emptied as it goes, and one already gone is let be.
 - **A courier with its maker** hands over only what they have room for. What does not fit it keeps, says "its maker has no room for what it brings", and tries again ten seconds later. It never fetches what its maker threw away.
 - **The surgeon's reach counts:** with no table at home it takes the nearest within its reach of where it stands (6, up to 12), where it looked only 6 blocks round whatever its reach. It reads its fitness again for each heart it tends, so a nocturnal head tends faster once night falls.
-- **A farmer picks up** what it reaped as far as it reaps, and two blocks more, where it looked only 10 blocks from home. It looks along a band of its box at a time, so a farmer set to reach 12 and a fit one read no more blocks a second than today's; a Tender asks a Create tank of many blocks once, at its controller.
+- **A farmer picks up** what it reaped as far as it reaps, and two blocks more, where it looked only 10 blocks from home. It looks along a band of its box at a time, so a farmer set to reach 12 reads no more blocks a second than today's; a Tender asks a Create tank of many blocks once, at its controller.
+
+**Put right after the second review** (docs/ARCHITECTURE-PROPOSAL.md 15.23):
+- **A fitter farmer never notices a ripe crop later than a 100% one.** Its bands were sized by its own look, so the fitter it was, the narrower each look's band: a 200% farmer at its own reach of 8 read its box in three looks, 30 ticks, where a 100% farmer read it whole every 20. A band is now as wide as a 100% farmer's at that reach (all the box at 8 or less), so a fitter farmer goes over its box as much sooner as it looks more often. It reads more blocks a second than today's farmer only by that much, twice at most. A poorer one reads as many more a look as keeps it to today's rate.
+- **Wings only buffet.** A wing's flap does no harm, so a winged body is shown and fights as its head: it bites, and its wings throw back what it bites. Before, the screen showed its bite and it flapped at its target for ever, hurting nothing. A headless body with only wings (or folded arms) has nothing to fight with: no Guard, Sentry or Hunter, and it strikes nothing that touches it.
+- **With its maker, its reach counts.** Idle keeps as far from its maker as its reach, as it does from home: it sets off 2 blocks past its reach and stops 1 short, never nearer than 3 (6 and 3 at its own 4, as before). A guard with its maker goes only for what is within its reach of them, and gives up on one that gets further. Before, both ignored the reach the screen let the maker set.
+- **A surgeon with no table in reach says so:** "no Surgery Table within 6 of where it stands", and its status line has it "at home" until it has one, where it said "at its table".
 
 ### 1.2 What makes a minion good or bad at a task
 
@@ -386,7 +392,7 @@ The brief's words keep their weight: villager and pillager heads are still the s
   - reach and maximum reach;
   - its main and second factors (a closed list: pace, sight, hands, blow, ranged, toughness, carry, pull);
   - its grip table (a map);
-  - its tool (an item tag, and whether it is required);
+  - its tool (an item tag; whether it is required stays the code's, since the goals decide it);
   - whether it stores its takings in the container by home;
   - the base numbers its levers scale.
 
@@ -437,12 +443,13 @@ Every missing knack and disposition counts as 1. Archetypes carry knacks and leg
 - **"Courier for the rest"** is a variant for the librarian, the cartographer, the mason and an unemployed villager (`"none"`). A modded profession gets the family's surgeon 1.5 and the biped's courier 1.25, and nothing more, until its datapack names it.
 - **The villager's own file no longer restates its family's `meek`.** A mob's own file wins over its family's variants (spec 4.2), so the nitwit's variant could not make it dim.
 - **Leg grips count only on a body standing on at least four legs.** A body standing on two wolf front legs uses them to stand, and holds with its mouth.
-- **The task file's tool** is `{"items": "<id or #tag>", "required": true, "carried": true, "grips": {...}}`, each optional: with no `items`, the task's own test in code (a Cleaver or Flensing Knife, a rod, a bow, crossbow or trident, healing splash potions, anything held as bait or sample); `carried` for a medic's potions, which it carries rather than holds; `grips`, the grip table while it holds one (a rod in hand fishes at 1, a courier's sample is held). The file also has `max_reach`, and the surgeon's `needs_surgeon_head` (1.5).
+- **The task file's tool** is `{"items": "<id or #tag>", "grips": {...}}`, each optional: with no `items`, the task's own test in code (a Cleaver or Flensing Knife, a rod, a bow, crossbow or trident, healing splash potions, anything held as bait or sample); `grips`, the grip table while it holds one (a rod in hand fishes at 1, a courier's sample is held). The file also has `max_reach`, and the surgeon's `needs_surgeon_head` (1.5). As built, the tool also had `required` and `carried`; after the second review these are the code's (below).
 - **The Olfactory Bulb gives Truffle Nose**, a new trait: `task_knack` Digger ×1.5. The Night Stalker Gland is left as it was.
 
 **What a task file can change, after the review** (docs/ARCHITECTURE-PROPOSAL.md 15.22):
 - **Its kind** is what a disposition scales and what the task screen lists it under: a hauler's file saying `"kind": "fight"` makes a brave head haul at 1.25 and moves the row under Fight. What the goals do stays code: a hauler does not start going after monsters.
 - **Its tool's `items`** narrow what the goals work with as well as what the row shows: a butcher's file naming only the Flensing Knife leaves a Cleaver waiting, row and goal alike (`MinionFitness.isTool`, which every goal that waits for a tool asks). A file cannot teach a goal a new tool: a stick named as a butcher's is no blade.
+- **Its tool's `required` and `carried`** are fixed in code, since the goals decide them: a butcher cannot cut without a blade, a fisher fishes by hand, a medic throws the potions it carries. A file that names them otherwise is logged and they are left as they are, and a tool given to a task that works with none (a farmer's) is left out (`MinionTask.checked`). Only the butcher, the herder and the medic wait for a tool. Where a file narrows the items, the words name them: "waiting for Flensing Knife", "With Crossbow: 150%" (a tag by its name where it has one).
 - **Its anchors** may be taken away, never added: only Idle, Guard, Hunter, Medic and Courier have goals that work round their maker. A file giving a Farmer "maker" is logged and the anchor left out; one with nothing left keeps the task's own. A task done only with its maker (a Guard's file with `["maker"]`) is set, woken and put back there.
 - **A head's `disposition` and its `knacks` keys** are checked as the data loads: a name that is no id ("Brave", "bloodandbones:Surgeon") or a knack that is no number is logged and left out, and the layer under it shows through. Before, it failed later, in play, and took the server down.
 
@@ -580,6 +587,16 @@ Every missing knack and disposition counts as 1. Archetypes carry knacks and leg
 - `badMinionDataLeftOutAsItLoads` (`gametest/MinionFitnessTests`) — a disposition "Brave" and knacks that are no id or no number are left out as the data loads, the layer under them showing through, and such a name read in play is no disposition, never a crash.
 - `partFactsShowKnacksGripsAndDispositions` now also reads JEI's page for a villager as a new one has it (Surgeon and Courier ×1.5, no Farmer, "its profession changes them"), and a witch's says nothing of one.
 - `tenderWakesAFallenMinion` has 3000 ticks, not 1600. Its Tender is 32% fit, and looked round half as often as its number said (the one-in-n chance was taken on every other tick), so its five errands ran past 80 s 2 times in 125. With the looks put right, they took 12 to 33 s over 38 runs.
+
+**Added after the second review** (docs/ARCHITECTURE-PROPOSAL.md 15.23; in `gametest/MinionTaskTests` unless named):
+- `fitFarmerFindsRipeCropsNoLater` — at every reach a farmer may be set to, one at 150% or 200% goes over its box in no more ticks than a 100% one, and a 50% one reads no more than its share. In the world, a 200% farmer at reach 6 by the pen's side (two bands, as it was) starts on a crop ripening on one side, then on the other, 30 times, within 16 ticks on average; a 100% farmer's look is 20. With the old bands it failed 5 runs in 6 (17 to 25 ticks).
+- `looksComeAsOftenAsTheScreenSays` — over two minutes a 200% courier looks round 240 times or so (every 10 ticks) and a poor one as its look ticks make, counted in the world. With the old one-in-n chance they looked about half as often and it failed every time.
+- `wingsBuffetTheHeadBites` — a farmer villager's head on a chicken's wings bites the husk by home as a Guard, its Blow its bite; a headless chicken body on its wings is offered no Guard, Sentry or Hunter.
+- `withMeKeepsToItsReach` — a guard with its maker at reach 4 leaves be what its maker hits 8 blocks off and goes for what they hit beside them; Idle with its maker at reach 8 stays while they are 9 off, and at its own reach follows.
+- `surgeonWithNoTableSaysSo` — with no table in its reach, its status line says so, "at home", all the time until a table is set down in reach, which it takes, the line then "at its table".
+- `reloadMovesATaskWhereItIsDone` — a Guard saved with its maker and loaded under a guard file allowing only home is Guard at home; one saved at home under a file allowing only its maker is with its maker; each keeps its home.
+- `tenderFillsTroughsAndCradles` now fills from a Create tank of eight blocks, two by two by two, and its look finds it once, at its block nearest the Tender.
+- `taskFileKindToolAndAnchorsCount` (`gametest/MinionFitnessTests`) now also reads that a file cannot make a butcher's tool optional, a fisher's required or a medic's held, nor give a farmer a tool, and that the words name a narrowed tool ("waiting for Flensing Knife", "With Crossbow") and the task's own otherwise.
 
 **The surgeon, if the recommendation is taken** (all built in D, `gametest/SurgeonTests`):
 - `anySurgeonWithAHandCuts` — a zombie-headed surgeon cuts and leaves a stump of two buckets; a villager-headed one leaves one bucket, and cuts first when both are there; a headless one leaves three. As built it also reads what the surgery screen is told of each: its fitness and its stumps' price.
