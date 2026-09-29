@@ -371,7 +371,23 @@ Two things stay open there: bloodless sounds (package 9), and both of a rabbit's
 
 **Owner first.** No.
 
-### 8. Rule 5: every block and every carcass on contraptions
+### 8. Rule 5: every block and every carcass on contraptions (done 29 September 2026, `bb-contraptions`)
+
+**Done.** ARCHITECTURE 15.29 has the details. The rest of this section is kept as it was written.
+- A contraption test for every block listed below (`ContraptionTests`), and one for building the blocks that hold things
+  into a Sable ship. Two blocks doubled what they held and are fixed: the Surgery Table dropped its attachment when a
+  contraption moved it, and every block that drops its contents when removed dropped them when a ship was built round it.
+- A hung carcass rides in its Shackle Hook's data while a contraption moves the hook, is drawn hanging there, and hangs
+  again, turned as the contraption turned, where it is set down (ARCHITECTURE 3.5's plan).
+- A resting carcass on a deck counts the deck's blocks as holding it up and is pinned to the deck, not the world.
+- A Shackle Hook on a ship is joined to the ship. The checks were right: it could not hold a carcass at all (Sable refused
+  its joint). It now hoists the carcass up to where the ship has carried its tip and holds it there.
+- A test on a moving deck: a ship driven four blocks with a cow resting on its deck and one hung from its gallows.
+- **Not done:**
+  - the cut leg that fell into the void was not made to happen again, in 32 tries (`VoidLegTests`, switched on only);
+  - chain conveyors on sub-levels (13.11), which this section named but did not ask to be built;
+  - a patient on a moved Surgery Table gets up where the table was (only Create's own seats carry a rider);
+  - a carcass kept in a hook's data is lost if the contraption is broken up and its blocks drop.
 
 **Why.**
 - "Every block moves on a gantry and glues to a contraption … Carcasses ride contraptions correctly too."
@@ -784,6 +800,8 @@ One line each. Details and test names are in ARCHITECTURE sections 13 to 15.
   - an organ adds a special.
 - **Power:** flesh minions drink at a Blood Trough they can reach; brass minions run on Soul Canisters swapped by the Charging Cradle; each kind has something the other lacks.
 - **Never destroyed:** a neglected or beaten minion powers down and lies where it is. The minion cap defaults to none.
+- **Contraptions and ships:** every block moves on a Create contraption keeping what it holds; a hung carcass rides in its
+  hook; on a Sable ship a hook holds its carcass and a resting carcass stays pinned to the deck as it moves (package 8).
 - **Checked by running it:** two clients on a dedicated server see the same carcass, and a dozen carcasses at once cost
   a sixth of a server tick until they rest (package 18). Hung carcasses do not rest; a line of them needs the cap
   (package 18, decision 3).

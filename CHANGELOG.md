@@ -118,6 +118,19 @@ Everything below is in development builds only; the art is placeholder (see the 
 - Carcass pieces in Create's Attribute Filter: sort by mob, by part (head, body, limb, tail), fresh
   or rotting, skinned, or from a baby.
 - Both hooks ride Create contraptions with the block they hang from.
+- A carcass hung on a Shackle Hook rides a Create contraption with its hook: it goes into the hook while it moves and is
+  drawn hanging there, and hangs again where the contraption stops, every piece where it was and turned as the
+  contraption turned. It used to fall off where the hook had been.
+- A Shackle Hook on a Sable ship holds its carcass, joined to the ship: it goes where the ship goes. Before, a hook on a
+  ship could not hold a carcass at all.
+- A carcass lying still on a ship's deck rests there, pinned to the deck, and goes where the deck goes. Before, it
+  unfolded again as soon as it rested (only the world's blocks counted as something under it), and a resting one was
+  pinned to the world, so it hung in the air while the deck moved on.
+- The four machines, the Bleeding Rack and its blood, the Spit Roast, the Butcher's Table, the Surgery Table, the Blood
+  Trough, the Charging Cradle, a Fluid Backtank set down and the Backtank Port ride Create contraptions keeping what
+  they hold. A moved machine turns at whatever drives it where it is set down, as Create's own machines do.
+- A Surgery Table moved on a contraption no longer drops its attachment as well as keeping it, and blocks built into a
+  Sable ship no longer drop what they hold as well (jars, tables, the rack, backtanks, machines' filters).
 
 ### Cooking, display and decoration
 
@@ -527,11 +540,13 @@ Everything below is in development builds only; the art is placeholder (see the 
   ones say "From a small one", but the Attribute Filter counts them as "from a baby".
 - Not rigged: the ender dragon and tropical fish.
 - Trolleys cannot ride chain conveyors that sit on a Sable sub-level (a moving ship).
-- A carcass hanging from a hook that a Create contraption moves falls off rather than going along.
+- A patient lying on a Surgery Table that a contraption moves gets up where the table was; only Create's own seats
+  carry a rider.
+- A carcass kept in its hook while a contraption moves is lost if the contraption is broken up and its blocks drop.
 - The Meat Hook holds a dragged carcass just in front of you. Walk forward and you walk into it, and it can carry you
   along; step back or sideways while facing it.
 - Now and then on a server, a cut-off limb falls through the ground and is lost. It has been seen once and not yet
-  reproduced.
+  reproduced (32 tries in game tests: legs over a chunk section's border, over a chunk's edge, flung off fast).
 - A carcass rising to a hook or a trolley still jostles a player standing right against it, a block or two.
 - A hung carcass never settles into its resting form, so every one hanging costs the server a little all the time
   (about 5 ms of each tick for a dozen).

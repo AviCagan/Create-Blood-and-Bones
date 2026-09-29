@@ -119,16 +119,19 @@ incremental. `./gradlew runClient` / `runServer` / `runData` are configured by M
 
 ### Development aids
 
-- `./gradlew runGameTestServer` runs the game tests headless (578: every rigged mob and baby,
+- `./gradlew runGameTestServer` runs the game tests headless (594: every rigged mob and baby,
   butchery and its three yield paths, rot, cold air, bleeding, machines, their motion and their part filters, cooking and display, decoration, surgery, organs, implants, backtanks, carcass armour and its traits, trait effects, minions and their tasks, movement and mounts, chains, recipes
   and the soul blood line on Create's machines, bloodless mode (no game logic reads it; no gory word or wet sound
   left), advancements and sounds, what a dozen carcasses at once cost the server, and the carcass physics: which way a
-  hooked carcass turns and a struck one falls).
+  hooked carcass turns and a struck one falls, and every block and carcass on Create contraptions and Sable ships).
   `-Dbloodandbones.debug.only=name,name` runs only those tests, and `-Dbloodandbones.debug.repeat=N` runs them N times.
   To time what carcasses cost, run one of these on its own with `-Dbloodandbones.debug.cost=N`:
   `-Dbloodandbones.debug.only=dozenCarcasses` prints the server's tick times with N dozen carcasses (one to four) made
   in the same tick, awake and then resting; `-Dbloodandbones.debug.only=dozenHung` with a dozen hanging on hooks, for a
   minute.
+  `-Dbloodandbones.debug.void=true -Dbloodandbones.debug.only=voidleg` chases the cut leg that once fell through the
+  ground (`VoidLegTests`: legs cut off cows hung over a chunk section's border, over a chunk's edge, and flung off
+  fast; `-Dbloodandbones.debug.void_runs=N` plays each N times).
 - The two-client check: with `-Dbloodandbones.multiplayer=true`, run `runMpServer`, then `runMpButcher` and
   `runMpWatcher`, each in its own terminal. The server makes a fresh flat world in `run/mp-server`; the Butcher kills,
   drags, hangs, cuts and skins a cow with real clicks while the Watcher photographs it into

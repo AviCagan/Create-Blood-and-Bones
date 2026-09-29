@@ -4475,3 +4475,125 @@ hind leg come round rear first, its head end pointing back west; the three struc
 swinging, one a leg short with the leg on the ground below it), the fitness lines and the task screen (Herder's and
 the Butcher's reasons, the list scrolled to its end, the Tender's reasons), the Surgery Table's line, the stumps by
 price, the minions' row, and the machines.
+
+### 15.29 (numbered at merge) Rule 5: every block and every carcass on contraptions (verified)
+
+This closes docs/BRIEF-AUDIT.md package 8, but for the cut leg that once fell into the void, which was chased and not
+made to happen again (below). No owner decision was needed and none was taken.
+
+**Every block on a Create contraption** (`gametest/ContraptionTests`). Create's own contraption tests put a contraption
+together, move it, take it apart and look at what arrived; these do the same with a Mechanical Piston two poles long
+built in the test (Create's use structure files). Each block is loaded first, then pushed two blocks on:
+- **the Mangler, Guillotine, Beheader and Deglover** (one test each): turning on a motor under them, pushed off it onto a
+  motor of another speed. As Create's own kinetic blocks do, a machine loses its drive while it moves and takes the drive
+  where it is set down (it turns at the new motor's 32 RPM). It keeps its output (and nothing new appears in it), its
+  filter, its stroke count and a Guillotine's wind. A machine is not an actor: it does nothing while it moves, as a
+  Millstone or a Mixer does not.
+- **the Bleeding Rack** with 2500 mB of blood: all of it arrives, none spills. Like Create's Basin and Item Drain, its
+  fluid rides in its data; it is not a mounted tank that the contraption's own fluid storage could draw on.
+- **the Spit Roast** with a whole cow on it, part cooked, pushing **a Specimen Jar** with a heart in it: both arrive with
+  what they hold, the cooking neither goes on nor back, and the cow does not come off into the world.
+- **the Butcher's Table** with a head on it and a filter; **the Blood Trough** with 3000 mB of blood pushing **the
+  Charging Cradle** with canisters and sheets (and each is found by minions where it is now: the per-level lists move with
+  them); **a Fluid Backtank** set down, iron, with 3000 mB of blood, pushing **the Backtank Port** (which still takes
+  pipes where it is set down).
+- **the Surgery Table and its seat**: with its Surgical Rig, a Cleaver laid on it, a filter and a villager lying on it.
+  The table arrives with all of it. Its seat does not go with it: a contraption carries a rider only on Create's own
+  seats (`Contraption#moveSeat` takes `SeatEntity` only, and puts riders back only on a `SeatBlock`), so the patient gets
+  up where the table was and the seat, left with no table, goes. **Found:** the table dropped its attachment as it was
+  taken up, so the rig arrived fitted and lay on the ground as well. The attachment is in the block's state, not its
+  block entity (which Create takes away before it removes the block), so nothing else stopped it. A table moved whole
+  (`movedByPiston`, which both Create and Sable pass when they move a block) keeps its attachment; it drops only when the
+  table is broken. The test first passed one run in two: the rig was sometimes knocked out of the test's ground by the
+  moving table, so each test now looks for the items it put in a little way round it too.
+- Every test checks that nothing lies about as an item: nothing dropped or doubled on the way.
+
+**Built into a Sable ship** (`blocksGoOntoAShipWhole`). Sable builds a ship by carrying each block's data into the ship's
+plot and then removing the old block with its block entity still there (it only asks it to clear itself, if it is a
+vanilla `Clearable`). Every block that drops its contents when removed dropped them: the jar's flesh, the Butcher's
+Table's piece, the Surgery Table's Cleaver and rig, a backtank (as its own item), the steel table's bone and the rack's
+diamond, all doubled, since the ship's copies kept theirs. The Mangler's output did not (it is `Clearable`), but its
+filter would have. Sable's own answer is the block tag `sable:silent_assembly_removal` (a block entity it removes quietly
+first), which datagen now fills with every block of ours that holds something (`BBTags.SILENT_ASSEMBLY_REMOVAL`); with the
+attachment fix above, nothing drops.
+
+**A hung carcass rides in its hook** (ARCHITECTURE 3.5's plan; `HookedCarcass`, `ShackleHookMovement`). Create can carry
+nothing on a contraption block but its data, and used to take the hook's data and leave the carcass, which fell where the
+hook had been (`movedShackleHookLetsGo` saw to it that the hook at least let go).
+- The hook is an actor now (a `MovementBehaviour`, registered on the block as Create's own are). Create starts its actors
+  while it puts the contraption together (`Contraption#startMoving`, called from each contraption type's `assemble`),
+  before it removes the blocks and before the contraption entity is sent to anyone. The actor reads the carcass from the
+  data Create took (not from the hook in the world: a train takes its blocks before it starts them), packs it and takes
+  its bodies out of the world (`CarcassButchery.takeAway`, as the Spit Roast takes a whole carcass).
+- **Packed**: the carcass's own record as it is saved, with its bodies' ids dropped and every other piece as a pose on
+  the torso (as the resting form keeps them, `RestPose`), the torso's turn in the world, and where on the torso the hook
+  held it. It goes into the hook's data (so it is set down with the hook) and a copy of what is needed to draw it into the
+  actor's own data, which Create sends to every client with the contraption.
+- **Drawn while it moves** (`HookedCarcassRenderer`, from `renderInContraption`, Create's way for an actor to draw in a
+  contraption): the torso held at the tip with its turn, every piece at its pose, with the mob's texture and coats, its
+  cut ends and its rot, the way the carcass's own cells draw it. It turns with the contraption. In bloodless mode it is
+  the plated wreck, as every carcass is (`CarcassModels.drawBone`).
+- **Set down**: Create loads the hook's data into the new hook, turns it (`TransformableBlockEntity`: a carcass set down by
+  a bearing a quarter round has its turn and its belly's way turned with it) and the hook, on its first tick, hangs it
+  again: the same record, its torso made anew and posed so the held point is on the tip, the rest unfolded and joined as a
+  resting carcass unfolds (`CarcassRest.split`). Its rot counts the time it spent moving (it goes by game time).
+- If the contraption does not move after all (a piston already at its end, a way blocked), the hook still in the world
+  keeps the packed carcass too and hangs it again on its next tick.
+- `hungCarcassRidesAContraptionInItsHooksData`: while the hook moves the cow is out of the world and the actor has it to
+  draw; set down, the same cow hangs at the moved hook's tip, skinned as it was, all six pieces back with five live
+  joints, each within 0.35 blocks of where it was on the torso, and there is one cow, not two. `turnedHookTurnsItsCarcass`:
+  set down a quarter round, its belly faces the way the turn took it. With the actor taken out, the first fails ("the
+  cow is still in the world while its hook moves").
+
+**Carcasses on Sable decks** (`CarcassRest`).
+- **What holds a resting carcass up**: `isSupported` read only the world's blocks, so a carcass on a deck (whose blocks are
+  in the ship's plot, far away) was found unsupported the second after it folded and unfolded again, for ever. It now
+  looks, under each corner, at the world's block and at the block of any sub-level there (read in its own plot), another
+  carcass included.
+- **What pins it**: the fully locked joint that holds a folded carcass still was made to the world, so on a deck that moved
+  it hung in the air while the deck went on. It is made to the deck when the carcass lies on one (a sub-level under it
+  that is not a carcass, which might unfold and go), at the same point and turn in the deck's own plot and frame; the
+  record says which (`restDeck`, not saved: the pin is made again after a reload, as before, and finds the deck again).
+- `restingCarcassIsPinnedToItsDeck`: a cow on a deck standing on four posts, nothing of the world under it, rests there
+  for longer than two of the support checks, pinned to the deck.
+
+**Shackle Hooks on ships** (`ShackleHookBlockEntity`). The checks were right (15.18, 15.28.1): a hook on a ship could not
+hold a carcass at all. It joined the body to the world at the tip's position in the ship's plot, which Sable refuses (a
+world joint's point may not be in the plot grid), so every tick it tried again and logged a warning, and the carcass
+lay where it was dragged. Now:
+- the joint is made to the ship's own body, at the tip in its plot, so the carcass goes where the ship goes;
+- the hook hoists on a ship too, up to where the ship has carried its tip, the ship's own speed at the tip added to the
+  hoist's; the belly-out spring turns with the ship;
+- a ship built round a hook with a carcass on it (Sable carries the hook's data into the plot, and the body stays where
+  it hangs) keeps it: a hook read back somewhere else lets its carcass go only if the carcass is not hanging at its tip.
+- `hookOnAShipHoldsItsCarcass`: a hook under a deck on posts hoists a cow up and holds it at the tip by a joint. With the
+  joint made to the world again, it fails (the hoist alone kept the cow near the tip, so the test asks for the joint).
+
+**A moving ship** (`carcassesRideAMovingShip`): a deck lying on the floor with a gallows at its back, a cow resting on
+the deck and a cow hung from the gallows' hook, driven four blocks east over three seconds (its speed set each tick, as
+a propeller would push it). The resting cow is still resting, within a quarter block of where it lay on the deck; the
+hung cow is still held fast, within half a block of where the ship has carried the tip. With the pin to the world, or the
+hook's joint to the world, it fails.
+
+**The cut leg that fell into the void** (15.18, item 4). Not made to happen again. `VoidLegTests` (off unless
+`-Dbloodandbones.debug.void=true`) builds high over its test, where no other test looks: a grass platform whose top is a
+chunk section's border, a cow lying on it and then hung four blocks over it for ten seconds, so that Sable drops that
+section's copy of the ground (nothing is near it), then a front leg cut off. Four ways: straight down, over a chunk's
+edge, and flung off at 6 and at 16 blocks a second across chunks. In 32 tries every leg stopped on the ground.
+- What was read. Sable builds the ground a body can hit only in the chunk sections near a body
+  (`PhysicsChunkTicketManager`: the body's box and one block round it, stretched down by one tick of its fall), once a
+  tick before the physics steps, and drops a section 20 ticks after nothing is near it. A falling leg has its section
+  built a tick or two before it gets there. Rapier's side keeps the ground only for sections it has been given, and a
+  block changed in a section it has not been given is ignored, not half-made. No way was found for the ground to be
+  missing where a leg lands.
+- One lead, not followed to the end: a leg flung 14 blocks down at 16 blocks a second went 0.77 blocks into the world's
+  grass in one tick before it was pushed out. At that speed a body moves 0.8 blocks a tick and Sable's physics has no
+  continuous collision, so a thin leg can sink that far; it did not go through. A catch that lifted any body found half a
+  block inside the ground back out, and built the ground again round it, was tried and taken out again: it could not be
+  tested against the real fault, and lifting one limb of a jointed carcass out of its neighbours threw it sideways.
+
+**Rule 4.** Nothing new is said to the player. The carcass drawn on a moving hook is drawn by `CarcassModels.drawBone`,
+which gives the plated wreck in bloodless mode.
+
+**Tests.** 16 new, all in `ContraptionTests`: ten for the blocks, one for building them into a ship, two for a hook on a
+contraption and three for decks and ships. The suite is 594 tests (the switched-on-only `VoidLegTests` are not in it).
