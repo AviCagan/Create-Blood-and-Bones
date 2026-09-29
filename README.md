@@ -107,9 +107,10 @@ incremental. `./gradlew runClient` / `runServer` / `runData` are configured by M
 
 ### Development aids
 
-- `./gradlew runGameTestServer` runs the game tests headless (417: every rigged mob and baby,
-  butchery, rot, bleeding, machines and their filters, cooking and display, decoration, surgery, implants, backtanks, carcass armour and its traits, trait effects, minions and their jobs, chains, recipes,
-  advancements and sounds).
+- `./gradlew runGameTestServer` runs the game tests headless (431: every rigged mob and baby,
+  butchery, rot, bleeding, machines and their filters, cooking and display, decoration, surgery, implants, backtanks, carcass armour and its traits, trait effects, minions and their jobs, chains, recipes
+  and the soul blood line on Create's machines, bloodless mode (no game logic reads it; no gory word or wet sound
+  left), advancements and sounds).
 - `./gradlew runData -Dbloodandbones.dump_layers=minecraft:goat#main,...` writes those vanilla
   models' part trees to `run/build/layer-dump.txt`, for writing new rig targets in
   `src/main/rig_targets`.

@@ -3,22 +3,12 @@
   "heat_requirement": "superheated",
   "ingredients": [
     {
-      "item": "minecraft:soul_sand"
-    },
-    {
-      "type": "neoforge:single",
-      "amount": 500,
-      "fluid": "bloodandbones:blood"
-    },
-    {
-      "type": "neoforge:single",
-      "amount": 50,
-      "fluid": "create_enchantment_industry:experience"
+      "item": "bloodandbones:soul_clot"
     }
   ],
   "results": [
     {
-      "amount": 500,
+      "amount": 200,
       "id": "bloodandbones:soul_blood"
     }
   ]

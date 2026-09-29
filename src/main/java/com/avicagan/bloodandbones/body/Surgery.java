@@ -235,7 +235,7 @@ public final class Surgery {
                 table.take();
                 body.restore(part);
                 com.avicagan.bloodandbones.carcass.Blood.burst(level, at, 4);
-                level.playSound(null, pos, SoundEvents.SLIME_BLOCK_PLACE, SoundSource.PLAYERS, 1.0F, 0.8F);
+                level.playSound(null, pos, com.avicagan.bloodandbones.registry.BBSounds.FLESH_PLACE.get(), SoundSource.PLAYERS, 1.0F, 0.8F);
             }
             case UNCLIP -> {
                 give(surgeon, body.unclip(part), pos, level);

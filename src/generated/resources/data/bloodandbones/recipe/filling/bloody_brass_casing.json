@@ -5,9 +5,9 @@
       "item": "create:brass_casing"
     },
     {
-      "type": "neoforge:single",
+      "type": "neoforge:tag",
       "amount": 250,
-      "fluid": "bloodandbones:blood"
+      "tag": "c:blood"
     }
   ],
   "results": [

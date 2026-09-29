@@ -7,7 +7,6 @@ import com.mojang.serialization.Codec;
 import com.mojang.serialization.MapCodec;
 import com.mojang.serialization.codecs.RecordCodecBuilder;
 import net.minecraft.resources.ResourceLocation;
-import net.minecraft.sounds.SoundEvents;
 import net.minecraft.world.effect.MobEffectCategory;
 import net.minecraft.world.effect.MobEffectInstance;
 import net.minecraft.world.entity.LivingEntity;
@@ -56,7 +55,7 @@ public record RegenEffect(LevelBasedValue amount, List<String> cure, Optional<Mo
         if (heal > 0.0F) {
             host.heal(heal);
             // flesh knitting back together: a soft wet squelch
-            ctx.level().playSound(null, host.getX(), host.getY(), host.getZ(), SoundEvents.SLIME_SQUISH_SMALL, host.getSoundSource(), 0.3F,
+            ctx.level().playSound(null, host.getX(), host.getY(), host.getZ(), com.avicagan.bloodandbones.registry.BBSounds.FLESH_SQUISH_SMALL.get(), host.getSoundSource(), 0.3F,
                     0.6F + ctx.random().nextFloat() * 0.2F);
         }
         cure(host, cure);

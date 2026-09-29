@@ -148,8 +148,8 @@ public final class Vent {
                 particles(level, eye, look, ParticleTypes.EFFECT);
             }
             case SPILL -> {
-                boolean blood = kind.isSame(com.avicagan.bloodandbones.registry.BBFluids.blood());
-                boolean soul = kind.isSame(com.avicagan.bloodandbones.registry.BBFluids.soulBlood());
+                boolean blood = kind.is(com.avicagan.bloodandbones.registry.BBFluids.BLOOD_TAG);
+                boolean soul = kind.is(com.avicagan.bloodandbones.registry.BBFluids.SOUL_BLOOD_TAG);
                 if (blood || soul) {
                     Vector3d from = new Vector3d(eye.x, eye.y - 0.2, eye.z);
                     com.avicagan.bloodandbones.carcass.Blood.spray(level, from, new Vector3d(look.x, look.y, look.z), 10, soul);

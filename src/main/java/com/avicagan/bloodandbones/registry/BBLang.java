@@ -67,7 +67,16 @@ public class BBLang {
         item("blood_steel_ingot",
                 "Iron _quenched in blood_. Fill an iron ingot with _250 mB_ of blood in a Spout.");
         item("blood_diamond",
-                "A diamond steeped in _soul blood_. Fill a diamond with _1000 mB_ of soul blood in a Spout.");
+                "A diamond steeped in _blood_ and _experience_, one after the other, as a sequenced assembly.",
+                "When Made", "Put a diamond through a _Spout_ of _1000 mB_ of blood, then a Spout of _1000 mB_ of liquid experience. Any mod's blood or experience will do.");
+        item("congealed_blood",
+                "Blood pressed until it _sets_: a dark, wobbling slab. The first step of the _soul blood_ line.",
+                "When Made", "A _Mechanical Press_ over a _heated_ Basin sets _250 mB_ of blood into one.",
+                "Next", "_Haunt_ it: an _Encased Fan_ blowing through _soul fire_ turns it into a Soul Clot.");
+        item("soul_clot",
+                "Congealed blood with a _soul_ caught in it, faintly glowing.",
+                "When Made", "Blow an _Encased Fan_ through _soul fire_ over Congealed Blood.",
+                "Next", "A _Mechanical Mixer_ over a _superheated_ Basin melts it back into _200 mB_ of soul blood.");
 
         // ---- cooking and display
         block("spit_roast",
@@ -92,6 +101,15 @@ public class BBLang {
         block("bloody_copper_casing",
                 "Copper casing _splashed with blood_. Joins up with its neighbours like any casing.",
                 "When Made", "_Fill_ a Copper Casing with 250 mB of blood using a _Spout_.");
+        block("bloody_railway_casing",
+                "Create's train casing _splashed with blood_. Joins up with its neighbours as Create's does.",
+                "When Made", "_Fill_ a Train Casing with 250 mB of blood using a _Spout_.");
+        for (String[] stone : new String[][]{{"bloody_cut_calcite", "Cut Calcite"}, {"bloody_polished_cut_calcite", "Polished Cut Calcite"},
+                {"bloody_cut_calcite_bricks", "Cut Calcite Bricks"}, {"bloody_small_calcite_bricks", "Small Calcite Bricks"}}) {
+            block(stone[0],
+                    "Create's " + stone[1] + ", white as a slaughterhouse wall, _splashed with blood_ that has run into the joints.",
+                    "When Made", "_Fill_ Create's " + stone[1] + " with 100 mB of blood using a _Spout_. A _stonecutter_ turns the stained cut calcite into the others, and any of them into stairs and slabs.");
+        }
         block("steel_table",
                 "A cold steel _morgue table_. Tables side by side _join into one run_, with legs only where it ends or turns.",
                 "When R-Clicked on the Top", "Lays the held item on it: _one item_, any item. A carcass piece lies on its back.",
@@ -110,8 +128,8 @@ public class BBLang {
                 "When Used on a Bone Pile", "Adds a _layer_, up to a full block.",
                 "When Broken", "Drops _two bones_ a layer.");
         block("butcher_hook",
-                "A hook for a wall, to hang a carcass piece on for show.",
-                "When R-Clicked with a Carcass Piece", "Hangs it on the hook. It _keeps_ there. R-Click with an _empty hand_ to take it down.");
+                "A hook for a wall, to hang _any body part_ on for show: a carcass piece, a severed limb, an organ, scraps, meat or a head.",
+                "When R-Clicked with a Body Part", "Hangs it on the hook. A carcass piece _keeps_ there. A fresh piece, a severed part or raw meat _drips_ for a while. R-Click with an _empty hand_ to take it down.");
         block("specimen_jar",
                 "A jar of cloudy _preserving fluid_ for keeping _one item_ on show, any item.",
                 "When R-Clicked with an Item", "Puts it in, to drift in the fluid; a carcass piece pickles pale. R-Click with an _empty hand_ to take it out.");
@@ -197,6 +215,24 @@ public class BBLang {
         item("stomach",
                 "Somebody's _stomach_.",
                 "On a Surgery Table", "Goes back in where a stomach is _missing_. Without a working stomach you cannot eat, though you never starve.");
+        // bloodless mode: organic implants are plating and cable, not grafted flesh, and they wear rather than rot
+        bloodless("item.bloodandbones.flesh_arm", "Plated Arm");
+        bloodless("item.bloodandbones.flesh_arm.tooltip.summary", "A _plated_ arm of panels and cable, riveted on. Runs on _essence_ from a worn Fluid Backtank.");
+        bloodless("item.bloodandbones.flesh_arm.tooltip.behaviour2", "Every swing _wears_ it a little. Essence in your backtank clears the wear as you go; fully worn, it gives no bonus until it has been _flushed_.");
+        bloodless("item.bloodandbones.sinew_leg", "Cabled Leg");
+        bloodless("item.bloodandbones.sinew_leg.tooltip.summary", "A _plated_ leg, all cable. Runs on _essence_ from a worn Fluid Backtank.");
+        bloodless("item.bloodandbones.sinew_leg.tooltip.behaviour2", "Every stretch you _run_ wears it a little. Essence in your backtank clears the wear as you go; fully worn, it gives no bonus.");
+        bloodless("item.bloodandbones.furnace_stomach", "Furnace Hopper");
+        bloodless("item.bloodandbones.furnace_stomach.tooltip.summary", "A _plated_ hopper with a fire in it. Runs on _essence_.");
+        bloodless("item.bloodandbones.furnace_stomach.tooltip.behaviour2", "Every meal wears it a little. Essence in your backtank clears the wear as you go.");
+        for (String limb : new String[]{"severed_arm", "severed_leg"}) {
+            bloodless("item.bloodandbones." + limb + ".tooltip.behaviour1", "Goes back on where " + ("severed_arm".equals(limb) ? "an arm" : "a leg")
+                    + " is _missing_, anyone's, either side. It works again.");
+        }
+        for (String piece : new String[]{"Helmet", "Chestplate", "Leggings", "Boots"}) {
+            bloodless("item.bloodandbones.carcass_" + piece.toLowerCase(java.util.Locale.ROOT), "Plated " + piece);
+        }
+        bloodless("bloodandbones.set_bonus.flesh", "Plated set: you mend from what you hit, and wear half as fast");
         // bloodless mode calls organs what they would be in a machine (docs/PARTS-AND-TRAITS.md section 7.10), here as in armour's text
         String[][] cores = {
                 {"eye", "Lens", "Somebody's _lens_.", "Goes back in where a lens is _missing_. A lens gone closes in your _view_; with none you see only a few blocks."},
@@ -411,8 +447,11 @@ public class BBLang {
         for (String piece : new String[]{"helmet", "chestplate", "leggings", "boots"}) {
             BloodAndBones.REGISTRATE.addRawLang("bloodandbones.piece." + piece, Character.toUpperCase(piece.charAt(0)) + piece.substring(1));
         }
-        BloodAndBones.REGISTRATE.addRawLang("scrap_material.bloodandbones.hide_plate", "Hide");
+        // the grazers' material is their meat and gristle, not their hide: hide is fitted on top, and a cow's boots
+        // of scraps alone must not read "Cow Hide Boots"
+        BloodAndBones.REGISTRATE.addRawLang("scrap_material.bloodandbones.hide_plate", "Brawn");
         BloodAndBones.REGISTRATE.addRawLang("scrap_material.bloodandbones.sinew", "Sinew");
+        bloodless("scrap_material.bloodandbones.sinew", "Cable");
         BloodAndBones.REGISTRATE.addRawLang("scrap_material.bloodandbones.gristle", "Gristle");
         // the item name is mob, material, piece: "Pelt" and "Plate", so a polar bear's is not "Polar Bear Bear Hide Chestplate"
         String[][] materials = {
@@ -626,6 +665,18 @@ public class BBLang {
         BloodAndBones.REGISTRATE.addRawLang("item.bloodandbones.carcass_piece.skinned", "Skinned");
         BloodAndBones.REGISTRATE.addRawLang("item.bloodandbones.carcass_piece.baby", "From a baby");
         BloodAndBones.REGISTRATE.addRawLang("item.bloodandbones.carcass_piece.small", "From a small one");
+        // a wreck's pieces do not rot, they corrode; skinned, they are stripped of their plating
+        bloodless("item.bloodandbones.carcass_piece.fresh", "Sound (%s%%)");
+        bloodless("item.bloodandbones.carcass_piece.going_off", "Worn (%s%%)");
+        bloodless("item.bloodandbones.carcass_piece.rotting", "Corroded (%s%%)");
+        bloodless("item.bloodandbones.carcass_piece.skinned", "Stripped");
+        // and Create's filter asks after the same keeping
+        bloodless("create.item_attributes.bloodandbones.fresh_piece", "is in sound condition");
+        bloodless("create.item_attributes.bloodandbones.fresh_piece.inverted", "is not in sound condition");
+        bloodless("create.item_attributes.bloodandbones.rotting_piece", "is corroded");
+        bloodless("create.item_attributes.bloodandbones.rotting_piece.inverted", "is not corroded");
+        bloodless("create.item_attributes.bloodandbones.skinned_piece", "is stripped");
+        bloodless("create.item_attributes.bloodandbones.skinned_piece.inverted", "is not stripped");
 
         // ---- advancements
         advancement("butchery", "Create: Blood & Bones", "Make a Meat Hook. Whatever it kills stays whole");
@@ -637,7 +688,7 @@ public class BBLang {
         advancement("machine", "Industrial Slaughter", "Build a butchery machine");
         advancement("blood_steel", "Tempered in Blood", "Quench iron in blood with a Spout");
         advancement("soul_blood", "Soul Food", "Give blood a soul");
-        advancement("blood_diamond", "Priceless", "Steep a diamond in soul blood");
+        advancement("blood_diamond", "Priceless", "Steep a diamond in blood and experience");
         advancement("spit_roast", "Low and Slow", "Build a Spit Roast");
         advancement("specimen", "Curiosities", "Make a Specimen Jar to keep a piece of something on show");
         advancement("butcher_table", "Chop Shop", "Make a Butcher's Table to cut pieces up on");
@@ -660,7 +711,7 @@ public class BBLang {
         ponder("beheader", "Taking Heads with the Beheader", "The Beheader takes heads off. Zombies, skeletons, creepers and piglins sometimes leave their skull whole", "It is driven by a shaft from below. The faster it turns, the faster it works", "It works any carcass lying on it or hanging over it. Set it flush in a floor so a body lies across it", "What it makes waits inside. Take it with an empty hand, or pull it out with a funnel or hopper");
         ponder("deglover", "Skinning with the Deglover", "The Deglover strips the hide off a carcass, and a sheep's wool with it", "It is driven by a shaft from below. The faster it turns, the faster it works", "It works any carcass lying on it or hanging over it. Set it flush in a floor so a body lies across it", "What it makes waits inside. Take it with an empty hand, or pull it out with a funnel or hopper");
         ponder("bleeding_rack", "Draining Blood with the Bleeding Rack", "The Bleeding Rack is a drip tray with a tank for catching blood", "Hang a carcass on a Shackle Hook up to 8 blocks above it, and its blood drips into the tray", "An Encased Fan blowing across the body drains it up to four times faster", "Pipes can pull the blood from the rack's sides and bottom. When the rack is full, the carcass stops draining");
-        ponder("butcher_hook", "Hanging Meat on the Butcher's Hook", "Bloody Casing: fill an Andesite Casing with 250 mB of blood from a Spout. It joins up like any casing", "A Butcher's Hook goes on the side of a solid block", "Right-click with a carcass piece to hang it up. It keeps there, like a piece in a Specimen Jar", "Take it down with an empty hand. If the block behind it is broken, the hook falls and drops the piece");
+        ponder("butcher_hook", "Hanging Meat on the Butcher's Hook", "Bloody Casing: fill an Andesite Casing with 250 mB of blood from a Spout. It joins up like any casing", "A Butcher's Hook goes on the side of a solid block", "Right-click with any body part to hang it up: a carcass piece, a severed limb, an organ, scraps or meat. A carcass piece keeps there, like a piece in a Specimen Jar", "Take it down with an empty hand. If the block behind it is broken, the hook falls and drops the piece");
         ponder("butcher_table", "Chopping Pieces on the Butcher's Table", "Right-click the Butcher's Table with a carcass piece to lay it on the top", "Chop it with a Cleaver: it comes apart into meat, bone, offal and fat, spoiled as far as it had rotted", "A Deployer holding a Cleaver chops too. A funnel or hopper can lay the pieces on the table");
         ponder("spit_roast", "Roasting on the Spit Roast", "Set the Spit Roast over heat: a campfire, fire, lava or a Blaze Burner", "A shaft turns the spit. It only roasts while it turns", "Right-click with a carcass piece to skewer it. It browns as it cooks", "Take it off with an empty hand once cooked: it comes apart into cooked meat and bones. Leave it too long and it burns");
 
@@ -693,10 +744,10 @@ public class BBLang {
                 "Guillotine: limbs off. Beheader: heads off, sometimes a skull. Deglover: hides off. Mangler: everything, down to meat and bone. Take their output with a funnel or an empty hand.",
                 "The filter slot on each machine's top edge picks what it works on: a spawn egg or a carcass piece for one kind of mob, or a Create list or attribute filter.");
         jei("display",
-                "Show off your work. The Butcher's Hook hangs on the side of a solid block and the Specimen Jar sits anywhere; either holds one carcass piece, which keeps there. Right-click with the piece, and with an empty hand to take it back.",
+                "Show off your work. The Butcher's Hook hangs on the side of a solid block and takes any body part: a carcass piece, a severed limb, an organ, scraps, meat or a head. The Specimen Jar sits anywhere and holds one thing, any thing. A carcass piece keeps in either. Right-click with it, and with an empty hand to take it back.",
                 "The Butcher's Table holds a piece too, lying on its top: right-click it with a Cleaver and it comes apart into meat, bone, offal and fat, spoiled as far as it had rotted.");
         jei("decoration",
-                "Bloody Casing: fill an Andesite Casing with 250 mB of blood from a Spout. It joins up with its neighbours like Create's own casings. Brass and Copper Casings take blood the same way.",
+                "Bloody Casing: fill an Andesite Casing with 250 mB of blood from a Spout. It joins up with its neighbours like Create's own casings. Brass, Copper and Train Casings take blood the same way. So does Create's cut calcite, 100 mB a block: a small stained palette of cut, polished, bricks and small bricks, with stairs and slabs from the stonecutter.",
                 "Gut Chain: three pieces of offal in a column make three. It hangs and lies like a chain. Used on a Create chain conveyor's chain, it hangs a link from it that rides round with the chain; use more on the string to lengthen it, up to eight links, and hit it to take it down.",
                 "Ribcage Arch: build two stacks facing each other; the top of each bends inward, and ribs hung in the air between them run level to close the arch. A row of arches makes the inside of a ribcage. Bone Pile: use it on a pile to add a layer; each layer drops two bones.");
         jei("morgue",
@@ -714,7 +765,9 @@ public class BBLang {
                 "A missing arm means no off-hand and slower swings, a missing leg no sprinting, a missing eye less to see by. Lay an implant or a part on the table and lie down again to fit it; an implant unclips with nothing on the table. Fitting never needs a surgeon, and a crude prosthetic never needs essence, so one can always go on.");
         jei("implants",
                 "Basic prosthetics (Peg Leg, Hook Hand) need nothing. Organic ones (Flesh Arm, Sinew Leg, Furnace Stomach) run on blood and cybernetics (Hydraulic Arm, Piston Leg, Optic Eye, Pump Heart, Bellows Lungs) on soul blood, from a worn Fluid Backtank, a mB or two a second. The Vent Arm runs on whatever the tank holds; the Port Arm needs nothing.",
+                "The gauge by the hotbar, where Create shows a backtank's air, reads the worn tank whenever one is on or a powered implant is fitted: how much it holds, a bar of the fluid itself, and under it the implants it runs, dimmed when their fuel is not in the tank.",
                 "When the tank runs out of their fluid they stop working, as if the part were missing, until it is filled again. The Vent Arm sprays the tank (hold use, empty-handed); the Port Arm plugs the tank into pipes at a Backtank Port.");
+        bloodless("bloodandbones.jei.implants.1", "Basic prosthetics (Peg Leg, Hook Hand) need nothing. Plated ones (Plated Arm, Cabled Leg, Furnace Hopper) run on essence and cybernetics (Hydraulic Arm, Piston Leg, Optic Eye, Pump Heart, Bellows Lungs) on soul essence, from a worn Fluid Backtank, a mB or two a second. The Vent Arm runs on whatever the tank holds; the Port Arm needs nothing.");
         jei("backtank",
                 "The Fluid Backtank holds any fluid, worn in the chest slot with the armour of its tier: copper 2 buckets, gold 3, iron 4, diamond 6, blood steel 8, blood diamond 16, soul netherite 32.",
                 "Right-click a block to set it down; pipes fill or empty it from any side, and it keeps its fluid when broken. A Spout fills it and an Item Drain empties it in the hand. The soul netherite tank is a smithing upgrade of the blood diamond one.",
@@ -736,7 +789,8 @@ public class BBLang {
                 "Every part does its own thing. The torso sets its size, health and how much it carries; the head its jobs and its bite; the legs how fast and how it moves; arms its blows. Crouch and R-Click it with an empty hand to change its job.",
                 "It runs on blood: a little all the time, more moving, working and fighting. Low, it walks to a Blood Trough to drink. Empty, it lies down where it is, alive, and nothing but a player can hurt it; give it blood and it gets up. Crouch-R-Click one lying down a few times to fold it up and carry it; set down, it works from there. Its maker's Cleaver on one lying down on an Assembly Frame table takes it back apart into a frame there.");
         jei("soul_blood",
-                "Soul Blood is blood with a soul in it. Mix blood, soul sand and a little liquid experience over a superheated Blaze Burner, or ferment blood with nether wart and soul soil under a Basin Lid.");
+                "Soul Blood is blood with a soul in it, and it takes Create's own machines to make in bulk. First a Mechanical Press over a heated Basin sets 250 mB of blood into Congealed Blood. Then an Encased Fan blowing through soul fire haunts it into a Soul Clot. Last, a Mechanical Mixer over a superheated Basin melts the clot back into 200 mB of Soul Blood.",
+                "There are two quicker ways, both far poorer: mix a bucket of blood with soul sand and 100 mB of liquid experience over a superheated Blaze Burner, or ferment it with nether wart and soul soil under a Basin Lid. Each gives back only 100 mB. Nether mobs hung over a Bleeding Rack bleed a little Soul Blood straight away.");
     }
 
     private static void config(String key, String name, String tooltip) {

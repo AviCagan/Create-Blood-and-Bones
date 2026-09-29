@@ -218,6 +218,23 @@ public final class DevShowcase {
                                 BBBlocks.GUT_CHAIN.asStack().getHoverName().getString(),
                                 com.avicagan.bloodandbones.registry.BBEntities.HANGING_GUT_CHAIN.get().getDescription().getString(),
                                 net.minecraft.client.resources.language.I18n.get("block.bloodandbones.ribcage_arch.tooltip.summary"));
+                        BloodAndBones.LOGGER.info("[showcase] material names: {} | {} | {} | {} | {} | {} | {}",
+                                BBItems.FLESH_ARM.asStack().getHoverName().getString(),
+                                BBItems.SEVERED_ARM.asStack().getHoverName().getString(),
+                                BBItems.CONGEALED_BLOOD.asStack().getHoverName().getString(),
+                                BBItems.SOUL_CLOT.asStack().getHoverName().getString(),
+                                BBBlocks.BLOODY_RAILWAY_CASING.asStack().getHoverName().getString(),
+                                BBBlocks.BLOODY_CUT_CALCITE_BRICKS.asStack().getHoverName().getString(),
+                                BBItems.CARCASS_BOOTS.asStack().getHoverName().getString());
+                        // what a wet sound is heard as here: itself, or in bloodless mode its metal twin (the
+                        // headless client has no sound, so the event the sound engine would send is sent by hand)
+                        var squelch = net.minecraft.client.resources.sounds.SimpleSoundInstance.forUI(com.avicagan.bloodandbones.registry.BBSounds.FLESH_SQUISH.get(), 0.8F, 0.5F);
+                        var heard = new net.neoforged.neoforge.client.event.sound.PlaySoundEvent(null, squelch);
+                        BloodlessSounds.onPlay(heard);
+                        BloodAndBones.LOGGER.info("[showcase] sound: {} is heard as {} (pitch {}, volume {})", squelch.getLocation(),
+                                heard.getSound() == null ? "nothing" : heard.getSound().getLocation(),
+                                heard.getSound() instanceof net.minecraft.client.resources.sounds.AbstractSoundInstance a ? ((com.avicagan.bloodandbones.mixin.SoundInstanceAccessor) a).bloodandbones$pitch() : -1.0F,
+                                heard.getSound() instanceof net.minecraft.client.resources.sounds.AbstractSoundInstance a2 ? ((com.avicagan.bloodandbones.mixin.SoundInstanceAccessor) a2).bloodandbones$volume() : -1.0F);
                         // what Create's Attribute Filter offers for a pig's head, as the player reads it
                         ItemStack head = new ItemStack(BBItems.CARCASS_PIECE.get());
                         head.set(com.avicagan.bloodandbones.registry.BBDataComponents.PIECE.get(), new CarcassPieceItem.Piece(
@@ -576,12 +593,37 @@ public final class DevShowcase {
                 } else if (t == 278) {
                     Screenshot.grab(mc.gameDirectory, PREFIX + "effects_1.png", mc.getMainRenderTarget(), message -> {
                     });
+                    // the backtank's gauge: a copper tank of blood worn, running a Flesh Arm and a Sinew Leg; a Hydraulic Arm
+                    // beside them has no soul blood, so it shows dimmed
                     server.execute(() -> {
                         ServerPlayer player = server.getPlayerList().getPlayers().get(0);
                         player.serverLevel().setDayTime(6000);
-                        player.setItemSlot(net.minecraft.world.entity.EquipmentSlot.CHEST, ItemStack.EMPTY);
+                        ItemStack tank = new ItemStack(BBItems.backtank(com.avicagan.bloodandbones.backtank.BacktankTier.COPPER));
+                        com.avicagan.bloodandbones.backtank.FluidBacktankItem.setFluid(tank, new net.neoforged.neoforge.fluids.FluidStack(BBFluids.blood(), 1500));
+                        player.setItemSlot(net.minecraft.world.entity.EquipmentSlot.CHEST, tank);
+                        var body = com.avicagan.bloodandbones.body.BodyEffects.body(player);
+                        body.fit(com.avicagan.bloodandbones.body.BodyPart.RIGHT_ARM, new ItemStack(BBItems.FLESH_ARM.get()));
+                        body.fit(com.avicagan.bloodandbones.body.BodyPart.LEFT_ARM, new ItemStack(BBItems.HYDRAULIC_ARM.get()));
+                        body.fit(com.avicagan.bloodandbones.body.BodyPart.RIGHT_LEG, new ItemStack(BBItems.SINEW_LEG.get()));
+                        com.avicagan.bloodandbones.body.BodyEffects.changed(player);
+                        // a second tank in the hotbar, to show its item bar in the blood's colour; the hand stays empty
+                        player.getInventory().setItem(8, tank.copy());
                     });
+                    mc.options.setCameraType(net.minecraft.client.CameraType.FIRST_PERSON);
                     mc.options.hideGui = false;
+                } else if (t == 300) {
+                    Screenshot.grab(mc.gameDirectory, PREFIX + "gauge.png", mc.getMainRenderTarget(), message -> {
+                    });
+                    BloodAndBones.LOGGER.info("[showcase] gauge: {} implants; bar colour {}", BacktankGauge.poweredImplants(mc.player).size(),
+                            Integer.toHexString(BacktankGauge.colour(com.avicagan.bloodandbones.backtank.FluidBacktankItem.fluid(
+                                    com.avicagan.bloodandbones.backtank.FluidBacktankItem.wornBy(mc.player)))));
+                    server.execute(() -> {
+                        ServerPlayer player = server.getPlayerList().getPlayers().get(0);
+                        player.setItemSlot(net.minecraft.world.entity.EquipmentSlot.CHEST, ItemStack.EMPTY);
+                        player.getInventory().clearContent();
+                        player.setData(com.avicagan.bloodandbones.body.BBAttachments.BODY, new com.avicagan.bloodandbones.body.Body());
+                        com.avicagan.bloodandbones.body.BodyEffects.changed(player);
+                    });
                     stage = 4;
                     ticks = 0;
                 }
@@ -743,6 +785,10 @@ public final class DevShowcase {
         int decoZ = o.getZ() + 34;
         decoration(level, o, decoZ, jarPig, roastCow);
 
+        // row F, the materials and the decoration leftovers (docs/BRIEF-AUDIT.md packages 14 and 17)
+        int materialsZ = o.getZ() + 52;
+        materials(level, o, materialsZ, jarPig, roastCow);
+
         double eye = o.getY();
         views = List.of(
                 // carcasses, from behind the row
@@ -784,13 +830,25 @@ public final class DevShowcase {
                 // gut chains riding the chain conveyor
                 new View(o.getX() - 2.5, eye + 1.5, decoZ + 1.0, 0, -12));
         debrisView = views.size() - 2;
+        views = new java.util.ArrayList<>(views);
+        // these four from the ground, where the player lands (it does not fly), looking level or up
+        views.addAll(List.of(
+                // the soul blood line: press over a heated basin, fan through soul fire, mixer over a superheated basin
+                new View(o.getX() - 3.5, eye, materialsZ - 8.0, 0, 0),
+                // the Blood Diamond on its depot under a spout, and a finished one beside it
+                new View(o.getX() + 6.0, eye, materialsZ - 3.5, 0, -8),
+                // the stained palette and the train casing, bloody beside Create's own, hooks hung with every kind of part
+                new View(o.getX() + 0.5, eye, materialsZ + 4.5, 0, 5),
+                // the hooks close up
+                new View(o.getX() - 1.5, eye, materialsZ + 6.8, 0, -18)));
         debrisAt = new BlockPos(o.getX(), o.getY() + 1, decoZ + 13);
         BloodAndBones.LOGGER.info("[showcase] built at {}", o);
     }
 
     /**
      * Client: bits flying off each bloody block as if it were broken, in a row in mid-air: bone pile, rib,
-     * brass, copper and andesite casing, gut chain. In bloodless mode they should come off clean.
+     * brass, copper and andesite casing, gut chain; above them, what comes off a carcass (landing, rolling, struck)
+     * and off a blood stain scuffed away. In bloodless mode they should come off clean: steel, and something damp.
      */
     private static void debris(Minecraft mc) {
         net.minecraft.world.level.block.state.BlockState[] states = {BBBlocks.BONE_PILE.getDefaultState().setValue(com.avicagan.bloodandbones.decoration.BonePileBlock.LAYERS, 8),
@@ -799,6 +857,8 @@ public final class DevShowcase {
         for (int i = 0; i < states.length; i++) {
             mc.particleEngine.destroy(debrisAt.offset(i * 2 - 5, 0, 0), states[i]);
         }
+        mc.particleEngine.destroy(debrisAt.offset(3, 3, 0), BBBlocks.CARCASS_PART.getDefaultState());
+        mc.particleEngine.destroy(debrisAt.offset(-3, 3, 0), BBBlocks.BLOOD_STAIN.getDefaultState());
     }
 
     /** The brief's decoration, laid out along one row from x - 7 to x + 12. */
@@ -887,6 +947,119 @@ public final class DevShowcase {
                 var cursor = new com.avicagan.bloodandbones.carcass.trolley.ChainCursor(a, b.subtract(a), along[i], aBe.reversed);
                 level.addFreshEntity(com.avicagan.bloodandbones.decoration.HangingGutChainEntity.create(level, cursor, links[i]));
             }
+        }
+    }
+
+    /**
+     * Row F: the soul blood line on Create's own machines (a press over a heated basin, a fan through soul fire onto a
+     * depot, a mixer over a superheated basin), the Blood Diamond on a depot under a spout, and a wall of the stained
+     * palette and the bloody train casing beside Create's own, with Butcher's Hooks hung with every kind of body part.
+     */
+    private static void materials(ServerLevel level, BlockPos o, int z, CarcassSavedData.Carcass pig, CarcassSavedData.Carcass cow) {
+        int y = o.getY();
+        // the press: a lit burner, a basin of blood with the congealed blood it has set, the press turned by a motor
+        BlockPos pressBasin = new BlockPos(o.getX() - 7, y + 1, z);
+        burner(level, pressBasin.below(), com.simibubi.create.content.processing.burner.BlazeBurnerBlock.HeatLevel.KINDLED);
+        level.setBlockAndUpdate(pressBasin, AllBlocks.BASIN.getDefaultState());
+        level.setBlockAndUpdate(pressBasin.above(2), AllBlocks.MECHANICAL_PRESS.getDefaultState()
+                .setValue(com.simibubi.create.content.kinetics.base.HorizontalKineticBlock.HORIZONTAL_FACING, Direction.EAST));
+        motor(level, pressBasin.above(2).east(), Direction.WEST, 32);
+        if (level.getBlockEntity(pressBasin) instanceof com.simibubi.create.content.processing.basin.BasinBlockEntity basin) {
+            basin.getTanks().getFirst().getCapability().fill(new net.neoforged.neoforge.fluids.FluidStack(BBFluids.blood(), 1000),
+                    net.neoforged.neoforge.fluids.capability.IFluidHandler.FluidAction.EXECUTE);
+            basin.getOutputInventory().insertItem(0, new ItemStack(BBItems.CONGEALED_BLOOD.get(), 3), false);
+        }
+        // the fan: blowing east through a soul campfire onto a depot of congealed blood
+        BlockPos fan = new BlockPos(o.getX() - 5, y, z);
+        motor(level, fan.west(), Direction.EAST, 64);
+        level.setBlockAndUpdate(fan, AllBlocks.ENCASED_FAN.getDefaultState().setValue(DirectionalKineticBlock.FACING, Direction.EAST));
+        level.setBlockAndUpdate(fan.east(), Blocks.SOUL_CAMPFIRE.defaultBlockState());
+        BlockPos depot = fan.east(2);
+        level.setBlockAndUpdate(depot, AllBlocks.DEPOT.getDefaultState());
+        if (level.getBlockEntity(depot) != null) {
+            var onDepot = level.getCapability(net.neoforged.neoforge.capabilities.Capabilities.ItemHandler.BLOCK, depot, null);
+            if (onDepot != null) {
+                onDepot.insertItem(0, new ItemStack(BBItems.SOUL_CLOT.get()), false);
+            }
+        }
+        // the mixer: a superheated burner, a basin with a soul clot melting to soul blood
+        BlockPos mixBasin = new BlockPos(o.getX() - 1, y + 1, z);
+        burner(level, mixBasin.below(), com.simibubi.create.content.processing.burner.BlazeBurnerBlock.HeatLevel.SEETHING);
+        level.setBlockAndUpdate(mixBasin, AllBlocks.BASIN.getDefaultState());
+        level.setBlockAndUpdate(mixBasin.above(2), AllBlocks.MECHANICAL_MIXER.getDefaultState());
+        level.setBlockAndUpdate(mixBasin.above(2).east(), AllBlocks.COGWHEEL.getDefaultState());
+        motor(level, mixBasin.above(1).east(), Direction.UP, 32);
+        if (level.getBlockEntity(mixBasin) instanceof com.simibubi.create.content.processing.basin.BasinBlockEntity basin) {
+            basin.getTanks().getSecond().getCapability().fill(new net.neoforged.neoforge.fluids.FluidStack(BBFluids.soulBlood(), 600),
+                    net.neoforged.neoforge.fluids.capability.IFluidHandler.FluidAction.EXECUTE);
+            basin.getInputInventory().insertItem(0, new ItemStack(BBItems.SOUL_CLOT.get(), 2), false);
+        }
+        // the Blood Diamond: a spout of blood over an Incomplete Blood Diamond on a depot, and a finished one beside it
+        BlockPos diamondDepot = new BlockPos(o.getX() + 5, y, z);
+        level.setBlockAndUpdate(diamondDepot, AllBlocks.DEPOT.getDefaultState());
+        level.setBlockAndUpdate(diamondDepot.above(2), AllBlocks.SPOUT.getDefaultState());
+        level.setBlockAndUpdate(diamondDepot.above(3), Blocks.STONE.defaultBlockState());
+        var spoutTank = level.getCapability(net.neoforged.neoforge.capabilities.Capabilities.FluidHandler.BLOCK, diamondDepot.above(2), Direction.UP);
+        if (spoutTank != null) {
+            spoutTank.fill(new net.neoforged.neoforge.fluids.FluidStack(net.minecraft.core.registries.BuiltInRegistries.FLUID.get(
+                    net.minecraft.resources.ResourceLocation.fromNamespaceAndPath("create_enchantment_industry", "experience")), 500),
+                    net.neoforged.neoforge.fluids.capability.IFluidHandler.FluidAction.EXECUTE);
+        }
+        var diamondOn = level.getCapability(net.neoforged.neoforge.capabilities.Capabilities.ItemHandler.BLOCK, diamondDepot, null);
+        if (diamondOn != null) {
+            diamondOn.insertItem(0, new ItemStack(BBItems.INCOMPLETE_BLOOD_DIAMOND.get()), false);
+        }
+        BlockPos doneDepot = diamondDepot.east(2);
+        level.setBlockAndUpdate(doneDepot, AllBlocks.DEPOT.getDefaultState());
+        var doneOn = level.getCapability(net.neoforged.neoforge.capabilities.Capabilities.ItemHandler.BLOCK, doneDepot, null);
+        if (doneOn != null) {
+            doneOn.insertItem(0, new ItemStack(BBItems.BLOOD_DIAMOND.get()), false);
+        }
+
+        // the wall: bloody train casing beside Create's, then the stained palette, two high; hooks on its face
+        int wallZ = z + 10;
+        List<net.minecraft.world.level.block.state.BlockState> column = List.of(BBBlocks.BLOODY_RAILWAY_CASING.getDefaultState(),
+                BBBlocks.BLOODY_RAILWAY_CASING.getDefaultState(), AllBlocks.RAILWAY_CASING.getDefaultState(), BBBlocks.BLOODY_CUT_CALCITE.getDefaultState(),
+                BBBlocks.BLOODY_POLISHED_CUT_CALCITE.getDefaultState(), BBBlocks.BLOODY_CUT_CALCITE_BRICKS.getDefaultState(),
+                BBBlocks.BLOODY_SMALL_CALCITE_BRICKS.getDefaultState());
+        for (int i = 0; i < column.size(); i++) {
+            for (int dy = 0; dy < 3; dy++) {
+                level.setBlockAndUpdate(new BlockPos(o.getX() - 3 + i, y + dy, wallZ), column.get(i));
+            }
+        }
+        // stairs and slabs of the palette along the foot of the wall
+        List<BlockEntry<?>> palette = BBBlocks.stainedPalette();
+        for (int i = 0; i < 4; i++) {
+            level.setBlockAndUpdate(new BlockPos(o.getX() + i, y, wallZ - 1), palette.get(4 + i).getDefaultState()
+                    .setValue(net.minecraft.world.level.block.StairBlock.FACING, Direction.SOUTH));
+            level.setBlockAndUpdate(new BlockPos(o.getX() + i, y, wallZ - 2), palette.get(8 + i).getDefaultState());
+        }
+        ItemStack[] hung = {new ItemStack(BBItems.SEVERED_ARM.get()), BBItems.HEART.get().of(net.minecraft.resources.ResourceLocation.withDefaultNamespace("cow"), false),
+                com.avicagan.bloodandbones.parts.ScrapsItem.of(new com.avicagan.bloodandbones.parts.Source(net.minecraft.resources.ResourceLocation.withDefaultNamespace("cow"), "leg", false), 1),
+                new ItemStack(net.minecraft.world.item.Items.ZOMBIE_HEAD), new ItemStack(net.minecraft.world.item.Items.BEEF),
+                pig == null ? new ItemStack(BBItems.OFFAL.get()) : CarcassPieceItem.of(pig, "left_front_leg"),
+                BBItems.EYE.get().of(net.minecraft.resources.ResourceLocation.withDefaultNamespace("cow"), false)};
+        for (int i = 0; i < hung.length; i++) {
+            BlockPos hook = new BlockPos(o.getX() - 3 + i, y + 2, wallZ - 1);
+            level.setBlockAndUpdate(hook, BBBlocks.BUTCHER_HOOK.getDefaultState().setValue(net.minecraft.world.level.block.HorizontalDirectionalBlock.FACING, Direction.NORTH));
+            if (level.getBlockEntity(hook) instanceof com.avicagan.bloodandbones.cooking.ButcherHookBlockEntity be) {
+                be.put(hung[i]);
+            }
+        }
+    }
+
+    private static void burner(ServerLevel level, BlockPos at, com.simibubi.create.content.processing.burner.BlazeBurnerBlock.HeatLevel heat) {
+        level.setBlockAndUpdate(at, AllBlocks.BLAZE_BURNER.getDefaultState().setValue(com.simibubi.create.content.processing.burner.BlazeBurnerBlock.HEAT_LEVEL,
+                com.simibubi.create.content.processing.burner.BlazeBurnerBlock.HeatLevel.SMOULDERING));
+        ItemStack fuel = heat == com.simibubi.create.content.processing.burner.BlazeBurnerBlock.HeatLevel.SEETHING
+                ? com.simibubi.create.AllItems.BLAZE_CAKE.asStack() : new ItemStack(net.minecraft.world.item.Items.COAL, 1);
+        com.simibubi.create.content.processing.burner.BlazeBurnerBlock.tryInsert(level.getBlockState(at), level, at, fuel, false, true, false);
+    }
+
+    private static void motor(ServerLevel level, BlockPos at, Direction facing, int speed) {
+        level.setBlockAndUpdate(at, AllBlocks.CREATIVE_MOTOR.getDefaultState().setValue(DirectionalKineticBlock.FACING, facing));
+        if (level.getBlockEntity(at) instanceof CreativeMotorBlockEntity motor) {
+            motor.generatedSpeed.setValue(speed);
         }
     }
 

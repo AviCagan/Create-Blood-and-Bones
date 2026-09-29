@@ -4,6 +4,7 @@ import com.avicagan.bloodandbones.backtank.FluidBacktankItem;
 import net.minecraft.ChatFormatting;
 import net.minecraft.network.chat.Component;
 import net.minecraft.resources.ResourceLocation;
+import net.minecraft.tags.TagKey;
 import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.item.Item;
 import net.minecraft.world.item.ItemStack;
@@ -62,6 +63,20 @@ public class ImplantItem extends Item {
                 && spec.work() <= 1.0F && spec.attack() <= 0.0F && spec.reach() <= 0.0F && spec.safeFall() <= 0.0F;
     }
 
+    /**
+     * The fluid tag it runs on: c:blood for organic prosthetics, c:soul_blood for cybernetics, so any mod's blood
+     * or soul blood in those tags works as well as ours.
+     */
+    @Nullable
+    public TagKey<Fluid> fuelTag() {
+        return switch (spec.fuel() == null ? "" : spec.fuel()) {
+            case "blood" -> com.avicagan.bloodandbones.registry.BBFluids.BLOOD_TAG;
+            case "soul_blood" -> com.avicagan.bloodandbones.registry.BBFluids.SOUL_BLOOD_TAG;
+            default -> null;
+        };
+    }
+
+    /** Our own fluid of its fuel's kind, for naming it. */
     @Nullable
     public Fluid fuel() {
         return switch (spec.fuel() == null ? "" : spec.fuel()) {
@@ -98,7 +113,8 @@ public class ImplantItem extends Item {
         if (anyFuel()) {
             return !tank.isEmpty();
         }
-        return tank.is(fuel()) && tank.getAmount() > 0;
+        TagKey<Fluid> fuel = fuelTag();
+        return fuel != null && !tank.isEmpty() && tank.is(fuel);
     }
 
     @Override

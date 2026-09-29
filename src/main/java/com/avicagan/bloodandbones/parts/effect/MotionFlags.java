@@ -6,7 +6,6 @@ import com.avicagan.bloodandbones.minion.MinionEntity;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.registries.Registries;
 import net.minecraft.server.level.ServerLevel;
-import net.minecraft.sounds.SoundEvents;
 import net.minecraft.tags.FluidTags;
 import net.minecraft.tags.TagKey;
 import net.minecraft.world.entity.LivingEntity;
@@ -76,7 +75,7 @@ public final class MotionFlags {
         host.resetFallDistance();
         if (host.tickCount % 8 == 0) {
             // a wet, sticky pull off the wall; the climber hears it here, everyone else from the server
-            host.level().playSound(host instanceof Player p ? p : null, host.getX(), host.getY(), host.getZ(), SoundEvents.HONEY_BLOCK_STEP,
+            host.level().playSound(host instanceof Player p ? p : null, host.getX(), host.getY(), host.getZ(), com.avicagan.bloodandbones.registry.BBSounds.FLESH_STEP.get(),
                     host.getSoundSource(), 0.4F, 0.7F + host.getRandom().nextFloat() * 0.2F);
         }
         return true;
@@ -109,8 +108,8 @@ public final class MotionFlags {
         Vec3 motion = host.getDeltaMovement();
         host.setDeltaMovement(motion.x, up, motion.z);
         if (host.level() instanceof ServerLevel level) {
-            level.playSound(null, host.getX(), host.getY(), host.getZ(), SoundEvents.SLIME_BLOCK_FALL, host.getSoundSource(), 1.0F, 0.6F);
-            level.playSound(null, host.getX(), host.getY(), host.getZ(), SoundEvents.SLIME_SQUISH, host.getSoundSource(), 0.8F, 0.5F);
+            level.playSound(null, host.getX(), host.getY(), host.getZ(), com.avicagan.bloodandbones.registry.BBSounds.FLESH_FALL.get(), host.getSoundSource(), 1.0F, 0.6F);
+            level.playSound(null, host.getX(), host.getY(), host.getZ(), com.avicagan.bloodandbones.registry.BBSounds.FLESH_SQUISH.get(), host.getSoundSource(), 0.8F, 0.5F);
         }
         return true;
     }
@@ -162,7 +161,7 @@ public final class MotionFlags {
             }
         }
         if (broke > 0) {
-            level.playSound(null, minion.getX(), minion.getY(), minion.getZ(), SoundEvents.SLIME_BLOCK_STEP, minion.getSoundSource(), 0.8F, 0.6F);
+            level.playSound(null, minion.getX(), minion.getY(), minion.getZ(), com.avicagan.bloodandbones.registry.BBSounds.FLESH_STEP.get(), minion.getSoundSource(), 0.8F, 0.6F);
         }
         return broke;
     }

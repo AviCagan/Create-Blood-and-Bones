@@ -11,15 +11,15 @@
       "item": "minecraft:nether_wart"
     },
     {
-      "type": "neoforge:single",
+      "type": "neoforge:tag",
       "amount": 1000,
-      "fluid": "bloodandbones:blood"
+      "tag": "c:blood"
     }
   ],
   "processing_time": 600,
   "results": [
     {
-      "amount": 500,
+      "amount": 100,
       "id": "bloodandbones:soul_blood"
     }
   ]

@@ -95,14 +95,16 @@ public class BBJeiPlugin implements IModPlugin {
                 mezz.jei.api.constants.VanillaTypes.ITEM_STACK,
                 Component.translatable("bloodandbones.jei.machines.1"), Component.translatable("bloodandbones.jei.machines.2"),
                 Component.translatable("bloodandbones.jei.machines.3"));
-        registration.addIngredientInfo(new net.minecraft.world.item.ItemStack(com.avicagan.bloodandbones.registry.BBFluids.SOUL_BLOOD.getBucket().get()),
-                mezz.jei.api.constants.VanillaTypes.ITEM_STACK, Component.translatable("bloodandbones.jei.soul_blood.1"));
+        registration.addIngredientInfo(java.util.List.of(new net.minecraft.world.item.ItemStack(com.avicagan.bloodandbones.registry.BBFluids.SOUL_BLOOD.getBucket().get()),
+                        new net.minecraft.world.item.ItemStack(BBItems.CONGEALED_BLOOD.get()), new net.minecraft.world.item.ItemStack(BBItems.SOUL_CLOT.get())),
+                mezz.jei.api.constants.VanillaTypes.ITEM_STACK, Component.translatable("bloodandbones.jei.soul_blood.1"), Component.translatable("bloodandbones.jei.soul_blood.2"));
         registration.addIngredientInfo(java.util.List.of(new net.minecraft.world.item.ItemStack(BBBlocks.BUTCHER_HOOK.get()), new net.minecraft.world.item.ItemStack(BBBlocks.SPECIMEN_JAR.get()),
                         new net.minecraft.world.item.ItemStack(BBBlocks.BUTCHER_TABLE.get())),
                 mezz.jei.api.constants.VanillaTypes.ITEM_STACK,
                 Component.translatable("bloodandbones.jei.display.1"), Component.translatable("bloodandbones.jei.display.2"));
-        registration.addIngredientInfo(java.util.stream.Stream.of(BBBlocks.BLOODY_CASING, BBBlocks.BLOODY_BRASS_CASING, BBBlocks.BLOODY_COPPER_CASING,
-                                BBBlocks.GUT_CHAIN, BBBlocks.RIBCAGE_ARCH, BBBlocks.BONE_PILE)
+        registration.addIngredientInfo(java.util.stream.Stream.concat(java.util.stream.Stream.of(BBBlocks.BLOODY_CASING, BBBlocks.BLOODY_BRASS_CASING,
+                                BBBlocks.BLOODY_COPPER_CASING, BBBlocks.BLOODY_RAILWAY_CASING, BBBlocks.GUT_CHAIN, BBBlocks.RIBCAGE_ARCH, BBBlocks.BONE_PILE),
+                                BBBlocks.stainedPalette().stream())
                         .map(e -> new net.minecraft.world.item.ItemStack(e.get())).toList(),
                 mezz.jei.api.constants.VanillaTypes.ITEM_STACK,
                 Component.translatable("bloodandbones.jei.decoration.1"), Component.translatable("bloodandbones.jei.decoration.2"),
@@ -119,7 +121,8 @@ public class BBJeiPlugin implements IModPlugin {
                         BBItems.PORT_ARM, BBItems.OPTIC_EYE, BBItems.PUMP_HEART, BBItems.BELLOWS_LUNGS, BBItems.FURNACE_STOMACH)
                         .map(e -> new net.minecraft.world.item.ItemStack(e.get())).toList(),
                 mezz.jei.api.constants.VanillaTypes.ITEM_STACK,
-                Component.translatable("bloodandbones.jei.implants.1"), Component.translatable("bloodandbones.jei.implants.2"));
+                Component.translatable("bloodandbones.jei.implants.1"), Component.translatable("bloodandbones.jei.implants.2"),
+                Component.translatable("bloodandbones.jei.implants.3"));
         registration.addIngredientInfo(new net.minecraft.world.item.ItemStack(BBBlocks.SURGERY_TABLE.get()), mezz.jei.api.constants.VanillaTypes.ITEM_STACK,
                 Component.translatable("bloodandbones.jei.minions.1"), Component.translatable("bloodandbones.jei.minions.2"));
         registration.addIngredientInfo(BBItems.BACKTANKS.values().stream().map(e -> new net.minecraft.world.item.ItemStack(e.get())).toList(),

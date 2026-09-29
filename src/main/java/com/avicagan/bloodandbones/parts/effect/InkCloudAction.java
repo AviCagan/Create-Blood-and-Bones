@@ -38,7 +38,7 @@ public record InkCloudAction(LevelBasedValue radius, LevelBasedValue seconds) im
         }
         level.sendParticles(ParticleTypes.SQUID_INK, at.x, at.y, at.z, (int) (20 * r), r * 0.4, 0.5, r * 0.4, 0.05);
         level.playSound(null, at.x, at.y, at.z, SoundEvents.SQUID_SQUIRT, SoundSource.NEUTRAL, 1.0F, 0.8F);
-        level.playSound(null, at.x, at.y, at.z, SoundEvents.SLIME_SQUISH, SoundSource.NEUTRAL, 0.7F, 0.5F);
+        level.playSound(null, at.x, at.y, at.z, com.avicagan.bloodandbones.registry.BBSounds.FLESH_SQUISH.get(), SoundSource.NEUTRAL, 0.7F, 0.5F);
     }
 
     @Override

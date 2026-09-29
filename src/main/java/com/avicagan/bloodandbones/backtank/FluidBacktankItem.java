@@ -134,9 +134,12 @@ public class FluidBacktankItem extends ArmorItem {
         return Math.round(13.0F * Mth.clamp(fluid(stack).getAmount() / (float) capacity(stack), 0.0F, 1.0F));
     }
 
+    /** The item bar's colour for what a tank holds: the fluid's own, once the client has said how (BacktankGauge#colour). */
+    public static java.util.function.ToIntFunction<FluidStack> barColour = fluid -> 0x8E1010;
+
     @Override
     public int getBarColor(ItemStack stack) {
-        return 0x8E1010;
+        return barColour.applyAsInt(fluid(stack)) & 0xFFFFFF;
     }
 
     @Override

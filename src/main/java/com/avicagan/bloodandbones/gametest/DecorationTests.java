@@ -595,6 +595,9 @@ public class DecorationTests {
         helper.setBlock(new BlockPos(5, y, z), BBBlocks.RIBCAGE_ARCH.getDefaultState().setValue(HorizontalDirectionalBlock.FACING, Direction.NORTH));
         helper.setBlock(new BlockPos(6, y, z), BBBlocks.BLOODY_BRASS_CASING.getDefaultState());
         helper.setBlock(new BlockPos(7, y, z), BBBlocks.BLOODY_COPPER_CASING.getDefaultState());
+        // the train casing, and a stair of the stained palette on it
+        helper.setBlock(new BlockPos(8, y, z), BBBlocks.BLOODY_RAILWAY_CASING.getDefaultState());
+        helper.setBlock(new BlockPos(8, y + 1, z), BBBlocks.BLOODY_CUT_CALCITE_BRICK_STAIRS.getDefaultState());
         // a pile the stone in front of it runs into unless the pile pushes it (Create would count a brittle
         // block as holding nothing up on any side), and a single layer on that stone
         helper.setBlock(new BlockPos(6, y + 1, z), BBBlocks.BONE_PILE.getDefaultState().setValue(BonePileBlock.LAYERS, 3));
@@ -630,12 +633,66 @@ public class DecorationTests {
             helper.assertBlockProperty(new BlockPos(9, y + 2, z), BonePileBlock.LAYERS, 1);
             helper.assertBlockNotPresent(BBBlocks.BONE_PILE.get(), new BlockPos(6, y + 1, z));
             helper.assertBlockNotPresent(BBBlocks.BONE_PILE.get(), new BlockPos(7, y + 2, z));
+            helper.assertBlockPresent(BBBlocks.BLOODY_RAILWAY_CASING.get(), new BlockPos(10, y, z));
+            helper.assertBlockPresent(BBBlocks.BLOODY_CUT_CALCITE_BRICK_STAIRS.get(), new BlockPos(10, y + 1, z));
             SteelTableBlockEntity table = (SteelTableBlockEntity) level.getBlockEntity(helper.absolutePos(new BlockPos(5, y, z)));
             SteelRackBlockEntity moved = (SteelRackBlockEntity) level.getBlockEntity(helper.absolutePos(new BlockPos(6, y, z)));
             helper.assertTrue(table != null && ItemStack.isSameItemSameComponents(table.specimen(), head), "the table lost its piece on the way");
             helper.assertTrue(moved != null && moved.item(0).is(Items.DIAMOND) && moved.item(3).is(BBItems.OFFAL.get()), "the rack lost its things on the way");
             // nothing fell off and dropped on the way (looking in this test's own ground, not its neighbours')
             helper.assertTrue(level.getEntitiesOfClass(ItemEntity.class, helper.getBounds()).isEmpty(), "something dropped on the way");
+        });
+    }
+
+    /**
+     * The wall hook takes every body part (brief § Decoration: "accepts any carcass or body part"): a severed limb, an
+     * organ, scraps, meat, a head, a bone, by hand or put there; not a diamond, stone or a blade. A fresh heart drips
+     * blood on the floor; a bone does not, nor a skeleton's heart.
+     */
+    @GameTest(template = "empty", timeoutTicks = 140)
+    public static void butcherHookTakesEveryBodyPart(GameTestHelper helper) {
+        net.minecraft.resources.ResourceLocation cow = net.minecraft.resources.ResourceLocation.withDefaultNamespace("cow");
+        net.minecraft.resources.ResourceLocation skeleton = net.minecraft.resources.ResourceLocation.withDefaultNamespace("skeleton");
+        List<ItemStack> parts = List.of(new ItemStack(BBItems.SEVERED_ARM.get()), BBItems.HEART.get().of(cow, false),
+                com.avicagan.bloodandbones.parts.ScrapsItem.of(new com.avicagan.bloodandbones.parts.Source(cow, "leg", false), 1),
+                new ItemStack(Items.BEEF), new ItemStack(Items.ZOMBIE_HEAD), new ItemStack(Items.BONE), BBItems.HEART.get().of(skeleton, false));
+        List<ItemStack> refused = List.of(new ItemStack(Items.DIAMOND), new ItemStack(Items.STONE), new ItemStack(BBItems.CLEAVER.get()));
+        List<com.avicagan.bloodandbones.cooking.ButcherHookBlockEntity> hooks = new java.util.ArrayList<>();
+        for (int i = 0; i < parts.size() + refused.size(); i++) {
+            BlockPos wall = new BlockPos(1, 3, i);
+            helper.setBlock(wall, Blocks.STONE);
+            helper.setBlock(wall.east(), BBBlocks.BUTCHER_HOOK.getDefaultState().setValue(HorizontalDirectionalBlock.FACING, Direction.EAST));
+            hooks.add((com.avicagan.bloodandbones.cooking.ButcherHookBlockEntity) helper.getLevel().getBlockEntity(helper.absolutePos(wall.east())));
+        }
+        // the heart by hand, the way a player hangs things; everything else put straight on
+        Player player = helper.makeMockPlayer(GameType.SURVIVAL);
+        player.setItemInHand(InteractionHand.MAIN_HAND, parts.get(1).copy());
+        helper.useBlock(new BlockPos(2, 3, 1), player);
+        if (!hooks.get(1).specimen().is(BBItems.HEART.get()) || !player.getMainHandItem().isEmpty()) {
+            helper.fail("A player should hang a heart on the hook by using it: " + hooks.get(1).specimen());
+            return;
+        }
+        for (int i = 0; i < parts.size(); i++) {
+            if (i != 1 && !hooks.get(i).put(parts.get(i).copy())) {
+                helper.fail("The hook should take " + parts.get(i).getHoverName().getString());
+                return;
+            }
+        }
+        for (int i = 0; i < refused.size(); i++) {
+            if (hooks.get(parts.size() + i).put(refused.get(i).copy())) {
+                helper.fail("The hook should not take " + refused.get(i).getHoverName().getString());
+                return;
+            }
+        }
+        if (!hooks.get(1).dripping() || hooks.get(5).dripping() || hooks.get(6).dripping()) {
+            helper.fail("A cow's heart should drip; a bone and a skeleton's heart should not");
+            return;
+        }
+        helper.runAfterDelay(125, () -> {
+            helper.assertBlockPresent(BBBlocks.BLOOD_STAIN.get(), new BlockPos(2, 2, 1));
+            helper.assertBlockNotPresent(BBBlocks.BLOOD_STAIN.get(), new BlockPos(2, 2, 5));
+            helper.assertBlockNotPresent(BBBlocks.BLOOD_STAIN.get(), new BlockPos(2, 2, 6));
+            helper.succeed();
         });
     }
 

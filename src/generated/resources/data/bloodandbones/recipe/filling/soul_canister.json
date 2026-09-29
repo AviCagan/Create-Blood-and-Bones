@@ -5,9 +5,9 @@
       "item": "bloodandbones:empty_soul_canister"
     },
     {
-      "type": "neoforge:single",
+      "type": "neoforge:tag",
       "amount": 1000,
-      "fluid": "bloodandbones:soul_blood"
+      "tag": "c:soul_blood"
     }
   ],
   "results": [

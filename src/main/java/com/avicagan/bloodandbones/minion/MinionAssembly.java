@@ -118,7 +118,7 @@ public final class MinionAssembly {
         }
         remove(level, carcass);
         table.setBuild(build);
-        level.playSound(null, table.getBlockPos(), SoundEvents.SLIME_BLOCK_PLACE, SoundSource.BLOCKS, 1.0F, 0.6F);
+        level.playSound(null, table.getBlockPos(), com.avicagan.bloodandbones.registry.BBSounds.FLESH_PLACE.get(), SoundSource.BLOCKS, 1.0F, 0.6F);
         return true;
     }
 
@@ -195,7 +195,7 @@ public final class MinionAssembly {
             return Component.translatable("bloodandbones.minion.too_big");
         }
         table.setBuild(next);
-        level.playSound(null, table.getBlockPos(), SoundEvents.SLIME_BLOCK_PLACE, SoundSource.BLOCKS, 1.0F, 0.9F);
+        level.playSound(null, table.getBlockPos(), com.avicagan.bloodandbones.registry.BBSounds.FLESH_PLACE.get(), SoundSource.BLOCKS, 1.0F, 0.9F);
         com.avicagan.bloodandbones.carcass.Blood.burst(level, new Vector3d(table.getBlockPos().getX() + 0.5, table.getBlockPos().getY() + 1.1,
                 table.getBlockPos().getZ() + 0.5), 4, false);
         return null;
@@ -216,8 +216,8 @@ public final class MinionAssembly {
         maybe.get().organ().map(CarcassArmourFittingRecipe::organItem).filter(back -> !back.isEmpty())
                 .ifPresent(back -> player.getInventory().placeItemBackInInventory(back));
         table.setBuild(maybe.get().withOrgan(Optional.of(organ)));
-        level.playSound(null, table.getBlockPos(), SoundEvents.SLIME_BLOCK_PLACE, SoundSource.BLOCKS, 1.0F, 0.6F);
-        level.playSound(null, table.getBlockPos(), SoundEvents.HONEY_BLOCK_SLIDE, SoundSource.BLOCKS, 0.8F, 0.5F);
+        level.playSound(null, table.getBlockPos(), com.avicagan.bloodandbones.registry.BBSounds.FLESH_PLACE.get(), SoundSource.BLOCKS, 1.0F, 0.6F);
+        level.playSound(null, table.getBlockPos(), com.avicagan.bloodandbones.registry.BBSounds.FLESH_SLIDE.get(), SoundSource.BLOCKS, 0.8F, 0.5F);
         com.avicagan.bloodandbones.carcass.Blood.burst(level, new Vector3d(table.getBlockPos().getX() + 0.5, table.getBlockPos().getY() + 1.1,
                 table.getBlockPos().getZ() + 0.5), 6, false);
         return true;
@@ -366,7 +366,7 @@ public final class MinionAssembly {
         }
         // flesh wakes on a bucket of blood; brass, sheathed, on a soul canister
         boolean brass = build.get().cybernetic();
-        if (brass ? !bucket.is(BBItems.SOUL_CANISTER.get()) : !bucket.is(BBFluids.BLOOD.getBucket().get())) {
+        if (brass ? !bucket.is(BBItems.SOUL_CANISTER.get()) : !bucket.is(BBFluids.BLOOD_BUCKETS)) {
             return null;
         }
         if (brass && !build.get().sheathed()) {

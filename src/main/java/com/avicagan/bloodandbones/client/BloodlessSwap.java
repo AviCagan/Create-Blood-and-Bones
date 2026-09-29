@@ -69,6 +69,27 @@ public final class BloodlessSwap extends BakedModelWrapper<BakedModel> {
             ResourceLocation.fromNamespaceAndPath("bloodandbones", "block/bloody_copper_casing"), ResourceLocation.fromNamespaceAndPath("create", "block/copper_casing"),
             ResourceLocation.fromNamespaceAndPath("bloodandbones", "block/bloody_copper_casing_connected"), ResourceLocation.fromNamespaceAndPath("create", "block/copper_casing_connected"));
 
+    /** The bloody train casing comes out as Create's, sides and top and their joined-up sheets. */
+    public static final Map<ResourceLocation, ResourceLocation> RAILWAY = Map.of(
+            ResourceLocation.fromNamespaceAndPath("bloodandbones", "block/bloody_railway_casing"), ResourceLocation.fromNamespaceAndPath("create", "block/railway_casing"),
+            ResourceLocation.fromNamespaceAndPath("bloodandbones", "block/bloody_railway_casing_connected"), ResourceLocation.fromNamespaceAndPath("create", "block/railway_casing_connected"),
+            ResourceLocation.fromNamespaceAndPath("bloodandbones", "block/bloody_railway_casing_side"), ResourceLocation.fromNamespaceAndPath("create", "block/railway_casing_side"),
+            ResourceLocation.fromNamespaceAndPath("bloodandbones", "block/bloody_railway_casing_side_connected"), ResourceLocation.fromNamespaceAndPath("create", "block/railway_casing_side_connected"));
+
+    /** The stained calcite palette comes out as Create's plain cut calcite. */
+    public static final Map<ResourceLocation, ResourceLocation> PALETTE = Map.of(
+            ResourceLocation.fromNamespaceAndPath("bloodandbones", "block/palettes/bloody_calcite_cut"), ResourceLocation.fromNamespaceAndPath("create", "block/palettes/stone_types/cut/calcite_cut"),
+            ResourceLocation.fromNamespaceAndPath("bloodandbones", "block/palettes/bloody_calcite_cut_polished"), ResourceLocation.fromNamespaceAndPath("create", "block/palettes/stone_types/polished/calcite_cut_polished"),
+            ResourceLocation.fromNamespaceAndPath("bloodandbones", "block/palettes/bloody_calcite_cut_brick"), ResourceLocation.fromNamespaceAndPath("create", "block/palettes/stone_types/brick/calcite_cut_brick"),
+            ResourceLocation.fromNamespaceAndPath("bloodandbones", "block/palettes/bloody_calcite_cut_small_brick"), ResourceLocation.fromNamespaceAndPath("create", "block/palettes/stone_types/small_brick/calcite_cut_small_brick"));
+
+    /**
+     * A carcass is drawn by its renderer, but the bits that come off it when it lands, rolls or is struck are the
+     * carcass block's own: red specks of meat, and in bloodless mode the plating's steel.
+     */
+    public static final Map<ResourceLocation, ResourceLocation> CARCASS = Map.of(
+            ResourceLocation.withDefaultNamespace("block/red_wool"), ResourceLocation.withDefaultNamespace("block/iron_block"));
+
     private final Map<ResourceLocation, ResourceLocation> swaps;
     /** Resolved on first use: the block atlas is only ready once baking is over. */
     @Nullable

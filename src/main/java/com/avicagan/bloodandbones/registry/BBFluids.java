@@ -57,9 +57,15 @@ public class BBFluids {
     public static final int BLOOD_BLOODLESS_RGB = 0x4A3B2C;
     public static final int SOUL_BLOOD_RGB = 0x167A74; // dark teal
 
-    /** c:blood, the common tag other mods look blood up by. */
+    /**
+     * c:blood, the common tag other mods look blood up by, and our own blood is in: everything that takes blood
+     * (recipes, organic implants, perfusion, minions, troughs) takes anything in it.
+     */
     public static final TagKey<Fluid> BLOOD_TAG = TagKey.create(Registries.FLUID, ResourceLocation.fromNamespaceAndPath("c", "blood"));
     public static final TagKey<Item> BLOOD_BUCKETS = TagKey.create(Registries.ITEM, ResourceLocation.fromNamespaceAndPath("c", "buckets/blood"));
+    /** c:soul_blood: Soul Blood, tagged apart from blood (brief § Blood and materials), and what cybernetics run on. */
+    public static final TagKey<Fluid> SOUL_BLOOD_TAG = TagKey.create(Registries.FLUID, ResourceLocation.fromNamespaceAndPath("c", "soul_blood"));
+    public static final TagKey<Item> SOUL_BLOOD_BUCKETS = TagKey.create(Registries.ITEM, ResourceLocation.fromNamespaceAndPath("c", "buckets/soul_blood"));
 
     /** Empties a bucket into the world like vanilla's water/lava dispenser behaviour (modded buckets have none). */
     private static final DefaultDispenseItemBehavior DISPENSE_BUCKET = new DefaultDispenseItemBehavior() {
@@ -124,7 +130,7 @@ public class BBFluids {
                     .tickRate(20)
                     .slopeFindDistance(3)
                     .explosionResistance(100f))
-            .tag(AllFluidTags.BOTTOMLESS_DENY.tag)
+            .tag(SOUL_BLOOD_TAG, AllFluidTags.BOTTOMLESS_DENY.tag)
             .source(BaseFlowingFluid.Source::new)
             .block()
             .properties(p -> p.mapColor(MapColor.WARPED_WART_BLOCK))
@@ -133,7 +139,7 @@ public class BBFluids {
             .bucket()
             .lang("Soul Blood Bucket")
             .properties(p -> p.rarity(Rarity.UNCOMMON))
-            .tag(Tags.Items.BUCKETS)
+            .tag(Tags.Items.BUCKETS, SOUL_BLOOD_BUCKETS)
             .model(BBFluids::dynamicBucketModel)
             .color(() -> DynamicFluidContainerModel.Colors::new)
             .onRegister(BBFluids::registerDispenseBehavior)
@@ -159,6 +165,23 @@ public class BBFluids {
     public static void register() {
         BloodAndBones.REGISTRATE.addRawLang("tag.fluid.c.blood", "Blood");
         BloodAndBones.REGISTRATE.addRawLang("tag.item.c.buckets.blood", "Blood Buckets");
+        BloodAndBones.REGISTRATE.addRawLang("tag.fluid.c.soul_blood", "Soul Blood");
+        BloodAndBones.REGISTRATE.addRawLang("tag.item.c.buckets.soul_blood", "Soul Blood Buckets");
+        // Create Enchantment Industry does not put its liquid experience in the common tag; the Blood Diamond, the
+        // mixing shortcut and the Vent Arm all ask for the tag, so any mod's liquid experience does
+        BloodAndBones.REGISTRATE.addDataGenerator(com.tterrag.registrate.providers.ProviderType.FLUID_TAGS, tags -> tags.addTag(Tags.Fluids.EXPERIENCE)
+                .addOptional(ResourceLocation.fromNamespaceAndPath("create_enchantment_industry", "experience"))
+                .addOptional(ResourceLocation.fromNamespaceAndPath("create_enchantment_industry", "flowing_experience")));
+    }
+
+    /** Whether this is blood, ours or any other mod's in c:blood. */
+    public static boolean isBlood(FluidStack stack) {
+        return !stack.isEmpty() && stack.is(BLOOD_TAG);
+    }
+
+    /** Whether this is soul blood, by c:soul_blood. */
+    public static boolean isSoulBlood(FluidStack stack) {
+        return !stack.isEmpty() && stack.is(SOUL_BLOOD_TAG);
     }
 
     /** NeoForge's dynamic bucket: vanilla bucket + the fluid's still texture through a mask, tinted on tint index 1. */

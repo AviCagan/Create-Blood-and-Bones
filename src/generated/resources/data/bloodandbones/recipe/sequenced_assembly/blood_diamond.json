@@ -1,0 +1,52 @@
+{
+  "type": "create:sequenced_assembly",
+  "ingredient": {
+    "tag": "c:gems/diamond"
+  },
+  "results": [
+    {
+      "id": "bloodandbones:blood_diamond"
+    }
+  ],
+  "sequence": [
+    {
+      "type": "create:filling",
+      "ingredients": [
+        {
+          "item": "bloodandbones:incomplete_blood_diamond"
+        },
+        {
+          "type": "neoforge:tag",
+          "amount": 1000,
+          "tag": "c:blood"
+        }
+      ],
+      "results": [
+        {
+          "id": "bloodandbones:incomplete_blood_diamond"
+        }
+      ]
+    },
+    {
+      "type": "create:filling",
+      "ingredients": [
+        {
+          "item": "bloodandbones:incomplete_blood_diamond"
+        },
+        {
+          "type": "neoforge:tag",
+          "amount": 1000,
+          "tag": "c:experience"
+        }
+      ],
+      "results": [
+        {
+          "id": "bloodandbones:incomplete_blood_diamond"
+        }
+      ]
+    }
+  ],
+  "transitional_item": {
+    "id": "bloodandbones:incomplete_blood_diamond"
+  }
+}

@@ -43,7 +43,7 @@ public record PullAction(LevelBasedValue strength) implements EnchantmentEntityE
             }
         });
         level.playSound(null, entity.getX(), entity.getY(), entity.getZ(), SoundEvents.FROG_TONGUE, entity.getSoundSource(), 1.0F, 0.7F);
-        level.playSound(null, entity.getX(), entity.getY(), entity.getZ(), SoundEvents.SLIME_SQUISH_SMALL, entity.getSoundSource(), 0.6F, 0.6F);
+        level.playSound(null, entity.getX(), entity.getY(), entity.getZ(), com.avicagan.bloodandbones.registry.BBSounds.FLESH_SQUISH_SMALL.get(), entity.getSoundSource(), 0.6F, 0.6F);
     }
 
     @Override

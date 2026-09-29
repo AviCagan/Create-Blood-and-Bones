@@ -770,6 +770,8 @@ dragon and tropical fish, middle-sized (size 2) slimes, and final art.
 - Hand-written JSON recipes: spout-filling iron with blood (Blood Steel), diamond with soul blood (Blood
   Diamond); soul blood by superheated mixing with CEI liquid experience, or by CDG basin fermenting.
   The `recipesLoad` game test checks every recipe file parsed, since a broken one only logs an error.
+  (Since replaced: recipes come from datagen, the Blood Diamond is a sequenced assembly, and soul blood has its
+  full line on Create's machines; see section 16.)
 
 ### 13.10 Every vanilla mob (verified; the ender dragon and tropical fish excepted)
 
@@ -2473,3 +2475,141 @@ The effects and the jobs were built apart; together, four things broke that neit
   them beside their minions.
 - **Not fixed yet:** a lava walker stands on lava but cannot walk across it; its path treats lava as a wall and it wades
   in when it moves. It needs a strider's navigation (lava as a stable, walkable node), which is on the next minion list.
+
+---
+
+## 16. Materials, bloodless mode and the decoration leftovers (audit packages 14, 9 and 17)
+
+What docs/BRIEF-AUDIT.md packages 14 (blood, Soul Blood and the materials as written), 9 (finish bloodless mode)
+and 17 (decoration leftovers) asked for, built on main after 054cdfd. Package 14 and package 9 are closed; package
+17 is closed except the part that waits on decision 9 (below). Package 2's line about hand-written recipes is closed
+too.
+
+### 16.1 Recipes come from datagen
+
+- All 78 hand-written recipe files are now written by `datagen/BBRecipeGen`, run through Registrate's recipe
+  provider, as section 8 decided ("never hand-written"). Create's processing recipes use Create's own builders
+  (`StandardProcessingRecipe.Builder`, `SequencedAssemblyRecipeBuilder`), so they come out in whatever format Create
+  reads, in a folder named for their type as Create's do (`filling/blood_steel_ingot`); the CDG basin fermenting
+  recipe goes through the same builder with CDG's own recipe class. Crafting recipes are the game's own recipe
+  objects written with their own codecs; the palette's stairs and slabs use Registrate's helpers.
+- The generated files were checked against the hand-written ones before anything changed: all 78 matched, apart
+  from the new ids of the 11 processing recipes (and a `loops: 1` Create leaves out as its default).
+
+### 16.2 Soul Blood, the Blood Diamond and the tags (package 14)
+
+- **Tags.** Soul blood has its own tag, `c:soul_blood` (and `c:buckets/soul_blood`), apart from `c:blood`. Create
+  Enchantment Industry does not put its liquid experience in `c:experience`, so our fluid tags add it (optionally):
+  the Blood Diamond, the mixing shortcut and the Vent Arm all ask for the tag.
+- **Every consumer matches the tags**, not our fluid: every recipe's fluid ingredient is a tag ingredient (Create
+  reads NeoForge's `SizedFluidIngredient`, which takes tags; Create's own honey compacting does the same); organic
+  implants run on `c:blood` and cybernetics on `c:soul_blood` (`ImplantItem.fuelTag`); perfusion takes any
+  `c:blood` (`Necrosis.perfuse`); the throttle, its gauge and the Vent Arm's spill read the tags
+  (`BBFluids.isBlood`, `isSoulBlood`); a minion is fed and woken, and the Surgery Table takes, any bucket in
+  `c:buckets/blood`; the Blood Trough was already on `c:blood`.
+- **The soul blood line** (section 8's chain, on Create's heating, pressing, haunting and mixing, and nothing new):
+  a Mechanical Press over a heated basin sets 250 mB of blood into **Congealed Blood** (`create:compacting`, heated);
+  an Encased Fan blowing through soul fire haunts it into a **Soul Clot** (`create:haunting`); a Mechanical Mixer
+  over a superheated basin melts the clot back into 200 mB of soul blood (`create:mixing`). Four fifths of the blood
+  comes back as soul blood. Section 8 set the congealing in a CDG Basin Lid; the brief names Create's heating and
+  pressing, and a heated press is exactly that, so the line needs no other mod.
+- **The shortcuts, much weaker.** Superheated mixing of a bucket of blood, soul sand and 100 mB of liquid experience,
+  and CDG fermenting of a bucket of blood with soul soil and two nether wart, each give 100 mB: a tenth, against the
+  full line's four fifths. The trickle path (nether mobs bleeding soul blood) is unchanged.
+- **The Blood Diamond** is a sequenced assembly, as the brief and section 8 have it: a diamond through a Spout of
+  1000 mB of blood (`c:blood`), then a Spout of 1000 mB of liquid experience (`c:experience`), one pass, through an
+  **Incomplete Blood Diamond**. The one-fill recipe of soul blood is gone. Soul netherite keeps section 8's decided
+  form (a Spout of 1000 mB of soul blood, then a Deployer with a super experience block), now on `c:soul_blood`.
+  The Blood Diamond's advancement now follows Blood Steel, not Soul Blood.
+- **The gauge** (`client/BacktankGauge`), styled as Create's air gauge (`RemainingAirOverlay`) and in its place, to
+  the right of the hotbar's top, drawn with Create's `GuiGameElement`: the worn tank, what it holds in buckets to a
+  tenth, and a bar of the fluid's own texture in its own tint, as far along as the tank is full. Unlike Create's it
+  is always up while a tank is worn, and while any powered implant is fitted (with no tank, a faded copper tank and
+  0.0 B). Under the bar sit the powered implants, half size on a dark strip, dimmed when the tank does not feed them, so a blood-fed
+  Flesh Arm reads as running and a Hydraulic Arm on the same tank as not. With implants and under a tenth full, the
+  reading flashes red as Create's does. The backtank's item bar is the fluid's colour too (its texture's average,
+  tinted), no longer always red.
+- Items: Congealed Blood, Soul Clot and the Incomplete Blood Diamond, each with a clean copy of its texture for
+  bloodless mode (essence brown, the item model's `bloodandbones:bloodless` override); descriptions, the JEI soul
+  blood pages (on the bucket, the clot and the congealed blood) and the implants page on the gauge.
+- Tests (`MaterialsTests`): `soulBloodTaggedApart`; `fillingRecipesTakeTheTags`, `soulBloodLineRecipes` and
+  `sequencedMaterialsRecipes` read each recipe back from the loaded recipes (type, item ingredients, fluid tag and
+  amount, heat, outputs and amounts, the full line at least five times either shortcut, the old one-fill diamond
+  gone); `spoutsMakeABloodDiamond` runs a real Spout over a Depot (blood, then experience makes the diamond; a Spout
+  of experience first leaves a diamond alone); `pressSetsBloodInAHeatedBasin` (and an unheated one does not),
+  `fanHauntsCongealedBlood` and `mixerMeltsSoulClot` run the line on Create's machines; `implantsRunOnTheTags`
+  (a Flesh Arm on blood and not soul blood, a Hydraulic Arm the other way, perfusion only with blood, water runs
+  neither).
+
+### 16.3 Bloodless mode finished (package 9)
+
+- **Words** (`BloodlessWords`): a carcass is a wreck ("constructs not corpses": a working body is a construct, a
+  dead one a wreck), carcass armour plated armour, severed detached, amputation replacement, a stump a socket, flesh
+  plated, necrosis wear; vanilla's Rotten Flesh keeps its name. Own bloodless text where the rewording would read
+  badly: the Plated Arm (Flesh Arm), Cabled Leg (Sinew Leg) and Furnace Hopper (Furnace Stomach) and what they say,
+  the four carcass armour pieces as Plated Helmet and so on, a piece's keeping as Sound, Worn and Corroded and a
+  skinned one as Stripped, the flesh set bonus, the implants JEI page. Organs already had theirs (Lens, Pump,
+  Bellows, Hopper).
+- **Looks.** A carcass is drawn as a wreck of a construct (`client/ConstructPlating`): each mob texture's plated
+  copy, made once on the client and kept (reloaded with resources), in three tones of cold steel taken from the
+  texture's own light and dark, with a dark seam wherever the tone drops and rivets every few pixels, so a cow's
+  patches read as a cow's plates. A skinned one is the darker frame under the plating. Coats (wool, a llama's decor)
+  are plated too, and so are minions, which are drawn the same way. The Plated Arm and Cabled Leg, the severed limbs
+  and the organs have plated icons, and the two implants a plated look on the body (`BodyRendering.worn`). The bits
+  that come off a carcass when it lands, rolls or is struck (the carcass block's own particles, red specks of meat)
+  come off as steel, and a blood stain scuffed away (drawn as nothing) leaves specks of mud, not blood: the
+  showcase caught both as red on the ground beside the plated wrecks.
+- **Sounds.** Every wet sound the mod plays is its own event (`BBSounds`), with a metal twin
+  `bloodless.<name>`: vanilla anvil, chain, iron and grindstone sounds pitched in sounds.json, and a chain rattle
+  laid over the heavy ones (thud, sever, crumble), for real files to replace later. The mod no longer plays
+  vanilla slime and honey sounds itself: those calls, and the Gut Chain's and blood stains' sound types, now play
+  `flesh.*` and `stain.*` events (squelch, squish, slide, tear, step, slap). The game always plays the wet one;
+  a client in bloodless mode hears the twin, where the wet one was, as loud and at its pitch
+  (`client/BloodlessSounds` on NeoForge's `PlaySoundEvent`, reading the asked volume and pitch through a client
+  mixin accessor). Twins have their own subtitles ("Wreck clanks", "Plating is cut").
+- **The rule, tested.** `BloodlessTests.onlyPresentationReadsBloodless` reads every class of the mod with ASM (from
+  the mod file's scan data) and lists each method that reads the client setting or the game rule. It fails if any
+  is outside presentation code: the client package, the setting and the game rule themselves, the tests, and four
+  named methods elsewhere (the fluid's tint and fog, Create's description cache, the carcass armour's texture, and
+  the Gut Chain's renderer). It also fails if the mod plays a wet vanilla sound itself, and checks it really found
+  the known readers, so an empty scan cannot pass. `bloodlessTextIsClean` reads the language file and fails on any
+  reworded line that still shows blood, gore, guts, a carcass, flesh, severing, a stump, necrosis, sinew, maggots
+  or stitches, and checks the names above. `everyWetSoundHasATwin` checks every twin is registered, in sounds.json
+  with metal under it and a subtitle, and that the Gut Chain and stains sound through them.
+
+### 16.4 Decoration leftovers (package 17)
+
+- **The Butcher's Hook takes every body part** (brief: "accepts any carcass or body part as a rendered
+  attachment"): whatever is in the item tag `bloodandbones:hangs_on_hooks` (data): carcass pieces, severed limbs,
+  organs, scraps, the mod's meat, offal, fat, hide and clots, vanilla meat and fish, heads, rotten flesh, bones,
+  leather, hides, rabbit's feet, spider eyes, ink sacs, feathers, membranes, slime balls, ghast tears, blaze rods
+  and scutes. A carcass piece is drawn as the body part it is, as before; anything else as its item, speared through
+  its top on the hook's point, swaying and twisting a little. What is in `bloodandbones:drips_on_hooks` (severed
+  parts, organs, scraps, raw meat, offal, hide) drips for a minute once hung, soul blood from a nether mob's parts,
+  nothing from a skeleton's. A player hangs anything in the tag by using it on the hook.
+- **Not built, decision 9:** heavy whole carcasses on the wall hook. They are bodies, never items (section 15.1
+  #5), and whether the hook should take them is the owner's call.
+- **Bloody Train Casing:** Create's train casing (`railway_casing`) filled with 250 mB of blood, joined up top and
+  sides as Create's is (`BuilderTransformers.layeredCasing`, two connected sheets); Create's four sheets with blood
+  painted over. Bloodless: Create's own (`BloodlessSwap.RAILWAY`).
+- **The small stained palette** (section 7): Create's cut calcite, polished cut calcite, cut calcite bricks and
+  small calcite bricks, white as a slaughterhouse wall, spout-filled with 100 mB of blood each, blood run into the
+  joints; a stonecutter turns the stained cut calcite into the other three, and each has stairs and a slab (crafted
+  or cut). Bloodless: Create's plain calcite (`BloodlessSwap.PALETTE`), named Stained.
+- **The grazers' scrap material is Brawn**, not Hide (grazers, horses and pigs): cow boots of scraps alone read
+  "Cow Brawn Boots", and "Hide:" on the tooltip means a hide really is fitted. The data id `hide_plate` is unchanged.
+- Tests: `butcherHookTakesEveryBodyPart` (a player hangs a heart by using it; the hook takes a severed arm, scraps,
+  beef, a zombie head, a bone and a skeleton's heart and refuses a diamond, stone and a Cleaver; the cow's heart
+  stains the floor, the bone and the skeleton's heart do not); `decorationRidesAContraption` now pushes the train
+  casing with a stained stair on it; `craftCowBoots` checks the name; the new recipes are read by
+  `fillingRecipesTakeTheTags` and loaded in `recipesLoad`.
+
+### 16.5 Looked at in the showcase
+
+Row F (normal and bloodless): the soul blood line on Create's machines, the Blood Diamond on its depot, the train
+casing beside Create's and the stained palette with its stairs and slabs, and a wall of hooks hung with a severed
+arm, a heart, scraps, a zombie head, beef, a pig's leg and an eye; `showcase_gauge.png`, the gauge over a copper
+tank of blood running a Flesh Arm and a Sinew Leg beside a dimmed Hydraulic Arm. In the bloodless run the carcass
+shots show the plated wrecks, and the debris shot what comes off a carcass and a scuffed stain: steel and mud.
+
+- The suite is 431 tests (13 new: nine in `MaterialsTests`, three in `BloodlessTests`, one in `DecorationTests`).

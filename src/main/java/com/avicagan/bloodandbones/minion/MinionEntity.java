@@ -672,7 +672,7 @@ public class MinionEntity extends PathfinderMob implements net.minecraft.world.e
             getNavigation().stop();
             setTarget(null);
             refreshDimensions();
-            level().playSound(null, blockPosition(), SoundEvents.SLIME_BLOCK_FALL, SoundSource.NEUTRAL, 1.0F, 0.6F);
+            level().playSound(null, blockPosition(), com.avicagan.bloodandbones.registry.BBSounds.FLESH_FALL.get(), SoundSource.NEUTRAL, 1.0F, 0.6F);
         }
     }
 
@@ -993,7 +993,7 @@ public class MinionEntity extends PathfinderMob implements net.minecraft.world.e
             }
             return InteractionResult.sidedSuccess(level().isClientSide);
         }
-        if (!cybernetic() && held.is(BBFluids.BLOOD.getBucket().get())) {
+        if (!cybernetic() && held.is(BBFluids.BLOOD_BUCKETS)) {
             // not poured away for a sip: only when half of it fits
             if (!level().isClientSide && stats().reservoir() - power() >= Math.min(HALF_BUCKET, stats().reservoir() * 0.5F)) {
                 feed(1000.0F);

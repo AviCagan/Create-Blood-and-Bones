@@ -1,0 +1,8 @@
+{
+  "parent": "minecraft:block/inner_stairs",
+  "textures": {
+    "bottom": "bloodandbones:block/palettes/bloody_calcite_cut_polished",
+    "side": "bloodandbones:block/palettes/bloody_calcite_cut_polished",
+    "top": "bloodandbones:block/palettes/bloody_calcite_cut_polished"
+  }
+}

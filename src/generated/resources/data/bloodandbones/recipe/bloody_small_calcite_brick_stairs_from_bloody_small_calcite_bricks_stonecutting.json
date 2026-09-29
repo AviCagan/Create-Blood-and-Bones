@@ -1,0 +1,10 @@
+{
+  "type": "minecraft:stonecutting",
+  "ingredient": {
+    "item": "bloodandbones:bloody_small_calcite_bricks"
+  },
+  "result": {
+    "count": 1,
+    "id": "bloodandbones:bloody_small_calcite_brick_stairs"
+  }
+}

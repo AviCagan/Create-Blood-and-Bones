@@ -9,7 +9,6 @@ import net.minecraft.network.syncher.EntityDataAccessor;
 import net.minecraft.network.syncher.EntityDataSerializers;
 import net.minecraft.network.syncher.SynchedEntityData;
 import net.minecraft.server.level.ServerLevel;
-import net.minecraft.sounds.SoundEvents;
 import net.minecraft.sounds.SoundSource;
 import net.minecraft.util.Mth;
 import net.minecraft.world.InteractionHand;
@@ -336,7 +335,7 @@ public class HangingGutChainEntity extends Entity {
         if (!level().isClientSide) {
             setLinks(links() + 1);
             stack.consume(1, player);
-            level().playSound(null, getX(), getY() - links(), getZ(), SoundEvents.SLIME_BLOCK_PLACE, SoundSource.BLOCKS, 0.8F, 0.9F);
+            level().playSound(null, getX(), getY() - links(), getZ(), com.avicagan.bloodandbones.registry.BBSounds.FLESH_PLACE.get(), SoundSource.BLOCKS, 0.8F, 0.9F);
         }
         return InteractionResult.sidedSuccess(level().isClientSide);
     }
@@ -360,7 +359,7 @@ public class HangingGutChainEntity extends Entity {
         if (!(by instanceof Player player && player.hasInfiniteMaterials())) {
             spawnAtLocation(new ItemStack(BBBlocks.GUT_CHAIN.asItem(), links()), -links() / 2.0F);
         }
-        playSound(SoundEvents.SLIME_BLOCK_BREAK, 1.0F, 0.8F);
+        playSound(com.avicagan.bloodandbones.registry.BBSounds.FLESH_BREAK.get(), 1.0F, 0.8F);
         discard();
     }
 

@@ -152,7 +152,7 @@ public final class Activation {
         }
         // the organ works with a wet squelch; brass with a hiss
         boolean brass = host instanceof MinionEntity minion && minion.cybernetic();
-        host.level().playSound(null, host.getX(), host.getY(), host.getZ(), brass ? SoundEvents.PISTON_EXTEND : SoundEvents.SLIME_SQUISH,
+        host.level().playSound(null, host.getX(), host.getY(), host.getZ(), brass ? SoundEvents.PISTON_EXTEND : com.avicagan.bloodandbones.registry.BBSounds.FLESH_SQUISH.get(),
                 host.getSoundSource(), 0.6F, (brass ? 1.4F : 0.6F) + host.getRandom().nextFloat() * 0.2F);
         if (entry.chance() >= 1.0F || host.getRandom().nextFloat() < entry.chance()) {
             entry.effect().run(new TraitContext(host, ActiveTraits.of(host), facet.entry(), facet.index(), entry, Trigger.ACTIVATE, target, null, 0.0F));
