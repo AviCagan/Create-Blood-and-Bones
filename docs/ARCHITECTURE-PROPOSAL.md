@@ -3257,3 +3257,5 @@ the chest beyond the table, none on the ground, the Cleaver bloody) and `fitness
   `showcase_table_line.png` (new) looks down at the Surgery Table with the cow on rabbit legs being built on it, its line on
   the action bar: "15 health, speed 0.32; best: Herder 200%, Tender 146%; 5 of 5 sockets filled". The other shots are as
   they were.
+- The suite is 486 tests (481 and the five new above), and passed three full runs in a row; the five new tests passed ten
+  times over, all at once in one world.
