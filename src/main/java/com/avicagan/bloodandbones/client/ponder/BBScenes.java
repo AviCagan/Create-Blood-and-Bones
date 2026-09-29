@@ -25,8 +25,22 @@ public final class BBScenes {
     private BBScenes() {
     }
 
-    /** The four carcass machines share one layout: a shaft up into the machine. */
-    public static void machine(SceneBuilder builder, SceneBuildingUtil util, String id, String header, String what, ItemStack shows) {
+    /** What the shaft's speed does for each machine: the Guillotine only winds faster, the Deglover gains nothing past 32 RPM. */
+    public static String speedLine(com.avicagan.bloodandbones.machine.MachineKind kind) {
+        return switch (kind) {
+            case GUILLOTINE -> "It is driven by a shaft from below. The faster it turns, the faster it winds its blade up";
+            case DEGLOVER -> "It is driven by a shaft from below. Up to 32 RPM, the faster it turns, the faster it works; past that it works no faster";
+            default -> "It is driven by a shaft from below. The faster it turns, the faster it works";
+        };
+    }
+
+    /**
+     * The four carcass machines share one layout: a shaft up into the machine. The Guillotine's also has a lever beside
+     * it, and shows the blade dropping when it is pulled.
+     */
+    public static void machine(SceneBuilder builder, SceneBuildingUtil util, com.avicagan.bloodandbones.machine.MachineKind kind, String header,
+                               String what, ItemStack shows) {
+        String id = kind.id;
         CreateSceneBuilder scene = new CreateSceneBuilder(builder);
         scene.title(id, header);
         scene.configureBasePlate(0, 0, 5);
@@ -47,9 +61,12 @@ public final class BBScenes {
         scene.world().setKineticSpeed(kinetics, 32);
         scene.effects().indicateSuccess(machine);
         scene.overlay().showText(70).attachKeyFrame().colored(PonderPalette.GREEN)
-                .text("It is driven by a shaft from below. The faster it turns, the faster it works")
+                .text(speedLine(kind))
                 .pointAt(util.vector().blockSurface(machine, Direction.DOWN)).placeNearTarget();
         scene.idle(80);
+        if (kind == com.avicagan.bloodandbones.machine.MachineKind.GUILLOTINE) {
+            guillotineDrop(scene, util, machine);
+        }
         scene.overlay().showText(80).attachKeyFrame()
                 .text("It works any carcass lying on it or hanging over it. Set it flush in a floor so a body lies across it")
                 .pointAt(top).placeNearTarget();
@@ -64,6 +81,38 @@ public final class BBScenes {
                 .pointAt(util.vector().blockSurface(machine, Direction.UP).add(0, 0, -0.35)).placeNearTarget();
         scene.idle(100);
         scene.markAsFinished();
+    }
+
+    /** A lever beside the Guillotine: wound up it holds the blade, armed, and a pull on the lever drops it. */
+    private static void guillotineDrop(CreateSceneBuilder scene, SceneBuildingUtil util, BlockPos machine) {
+        BlockPos support = machine.east().below();
+        BlockPos lever = machine.east();
+        scene.world().setBlock(support, com.simibubi.create.AllBlocks.ANDESITE_CASING.getDefaultState(), false);
+        scene.world().setBlock(lever, net.minecraft.world.level.block.Blocks.LEVER.defaultBlockState()
+                .setValue(net.minecraft.world.level.block.LeverBlock.FACE, net.minecraft.world.level.block.state.properties.AttachFace.FLOOR)
+                .setValue(net.minecraft.world.level.block.LeverBlock.FACING, Direction.WEST), false);
+        scene.world().showSection(util.select().fromTo(support, lever), Direction.DOWN);
+        scene.world().modifyBlockEntity(machine, com.avicagan.bloodandbones.machine.CarcassMachineBlockEntity.class, be -> be.wind = 1.0F);
+        scene.idle(15);
+        scene.overlay().showText(90).attachKeyFrame().colored(PonderPalette.RED)
+                .text("Wound up, it holds the blade at the top, armed. Only a redstone pulse drops it: a lever, a button or a clock beside it")
+                .pointAt(util.vector().topOf(lever)).placeNearTarget();
+        scene.idle(60);
+        scene.overlay().showControls(util.vector().topOf(lever), Pointing.DOWN, 20).rightClick();
+        scene.world().toggleRedstonePower(util.select().position(lever));
+        scene.effects().indicateRedstone(lever);
+        // the blade falls, a tick at a time, and lands (set here: a Ponder world never sees the redstone edge that drops it)
+        for (int left = com.avicagan.bloodandbones.machine.CarcassMachineBlockEntity.DROP_TICKS; left >= 0; left--) {
+            int falling = left;
+            scene.world().modifyBlockEntity(machine, com.avicagan.bloodandbones.machine.CarcassMachineBlockEntity.class, be -> {
+                be.falling = falling;
+                be.wind = 0.0F;
+            });
+            scene.idle(1);
+        }
+        scene.idle(35);
+        scene.world().toggleRedstonePower(util.select().position(lever));
+        scene.idle(10);
     }
 
     public static void bleedingRack(SceneBuilder builder, SceneBuildingUtil util) {

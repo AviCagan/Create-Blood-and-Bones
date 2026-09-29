@@ -36,12 +36,22 @@ public final class PartFilter {
 
     /** Whether a filter lets a station take this part of a carcass. */
     public static boolean takes(Level level, ItemStack filter, CarcassSavedData.Carcass carcass, String bone) {
-        return filter.isEmpty() || test(level, FilterItemStack.of(filter), CarcassPieceItem.of(carcass, bone));
+        return filter.isEmpty() || takes(level, FilterItemStack.of(filter), carcass, bone);
     }
 
     /** Whether a filter lets a station take this part, given as the item it would be. */
     public static boolean takes(Level level, ItemStack filter, ItemStack part) {
-        return filter.isEmpty() || test(level, FilterItemStack.of(filter), part);
+        return filter.isEmpty() || takes(level, FilterItemStack.of(filter), part);
+    }
+
+    /** As {@link #takes(Level, ItemStack, CarcassSavedData.Carcass, String)}, with the filter already read (a slot keeps it read). */
+    public static boolean takes(Level level, FilterItemStack filter, CarcassSavedData.Carcass carcass, String bone) {
+        return filter.item().isEmpty() || test(level, filter, CarcassPieceItem.of(carcass, bone));
+    }
+
+    /** As {@link #takes(Level, ItemStack, ItemStack)}, with the filter already read. */
+    public static boolean takes(Level level, FilterItemStack filter, ItemStack part) {
+        return filter.item().isEmpty() || test(level, filter, part);
     }
 
     private static boolean test(Level level, FilterItemStack filter, ItemStack part) {

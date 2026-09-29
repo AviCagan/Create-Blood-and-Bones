@@ -206,29 +206,45 @@ public final class BBItemAttributes {
     /**
      * Which limb a piece is, finer than {@link PiecePart}'s "limb": a hind leg, a front leg, a wing, a tentacle, by the
      * slot rules that are data (PartSlots, docs/PARTS-AND-TRAITS.md section 2.2), so it works for any mob's group, and a
-     * Guillotine set to "is a carcass hind leg" takes only hind legs. Heads, bodies and tails are PiecePart's.
+     * Guillotine set to "is a carcass hind leg" takes only hind legs. Any slot key the rules give is one (a datapack's
+     * "arm.fin" too); heads, bodies and tails are PiecePart's.
      */
     public record PieceSlot(String slot) implements ItemAttribute {
-        /** The slot keys it names (SlotInfo#key), and their words. */
+        /** The words for the slot keys the mod's own rules give (SlotInfo#key); any other key is worded from its parts. */
         public static final String[][] WORDS = {
                 {"leg", "leg"}, {"leg.front", "front leg"}, {"leg.hind", "hind leg"}, {"leg.mid", "middle leg"},
                 {"leg.tentacle", "tentacle"}, {"arm", "arm"}, {"arm.wing", "wing"}, {"arm.pair", "pair of arms"},
                 {"arm.front", "front arm"}, {"arm.hind", "hind arm"}, {"arm.mid", "middle arm"},
                 {"neck", "neck"}, {"torso_ext", "back half"}};
-        private static final java.util.Set<String> NAMED = java.util.Arrays.stream(WORDS).map(w -> w[0]).collect(java.util.stream.Collectors.toSet());
+        /** The slots that are not limbs: PiecePart's head, body and tail, and decoration drawn with its parent. */
+        private static final java.util.Set<com.avicagan.bloodandbones.parts.PartSlot> NOT_LIMBS = java.util.EnumSet.of(
+                com.avicagan.bloodandbones.parts.PartSlot.HEAD, com.avicagan.bloodandbones.parts.PartSlot.TORSO,
+                com.avicagan.bloodandbones.parts.PartSlot.TAIL, com.avicagan.bloodandbones.parts.PartSlot.EXTRA);
         public static final MapCodec<PieceSlot> CODEC = Codec.STRING.xmap(PieceSlot::new, PieceSlot::slot).fieldOf("value");
         public static final StreamCodec<ByteBuf, PieceSlot> STREAM_CODEC = ByteBufCodecs.STRING_UTF8.map(PieceSlot::new, PieceSlot::slot);
 
-        /** The piece's slot key, or null for a head, a body, a tail or anything it has no words for. */
+        /** The piece's slot key, or null for a head, a body, a tail or decoration. */
         @org.jetbrains.annotations.Nullable
         public static String slotOf(CarcassPieceItem.Piece piece, Level level) {
-            com.avicagan.bloodandbones.parts.PartsData.Store store = com.avicagan.bloodandbones.parts.PartsData.of(level);
+            return slotOf(com.avicagan.bloodandbones.parts.PartsData.of(level), piece);
+        }
+
+        /** As {@link #slotOf(CarcassPieceItem.Piece, Level)}, by the slot rules of one side's data. */
+        @org.jetbrains.annotations.Nullable
+        public static String slotOf(com.avicagan.bloodandbones.parts.PartsData.Store store, CarcassPieceItem.Piece piece) {
             java.util.Optional<Rig> rig = store.rig(piece.entity(), piece.baby());
             if (rig.isEmpty() || rig.get().bone(piece.bone()).isEmpty()) {
                 return null;
             }
-            String key = com.avicagan.bloodandbones.parts.PartSlots.of(store, piece.entity(), rig.get(), piece.bone()).key();
-            return NAMED.contains(key) ? key : null;
+            com.avicagan.bloodandbones.parts.SlotInfo info = com.avicagan.bloodandbones.parts.PartSlots.of(store, piece.entity(), rig.get(), piece.bone());
+            return NOT_LIMBS.contains(info.slot()) ? null : info.key();
+        }
+
+        /** Words for a slot key with none of its own in the lang file: its form or sub-slot before its slot ("fin arm"). */
+        public static String words(String key) {
+            String[] parts = key.split("\\.", 2);
+            String slot = parts[0].replace('_', ' ');
+            return parts.length < 2 ? slot : parts[1].replace('_', ' ') + " " + slot;
         }
 
         @Override
@@ -249,7 +265,7 @@ public final class BBItemAttributes {
 
         @Override
         public Object[] getTranslationParameters() {
-            return new Object[]{Component.translatable("bloodandbones.piece_slot." + slot)};
+            return new Object[]{Component.translatableWithFallback("bloodandbones.piece_slot." + slot, words(slot))};
         }
 
         public static class Type implements ItemAttributeType {

@@ -25,6 +25,8 @@ public class SurgeryTableBlockEntity extends SmartBlockEntity {
 
     /** With the Surgical Rig: which parts it takes (see SurgicalRig and com.avicagan.bloodandbones.machine.PartFilter). */
     public com.avicagan.bloodandbones.machine.PartFilteringBehaviour filtering;
+    /** The game time the rig's last cut is done and the next may start (SurgicalRig#PAUSE); not saved. */
+    public long nextCut;
 
     @Override
     public void addBehaviours(List<BlockEntityBehaviour> behaviours) {
@@ -61,6 +63,22 @@ public class SurgeryTableBlockEntity extends SmartBlockEntity {
     public void clearBuild() {
         build = java.util.Optional.empty();
         notifyUpdate();
+    }
+
+    /**
+     * The Surgical Rig comes off, and its filter with it: a Create filter in the slot goes back to whoever took the rig off
+     * (or drops), and the slot is cleared, so nothing is left in a slot that is no longer there.
+     */
+    public void takeFilter(@org.jetbrains.annotations.Nullable net.minecraft.world.entity.player.Player player) {
+        ItemStack filter = filtering.getFilter();
+        if (filter.getItem() instanceof com.simibubi.create.content.logistics.filter.FilterItem && level != null && !level.isClientSide) {
+            if (player != null) {
+                player.getInventory().placeItemBackInInventory(filter.copy());
+            } else {
+                net.minecraft.world.level.block.Block.popResource(level, worldPosition, filter.copy());
+            }
+        }
+        filtering.setFilter(ItemStack.EMPTY);
     }
 
     public ItemStack take() {

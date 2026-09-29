@@ -58,7 +58,8 @@ import java.util.UUID;
  * <ul>
  * <li>The Mangler, Beheader and Deglover make ready for their next stroke while they turn (faster the faster, the
  * Millstone way), and strike as soon as something they can take is in reach, so a Beheader under a line takes each head
- * as it passes.</li>
+ * as it passes. Ready and idle, they look every couple of ticks at first and less often while nothing comes, and only
+ * at carcasses lying near.</li>
  * <li>The Guillotine winds its blade up while it turns and holds it there, armed; a rising redstone edge drops it
  * through one limb, and it winds up again (ARCHITECTURE 7's state machine, the Sequenced Gearshift's edge).</li>
  * </ul>
@@ -74,8 +75,12 @@ public class CarcassMachineBlockEntity extends KineticBlockEntity implements Cle
     public static final double SPREAD = 0.75;
     /** Ticks the Guillotine's blade takes to fall. */
     public static final int DROP_TICKS = 4;
-    /** How often a machine ready to strike looks for something to take. */
+    /** How often a machine ready to strike looks for something to take, at first. */
     private static final int LOOK_EVERY = 2;
+    /** The longest it goes between looks while nothing comes (each look that finds nothing doubles the wait up to this). */
+    private static final int LOOK_IDLE = 10;
+    /** How far from its zone a carcass's torso may lie and still have a part in reach (its limbs hang off it). */
+    private static final double BODY_SPAN = 6.0;
 
     private static final Map<String, Item> SKULLS = Map.of(
             "minecraft:zombie", Items.ZOMBIE_HEAD,
@@ -124,6 +129,9 @@ public class CarcassMachineBlockEntity extends KineticBlockEntity implements Cle
     private boolean powered;
     /** Strokes that took something, since it was placed: what a test counts the time of a path by. */
     public int strokes;
+    /** Ticks until it looks again while ready, and how long the next wait is after a look that found nothing; not saved. */
+    private int lookIn;
+    private int idleWait = LOOK_EVERY;
     /** Which parts it takes; see {@link PartFilter}. */
     public PartFilteringBehaviour filtering;
 
@@ -189,13 +197,19 @@ public class CarcassMachineBlockEntity extends KineticBlockEntity implements Cle
             timer++;
             return;
         }
-        if (isOutputFull() || level.getGameTime() % LOOK_EVERY != 0) {
+        // ready: it looks every couple of ticks, backing off while nothing comes, so an idle line costs little
+        if (isOutputFull() || --lookIn > 0) {
             return;
         }
         if (stroke((ServerLevel) level)) {
             timer = 0;
             strokes++;
+            lookIn = 0;
+            idleWait = LOOK_EVERY;
             sendData();
+        } else {
+            lookIn = idleWait;
+            idleWait = Math.min(LOOK_IDLE, idleWait * 2);
         }
     }
 
@@ -383,14 +397,18 @@ public class CarcassMachineBlockEntity extends KineticBlockEntity implements Cle
         };
     }
 
-    /** Whether there is anything on this carcass this machine would take, filter and all (the Mangler grinds anything). */
+    /**
+     * Whether there is anything on this carcass this machine would take, filter and all, as {@link #pick} would find it:
+     * an attached limb it takes, or for the Mangler the body itself once nothing hangs off it (a body with a limb the
+     * filter turns away still on it cannot be ground, and unfolding it would be for nothing, every stroke).
+     */
     private boolean hasWork(CarcassSavedData.Carcass carcass, MachineKind kind) {
         for (CarcassJoints.Spec joint : carcass.joints) {
             if (takes(carcass, joint.child(), kind) && accepts(carcass, joint.child())) {
                 return true;
             }
         }
-        return kind == MachineKind.MANGLER && accepts(carcass);
+        return kind == MachineKind.MANGLER && !CarcassButchery.isAttached(carcass, carcass.rootBone) && accepts(carcass);
     }
 
     /**
@@ -407,6 +425,8 @@ public class CarcassMachineBlockEntity extends KineticBlockEntity implements Cle
                     return false;
                 }
             }
+            // the hide goes between the grinders with it (the path's share of it, none unless a datapack says so)
+            CarcassButchery.groundHide(level, piece, bone, at);
             CarcassButchery.butcher(level, piece, bone, at);
             level.playSound(null, at.x, at.y, at.z, BBSounds.MACHINE_GRIND.get(), SoundSource.BLOCKS, 1.0F, 0.7F + level.random.nextFloat() * 0.3F);
             if (com.avicagan.bloodandbones.carcass.Blood.bloody(piece)) {
@@ -482,9 +502,18 @@ public class CarcassMachineBlockEntity extends KineticBlockEntity implements Cle
             return found;
         }
         AABB zone = zone();
+        // a record's parts hang off its root: one whose root lies well away from the zone has nothing in it
+        AABB near = zone.inflate(BODY_SPAN);
         List<Map.Entry<CarcassSavedData.Carcass, Double>> order = new ArrayList<>();
-        for (CarcassSavedData.Carcass carcass : List.copyOf(CarcassSavedData.get(level).all())) {
-            Map<String, Vector3d> here = new LinkedHashMap<>();
+        for (CarcassSavedData.Carcass carcass : CarcassSavedData.get(level).all()) {
+            UUID rootId = carcass.bones.get(carcass.rootBone);
+            if (rootId != null && container.getSubLevel(rootId) instanceof ServerSubLevel root && !root.isRemoved()) {
+                Vector3dc p = root.logicalPose().position();
+                if (!near.contains(p.x(), p.y(), p.z())) {
+                    continue;
+                }
+            }
+            Map<String, Vector3d> here = null;
             double lowest = Double.MAX_VALUE;
             for (Map.Entry<String, UUID> bone : carcass.bones.entrySet()) {
                 if (!(container.getSubLevel(bone.getValue()) instanceof ServerSubLevel body) || body.isRemoved()) {
@@ -492,11 +521,14 @@ public class CarcassMachineBlockEntity extends KineticBlockEntity implements Cle
                 }
                 Vector3dc p = body.logicalPose().position();
                 if (zone.contains(p.x(), p.y(), p.z())) {
+                    if (here == null) {
+                        here = new LinkedHashMap<>();
+                    }
                     here.put(bone.getKey(), new Vector3d(p));
                     lowest = Math.min(lowest, p.y());
                 }
             }
-            if (!here.isEmpty()) {
+            if (here != null) {
                 found.put(carcass, here);
                 order.add(Map.entry(carcass, lowest));
             }

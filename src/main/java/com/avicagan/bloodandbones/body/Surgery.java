@@ -370,19 +370,33 @@ public final class Surgery {
     }
 
     /**
-     * The trait on a carcass piece counting the organs already taken from it; a carcass in the world counts each of its
-     * parts' under this plus "." and the part (SurgicalRig), which a piece picked up off it keeps.
+     * The trait on a carcass piece counting the organs already taken from it. A carcass lying whole counts each bone's
+     * under its own key ("organs_taken:head"), which a piece cut off it still reads.
      */
     public static final String ORGANS_TAKEN = "organs_taken";
 
     public static int organsTaken(com.avicagan.bloodandbones.item.CarcassPieceItem.Piece piece) {
-        return Math.max(organsTaken(piece.traits(), ORGANS_TAKEN), organsTaken(piece.traits(), ORGANS_TAKEN + "." + piece.bone()));
+        String own = piece.traits().get(ORGANS_TAKEN);
+        return count(own != null ? own : piece.traits().get(ORGANS_TAKEN + ":" + piece.bone()));
     }
 
-    /** A count kept among a carcass's or piece's traits. */
-    public static int organsTaken(java.util.Map<String, String> traits, String key) {
+    /** How many organs were taken out of one bone of a carcass (a piece put down counted its own under the plain key). */
+    public static int organsTaken(java.util.Map<String, String> traits, String bone, boolean root) {
+        int own = count(traits.get(ORGANS_TAKEN + ":" + bone));
+        return root ? Math.max(own, count(traits.get(ORGANS_TAKEN))) : own;
+    }
+
+    /** A carried piece put down whole: what was taken out of it is its bone's own count now, not the whole carcass's. */
+    public static void putDown(java.util.Map<String, String> traits, String bone) {
+        String own = traits.remove(ORGANS_TAKEN);
+        if (own != null) {
+            traits.put(ORGANS_TAKEN + ":" + bone, own);
+        }
+    }
+
+    private static int count(@org.jetbrains.annotations.Nullable String value) {
         try {
-            return Integer.parseInt(traits.getOrDefault(key, "0"));
+            return value == null ? 0 : Integer.parseInt(value);
         } catch (NumberFormatException e) {
             return 0;
         }

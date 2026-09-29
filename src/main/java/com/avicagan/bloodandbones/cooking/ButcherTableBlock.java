@@ -45,10 +45,15 @@ public class ButcherTableBlock extends Block implements IBE<ButcherTableBlockEnt
         if (!stack.isEmpty() && !cleaver && !stack.is(BBItems.CARCASS_PIECE.get())) {
             return ItemInteractionResult.PASS_TO_DEFAULT_BLOCK_INTERACTION;
         }
-        boolean empty = !(level.getBlockEntity(pos) instanceof ButcherTableBlockEntity table) || table.specimen().isEmpty();
+        ButcherTableBlockEntity here = level.getBlockEntity(pos) instanceof ButcherTableBlockEntity table ? table : null;
+        boolean empty = here == null || here.specimen().isEmpty();
+        // a Cleaver in one hand and a piece the table takes in the other, at an empty table: the piece goes on first, on
+        // both sides alike (the client cannot see a loose piece lying on the top, so it could not tell the two apart)
+        if (cleaver && empty && hand == InteractionHand.MAIN_HAND && here != null && here.inventory.isItemValid(0, player.getOffhandItem())) {
+            return ItemInteractionResult.PASS_TO_DEFAULT_BLOCK_INTERACTION;
+        }
         // a cleaver also chops a loose piece lying on the top, which only the server knows of (the client swings)
-        if (stack.isEmpty() && empty || cleaver && empty && !level.isClientSide
-                && (!(level.getBlockEntity(pos) instanceof ButcherTableBlockEntity table) || table.lying((ServerLevel) level) == null)) {
+        if (stack.isEmpty() && empty || cleaver && empty && !level.isClientSide && (here == null || here.lying((ServerLevel) level) == null)) {
             // nothing on the table to take or chop: let the other hand have its turn
             return ItemInteractionResult.PASS_TO_DEFAULT_BLOCK_INTERACTION;
         }
@@ -84,7 +89,8 @@ public class ButcherTableBlock extends Block implements IBE<ButcherTableBlockEnt
         if (!state.is(newState.getBlock()) && level.getBlockEntity(pos) instanceof ButcherTableBlockEntity table && !table.specimen().isEmpty()) {
             Block.popResource(level, pos, table.take());
         }
-        super.onRemove(state, level, pos, newState, movedByPiston);
+        // as Create's own blocks do: the block entity's behaviours are destroyed too, so the filter drops
+        IBE.onRemove(state, level, pos, newState);
     }
 
     @Override

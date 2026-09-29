@@ -24,14 +24,14 @@ public class PartFilteringBehaviour extends FilteringBehaviour {
         withPredicate(PartFilter::allowed);
     }
 
-    /** Whether it lets its station take this part of a carcass. */
+    /** Whether it lets its station take this part of a carcass (asked of the filter as the slot keeps it read, not read again). */
     public boolean takes(com.avicagan.bloodandbones.carcass.CarcassSavedData.Carcass carcass, String bone) {
-        return PartFilter.takes(getWorld(), getFilter(), carcass, bone);
+        return PartFilter.takes(getWorld(), filter, carcass, bone);
     }
 
     /** Whether it lets its station take this part, given as the item it would be. */
     public boolean takes(ItemStack part) {
-        return PartFilter.takes(getWorld(), getFilter(), part);
+        return PartFilter.takes(getWorld(), filter, part);
     }
 
     /**

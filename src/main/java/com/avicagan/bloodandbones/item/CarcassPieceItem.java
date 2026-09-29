@@ -148,6 +148,8 @@ public class CarcassPieceItem extends Item {
         }
         carcass.skinned = piece.skinned();
         carcass.traits.putAll(piece.traits());
+        // the organs taken out of it were its own bone's, not the whole body's
+        com.avicagan.bloodandbones.body.Surgery.putDown(carcass.traits, piece.bone());
         carcass.blood = piece.blood();
         carcass.bloodMax = piece.bloodMax();
         carcass.decay = piece.decay();

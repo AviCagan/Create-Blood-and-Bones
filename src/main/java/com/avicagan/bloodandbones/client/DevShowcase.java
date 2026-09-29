@@ -76,6 +76,9 @@ public final class DevShowcase {
     /** The view whose picture shows bits breaking off the bloody blocks, and where they are thrown. */
     private static int debrisView = -1;
     private static BlockPos debrisAt;
+    /** An empty Butcher's Table and an empty Spit Roast, for the client's half of a click with something in the other hand. */
+    private static BlockPos emptyTable;
+    private static BlockPos emptySpit;
     /** Server ticks to let the scene play before the first picture, and between pictures. */
     private static final int SETTLE = 400;
     private static final int SHOT_GAP = 40;
@@ -85,7 +88,8 @@ public final class DevShowcase {
     /** Client ticks per Ponder scene: long enough for its first line of text. */
     private static final int PONDER_GAP = 110;
     private static final List<java.util.function.Supplier<? extends net.minecraft.world.level.ItemLike>> PONDERS = List.of(
-            BBBlocks.MANGLER::get, BBBlocks.BLEEDING_RACK::get, BBBlocks.SPIT_ROAST::get, BBBlocks.BUTCHER_HOOK::get, BBBlocks.BUTCHER_TABLE::get);
+            BBBlocks.MANGLER::get, BBBlocks.BLEEDING_RACK::get, BBBlocks.SPIT_ROAST::get, BBBlocks.BUTCHER_HOOK::get, BBBlocks.BUTCHER_TABLE::get,
+            BBBlocks.GUILLOTINE::get);
 
     private DevShowcase() {
     }
@@ -197,6 +201,9 @@ public final class DevShowcase {
                 int phase = ticks % PONDER_GAP;
                 ticks++;
                 if (scene >= PONDERS.size()) {
+                    if (phase == 0) {
+                        otherHand(mc);
+                    }
                     if (phase == 0 && com.avicagan.bloodandbones.compat.jei.BBJeiPlugin.runtime != null) {
                         mc.setScreen(null);
                         // the cow's page: what a cow's carcass gives
@@ -247,10 +254,16 @@ public final class DevShowcase {
                         && mc.screen instanceof net.createmod.ponder.foundation.ui.PonderUI ponder) {
                     // the Deployer over the table, a piece on it
                     ponder.seekToTime(250);
+                } else if (phase == PONDER_GAP - 4 && PONDERS.get(scene).get() == BBBlocks.GUILLOTINE.get()
+                        && mc.screen instanceof net.createmod.ponder.foundation.ui.PonderUI ponder && ponder.getActiveScene().getCurrentTime() < 274) {
+                    // the lever beside it just pulled and the blade down, when the shot is taken (late: a scene slows down
+                    // while its text is up)
+                    ponder.seekToTime(274);
                 } else if (phase == PONDER_GAP - 1) {
                     Screenshot.grab(mc.gameDirectory, PREFIX + "ponder_" + scene + ".png", mc.getMainRenderTarget(), message -> {
                     });
-                    BloodAndBones.LOGGER.info("[showcase] took ponder shot {}", scene);
+                    BloodAndBones.LOGGER.info("[showcase] took ponder shot {} at scene time {}", scene,
+                            mc.screen instanceof net.createmod.ponder.foundation.ui.PonderUI ponder ? ponder.getActiveScene().getCurrentTime() : -1);
                 }
             }
             case 6 -> {
@@ -764,6 +777,21 @@ public final class DevShowcase {
             wholeSpit.skewer(level, wholeCow);
             wholeSpit.progress = wholeSpit.cookTime() * 0.75F;
         }
+        // and a third spit that a cow went on and came off raw: it is set down whole again, not in six heaped pieces
+        BlockPos rawSpit = new BlockPos(o.getX() - 15, o.getY(), z);
+        emptySpit = rawSpit;
+        // an empty Butcher's Table out of the way, for the client's half of a click
+        emptyTable = new BlockPos(o.getX() - 19, o.getY(), z);
+        level.setBlockAndUpdate(emptyTable, BBBlocks.BUTCHER_TABLE.getDefaultState());
+        level.setBlockAndUpdate(rawSpit, BBBlocks.SPIT_ROAST.getDefaultState().setValue(HorizontalAxisKineticBlock.HORIZONTAL_AXIS, Direction.Axis.X));
+        CarcassSavedData.Carcass rawCow = carcass(level, EntityType.COW, new BlockPos(o.getX() - 16, o.getY(), z + 12), false);
+        if (rawCow != null && level.getBlockEntity(rawSpit) instanceof SpitRoastBlockEntity raw && raw.skewer(level, rawCow)) {
+            raw.takeOff(player);
+            CarcassSavedData.get(level).all().stream().filter(c -> c.entity.equals(rawCow.entity)
+                            && CarcassAssembler.boneWorldPosition(level, c, c.rootBone) != null
+                            && CarcassAssembler.boneWorldPosition(level, c, c.rootBone).distance(rawSpit.getX() + 0.5, rawSpit.getY() + 1.0, rawSpit.getZ() + 0.5) < 3.0)
+                    .forEach(c -> BloodAndBones.LOGGER.info("[showcase] set down off the spit: {} bones, {} joints", c.bones.size(), c.joints.size()));
+        }
 
         double eye = o.getY();
         views = List.of(
@@ -816,10 +844,42 @@ public final class DevShowcase {
                 // the two Guillotines from the south, level with their blades: one up, one fallen and winding back
                 new View(o.getX() - 26.5, eye, o.getZ() + 14.9, 180, 18),
                 // a whole cow roasting on a spit
-                new View(o.getX() - 10.5, eye + 1.0, o.getZ() + 16.6, 0, 18));
-        debrisView = views.size() - 8;
+                new View(o.getX() - 10.5, eye + 1.0, o.getZ() + 16.6, 0, 18),
+                // a cow taken off a spit raw, set down whole
+                new View(o.getX() - 14.5, eye + 1.2, o.getZ() + 16.2, 0, 22));
+        // the view with the flying bits (the eighteenth)
+        debrisView = 17;
         debrisAt = new BlockPos(o.getX(), o.getY() + 1, decoZ + 13);
         BloodAndBones.LOGGER.info("[showcase] built at {}", o);
+    }
+
+    /**
+     * Client: what the client decides on a click with a Cleaver at an empty Butcher's Table and the Meat Hook at an empty
+     * spit, with a piece in the other hand and without. With one, the click should pass, so the other hand has its turn;
+     * without, it should be taken (the arm swings: only the server can see a piece lying there to chop).
+     */
+    private static void otherHand(Minecraft mc) {
+        if (mc.level == null || mc.player == null || emptyTable == null || emptySpit == null) {
+            return;
+        }
+        ItemStack before = mc.player.getOffhandItem();
+        ItemStack piece = new ItemStack(BBItems.CARCASS_PIECE.get());
+        piece.set(com.avicagan.bloodandbones.registry.BBDataComponents.PIECE.get(), new CarcassPieceItem.Piece(
+                net.minecraft.resources.ResourceLocation.withDefaultNamespace("cow"), "left_hind_leg",
+                net.minecraft.resources.ResourceLocation.withDefaultNamespace("textures/entity/cow/cow.png"), List.of(), 1.0F,
+                false, java.util.Map.of(), 0.0F, 0.0F, 0.0F, false));
+        List<String> results = new java.util.ArrayList<>();
+        for (BlockPos at : List.of(emptyTable, emptySpit)) {
+            ItemStack tool = new ItemStack(at == emptyTable ? BBItems.CLEAVER.get() : BBItems.MEAT_HOOK.get());
+            net.minecraft.world.phys.BlockHitResult hit = new net.minecraft.world.phys.BlockHitResult(net.minecraft.world.phys.Vec3.atCenterOf(at), Direction.UP, at, false);
+            for (ItemStack other : List.of(piece, ItemStack.EMPTY)) {
+                mc.player.setItemInHand(InteractionHand.OFF_HAND, other.copy());
+                results.add(mc.level.getBlockState(at).useItemOn(tool, mc.level, mc.player, InteractionHand.MAIN_HAND, hit).name());
+            }
+        }
+        mc.player.setItemInHand(InteractionHand.OFF_HAND, before);
+        BloodAndBones.LOGGER.info("[showcase] client clicks: Cleaver at an empty table, a piece in the other hand {}, none {}; "
+                + "Meat Hook at an empty spit, a piece {}, none {}", results.toArray());
     }
 
     /**
@@ -970,6 +1030,12 @@ public final class DevShowcase {
                 .setValue(com.avicagan.bloodandbones.body.SurgeryTableBlock.ATTACHMENT, com.avicagan.bloodandbones.body.TableAttachment.SURGICAL));
         if (level.getBlockEntity(rig) instanceof com.avicagan.bloodandbones.body.SurgeryTableBlockEntity surgery) {
             surgery.filtering.setFilter(partFilter(new com.avicagan.bloodandbones.registry.BBItemAttributes.PieceSlot("leg.hind")));
+            if (cow != null) {
+                // a hind leg laid on it and one cut made, as a Deployer makes it: its hide is off, the meat bare
+                surgery.put(CarcassPieceItem.of(cow, "right_hind_leg"));
+                com.avicagan.bloodandbones.body.SurgicalRig.cut(level, net.neoforged.neoforge.common.util.FakePlayerFactory.getMinecraft(level), surgery,
+                        new ItemStack(BBItems.CLEAVER.get()));
+            }
         }
     }
 

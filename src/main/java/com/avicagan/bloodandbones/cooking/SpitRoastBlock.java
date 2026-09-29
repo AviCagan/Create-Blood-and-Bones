@@ -44,13 +44,21 @@ public class SpitRoastBlock extends HorizontalAxisKineticBlock implements IBE<Sp
     protected ItemInteractionResult useItemOn(ItemStack stack, BlockState state, Level level, BlockPos pos, Player player,
                                               InteractionHand hand, BlockHitResult hit) {
         if (stack.is(BBItems.MEAT_HOOK.get())) {
-            // a whole carcass goes on: the one the hook is dragging, or one lying over the spit
+            // a whole carcass goes on: the one the hook is dragging, or else one lying over the spit, unless the other hand
+            // holds a piece to skewer; with the spit full, or the other hand's piece to go on, the other hand has its turn
+            // (both sides decide alike: only the server sees a carcass lying there, so the client swings on the chance)
+            boolean empty = level.getBlockEntity(pos) instanceof SpitRoastBlockEntity be && be.pieces().isEmpty();
+            boolean offhandPiece = hand == InteractionHand.MAIN_HAND && player.getOffhandItem().is(BBItems.CARCASS_PIECE.get());
             if (level.isClientSide) {
-                return ItemInteractionResult.SUCCESS;
+                boolean dragging = com.avicagan.bloodandbones.client.ClientDragState.all().containsKey(player.getUUID());
+                return empty && (dragging || !offhandPiece) ? ItemInteractionResult.SUCCESS : ItemInteractionResult.PASS_TO_DEFAULT_BLOCK_INTERACTION;
+            }
+            if (!empty || offhandPiece && com.avicagan.bloodandbones.carcass.CarcassDrag.current(player) == null) {
+                return ItemInteractionResult.PASS_TO_DEFAULT_BLOCK_INTERACTION;
             }
             return onBlockEntityUseItemOn(level, pos, be -> {
                 com.avicagan.bloodandbones.carcass.CarcassSavedData.Carcass carcass = wholeFor((net.minecraft.server.level.ServerLevel) level, pos, player);
-                if (carcass == null || !be.pieces().isEmpty()) {
+                if (carcass == null) {
                     return ItemInteractionResult.PASS_TO_DEFAULT_BLOCK_INTERACTION;
                 }
                 com.avicagan.bloodandbones.carcass.CarcassDrag.stop((net.minecraft.server.level.ServerLevel) level, player);

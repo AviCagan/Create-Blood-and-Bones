@@ -178,29 +178,63 @@ public final class CarcassButchery {
         if (carcass.skinStrokes < STROKES_TO_SKIN) {
             return true;
         }
+        return flay(level, carcass, where);
+    }
+
+    /**
+     * The hide comes off at once, on whatever path is set (the last stroke of a knife or a Deglover, or one cut at the
+     * Surgical Rig): the record's share of the hide (and anything the table adds, like a sheep's wool) drops, and the
+     * carcass shows bare meat from then on.
+     *
+     * @return false if it was already skinned or has no hide to give
+     */
+    public static boolean flay(ServerLevel level, CarcassSavedData.Carcass carcass, @Nullable Vector3d at) {
+        var table = com.avicagan.bloodandbones.carcass.butchery.ButcheryManager.forEntity(carcass.entity).orElse(null);
+        Vector3d where = at != null ? at : CarcassAssembler.boneWorldPosition(level, carcass, carcass.rootBone);
+        if (carcass.skinned || table == null || table.hide().isEmpty() || where == null) {
+            return false;
+        }
         carcass.skinStrokes = 0;
         dropYields(level, carcass, table.hide(), shareOfAnimal(carcass), where);
         carcass.skinned = true;
         carcass.look = CarcassLook.flesh();
         CarcassRot.sync(level, carcass, null);
         Blood.wound(level, carcass, where, 16, 2);
+        level.playSound(null, where.x, where.y, where.z, com.avicagan.bloodandbones.registry.BBSounds.CARCASS_SKIN.get(), SoundSource.BLOCKS, 1.0F, 0.9F);
         CarcassSavedData.get(level).setDirty();
         return true;
     }
 
+    /**
+     * A piece ground whole with its hide still on (the Mangler's way): its share of the hide, at the path's share for
+     * hide. The Mangler's is none, so it grinds the hide away; a datapack that gives it some gets that much hide back.
+     */
+    public static void groundHide(ServerLevel level, CarcassSavedData.Carcass carcass, String bone, Vector3d at) {
+        if (carcass.skinned || path().share("hide") <= 0.0F) {
+            return;
+        }
+        var table = com.avicagan.bloodandbones.carcass.butchery.ButcheryManager.forEntity(carcass.entity).orElse(null);
+        var rig = com.avicagan.bloodandbones.carcass.rig.RigManager.forCarcass(carcass).orElse(null);
+        if (table != null && rig != null && !table.hide().isEmpty()) {
+            dropYields(level, carcass, table.hide(), shareOfAnimal(rig, bone::equals), at);
+        }
+    }
+
     /** How much of the whole animal this record still is, by bone volume (a lone leg is a small hide). */
     public static float shareOfAnimal(CarcassSavedData.Carcass carcass) {
-        var rig = com.avicagan.bloodandbones.carcass.rig.RigManager.forCarcass(carcass).orElse(null);
-        if (rig == null) {
-            return 1.0F;
-        }
+        return com.avicagan.bloodandbones.carcass.rig.RigManager.forCarcass(carcass)
+                .map(rig -> shareOfAnimal(rig, bone -> carcass.bones.containsKey(bone) || carcass.restPoses.containsKey(bone))).orElse(1.0F);
+    }
+
+    /** How much of the whole animal these bones of its rig are, by volume. */
+    public static float shareOfAnimal(com.avicagan.bloodandbones.carcass.rig.Rig rig, java.util.function.Predicate<String> has) {
         float all = 0.0F;
         float here = 0.0F;
         for (var bone : rig.bones()) {
             org.joml.Vector3f size = bone.boxSize();
             float volume = size.x * size.y * size.z;
             all += volume;
-            if (carcass.bones.containsKey(bone.name()) || carcass.restPoses.containsKey(bone.name())) {
+            if (has.test(bone.name())) {
                 here += volume;
             }
         }
@@ -324,25 +358,81 @@ public final class CarcassButchery {
     }
 
     /**
-     * The mob's own loot table, rolled as if it had died with nobody to blame: what a grown one drops (a baby drops
-     * nothing, as in the game, and nothing drops with mob loot turned off).
+     * The mob's own loot table, rolled as if it had died with nobody to blame, for the carcass it left: a grown one's, as
+     * it was (a black sheep's wool is black; a sheep skinned already, or sheared when it died, has none; a big magma cube
+     * is big), and nothing for a baby, as in the game, or with mob loot turned off.
+     * <p>
+     * What its butchery table also gives is left out: the path taking the carcass apart already took its share of that
+     * from the table (the Mangler a quarter of the meat and bone, none of the hide), and the drop on top would give more
+     * than a careful station does. So the Mangler gets the drops no table gives: a cow's leather, a zombie's rare iron, a
+     * skeleton's arrows.
      */
     public static void rollLoot(ServerLevel level, CarcassSavedData.Carcass carcass, Vector3d at) {
-        if (carcass.baby || !level.getGameRules().getBoolean(net.minecraft.world.level.GameRules.RULE_DOMOBLOOT)) {
-            return;
-        }
-        var type = net.minecraft.core.registries.BuiltInRegistries.ENTITY_TYPE.getOptional(carcass.entity);
-        if (type.isEmpty() || !(type.get().create(level) instanceof net.minecraft.world.entity.LivingEntity mob)) {
+        net.minecraft.world.entity.LivingEntity mob = lootMob(level, carcass);
+        if (mob == null || mob.isBaby() || !level.getGameRules().getBoolean(net.minecraft.world.level.GameRules.RULE_DOMOBLOOT)) {
             return;
         }
         mob.moveTo(at.x, at.y, at.z, 0.0F, 0.0F);
+        java.util.Set<net.minecraft.world.item.Item> tabled = tableItems(carcass);
         var table = level.getServer().reloadableRegistries().getLootTable(mob.getLootTable());
         var params = new net.minecraft.world.level.storage.loot.LootParams.Builder(level)
                 .withParameter(net.minecraft.world.level.storage.loot.parameters.LootContextParams.THIS_ENTITY, mob)
                 .withParameter(net.minecraft.world.level.storage.loot.parameters.LootContextParams.ORIGIN, mob.position())
                 .withParameter(net.minecraft.world.level.storage.loot.parameters.LootContextParams.DAMAGE_SOURCE, level.damageSources().generic())
                 .create(net.minecraft.world.level.storage.loot.parameters.LootContextParamSets.ENTITY);
-        table.getRandomItems(params, stack -> emit(level, stack, at));
+        table.getRandomItems(params, stack -> {
+            if (!tabled.contains(stack.getItem())) {
+                emit(level, stack, at);
+            }
+        });
+    }
+
+    /**
+     * A fresh instance of the carcass's mob, never added to the world, set as the carcass has it where its loot reads
+     * it: a baby's age; a slime's size (the rig's baby is the smallest, else the biggest a carcass comes from); a sheep's
+     * wool colour, and sheared if its wool is gone.
+     */
+    @Nullable
+    private static net.minecraft.world.entity.LivingEntity lootMob(ServerLevel level, CarcassSavedData.Carcass carcass) {
+        var type = net.minecraft.core.registries.BuiltInRegistries.ENTITY_TYPE.getOptional(carcass.entity);
+        if (type.isEmpty() || !(type.get().create(level) instanceof net.minecraft.world.entity.LivingEntity mob)) {
+            return null;
+        }
+        if (mob instanceof net.minecraft.world.entity.monster.Slime slime) {
+            slime.setSize(carcass.baby ? 1 : 4, false);
+        } else if (carcass.baby && mob instanceof net.minecraft.world.entity.Mob young) {
+            young.setBaby(true);
+            if (!young.isBaby()) {
+                // a mob the game never raises young of: what the rig calls its baby drops nothing all the same
+                return null;
+            }
+        }
+        if (mob instanceof net.minecraft.world.entity.animal.Sheep sheep) {
+            String wool = carcass.traits.get("wool");
+            net.minecraft.world.item.DyeColor colour = wool == null ? null : net.minecraft.world.item.DyeColor.byName(wool, null);
+            if (colour != null) {
+                sheep.setColor(colour);
+            }
+            sheep.setSheared(colour == null || carcass.skinned);
+        }
+        return mob;
+    }
+
+    /** Every item the carcass's mob's butchery table gives, its hide and all its parts, with its traits filled in. */
+    private static java.util.Set<net.minecraft.world.item.Item> tableItems(CarcassSavedData.Carcass carcass) {
+        java.util.Set<net.minecraft.world.item.Item> items = new java.util.HashSet<>();
+        com.avicagan.bloodandbones.carcass.butchery.ButcheryManager.forEntity(carcass.entity).ifPresent(table -> {
+            java.util.List<com.avicagan.bloodandbones.carcass.butchery.Yield> all = new java.util.ArrayList<>(table.hide());
+            table.parts().values().forEach(all::addAll);
+            for (var yield : all) {
+                String id = fillTraits(yield.item(), carcass.traits);
+                net.minecraft.resources.ResourceLocation key = id == null ? null : net.minecraft.resources.ResourceLocation.tryParse(id);
+                if (key != null) {
+                    net.minecraft.core.registries.BuiltInRegistries.ITEM.getOptional(key).ifPresent(items::add);
+                }
+            }
+        });
+        return items;
     }
 
     /** Where yields go instead of the ground while a machine is working, else null. */
@@ -363,6 +453,29 @@ public final class CarcassButchery {
                     dropYields(level, stand, table.part(piece.bone()), 1.0F, new Vector3d());
                     return true;
                 }));
+        return out;
+    }
+
+    /**
+     * What flaying a carried piece gives, as items: its share of its mob's hide, by its bone's volume, spoiled as far as it
+     * had rotted and scaled for a baby. Nothing for a piece already skinned, or a mob with no hide.
+     */
+    public static java.util.List<net.minecraft.world.item.ItemStack> pieceHide(ServerLevel level, com.avicagan.bloodandbones.item.CarcassPieceItem.Piece piece) {
+        java.util.List<net.minecraft.world.item.ItemStack> out = new java.util.ArrayList<>();
+        var table = com.avicagan.bloodandbones.carcass.butchery.ButcheryManager.forEntity(piece.entity()).orElse(null);
+        var rig = com.avicagan.bloodandbones.carcass.rig.RigManager.forEntity(piece.entity(), piece.baby()).orElse(null);
+        if (piece.skinned() || table == null || table.hide().isEmpty() || rig == null) {
+            return out;
+        }
+        CarcassSavedData.Carcass stand = new CarcassSavedData.Carcass(UUID.randomUUID(), piece.entity(), piece.bone());
+        stand.freshness = piece.freshness();
+        stand.baby = piece.baby();
+        stand.traits.putAll(piece.traits());
+        float share = shareOfAnimal(rig, bone -> bone.equals(piece.bone()));
+        capturing(out::add, () -> {
+            dropYields(level, stand, table.hide(), share, new Vector3d());
+            return true;
+        });
         return out;
     }
 
@@ -576,7 +689,7 @@ public final class CarcassButchery {
     /**
      * The carcass parts lying on top of a block whose top is {@code top} blocks above its floor (a table top): each one's
      * middle over the block and not far above that top, nearest the middle of the top first. Bodies being dragged are left
-     * out: they are only passing.
+     * out: they are only passing; so are bodies hanging from a hook or a trolley, which only sway over it.
      */
     public static java.util.List<Lying> lyingOn(ServerLevel level, net.minecraft.core.BlockPos pos, double top) {
         ServerSubLevelContainer container = SubLevelContainer.getContainer(level);
@@ -590,10 +703,17 @@ public final class CarcassButchery {
             if (CarcassDrag.isDraggingCarcass(carcass.id)) {
                 continue;
             }
+            Boolean hanging = null;
             for (Map.Entry<String, UUID> bone : carcass.bones.entrySet()) {
                 if (container.getSubLevel(bone.getValue()) instanceof ServerSubLevel body && !body.isRemoved()) {
                     org.joml.Vector3dc p = body.logicalPose().position();
                     if (over.contains(p.x(), p.y(), p.z())) {
+                        if (hanging == null) {
+                            hanging = CarcassRest.isHeld(level, carcass);
+                        }
+                        if (hanging) {
+                            break;
+                        }
                         found.add(new Lying(carcass, bone.getKey(), new Vector3d(p)));
                     }
                 }

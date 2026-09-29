@@ -33,16 +33,19 @@ Everything below is in development builds only; the art is placeholder (see the 
   or hopper puts pieces on it and a Deployer holding a Cleaver chops them.
 - The yield gap: by hand (a Flensing Knife or Cleaver in your own hand, or a butcher minion's) you get about
   half of what a machine gets, and now and then a cut is botched and a piece lost. A Deployer at the Butcher's
-  Table, the Deglover and the Surgery Table get all of it. The Mangler keeps the least meat and bone, but gives
-  armour scraps and the mob's own drops (a cow's leather, a golem's iron). All of this is data
-  (`data/bloodandbones/butchery_path/`).
+  Table or the Surgery Table and the Deglover get all of it. The Mangler keeps the least meat and bone, whatever
+  the mob, but gives armour scraps and whatever of the mob's own drops its butchery does not already give (a cow's
+  leather, a zombie's rare iron, a skeleton's arrows). All of this is data (`data/bloodandbones/butchery_path/`).
 - A new attribute, Butchery Yield, scales what your hand gets out of a carcass. The Keen Butcher trait raises it.
 - The Flensing Knife is held on a carcass: it saws back and forth, a stroke every half second, and lets go
   when the hide is off.
 - The Butcher's Table also chops a loose piece lying on its top, so a body too heavy to carry can be dragged
   onto it.
-- The Surgery Table's Surgical Rig takes a carcass all the way down: its organs, one a cut, then its limbs, then
-  all of its meat and bone. It works a piece laid on it or a carcass lying on it.
+- The Surgery Table's Surgical Rig takes a carcass all the way down: its organs, one a cut, then its hide, then its
+  limbs, then its meat and bone. It works a piece laid on it or a carcass lying on it (not one hanging over it). It
+  is the slowest way: every cut takes a second and a half, by hand or by a Deployer. By hand you get the organs
+  but only a hand's share of the rest; a Deployer holding a Cleaver gets all of it. Each organ comes out once,
+  however the part got to the table.
 
 ### Blood
 
@@ -68,7 +71,10 @@ Everything below is in development builds only; the art is placeholder (see the 
   chain.
 - The Mangler goes through a carcass fastest: each limb is torn off and ground in one stroke. The Beheader is
   the quickest and cheapest machine; the Deglover costs the most stress and works no faster above 32 RPM.
-- Carcass pieces in Create's Attribute Filter by limb: hind leg, front leg, wing, arm, tentacle, neck.
+- Carcass pieces in Create's Attribute Filter by limb: hind leg, front leg, wing, arm, tentacle, neck, and any
+  other limb a datapack's slot rules name.
+- A Create filter set on the Butcher's Table or the Surgical Rig drops when the table is broken, and comes back
+  to you when the rig is taken off.
 - Shackle Hook and Shackle Trolley on Create chain conveyors; trolleys queue a body's length apart.
 - Carcass pieces in Create's Attribute Filter: sort by mob, by part (head, body, limb, tail), fresh
   or rotting, skinned, or from a baby.
@@ -78,7 +84,9 @@ Everything below is in development builds only; the art is placeholder (see the 
 
 - Spit Roast and Specimen Jar (the jar shows one item, any item; a carcass piece pickles in it).
 - The Spit Roast takes whole carcasses: right-click it with the Meat Hook while dragging one. It cooks as fast
-  as it turns: a Hand Crank slowly, a shaft at 256 RPM eight times faster.
+  as it turns: a Hand Crank slowly, a shaft at 256 RPM eight times faster. Taken off raw, the carcass is set down
+  whole again, never handed over. With a Cleaver or the Meat Hook in one hand and a piece in the other, the piece
+  goes on the Butcher's Table or the spit first.
 - Butcher's Hook: a wall hook to hang a piece on; a fresh piece drips blood onto the floor below
   until it runs dry.
 - Bloody Casing: andesite casing filled with blood, joining up like Create's casings.

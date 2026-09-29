@@ -176,8 +176,9 @@ public class MachineMotionTests {
 
     /**
      * A whole cow goes on the Spit Roast with the Meat Hook that drags it: every piece of it, its bodies gone from the
-     * world, drawn whole on the spit. It takes longer than a leg, and comes off as all of its meat cooked. A whole carcass
-     * taken off raw is set down again, piece by piece.
+     * world, drawn whole on the spit. It takes longer than a leg, and comes off as all of its meat cooked. Taken off raw it
+     * is set down again whole: one body, its six pieces joined as they were, each where it was on the cow, not six pieces
+     * heaped at one spot.
      */
     @GameTest(template = "empty", timeoutTicks = 100)
     public static void spitRoastTakesAWholeCarcass(GameTestHelper helper) {
@@ -216,12 +217,25 @@ public class MachineMotionTests {
             List<ItemStack> out = roast.cookedYields(level);
             int cooked = out.stream().filter(s -> s.is(Items.COOKED_BEEF)).mapToInt(ItemStack::getCount).sum();
             helper.assertTrue(cooked >= 4 && out.stream().noneMatch(s -> s.is(Items.BEEF)), "a whole cow roasted should give all its beef cooked: " + out);
-            // raw, it comes off in its pieces, set down beside the spit
-            int before = CarcassSavedData.get(level).all().size();
+            // raw, it comes off whole, set down on the spit
+            java.util.Set<UUID> before = new java.util.HashSet<>(CarcassSavedData.get(level).all().stream().map(c -> c.id).toList());
             roast.progress = 0;
             roast.takeOff(player);
-            int after = CarcassSavedData.get(level).all().size();
-            helper.assertTrue(roast.pieces().isEmpty() && after - before == 6, "a raw whole cow should come off as its six pieces: " + (after - before));
+            List<CarcassSavedData.Carcass> back = CarcassSavedData.get(level).all().stream().filter(c -> !before.contains(c.id)).toList();
+            helper.assertTrue(roast.pieces().isEmpty() && back.size() == 1, "a raw whole cow should come off as one body: " + back.size() + " records");
+            CarcassSavedData.Carcass whole = back.getFirst();
+            helper.assertTrue(whole.bones.size() == 6 && whole.joints.size() == 5 && !whole.resting,
+                    "with all six pieces joined, and unfolded: " + whole.bones.keySet() + ", " + whole.joints.size() + " joints");
+            org.joml.Vector3d body = CarcassAssembler.boneWorldPosition(level, whole, whole.rootBone);
+            org.joml.Vector3d head = CarcassAssembler.boneWorldPosition(level, whole, "head");
+            helper.assertTrue(body != null && head != null && head.distance(body) > 0.5, "its head should be at its place on the cow, not on the body: "
+                    + (body == null || head == null ? "missing" : head.distance(body)));
+            List<org.joml.Vector3d> legs = whole.bones.keySet().stream().filter(b -> b.endsWith("_leg")).map(b -> CarcassAssembler.boneWorldPosition(level, whole, b)).toList();
+            for (int i = 0; i < legs.size(); i++) {
+                for (int j = i + 1; j < legs.size(); j++) {
+                    helper.assertTrue(legs.get(i).distance(legs.get(j)) > 0.3, "its legs should stand apart, not heaped: " + legs);
+                }
+            }
             helper.succeed();
         });
     }
@@ -265,6 +279,52 @@ public class MachineMotionTests {
             float ratio = shafted.progress / cranked.progress;
             helper.assertTrue(ratio > 6.0F, "a shaft at 256 RPM should cook far faster than a crank: " + ratio + "x");
             helper.succeed();
+        });
+    }
+
+    /**
+     * A body skewered from the world stays a body, however few pieces are left of it: a cow's torso with every limb cut
+     * off is one piece, too heavy to carry, and taken off the spit raw it is set down, not put in the hand; the spit
+     * being broken sets it down too. It cooks as a carcass, not held to a carried piece's cap.
+     */
+    @GameTest(template = "empty", timeoutTicks = 60)
+    public static void spitRoastKeepsAHeavyBodyABody(GameTestHelper helper) {
+        ServerLevel level = helper.getLevel();
+        BlockPos spit = new BlockPos(3, 3, 3);
+        helper.setBlock(spit.below(), Blocks.CAMPFIRE.defaultBlockState());
+        helper.setBlock(spit, BBBlocks.SPIT_ROAST.getDefaultState().setValue(HorizontalAxisKineticBlock.HORIZONTAL_AXIS, Direction.Axis.X));
+        CarcassSavedData.Carcass cow = carcass(helper, EntityType.COW, new BlockPos(7, 2, 7));
+        if (cow == null) {
+            return;
+        }
+        helper.runAfterDelay(5, () -> {
+            for (String limb : List.copyOf(cow.joints.stream().map(j -> j.child()).toList())) {
+                com.avicagan.bloodandbones.carcass.CarcassButchery.sever(level, cow, limb, null);
+            }
+            helper.assertTrue(cow.bones.size() == 1 && !com.avicagan.bloodandbones.carcass.CarcassButchery.canPickUp(level, cow, cow.rootBone),
+                    "a cow's bare torso should be one piece too heavy to carry");
+            SpitRoastBlockEntity roast = (SpitRoastBlockEntity) level.getBlockEntity(helper.absolutePos(spit));
+            helper.assertTrue(roast.skewer(level, cow) && roast.whole() && roast.pieces().size() == 1, "the torso alone should go on as a carcass");
+            helper.assertTrue(roast.cookTime() > SpitRoastBlockEntity.MAX_COOK, "a cow's torso takes longer than a carried piece may: " + roast.cookTime());
+            Player player = helper.makeMockPlayer(GameType.SURVIVAL);
+            UUID skewered = cow.id;
+            roast.takeOff(player);
+            helper.assertTrue(player.getInventory().items.stream().noneMatch(s -> s.is(BBItems.CARCASS_PIECE.get())), "the torso should not go into the hand");
+            CarcassSavedData.Carcass down = CarcassSavedData.get(level).all().stream().filter(c -> c.entity.equals(cow.entity) && !c.id.equals(skewered)
+                    && c.bones.containsKey(cow.rootBone) && CarcassAssembler.boneWorldPosition(level, c, c.rootBone) != null
+                    && CarcassAssembler.boneWorldPosition(level, c, c.rootBone).distance(helper.absolutePos(spit).getCenter().x, helper.absolutePos(spit).getCenter().y,
+                    helper.absolutePos(spit).getCenter().z) < 3.0).findFirst().orElse(null);
+            helper.assertTrue(down != null, "it should be set down by the spit");
+            // on again, and the spit broken under it
+            helper.assertTrue(roast.skewer(level, down), "the torso should go back on");
+            java.util.Set<UUID> before = new java.util.HashSet<>(CarcassSavedData.get(level).all().stream().map(c -> c.id).toList());
+            level.destroyBlock(helper.absolutePos(spit), true);
+            helper.assertTrue(CarcassSavedData.get(level).all().stream().anyMatch(c -> !before.contains(c.id) && c.entity.equals(cow.entity) && c.bones.containsKey(cow.rootBone)),
+                    "breaking the spit should set the torso down");
+            helper.runAfterDelay(1, () -> {
+                helper.assertItemEntityCountIs(BBItems.CARCASS_PIECE.get(), spit, 2.0, 0);
+                helper.succeed();
+            });
         });
     }
 }

@@ -261,7 +261,15 @@ Then, either way:
 
 **Owner first.** Yes: decisions 2 and 7.
 
-### 5. The yield gap, and three paths that stay distinct
+### 5. The yield gap, and three paths that stay distinct (partly built 29 September 2026, `bb-machines`)
+
+**Partly built.** ARCHITECTURE 16.1 has the details. The paths are data, by hand is about half with real loss, the
+Mangler is fastest with the least of anything a table gives (its loot less what its table already gives), the stations
+get all of it, and the Surgical Rig is the slowest at any speed with organs and the hide on top (a hand at the rig gets
+a hand's share). The knife is held on a part, and one test sends a cow down each path. **Not built:** nothing in
+survival carries the Keen Butcher trait, so the butchery yield is 1 for every player and minion (a balance-pass
+choice); decision 6 is still open, so the knife and the Cleaver stay two tools. The rest of this section is kept as it
+was written.
 
 **Why.** The brief says:
 - Flensing Knife: "Roughly half the yield of a machine, with random loss … Hold on a part to take it off."
@@ -421,7 +429,13 @@ Two things stay open there: bloodless sounds (package 9), and both of a rabbit's
 
 **Owner first.** No.
 
-### 10. Filters that pick one part out of a mixed line
+### 10. Filters that pick one part out of a mixed line (partly built 29 September 2026, `bb-machines`)
+
+**Partly built.** ARCHITECTURE 16.2 has the details. The machines, the Butcher's Table and the Surgical Rig ask their
+filter about each part they could take, a limb attribute takes any slot the data names, and mixed lines are tested.
+**Not built:** the butchering minion's filter (a minion's job is becoming a task, and how a task is given is decision
+12); a filter for single organs at the rig (it asks about the part an organ is in, so it cannot take only hearts;
+organs are main's data now). The rest of this section is kept as it was written.
 
 **Why.**
 - "A filtered machine pulls one specific part out of a mixed line and passes the rest through untouched."
@@ -572,7 +586,10 @@ That comparison belongs in the balance pass (PARTS-AND-TRAITS slice 9).
 
 **Owner first.** No; section 8 decided the chain.
 
-### 15. The machines as the brief describes them
+### 15. The machines as the brief describes them (built 29 September 2026, `bb-machines`, but the Spit Roast's effects)
+
+**Built** but the Spit Roast's effects, which wait for decision 8. ARCHITECTURE 16.3 has the details. The rest of this
+section is kept as it was written.
 
 **Why.**
 - Guillotine: "Winds up under rotation, drops on a redstone edge. The clean, straight limb cut."
@@ -601,7 +618,9 @@ That comparison belongs in the balance pass (PARTS-AND-TRAITS slice 9).
 
 **Owner first.** Only for the Spit Roast's effects.
 
-### 16. Cold air and other addons' freezing
+### 16. Cold air and other addons' freezing (done 29 September 2026, `bb-machines`)
+
+**Done.** ARCHITECTURE 16.4 has the details. The rest of this section is kept as it was written.
 
 **Why.** "Cold air keeps carcasses fresh; this should play nicely with other addons' bulk freezing."
 

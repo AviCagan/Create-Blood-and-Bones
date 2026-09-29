@@ -441,6 +441,77 @@ public final class CarcassAssembler {
         return carcass;
     }
 
+    /**
+     * A carcass put back together from pieces of one animal (a whole carcass taken off a spit raw): the root piece set
+     * down as {@link #assemblePiece} sets one down, and every other piece at its place on the living mob round it, joined
+     * to its parent as it was, the whole of it lifted so no leg starts in the ground. It is built folded (each piece a
+     * rest pose, the way CarcassRest remembers a still body) and unfolded at once, so it falls and settles as one body. A
+     * piece whose way back to the root is missing is left out; the caller sets it down on its own.
+     *
+     * @return the new record, holding the pieces that went back on, or null if there was no room
+     */
+    @Nullable
+    public static CarcassSavedData.Carcass assembleWhole(ServerLevel level, Rig rig, String root, java.util.Collection<String> pieces, boolean baby,
+                                                         CarcassLook look, float freshness, Vec3 at, float yaw) {
+        Bone torso = rig.bone(root).orElse(null);
+        if (torso == null) {
+            return null;
+        }
+        // the pieces that still hang together through their parents back to the root
+        List<Bone> joined = new java.util.ArrayList<>();
+        for (String name : pieces) {
+            Bone bone = rig.bone(name).orElse(null);
+            Bone cursor = bone;
+            for (int hops = 0; cursor != null && !cursor.name().equals(root) && hops < 64; hops++) {
+                cursor = cursor.parent().filter(pieces::contains).flatMap(rig::bone).orElse(null);
+            }
+            if (bone != null && cursor != null && !bone.name().equals(root)) {
+                joined.add(bone);
+            }
+        }
+        // how far below the root's own lowest corner the lowest of them hangs, with the root laid as a piece is
+        Quaterniond g = new Quaterniond().rotationY(Math.toRadians(180.0 - yaw)).rotateZ(Math.PI);
+        double rootLowest = lowestCorner(g, torso, new Vector3d());
+        double lowest = rootLowest;
+        for (Bone bone : joined) {
+            Vector3d origin = g.transform(new Vector3d(bone.offset()).sub(new Vector3d(torso.offset())).div(16.0));
+            lowest = Math.min(lowest, lowestCorner(g, bone, origin));
+        }
+        CarcassSavedData.Carcass carcass = assemblePiece(level, rig, torso, look, freshness, at.add(0.0, rootLowest - lowest, 0.0), yaw);
+        if (carcass == null || joined.isEmpty()) {
+            return carcass;
+        }
+        carcass.baby = baby;
+        Quaterniond rootInverse = new Quaterniond(torso.rotation()).invert();
+        for (Bone bone : joined) {
+            // the piece's frame relative to the root's, on the living mob: what jointSpec reads its joint from
+            Vector3d position = rootInverse.transform(new Vector3d(bone.offset()).sub(new Vector3d(torso.offset())).div(16.0));
+            Quaterniond orientation = new Quaterniond(rootInverse).mul(new Quaterniond(bone.rotation()));
+            carcass.restPoses.put(bone.name(), new CarcassSavedData.RestPose(position, orientation));
+            bone.parent().flatMap(rig::bone).ifPresent(parent -> carcass.joints.add(jointSpec(parent, bone)));
+        }
+        carcass.resting = true;
+        if (CarcassRest.split(level, carcass) == null) {
+            // no room to unfold it: the root alone, and the rest set down by the caller
+            carcass.restPoses.clear();
+            carcass.joints.clear();
+            carcass.resting = false;
+        }
+        return carcass;
+    }
+
+    /** The lowest a bone's box reaches, laid with {@code g} and its origin at {@code origin}. */
+    private static double lowestCorner(Quaterniond g, Bone bone, Vector3d origin) {
+        Quaterniond orientation = new Quaterniond(g).mul(new Quaterniond(bone.rotation()));
+        double lowest = Double.MAX_VALUE;
+        for (int i = 0; i < 8; i++) {
+            Vector3d corner = new Vector3d((i & 1) == 0 ? bone.boxMin().x : bone.boxMax().x, (i & 2) == 0 ? bone.boxMin().y : bone.boxMax().y,
+                    (i & 4) == 0 ? bone.boxMin().z : bone.boxMax().z).div(16.0);
+            lowest = Math.min(lowest, orientation.transform(corner).add(origin).y);
+        }
+        return lowest;
+    }
+
     /** World position of a bone's body (its centre of mass), or null if it is not loaded. */
     @Nullable
     public static Vector3d boneWorldPosition(ServerLevel level, CarcassSavedData.Carcass carcass, @Nullable String bone) {

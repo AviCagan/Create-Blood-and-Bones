@@ -55,6 +55,11 @@ public class SpitRoastBlockEntity extends KineticBlockEntity {
 
     /** What is on the spit: one carried piece, or every piece of a whole carcass (the torso first). */
     private final List<ItemStack> pieces = new ArrayList<>();
+    /**
+     * Whether it was skewered from the world with the Meat Hook, however many pieces that is (a body with its limbs cut off
+     * is one): too heavy to carry, so taken off raw it is set down again as a body, never handed over.
+     */
+    private boolean carcass;
     /** Cooking done, in campfire-ticks at a Hand Crank's speed. */
     public float progress;
     private int syncTicks;
@@ -73,9 +78,9 @@ public class SpitRoastBlockEntity extends KineticBlockEntity {
         return pieces;
     }
 
-    /** Whether a whole carcass is on it (more than one piece). */
+    /** Whether a carcass skewered from the world is on it, not a carried piece. */
     public boolean whole() {
-        return pieces.size() > 1;
+        return carcass && !pieces.isEmpty();
     }
 
     /** Ticks what is on the spit needs at a campfire, by how much meat there is. */
@@ -114,6 +119,7 @@ public class SpitRoastBlockEntity extends KineticBlockEntity {
             return false;
         }
         pieces.add(stack);
+        carcass = false;
         progress = 0;
         notifyUpdate();
         return true;
@@ -136,6 +142,7 @@ public class SpitRoastBlockEntity extends KineticBlockEntity {
         }
         Vec3 at = Vec3.atCenterOf(worldPosition);
         CarcassButchery.takeAway(level, carcass);
+        this.carcass = true;
         progress = 0;
         level.playSound(null, at.x, at.y, at.z, com.avicagan.bloodandbones.registry.BBSounds.CARCASS_CUT.get(), SoundSource.BLOCKS, 1.0F, 0.5F);
         if (com.avicagan.bloodandbones.carcass.Blood.bloody(carcass)) {
@@ -210,8 +217,8 @@ public class SpitRoastBlockEntity extends KineticBlockEntity {
     }
 
     /**
-     * Take it off. Cooked, it comes apart into its cooked yields. Raw, a carried piece comes back as it went on; a whole
-     * carcass is too heavy to carry, and its pieces are set down beside the spit as they were cut from it.
+     * Take it off. Cooked, it comes apart into its cooked yields. Raw, a carried piece comes back as it went on; a carcass
+     * from the world is too heavy to carry, and is set down on the spit again, whole as it went on.
      */
     public void takeOff(Player player) {
         if (pieces.isEmpty() || !(level instanceof ServerLevel serverLevel)) {
@@ -224,30 +231,64 @@ public class SpitRoastBlockEntity extends KineticBlockEntity {
         } else if (!whole()) {
             player.getInventory().placeItemBackInInventory(pieces.getFirst());
         } else {
-            Vec3 at = Vec3.atBottomCenterOf(worldPosition.above());
-            for (ItemStack stack : pieces) {
-                setDown(serverLevel, stack, at, player.getYRot());
-            }
+            setDown(serverLevel, pieces, Vec3.atBottomCenterOf(worldPosition.above()), player.getYRot());
         }
         pieces.clear();
+        carcass = false;
         progress = 0;
         notifyUpdate();
     }
 
-    /** A piece of a raw carcass taken off the spit, set down in the world as a body again (as a carried piece is). */
-    private static void setDown(ServerLevel level, ItemStack stack, Vec3 at, float yaw) {
-        CarcassPieceItem.Piece piece = CarcassPieceItem.piece(stack);
-        var rig = piece == null ? null : RigManager.forEntity(piece.entity(), piece.baby()).orElse(null);
+    /**
+     * A raw carcass taken off the spit, set down in the world as a body again: put back together whole, every piece at
+     * its place on the animal and joined as it was (CarcassAssembler#assembleWhole); a piece that cannot go back on (no
+     * room, or its way to the torso is gone) is set down on its own, as a carried piece is.
+     */
+    private static void setDown(ServerLevel level, List<ItemStack> stacks, Vec3 at, float yaw) {
+        CarcassPieceItem.Piece root = stacks.isEmpty() ? null : CarcassPieceItem.piece(stacks.getFirst());
+        var rig = root == null ? null : RigManager.forEntity(root.entity(), root.baby()).orElse(null);
+        java.util.Set<String> back = java.util.Set.of();
+        if (rig != null) {
+            List<String> bones = new ArrayList<>();
+            for (ItemStack stack : stacks) {
+                CarcassPieceItem.Piece piece = CarcassPieceItem.piece(stack);
+                if (piece != null && piece.entity().equals(root.entity())) {
+                    bones.add(piece.bone());
+                }
+            }
+            CarcassSavedData.Carcass whole = com.avicagan.bloodandbones.carcass.CarcassAssembler.assembleWhole(level, rig, root.bone(), bones, root.baby(),
+                    root.look(), root.freshness(), at, yaw);
+            if (whole != null) {
+                keep(level, whole, root);
+                back = java.util.Set.copyOf(whole.bones.keySet());
+            }
+        }
+        for (ItemStack stack : stacks) {
+            CarcassPieceItem.Piece piece = CarcassPieceItem.piece(stack);
+            if (piece != null && !back.contains(piece.bone())) {
+                setDown(level, piece, at, yaw);
+            }
+        }
+    }
+
+    /** One piece set down in the world as a body of its own (as a carried piece is). */
+    private static void setDown(ServerLevel level, CarcassPieceItem.Piece piece, Vec3 at, float yaw) {
+        var rig = RigManager.forEntity(piece.entity(), piece.baby()).orElse(null);
         Bone bone = rig == null ? null : rig.bone(piece.bone()).orElse(null);
         if (bone == null) {
             return;
         }
         CarcassSavedData.Carcass carcass = com.avicagan.bloodandbones.carcass.CarcassAssembler.assemblePiece(level, rig, bone, piece.look(), piece.freshness(), at, yaw);
-        if (carcass == null) {
-            return;
+        if (carcass != null) {
+            keep(level, carcass, piece);
         }
+    }
+
+    /** A body set down from the spit keeps what its piece kept: skinned or not, its traits, its blood and its rot. */
+    private static void keep(ServerLevel level, CarcassSavedData.Carcass carcass, CarcassPieceItem.Piece piece) {
         carcass.skinned = piece.skinned();
         carcass.traits.putAll(piece.traits());
+        com.avicagan.bloodandbones.body.Surgery.putDown(carcass.traits, piece.bone());
         carcass.blood = piece.blood();
         carcass.bloodMax = piece.bloodMax();
         carcass.decay = piece.decay();
@@ -300,13 +341,11 @@ public class SpitRoastBlockEntity extends KineticBlockEntity {
     @Override
     public void destroy() {
         super.destroy();
-        if (level != null) {
+        if (level instanceof ServerLevel serverLevel && whole()) {
+            setDown(serverLevel, pieces, Vec3.atCenterOf(worldPosition), 0.0F);
+        } else if (level != null) {
             for (ItemStack stack : pieces) {
-                if (whole() && level instanceof ServerLevel serverLevel) {
-                    setDown(serverLevel, stack, Vec3.atCenterOf(worldPosition), 0.0F);
-                } else {
-                    net.minecraft.world.level.block.Block.popResource(level, worldPosition, stack);
-                }
+                net.minecraft.world.level.block.Block.popResource(level, worldPosition, stack);
             }
         }
     }
@@ -318,6 +357,7 @@ public class SpitRoastBlockEntity extends KineticBlockEntity {
             list.add(stack.save(registries));
         }
         tag.put("Pieces", list);
+        tag.putBoolean("Carcass", carcass);
         tag.putFloat("Progress", progress);
         super.write(tag, registries, clientPacket);
     }
@@ -332,6 +372,8 @@ public class SpitRoastBlockEntity extends KineticBlockEntity {
         for (Tag entry : tag.getList("Pieces", Tag.TAG_COMPOUND)) {
             ItemStack.parse(registries, entry).ifPresent(pieces::add);
         }
+        // spits saved before the flag knew a whole carcass by its many pieces
+        carcass = tag.contains("Carcass") ? tag.getBoolean("Carcass") : pieces.size() > 1;
         progress = tag.getFloat("Progress");
         super.read(tag, registries, clientPacket);
     }
