@@ -1966,9 +1966,11 @@ public final class MinionTasks {
             ItemStack blade = minion.getMainHandItem();
             boolean skinning = blade.getItem() instanceof FlensingKnifeItem;
             boolean bloody = com.avicagan.bloodandbones.carcass.Blood.bloody(c);
-            // what comes off goes into its hands, as a machine's yields go to the machine, less what a poor butcher wastes
-            boolean did = CarcassButchery.yielding(MinionFitness.yieldShare(minion.taskFitness()), () -> CarcassButchery.capturing(stack -> keep(minion, stack),
-                    () -> skinning ? CarcassButchery.skin(level, null, c, at) : CarcassButchery.cut(level, null, c, bone, at)));
+            // what comes off goes into its hands, as a machine's yields go to the machine; a blade in its hand gets what a
+            // player's would (the hand path, by its butchery yield), less what a poor butcher wastes
+            boolean did = CarcassButchery.capturing(stack -> keep(minion, stack), () -> CarcassButchery.byHand(minion,
+                    () -> CarcassButchery.yielding(MinionFitness.yieldShare(minion.taskFitness()),
+                    () -> skinning ? CarcassButchery.skin(level, null, c, at) : CarcassButchery.cut(level, null, c, bone, at))));
             minion.swing(InteractionHand.MAIN_HAND);
             if (did && bloody) {
                 com.avicagan.bloodandbones.carcass.Blood.bloody(blade, level);
@@ -1980,7 +1982,8 @@ public final class MinionTasks {
 
         /**
          * At a Butcher's Table: it stands at arm's length from the top and, at its stroke, chops the piece there with its
-         * Cleaver as a Deployer does, keeping what comes off (less what a poor butcher wastes), the Cleaver coming away bloody.
+         * Cleaver as a Deployer does, keeping what comes off (a hand's share, less what a poor butcher wastes), the Cleaver coming
+         * away bloody. It chops only a piece the table's filter takes.
          * It goes to a table only with a free slot for each kind of thing the piece comes apart into, so what it chops stays
          * in its hands; carrying nothing, it chops whatever its room, and what it has no room for falls on the table top.
          */
@@ -2012,7 +2015,7 @@ public final class MinionTasks {
                 return;
             }
             // what it has no room for falls on the table top, as a Deployer's chop leaves it
-            CarcassButchery.yielding(MinionFitness.yieldShare(minion.taskFitness()), () -> at.chop(level, blade, minion::carry));
+            CarcassButchery.yielding(MinionFitness.yieldShare(minion.taskFitness()), () -> at.chop(level, blade, minion, minion::carry));
             minion.swing(InteractionHand.MAIN_HAND);
             // one chop takes the whole piece apart
             done = true;

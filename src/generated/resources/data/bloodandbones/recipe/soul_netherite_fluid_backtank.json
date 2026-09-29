@@ -1,0 +1,16 @@
+{
+  "type": "minecraft:smithing_transform",
+  "addition": {
+    "item": "bloodandbones:soul_netherite_ingot"
+  },
+  "base": {
+    "item": "bloodandbones:blood_diamond_fluid_backtank"
+  },
+  "result": {
+    "count": 1,
+    "id": "bloodandbones:soul_netherite_fluid_backtank"
+  },
+  "template": {
+    "item": "minecraft:netherite_upgrade_smithing_template"
+  }
+}

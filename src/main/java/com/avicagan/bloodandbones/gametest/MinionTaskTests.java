@@ -2034,7 +2034,7 @@ public class MinionTaskTests {
         helper.succeed();
     }
 
-    // ---- the review of the tasks (docs/ARCHITECTURE-PROPOSAL.md 15.22)
+    // ---- the review of the tasks (docs/ARCHITECTURE-PROPOSAL.md 15.25)
 
     /**
      * Folded arms never strike, but a head over them bites (docs/NEXT.md 1.7): a whole villager is shown able to guard, by
@@ -2508,7 +2508,7 @@ public class MinionTaskTests {
         helper.succeed();
     }
 
-    // ---- the second review of the tasks (docs/ARCHITECTURE-PROPOSAL.md 15.23)
+    // ---- the second review of the tasks (docs/ARCHITECTURE-PROPOSAL.md 15.26)
 
     /**
      * Wings only buffet (docs/NEXT.md 1.7): a farmer villager's head on a chicken's body and wings bites, as its Blow reads

@@ -1,0 +1,7 @@
+{
+  "parent": "minecraft:block/cube_column",
+  "textures": {
+    "end": "bloodandbones:block/bloody_railway_casing",
+    "side": "bloodandbones:block/bloody_railway_casing_side"
+  }
+}

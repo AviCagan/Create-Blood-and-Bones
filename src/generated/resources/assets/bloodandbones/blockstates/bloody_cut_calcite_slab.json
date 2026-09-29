@@ -1,0 +1,13 @@
+{
+  "variants": {
+    "type=bottom": {
+      "model": "bloodandbones:block/bloody_cut_calcite_slab"
+    },
+    "type=double": {
+      "model": "bloodandbones:block/bloody_cut_calcite"
+    },
+    "type=top": {
+      "model": "bloodandbones:block/bloody_cut_calcite_slab_top"
+    }
+  }
+}

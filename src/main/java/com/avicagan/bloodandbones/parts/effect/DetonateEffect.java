@@ -74,7 +74,7 @@ public record DetonateEffect(LevelBasedValue power, boolean fire, boolean blockD
         LIT.put(host, new Lit(this, strength, new int[]{fuse}));
         host.gameEvent(GameEvent.PRIME_FUSE);
         ctx.level().playSound(null, host.getX(), host.getY(), host.getZ(), SoundEvents.CREEPER_PRIMED, host.getSoundSource(), 1.0F, 0.5F);
-        ctx.level().playSound(null, host.getX(), host.getY(), host.getZ(), SoundEvents.HONEY_BLOCK_SLIDE, host.getSoundSource(), 1.0F, 0.5F);
+        ctx.level().playSound(null, host.getX(), host.getY(), host.getZ(), com.avicagan.bloodandbones.registry.BBSounds.FLESH_SLIDE.get(), host.getSoundSource(), 1.0F, 0.5F);
     }
 
     /** Whether the host is hissing toward a blast now. */
@@ -131,8 +131,8 @@ public record DetonateEffect(LevelBasedValue power, boolean fire, boolean blockD
         if (host instanceof MinionEntity) {
             MotionEffects.gibs(level, host, at, 10);
         }
-        level.playSound(null, at.x, at.y, at.z, SoundEvents.SLIME_BLOCK_BREAK, host.getSoundSource(), 1.5F, 0.5F);
-        level.playSound(null, at.x, at.y, at.z, SoundEvents.HONEY_BLOCK_BREAK, host.getSoundSource(), 1.2F, 0.6F);
+        level.playSound(null, at.x, at.y, at.z, com.avicagan.bloodandbones.registry.BBSounds.FLESH_BREAK.get(), host.getSoundSource(), 1.5F, 0.5F);
+        level.playSound(null, at.x, at.y, at.z, com.avicagan.bloodandbones.registry.BBSounds.FLESH_BREAK.get(), host.getSoundSource(), 1.2F, 0.6F);
         if (minionPowersDown && host instanceof MinionEntity minion) {
             minion.powerDown();
         }

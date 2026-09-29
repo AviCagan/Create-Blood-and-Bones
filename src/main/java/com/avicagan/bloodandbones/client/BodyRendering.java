@@ -116,7 +116,7 @@ public final class BodyRendering {
                     arm.xRot = 0.0F;
                     boolean visible = arm.visible;
                     arm.visible = true;
-                    arm.render(event.getPoseStack(), event.getMultiBufferSource().getBuffer(RenderType.entityCutoutNoCull(implant.texture())),
+                    arm.render(event.getPoseStack(), event.getMultiBufferSource().getBuffer(RenderType.entityCutoutNoCull(worn(implant))),
                             event.getPackedLight(), OverlayTexture.NO_OVERLAY);
                     float spool = implant.spec().slots() > 0 ? CyberClient.level(player, part) : 0.0F;
                     if (spool > 0.0F) {
@@ -222,6 +222,24 @@ public final class BodyRendering {
     /** How long a stump is, in model pixels: a clean cut close, a ragged one longer and torn. */
     private static final float CLEAN_STUMP = 3.0F;
     private static final float RAGGED_STUMP = 4.5F;
+    /** Which worn textures have a clean copy ({@code <name>_clean.png}), found once each. */
+    private static final java.util.Map<net.minecraft.resources.ResourceLocation, net.minecraft.resources.ResourceLocation> CLEAN = new java.util.concurrent.ConcurrentHashMap<>();
+
+    /**
+     * The texture an implant is drawn with on the body: in bloodless mode its clean copy where it has one (the Flesh
+     * Arm and Sinew Leg as plating and cable, as their bloodless names say), else its own.
+     */
+    static net.minecraft.resources.ResourceLocation worn(ImplantItem implant) {
+        net.minecraft.resources.ResourceLocation texture = implant.texture();
+        if (!com.avicagan.bloodandbones.config.BBClientConfig.bloodless()) {
+            return texture;
+        }
+        return CLEAN.computeIfAbsent(texture, own -> {
+            net.minecraft.resources.ResourceLocation clean = own.withPath(path -> path.replace(".png", "_clean.png"));
+            return Minecraft.getInstance().getResourceManager().getResource(clean).isPresent() ? clean : own;
+        });
+    }
+
     /** How far a ragged stump's torn flaps hang past its end, and flare out, at a bucket's price. */
     private static final float FLAP = 2.0F;
     private static final float FLARE = 0.3F;
@@ -359,7 +377,7 @@ public final class BodyRendering {
                     model.visible = true;
                     // an organic part greys and greens as it rots from use
                     float rot = implant.organic() ? com.avicagan.bloodandbones.body.Necrosis.of(body.implant(part)) / (float) com.avicagan.bloodandbones.body.Necrosis.MAX : 0.0F;
-                    model.render(poseStack, buffers.getBuffer(RenderType.entityCutoutNoCull(implant.texture())), packedLight,
+                    model.render(poseStack, buffers.getBuffer(RenderType.entityCutoutNoCull(worn(implant))), packedLight,
                             net.minecraft.client.renderer.entity.LivingEntityRenderer.getOverlayCoords(player, 0.0F), CarcassModels.rotColor(1.0F - rot));
                     // a brass limb being spooled glows along its seams, brighter as the throttle climbs
                     float spool = implant.spec().slots() > 0 ? CyberClient.level(player, part) : 0.0F;

@@ -1,0 +1,137 @@
+{
+ "parent": "block/block",
+ "render_type": "minecraft:cutout",
+ "textures": {
+  "blade": "bloodandbones:block/butcher_blade_clean",
+  "casing": "create:block/andesite_casing",
+  "particle": "bloodandbones:block/butcher_blade_clean"
+ },
+ "elements": [
+  {
+   "from": [
+    2,
+    24,
+    7.5
+   ],
+   "to": [
+    14,
+    30,
+    8.5
+   ],
+   "faces": {
+    "north": {
+     "texture": "#blade",
+     "uv": [
+      2,
+      10,
+      14,
+      16
+     ]
+    },
+    "south": {
+     "texture": "#blade",
+     "uv": [
+      2,
+      10,
+      14,
+      16
+     ]
+    },
+    "down": {
+     "texture": "#blade",
+     "uv": [
+      2,
+      15,
+      14,
+      16
+     ]
+    },
+    "up": {
+     "texture": "#blade",
+     "uv": [
+      2,
+      10,
+      14,
+      11
+     ]
+    },
+    "east": {
+     "texture": "#blade",
+     "uv": [
+      0,
+      10,
+      1,
+      16
+     ]
+    },
+    "west": {
+     "texture": "#blade",
+     "uv": [
+      0,
+      10,
+      1,
+      16
+     ]
+    }
+   },
+   "name": "blade"
+  },
+  {
+   "from": [
+    5,
+    28,
+    7
+   ],
+   "to": [
+    11,
+    30,
+    9
+   ],
+   "faces": {
+    "north": {
+     "texture": "#casing",
+     "uv": [
+      5,
+      0,
+      11,
+      2
+     ]
+    },
+    "south": {
+     "texture": "#casing",
+     "uv": [
+      5,
+      0,
+      11,
+      2
+     ]
+    },
+    "east": {
+     "texture": "#casing",
+     "uv": [
+      7,
+      0,
+      9,
+      2
+     ]
+    },
+    "west": {
+     "texture": "#casing",
+     "uv": [
+      7,
+      0,
+      9,
+      2
+     ]
+    },
+    "up": {
+     "texture": "#casing"
+    },
+    "down": {
+     "texture": "#casing"
+    }
+   },
+   "name": "weight"
+  }
+ ]
+}

@@ -11,7 +11,7 @@ import com.simibubi.create.foundation.blockEntity.renderer.SafeBlockEntityRender
 import net.minecraft.client.renderer.MultiBufferSource;
 import net.minecraft.client.renderer.blockentity.BlockEntityRendererProvider;
 
-/** The piece lying on the table top, turned a different way on each table. */
+/** The piece lying on the table top, turned a different way on each table, and the filter slot on the top's edge. */
 public class ButcherTableRenderer extends SafeBlockEntityRenderer<ButcherTableBlockEntity> {
     /** How big the piece is drawn, its longest side in blocks. */
     private static final float SIZE = 0.8F;
@@ -27,6 +27,8 @@ public class ButcherTableRenderer extends SafeBlockEntityRenderer<ButcherTableBl
 
     @Override
     protected void renderSafe(ButcherTableBlockEntity be, float partialTicks, PoseStack ms, MultiBufferSource buffer, int light, int overlay) {
+        // the filter slot on the edge of the top
+        com.simibubi.create.foundation.blockEntity.behaviour.filtering.FilteringRenderer.renderOnBlockEntity(be, partialTicks, ms, buffer, light, overlay);
         CarcassPieceItem.Piece piece = CarcassPieceItem.piece(be.specimen());
         Rig rig = piece == null ? null : RigManager.clientRig(piece.entity(), piece.baby()).orElse(null);
         Bone bone = rig == null ? null : rig.bone(piece.bone()).orElse(null);

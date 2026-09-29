@@ -144,7 +144,7 @@ public record ProjectileEffect(Kind kind, int count, float spread, Optional<Floa
         level.playSound(null, host.getX(), host.getY(), host.getZ(), kind.sound, host.getSoundSource(), 1.0F, pitch);
         // the heave of whatever gland or gullet it came out of; a brass minion's hisses
         boolean brass = host instanceof MinionEntity minion && minion.cybernetic();
-        level.playSound(null, host.getX(), host.getY(), host.getZ(), brass ? SoundEvents.PISTON_CONTRACT : SoundEvents.SLIME_SQUISH_SMALL, host.getSoundSource(),
+        level.playSound(null, host.getX(), host.getY(), host.getZ(), brass ? SoundEvents.PISTON_CONTRACT : com.avicagan.bloodandbones.registry.BBSounds.FLESH_SQUISH_SMALL.get(), host.getSoundSource(),
                 0.5F, brass ? 1.5F : 0.5F + host.getRandom().nextFloat() * 0.2F);
     }
 

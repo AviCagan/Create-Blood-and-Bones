@@ -74,6 +74,47 @@ public final class FanAirflow {
         return best;
     }
 
+    /**
+     * The processing each fan current passing through {@code pos} gives there (a Dragons Plus freezing fan's past its
+     * powder snow, a haunting fan's past its soul fire); none for a plain current. Any fan counts, not only the fastest.
+     */
+    public static java.util.List<FanProcessingType> processingAt(Level level, BlockPos pos) {
+        java.util.List<FanProcessingType> types = new java.util.ArrayList<>();
+        int range = maxRange();
+        AABB target = new AABB(pos);
+        for (Direction side : Direction.values()) {
+            for (int i = 1; i <= range; i++) {
+                BlockPos fanPos = pos.relative(side, i);
+                if (!level.isLoaded(fanPos)) {
+                    break;
+                }
+                if (!(level.getBlockEntity(fanPos) instanceof IAirCurrentSource source) || source.isSourceRemoved()) {
+                    continue;
+                }
+                AirCurrent current = source.getAirCurrent();
+                if (current == null || source.getSpeed() == 0 || current.direction != side.getOpposite() || current.maxDistance <= 0
+                        || !current.bounds.intersects(target)) {
+                    continue;
+                }
+                FanProcessingType type = current.getTypeAt(i - 1);
+                if (type != null) {
+                    types.add(type);
+                }
+            }
+        }
+        return types;
+    }
+
+    /** Whether any of these fan processings is in this tag. */
+    public static boolean any(java.util.List<FanProcessingType> types, net.minecraft.tags.TagKey<FanProcessingType> tag) {
+        for (FanProcessingType type : types) {
+            if (com.simibubi.create.api.registry.CreateBuiltInRegistries.FAN_PROCESSING_TYPE.wrapAsHolder(type).is(tag)) {
+                return true;
+            }
+        }
+        return false;
+    }
+
     private static int maxRange() {
         try {
             CKinetics kinetics = AllConfigs.server().kinetics;

@@ -1,0 +1,24 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "category": "equipment",
+  "key": {
+    "M": {
+      "item": "create:precision_mechanism"
+    },
+    "P": {
+      "tag": "c:plates/brass"
+    },
+    "U": {
+      "item": "create:mechanical_pump"
+    }
+  },
+  "pattern": [
+    "PUP",
+    "PMP",
+    " P "
+  ],
+  "result": {
+    "count": 1,
+    "id": "bloodandbones:pump_heart"
+  }
+}

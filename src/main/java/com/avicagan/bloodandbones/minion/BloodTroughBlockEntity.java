@@ -5,7 +5,6 @@ import com.simibubi.create.foundation.blockEntity.behaviour.BlockEntityBehaviour
 import com.simibubi.create.foundation.blockEntity.behaviour.fluid.SmartFluidTankBehaviour;
 import net.minecraft.core.BlockPos;
 import net.minecraft.resources.ResourceKey;
-import net.minecraft.tags.FluidTags;
 import net.minecraft.tags.TagKey;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.block.entity.BlockEntityType;
@@ -26,7 +25,7 @@ import java.util.concurrent.ConcurrentHashMap;
  */
 public class BloodTroughBlockEntity extends SmartBlockEntity {
     public static final int CAPACITY = 4000;
-    public static final TagKey<Fluid> BLOOD = FluidTags.create(net.minecraft.resources.ResourceLocation.fromNamespaceAndPath("c", "blood"));
+    public static final TagKey<Fluid> BLOOD = com.avicagan.bloodandbones.registry.BBFluids.BLOOD_TAG;
     private static final Map<ResourceKey<Level>, Set<BlockPos>> TROUGHS = new ConcurrentHashMap<>();
 
     private SmartFluidTankBehaviour tank;

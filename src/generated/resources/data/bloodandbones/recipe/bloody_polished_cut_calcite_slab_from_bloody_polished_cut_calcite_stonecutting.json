@@ -1,0 +1,10 @@
+{
+  "type": "minecraft:stonecutting",
+  "ingredient": {
+    "item": "bloodandbones:bloody_polished_cut_calcite"
+  },
+  "result": {
+    "count": 2,
+    "id": "bloodandbones:bloody_polished_cut_calcite_slab"
+  }
+}

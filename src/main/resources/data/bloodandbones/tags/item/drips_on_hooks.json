@@ -1,0 +1,16 @@
+{
+  "values": [
+    "bloodandbones:severed_arm",
+    "bloodandbones:severed_leg",
+    "bloodandbones:eye",
+    "bloodandbones:heart",
+    "bloodandbones:lungs",
+    "bloodandbones:stomach",
+    "bloodandbones:gland",
+    "bloodandbones:scraps",
+    "bloodandbones:raw_meat",
+    "bloodandbones:offal",
+    "bloodandbones:raw_hide",
+    "#c:foods/raw_meat"
+  ]
+}

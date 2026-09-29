@@ -40,6 +40,7 @@ public class BloodAndBones {
         BBBlockEntities.register();
         com.avicagan.bloodandbones.registry.BBEntities.register();
         BBLang.register();
+        com.avicagan.bloodandbones.datagen.BBRecipeGen.register();
         com.avicagan.bloodandbones.registry.BBGameRules.register();
         com.avicagan.bloodandbones.registry.BBMovementChecks.register();
 
@@ -77,10 +78,14 @@ public class BloodAndBones {
             // the rig exporter reads client-only model classes; a dedicated server must never link it
             modEventBus.addListener(BBDatagen::gatherData);
             com.avicagan.bloodandbones.client.DevShowcase.init();
+            com.avicagan.bloodandbones.client.MultiplayerShowcase.init();
             com.avicagan.bloodandbones.client.BBClientSetup.registerConfigScreen(modContainer);
             com.avicagan.bloodandbones.client.BBClientSetup.initEffects(modEventBus);
+            // the machines' moving parts are asked for before models load
+            com.avicagan.bloodandbones.client.BBPartialModels.init();
         }
         modEventBus.addListener(BBGameTests::register);
+        com.avicagan.bloodandbones.gametest.MultiplayerCheck.init();
         modEventBus.addListener(BBNetwork::register);
         modEventBus.addListener(BBBlockEntities::registerCapabilities);
         com.avicagan.bloodandbones.registry.BBDataComponents.COMPONENTS.register(modEventBus);

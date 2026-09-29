@@ -42,9 +42,10 @@ provided by [Sable](https://github.com/ryanhcode/sable).
   grinds it down; the Guillotine takes limbs off; the Beheader takes heads (sometimes the skull);
   the Deglover strips hides. Each works whatever carcass lies on or hangs over it, and a filter slot
   on its top edge can limit it to one kind of mob.
-- **Materials.** Blood Steel (spout-fill iron with blood), Soul Blood (superheated mix with liquid
-  experience, or a Diesel Generators fermenting basin), the Blood Diamond (spout-fill a diamond
-  with soul blood), and the Blood Steel Cleaver (twice as deep a chop).
+- **Materials.** Blood Steel (spout-fill iron with blood), Soul Blood (blood set under a Diesel
+  Generators Basin Lid, haunted by a fan through soul fire, melted back in a superheated mixer; or a
+  tenth as much in one step), the Blood Diamond (a sequenced assembly: a Spout of a bucket of blood,
+  then one of liquid experience), and the Blood Steel Cleaver (twice as deep a chop).
 - **Sorting.** Create's Attribute Filter knows carcass pieces: which mob, which part (head, body,
   limb, tail), fresh or rotting, skinned, or from a baby, so funnels and frogports can sort meat. The
   machines have a filter slot too: a spawn egg, a piece or a filter picks the carcasses they work on.
@@ -118,14 +119,25 @@ incremental. `./gradlew runClient` / `runServer` / `runData` are configured by M
 
 ### Development aids
 
-- `./gradlew runGameTestServer` runs the game tests headless (486: every rigged mob and baby,
-  butchery, rot, bleeding, machines and their filters, cooking and display, decoration, surgery, organs, implants, backtanks, carcass armour and its traits, trait effects, minions and their tasks, movement and mounts, chains, recipes,
-  advancements and sounds).
+- `./gradlew runGameTestServer` runs the game tests headless (557: every rigged mob and baby,
+  butchery and its three yield paths, rot, cold air, bleeding, machines, their motion and their part filters, cooking and display, decoration, surgery, organs, implants, backtanks, carcass armour and its traits, trait effects, minions and their tasks, movement and mounts, chains, recipes
+  and the soul blood line on Create's machines, bloodless mode (no game logic reads it; no gory word or wet sound
+  left), advancements and sounds, and what a dozen carcasses at once cost the server).
+  `-Dbloodandbones.debug.only=name,name` runs only those tests, and `-Dbloodandbones.debug.repeat=N` runs them N times.
+  To time what carcasses cost, run one of these on its own with `-Dbloodandbones.debug.cost=N`:
+  `-Dbloodandbones.debug.only=dozenCarcasses` prints the server's tick times with N dozen carcasses (one to four) made
+  in the same tick, awake and then resting; `-Dbloodandbones.debug.only=dozenHung` with a dozen hanging on hooks, for a
+  minute.
+- The two-client check: with `-Dbloodandbones.multiplayer=true`, run `runMpServer`, then `runMpButcher` and
+  `runMpWatcher`, each in its own terminal. The server makes a fresh flat world in `run/mp-server`; the Butcher kills,
+  drags, hangs, cuts and skins a cow with real clicks while the Watcher photographs it into
+  `run/mp-watcher/screenshots/mp_watcher_*.png`. Both clients log where they draw every carcass body, and the server
+  where it really is (the `[mp]` lines of each `logs/latest.log`). All three quit after about forty seconds of play.
 - `./gradlew runData -Dbloodandbones.dump_layers=minecraft:goat#main,...` writes those vanilla
   models' part trees to `run/build/layer-dump.txt`, for writing new rig targets in
   `src/main/rig_targets`.
 - `./gradlew runClient -Dbloodandbones.showcase=true` makes a flat world, builds a scene of
-  carcasses, machines and the rest, screenshots it (and five Ponder scenes, the cow's JEI
+  carcasses, machines and the rest, screenshots it (and six Ponder scenes, the cow's JEI
   page, a creeper's powder sac's and a villager's Body Parts page, a minion's task screen and a
   Surgery Table's line while building) into `run/screenshots/showcase_*.png`, and quits. It runs without a screen under
   `xvfb-run`. `-Dbloodandbones.showcase=bloodless` does the same with bloodless mode forced on.

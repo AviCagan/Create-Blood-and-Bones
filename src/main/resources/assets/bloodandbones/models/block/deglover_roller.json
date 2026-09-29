@@ -1,0 +1,79 @@
+{
+ "parent": "block/block",
+ "render_type": "minecraft:cutout",
+ "textures": {
+  "roller": "bloodandbones:block/deglover_roller",
+  "particle": "bloodandbones:block/deglover_roller"
+ },
+ "elements": [
+  {
+   "from": [
+    1,
+    15.75,
+    2.25
+   ],
+   "to": [
+    15,
+    20.25,
+    6.75
+   ],
+   "faces": {
+    "north": {
+     "texture": "#roller",
+     "uv": [
+      1,
+      0,
+      15,
+      5
+     ]
+    },
+    "south": {
+     "texture": "#roller",
+     "uv": [
+      1,
+      0,
+      15,
+      5
+     ]
+    },
+    "east": {
+     "texture": "#roller",
+     "uv": [
+      0,
+      0,
+      5,
+      5
+     ]
+    },
+    "west": {
+     "texture": "#roller",
+     "uv": [
+      0,
+      0,
+      5,
+      5
+     ]
+    },
+    "up": {
+     "texture": "#roller",
+     "uv": [
+      1,
+      0,
+      15,
+      5
+     ]
+    },
+    "down": {
+     "texture": "#roller",
+     "uv": [
+      1,
+      0,
+      15,
+      5
+     ]
+    }
+   },
+   "name": "roller"
+  }
+ ]
+}

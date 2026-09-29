@@ -77,7 +77,7 @@ public class MachineTests {
     public static void machinesTurnAndCostStress(GameTestHelper helper) {
         helper.setBlock(MOTOR, AllBlocks.CREATIVE_MOTOR.getDefaultState().setValue(DirectionalKineticBlock.FACING, Direction.UP));
         helper.setBlock(MACHINE, BBBlocks.MANGLER.getDefaultState());
-        if (BlockStressValues.getImpact(BBBlocks.MANGLER.get()) != 8.0 || BlockStressValues.getImpact(BBBlocks.DEGLOVER.get()) != 4.0) {
+        if (BlockStressValues.getImpact(BBBlocks.MANGLER.get()) != 8.0 || BlockStressValues.getImpact(BBBlocks.DEGLOVER.get()) != 16.0) {
             helper.fail("Stress impacts not registered");
         }
         helper.runAfterDelay(10, () -> {
@@ -93,11 +93,25 @@ public class MachineTests {
         });
     }
 
-    /** The Guillotine takes limbs off a cow lying on it, but never the head. */
+    /** A redstone clock beside the machine: a block of redstone set in the floor and taken away again every {@code period} ticks. */
+    static void clock(GameTestHelper helper, BlockPos machine, int period) {
+        BlockPos beside = machine.east();
+        helper.onEachTick(() -> {
+            long t = helper.getTick();
+            if (t % period == 0) {
+                helper.setBlock(beside, net.minecraft.world.level.block.Blocks.REDSTONE_BLOCK);
+            } else if (t % period == period / 2) {
+                helper.setBlock(beside, net.minecraft.world.level.block.Blocks.STONE);
+            }
+        });
+    }
+
+    /** The Guillotine takes limbs off a cow lying on it, but never the head: one each time a redstone pulse drops its blade. */
     @GameTest(template = "empty", timeoutTicks = 900)
     public static void guillotineTakesLegsNotHead(GameTestHelper helper) {
         UUID id = setUp(helper, BBBlocks.GUILLOTINE, EntityType.COW);
         ServerLevel level = helper.getLevel();
+        clock(helper, MACHINE, 30);
         helper.succeedWhen(() -> {
             CarcassSavedData.Carcass cow = CarcassSavedData.get(level).carcass(id);
             helper.assertTrue(cow != null, "the cow's record is gone");

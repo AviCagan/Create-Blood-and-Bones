@@ -192,7 +192,7 @@ public record PowerEffect(LevelBasedValue capacityMult, LevelBasedValue drainMul
             return;
         }
         level.playSound(null, minion.getX(), minion.getY(), minion.getZ(), SoundEvents.GENERIC_EAT, minion.getSoundSource(), 0.8F, 0.5F);
-        level.playSound(null, minion.getX(), minion.getY(), minion.getZ(), SoundEvents.SLIME_SQUISH, minion.getSoundSource(), 0.5F, 0.5F);
+        level.playSound(null, minion.getX(), minion.getY(), minion.getZ(), com.avicagan.bloodandbones.registry.BBSounds.FLESH_SQUISH.get(), minion.getSoundSource(), 0.5F, 0.5F);
         Diet.crumbs(level, minion, food);
     }
 }

@@ -170,7 +170,7 @@ The packages are in order of how much their gap hurts the brief:
   - the necrosis rates.
 - **Organ lists are code on main** (`Surgery.harvest`); `bb-organs` makes them data.
 - **The naming rules are undocumented.** They live in code (`RigDerivation.jointFor`) and in `bone_slot_rules`. There is no guide for someone making a modded mob's model.
-- **Recipes are hand-written.** Section 8 decided recipe JSON would be generated, because Create's fluid ingredient format is due to change. In fact 78 recipe files are hand-written and 3 are generated.
+- **Recipes are hand-written.** Section 8 decided recipe JSON would be generated, because Create's fluid ingredient format is due to change. In fact 78 recipe files are hand-written and 3 are generated. (Done 29 September 2026, `bb-materials`: every recipe comes from datagen, ARCHITECTURE 15.20.1.)
 
 **What to build.**
 - A fallback body for any mob with no rig: its archetype's generic rig scaled to the mob's hitbox, wearing its own texture as far as possible. The other option is reading the model on the client, as section 4.1 proposed. Add a test with a mob that has no rig file.
@@ -255,7 +255,15 @@ Then, either way:
 
 **Owner first.** Yes: decisions 2 and 7.
 
-### 5. The yield gap, and three paths that stay distinct
+### 5. The yield gap, and three paths that stay distinct (partly built 29 September 2026, `bb-machines`)
+
+**Partly built.** ARCHITECTURE 15.19.1 has the details. The paths are data, by hand is about half with real loss, the
+Mangler is fastest with the least of anything a table gives (its loot less what its table already gives), the stations
+get all of it, and the Surgical Rig is the slowest at any speed with organs and the hide on top (a hand at the rig gets
+a hand's share). The knife is held on a part, and one test sends a cow down each path. **Not built:** nothing in
+survival carries the Keen Butcher trait, so the butchery yield is 1 for every player and minion (a balance-pass
+choice); decision 6 is still open, so the knife and the Cleaver stay two tools. The rest of this section is kept as it
+was written.
 
 **Why.** The brief says:
 - Flensing Knife: "Roughly half the yield of a machine, with random loss … Hold on a part to take it off."
@@ -395,7 +403,9 @@ Two things stay open there: bloodless sounds (package 9), and both of a rabbit's
 
 **Owner first.** No.
 
-### 9. Rule 4: finish bloodless mode
+### 9. Rule 4: finish bloodless mode (done 29 September 2026, `bb-materials`)
+
+**Done.** ARCHITECTURE 15.20.3 has the details. The rest of this section is kept as it was written.
 
 **Why.** Bloodless mode "reframes the whole mod as mechanical rather than organic: 'replacement' not 'amputation', clean plating not grafted flesh, essence not blood, constructs not corpses. Identical mechanics, presentation only … Wire it in from the first feature."
 
@@ -417,7 +427,13 @@ Two things stay open there: bloodless sounds (package 9), and both of a rabbit's
 
 **Owner first.** No.
 
-### 10. Filters that pick one part out of a mixed line
+### 10. Filters that pick one part out of a mixed line (partly built 29 September 2026, `bb-machines`)
+
+**Partly built.** ARCHITECTURE 15.19.2 has the details. The machines, the Butcher's Table and the Surgical Rig ask their
+filter about each part they could take, a limb attribute takes any slot the data names, and mixed lines are tested.
+**Not built:** the butchering minion's filter (a minion's job is becoming a task, and how a task is given is decision
+12); a filter for single organs at the rig (it asks about the part an organ is in, so it cannot take only hearts;
+organs are main's data now). The rest of this section is kept as it was written.
 
 **Why.**
 - "A filtered machine pulls one specific part out of a mixed line and passes the rest through untouched."
@@ -514,7 +530,7 @@ An attribute filter set to a part is asked about the whole body, so it never mat
 - The owner decided on 24 September that there are no jobs. Any task can be given to any minion, which does it better or worse depending on its stats (docs/NEXT.md item 1).
 - The brief also says neither kind of minion "should be more OP than the other".
 
-**Built on 29 September 2026** (docs/NEXT.md 1.10; docs/ARCHITECTURE-PROPOSAL.md 15.18 to 15.23). Any minion can be given any of 16 tasks and does it better or worse by its parts: its fitness comes from its stats, its head's knacks and disposition, all in data, and is shown on the task screen, the status line, the Surgery Table, JEI and piece tooltips. Only the surgeon switch (decision 12, docs/NEXT.md 1.5) waits for the owner.
+**Built on 29 September 2026** (docs/NEXT.md 1.10; docs/ARCHITECTURE-PROPOSAL.md 15.21 to 15.26). Any minion can be given any of 16 tasks and does it better or worse by its parts: its fitness comes from its stats, its head's knacks and disposition, all in data, and is shown on the task screen, the status line, the Surgery Table, JEI and piece tooltips. Only the surgeon switch (decision 12, docs/NEXT.md 1.5) waits for the owner.
 
 **What is still open.** Flesh and brass minions each have something the other lacks, but nothing compares them:
 - brass drains a quarter as much blood, ignores poison, wither, hunger and drowning, and takes a module;
@@ -534,7 +550,9 @@ That comparison belongs in the balance pass (PARTS-AND-TRAITS slice 9).
 
 **Owner first.** Only the surgeon switch.
 
-### 14. Blood, Soul Blood and the materials as written
+### 14. Blood, Soul Blood and the materials as written (done 29 September 2026, `bb-materials`)
+
+**Done.** ARCHITECTURE 15.20.2 has the details; it leaves the owner one question (a press as a second way to congeal). The rest of this section is kept as it was written.
 
 **Why.** The brief says:
 - Soul Blood "is the expensive tier, made through a congeal, haunt, re-melt chain using Create's own heating, pressing, haunting and mixing … the full line is what makes the late game viable. Tagged separately from normal blood."
@@ -570,7 +588,10 @@ That comparison belongs in the balance pass (PARTS-AND-TRAITS slice 9).
 
 **Owner first.** No; section 8 decided the chain.
 
-### 15. The machines as the brief describes them
+### 15. The machines as the brief describes them (built 29 September 2026, `bb-machines`, but the Spit Roast's effects)
+
+**Built** but the Spit Roast's effects, which wait for decision 8. ARCHITECTURE 15.19.3 has the details. The rest of this
+section is kept as it was written.
 
 **Why.**
 - Guillotine: "Winds up under rotation, drops on a redstone edge. The clean, straight limb cut."
@@ -599,7 +620,9 @@ That comparison belongs in the balance pass (PARTS-AND-TRAITS slice 9).
 
 **Owner first.** Only for the Spit Roast's effects.
 
-### 16. Cold air and other addons' freezing
+### 16. Cold air and other addons' freezing (done 29 September 2026, `bb-machines`)
+
+**Done.** ARCHITECTURE 15.19.4 has the details. The rest of this section is kept as it was written.
 
 **Why.** "Cold air keeps carcasses fresh; this should play nicely with other addons' bulk freezing."
 
@@ -618,7 +641,9 @@ That comparison belongs in the balance pass (PARTS-AND-TRAITS slice 9).
 
 **Owner first.** No.
 
-### 17. Decoration leftovers
+### 17. Decoration leftovers (done 29 September 2026, `bb-materials`, but heavy carcasses on the wall hook)
+
+**Done** but whole carcasses on the wall hook, which wait for decision 9. ARCHITECTURE 15.20.4 has the details. The rest of this section is kept as it was written.
 
 **Why.**
 - "Wall-mounted Meat Hook: accepts any carcass or body part as a rendered attachment."
@@ -640,7 +665,35 @@ That comparison belongs in the balance pass (PARTS-AND-TRAITS slice 9).
 
 **Owner first.** Only decision 9.
 
-### 18. Checks nobody has run
+### 18. Checks nobody has run (done 29 September 2026)
+
+**Done.** ARCHITECTURE 15.18 has the details and the numbers. The rest of this section is kept as it was written.
+- **Two clients** on a dedicated server (`-Dbloodandbones.multiplayer=true`: `runMpServer`, `runMpButcher`,
+  `runMpWatcher`). One client kills, drags, hangs, cuts and skins a cow with real clicks; the other photographs it and
+  logs where it draws every body.
+  - The Watcher sees it right. Bodies are drawn 3.5 cm on average from where the server has them. The rack's blood and
+    the stains match the server's within a few ticks, and the handover never leaves a gap.
+  - Hanging a carcass threw the player beside it about 220 blocks. Fixed: the Shackle Hook and the Shackle Trolley now
+    hoist the body up at 3 blocks a second, and neither snaps it up after a reload or when it is caught under something.
+    A player standing right against the rising body is still jostled (a block or two); left for package 1. A hook on a
+    ship is unchanged and untested.
+  - Walking forward while dragging, your own carcass pushes you along. Not fixed; left for package 1.
+  - A cut leg fell through the ground into the void in one run of seven (one of the three in which the leg was cut
+    off). Not fixed: game tests could not reproduce it.
+- **A dozen at once.** Twelve awake cost 7.5 to 9 ms of the 50 ms server tick for about ten seconds; resting, under a
+  millisecond. Four dozen awake cost about 27 ms at first, and all rest within fifteen seconds. Making a carcass costs about 12 ms in the tick of
+  the kill. Hung carcasses never rest: a dozen on hooks cost about 5 ms of every tick for as long as they hang, so a line
+  of four dozen would cost about 20 ms all the time. ARCHITECTURE 3.4's cap is still open and was not built; settle it
+  with decision 3.
+  - It found that a spider carcass never rested (its legs twitched for ever). Fixed: a carcass that stays where it lies
+    for five seconds rests, however it twitches.
+  - It found that a rabbit spun on its hook and could not be hoisted (the belly-out spring was too stiff for so light a
+    torso). Fixed.
+- **Nine tests** for what was built but unproven, and four for the hanging fix (the hook, a hook read back part way up,
+  a body caught under something, the trolley). Each was also run with its feature or fix taken out, and failed.
+  - The Grappling Spool test found that a reeled-in carcass often ran out of time a step short of your hand and was
+    never handed to the drag. Fixed: a carcass has four seconds more to arrive than it had (five more than a mob).
+  - Not built: the Guillotine's limbs reach a minion or a wall hook only through a player's hands (package 4, decision 9).
 
 **Why.**
 - "Verify things by running them, not by reasoning about them … actually look at anything visual on screen."
@@ -728,6 +781,9 @@ One line each. Details and test names are in ARCHITECTURE sections 13 to 15.
   - an organ adds a special.
 - **Power:** flesh minions drink at a Blood Trough they can reach; brass minions run on Soul Canisters swapped by the Charging Cradle; each kind has something the other lacks.
 - **Never destroyed:** a neglected or beaten minion powers down and lies where it is. The minion cap defaults to none.
+- **Checked by running it:** two clients on a dedicated server see the same carcass, and a dozen carcasses at once cost
+  a sixth of a server tick until they rest (package 18). Hung carcasses do not rest; a line of them needs the cap
+  (package 18, decision 3).
 
 ## Different from the brief by recorded decision (not gaps)
 

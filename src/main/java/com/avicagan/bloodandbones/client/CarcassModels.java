@@ -36,16 +36,21 @@ public final class CarcassModels {
     private CarcassModels() {
     }
 
-    /** The skin, then each coat, for a bone's own part and everything attached to it. */
+    /**
+     * The skin, then each coat, for a bone's own part and everything attached to it. In bloodless mode a carcass is a
+     * wreck of a construct: every texture is drawn as its plated copy (ConstructPlating), and a skinned one as the
+     * frame under the plating.
+     */
     public static void drawBone(Rig rig, Bone bone, ResourceLocation texture, List<CarcassLook.Coat> passes, int rot,
                                 PoseStack poseStack, MultiBufferSource buffers, int packedLight) {
-        if (texture.equals(CarcassLook.FLESH) && com.avicagan.bloodandbones.config.BBClientConfig.bloodless()) {
-            texture = FLESH_BLOODLESS;
+        boolean construct = com.avicagan.bloodandbones.config.BBClientConfig.bloodless();
+        if (construct) {
+            texture = texture.equals(CarcassLook.FLESH) ? ConstructPlating.plated(FLESH_BLOODLESS, true) : ConstructPlating.plated(texture, false);
         }
         drawPass(rig, bone, rig.layer(), texture, rot, poseStack, buffers, packedLight);
         for (CarcassLook.Coat coat : passes) {
             int color = coat.tint() == -1 ? rot : FastColor.ARGB32.multiply(coat.tint() | 0xFF000000, rot);
-            drawPass(rig, bone, coat.layer(), coat.texture(), color, poseStack, buffers, packedLight);
+            drawPass(rig, bone, coat.layer(), construct ? ConstructPlating.plated(coat.texture(), false) : coat.texture(), color, poseStack, buffers, packedLight);
         }
     }
 

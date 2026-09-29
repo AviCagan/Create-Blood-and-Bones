@@ -1,0 +1,22 @@
+{
+  "type": "bloodandbones:carcass_armour",
+  "category": "equipment",
+  "key": {
+    "L": {
+      "item": "bloodandbones:scraps"
+    },
+    "P": {
+      "item": "bloodandbones:scraps"
+    }
+  },
+  "pattern": [
+    "PPP",
+    "L L",
+    "L L"
+  ],
+  "piece": "leggings",
+  "result": {
+    "count": 1,
+    "id": "bloodandbones:carcass_leggings"
+  }
+}

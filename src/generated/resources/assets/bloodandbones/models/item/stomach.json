@@ -1,5 +1,13 @@
 {
   "parent": "minecraft:item/generated",
+  "overrides": [
+    {
+      "model": "bloodandbones:item/stomach_clean",
+      "predicate": {
+        "bloodandbones:bloodless": 1.0
+      }
+    }
+  ],
   "textures": {
     "layer0": "bloodandbones:item/stomach"
   }

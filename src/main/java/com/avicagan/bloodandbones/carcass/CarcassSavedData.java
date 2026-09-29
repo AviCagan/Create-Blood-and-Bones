@@ -65,6 +65,9 @@ public class CarcassSavedData extends SavedData {
         public final List<net.minecraft.core.BlockPos> restCells = new ArrayList<>();
         /** consecutive ticks the whole carcass has been still, not saved */
         public int stillTicks;
+        /** where each body lay when the carcass last settled, however it twitches, and for how many ticks (CarcassRest); not saved */
+        public final Map<String, org.joml.Vector3d> settledAt = new java.util.HashMap<>();
+        public int settledTicks;
         /** each bone's vertical speed last tick, to hear it land (CarcassThuds); not saved */
         public final Map<String, Double> fallSpeeds = new java.util.HashMap<>();
         /** ticks until this carcass may thud again, and how many times it has; not saved */

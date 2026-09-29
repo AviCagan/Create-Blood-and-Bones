@@ -403,7 +403,7 @@ public final class MotionEffects {
                     // back the way it came, and now the host's: what it hits is the host's doing
                     projectile.deflect(ProjectileDeflection.REVERSE, host, host, false);
                     level.playSound(null, host.getX(), host.getY(), host.getZ(), SoundEvents.SHIELD_BLOCK, host.getSoundSource(), 0.8F, 1.3F);
-                    level.playSound(null, host.getX(), host.getY(), host.getZ(), SoundEvents.SLIME_BLOCK_HIT, host.getSoundSource(), 1.0F, 0.6F);
+                    level.playSound(null, host.getX(), host.getY(), host.getZ(), com.avicagan.bloodandbones.registry.BBSounds.FLESH_HIT.get(), host.getSoundSource(), 1.0F, 0.6F);
                 }
                 case "dodge" -> {
                     LET_BY.put(projectile, host);
@@ -412,7 +412,7 @@ public final class MotionEffects {
                 }
                 default -> {
                     LET_BY.put(projectile, host);
-                    level.playSound(null, host.getX(), host.getY(), host.getZ(), SoundEvents.SLIME_SQUISH, host.getSoundSource(), 0.8F, 0.4F);
+                    level.playSound(null, host.getX(), host.getY(), host.getZ(), com.avicagan.bloodandbones.registry.BBSounds.FLESH_SQUISH.get(), host.getSoundSource(), 0.8F, 0.4F);
                 }
             }
             return;
@@ -460,7 +460,7 @@ public final class MotionEffects {
         host.push(step.x, 0.05, step.z);
         host.hurtMarked = true;
         host.level().playSound(null, host.getX(), host.getY(), host.getZ(), SoundEvents.PLAYER_ATTACK_NODAMAGE, host.getSoundSource(), 0.8F, 1.2F);
-        host.level().playSound(null, host.getX(), host.getY(), host.getZ(), SoundEvents.HONEY_BLOCK_SLIDE, host.getSoundSource(), 0.6F, 1.1F);
+        host.level().playSound(null, host.getX(), host.getY(), host.getZ(), com.avicagan.bloodandbones.registry.BBSounds.FLESH_SLIDE.get(), host.getSoundSource(), 0.6F, 1.1F);
     }
 
     /** Mobs notice a host with a visibility effect less (or more), as a mob's own head worn does for its kind. */

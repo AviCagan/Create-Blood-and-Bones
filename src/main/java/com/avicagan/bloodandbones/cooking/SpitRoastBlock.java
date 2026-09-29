@@ -22,9 +22,10 @@ import net.minecraft.world.phys.shapes.Shapes;
 import net.minecraft.world.phys.shapes.VoxelShape;
 
 /**
- * Two posts and a spit, set over a fire. A shaft through the spit turns it; a carcass piece skewered on
- * it roasts while it turns and there is heat below. Right-click with a piece to skewer it, with an empty
- * hand to take it off, cooked or not.
+ * Two posts and a spit, set over a fire. A shaft through the spit turns it (or a Hand Crank, slowly); what is
+ * skewered on it roasts while it turns and there is heat below. Right-click with a carried piece to skewer it, or
+ * with the Meat Hook to skewer a whole carcass (the one it drags, or one lying over the spit); an empty hand takes it
+ * off, cooked or not.
  */
 public class SpitRoastBlock extends HorizontalAxisKineticBlock implements IBE<SpitRoastBlockEntity> {
     private static final VoxelShape X = Shapes.or(Block.box(0, 0, 6, 2, 10, 10), Block.box(14, 0, 6, 16, 10, 10), Block.box(0, 7, 7, 16, 9, 9));
@@ -42,6 +43,29 @@ public class SpitRoastBlock extends HorizontalAxisKineticBlock implements IBE<Sp
     @Override
     protected ItemInteractionResult useItemOn(ItemStack stack, BlockState state, Level level, BlockPos pos, Player player,
                                               InteractionHand hand, BlockHitResult hit) {
+        if (stack.is(BBItems.MEAT_HOOK.get())) {
+            // a whole carcass goes on: the one the hook is dragging, or else one lying over the spit, unless the other hand
+            // holds a piece to skewer; with the spit full, or the other hand's piece to go on, the other hand has its turn
+            // (both sides decide alike: only the server sees a carcass lying there, so the client swings on the chance)
+            boolean empty = level.getBlockEntity(pos) instanceof SpitRoastBlockEntity be && be.pieces().isEmpty();
+            boolean offhandPiece = hand == InteractionHand.MAIN_HAND && player.getOffhandItem().is(BBItems.CARCASS_PIECE.get());
+            if (level.isClientSide) {
+                boolean dragging = com.avicagan.bloodandbones.client.ClientDragState.all().containsKey(player.getUUID());
+                return empty && (dragging || !offhandPiece) ? ItemInteractionResult.SUCCESS : ItemInteractionResult.PASS_TO_DEFAULT_BLOCK_INTERACTION;
+            }
+            if (!empty || offhandPiece && com.avicagan.bloodandbones.carcass.CarcassDrag.current(player) == null) {
+                return ItemInteractionResult.PASS_TO_DEFAULT_BLOCK_INTERACTION;
+            }
+            return onBlockEntityUseItemOn(level, pos, be -> {
+                com.avicagan.bloodandbones.carcass.CarcassSavedData.Carcass carcass = wholeFor((net.minecraft.server.level.ServerLevel) level, pos, player);
+                if (carcass == null) {
+                    return ItemInteractionResult.PASS_TO_DEFAULT_BLOCK_INTERACTION;
+                }
+                com.avicagan.bloodandbones.carcass.CarcassDrag.stop((net.minecraft.server.level.ServerLevel) level, player);
+                return be.skewer((net.minecraft.server.level.ServerLevel) level, carcass) ? ItemInteractionResult.SUCCESS
+                        : ItemInteractionResult.PASS_TO_DEFAULT_BLOCK_INTERACTION;
+            });
+        }
         if (!stack.isEmpty() && !stack.is(BBItems.CARCASS_PIECE.get())) {
             return ItemInteractionResult.PASS_TO_DEFAULT_BLOCK_INTERACTION;
         }
@@ -60,6 +84,26 @@ public class SpitRoastBlock extends HorizontalAxisKineticBlock implements IBE<Sp
             return ItemInteractionResult.PASS_TO_DEFAULT_BLOCK_INTERACTION;
         });
     }
+
+    /** The carcass a Meat Hook click puts on the spit: the one it is dragging within reach, else the nearest lying over it. */
+    @org.jetbrains.annotations.Nullable
+    static com.avicagan.bloodandbones.carcass.CarcassSavedData.Carcass wholeFor(net.minecraft.server.level.ServerLevel level, BlockPos pos, Player player) {
+        com.avicagan.bloodandbones.carcass.CarcassDrag.Drag drag = com.avicagan.bloodandbones.carcass.CarcassDrag.current(player);
+        if (drag != null) {
+            com.avicagan.bloodandbones.carcass.CarcassSavedData.Carcass dragged = com.avicagan.bloodandbones.carcass.CarcassSavedData.get(level).carcass(drag.carcass);
+            org.joml.Vector3d at = dragged == null ? null : com.avicagan.bloodandbones.carcass.CarcassAssembler.boneWorldPosition(level, dragged, dragged.rootBone);
+            if (at != null && at.distanceSquared(pos.getX() + 0.5, pos.getY() + 0.5, pos.getZ() + 0.5) <= REACH * REACH) {
+                return dragged;
+            }
+        }
+        for (com.avicagan.bloodandbones.carcass.CarcassButchery.Lying lying : com.avicagan.bloodandbones.carcass.CarcassButchery.lyingOn(level, pos, 0.5)) {
+            return lying.carcass();
+        }
+        return null;
+    }
+
+    /** How near the spit a dragged carcass has to be for the hook to put it on. */
+    private static final double REACH = 3.0;
 
     @Override
     public Class<SpitRoastBlockEntity> getBlockEntityClass() {

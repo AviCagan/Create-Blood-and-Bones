@@ -365,10 +365,11 @@ public class OrganTests {
     /**
      * A cow too heavy to carry, lying over a Surgical Rig table with nothing laid on it: the Cleaver takes its organs out
      * where it lies, its torso's first (heart, lungs, stomach, rumen), then its head's two eyes, each bone counting its
-     * own; the Cleaver is never laid on the table meanwhile. With every organ out the body is no bar to laying the Cleaver
-     * down, for surgery: the next click lays it on the table.
+     * own; the Cleaver is never laid on the table meanwhile. The rig takes one cut each of its pauses (SurgicalRig#PAUSE),
+     * so the clicks come that far apart. With every organ out, the rig's next cut is the cow's hide (it works a carcass
+     * lying on it all the way down: SurgicalRig), the Cleaver still in hand.
      */
-    @GameTest(template = "empty", timeoutTicks = 100)
+    @GameTest(template = "empty", timeoutTicks = 300)
     public static void heavyCarcassOrgansOnRig(GameTestHelper helper) {
         BlockPos at = new BlockPos(5, 2, 5);
         SurgeryTableBlockEntity table = table(helper, at, TableAttachment.SURGICAL);
@@ -376,14 +377,16 @@ public class OrganTests {
         if (carcass == null) {
             return;
         }
-        helper.runAfterDelay(30, () -> harvestCow(helper, table, at, carcass, false));
+        long start = helper.getLevel().getGameTime() + 30;
+        harvestCow(helper, table, at, carcass, false, () -> helper.getLevel().getGameTime() >= start);
     }
 
     /**
      * The same once the cow has lain still long enough to fold into its torso (CarcassRest), as it does lying over the
-     * table while its butcher is away: its head, now only a rest pose, still gives its two eyes.
+     * table while its butcher is away: its head, now only a rest pose, still gives its two eyes, and taking the organs out
+     * leaves it folded.
      */
-    @GameTest(template = "empty", timeoutTicks = 400)
+    @GameTest(template = "empty", timeoutTicks = 640)
     public static void restingCarcassOrgansOnRig(GameTestHelper helper) {
         BlockPos at = new BlockPos(5, 2, 5);
         SurgeryTableBlockEntity table = table(helper, at, TableAttachment.SURGICAL);
@@ -391,19 +394,13 @@ public class OrganTests {
         if (carcass == null) {
             return;
         }
-        boolean[] done = {false};
-        helper.onEachTick(() -> {
-            if (!done[0] && carcass.resting) {
-                done[0] = true;
-                harvestCow(helper, table, at, carcass, true);
-            }
-        });
-        helper.runAfterDelay(380, () -> {
-            if (!done[0]) {
-                done[0] = true;
+        long giveUp = helper.getLevel().getGameTime() + 380;
+        harvestCow(helper, table, at, carcass, true, () -> {
+            if (!carcass.resting && helper.getLevel().getGameTime() >= giveUp) {
                 remove(helper.getLevel(), carcass);
                 helper.fail("The cow never came to rest over the table");
             }
+            return carcass.resting;
         });
     }
 
@@ -419,42 +416,80 @@ public class OrganTests {
         return carcass;
     }
 
-    /** Click a Cleaver on the table until nothing more comes out of the cow over it, and check what did, and in what order. */
-    private static void harvestCow(GameTestHelper helper, SurgeryTableBlockEntity table, BlockPos at, CarcassSavedData.Carcass carcass, boolean resting) {
+    /**
+     * From when {@code ready} first holds, click a Cleaver on the table once each of the rig's pauses until six organs have
+     * come out of the cow over it, and check what did, and in what order; then click once more: the rig's next cut is the
+     * cow's hide.
+     */
+    private static void harvestCow(GameTestHelper helper, SurgeryTableBlockEntity table, BlockPos at, CarcassSavedData.Carcass carcass, boolean resting,
+                                   java.util.function.BooleanSupplier ready) {
         ServerLevel level = helper.getLevel();
         Player butcher = helper.makeMockPlayer(GameType.SURVIVAL);
-        try {
-            if (Surgery.carcassOn(level, table.getBlockPos()) != carcass || carcass.resting != resting) {
-                helper.fail("The cow should lie over the table, " + (resting ? "folded to rest" : "not yet folded") + ": resting " + carcass.resting);
+        List<ResourceLocation> order = new ArrayList<>();
+        long[] next = {-1L};
+        boolean[] done = {false};
+        helper.onEachTick(() -> {
+            if (done[0]) {
                 return;
             }
-            List<ResourceLocation> order = new ArrayList<>();
-            for (int i = 0; i < 6; i++) {
-                int before = butcher.getInventory().items.stream().mapToInt(ItemStack::getCount).sum();
-                click(helper, butcher, at, new ItemStack(BBItems.CLEAVER.get()));
-                int after = butcher.getInventory().items.stream().mapToInt(ItemStack::getCount).sum();
-                if (after <= before || !table.item().isEmpty()) {
-                    break;
+            if (next[0] < 0) {
+                if (!ready.getAsBoolean()) {
+                    return;
                 }
-                ItemStack newest = butcher.getInventory().items.stream().filter(s -> !s.isEmpty() && !s.is(BBItems.CLEAVER.get()))
-                        .filter(s -> Organs.of(s, PartsData.SERVER) != null).reduce((a, b) -> b).orElse(ItemStack.EMPTY);
-                order.add(Organs.of(newest, PartsData.SERVER) == null ? bb("none") : Organs.of(newest, PartsData.SERVER).organ());
+                if (Surgery.carcassOn(level, table.getBlockPos()) != carcass || carcass.resting != resting) {
+                    done[0] = true;
+                    remove(level, carcass);
+                    helper.fail("The cow should lie over the table, " + (resting ? "folded to rest" : "not yet folded") + ": resting " + carcass.resting);
+                    return;
+                }
+                next[0] = level.getGameTime();
             }
-            if (!order.equals(List.of(bb("heart"), bb("lungs"), bb("stomach"), bb("rumen"), bb("eye"), bb("eye"))) || !table.item().isEmpty()
-                    || count(butcher, BBItems.EYE.get()) != 2 || !"4".equals(carcass.traits.get(Surgery.ORGANS_TAKEN + ":" + carcass.rootBone))) {
-                helper.fail("The cow lying on the table should give its torso's four organs and its head's two eyes, the Cleaver kept in hand: "
-                        + order + ", table " + table.item() + ", " + carcass.traits);
+            if (level.getGameTime() < next[0]) {
                 return;
             }
-            click(helper, butcher, at, new ItemStack(BBItems.CLEAVER.get()));
-            if (!table.item().is(BBItems.CLEAVER.get())) {
-                helper.fail("With every organ out, a Cleaver clicked on the table should be laid on it: " + table.item());
-                return;
+            next[0] = level.getGameTime() + com.avicagan.bloodandbones.body.SurgicalRig.PAUSE;
+            boolean finished = true;
+            try {
+                if (order.size() < 6) {
+                    int before = butcher.getInventory().items.stream().mapToInt(ItemStack::getCount).sum();
+                    click(helper, butcher, at, new ItemStack(BBItems.CLEAVER.get()));
+                    int after = butcher.getInventory().items.stream().mapToInt(ItemStack::getCount).sum();
+                    if (after > before && table.item().isEmpty()) {
+                        ItemStack newest = butcher.getInventory().items.stream().filter(s -> !s.isEmpty() && !s.is(BBItems.CLEAVER.get()))
+                                .filter(s -> Organs.of(s, PartsData.SERVER) != null).reduce((a, b) -> b).orElse(ItemStack.EMPTY);
+                        order.add(Organs.of(newest, PartsData.SERVER) == null ? bb("none") : Organs.of(newest, PartsData.SERVER).organ());
+                        if (order.size() < 6) {
+                            finished = false;
+                            return;
+                        }
+                    }
+                    if (!order.equals(List.of(bb("heart"), bb("lungs"), bb("stomach"), bb("rumen"), bb("eye"), bb("eye"))) || !table.item().isEmpty()
+                            || count(butcher, BBItems.EYE.get()) != 2 || !"4".equals(carcass.traits.get(Surgery.ORGANS_TAKEN + ":" + carcass.rootBone))) {
+                        helper.fail("The cow lying on the table should give its torso's four organs and its head's two eyes, the Cleaver kept in hand: "
+                                + order + ", table " + table.item() + ", " + carcass.traits);
+                        return;
+                    }
+                    if (resting && !carcass.resting) {
+                        helper.fail("Taking the organs out of a cow folded to rest should leave it folded");
+                        return;
+                    }
+                    finished = false;
+                    return;
+                }
+                click(helper, butcher, at, new ItemStack(BBItems.CLEAVER.get()));
+                if (!table.item().isEmpty() || !carcass.skinned || count(butcher, BBItems.EYE.get()) != 2) {
+                    helper.fail("With every organ out, the rig's next cut should take the cow's hide, the Cleaver kept in hand: table " + table.item()
+                            + ", skinned " + carcass.skinned);
+                    return;
+                }
+                helper.succeed();
+            } finally {
+                if (finished) {
+                    done[0] = true;
+                    remove(level, carcass);
+                }
             }
-            helper.succeed();
-        } finally {
-            remove(level, carcass);
-        }
+        });
     }
 
     /** Other tests share this world's carcasses: this one goes, bodies and all. */

@@ -30,7 +30,9 @@ import net.neoforged.neoforge.network.PacketDistributor;
  * <li>Surgical Rig: lay a blade, an implant or a part on it; right-click it with an empty hand to lie on it and
  * choose what to do to which part of you. With someone else on it, an empty hand opens the same screen for
  * them. A mob on a lead is laid on it by right-clicking with an empty hand while leading it. A carcass piece
- * laid on it gives up its organs to a Cleaver, one a cut; with nothing laid on it, so does a carcass lying over it.</li>
+ * laid on it, or a carcass lying on its top (one too heavy to carry), gives up its organs to a Cleaver, one a cut, then its
+ * hide, its limbs, then its meat and bone, a slow cut at a time (SurgicalRig; the organs through Surgery#harvest); the
+ * rig's filter picks which parts, and goes back to whoever takes the rig off.</li>
  * <li>Assembly Frame: a carcass torso laid on it, or claimed from a carcass lying over it, is a minion in the making (see MinionAssembly).</li>
  * </ul>
  * Sneak and right-click with an empty hand to take back what lies on it.
@@ -74,9 +76,12 @@ public class SurgeryTableBlock extends Block implements IBE<SurgeryTableBlockEnt
         };
     }
 
-    /** Fit an attachment, handing back the one it replaces. Only on an empty table. */
+    /** Fit an attachment, handing back the one it replaces (the Surgical Rig with its filter). Only on an empty table. */
     private static void fitAttachment(Level level, BlockPos pos, BlockState state, Player player, ItemStack stack, TableAttachment attachment) {
         TableAttachment old = state.getValue(ATTACHMENT);
+        if (old == TableAttachment.SURGICAL && level.getBlockEntity(pos) instanceof SurgeryTableBlockEntity table) {
+            table.takeFilter(player);
+        }
         level.setBlockAndUpdate(pos, state.setValue(ATTACHMENT, attachment));
         stack.consume(1, player);
         if (itemOf(old) != null) {
@@ -115,18 +120,17 @@ public class SurgeryTableBlock extends Block implements IBE<SurgeryTableBlockEnt
         }
         if (Surgery.isBlade(stack) && table.item().is(com.avicagan.bloodandbones.registry.BBItems.CARCASS_PIECE.get())) {
             if (!level.isClientSide) {
-                Surgery.harvest((ServerLevel) level, player, table, stack);
+                SurgicalRig.click((ServerLevel) level, player, table, stack);
             }
             return ItemInteractionResult.sidedSuccess(level.isClientSide);
         }
-        // nothing laid on it, nobody on it, and a carcass too heavy to carry lying over it with an organ still in it: the
-        // blade goes into that (one with nothing left in it is no bar to laying the blade down, for surgery)
-        if (Surgery.isBlade(stack) && table.item().isEmpty() && !level.isClientSide && Surgery.patientAt(level, pos) == null) {
-            var carcass = Surgery.carcassOn((ServerLevel) level, pos);
-            if (carcass != null && Surgery.nextOrgan(com.avicagan.bloodandbones.parts.PartsData.SERVER, carcass) != null
-                    && Surgery.harvest((ServerLevel) level, player, table, stack)) {
-                return ItemInteractionResult.CONSUME;
-            }
+        // nothing laid on it and nobody on it, but a carcass lying on its top (too heavy to carry): the blade works that, its
+        // organs first (still at it from the last cut, it waits); with nothing there it may take, the blade is laid down,
+        // for surgery, as before
+        if (Surgery.isBlade(stack) && table.item().isEmpty() && !level.isClientSide && Surgery.patientAt(level, pos) == null
+                && SurgicalRig.anythingOn((ServerLevel) level, table)
+                && SurgicalRig.click((ServerLevel) level, player, table, stack) != SurgicalRig.Result.NOTHING) {
+            return ItemInteractionResult.SUCCESS;
         }
         if (!table.item().isEmpty()) {
             return ItemInteractionResult.PASS_TO_DEFAULT_BLOCK_INTERACTION;
@@ -147,7 +151,7 @@ public class SurgeryTableBlock extends Block implements IBE<SurgeryTableBlockEnt
         }
         ServerLevel server = (ServerLevel) level;
         // a bucket of blood wakes flesh, a soul canister brass
-        if (stack.is(com.avicagan.bloodandbones.registry.BBFluids.BLOOD.getBucket().get()) || stack.is(com.avicagan.bloodandbones.registry.BBItems.SOUL_CANISTER.get())) {
+        if (stack.is(com.avicagan.bloodandbones.registry.BBFluids.BLOOD_BUCKETS) || stack.is(com.avicagan.bloodandbones.registry.BBItems.SOUL_CANISTER.get())) {
             if (table.build().isEmpty()) {
                 return ItemInteractionResult.PASS_TO_DEFAULT_BLOCK_INTERACTION;
             }
@@ -214,6 +218,9 @@ public class SurgeryTableBlock extends Block implements IBE<SurgeryTableBlockEnt
                     return InteractionResult.PASS;
                 }
                 if (!level.isClientSide) {
+                    if (attachment == TableAttachment.SURGICAL) {
+                        table.takeFilter(player);
+                    }
                     level.setBlockAndUpdate(pos, state.setValue(ATTACHMENT, TableAttachment.NONE));
                     player.getInventory().placeItemBackInInventory(new ItemStack(itemOf(attachment)));
                 }
@@ -304,7 +311,8 @@ public class SurgeryTableBlock extends Block implements IBE<SurgeryTableBlockEnt
         if (!state.is(newState.getBlock()) && itemOf(state.getValue(ATTACHMENT)) != null) {
             Block.popResource(level, pos, new ItemStack(itemOf(state.getValue(ATTACHMENT))));
         }
-        super.onRemove(state, level, pos, newState, movedByPiston);
+        // as Create's own blocks do: the block entity's behaviours are destroyed too, so the rig's filter drops
+        IBE.onRemove(state, level, pos, newState);
     }
 
     @Override

@@ -46,7 +46,7 @@ public record BlinkTargetAction(LevelBasedValue range) implements EnchantmentEnt
             if (living.randomTeleport(event.getTargetX(), event.getTargetY(), event.getTargetZ(), true)) {
                 level.gameEvent(GameEvent.TELEPORT, from, GameEvent.Context.of(living));
                 level.playSound(null, from.x, from.y, from.z, SoundEvents.CHORUS_FRUIT_TELEPORT, living.getSoundSource(), 1.0F, 0.6F);
-                level.playSound(null, living.getX(), living.getY(), living.getZ(), SoundEvents.SLIME_SQUISH, living.getSoundSource(), 0.6F, 0.5F);
+                level.playSound(null, living.getX(), living.getY(), living.getZ(), com.avicagan.bloodandbones.registry.BBSounds.FLESH_SQUISH.get(), living.getSoundSource(), 0.6F, 0.5F);
                 living.resetFallDistance();
                 return;
             }

@@ -1,0 +1,27 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "category": "equipment",
+  "key": {
+    "C": {
+      "item": "minecraft:chain"
+    },
+    "H": {
+      "item": "bloodandbones:meat_hook"
+    },
+    "M": {
+      "item": "create:precision_mechanism"
+    },
+    "P": {
+      "tag": "c:plates/brass"
+    }
+  },
+  "pattern": [
+    " H ",
+    "PMP",
+    " C "
+  ],
+  "result": {
+    "count": 1,
+    "id": "bloodandbones:grappling_spool"
+  }
+}

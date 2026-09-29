@@ -1,0 +1,27 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "category": "misc",
+  "key": {
+    "C": {
+      "item": "create:andesite_casing"
+    },
+    "I": {
+      "tag": "c:ingots/iron"
+    },
+    "S": {
+      "item": "create:shaft"
+    },
+    "W": {
+      "item": "create:mechanical_saw"
+    }
+  },
+  "pattern": [
+    " W ",
+    "ICI",
+    " S "
+  ],
+  "result": {
+    "count": 1,
+    "id": "bloodandbones:beheader"
+  }
+}

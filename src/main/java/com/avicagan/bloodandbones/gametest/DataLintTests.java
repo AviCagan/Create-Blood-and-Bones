@@ -356,8 +356,7 @@ public class DataLintTests {
             "amphibian: drying out after 120 s (dry_out waits 60)",
             "shellback: turtles and shulkers shedding scutes (scute_shed sheds an armadillo's)",
             "vermin: Infestation's kin with arthropods",
-            "spirit: Ethereal's projectiles passing through you",
-            "traits: keen_butcher (the butchery_yield attribute)");
+            "spirit: Ethereal's projectiles passing through you");
 
     /**
      * Spec 8.2, as built: each mob's own file lists its signature ("parts.&lt;key&gt;", "organs.&lt;id&gt;", "hide",

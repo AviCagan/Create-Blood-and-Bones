@@ -24,7 +24,7 @@ import net.minecraft.world.phys.shapes.VoxelShape;
 /**
  * The Mangler, Guillotine, Beheader and Deglover: a machine on legs, driven by a shaft from below (the
  * Millstone pattern), that works the carcass parts lying on or hanging over it. Empty-handed use takes
- * what it has made.
+ * what it has made. Redstone reaching it is passed on: a rising edge drops an armed Guillotine's blade.
  */
 public class CarcassMachineBlock extends KineticBlock implements IBE<CarcassMachineBlockEntity> {
     private static final VoxelShape SHAPE = Block.box(0, 0, 0, 16, 16, 16);
@@ -62,6 +62,15 @@ public class CarcassMachineBlock extends KineticBlock implements IBE<CarcassMach
         }
         withBlockEntityDo(level, pos, be -> be.giveContentsTo(player));
         return ItemInteractionResult.SUCCESS;
+    }
+
+    /** The Sequenced Gearshift's way: every neighbour change looks again whether redstone reaches it. */
+    @Override
+    protected void neighborChanged(BlockState state, Level level, BlockPos pos, Block neighbor, BlockPos neighborPos, boolean movedByPiston) {
+        super.neighborChanged(state, level, pos, neighbor, neighborPos, movedByPiston);
+        if (!level.isClientSide) {
+            withBlockEntityDo(level, pos, be -> be.redstone(level.hasNeighborSignal(pos)));
+        }
     }
 
     @Override

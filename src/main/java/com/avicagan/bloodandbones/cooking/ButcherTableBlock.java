@@ -21,8 +21,9 @@ import net.minecraft.world.phys.shapes.Shapes;
 import net.minecraft.world.phys.shapes.VoxelShape;
 
 /**
- * A steel butcher's table. Lay a carried carcass piece on it; chop it with a Cleaver and it comes apart
- * into what butchering it gives; an empty hand takes it back.
+ * A steel butcher's table. Lay a carried carcass piece on it, or drag a loose one too heavy to carry onto its top;
+ * chop it with a Cleaver and it comes apart into what butchering it gives; an empty hand takes a carried one back.
+ * Its filter, on the edge of the top, picks which pieces it takes.
  */
 public class ButcherTableBlock extends Block implements IBE<ButcherTableBlockEntity> {
     private static final VoxelShape SHAPE = Shapes.or(Block.box(0, 12, 0, 16, 16, 16),
@@ -44,8 +45,15 @@ public class ButcherTableBlock extends Block implements IBE<ButcherTableBlockEnt
         if (!stack.isEmpty() && !cleaver && !stack.is(BBItems.CARCASS_PIECE.get())) {
             return ItemInteractionResult.PASS_TO_DEFAULT_BLOCK_INTERACTION;
         }
-        boolean empty = !(level.getBlockEntity(pos) instanceof ButcherTableBlockEntity table) || table.specimen().isEmpty();
-        if ((stack.isEmpty() || cleaver) && empty) {
+        ButcherTableBlockEntity here = level.getBlockEntity(pos) instanceof ButcherTableBlockEntity table ? table : null;
+        boolean empty = here == null || here.specimen().isEmpty();
+        // a Cleaver in one hand and a piece the table takes in the other, at an empty table: the piece goes on first, on
+        // both sides alike (the client cannot see a loose piece lying on the top, so it could not tell the two apart)
+        if (cleaver && empty && hand == InteractionHand.MAIN_HAND && here != null && here.inventory.isItemValid(0, player.getOffhandItem())) {
+            return ItemInteractionResult.PASS_TO_DEFAULT_BLOCK_INTERACTION;
+        }
+        // a cleaver also chops a loose piece lying on the top, which only the server knows of (the client swings)
+        if (stack.isEmpty() && empty || cleaver && empty && !level.isClientSide && (here == null || here.lying((ServerLevel) level) == null)) {
             // nothing on the table to take or chop: let the other hand have its turn
             return ItemInteractionResult.PASS_TO_DEFAULT_BLOCK_INTERACTION;
         }
@@ -56,7 +64,7 @@ public class ButcherTableBlock extends Block implements IBE<ButcherTableBlockEnt
             if (cleaver) {
                 // a Deployer's stand-in player never ticks, so a cooldown would never run out: it goes at its own pace
                 boolean paced = !(player instanceof net.neoforged.neoforge.common.util.FakePlayer);
-                if ((paced && player.getCooldowns().isOnCooldown(stack.getItem())) || !be.chop((ServerLevel) level, stack)) {
+                if ((paced && player.getCooldowns().isOnCooldown(stack.getItem())) || !be.chop((ServerLevel) level, stack, player)) {
                     return ItemInteractionResult.PASS_TO_DEFAULT_BLOCK_INTERACTION;
                 }
                 if (paced) {
@@ -81,7 +89,8 @@ public class ButcherTableBlock extends Block implements IBE<ButcherTableBlockEnt
         if (!state.is(newState.getBlock()) && level.getBlockEntity(pos) instanceof ButcherTableBlockEntity table && !table.specimen().isEmpty()) {
             Block.popResource(level, pos, table.take());
         }
-        super.onRemove(state, level, pos, newState, movedByPiston);
+        // as Create's own blocks do: the block entity's behaviours are destroyed too, so the filter drops
+        IBE.onRemove(state, level, pos, newState);
     }
 
     @Override
