@@ -336,7 +336,7 @@ public final class DevShowcase {
                     mc.player.yHeadRotO = yaw;
                 }
                 // the missing-limb shot: square on to the camera, looking level
-                if (mc.player != null && t >= 178 && t <= 188) {
+                if (mc.player != null && t >= 181 && t <= 188) {
                     float yaw = mc.player.getYRot();
                     mc.player.setYBodyRot(yaw);
                     mc.player.yBodyRotO = yaw;
@@ -696,6 +696,8 @@ public final class DevShowcase {
                         player.setItemSlot(net.minecraft.world.entity.EquipmentSlot.FEET, new ItemStack(net.minecraft.world.item.Items.IRON_BOOTS));
                         player.setItemInHand(InteractionHand.MAIN_HAND, new ItemStack(net.minecraft.world.item.Items.IRON_SWORD));
                         player.setItemInHand(InteractionHand.OFF_HAND, new ItemStack(net.minecraft.world.item.Items.SHIELD));
+                        // turned away from the minions, so the camera in front has open ground behind it
+                        player.teleportTo(player.serverLevel(), player.getX(), player.getY(), player.getZ(), 180.0F, 0.0F);
                     });
                     mc.options.setCameraType(net.minecraft.client.CameraType.THIRD_PERSON_FRONT);
                 } else if (t == 188) {
@@ -708,6 +710,8 @@ public final class DevShowcase {
                         for (var slot : net.minecraft.world.entity.EquipmentSlot.values()) {
                             player.setItemSlot(slot, ItemStack.EMPTY);
                         }
+                        // facing the minions again, as their shots want
+                        player.teleportTo(player.serverLevel(), player.getX(), player.getY(), player.getZ(), 0.0F, 20.0F);
                     });
                     mc.options.setCameraType(net.minecraft.client.CameraType.FIRST_PERSON);
                 } else if (t == 200) {

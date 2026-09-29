@@ -407,6 +407,17 @@ public class SurgeryScreen extends AbstractSimiScreen {
         return y;
     }
 
+    /** One line of small print, shrunk further if it would not fit the width. */
+    private void fitted(GuiGraphics graphics, Component text, int x, int y, int w, int color) {
+        float scale = Math.min(SMALL, w / (float) Math.max(1, font.width(text)));
+        PoseStack pose = graphics.pose();
+        pose.pushPose();
+        pose.translate(x, y + (SMALL - scale) * 4, 0);
+        pose.scale(scale, scale, 1.0F);
+        graphics.drawString(font, text, 0, 0, color, false);
+        pose.popPose();
+    }
+
     // -- the body
 
     private void renderBody(GuiGraphics graphics, LivingEntity patient, Body body, int mouseX, int mouseY) {
@@ -649,7 +660,7 @@ public class SurgeryScreen extends AbstractSimiScreen {
         int w = panelWidth() - 2 * PAD;
         int y = MARGIN + PAD;
         heading(graphics, Component.translatable(selected.translationKey()), x, y, w);
-        y = small(graphics, state(body, selected, patient), x, y + 11, w, stateColor(body, selected, patient), 1);
+        y = small(graphics, state(body, selected, patient), x, y + 11, w, stateColor(body, selected, patient), 2);
         ItemStack onTable = onTable();
         y = small(graphics, onTable.isEmpty() ? Component.translatable("bloodandbones.surgery.table_empty")
                 : Component.translatable("bloodandbones.surgery.on_table", onTable.getHoverName()), x, y + 1, w, DIM, 1);
@@ -732,7 +743,7 @@ public class SurgeryScreen extends AbstractSimiScreen {
         Component verb = Component.translatable(option.action().translationKey());
         graphics.drawString(font, font.substrByWidth(verb, w - 26).getString(), x + 22, y + 3, can ? TEXT : DIM, can);
         Component under = problem != null ? problem : from(option);
-        small(graphics, under, x + 22, y + 13, w - 26, problem != null ? PROBLEM : 0xFFD8C8A8, 1);
+        fitted(graphics, under, x + 22, y + 13, w - 26, problem != null ? PROBLEM : 0xFFD8C8A8);
     }
 
     /** What an option uses, and from where: "Hook Hand, carried", "Cleaver, on the table", or "back to you" for an unclip. */
