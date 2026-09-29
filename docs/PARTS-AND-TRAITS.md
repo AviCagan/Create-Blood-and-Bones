@@ -1376,7 +1376,7 @@ Saved old minions get a one-time conversion that drops their parts. `MinionTests
 - Each ARM piece brings its strike style, its grip and (for wings) its lift.
 - **Melee damage per arm** = clamp(1 + 0.5 × the source's ATTACK_DAMAGE, 1, 10) × the style multiplier. Zombie 2.5, enderman 4.5, iron golem 8.5, warden 10.
 - **Strikes alternate** between arm pieces: a zombie arm and a polar bear arm grab, then maul.
-- **Attack speed** +15% for each arm beyond 2, up to +60%.
+- **Attack speed** +15% for each arm beyond 2, up to +60%: blows land that much more often (built with tasks' stage C, docs/NEXT.md 1.10).
 - **Ranged:**
   - **Held weapons** (hand grip) use vanilla goals with ammo from the inventory: `RangedBowAttackGoal` for bows, `RangedCrossbowAttackGoal` for crossbows, a thrown trident, splash potions for the witch.
   - **Innate projectiles** from traits cost power per shot, not ammo: blaze fireballs, llama spit, snow golem snowballs, skeleton bone throws of 2 damage with no bow.
@@ -1477,7 +1477,9 @@ Cybernetic drain is ×0.25 of this. `blood_upkeep` and power traits scale both.
 > **Superseded (owner, 24 September 2026; built 29 September 2026):** there are no jobs offered by heads. Any of sixteen
 > tasks can be given to any minion, and its build decides how well it does it (docs/NEXT.md 1.1 has the list, 1.2 the
 > fitness). The table below is the old list the tasks came from: companion and bodyguard became Guard and Idle done with
-> the maker, and the scavenger a Courier with a sample in hand.
+> the maker, and the scavenger a Courier with a sample in hand. What a minion's fitness makes of its work in play (1.2's
+> levers) and the surgeon's stump, one to three buckets by its fitness (1.5), are built too (stages C and D, 29 September
+> 2026).
 
 | Job | What it does | Needs | Cost |
 |---|---|---|---|

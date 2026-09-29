@@ -136,7 +136,7 @@ public final class Surgery {
         return null;
     }
 
-    /** "1 bucket", "2 buckets": a stump's price in words. */
+    /** "a bucket", "2 buckets": a stump's price in words. */
     public static Component buckets(int buckets) {
         return buckets == 1 ? Component.translatable("bloodandbones.surgery.bucket") : Component.translatable("bloodandbones.surgery.buckets", buckets);
     }

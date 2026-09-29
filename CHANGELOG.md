@@ -82,11 +82,14 @@ Everything below is in development builds only; the art is placeholder (see the 
   goes where one is missing; a prosthetic unclips. Limbs are only ever lost by choice, and nothing
   can go wrong.
 - Amputation is a ritual, as the brief has it: a player's flesh only comes off with a surgeon minion
-  (a villager's or a pillager's head, and an arm) awake beside the table. It hacks: the stump it leaves
-  is ragged, and fitting anything but a crude prosthetic there later takes a bucket of blood as well (from
-  a bucket or a worn backtank). Fitting never needs a surgeon, and a crude prosthetic never needs blood, so
-  one can always go on. A surgeon keeps to its table and tends whoever lies on it.
-- Stumps show: a limb gone leaves the top of it in your own skin with a raw end; a ragged one is
+  awake beside the table (any minion with a hand set to Surgeon; a datapack can keep it to villager,
+  illager and witch heads, as the brief's words have it). It hacks: the stump it leaves is ragged, and
+  fitting anything but a crude prosthetic there later takes blood as well, by how fit the surgeon was: a
+  bucket after a villager's or a pillager's head, two or three after a poorer one, from every bucket and
+  backtank you carry added together. The surgery screen names the surgeon and its price before you cut.
+  Fitting never needs a surgeon, and a crude prosthetic never needs blood, so one can always go on. A
+  surgeon keeps to its table and tends whoever lies on it, a fitter one faster.
+- Stumps show, a dearer ragged stump raggeder: a limb gone leaves the top of it in your own skin with a raw end; a ragged one is
   longer, torn, with flaps of flesh hanging off.
 - Missing parts follow the design brief: an arm gone means no off-hand and swings a quarter slower
   (the main hand always works); a leg gone means no sprinting; an eye gone closes the view in with fog
@@ -183,6 +186,11 @@ Everything below is in development builds only; the art is placeholder (see the 
   says so; it never changes task by itself. A minion with no head strikes only what touches it; a sentry with no bow
   strikes what comes within reach of its post. A fitter minion uses less blood at work. Old minions' jobs become the
   same tasks (a companion or bodyguard guards you, a scavenger is a courier). The Tender's work comes later.
+- How fit a minion is at its task changes its work: a fitter butcher strokes faster and wastes nothing (a poor one
+  wastes part of each cut), a fitter sentry shoots sooner and truer, a fitter medic throws sooner and truer, a fitter
+  fisher, digger, barterer, courier or farmer works or looks round sooner, a fitter herder keeps after a stray longer;
+  a poor hauler tows a body slower than you would, a fit one as fast, never faster. The task screen says what it makes
+  of each. More arms that strike land blows more often (+15% for each past two).
 - The groundwork for tasks in place of jobs (any task to any minion, better or worse by what it is built of): every
   minion's fitness at every task is worked out on the server from its parts, their knacks and its head's disposition,
   though nothing in play reads it yet. Datapacks can retune each task (`minion_task`) and disposition

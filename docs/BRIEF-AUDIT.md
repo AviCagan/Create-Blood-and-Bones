@@ -721,7 +721,7 @@ One line each. Details and test names are in ARCHITECTURE sections 13 to 15.
 - **Decoration:** the Gut Chain (on chain conveyors too), ribcage arches, bone piles, and three bloody casings.
 - **Chain trolleys:** carry hung carcasses along Create's chains and queue.
 - **The body:** a set of slots, with crude prosthetics that give back exactly what flesh does. The safety floor never needs a surgeon or blood.
-- **Amputation:** only at the table, with a surgeon minion (villager or pillager head). A ragged stump costs a bucket of blood to fit; the heart can only be swapped.
+- **Amputation:** only at the table, with a surgeon minion (villager or pillager head). A ragged stump costs a bucket of blood to fit; the heart can only be swapped. (Since tasks' stage D: any minion with a hand set to Surgeon may cut by default, the owner's call in docs/NEXT.md 1.5, and its stump costs one to three buckets by its fitness.)
 - **Empty-slot penalties:** a missing arm means no off-hand and slow swings; a missing leg means no sprinting.
 - **Necrosis:** on organic implants, cleared by blood perfusion. At the maximum the limb stops working, but never falls off or kills.
 - **Cybernetics:** the throttle (gauge, pitch, glow), all seven modules, no redstone-link module, and both set bonuses.

@@ -452,9 +452,10 @@ slot and has armour variants. The plan for building it is §14.
 **Decided after the jobs were built (24 September 2026)**: no jobs. Any task, from a list drawn up with the owner,
 can be given to any minion. Some minions do a task better than others because of the stats they get from what they are
 built of. This replaces heads offering jobs (spec 6.4 and 6.9). It is built in stages (docs/NEXT.md 1.10): the numbers
-(§15.18) and tasks in the jobs' place, with the task screen (§15.19); the levers, the surgeon's stump price, the Tender
-and the rest follow. The surgeon (docs/NEXT.md 1.5) is still the owner's call: by default any minion with a hand
-may cut, and the surgeon task file's `"needs_surgeon_head": true` limits it to surgeons' heads.
+(§15.18) and tasks in the jobs' place, with the task screen (§15.19); the levers and the surgeon's stump price
+(§15.20); the Tender and the rest follow. The surgeon (docs/NEXT.md 1.5) is still the owner's call: by default any minion
+with a hand may cut, its fitness pricing the stump, and the surgeon task file's `"needs_surgeon_head": true` limits it to
+surgeons' heads. Both are built.
 
 **Still open** (as of the latest build): everything up to and including machines, materials,
 cooking, display and decoration is built and tested (§13). What remains needs design decisions
@@ -1335,7 +1336,8 @@ The brief says to build the throttle once, as shared infrastructure, and then th
   of blood as well (`Surgery.costsBlood`), from a bucket or any fluid item the operator carries, a worn Fluid
   Backtank included. Once fitted the stump is
   dressed: take the implant out and it is an ordinary empty slot. Swapping an implant straight in for flesh
-  leaves no stump. `raggedStumpCostsBlood`, `raggedStumpPaidFromBacktank`.
+  leaves no stump. `raggedStumpCostsBlood`, `raggedStumpPaidFromBacktank`. (Since §15.20 the fittest surgeon by the table
+  cuts, and a stump costs one to three buckets by its fitness, paid from all the operator carries.)
 - **The safety floor holds**: fitting, reattaching, swapping implants and modules never need a surgeon, and a crude
   prosthetic (`ImplantItem.crude`: runs on nothing, gives nothing past flesh) never needs blood, even in a ragged
   stump, so one can always go on. `safetyFloorNeverNeedsSurgeon`.
@@ -1370,7 +1372,7 @@ file, composed from about 30 effect types.
 8. Surgeon heads: built for villager and pillager heads, as the brief names them; their kin (other illagers, the
    zombie villager) come with the per-mob data. *Now the owner's call in docs/NEXT.md 1.5* (tasks instead of jobs): any
    minion with a hand may cut, its fitness setting the stump's price (the default), or, with the surgeon task file's
-   `"needs_surgeon_head": true`, only heads whose data says `"surgeon": true` (15.18).
+   `"needs_surgeon_head": true`, only heads whose data says `"surgeon": true` (15.18; both built at the table in 15.20).
 9. Per-mob signatures are authored last, once the base system works, as the brief defers them.
 10. Boss parts (warden, wither) usable by default.
 11. Tiers upgrade by crafting (piece + ingot), which Mechanical Crafters automate.
@@ -3044,3 +3046,109 @@ and the blood it uses at work read it.
 - The suite is 473 tests (466, less the six deleted, and the thirteen above), and passed two runs in a row after the
   medic test's fix; `medicWithMeHealsOnTheMove` passed twenty times over, and the three added last
   (`reloadTakesAnImpossibleTask`, `taskWordsReadBloodless`, `surgeonHeadIsTheOwnersCall`) three to five times over.
+
+
+### 15.20 Tasks, stages C and D as built: the levers, and the surgeon's stump (verified)
+
+docs/NEXT.md item 1 is the design. Stage C (1.10) puts every lever of 1.2's table to work: what a minion's fitness at its
+task makes of the work in play, each today's constant at 100%. Stage D prices the surgeon's stump by its fitness, as the
+recommendation in 1.5 has it, with the brief's letter one data switch away; which of the two stands is still the owner's
+call, and the recommendation is the default until they answer.
+
+- **The levers** (`MinionFitness`, pure; each goal reads its task's numbers from its file, `MinionTask.Data`). The fitness a
+  lever reads is held between 25% and 200% (`lever`), so nothing is ever more than four times slower, and the goals read
+  the minion's fitness at its task worked out once a second and whenever its task or build changes
+  (`MinionEntity.taskFitness`), not on every tick they ask:
+  - the sentry: the time between shots ÷ fitness, never under half (`shotTicks`: a bow's second after it looses, a
+    crossbow's second after loading and one to two after loosing, a trident's two), and its spread, vanilla's 14 less 4 a
+    step of difficulty, ÷ fitness (`shotSpread`), for the bow, the crossbow and the trident alike;
+  - the medic: a throw every 3 s ÷ fitness, never under 1 s (`throwTicks`), at a witch's spread of 8 ÷ fitness
+    (`throwSpread`);
+  - the herder: 30 s after a stray × fitness (`strayTicks`);
+  - the courier and the farmer: how often they look round, every half second ÷ fitness (`lookTicks`), as the one-in-ten
+    chance each time its goal was asked became one in that many; the Tender's (every second) waits for its goals (stage E);
+  - the fisher: 30 to 60 s between catches ÷ fitness, never under a sixth of 30 s with Lure's cut as well (`catchTicks`,
+    `catchLeast`); the digger 1 to 2 minutes ÷ fitness (`digTicks`); the barterer 6 s looking the gold over
+    (`admireTicks`);
+  - the butcher: a stroke every 0.75 s ÷ fitness, never under 0.3 s (`strokeTicks`), and below 100% its yields × fitness
+    (`yieldShare`), through `CarcassButchery.yielding`, a scale around a cut or a stroke of skinning as `capturing` sends
+    its yields elsewhere; a scale over 1 counts as 1, so no butcher beats hand yields;
+  - the hauler: towing, a player's slowdown at 100% and over, never less, and a player's ÷ fitness below, at most 90%
+    (`towing`), through `CarcassDrag.Dragger`, which a dragger that is not a player answers for itself. A minion's drag
+    strength counts only in its fitness now (its pull): before, it eased its slowdown directly, so a cow torso's Beast of
+    Burden towed with less slowdown than a player;
+  - the surgeon's tending (a heart every 5 s ÷ fitness, never under 2 s) and blood at work (25 mB a minute ÷ fitness held
+    50% to 200%, brass a quarter) came in stage B.
+- **The strike rate** (spec 6.4's "+15% for each arm beyond 2, up to +60%", counted in Blow since stage A): blows land
+  that much more often, `MinionGoals.blowTicks`, a second at two arms that strike and 13 ticks at eight. The melee goal
+  (`Bite`, vanilla's `MeleeAttackGoal` with its own blow timing, its first blow at once as vanilla's), a headless body's
+  `Feel` and a bowless sentry's strike all take it.
+- **Shown.** The task screen's hover says what a task's fitness makes of its work, in the task's own numbers
+  (`TaskWords.levers`): "A stroke every 3 s, keeping 25% of each cut", "Shoots every 0.5 s with a bow, spread 3", "Keeps
+  after a stray for 60 s", "Towing, slowed 2.74 times as much as a player, to at most 90%", "Strikes every 0.65 s".
+- **The surgeon** (docs/NEXT.md 1.5):
+  - `Surgery.surgeonAt` takes the fittest awake minion on the Surgeon task within 4 blocks that may cut (`MinionFitness.mayCut`:
+    by default any with a hand; with the surgeon file's `"needs_surgeon_head": true` only a head whose data says
+    `"surgeon": true`, while anyone may still be set to Surgeon to tend). The shipped surgeon file writes the switch out as
+    false.
+  - Its fitness prices the stump: one bucket at 150% and over, two from 75%, three below (`MinionFitness.stumpBuckets`,
+    from the surgeon file's `"one_bucket_from"` and `"two_buckets_from"`). A villager's or pillager's head with a hand
+    is 200%, a zombie's 141%, the zombie villager's shaky hands 88%, a headless body 12%.
+  - `Body` keeps each ragged stump's price per part (`raggedBuckets`); its codec reads a body saved with the old list of
+    ragged parts as a bucket each. `Surgery.raggedCost` replaces the old check: the stump's buckets for fitting anything
+    but a crude prosthetic, 0 for a crude one whatever the stump.
+  - `Surgery.payBlood(player, mB, take)` adds up all the blood the operator carries, taking nothing unless all of it is
+    there: what gives only all it holds or nothing (a bucket) first, in the order carried, while it is no more than is
+    owed, then the rest from what gives any part (a backtank). "Needs 2 buckets of blood" when short.
+  - The surgery screen, before any cut: "Surgeon: Minion (Zombie head), 141%" and "Its stumps cost 2 buckets of blood to
+    fit" at its foot (amber at two, red at three), or "No surgeon by the table"; each ragged stump with its price
+    ("Ragged stump: 2 buckets"). Clients are sent, with each minion, its fitness at its task and, for a surgeon that may
+    cut, its stumps' price (`shownFitness`, `shownStump`), since task and disposition files never go to clients; the
+    server works both out once a second and at once when its task or build changes. The task screen's Surgeon row says
+    the price too, or that with the switch on only a surgeon's head may cut.
+  - The stump is drawn raggeder the dearer it is (`BodyRendering.stump`): at a bucket as before; at two longer, its flaps
+    hanging further and flaring wider, with torn strips at its corners; at three more so. Bloodless mode keeps a plain end.
+  - The JEI surgery pages say any minion with a hand set to Surgeon, and the price by its fitness.
+- **Words** (`BBLang`): the levers' lines, the surgeon and price lines, "a bucket" and "%s buckets", each with bloodless
+  wording where the usual rewording is not enough (an open socket leaves a price in essence; only a surgeon's head may do
+  the ritual's work). `taskWordsReadBloodless` reads them too.
+- **Changed from the design, and why** (each recorded in docs/NEXT.md 1.5, 1.9 and 1.10):
+  - `fitterButcherIsFasterAndCleaner` reads the pace at the carcass (a stroke every 8 ticks at 200%, every 30 at 50%: 3.75
+    times as often), not the count over the whole 20 s: between pieces each butcher looks for its next one (a one-in-twenty
+    chance on every other tick, about two seconds, now and then six) and walks to it, the same for both and at random, so
+    the count ranged from 1.2 to 4 times over the runs, most often about twice, and failed now and then as a check. The
+    poor one's half of a player's beef is read over 200 cuts under the scale its goal cuts under, since each cut's yield is
+    rounded by a dice throw.
+  - The 200% butcher is a butcher's head over a spider's torso on four of its own legs with four zombie arms, and the 50%
+    one a whole villager: the design named only the numbers.
+  - `bloodAtWorkFollowsFitness` adds a brass horse, a little under 200% (brass keeps no hide), at a quarter of what its
+    fitness would cost flesh.
+  - bb-organs had no test of its own for the zombie villager's shaky hands; `shakySurgeonReadsItsKnack` is new.
+  - The Tender's look waits for its goals (stage E).
+- **Found on the way:**
+  - A butcher measured its reach to a piece from its feet, and a resting body's torso lies a block up: standing against
+    the body where its path ended, it was out of reach, stood there five seconds and gave the body up for half a minute
+    (more than half the runs of the new butcher test, one butcher or the other). It now reaches as far across as before and two and a half blocks
+    over or under its feet, as the hauler measures across.
+  - The surgery screen closed at once whenever the server opened it (laying the patient on the table) a tick before the
+    seat they ride reached the client, so `showcase_body_2.png` had shown no screen. It now waits a second for them to be
+    seen on the table.
+- **Tests** (eight new, seven changed): in `gametest/MinionTaskTests` `fitterButcherIsFasterAndCleaner`,
+  `poorHaulerCrawlsFitOneNoBetterThanAPlayer` (and the Hauler row's words on its maker's screen),
+  `bloodAtWorkFollowsFitness`, `moreArmsStrikeMoreOften`, and `taskWordsReadBloodless` reading the new words; in
+  `gametest/MinionFitnessTests` `oneHundredIsToday` with every lever at 100% and its bounds; in `gametest/SurgeonTests`
+  `anySurgeonWithAHandCuts`, `raggedStumpPaidAcrossContainers`, `oldRaggedStumpIsOneBucket`, `shakySurgeonReadsItsKnack`,
+  `surgeonHeadIsTheOwnersCall` cutting both ways, and `amputationNeedsSurgeon`, `raggedStumpCostsBlood`,
+  `raggedStumpPaidFromBacktank` and `safetyFloorNeverNeedsSurgeon` reading the price.
+- **On screen:** `showcase_body_2.png` is the surgery screen on yourself with a zombie-headed surgeon by the table: "Left
+  arm: Ragged stump: 2 buckets" in red, the rest of the body's rows, and at the foot "Surgeon: Minion (Zombie head), 141%"
+  and, in amber, "Its stumps cost 2 buckets of blood to fit"; bloodless, "Open socket: 2 buckets", "Construct (Zombie
+  head)" and "Its open sockets cost 2 buckets of essence to fit", the eyes lenses and the organs pump, bellows and hopper.
+  `showcase_stumps.png` has a stump of each price side by side: a bucket on the right arm (short, its flaps short), two on
+  the left leg (longer flaps, torn at the corners), three on the left arm (the longest, flaring widest), and a clean cut on
+  the right leg; bloodless, plain ends. `showcase_tasks_3.png` (new) hovers on the cow on rabbit legs' Butcher (22%,
+  Hopeless): its mouth and bite, "A stroke every 3 s, keeping 25% of each cut" and "At work: 50 mB of blood a minute";
+  bloodless, the Dismantler and essence. `showcase_tasks_1.png` gains "Keeps after a stray for 60 s" on Herder. The other
+  shots are as they were.
+- The suite is 481 tests (473 and the eight new above), and passed two full runs in a row; the new and changed tests passed
+  five times over, and `fitterButcherIsFasterAndCleaner` (after the reach fix) 34 times.
