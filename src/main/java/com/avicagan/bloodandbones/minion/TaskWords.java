@@ -178,7 +178,11 @@ public final class TaskWords {
             case MEDIC -> out.add(lever("medic", seconds(MinionFitness.throwTicks(data, f)), number(MinionFitness.throwSpread(data, f))));
             case HERDER -> out.add(lever("herder", seconds(MinionFitness.strayTicks(data, f))));
             case TENDER, COURIER -> out.add(lever("look", seconds(MinionFitness.lookTicks(data, f))));
-            case HAULER -> out.add(lever("hauler", number(MinionFitness.towing(data, 1.0F, f))));
+            case HAULER -> {
+                // towing slowed as a player is, never less, or as many times more (to at most the task's most)
+                float times = f >= 1.0F ? 1.0F : 1.0F / MinionFitness.lever(f);
+                out.add(times <= 1.0F + 1.0E-4F ? lever("hauler_player") : lever("hauler", number(times), percent(data.number("slowdown_most", 0.9F))));
+            }
             case FARMER -> out.add(lever("farmer", seconds(MinionFitness.lookTicks(data, f))));
             case FISHER -> {
                 int[] catches = MinionFitness.catchTicks(data, f);

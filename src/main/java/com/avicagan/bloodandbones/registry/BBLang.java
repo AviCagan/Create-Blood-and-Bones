@@ -331,7 +331,8 @@ public class BBLang {
         for (String[] lever : new String[][]{{"strike", "Strikes every %s s"}, {"sentry", "Shoots every %s s with a bow, spread %s"},
                 {"surgeon", "Tends a heart every %s s"}, {"surgeon_stump", "A stump it cuts costs %s of blood to fit"},
                 {"surgeon_no_cut", "It tends, but only a surgeon's head may cut"}, {"medic", "Throws every %s s, spread %s"},
-                {"herder", "Keeps after a stray for %s s"}, {"look", "Looks round every %s s"}, {"hauler", "Towing, slowed %s times as much as a player"},
+                {"herder", "Keeps after a stray for %s s"}, {"look", "Looks round every %s s"}, {"hauler", "Towing, slowed %s times as much as a player, to at most %s"},
+                {"hauler_player", "Towing, slowed as much as a player, no less"},
                 {"farmer", "Looks for ripe crops every %s s"}, {"fisher", "A catch every %s to %s s"}, {"butcher", "A stroke every %s s, keeping %s of each cut"},
                 {"barterer", "Looks gold over for %s s"}, {"digger", "A find every %s to %s s"}}) {
             BloodAndBones.REGISTRATE.addRawLang("bloodandbones.minion.lever." + lever[0], lever[1]);

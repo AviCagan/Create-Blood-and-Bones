@@ -865,6 +865,17 @@ public class MinionTaskTests {
                     + slowed[2] + " to " + slowed[0]);
             return;
         }
+        // and its maker's task screen says so over the Hauler row (from between the two, within reach of both)
+        maker.stand(helper, new Vec3(5.5, 2.0, 3.5));
+        List<Component> weakLines = MinionTasks.open(weak, maker).orElseThrow().rows().get(MinionTask.HAULER.ordinal()).lines();
+        List<Component> strongLines = MinionTasks.open(strong, maker).orElseThrow().rows().get(MinionTask.HAULER.ordinal()).lines();
+        String times = com.avicagan.bloodandbones.minion.TaskWords.number(1.0F / weakly);
+        if (weakLines.stream().noneMatch(line -> line.getContents() instanceof TranslatableContents t && t.getKey().equals("bloodandbones.minion.lever.hauler")
+                && t.getArgs().length > 0 && times.equals(t.getArgs()[0])) || strongLines.stream().noneMatch(line -> names(line, "bloodandbones.minion.lever.hauler_player"))) {
+            helper.fail("The Hauler row should say the rabbit is slowed " + times + " times as much as a player, the horse as much as one: " + weakLines + " | "
+                    + strongLines);
+            return;
+        }
         helper.succeed();
     }
 
