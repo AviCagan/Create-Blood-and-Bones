@@ -8,21 +8,6 @@
     "red_thing": "head"
   },
   "joints": {
-    "head": {
-      "min_degrees": [
-        -20,
-        -40,
-        -10
-      ],
-      "max_degrees": [
-        40,
-        40,
-        10
-      ],
-      "damping": 3.0,
-      "stiffness": 1.5,
-      "contacts": false
-    },
     "right_wing": {
       "min_degrees": [
         -15,

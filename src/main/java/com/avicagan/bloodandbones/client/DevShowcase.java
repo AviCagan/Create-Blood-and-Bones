@@ -609,10 +609,10 @@ public final class DevShowcase {
     /**
      * The physics the brief asks for, photographed: a cow dragged by a hind leg, come round rear first behind its dragger;
      * three cows killed by a blow, one from the flank (down on its side, away from the blow), one from behind (pitched
-     * forward) and one struck in the face from in front (its head snapped back, down about where it stood, not flung);
-     * and three hung cows, one whole, one with its right hind leg cut off (the leg lying under it) and one
-     * punched a moment before. Held belly-out on their hooks, the three hang alike: a looser hang, swinging and hanging
-     * differently with a leg off, waits on the owner's decision 5. Timed on the server's clock, as the scene's pictures are.
+     * forward) and one struck in the face from in front (its head snapped back, down about where it stood, not flung),
+     * their heads lolled onto the ground; and three hung cows, one whole, one with its right hind leg cut off (hanging
+     * differently, lower on the side that kept its leg) and one knocked a moment before, mid-swing. Timed on the server's
+     * clock, as the scene's pictures are.
      */
     private static void physics(Minecraft mc) {
         MinecraftServer server = mc.getSingleplayerServer();

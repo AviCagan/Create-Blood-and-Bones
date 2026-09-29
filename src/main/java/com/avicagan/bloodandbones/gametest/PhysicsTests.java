@@ -51,11 +51,11 @@ import java.util.Map;
 /**
  * The brief's physics, one test a sentence ("Physics: what I actually want"), each held to a direction or an amount: a
  * carcass hooked by a hind leg comes round rear first and one hooked by the head follows head first; a blow to the flank
- * lands it on its side, away from the blow, and one from behind lands it nose down; dragged by a hind leg it gets up a
- * one-block step; a punch knocks a hung carcass. Then the parts the physics stands on: a lying carcass is hooked by the
- * part aimed at, the killing blow lands on the part it hits, bone and plate weigh more than flesh, and the drag's
- * slowdown follows the mass actually on the hook (docs/ARCHITECTURE-PROPOSAL.md 15.19). The head lolling, and a hung
- * carcass swinging freely and hanging differently with a leg off, wait on the owner's decisions 4 and 5.
+ * lands it on its side, away from the blow, and one from behind lands it nose down; lying, its head rests below its neck;
+ * hung, it swings when knocked, and with a leg off it hangs lower on the side that kept its leg; dragged by a hind leg it
+ * gets up a one-block step. Then the parts the physics stands on: a lying carcass is hooked by the part aimed at, the
+ * killing blow lands on the part it hits, bone and plate weigh more than flesh, and the drag's slowdown follows the mass
+ * actually on the hook (docs/ARCHITECTURE-PROPOSAL.md 15.19).
  * <p>
  * The scenarios are the physics measurement's own (RigScenarios), played on a cow; each test only looks at the carcass it
  * made. Each was run many times over with {@code -Dbloodandbones.debug.repeat} to show it holds.
@@ -476,16 +476,56 @@ public class PhysicsTests {
         return made;
     }
 
-    // ---------------------------------------------------------------- hanging
+    // ---------------------------------------------------------------- limbs hang, the head lolls
+
+    /** "The head lolls": a carcass lying where it fell rests its head lower than where its neck meets its body. */
+    @GameTest(template = "open_ground", timeoutTicks = 400)
+    public static void lyingHeadRestsBelowItsNeck(GameTestHelper helper) {
+        RigComparison.killed(helper, COW, RigScenarios.KILLED_AT, RigScenarios.SOUTH, RigScenarios.KILLED_AT.add(-RigScenarios.KILLER_OFF, 0, 0), s -> {
+            int[] still = {0};
+            int[] t = {0};
+            boolean[] finished = {false};
+            helper.onEachTick(() -> {
+                if (finished[0] || s.torso() == null) {
+                    return;
+                }
+                t[0]++;
+                still[0] = t[0] > 5 && s.still() ? still[0] + 1 : 0;
+                if (still[0] < RigComparison.SETTLE_RUN && t[0] < RigComparison.SETTLE_CAP) {
+                    return;
+                }
+                finished[0] = true;
+                double drop = neckMinusHead(s);
+                helper.assertTrue(drop >= HEAD_DROP, "lying where it fell its head should rest below its neck, but the head's middle is only "
+                        + fmt(drop) + " blocks below where the neck meets the body");
+                helper.assertTrue(headDown(s, helper), "lying where it fell its head should rest on the ground");
+                helper.succeed();
+            });
+        });
+    }
 
     /**
-     * A punch lands on a hung carcass too: punched from the east it is pushed west, away from the punch, and comes back
-     * under its hook. How far it swings is the hang's: held belly-out as it is (ShackleHookBlockEntity#turn), it gives a
-     * few hundredths of a block; a looser hang, which swings for seconds, waits on the owner's decision 5
-     * (docs/ARCHITECTURE-PROPOSAL.md 15.19).
+     * How far below where its neck meets the body a lying cow's head's middle rests, at least, in blocks. On its side the
+     * neck meets the body half the body's width up, and the head, half as wide, can drop an eighth of a block before its
+     * cheek is on the ground; it does, most of that way.
      */
+    private static final double HEAD_DROP = 0.04;
+
+    /** Height of where the neck meets the torso, less the height of the head's middle. */
+    static double neckMinusHead(Subject s) {
+        return RigScenarios.neckMinusHead(s);
+    }
+
+    /** Whether a carcass's head rests on the ground (its lowest corner within a tenth of a block of the floor's top). */
+    static boolean headDown(Subject s, GameTestHelper helper) {
+        return RigScenarios.headOnTheGround(s, RigComparison.generatedHead(s.type), helper.absolutePos(new BlockPos(0, RigComparison.FLOOR, 0)).getY());
+    }
+
+    // ---------------------------------------------------------------- hanging
+
+    /** "Swinging when knocked": a hung carcass punched from the side swings away from the punch and back. */
     @GameTest(template = "empty", timeoutTicks = 300)
-    public static void hungCarcassIsKnockedByAPunch(GameTestHelper helper) {
+    public static void hungCarcassSwingsWhenKnocked(GameTestHelper helper) {
         Subject s = RigComparison.assembled(helper, COW, new Vec3(5.5, 2, 5.5), RigScenarios.SOUTH);
         if (s == null) {
             helper.fail("no carcass");
@@ -495,7 +535,9 @@ public class PhysicsTests {
         helper.runAfterDelay(5, () -> helper.assertTrue(RigComparison.hang(s, hookAt), "could not hang it"));
         Vector3d[] atPunch = {null};
         Vector3d way = new Vector3d(-1, 0, 0);
+        double[] away = {0.0};
         double[] awayEarly = {0.0};
+        double[] back = {0.0};
         int[] t = {0};
         helper.onEachTick(() -> {
             int now = ++t[0];
@@ -513,22 +555,24 @@ public class PhysicsTests {
             } else if (now > 90 && atPunch[0] != null) {
                 Vector3d moved = new Vector3d(s.torsoCentre()).sub(atPunch[0]);
                 double along = moved.x * way.x + moved.z * way.z;
+                away[0] = Math.max(away[0], along);
+                back[0] = Math.min(back[0], along);
                 if (now <= 110) {
                     awayEarly[0] = Math.max(awayEarly[0], along);
                 }
                 if (now == 200) {
-                    helper.assertTrue(awayEarly[0] >= KNOCKED, "punched from the east it should be pushed west, away from the punch, but moved only "
+                    helper.assertTrue(awayEarly[0] >= 0.1, "punched from the east it should first swing west, away from the punch, but moved only "
                             + fmt(awayEarly[0]) + " blocks that way");
-                    double left = new Vector3d(s.torsoCentre()).sub(atPunch[0]).length();
-                    helper.assertTrue(left <= 0.1, "knocked, it should come back under its hook, but hangs " + fmt(left) + " blocks from where it hung");
+                    helper.assertTrue(away[0] - back[0] >= SWING, "knocked, it should swing, but it moved over only " + fmt(away[0] - back[0]) + " blocks");
+                    helper.assertTrue(back[0] <= -0.02, "it should swing back past where it hung, but came back only to " + fmt(back[0]));
                     helper.succeed();
                 }
             }
         });
     }
 
-    /** How far a punch pushes a hung cow's torso away from it, at least, in blocks. */
-    private static final double KNOCKED = 0.03;
+    /** How far a punched cow's torso swings, end to end, at least, in blocks. */
+    private static final double SWING = 0.15;
 
     /**
      * A hung cow punched on a hind leg, near eye level: the leg swings on its hip, about as fast as a punch may set the
@@ -610,6 +654,59 @@ public class PhysicsTests {
     static void charge(Player player) {
         net.neoforged.fml.util.ObfuscationReflectionHelper.setPrivateValue(LivingEntity.class, player, 100, "attackStrengthTicker");
     }
+
+    /**
+     * "Hanging differently once a leg's been cut off": two cows hung side by side, the right hind leg cut off one. The
+     * whole one hangs level across its hips; the other hangs lower on its left, the side that kept its leg, its stump's
+     * side riding up (its weight is no longer balanced across the hook). Hung by the neck, the whole of it swings round
+     * under the hook to put its weight below it again, so the tilt is small (about a degree and a half for a cow, whose
+     * hind leg is a sixteenth of it), but it is always that way.
+     */
+    @GameTest(template = "empty", timeoutTicks = 300)
+    public static void legOffHangsLowerOnThatSide(GameTestHelper helper) {
+        Subject whole = RigComparison.assembled(helper, COW, new Vec3(2.5, 2, 5.5), RigScenarios.SOUTH);
+        Subject cut = RigComparison.assembled(helper, COW, new Vec3(7.5, 2, 5.5), RigScenarios.SOUTH);
+        if (whole == null || cut == null) {
+            helper.fail("no carcass");
+            return;
+        }
+        BlockPos hookA = RigComparison.hook(helper, new BlockPos(2, 5, 5));
+        BlockPos hookB = RigComparison.hook(helper, new BlockPos(7, 5, 5));
+        helper.runAfterDelay(5, () -> helper.assertTrue(RigComparison.hang(whole, hookA) && RigComparison.hang(cut, hookB), "could not hang them"));
+        helper.runAfterDelay(40, () -> {
+            RigComparison.cutOff(cut, "right_hind_leg");
+            cut.wake();
+            whole.wake();
+        });
+        List<Double> wholeSide = new ArrayList<>();
+        List<Double> rise = new ArrayList<>();
+        int[] t = {0};
+        helper.onEachTick(() -> {
+            int now = ++t[0];
+            if (now < 200) {
+                return;
+            }
+            // how far each one's right side points above level, degrees
+            double w = RigScenarios.sideHeightDeg(whole, "right_hind_leg");
+            wholeSide.add(w);
+            rise.add(RigScenarios.sideHeightDeg(cut, "right_hind_leg") - w);
+            if (now == 240) {
+                double level = median(wholeSide);
+                double up = median(rise);
+                BloodAndBones.LOGGER.info("[physics] hung cows: the whole one's right side {} degrees above level; with its right hind leg off it rides {} "
+                        + "degrees higher (cut one has {}, head ends {} / {}, centres {} / {})", fmt(level), fmt(up), cut.carcass().bones.keySet(),
+                        whole.headEnd(), cut.headEnd(), whole.torsoCentre(), cut.torsoCentre());
+                helper.assertTrue(Math.abs(level) <= LEVEL, "a whole cow should hang level across its hips, but it is tipped " + fmt(level) + " degrees");
+                helper.assertTrue(up >= RIDES_UP, "with its right hind leg off it should hang lower on its left, the side that kept its leg, but its right "
+                        + "side is only " + fmt(up) + " degrees higher than a whole cow's");
+                helper.succeed();
+            }
+        });
+    }
+
+    /** How level a whole hung cow's hips are, and how much higher its stump's side rides with a hind leg off, in degrees. */
+    private static final double LEVEL = 2.0;
+    private static final double RIDES_UP = 0.8;
 
     // ---------------------------------------------------------------- weight
 
