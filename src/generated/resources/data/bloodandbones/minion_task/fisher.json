@@ -27,7 +27,6 @@
       "mouth": 0.35,
       "paw": 0.6,
       "tentacle": 0.6
-    },
-    "required": false
+    }
   }
 }

@@ -17,7 +17,5 @@
   "reach": 6,
   "second": "blow",
   "stores": true,
-  "tool": {
-    "required": true
-  }
+  "tool": {}
 }

@@ -20,7 +20,5 @@
   "reach": 8,
   "second": "sight",
   "stores": false,
-  "tool": {
-    "required": true
-  }
+  "tool": {}
 }
