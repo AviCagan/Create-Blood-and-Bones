@@ -912,6 +912,7 @@ public final class DevShowcase {
                 }
             }
             case 7 -> physics(mc);
+            case 8 -> contraptions(mc);
             default -> {
             }
         }
@@ -1055,12 +1056,184 @@ public final class DevShowcase {
                         BloodAndBones.LOGGER.info("[showcase] hung cow {}: bodies {}, head end {}", i, cow.bones.size(), up);
                     }
                 }
+            });
+            // then the carcasses on contraptions and ships, which go on to the Ponder scenes
+            stage = 8;
+            ticks = 0;
+        }
+    }
+
+    // ---------------------------------------------------------------- carcasses on contraptions and ships (15.29)
+
+    /** Server time the contraption yard was started, -1 before; its corner; how far through its steps it is. */
+    private static long rideAt = -1;
+    private static BlockPos ride;
+    private static int rideStep;
+    private static dev.ryanhcode.sable.sublevel.ServerSubLevel rideShip;
+
+    /**
+     * Rule 5, photographed: a cow hung on a Shackle Hook under a stone block that a Mechanical Piston pushes, seen while it
+     * moves (the cow rides in the hook's data and the hook's actor draws it hanging there) and once set down (hung again,
+     * a body); and a Sable ship, a deck with a gallows, carrying a cow resting on its deck and one hung from its hook, seen
+     * as it is driven along. Timed on the server's clock.
+     */
+    private static void contraptions(Minecraft mc) {
+        MinecraftServer server = mc.getSingleplayerServer();
+        if (server == null) {
+            return;
+        }
+        long now = server.overworld().getGameTime();
+        if (rideAt < 0) {
+            rideAt = now;
+            ride = origin.offset(-60, 0, 45);
+            mc.options.setCameraType(net.minecraft.client.CameraType.FIRST_PERSON);
+            mc.options.hideGui = true;
+            server.execute(() -> {
                 ServerPlayer player = server.getPlayerList().getPlayers().get(0);
-                player.teleportTo(level, origin.getX() + 0.5, origin.getY(), origin.getZ() + 0.5, 0.0F, 0.0F);
+                player.teleportTo(player.serverLevel(), ride.getX() + 0.5, ride.getY(), ride.getZ() - 4.5, 0.0F, 20.0F);
+            });
+            return;
+        }
+        long age = now - rideAt;
+        if (rideStep == 0 && age >= 10) {
+            rideStep = 1;
+            server.execute(() -> rideBuild(server.overworld(), server.getPlayerList().getPlayers().get(0)));
+        } else if (rideStep == 1 && age < 200) {
+            // the piston's row from the south-east, the hung cow in front of it
+            rideView(server, 5.5, 1.0, -3.5, 35.0F, 5.0F);
+        } else if (rideStep == 1) {
+            rideStep = 2;
+            // the piston starts, slowly: two blocks east in a few seconds
+            server.execute(() -> {
+                if (server.overworld().getBlockEntity(ride.offset(2, 3, 0)) instanceof CreativeMotorBlockEntity motor) {
+                    motor.generatedSpeed.setValue(-16);
+                }
+            });
+        } else if (rideStep == 2 && age >= 230) {
+            rideStep = 3;
+            Screenshot.grab(mc.gameDirectory, PREFIX + "contraption_0.png", mc.getMainRenderTarget(), message -> {
+            });
+            server.execute(() -> BloodAndBones.LOGGER.info("[showcase] moving hook: contraptions {}, cow in the world {}",
+                    server.overworld().getEntitiesOfClass(com.simibubi.create.content.contraptions.AbstractContraptionEntity.class,
+                            new net.minecraft.world.phys.AABB(ride).inflate(8)).size(),
+                    CarcassSavedData.get(server.overworld()).all().stream().filter(c -> {
+                        org.joml.Vector3d at = CarcassAssembler.boneWorldPosition(server.overworld(), c, c.rootBone);
+                        return at != null && at.distance(ride.getX(), ride.getY(), ride.getZ()) < 8;
+                    }).count()));
+        } else if (rideStep == 3 && age >= 360) {
+            rideStep = 4;
+            Screenshot.grab(mc.gameDirectory, PREFIX + "contraption_1.png", mc.getMainRenderTarget(), message -> {
+            });
+        } else if (rideStep == 4 && age < 380) {
+            // the ship from the south
+            rideView(server, 5.0, 1.5, 14.0, 180.0F, 15.0F);
+        } else if (rideStep == 4 && age < 440) {
+            // drive it east, kept level, and follow it
+            double dx = (age - 380) * 0.07;
+            rideView(server, 5.0 + dx, 1.5, 14.0, 180.0F, 15.0F);
+            server.execute(() -> {
+                if (rideShip != null && !rideShip.isRemoved()) {
+                    var handle = dev.ryanhcode.sable.api.physics.handle.RigidBodyHandle.of(rideShip);
+                    org.joml.Vector3d v = handle.getLinearVelocity(new org.joml.Vector3d());
+                    org.joml.Vector3d w = handle.getAngularVelocity(new org.joml.Vector3d());
+                    handle.addLinearAndAngularVelocity(new org.joml.Vector3d(1.4 - v.x, 0.0, -v.z), w.negate());
+                }
+            });
+            if (age == 430) {
+                Screenshot.grab(mc.gameDirectory, PREFIX + "contraption_2.png", mc.getMainRenderTarget(), message -> {
+                });
+            }
+        } else if (rideStep == 4) {
+            rideStep = 5;
+            server.execute(() -> {
+                ServerPlayer player = server.getPlayerList().getPlayers().get(0);
+                player.teleportTo(player.serverLevel(), origin.getX() + 0.5, origin.getY(), origin.getZ() + 0.5, 0.0F, 0.0F);
             });
             mc.options.hideGui = false;
             stage = 4;
             ticks = 0;
+        }
+    }
+
+    /** Hold the player (the camera) at a spot of the contraption yard, looking one way. */
+    private static void rideView(MinecraftServer server, double x, double y, double z, float yaw, float pitch) {
+        server.execute(() -> {
+            ServerPlayer player = server.getPlayerList().getPlayers().get(0);
+            player.teleportTo(player.serverLevel(), ride.getX() + x, ride.getY() + y, ride.getZ() + z, yaw, pitch);
+        });
+    }
+
+    /**
+     * The contraption yard: a Mechanical Piston two poles long pushing a stone block with a Shackle Hook under it, a cow hung
+     * on the hook (its motor still until the picture); and to the south a ship, a deck of stone lying on the ground with a
+     * gallows at its back, a cow hung from the gallows' hook and one lying on the deck.
+     */
+    private static void rideBuild(ServerLevel level, ServerPlayer player) {
+        BlockPos y = ride;
+        for (int x = 0; x <= 1; x++) {
+            level.setBlockAndUpdate(y.offset(x, 4, 0), AllBlocks.PISTON_EXTENSION_POLE.getDefaultState()
+                    .setValue(net.minecraft.world.level.block.DirectionalBlock.FACING, Direction.EAST));
+        }
+        level.setBlockAndUpdate(y.offset(2, 4, 0), AllBlocks.MECHANICAL_PISTON.getDefaultState().setValue(DirectionalKineticBlock.FACING, Direction.EAST)
+                .setValue(com.simibubi.create.content.kinetics.base.DirectionalAxisKineticBlock.AXIS_ALONG_FIRST_COORDINATE, true));
+        level.setBlockAndUpdate(y.offset(2, 3, 0), AllBlocks.CREATIVE_MOTOR.getDefaultState()
+                .setValue(com.simibubi.create.content.kinetics.motor.CreativeMotorBlock.FACING, Direction.UP));
+        if (level.getBlockEntity(y.offset(2, 3, 0)) instanceof CreativeMotorBlockEntity motor) {
+            motor.generatedSpeed.setValue(0);
+        }
+        level.setBlockAndUpdate(y.offset(3, 4, 0), Blocks.STONE.defaultBlockState());
+        BlockPos hook = y.offset(3, 3, 0);
+        level.setBlockAndUpdate(hook, BBBlocks.SHACKLE_HOOK.getDefaultState().setValue(ShackleHookBlock.FACING, Direction.UP));
+        CarcassSavedData.Carcass onPiston = carcass(level, EntityType.COW, hook.below(3), false);
+        if (onPiston != null) {
+            hang(level, player, onPiston, hook);
+        }
+        // the ship: a deck on the ground, a gallows at its back (north) with a hook under its beam
+        int z0 = 12;
+        List<BlockPos> blocks = new java.util.ArrayList<>();
+        for (int x = 2; x <= 7; x++) {
+            for (int z = z0; z <= z0 + 5; z++) {
+                blocks.add(y.offset(x, 0, z));
+            }
+        }
+        for (int h = 1; h <= 3; h++) {
+            blocks.add(y.offset(2, h, z0));
+            blocks.add(y.offset(7, h, z0));
+        }
+        for (int x = 2; x <= 7; x++) {
+            blocks.add(y.offset(x, 4, z0));
+        }
+        for (BlockPos at : blocks) {
+            level.setBlockAndUpdate(at, Blocks.STRIPPED_SPRUCE_LOG.defaultBlockState());
+        }
+        BlockPos shipHook = y.offset(4, 3, z0);
+        level.setBlockAndUpdate(shipHook, BBBlocks.SHACKLE_HOOK.getDefaultState().setValue(ShackleHookBlock.FACING, Direction.UP));
+        blocks.add(shipHook);
+        BlockPos min = y.offset(2, 0, z0);
+        BlockPos max = y.offset(7, 4, z0 + 5);
+        rideShip = dev.ryanhcode.sable.api.SubLevelAssemblyHelper.assembleBlocks(level, blocks.get(0), blocks,
+                new dev.ryanhcode.sable.companion.math.BoundingBox3i(min, max));
+        if (rideShip == null) {
+            BloodAndBones.LOGGER.warn("[showcase] the contraption yard's ship was not made");
+            return;
+        }
+        CarcassAssembler.bindColliders(level, rideShip);
+        carcass(level, EntityType.COW, y.offset(5, 2, z0 + 3), false);
+        CarcassSavedData.Carcass onShip = carcass(level, EntityType.COW, y.offset(4, 2, z0 + 1), false);
+        ShackleHookBlockEntity shackle = null;
+        for (var holder : rideShip.getPlot().getLoadedChunks()) {
+            for (var be : holder.getChunk().getBlockEntities().values()) {
+                if (be instanceof ShackleHookBlockEntity found) {
+                    shackle = found;
+                }
+            }
+        }
+        var container = dev.ryanhcode.sable.api.sublevel.SubLevelContainer.getContainer(level);
+        if (onShip != null && shackle != null && container.getSubLevel(onShip.bones.get("right_hind_leg")) instanceof dev.ryanhcode.sable.sublevel.ServerSubLevel leg) {
+            player.teleportTo(level, shipHook.getX() + 0.5, shipHook.getY() - 2.0, shipHook.getZ() + 3.5, 180.0F, 0.0F);
+            if (CarcassDrag.start(level, player, leg.getPlot().getCenterBlock(), null)) {
+                shackle.toggle(level, player);
+            }
         }
     }
 
