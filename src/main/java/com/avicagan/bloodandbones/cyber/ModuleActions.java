@@ -483,8 +483,12 @@ public final class ModuleActions {
             Vector3d at = carcass == null ? null : CarcassAssembler.boneWorldPosition(level, carcass, carcass.rootBone);
             if (carcass == null || container == null || at == null) {
                 done = true;
-            } else if (at.distance(to.x, to.y, to.z) < 3.0) {
-                // in hand: the Meat Hook's own tether takes it from here
+            } else if (at.distance(player.getX(), player.getEyeY(), player.getZ()) < CarcassDrag.HOOK_REACH) {
+                // within a Meat Hook's reach: its own tether takes it from here. Handed over only once it was within three
+                // blocks of the player's middle, a cow the spool yanked along the ground came to a stop 3.3 to 3.6 blocks off
+                // once the ground's friction had taken the speed of the first yank (each tick's nudge is less than the
+                // friction takes from a carcass at rest), and was never handed over (grapplingSpoolHandsACarcassToTheDrag,
+                // about 1 run in 80)
                 if (!CarcassDrag.isDragging(player) && haul.plot != null && level.getBlockEntity(haul.plot) instanceof CarcassPartBlockEntity) {
                     CarcassDrag.start(level, player, haul.plot, null);
                 }
