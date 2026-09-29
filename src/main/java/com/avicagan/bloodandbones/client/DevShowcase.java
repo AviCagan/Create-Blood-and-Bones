@@ -712,8 +712,9 @@ public final class DevShowcase {
                         body.fit(com.avicagan.bloodandbones.body.BodyPart.LEFT_ARM, new ItemStack(BBItems.HYDRAULIC_ARM.get()));
                         body.fit(com.avicagan.bloodandbones.body.BodyPart.RIGHT_LEG, new ItemStack(BBItems.SINEW_LEG.get()));
                         com.avicagan.bloodandbones.body.BodyEffects.changed(player);
-                        // a second tank in the hotbar, to show its item bar in the blood's colour; the hand stays empty
-                        player.getInventory().setItem(8, tank.copy());
+                        // a second tank in the hotbar, to show its item bar in the blood's colour; the hand stays empty (the
+                        // armour shots left the last slot the one held)
+                        player.getInventory().setItem(0, tank.copy());
                     });
                     mc.options.setCameraType(net.minecraft.client.CameraType.FIRST_PERSON);
                     mc.options.hideGui = false;
