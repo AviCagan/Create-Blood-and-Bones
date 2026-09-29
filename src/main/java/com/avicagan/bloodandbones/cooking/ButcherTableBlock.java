@@ -21,8 +21,9 @@ import net.minecraft.world.phys.shapes.Shapes;
 import net.minecraft.world.phys.shapes.VoxelShape;
 
 /**
- * A steel butcher's table. Lay a carried carcass piece on it; chop it with a Cleaver and it comes apart
- * into what butchering it gives; an empty hand takes it back.
+ * A steel butcher's table. Lay a carried carcass piece on it, or drag a loose one too heavy to carry onto its top;
+ * chop it with a Cleaver and it comes apart into what butchering it gives; an empty hand takes a carried one back.
+ * Its filter, on the edge of the top, picks which pieces it takes.
  */
 public class ButcherTableBlock extends Block implements IBE<ButcherTableBlockEntity> {
     private static final VoxelShape SHAPE = Shapes.or(Block.box(0, 12, 0, 16, 16, 16),
@@ -45,7 +46,9 @@ public class ButcherTableBlock extends Block implements IBE<ButcherTableBlockEnt
             return ItemInteractionResult.PASS_TO_DEFAULT_BLOCK_INTERACTION;
         }
         boolean empty = !(level.getBlockEntity(pos) instanceof ButcherTableBlockEntity table) || table.specimen().isEmpty();
-        if ((stack.isEmpty() || cleaver) && empty) {
+        // a cleaver also chops a loose piece lying on the top, which only the server knows of (the client swings)
+        if (stack.isEmpty() && empty || cleaver && empty && !level.isClientSide
+                && (!(level.getBlockEntity(pos) instanceof ButcherTableBlockEntity table) || table.lying((ServerLevel) level) == null)) {
             // nothing on the table to take or chop: let the other hand have its turn
             return ItemInteractionResult.PASS_TO_DEFAULT_BLOCK_INTERACTION;
         }
@@ -56,7 +59,7 @@ public class ButcherTableBlock extends Block implements IBE<ButcherTableBlockEnt
             if (cleaver) {
                 // a Deployer's stand-in player never ticks, so a cooldown would never run out: it goes at its own pace
                 boolean paced = !(player instanceof net.neoforged.neoforge.common.util.FakePlayer);
-                if ((paced && player.getCooldowns().isOnCooldown(stack.getItem())) || !be.chop((ServerLevel) level, stack)) {
+                if ((paced && player.getCooldowns().isOnCooldown(stack.getItem())) || !be.chop((ServerLevel) level, stack, player)) {
                     return ItemInteractionResult.PASS_TO_DEFAULT_BLOCK_INTERACTION;
                 }
                 if (paced) {

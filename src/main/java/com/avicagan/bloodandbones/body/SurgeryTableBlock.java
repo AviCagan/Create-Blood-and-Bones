@@ -30,7 +30,8 @@ import net.neoforged.neoforge.network.PacketDistributor;
  * <li>Surgical Rig: lay a blade, an implant or a part on it; right-click it with an empty hand to lie on it and
  * choose what to do to which part of you. With someone else on it, an empty hand opens the same screen for
  * them. A mob on a lead is laid on it by right-clicking with an empty hand while leading it. A carcass piece
- * laid on it gives up its organs to a Cleaver, one a cut.</li>
+ * laid on it, or a carcass lying on its top, gives up its organs to a Cleaver, one a cut, then its limbs, then
+ * all of its meat and bone (SurgicalRig); the rig's filter picks which parts.</li>
  * <li>Assembly Frame: a carcass torso laid on it, or claimed from a carcass lying over it, is a minion in the making (see MinionAssembly).</li>
  * </ul>
  * Sneak and right-click with an empty hand to take back what lies on it.
@@ -115,9 +116,15 @@ public class SurgeryTableBlock extends Block implements IBE<SurgeryTableBlockEnt
         }
         if (Surgery.isBlade(stack) && table.item().is(com.avicagan.bloodandbones.registry.BBItems.CARCASS_PIECE.get())) {
             if (!level.isClientSide) {
-                Surgery.harvest((ServerLevel) level, player, table, stack);
+                SurgicalRig.cut((ServerLevel) level, player, table, stack);
             }
             return ItemInteractionResult.sidedSuccess(level.isClientSide);
+        }
+        // nothing laid on it but a carcass lying on its top: the blade works that (else it is laid down, as before)
+        if (Surgery.isBlade(stack) && table.item().isEmpty() && !level.isClientSide && Surgery.patientAt(level, pos) == null
+                && SurgicalRig.anythingOn((ServerLevel) level, table)) {
+            SurgicalRig.cut((ServerLevel) level, player, table, stack);
+            return ItemInteractionResult.SUCCESS;
         }
         if (!table.item().isEmpty()) {
             return ItemInteractionResult.PASS_TO_DEFAULT_BLOCK_INTERACTION;

@@ -337,12 +337,7 @@ public final class Surgery {
             surgeon.displayClientMessage(Component.translatable("bloodandbones.surgery.no_organs"), true);
             return false;
         }
-        String kind = com.avicagan.bloodandbones.registry.BBItemAttributes.PiecePart.kindOf(piece, level);
-        java.util.List<BodyPart.Kind> organs = switch (kind) {
-            case "body" -> java.util.List.of(BodyPart.Kind.HEART, BodyPart.Kind.LUNGS, BodyPart.Kind.STOMACH);
-            case "head" -> java.util.List.of(BodyPart.Kind.EYE, BodyPart.Kind.EYE);
-            default -> java.util.List.of();
-        };
+        java.util.List<BodyPart.Kind> organs = organs(com.avicagan.bloodandbones.registry.BBItemAttributes.PiecePart.kindOf(piece, level));
         int taken = organsTaken(piece);
         if (taken >= organs.size()) {
             surgeon.displayClientMessage(Component.translatable("bloodandbones.surgery.no_organs"), true);
@@ -365,12 +360,29 @@ public final class Surgery {
         return true;
     }
 
-    /** The trait on a carcass piece counting the organs already taken from it. */
+    /** The organs a part of a carcass holds, by its kind (BBItemAttributes.PiecePart): a body's heart, lungs and stomach, a head's eyes. */
+    public static java.util.List<BodyPart.Kind> organs(String kind) {
+        return switch (kind) {
+            case "body" -> java.util.List.of(BodyPart.Kind.HEART, BodyPart.Kind.LUNGS, BodyPart.Kind.STOMACH);
+            case "head" -> java.util.List.of(BodyPart.Kind.EYE, BodyPart.Kind.EYE);
+            default -> java.util.List.of();
+        };
+    }
+
+    /**
+     * The trait on a carcass piece counting the organs already taken from it; a carcass in the world counts each of its
+     * parts' under this plus "." and the part (SurgicalRig), which a piece picked up off it keeps.
+     */
     public static final String ORGANS_TAKEN = "organs_taken";
 
     public static int organsTaken(com.avicagan.bloodandbones.item.CarcassPieceItem.Piece piece) {
+        return Math.max(organsTaken(piece.traits(), ORGANS_TAKEN), organsTaken(piece.traits(), ORGANS_TAKEN + "." + piece.bone()));
+    }
+
+    /** A count kept among a carcass's or piece's traits. */
+    public static int organsTaken(java.util.Map<String, String> traits, String key) {
         try {
-            return Integer.parseInt(piece.traits().getOrDefault(ORGANS_TAKEN, "0"));
+            return Integer.parseInt(traits.getOrDefault(key, "0"));
         } catch (NumberFormatException e) {
             return 0;
         }

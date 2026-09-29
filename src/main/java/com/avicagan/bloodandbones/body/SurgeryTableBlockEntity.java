@@ -23,8 +23,16 @@ public class SurgeryTableBlockEntity extends SmartBlockEntity {
         super(type, pos, state);
     }
 
+    /** With the Surgical Rig: which parts it takes (see SurgicalRig and com.avicagan.bloodandbones.machine.PartFilter). */
+    public com.avicagan.bloodandbones.machine.PartFilteringBehaviour filtering;
+
     @Override
     public void addBehaviours(List<BlockEntityBehaviour> behaviours) {
+        filtering = new com.avicagan.bloodandbones.machine.PartFilteringBehaviour(this, new com.avicagan.bloodandbones.machine.TableFilterSlot(12.5F,
+                state -> state.hasProperty(SurgeryTableBlock.ATTACHMENT) && state.getValue(SurgeryTableBlock.ATTACHMENT) == TableAttachment.SURGICAL));
+        filtering.onlyActiveWhen(() -> getBlockState().hasProperty(SurgeryTableBlock.ATTACHMENT)
+                && getBlockState().getValue(SurgeryTableBlock.ATTACHMENT) == TableAttachment.SURGICAL);
+        behaviours.add(filtering);
     }
 
     public ItemStack item() {

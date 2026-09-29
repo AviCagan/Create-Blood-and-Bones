@@ -59,6 +59,10 @@ public final class BBScenes {
                 .text("What it makes waits inside. Take it with an empty hand, or pull it out with a funnel or hopper")
                 .pointAt(top).placeNearTarget();
         scene.idle(90);
+        scene.overlay().showText(90).attachKeyFrame()
+                .text("The filter on its top edge picks which parts it takes: an Attribute Filter set to a part, such as a hind leg, or a spawn egg for one kind of mob")
+                .pointAt(util.vector().blockSurface(machine, Direction.UP).add(0, 0, -0.35)).placeNearTarget();
+        scene.idle(100);
         scene.markAsFinished();
     }
 
@@ -114,7 +118,7 @@ public final class BBScenes {
         scene.idle(10);
         scene.world().setKineticSpeed(kinetics, 16);
         scene.overlay().showText(70).attachKeyFrame().colored(PonderPalette.GREEN)
-                .text("A shaft turns the spit. It only roasts while it turns")
+                .text("A shaft turns the spit, or a Hand Crank, slowly. It only roasts while it turns, and a fast shaft roasts up to eight times as fast")
                 .pointAt(util.vector().centerOf(spit)).placeNearTarget();
         scene.idle(80);
         scene.overlay().showControls(util.vector().topOf(spit), Pointing.DOWN, 50).rightClick().withItem(piece);
@@ -124,6 +128,10 @@ public final class BBScenes {
         scene.idle(90);
         scene.overlay().showText(90).attachKeyFrame()
                 .text("Take it off with an empty hand once cooked: it comes apart into cooked meat and bones. Leave it too long and it burns")
+                .pointAt(util.vector().topOf(spit)).placeNearTarget();
+        scene.idle(100);
+        scene.overlay().showText(90).attachKeyFrame()
+                .text("A whole carcass goes on too: right-click the spit with the Meat Hook while dragging one. It takes longer, and gives all its meat cooked")
                 .pointAt(util.vector().topOf(spit)).placeNearTarget();
         scene.idle(100);
         scene.markAsFinished();
@@ -191,7 +199,7 @@ public final class BBScenes {
         scene.idle(10);
         chop(scene, util, table, yields);
         scene.overlay().showText(80).attachKeyFrame().colored(PonderPalette.RED)
-                .text("Chop it with a Cleaver: it comes apart into meat, bone, offal and fat, spoiled as far as it had rotted")
+                .text("Chop it with a Cleaver: it comes apart into meat, bone, offal and fat, spoiled as far as it had rotted. By hand you get about half")
                 .pointAt(util.vector().topOf(table)).placeNearTarget();
         scene.idle(90);
         scene.world().showSection(util.select().position(deployer), Direction.DOWN);
@@ -200,14 +208,18 @@ public final class BBScenes {
         scene.idle(15);
         scene.world().modifyBlockEntity(table, ButcherTableBlockEntity.class, be -> be.put(piece.copy()));
         scene.overlay().showText(80).attachKeyFrame()
-                .text("A Deployer holding a Cleaver chops too. A funnel or hopper can lay the pieces on the table")
+                .text("A Deployer holding a Cleaver chops too, and gets all of it. A funnel or hopper can lay the pieces on the table")
                 .pointAt(util.vector().centerOf(deployer)).placeNearTarget();
         scene.idle(30);
         scene.world().moveDeployer(deployer, 1, 20);
         scene.idle(20);
         chop(scene, util, table, yields);
         scene.world().moveDeployer(deployer, -1, 20);
-        scene.idle(60);
+        scene.idle(40);
+        scene.overlay().showText(90).attachKeyFrame()
+                .text("The filter on the edge of its top picks which pieces it takes. A body too heavy to carry can be dragged onto it and chopped where it lies")
+                .pointAt(util.vector().blockSurface(table, Direction.NORTH)).placeNearTarget();
+        scene.idle(100);
         scene.markAsFinished();
     }
 

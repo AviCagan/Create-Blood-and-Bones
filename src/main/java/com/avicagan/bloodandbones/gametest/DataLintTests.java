@@ -354,7 +354,7 @@ public class DataLintTests {
             "shellback: turtles and shulkers shedding scutes (scute_shed sheds an armadillo's)",
             "vermin: Infestation's kin with arthropods",
             "spirit: Ethereal's projectiles passing through you",
-            "traits: rideable (the mount type), keen_butcher (the butchery_yield attribute)");
+            "traits: rideable (the mount type)");
 
     /**
      * Spec 8.2, as built: each mob's own file lists its signature ("parts.&lt;key&gt;", "organs.&lt;id&gt;", "hide",

@@ -24,16 +24,16 @@ public class BBPonderPlugin implements PonderPlugin {
     public void registerScenes(PonderSceneRegistrationHelper<ResourceLocation> helper) {
         PonderSceneRegistrationHelper<ItemProviderEntry<?, ?>> scenes = helper.withKeyFunction(RegistryEntry::getId);
         scenes.forComponents(BBBlocks.MANGLER).addStoryBoard("mangler", (b, u) -> BBScenes.machine(b, u, "mangler",
-                "Grinding Carcasses with the Mangler", "The Mangler tears the limbs off a carcass, then grinds every piece into meat, bone, offal and fat",
+                "Grinding Carcasses with the Mangler", "The Mangler tears each limb off a carcass and grinds it at once, then the body: the quickest way through a carcass. It keeps the least meat and bone, but gives armour scraps and the mob's own drops",
                 new ItemStack(Items.BEEF)), AllCreatePonderTags.KINETIC_APPLIANCES);
         scenes.forComponents(BBBlocks.GUILLOTINE).addStoryBoard("guillotine", (b, u) -> BBScenes.machine(b, u, "guillotine",
-                "Taking Limbs Off with the Guillotine", "The Guillotine takes the nearest limb off a carcass in one stroke. It never takes the head",
+                "Taking Limbs Off with the Guillotine", "The Guillotine winds its blade up while it turns. A redstone pulse drops it through one limb, whole. It never takes the head",
                 new ItemStack(BBItems.CARCASS_PIECE.get())), AllCreatePonderTags.KINETIC_APPLIANCES);
         scenes.forComponents(BBBlocks.BEHEADER).addStoryBoard("beheader", (b, u) -> BBScenes.machine(b, u, "beheader",
-                "Taking Heads with the Beheader", "The Beheader takes heads off. Zombies, skeletons, creepers and piglins sometimes leave their skull whole",
+                "Taking Heads with the Beheader", "The Beheader takes heads off as they come, one quick stroke each, under a line of hanging carcasses too. Zombies, skeletons, creepers and piglins sometimes leave their skull whole",
                 new ItemStack(Items.ZOMBIE_HEAD)), AllCreatePonderTags.KINETIC_APPLIANCES);
         scenes.forComponents(BBBlocks.DEGLOVER).addStoryBoard("deglover", (b, u) -> BBScenes.machine(b, u, "deglover",
-                "Skinning with the Deglover", "The Deglover strips the hide off a carcass, and a sheep's wool with it",
+                "Skinning with the Deglover", "The Deglover rolls the hide off a carcass whole, and a sheep's wool with it. It costs a lot of stress and works no faster above 32 RPM: turn it slowly",
                 new ItemStack(BBItems.RAW_HIDE.get())), AllCreatePonderTags.KINETIC_APPLIANCES);
         scenes.forComponents(BBBlocks.BLEEDING_RACK).addStoryBoard("bleeding_rack", BBScenes::bleedingRack, AllCreatePonderTags.FLUIDS);
         scenes.forComponents(BBBlocks.BUTCHER_HOOK, BBBlocks.BLOODY_CASING).addStoryBoard("butcher_hook",

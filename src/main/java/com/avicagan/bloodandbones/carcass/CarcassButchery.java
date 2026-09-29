@@ -4,7 +4,10 @@ import com.avicagan.bloodandbones.BloodAndBones;
 import dev.ryanhcode.sable.api.physics.constraint.PhysicsConstraintHandle;
 import dev.ryanhcode.sable.api.sublevel.ServerSubLevelContainer;
 import dev.ryanhcode.sable.api.sublevel.SubLevelContainer;
+import com.avicagan.bloodandbones.carcass.butchery.ButcheryPath;
+import com.avicagan.bloodandbones.carcass.butchery.ButcheryPaths;
 import dev.ryanhcode.sable.sublevel.ServerSubLevel;
+import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.sounds.SoundEvents;
 import net.minecraft.sounds.SoundSource;
@@ -19,6 +22,11 @@ import java.util.UUID;
  * Taking a carcass apart. A Cleaver cut on an attached limb wounds it and enough cuts sever the joint, the
  * limb becoming a carcass of its own; Cleaver cuts on a loose piece break it down into meat, bone and offal
  * by the mob's butchery table. A Flensing Knife takes the hide off the whole carcass first.
+ * <p>
+ * How much of the table comes out depends on the path taking the carcass apart ({@link ButcheryPaths}): a blade in
+ * a player's hand gets about half, with real loss; a machine or a Deployer at a station gets all of it; the Mangler
+ * the least, but the mob's own drops and armour scraps on top. The path is set around the work with {@link #onPath},
+ * or {@link #byHand} for whoever holds the blade; a player's own cut or stroke with none set is by hand.
  */
 public final class CarcassButchery {
     /** Cleaver cuts it takes to get through a joint. */
@@ -33,6 +41,9 @@ public final class CarcassButchery {
      * @return true if the cut did anything
      */
     public static boolean cut(ServerLevel level, @Nullable Player player, CarcassSavedData.Carcass carcass, String bone, @Nullable Vector3d hitWorld) {
+        if (PATH.get() == null && handOf(player)) {
+            return byHand(player, () -> cut(level, player, carcass, bone, hitWorld));
+        }
         if (carcass.resting) {
             if (CarcassRest.split(level, carcass) == null) {
                 return false;
@@ -96,11 +107,16 @@ public final class CarcassButchery {
         Vector3d where = new Vector3d(body.logicalPose().position());
         com.avicagan.bloodandbones.carcass.butchery.ButcheryManager.forEntity(carcass.entity)
                 .ifPresent(table -> dropYields(level, carcass, table.part(bone), 1.0F, where));
-        if (Boolean.TRUE.equals(MANGLING.get()) && SINK.get() != null) {
+        ButcheryPath path = path();
+        if (path.scraps()) {
             net.minecraft.world.item.ItemStack scraps = scraps(level, carcass, bone);
             if (!scraps.isEmpty()) {
-                SINK.get().accept(scraps);
+                emit(level, scraps, where);
             }
+        }
+        if (path.lootTable() && isTorso(carcass, bone)) {
+            // the grinder takes what the mob would have dropped had it died any other way, once, with its body
+            rollLoot(level, carcass, where);
         }
         carcass.cuts.remove(bone);
         CarcassSavedData data = CarcassSavedData.get(level);
@@ -139,6 +155,9 @@ public final class CarcassButchery {
      * @return true if the stroke did anything
      */
     public static boolean skin(ServerLevel level, @Nullable Player player, CarcassSavedData.Carcass carcass, @Nullable Vector3d at) {
+        if (PATH.get() == null && handOf(player)) {
+            return byHand(player, () -> skin(level, player, carcass, at));
+        }
         if (carcass.skinned) {
             return false;
         }
@@ -218,12 +237,15 @@ public final class CarcassButchery {
                                   float scale, Vector3d at) {
         float fresh = carcass.freshness;
         scale *= babyYieldScale(carcass);
+        ButcheryPath path = path();
+        Context context = PATH.get();
+        float hand = context == null ? 1.0F : context.yield();
         for (var yield : yields) {
             String id = fillTraits(yield.item(), carcass.traits);
             if (id == null) {
                 continue;
             }
-            float count = yield.count() * scale;
+            float count = yield.count() * scale * path.share(yield.kind()) * hand;
             switch (yield.kind()) {
                 case "meat", "offal", "fat" -> {
                     if (fresh < 0.3F) {
@@ -253,7 +275,17 @@ public final class CarcassButchery {
                 BloodAndBones.LOGGER.warn("Butchery yield {} of {} is not an item", id, carcass.entity);
                 continue;
             }
-            int n = (int) Math.floor(count) + (level.random.nextFloat() < count - Math.floor(count) ? 1 : 0);
+            int n = roll(level, count);
+            if (path.loss() > 0.0F) {
+                // each whole piece the blade could have had is a chance to botch it
+                int kept = 0;
+                for (int i = 0; i < n; i++) {
+                    if (level.random.nextFloat() >= path.loss()) {
+                        kept++;
+                    }
+                }
+                n = kept;
+            }
             while (n > 0) {
                 int stackSize = Math.min(n, item.get().getDefaultMaxStackSize());
                 n -= stackSize;
@@ -262,17 +294,55 @@ public final class CarcassButchery {
                     // a hide remembers whose it was, for fitting over carcass armour, where the item alone would not say
                     com.avicagan.bloodandbones.parts.Hides.stamp(stack, carcass.entity);
                 }
-                java.util.function.Consumer<net.minecraft.world.item.ItemStack> sink = SINK.get();
-                if (sink != null) {
-                    sink.accept(stack);
-                    continue;
-                }
-                net.minecraft.world.entity.item.ItemEntity entity = new net.minecraft.world.entity.item.ItemEntity(level, at.x, at.y + 0.25, at.z, stack);
-                entity.setDeltaMovement((level.random.nextDouble() - 0.5) * 0.15, 0.2, (level.random.nextDouble() - 0.5) * 0.15);
-                entity.setDefaultPickUpDelay();
-                level.addFreshEntity(entity);
+                emit(level, stack, at);
             }
         }
+    }
+
+    /** An expected count as a whole number: the fraction is the chance of one more. */
+    private static int roll(ServerLevel level, float count) {
+        return (int) Math.floor(count) + (level.random.nextFloat() < count - Math.floor(count) ? 1 : 0);
+    }
+
+    /** Into the sink if a machine is working, else thrown out of the carcass at that point. */
+    private static void emit(ServerLevel level, net.minecraft.world.item.ItemStack stack, Vector3d at) {
+        java.util.function.Consumer<net.minecraft.world.item.ItemStack> sink = SINK.get();
+        if (sink != null) {
+            sink.accept(stack);
+            return;
+        }
+        net.minecraft.world.entity.item.ItemEntity entity = new net.minecraft.world.entity.item.ItemEntity(level, at.x, at.y + 0.25, at.z, stack);
+        entity.setDeltaMovement((level.random.nextDouble() - 0.5) * 0.15, 0.2, (level.random.nextDouble() - 0.5) * 0.15);
+        entity.setDefaultPickUpDelay();
+        level.addFreshEntity(entity);
+    }
+
+    /** Whether this bone is the mob's torso (the rig's root), not a piece that became a record of its own. */
+    public static boolean isTorso(CarcassSavedData.Carcass carcass, String bone) {
+        return com.avicagan.bloodandbones.carcass.rig.RigManager.forCarcass(carcass).map(rig -> rig.root().name().equals(bone))
+                .orElse(bone.equals(carcass.rootBone));
+    }
+
+    /**
+     * The mob's own loot table, rolled as if it had died with nobody to blame: what a grown one drops (a baby drops
+     * nothing, as in the game, and nothing drops with mob loot turned off).
+     */
+    public static void rollLoot(ServerLevel level, CarcassSavedData.Carcass carcass, Vector3d at) {
+        if (carcass.baby || !level.getGameRules().getBoolean(net.minecraft.world.level.GameRules.RULE_DOMOBLOOT)) {
+            return;
+        }
+        var type = net.minecraft.core.registries.BuiltInRegistries.ENTITY_TYPE.getOptional(carcass.entity);
+        if (type.isEmpty() || !(type.get().create(level) instanceof net.minecraft.world.entity.LivingEntity mob)) {
+            return;
+        }
+        mob.moveTo(at.x, at.y, at.z, 0.0F, 0.0F);
+        var table = level.getServer().reloadableRegistries().getLootTable(mob.getLootTable());
+        var params = new net.minecraft.world.level.storage.loot.LootParams.Builder(level)
+                .withParameter(net.minecraft.world.level.storage.loot.parameters.LootContextParams.THIS_ENTITY, mob)
+                .withParameter(net.minecraft.world.level.storage.loot.parameters.LootContextParams.ORIGIN, mob.position())
+                .withParameter(net.minecraft.world.level.storage.loot.parameters.LootContextParams.DAMAGE_SOURCE, level.damageSources().generic())
+                .create(net.minecraft.world.level.storage.loot.parameters.LootContextParamSets.ENTITY);
+        table.getRandomItems(params, stack -> emit(level, stack, at));
     }
 
     /** Where yields go instead of the ground while a machine is working, else null. */
@@ -296,18 +366,49 @@ public final class CarcassButchery {
         return out;
     }
 
-    /** Set while the Mangler grinds: pieces it butchers give armour scraps too. */
-    private static final ThreadLocal<Boolean> MANGLING = new ThreadLocal<>();
+    /** The path the butchery on this thread is taking and how good the hand at it is (1 but for a hand); null: a station's. */
+    private record Context(ResourceLocation path, float yield) {
+    }
 
-    /** As {@link #capturing}, for the Mangler: each piece ground also gives its scraps. */
-    public static <T> T mangling(java.util.function.Consumer<net.minecraft.world.item.ItemStack> sink, java.util.function.Supplier<T> action) {
-        Boolean previous = MANGLING.get();
-        MANGLING.set(true);
+    private static final ThreadLocal<Context> PATH = new ThreadLocal<>();
+
+    /** The path the work on this thread takes: the station's (everything) when none is set. */
+    public static ButcheryPath path() {
+        Context context = PATH.get();
+        return ButcheryPaths.get(context == null ? ButcheryPaths.STATION : context.path());
+    }
+
+    /** Run some butchery along a path; {@code yield} scales what it gets (a hand's butchery yield, else 1). */
+    public static <T> T onPath(ResourceLocation path, float yield, java.util.function.Supplier<T> action) {
+        Context previous = PATH.get();
+        PATH.set(new Context(path, yield));
         try {
-            return capturing(sink, action);
+            return action.get();
         } finally {
-            MANGLING.set(previous);
+            PATH.set(previous);
         }
+    }
+
+    /**
+     * Butchery with a blade in this one's hand: a player's own (not a Deployer's stand-in) or a minion's is the hand
+     * path, scaled by their butchery yield; anyone else's is a station's.
+     */
+    public static <T> T byHand(@Nullable net.minecraft.world.entity.LivingEntity who, java.util.function.Supplier<T> action) {
+        if (who == null || who instanceof net.neoforged.neoforge.common.util.FakePlayer) {
+            return onPath(ButcheryPaths.STATION, 1.0F, action);
+        }
+        var attribute = who.getAttribute(com.avicagan.bloodandbones.registry.BBAttributes.BUTCHERY_YIELD);
+        return onPath(ButcheryPaths.HAND, attribute == null ? 1.0F : (float) attribute.getValue(), action);
+    }
+
+    /** Whether a cut or stroke by this player is by hand (a real one; a Deployer's stand-in works as a station). */
+    private static boolean handOf(@Nullable Player player) {
+        return player != null && !(player instanceof net.neoforged.neoforge.common.util.FakePlayer);
+    }
+
+    /** As {@link #capturing}, for the Mangler: its path, so each piece ground gives its scraps, and the body the mob's drops. */
+    public static <T> T mangling(java.util.function.Consumer<net.minecraft.world.item.ItemStack> sink, java.util.function.Supplier<T> action) {
+        return onPath(ButcheryPaths.MANGLER, 1.0F, () -> capturing(sink, action));
     }
 
     /**
@@ -373,8 +474,13 @@ public final class CarcassButchery {
         return text;
     }
 
-    /** Cut the joint between a limb and its parent for good. */
-    public static void sever(ServerLevel level, CarcassSavedData.Carcass carcass, String bone, @Nullable Vector3d at) {
+    /**
+     * Cut the joint between a limb and its parent for good.
+     *
+     * @return the limb's own record from now on (with anything that hung off it), or null if it could not be split off
+     */
+    @Nullable
+    public static CarcassSavedData.Carcass sever(ServerLevel level, CarcassSavedData.Carcass carcass, String bone, @Nullable Vector3d at) {
         carcass.joints.removeIf(joint -> joint.child().equals(bone));
         carcass.severed.add(bone);
         carcass.cuts.remove(bone);
@@ -414,6 +520,7 @@ public final class CarcassButchery {
             }
         }
         BloodAndBones.LOGGER.debug("Severed {} from carcass {}", bone, carcass.id);
+        return piece;
     }
 
     /** A body no heavier than this (Sable mass units) can be picked up by hand: heads, legs, a whole chicken. */
@@ -460,6 +567,72 @@ public final class CarcassButchery {
         container.removeSubLevel(body, dev.ryanhcode.sable.sublevel.storage.SubLevelRemovalReason.REMOVED);
         level.playSound(null, at.x, at.y, at.z, com.avicagan.bloodandbones.registry.BBSounds.CARCASS_PICK_UP.get(), SoundSource.BLOCKS, 0.6F, 0.8F);
         return true;
+    }
+
+    /** A carcass part lying on a work surface, and where. */
+    public record Lying(CarcassSavedData.Carcass carcass, String bone, Vector3d at) {
+    }
+
+    /**
+     * The carcass parts lying on top of a block whose top is {@code top} blocks above its floor (a table top): each one's
+     * middle over the block and not far above that top, nearest the middle of the top first. Bodies being dragged are left
+     * out: they are only passing.
+     */
+    public static java.util.List<Lying> lyingOn(ServerLevel level, net.minecraft.core.BlockPos pos, double top) {
+        ServerSubLevelContainer container = SubLevelContainer.getContainer(level);
+        java.util.List<Lying> found = new java.util.ArrayList<>();
+        if (container == null) {
+            return found;
+        }
+        net.minecraft.world.phys.AABB over = new net.minecraft.world.phys.AABB(pos.getX() - 0.25, pos.getY() + top - 0.3, pos.getZ() - 0.25,
+                pos.getX() + 1.25, pos.getY() + top + 1.5, pos.getZ() + 1.25);
+        for (CarcassSavedData.Carcass carcass : CarcassSavedData.get(level).all()) {
+            if (CarcassDrag.isDraggingCarcass(carcass.id)) {
+                continue;
+            }
+            for (Map.Entry<String, UUID> bone : carcass.bones.entrySet()) {
+                if (container.getSubLevel(bone.getValue()) instanceof ServerSubLevel body && !body.isRemoved()) {
+                    org.joml.Vector3dc p = body.logicalPose().position();
+                    if (over.contains(p.x(), p.y(), p.z())) {
+                        found.add(new Lying(carcass, bone.getKey(), new Vector3d(p)));
+                    }
+                }
+            }
+        }
+        double cx = pos.getX() + 0.5;
+        double cy = pos.getY() + top;
+        double cz = pos.getZ() + 0.5;
+        found.sort(java.util.Comparator.comparingDouble(lying -> lying.at().distanceSquared(cx, cy, cz)));
+        return found;
+    }
+
+    /**
+     * Take a whole carcass out of the world (onto a spit): the record is forgotten first, so taking its bodies away does
+     * not split what is left into new records (as CarcassRot#crumble does), then its joints and bodies go.
+     */
+    public static void takeAway(ServerLevel level, CarcassSavedData.Carcass carcass) {
+        CarcassSavedData.get(level).forget(carcass);
+        CarcassRest.unlock(carcass);
+        for (PhysicsConstraintHandle handle : carcass.liveJoints) {
+            if (handle.isValid()) {
+                handle.remove();
+            }
+        }
+        carcass.liveJoints.clear();
+        ServerSubLevelContainer container = SubLevelContainer.getContainer(level);
+        if (container != null) {
+            for (UUID id : java.util.List.copyOf(carcass.bones.values())) {
+                if (container.getSubLevel(id) instanceof ServerSubLevel body && !body.isRemoved()) {
+                    container.removeSubLevel(body, dev.ryanhcode.sable.sublevel.storage.SubLevelRemovalReason.REMOVED);
+                }
+            }
+        }
+    }
+
+    /** Whether this bone of a carcass has a butchery table entry to break it down into. */
+    public static boolean hasYields(CarcassSavedData.Carcass carcass, String bone) {
+        return com.avicagan.bloodandbones.carcass.butchery.ButcheryManager.forEntity(carcass.entity)
+                .map(table -> !table.part(bone).isEmpty()).orElse(false);
     }
 
     /** How many joints a carcass still has to hold it together. */

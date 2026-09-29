@@ -6,7 +6,9 @@ import com.avicagan.bloodandbones.carcass.CarcassJoints;
 import com.avicagan.bloodandbones.carcass.CarcassRest;
 import com.avicagan.bloodandbones.carcass.CarcassSavedData;
 import com.avicagan.bloodandbones.registry.BBBlockEntities;
+import com.avicagan.bloodandbones.registry.BBSounds;
 import com.simibubi.create.content.kinetics.base.KineticBlockEntity;
+import com.simibubi.create.foundation.blockEntity.behaviour.BlockEntityBehaviour;
 import com.simibubi.create.foundation.item.ItemHelper;
 import dev.ryanhcode.sable.api.sublevel.ServerSubLevelContainer;
 import dev.ryanhcode.sable.api.sublevel.SubLevelContainer;
@@ -29,26 +31,37 @@ import net.minecraft.world.item.Items;
 import net.minecraft.world.level.block.entity.BlockEntityType;
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.phys.AABB;
+import net.minecraft.world.phys.Vec3;
 import net.neoforged.neoforge.capabilities.Capabilities;
 import net.neoforged.neoforge.capabilities.RegisterCapabilitiesEvent;
 import net.neoforged.neoforge.items.IItemHandler;
 import net.neoforged.neoforge.items.ItemHandlerHelper;
 import net.neoforged.neoforge.items.ItemStackHandler;
 import net.neoforged.neoforge.items.wrapper.RangedWrapper;
+import org.jetbrains.annotations.Nullable;
 import org.joml.Vector3d;
 import org.joml.Vector3dc;
 
 import java.util.ArrayList;
+import java.util.Comparator;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.UUID;
 
 /**
- * A butchery machine driven by a shaft from below. Every so often, faster the faster it turns, it works
- * whatever carcass part is over it (up to a couple of blocks up, so a carcass lying on it or hanging over
- * it both count), the same way a player with the right tool would. What falls out is kept in its output
- * for funnels, chutes and hoppers to take, or for a player to take with an empty hand; while that is full
+ * A butchery machine driven by a shaft from below. It works whatever carcass part is over it (up to a couple of blocks
+ * up, so a carcass lying on it, hanging over it or passing over it on a trolley all count), and asks its filter about
+ * each part it could take, so a line of them can pull one part at a time out of a mixed stream. What falls out is kept
+ * in its output for funnels, chutes and hoppers to take, or for a player to take with an empty hand; while that is full
  * the machine waits.
+ * <ul>
+ * <li>The Mangler, Beheader and Deglover make ready for their next stroke while they turn (faster the faster, the
+ * Millstone way), and strike as soon as something they can take is in reach, so a Beheader under a line takes each head
+ * as it passes.</li>
+ * <li>The Guillotine winds its blade up while it turns and holds it there, armed; a rising redstone edge drops it
+ * through one limb, and it winds up again (ARCHITECTURE 7's state machine, the Sequenced Gearshift's edge).</li>
+ * </ul>
  */
 public class CarcassMachineBlockEntity extends KineticBlockEntity implements Clearable {
     /** Ticks per stroke at 16 RPM, before the kind's pace. */
@@ -57,6 +70,12 @@ public class CarcassMachineBlockEntity extends KineticBlockEntity implements Cle
     public static final int MIN_STROKE = 5;
     /** How far above the machine it reaches. */
     public static final double REACH = 2.5;
+    /** How far past its own edges it reaches, so a body lying across it and the floor beside it counts. */
+    public static final double SPREAD = 0.75;
+    /** Ticks the Guillotine's blade takes to fall. */
+    public static final int DROP_TICKS = 4;
+    /** How often a machine ready to strike looks for something to take. */
+    private static final int LOOK_EVERY = 2;
 
     private static final Map<String, Item> SKULLS = Map.of(
             "minecraft:zombie", Items.ZOMBIE_HEAD,
@@ -95,101 +114,43 @@ public class CarcassMachineBlockEntity extends KineticBlockEntity implements Cle
             return false;
         }
     };
+    /** Ticks since the last stroke; at {@link #strokeTicks()} it is ready and strikes when it finds work. */
     public int timer;
-    /**
-     * Which carcasses it works on: all when empty; a spawn egg or a carcass piece for one kind of mob; a
-     * Create filter for anything its settings allow (the piece attributes: a mob, fresh, rotting, baby...).
-     */
-    public com.simibubi.create.foundation.blockEntity.behaviour.filtering.FilteringBehaviour filtering;
+    /** The Guillotine's blade: 0 just fallen, 1 wound all the way up and armed. */
+    public float wind;
+    /** Ticks left of the Guillotine's blade falling; 0 when it is not. */
+    public int falling;
+    /** Whether redstone reached it when last looked, for the rising edge. */
+    private boolean powered;
+    /** Strokes that took something, since it was placed: what a test counts the time of a path by. */
+    public int strokes;
+    /** Which parts it takes; see {@link PartFilter}. */
+    public PartFilteringBehaviour filtering;
 
     public CarcassMachineBlockEntity(BlockEntityType<?> type, BlockPos pos, BlockState state) {
         super(type, pos, state);
     }
 
     @Override
-    public void addBehaviours(List<com.simibubi.create.foundation.blockEntity.behaviour.BlockEntityBehaviour> behaviours) {
+    public void addBehaviours(List<BlockEntityBehaviour> behaviours) {
         super.addBehaviours(behaviours);
-        filtering = new com.simibubi.create.foundation.blockEntity.behaviour.filtering.FilteringBehaviour(this, new MachineFilterSlot()) {
-            // a Deployer's stand-in player is let through Create's slot hit test: it would set the filter
-            // instead of putting a piece on the machine or taking its output
-            @Override
-            public boolean mayInteract(Player player) {
-                return !(player instanceof net.neoforged.neoforge.common.util.FakePlayer);
-            }
-
-            // Create hands the old filter back before it asks whether the new item may go in: an item that
-            // may not has to be turned away before that, or each refused click would copy the old filter
-            @Override
-            public boolean canShortInteract(ItemStack toApply) {
-                return super.canShortInteract(toApply) && (toApply.isEmpty() || filterAllowed(toApply));
-            }
-
-            /** Turned away, with Create's own "invalid item" message and sound. */
-            @Override
-            public void onShortInteract(Player player, net.minecraft.world.InteractionHand hand, net.minecraft.core.Direction side,
-                                        net.minecraft.world.phys.BlockHitResult hitResult) {
-                ItemStack toApply = player.getItemInHand(hand);
-                if (!toApply.isEmpty() && !filterAllowed(toApply)) {
-                    if (!player.level().isClientSide) {
-                        player.displayClientMessage(com.simibubi.create.foundation.utility.CreateLang.translateDirect("logistics.filter.invalid_item"), true);
-                        com.simibubi.create.AllSoundEvents.DENY.playOnServer(player.level(), player.blockPosition(), 1, 1);
-                    }
-                    return;
-                }
-                super.onShortInteract(player, hand, side, hitResult);
-            }
-
-            @Override
-            public boolean readFromClipboard(net.minecraft.core.HolderLookup.Provider registries, CompoundTag tag, Player player,
-                                             net.minecraft.core.Direction side, boolean simulate) {
-                if (tag.contains("Filter")) {
-                    ItemStack copied = ItemStack.parseOptional(registries, tag.getCompound("Filter"));
-                    if (!copied.isEmpty() && !filterAllowed(copied)) {
-                        return false;
-                    }
-                }
-                return super.readFromClipboard(registries, tag, player, side, simulate);
-            }
-        }.withPredicate(CarcassMachineBlockEntity::filterAllowed);
+        filtering = new PartFilteringBehaviour(this, new MachineFilterSlot());
         behaviours.add(filtering);
     }
 
     /** What may go in the filter slot: a spawn egg, a carcass piece, or a Create filter. */
     public static boolean filterAllowed(ItemStack stack) {
-        return stack.getItem() instanceof net.minecraft.world.item.SpawnEggItem
-                || stack.is(com.avicagan.bloodandbones.registry.BBItems.CARCASS_PIECE.get())
-                || stack.getItem() instanceof com.simibubi.create.content.logistics.filter.FilterItem;
+        return PartFilter.allowed(stack);
     }
 
-    /** Whether the filter lets this machine work on this carcass. */
+    /** Whether the filter lets this machine take this part of this carcass. */
+    public boolean accepts(CarcassSavedData.Carcass carcass, String bone) {
+        return filtering == null || filtering.takes(carcass, bone);
+    }
+
+    /** Whether the filter lets this machine take anything of this carcass, asked about its torso. */
     public boolean accepts(CarcassSavedData.Carcass carcass) {
-        ItemStack filter = filtering == null ? ItemStack.EMPTY : filtering.getFilter();
-        return filter.isEmpty() || matches(com.simibubi.create.content.logistics.filter.FilterItemStack.of(filter), carcass);
-    }
-
-    /**
-     * A spawn egg or a carcass piece means that mob (Create's plain match would take any piece at all); a
-     * list filter asks the same of each entry, as a whitelist or a blacklist; anything else (an attribute
-     * filter) is asked about a piece of the carcass, as Create would ask it about an item.
-     */
-    private boolean matches(com.simibubi.create.content.logistics.filter.FilterItemStack filter, CarcassSavedData.Carcass carcass) {
-        ItemStack item = filter.item();
-        if (item.getItem() instanceof net.minecraft.world.item.SpawnEggItem egg) {
-            return net.minecraft.core.registries.BuiltInRegistries.ENTITY_TYPE.getKey(egg.getType(item)).equals(carcass.entity);
-        }
-        if (item.is(com.avicagan.bloodandbones.registry.BBItems.CARCASS_PIECE.get())) {
-            com.avicagan.bloodandbones.item.CarcassPieceItem.Piece piece = com.avicagan.bloodandbones.item.CarcassPieceItem.piece(item);
-            return piece == null || piece.entity().equals(carcass.entity);
-        }
-        if (filter instanceof com.simibubi.create.content.logistics.filter.FilterItemStack.ListFilterItemStack list) {
-            for (com.simibubi.create.content.logistics.filter.FilterItemStack entry : list.containedItems) {
-                if (matches(entry, carcass)) {
-                    return !list.isBlacklist;
-                }
-            }
-            return list.isBlacklist;
-        }
-        return filter.test(level, com.avicagan.bloodandbones.item.CarcassPieceItem.of(carcass, carcass.rootBone));
+        return accepts(carcass, carcass.rootBone);
     }
 
     public static void registerCapabilities(RegisterCapabilitiesEvent event) {
@@ -200,11 +161,13 @@ public class CarcassMachineBlockEntity extends KineticBlockEntity implements Cle
         return getBlockState().getBlock() instanceof CarcassMachineBlock block ? block.kind : MachineKind.MANGLER;
     }
 
-    /** MillstoneBlockEntity#getProcessingSpeed: 1 at 16 RPM, 16 at 256. */
+    /** MillstoneBlockEntity#getProcessingSpeed: 1 at 16 RPM, 16 at 256; no more than the kind's own top speed allows. */
     public int processingSpeed() {
-        return Mth.clamp((int) Math.abs(getSpeed() / 16.0F), 1, 512);
+        float rpm = Math.min(Math.abs(getSpeed()), kind().maxRpm);
+        return Mth.clamp((int) (rpm / 16.0F), 1, 512);
     }
 
+    /** Ticks a stroke takes at this speed; for the Guillotine, the wind-up. */
     public int strokeTicks() {
         return Math.max(MIN_STROKE, Math.round(BASE_STROKE * kind().pace / processingSpeed()));
     }
@@ -212,19 +175,105 @@ public class CarcassMachineBlockEntity extends KineticBlockEntity implements Cle
     @Override
     public void tick() {
         super.tick();
-        if (level == null || level.isClientSide || getSpeed() == 0) {
+        if (level == null) {
             return;
         }
-        if (isOutputFull()) {
+        if (kind() == MachineKind.GUILLOTINE) {
+            tickGuillotine();
             return;
         }
-        if (++timer < strokeTicks()) {
+        if (level.isClientSide || getSpeed() == 0) {
             return;
         }
-        timer = 0;
+        if (timer < strokeTicks()) {
+            timer++;
+            return;
+        }
+        if (isOutputFull() || level.getGameTime() % LOOK_EVERY != 0) {
+            return;
+        }
         if (stroke((ServerLevel) level)) {
+            timer = 0;
+            strokes++;
             sendData();
         }
+    }
+
+    /**
+     * The blade winds up while the shaft turns, on both sides (the client to draw it rising), and is held there; the
+     * server says when it drops, and cuts when it lands.
+     */
+    private void tickGuillotine() {
+        if (falling > 0) {
+            falling--;
+            if (falling == 0 && !level.isClientSide) {
+                land((ServerLevel) level);
+            }
+            return;
+        }
+        if (getSpeed() == 0 || wind >= 1.0F) {
+            return;
+        }
+        float before = wind;
+        wind = Math.min(1.0F, wind + 1.0F / strokeTicks());
+        if (level.isClientSide) {
+            return;
+        }
+        // a ratchet clicking as the blade goes up, and a clack when it catches at the top
+        if ((int) (before * 8) != (int) (wind * 8)) {
+            level.playSound(null, worldPosition, BBSounds.MACHINE_WIND.get(), SoundSource.BLOCKS, 0.35F, 0.8F + wind * 0.6F);
+        }
+        if (wind >= 1.0F) {
+            level.playSound(null, worldPosition, SoundEvents.CROSSBOW_LOADING_END.value(), SoundSource.BLOCKS, 0.6F, 0.6F);
+            sendData();
+        }
+    }
+
+    /** Redstone reaching it changed: a rising edge drops an armed Guillotine's blade. */
+    public void redstone(boolean signal) {
+        if (signal && !powered) {
+            drop();
+        }
+        if (signal != powered) {
+            powered = signal;
+            setChanged();
+        }
+    }
+
+    /** Let the blade go, if it is wound up. */
+    public boolean drop() {
+        if (level == null || level.isClientSide || kind() != MachineKind.GUILLOTINE || wind < 1.0F || falling > 0) {
+            return false;
+        }
+        falling = DROP_TICKS;
+        wind = 0.0F;
+        level.playSound(null, worldPosition, SoundEvents.CROSSBOW_SHOOT, SoundSource.BLOCKS, 0.8F, 0.5F);
+        sendData();
+        return true;
+    }
+
+    /** The blade hits the bottom: through whatever limb is under it. */
+    private void land(ServerLevel level) {
+        Vec3 bottom = Vec3.atBottomCenterOf(worldPosition.above());
+        if (!isOutputFull() && stroke(level)) {
+            strokes++;
+        } else {
+            level.playSound(null, bottom.x, bottom.y, bottom.z, BBSounds.MACHINE_BLADE.get(), SoundSource.BLOCKS, 0.5F, 1.2F);
+        }
+        sendData();
+    }
+
+    /** How far the Guillotine's blade is from the top of its frame, 0 armed to 1 at the bottom, for drawing. */
+    public float bladeDrop(float partialTicks) {
+        if (falling > 0) {
+            float fallen = Math.min(1.0F, (DROP_TICKS - falling + partialTicks) / DROP_TICKS);
+            return fallen * fallen;
+        }
+        float wound = wind;
+        if (wind < 1.0F && getSpeed() != 0) {
+            wound = Math.min(1.0F, wind + partialTicks / strokeTicks());
+        }
+        return 1.0F - wound;
     }
 
     private boolean isOutputFull() {
@@ -236,36 +285,44 @@ public class CarcassMachineBlockEntity extends KineticBlockEntity implements Cle
         return true;
     }
 
-    /** How far past its own edges it reaches, so a body lying across it and the floor beside it counts. */
-    public static final double SPREAD = 0.75;
-
     /** The space over the machine it works in. */
     public AABB zone() {
         return new AABB(worldPosition.getX() - SPREAD, worldPosition.getY() + 0.5, worldPosition.getZ() - SPREAD,
                 worldPosition.getX() + 1.0 + SPREAD, worldPosition.getY() + 1.0 + REACH, worldPosition.getZ() + 1.0 + SPREAD);
     }
 
-    /** One stroke of work; true if it touched anything. */
+    /** One stroke of work; true if it took anything. */
     public boolean stroke(ServerLevel level) {
-        List<Target> targets = targets(level);
-        if (targets.isEmpty()) {
-            return false;
-        }
         MachineKind kind = kind();
-        for (Target target : targets) {
-            CarcassSavedData.Carcass carcass = target.carcass();
-            // a carcass lying folded over the machine is unfolded so its limbs can be reached, in the same
-            // stroke: left for the next one, it may already have settled and folded up again
-            // (only when this machine has something to cut on it: a head for the Beheader, any other limb for the
-            // Guillotine; else it would unfold the body every stroke for nothing)
-            if (carcass.resting && kind != MachineKind.DEGLOVER && (!hasWork(carcass, kind) || CarcassRest.split(level, carcass) == null)) {
+        for (Map.Entry<CarcassSavedData.Carcass, Map<String, Vector3d>> over : inReach(level).entrySet()) {
+            CarcassSavedData.Carcass carcass = over.getKey();
+            Map<String, Vector3d> reached = over.getValue();
+            if (kind == MachineKind.DEGLOVER) {
+                Vector3d at = reached.values().iterator().next();
+                if (accepts(carcass) && capture(() -> CarcassButchery.skin(level, null, carcass, at))) {
+                    return true;
+                }
                 continue;
             }
+            // a carcass lying folded over the machine is unfolded so its limbs can be reached, in the same stroke: left
+            // for the next one, it may already have settled and folded up again (only when there is something here for
+            // this machine, else it would unfold the body every stroke for nothing)
+            if (carcass.resting) {
+                if (!hasWork(carcass, kind) || CarcassRest.split(level, carcass) == null) {
+                    continue;
+                }
+                reached = positions(level, carcass, reached.containsKey(carcass.rootBone));
+            }
+            String part = pick(level, carcass, reached, kind);
+            if (part == null) {
+                continue;
+            }
+            Vector3d at = reached.getOrDefault(part, reached.values().iterator().next());
             boolean did = switch (kind) {
-                case MANGLER -> mangle(level, target);
-                case GUILLOTINE -> chop(level, target, false);
-                case BEHEADER -> chop(level, target, true);
-                case DEGLOVER -> capture(() -> CarcassButchery.skin(level, null, carcass, target.at()));
+                case MANGLER -> grind(level, carcass, part, at);
+                case GUILLOTINE -> chop(level, carcass, part, at, false);
+                case BEHEADER -> chop(level, carcass, part, at, true);
+                case DEGLOVER -> false;
             };
             if (did) {
                 return true;
@@ -274,57 +331,95 @@ public class CarcassMachineBlockEntity extends KineticBlockEntity implements Cle
         return false;
     }
 
-
-    /** Whether a blade of this kind has anything to cut on this carcass; the Mangler grinds anything. */
-    private static boolean hasWork(CarcassSavedData.Carcass carcass, MachineKind kind) {
-        if (kind != MachineKind.GUILLOTINE && kind != MachineKind.BEHEADER) {
-            return true;
+    /**
+     * Which part of this carcass it takes now, of those in reach (a body across it offers its limbs that stick out past
+     * it too), asked of the filter, the one nearest its middle:
+     * <ul>
+     * <li>the Mangler: a loose piece, else a limb to tear off and grind, else the body once nothing hangs off it;</li>
+     * <li>the Guillotine: a limb that is not a head;</li>
+     * <li>the Beheader: a head at its neck end (a ravager's neck, not the head on it).</li>
+     * </ul>
+     */
+    @Nullable
+    private String pick(ServerLevel level, CarcassSavedData.Carcass carcass, Map<String, Vector3d> reached, MachineKind kind) {
+        boolean bodyOver = reached.containsKey(carcass.rootBone);
+        Map<String, Vector3d> everywhere = positions(level, carcass, true);
+        Vec3 middle = zone().getCenter();
+        Comparator<String> nearest = Comparator.comparingDouble(bone -> {
+            Vector3d at = everywhere.get(bone);
+            return at == null ? Double.MAX_VALUE : at.distanceSquared(middle.x, middle.y, middle.z);
+        });
+        List<String> candidates = new ArrayList<>();
+        if (kind == MachineKind.MANGLER) {
+            for (String bone : reached.keySet()) {
+                if (!CarcassButchery.isAttached(carcass, bone) && accepts(carcass, bone)) {
+                    candidates.add(bone);
+                }
+            }
+            if (!candidates.isEmpty()) {
+                return candidates.stream().min(nearest).orElse(null);
+            }
         }
-        boolean heads = kind == MachineKind.BEHEADER;
         for (CarcassJoints.Spec joint : carcass.joints) {
             String bone = joint.child();
-            if (CarcassButchery.isAttached(carcass, bone) && isHead(bone) == heads && !(heads && hasHeadAbove(carcass, bone))) {
+            if (!everywhere.containsKey(bone) || !(bodyOver || reached.containsKey(bone)) || !takes(carcass, bone, kind) || !accepts(carcass, bone)) {
+                continue;
+            }
+            candidates.add(bone);
+        }
+        return candidates.stream().min(nearest).orElse(null);
+    }
+
+    /** Whether this kind of blade can take this attached bone: a head at its neck end for the Beheader, any other limb for the rest. */
+    private static boolean takes(CarcassSavedData.Carcass carcass, String bone, MachineKind kind) {
+        if (bone.equals(carcass.rootBone) || !CarcassButchery.isAttached(carcass, bone)) {
+            return false;
+        }
+        return switch (kind) {
+            case BEHEADER -> isHead(bone) && !hasHeadAbove(carcass, bone);
+            case GUILLOTINE -> !isHead(bone);
+            case MANGLER -> true;
+            case DEGLOVER -> false;
+        };
+    }
+
+    /** Whether there is anything on this carcass this machine would take, filter and all (the Mangler grinds anything). */
+    private boolean hasWork(CarcassSavedData.Carcass carcass, MachineKind kind) {
+        for (CarcassJoints.Spec joint : carcass.joints) {
+            if (takes(carcass, joint.child(), kind) && accepts(carcass, joint.child())) {
                 return true;
             }
         }
-        return false;
+        return kind == MachineKind.MANGLER && accepts(carcass);
     }
 
-    /** Tear a limb off first, else grind a loose piece. The body is only ground once nothing hangs off it. */
-    private boolean mangle(ServerLevel level, Target target) {
-        CarcassSavedData.Carcass carcass = target.carcass();
-        String bone = target.bone();
-        if (bone.equals(carcass.rootBone) && CarcassButchery.isAttached(carcass, bone)) {
-            // the body is over the machine: pull at whichever limb is nearest
-            bone = nearestLimb(level, carcass, null);
-            if (bone == null) {
-                return false;
+    /**
+     * The terminal grind, one stroke a piece: a limb is torn off and goes straight between the grinders, a loose piece or
+     * a bare body is ground where it lies. The Mangler's path takes the least meat and bone, but gives armour scraps for
+     * every piece and the mob's own drops with its body.
+     */
+    private boolean grind(ServerLevel level, CarcassSavedData.Carcass carcass, String bone, Vector3d at) {
+        return CarcassButchery.mangling(this::store, () -> {
+            CarcassSavedData.Carcass piece = carcass;
+            if (CarcassButchery.isAttached(carcass, bone)) {
+                piece = CarcassButchery.sever(level, carcass, bone, at);
+                if (piece == null || !piece.bones.containsKey(bone)) {
+                    return false;
+                }
             }
-        }
-        String cutting = bone;
-        return CarcassButchery.mangling(this::store, () -> CarcassButchery.cut(level, null, carcass, cutting, target.at()));
+            CarcassButchery.butcher(level, piece, bone, at);
+            level.playSound(null, at.x, at.y, at.z, BBSounds.MACHINE_GRIND.get(), SoundSource.BLOCKS, 1.0F, 0.7F + level.random.nextFloat() * 0.3F);
+            if (com.avicagan.bloodandbones.carcass.Blood.bloody(piece)) {
+                com.avicagan.bloodandbones.carcass.Blood.gibs(level, at, 6);
+            }
+            return true;
+        });
     }
 
-    /** One blade stroke through a limb's joint: it comes off at once. */
-    private boolean chop(ServerLevel level, Target target, boolean heads) {
-        CarcassSavedData.Carcass carcass = target.carcass();
-        String bone = target.bone();
-        if (bone.equals(carcass.rootBone)) {
-            // the body is under the blade: the nearest limb of the right sort is what the blade meets
-            bone = nearestLimb(level, carcass, heads);
-            if (bone == null) {
-                return false;
-            }
-        }
-        if (bone.equals(carcass.rootBone) || !CarcassButchery.isAttached(carcass, bone) || isHead(bone) != heads) {
-            return false;
-        }
-        if (heads && hasHeadAbove(carcass, bone)) {
-            // cut at the neck, not through the skull: the bone nearer the body goes first
-            return false;
-        }
+    /** One blade stroke through a limb's joint: it comes off at once, whole. */
+    private boolean chop(ServerLevel level, CarcassSavedData.Carcass carcass, String bone, Vector3d at, boolean heads) {
         String entity = carcass.entity.toString();
-        CarcassButchery.sever(level, carcass, bone, target.at());
+        CarcassButchery.sever(level, carcass, bone, at);
         if (heads) {
             Item skull = SKULLS.get(entity);
             float chance = skull == Items.WITHER_SKELETON_SKULL ? WITHER_SKULL_CHANCE : SKULL_CHANCE;
@@ -332,39 +427,8 @@ public class CarcassMachineBlockEntity extends KineticBlockEntity implements Cle
                 store(new ItemStack(skull));
             }
         }
-        level.playSound(null, target.at().x, target.at().y, target.at().z, com.avicagan.bloodandbones.registry.BBSounds.MACHINE_BLADE.get(), SoundSource.BLOCKS, 0.4F, heads ? 1.4F : 0.8F);
+        level.playSound(null, at.x, at.y, at.z, BBSounds.MACHINE_BLADE.get(), SoundSource.BLOCKS, 0.4F, heads ? 1.4F : 0.8F);
         return true;
-    }
-
-    /**
-     * The attached limb of this carcass nearest the middle of the zone; heads only, never heads, or either
-     * (null). A beheader wants the neck end, so a head under another head is passed over.
-     */
-    @org.jetbrains.annotations.Nullable
-    private String nearestLimb(ServerLevel level, CarcassSavedData.Carcass carcass, @org.jetbrains.annotations.Nullable Boolean heads) {
-        ServerSubLevelContainer container = SubLevelContainer.getContainer(level);
-        if (container == null) {
-            return null;
-        }
-        net.minecraft.world.phys.Vec3 middle = zone().getCenter();
-        String best = null;
-        double bestDistance = Double.MAX_VALUE;
-        for (CarcassJoints.Spec joint : carcass.joints) {
-            String bone = joint.child();
-            if (heads != null && (isHead(bone) != heads || (heads && hasHeadAbove(carcass, bone)))) {
-                continue;
-            }
-            UUID id = carcass.bones.get(bone);
-            if (id == null || !(container.getSubLevel(id) instanceof ServerSubLevel body) || body.isRemoved()) {
-                continue;
-            }
-            double distance = body.logicalPose().position().distanceSquared(middle.x, middle.y, middle.z);
-            if (distance < bestDistance) {
-                bestDistance = distance;
-                best = bone;
-            }
-        }
-        return best;
     }
 
     /** A head or a neck, by the part's own name. */
@@ -407,38 +471,61 @@ public class CarcassMachineBlockEntity extends KineticBlockEntity implements Cle
         }
     }
 
-    public record Target(CarcassSavedData.Carcass carcass, String bone, Vector3d at) {
-    }
-
-    /** Every loaded carcass part whose centre is in the zone, lowest first. */
-    public List<Target> targets(ServerLevel level) {
+    /**
+     * Every carcass with a part in reach, and where those parts are, the one whose lowest part is lowest first (the
+     * body lying on it before one hanging over it).
+     */
+    public Map<CarcassSavedData.Carcass, Map<String, Vector3d>> inReach(ServerLevel level) {
+        Map<CarcassSavedData.Carcass, Map<String, Vector3d>> found = new LinkedHashMap<>();
         ServerSubLevelContainer container = SubLevelContainer.getContainer(level);
-        List<Target> found = new ArrayList<>();
         if (container == null) {
             return found;
         }
         AABB zone = zone();
+        List<Map.Entry<CarcassSavedData.Carcass, Double>> order = new ArrayList<>();
         for (CarcassSavedData.Carcass carcass : List.copyOf(CarcassSavedData.get(level).all())) {
-            // the filter is only asked about carcasses that are actually over the machine
-            Boolean accepted = null;
+            Map<String, Vector3d> here = new LinkedHashMap<>();
+            double lowest = Double.MAX_VALUE;
             for (Map.Entry<String, UUID> bone : carcass.bones.entrySet()) {
                 if (!(container.getSubLevel(bone.getValue()) instanceof ServerSubLevel body) || body.isRemoved()) {
                     continue;
                 }
                 Vector3dc p = body.logicalPose().position();
                 if (zone.contains(p.x(), p.y(), p.z())) {
-                    if (accepted == null) {
-                        accepted = accepts(carcass);
-                    }
-                    if (!accepted) {
-                        break;
-                    }
-                    found.add(new Target(carcass, bone.getKey(), new Vector3d(p)));
+                    here.put(bone.getKey(), new Vector3d(p));
+                    lowest = Math.min(lowest, p.y());
+                }
+            }
+            if (!here.isEmpty()) {
+                found.put(carcass, here);
+                order.add(Map.entry(carcass, lowest));
+            }
+        }
+        order.sort(Map.Entry.comparingByValue());
+        Map<CarcassSavedData.Carcass, Map<String, Vector3d>> sorted = new LinkedHashMap<>();
+        for (Map.Entry<CarcassSavedData.Carcass, Double> entry : order) {
+            sorted.put(entry.getKey(), found.get(entry.getKey()));
+        }
+        return sorted;
+    }
+
+    /** Where each part of a carcass is now; only those in reach unless {@code all}. */
+    private Map<String, Vector3d> positions(ServerLevel level, CarcassSavedData.Carcass carcass, boolean all) {
+        Map<String, Vector3d> out = new LinkedHashMap<>();
+        ServerSubLevelContainer container = SubLevelContainer.getContainer(level);
+        if (container == null) {
+            return out;
+        }
+        AABB zone = zone();
+        for (Map.Entry<String, UUID> bone : carcass.bones.entrySet()) {
+            if (container.getSubLevel(bone.getValue()) instanceof ServerSubLevel body && !body.isRemoved()) {
+                Vector3dc p = body.logicalPose().position();
+                if (all || zone.contains(p.x(), p.y(), p.z())) {
+                    out.put(bone.getKey(), new Vector3d(p));
                 }
             }
         }
-        found.sort((a, b) -> Double.compare(a.at().y, b.at().y));
-        return found;
+        return out;
     }
 
     public void giveContentsTo(Player player) {
@@ -453,6 +540,17 @@ public class CarcassMachineBlockEntity extends KineticBlockEntity implements Cle
     @Override
     public boolean addToGoggleTooltip(List<Component> tooltip, boolean isPlayerSneaking) {
         super.addToGoggleTooltip(tooltip, isPlayerSneaking);
+        MachineKind kind = kind();
+        if (kind == MachineKind.GUILLOTINE) {
+            boolean armed = wind >= 1.0F && falling == 0;
+            new LangBuilder(BloodAndBones.MOD_ID).translate(armed ? "gui.goggles.guillotine.armed" : "gui.goggles.guillotine.winding",
+                    Math.round(wind * 100)).style(armed ? ChatFormatting.GOLD : ChatFormatting.GRAY).forGoggles(tooltip);
+            return true;
+        }
+        if (Math.abs(getSpeed()) > kind.maxRpm) {
+            new LangBuilder(BloodAndBones.MOD_ID).translate("gui.goggles.carcass_machine.too_fast", kind.maxRpm)
+                    .style(ChatFormatting.GOLD).forGoggles(tooltip);
+        }
         int held = 0;
         for (int i = 0; i < output.getSlots(); i++) {
             held += output.getStackInSlot(i).getCount();
@@ -484,6 +582,10 @@ public class CarcassMachineBlockEntity extends KineticBlockEntity implements Cle
     @Override
     protected void write(CompoundTag tag, HolderLookup.Provider registries, boolean clientPacket) {
         tag.putInt("Timer", timer);
+        tag.putFloat("Wind", wind);
+        tag.putInt("Falling", falling);
+        tag.putBoolean("Powered", powered);
+        tag.putInt("Strokes", strokes);
         tag.put("Output", output.serializeNBT(registries));
         super.write(tag, registries, clientPacket);
     }
@@ -491,6 +593,10 @@ public class CarcassMachineBlockEntity extends KineticBlockEntity implements Cle
     @Override
     protected void read(CompoundTag tag, HolderLookup.Provider registries, boolean clientPacket) {
         timer = tag.getInt("Timer");
+        wind = tag.getFloat("Wind");
+        falling = tag.getInt("Falling");
+        powered = tag.getBoolean("Powered");
+        strokes = tag.getInt("Strokes");
         output.deserializeNBT(registries, tag.getCompound("Output"));
         super.read(tag, registries, clientPacket);
     }

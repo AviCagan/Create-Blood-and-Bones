@@ -18,6 +18,8 @@ Everything below is in development builds only; the art is placeholder (see the 
   ship's deck; a hard landing splats blood.
 - Flies gather over rotting carcasses, and maggots squirm over ones nearly gone. Rotten carcasses
   fall apart after a day.
+- A carcass in the air of a Create: Dragons Plus freezing fan (a fan blowing through powder snow) does not
+  rot. Other addons' freezing fans and freezers join through Dragons Plus or a tag.
 
 ### Butchery
 
@@ -29,6 +31,18 @@ Everything below is in development builds only; the art is placeholder (see the 
   skinned or from a baby.
 - Butcher's Table: lay a carried piece on it and chop it up with a Cleaver. Automatable: a funnel
   or hopper puts pieces on it and a Deployer holding a Cleaver chops them.
+- The yield gap: by hand (a Flensing Knife or Cleaver in your own hand, or a butcher minion's) you get about
+  half of what a machine gets, and now and then a cut is botched and a piece lost. A Deployer at the Butcher's
+  Table, the Deglover and the Surgery Table get all of it. The Mangler keeps the least meat and bone, but gives
+  armour scraps and the mob's own drops (a cow's leather, a golem's iron). All of this is data
+  (`data/bloodandbones/butchery_path/`).
+- A new attribute, Butchery Yield, scales what your hand gets out of a carcass. The Keen Butcher trait raises it.
+- The Flensing Knife is held on a carcass: it saws back and forth, a stroke every half second, and lets go
+  when the hide is off.
+- The Butcher's Table also chops a loose piece lying on its top, so a body too heavy to carry can be dragged
+  onto it.
+- The Surgery Table's Surgical Rig takes a carcass all the way down: its organs, one a cut, then its limbs, then
+  all of its meat and bone. It works a piece laid on it or a carcass lying on it.
 
 ### Blood
 
@@ -44,6 +58,17 @@ Everything below is in development builds only; the art is placeholder (see the 
 
 - Mangler, Guillotine, Beheader and Deglover kinetic machines, each with a filter slot on its top
   edge: a spawn egg, a carcass piece or a Create filter picks which carcasses it works on.
+- The machines' filters are asked about each part they could take: a Guillotine with an Attribute Filter set
+  to "is a carcass hind leg" takes only hind legs, from any mob, and passes the rest over. The Butcher's Table
+  and the Surgical Rig carry a filter too, on the edge of their tops.
+- The machines move: the Mangler's toothed grinders and the Deglover's rollers turn against each other, the
+  Beheader's saw spins, and the Guillotine's blade rises on its rope.
+- The Guillotine winds its blade up while it turns and drops it on a redstone pulse, taking one limb whole.
+- The Beheader strikes as soon as a head is in reach, so it takes heads off carcasses passing over it on a
+  chain.
+- The Mangler goes through a carcass fastest: each limb is torn off and ground in one stroke. The Beheader is
+  the quickest and cheapest machine; the Deglover costs the most stress and works no faster above 32 RPM.
+- Carcass pieces in Create's Attribute Filter by limb: hind leg, front leg, wing, arm, tentacle, neck.
 - Shackle Hook and Shackle Trolley on Create chain conveyors; trolleys queue a body's length apart.
 - Carcass pieces in Create's Attribute Filter: sort by mob, by part (head, body, limb, tail), fresh
   or rotting, skinned, or from a baby.
@@ -52,6 +77,8 @@ Everything below is in development builds only; the art is placeholder (see the 
 ### Cooking, display and decoration
 
 - Spit Roast and Specimen Jar (the jar shows one item, any item; a carcass piece pickles in it).
+- The Spit Roast takes whole carcasses: right-click it with the Meat Hook while dragging one. It cooks as fast
+  as it turns: a Hand Crank slowly, a shaft at 256 RPM eight times faster.
 - Butcher's Hook: a wall hook to hang a piece on; a fresh piece drips blood onto the floor below
   until it runs dry.
 - Bloody Casing: andesite casing filled with blood, joining up like Create's casings.

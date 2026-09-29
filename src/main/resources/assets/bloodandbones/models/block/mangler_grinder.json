@@ -1,0 +1,80 @@
+{
+ "parent": "block/block",
+ "render_type": "minecraft:cutout",
+ "textures": {
+  "grinder": "bloodandbones:block/mangler_grinder",
+  "casing": "create:block/andesite_casing",
+  "particle": "bloodandbones:block/mangler_grinder"
+ },
+ "elements": [
+  {
+   "from": [
+    1,
+    12,
+    2
+   ],
+   "to": [
+    15,
+    17,
+    7
+   ],
+   "faces": {
+    "north": {
+     "texture": "#grinder",
+     "uv": [
+      1,
+      0,
+      15,
+      5
+     ]
+    },
+    "south": {
+     "texture": "#grinder",
+     "uv": [
+      1,
+      0,
+      15,
+      5
+     ]
+    },
+    "east": {
+     "texture": "#casing",
+     "uv": [
+      0,
+      0,
+      5,
+      5
+     ]
+    },
+    "west": {
+     "texture": "#casing",
+     "uv": [
+      0,
+      0,
+      5,
+      5
+     ]
+    },
+    "up": {
+     "texture": "#grinder",
+     "uv": [
+      1,
+      0,
+      15,
+      5
+     ]
+    },
+    "down": {
+     "texture": "#grinder",
+     "uv": [
+      1,
+      0,
+      15,
+      5
+     ]
+    }
+   },
+   "name": "grinder"
+  }
+ ]
+}

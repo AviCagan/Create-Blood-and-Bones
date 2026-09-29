@@ -11,6 +11,15 @@ public final class BBTags {
     /** Blocks that stop rot entirely when near a carcass: the deep-cold ices. */
     public static final TagKey<Block> PRESERVES = TagKey.create(Registries.BLOCK, BloodAndBones.asResource("preserves"));
 
+    /**
+     * Encased fan air that keeps a carcass in its current cold, as the block tags of the same names do: a Create: Dragons
+     * Plus freezing fan preserves outright. Other addons' freezing currents join by adding their type.
+     */
+    public static final TagKey<com.simibubi.create.content.kinetics.fan.processing.FanProcessingType> CHILLING_AIR =
+            TagKey.create(com.simibubi.create.api.registry.CreateRegistries.FAN_PROCESSING_TYPE, BloodAndBones.asResource("chills"));
+    public static final TagKey<com.simibubi.create.content.kinetics.fan.processing.FanProcessingType> PRESERVING_AIR =
+            TagKey.create(com.simibubi.create.api.registry.CreateRegistries.FAN_PROCESSING_TYPE, BloodAndBones.asResource("preserves"));
+
     /** Mobs with no blood to drain: the skeletons. */
     public static final TagKey<net.minecraft.world.entity.EntityType<?>> BLOODLESS = TagKey.create(Registries.ENTITY_TYPE, BloodAndBones.asResource("bloodless"));
     /** Nether mobs: their carcasses drain Soul Blood, not blood (the trickle path to it). */

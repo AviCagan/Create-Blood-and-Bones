@@ -3,26 +3,41 @@ package com.avicagan.bloodandbones.cooking;
 import com.avicagan.bloodandbones.carcass.Blood;
 import com.avicagan.bloodandbones.carcass.CarcassButchery;
 import com.avicagan.bloodandbones.item.CarcassPieceItem;
+import com.avicagan.bloodandbones.machine.PartFilteringBehaviour;
+import com.avicagan.bloodandbones.machine.TableFilterSlot;
 import com.avicagan.bloodandbones.registry.BBTags;
+import com.simibubi.create.foundation.blockEntity.behaviour.BlockEntityBehaviour;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.registries.BuiltInRegistries;
 import net.minecraft.server.level.ServerLevel;
-import net.minecraft.sounds.SoundEvents;
 import net.minecraft.sounds.SoundSource;
 import net.minecraft.world.entity.item.ItemEntity;
+import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.level.block.entity.BlockEntityType;
 import net.minecraft.world.level.block.state.BlockState;
+import org.jetbrains.annotations.Nullable;
 import org.joml.Vector3d;
 
 import java.util.List;
 
-/** The piece on a butcher's table: held like a piece in a jar until a Cleaver takes it apart. */
+/**
+ * The piece on a butcher's table: held like a piece in a jar until a Cleaver takes it apart, or a loose piece lying on
+ * its top in the world (a body too heavy to carry, dragged there). Its filter picks which pieces it takes, so funnels
+ * only put those on it and a Cleaver only chops those: a filtered station on a mixed line. By hand it gets what a hand
+ * gets; a Deployer holding the Cleaver works it as a station, getting all of it.
+ */
 public class ButcherTableBlockEntity extends SpecimenJarBlockEntity {
-    /** A carcass piece only. */
+    /** Height of the table top, in blocks. */
+    public static final double TOP = 1.0;
+
+    /** Which pieces it takes; see {@link com.avicagan.bloodandbones.machine.PartFilter}. */
+    public PartFilteringBehaviour filtering;
+
+    /** A carcass piece its filter lets on. */
     @Override
-    protected boolean accepts(net.minecraft.world.item.ItemStack stack) {
-        return com.avicagan.bloodandbones.item.CarcassPieceItem.piece(stack) != null;
+    protected boolean accepts(ItemStack stack) {
+        return CarcassPieceItem.piece(stack) != null && (filtering == null || filtering.takes(stack));
     }
 
     /** For funnels and hoppers: one carcass piece goes on an empty table, and can be taken off again. */
@@ -63,7 +78,7 @@ public class ButcherTableBlockEntity extends SpecimenJarBlockEntity {
 
         @Override
         public boolean isItemValid(int slot, ItemStack stack) {
-            return CarcassPieceItem.piece(stack) != null;
+            return accepts(stack);
         }
     };
 
@@ -71,21 +86,52 @@ public class ButcherTableBlockEntity extends SpecimenJarBlockEntity {
         super(type, pos, state);
     }
 
+    @Override
+    public void addBehaviours(List<BlockEntityBehaviour> behaviours) {
+        super.addBehaviours(behaviours);
+        filtering = new PartFilteringBehaviour(this, new TableFilterSlot(14, state -> true));
+        behaviours.add(filtering);
+    }
+
     public static void registerCapabilities(net.neoforged.neoforge.capabilities.RegisterCapabilitiesEvent event) {
         event.registerBlockEntity(net.neoforged.neoforge.capabilities.Capabilities.ItemHandler.BLOCK,
                 com.avicagan.bloodandbones.registry.BBBlockEntities.BUTCHER_TABLE.get(), (be, side) -> be.inventory);
     }
 
+    /** A loose piece lying on the top that the filter lets it chop (nothing jointed to it, with something to cut it into). */
+    @Nullable
+    public CarcassButchery.Lying lying(ServerLevel level) {
+        for (CarcassButchery.Lying lying : CarcassButchery.lyingOn(level, getBlockPos(), TOP)) {
+            if (!CarcassButchery.isAttached(lying.carcass(), lying.bone()) && CarcassButchery.hasYields(lying.carcass(), lying.bone())
+                    && (filtering == null || filtering.takes(lying.carcass(), lying.bone()))) {
+                return lying;
+            }
+        }
+        return null;
+    }
+
     /**
-     * One chop: the piece comes apart into what butchering it gives, dropped on the table top, with the
-     * wet sound and spray of a cut. The cleaver comes away bloody from a mob that bleeds.
+     * One chop: the piece on the table, or else the piece lying on it, comes apart into what butchering it gives, dropped
+     * on the table top, with the wet sound and spray of a cut. The cleaver comes away bloody from a mob that bleeds.
      *
-     * @return false when there is nothing on the table, or its mob or part has nothing to cut it into
+     * @param who whoever holds the cleaver (a player's own hand gets the hand's share, a Deployer's all of it)
+     * @return false when there is nothing to chop, or its mob or part has nothing to cut it into
      */
-    public boolean chop(ServerLevel level, ItemStack cleaver) {
+    public boolean chop(ServerLevel level, ItemStack cleaver, @Nullable Player who) {
         CarcassPieceItem.Piece piece = CarcassPieceItem.piece(specimen());
         if (piece == null) {
-            return false;
+            CarcassButchery.Lying lying = lying(level);
+            if (lying == null) {
+                return false;
+            }
+            CarcassButchery.byHand(who, () -> {
+                CarcassButchery.butcher(level, lying.carcass(), lying.bone(), lying.at());
+                return true;
+            });
+            if (Blood.bloody(lying.carcass())) {
+                Blood.bloody(cleaver, level);
+            }
+            return true;
         }
         boolean cuttable = com.avicagan.bloodandbones.carcass.butchery.ButcheryManager.forEntity(piece.entity())
                 .map(table -> !table.part(piece.bone()).isEmpty()).orElse(false);
@@ -94,7 +140,7 @@ public class ButcherTableBlockEntity extends SpecimenJarBlockEntity {
             return false;
         }
         // (a piece that could give something is used up even when this chop's rolls come up empty)
-        List<ItemStack> yields = CarcassButchery.pieceYields(level, piece);
+        List<ItemStack> yields = CarcassButchery.byHand(who, () -> CarcassButchery.pieceYields(level, piece));
         take();
         BlockPos pos = getBlockPos();
         Vector3d top = new Vector3d(pos.getX() + 0.5, pos.getY() + 1.05, pos.getZ() + 0.5);

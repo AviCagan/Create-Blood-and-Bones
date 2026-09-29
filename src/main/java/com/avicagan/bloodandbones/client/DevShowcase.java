@@ -182,6 +182,9 @@ public final class DevShowcase {
                     if (step == HANDS + 1) {
                         mc.options.setCameraType(net.minecraft.client.CameraType.THIRD_PERSON_BACK);
                     }
+                } else if (phase == 8 && step == 1 && mc.player != null) {
+                    // the Flensing Knife held on the carcass in front: it saws back and forth as it works the hide loose
+                    mc.player.startUsingItem(InteractionHand.MAIN_HAND);
                 } else if (phase == HAND_GAP - 1) {
                     Screenshot.grab(mc.gameDirectory, PREFIX + "hand_" + step + ".png", mc.getMainRenderTarget(), message -> {
                     });
@@ -648,8 +651,11 @@ public final class DevShowcase {
             }
             carcass(level, onThem[i], at.above(), false);
             if (i == 0 && level.getBlockEntity(at) instanceof com.avicagan.bloodandbones.machine.CarcassMachineBlockEntity machine) {
-                // the filter slot, set for what lies on it
-                machine.filtering.setFilter(new ItemStack(net.minecraft.world.item.Items.COW_SPAWN_EGG));
+                // the filter slot, set for limbs: it tears the cow's legs off and grinds them, and leaves the rest lying on it
+                machine.filtering.setFilter(partFilter(new com.avicagan.bloodandbones.registry.BBItemAttributes.PiecePart("limb")));
+            }
+            if (machines[i] == BBBlocks.GUILLOTINE) {
+                observerClock(level, at);
             }
         }
 
@@ -743,6 +749,22 @@ public final class DevShowcase {
         int decoZ = o.getZ() + 34;
         decoration(level, o, decoZ, jarPig, roastCow);
 
+        // row F, off to the west: the machines bare, their parts turning (docs/BRIEF-AUDIT.md package 15), and the tables' filters
+        movingParts(level, new BlockPos(o.getX() - 34, ground, o.getZ() + 12), roastCow);
+        // a whole cow on a second spit, most of the way cooked
+        BlockPos wholeFire = new BlockPos(o.getX() - 11, o.getY(), z);
+        level.setBlockAndUpdate(wholeFire, Blocks.CAMPFIRE.defaultBlockState());
+        level.setBlockAndUpdate(wholeFire.above(), BBBlocks.SPIT_ROAST.getDefaultState().setValue(HorizontalAxisKineticBlock.HORIZONTAL_AXIS, Direction.Axis.X));
+        level.setBlockAndUpdate(wholeFire.above().west(), AllBlocks.CREATIVE_MOTOR.getDefaultState().setValue(DirectionalKineticBlock.FACING, Direction.EAST));
+        if (level.getBlockEntity(wholeFire.above().west()) instanceof CreativeMotorBlockEntity spitMotor) {
+            spitMotor.generatedSpeed.setValue(8);
+        }
+        CarcassSavedData.Carcass wholeCow = carcass(level, EntityType.COW, new BlockPos(o.getX() - 12, o.getY(), z + 12), false);
+        if (wholeCow != null && level.getBlockEntity(wholeFire.above()) instanceof SpitRoastBlockEntity wholeSpit) {
+            wholeSpit.skewer(level, wholeCow);
+            wholeSpit.progress = wholeSpit.cookTime() * 0.75F;
+        }
+
         double eye = o.getY();
         views = List.of(
                 // carcasses, from behind the row
@@ -782,8 +804,20 @@ public final class DevShowcase {
                 // the bits that fly off the bloody blocks when broken, thrown in mid-air just before the shot
                 new View(o.getX() + 0.5, eye, decoZ + 8.0, 0, 0),
                 // gut chains riding the chain conveyor
-                new View(o.getX() - 2.5, eye + 1.5, decoZ + 1.0, 0, -12));
-        debrisView = views.size() - 2;
+                new View(o.getX() - 2.5, eye + 1.5, decoZ + 1.0, 0, -12),
+                // the bare machines, parts turning: Mangler, Deglover, Beheader, and two Guillotines, one armed, one fallen
+                new View(o.getX() - 29.5, eye + 2.2, o.getZ() + 8.8, 0, 38),
+                // the Mangler's grinders and the Deglover's rollers, close
+                new View(o.getX() - 32.5, eye + 1.2, o.getZ() + 10.6, 0, 50),
+                // the Beheader's saw and the Guillotines' blades, close
+                new View(o.getX() - 27.5, eye + 1.2, o.getZ() + 10.0, 0, 30),
+                // the Butcher's Table and the Surgical Rig with their filters set
+                new View(o.getX() - 32.5, eye + 1.3, o.getZ() + 12.7, 0, 35),
+                // the two Guillotines from the south, level with their blades: one up, one fallen and winding back
+                new View(o.getX() - 26.5, eye, o.getZ() + 14.9, 180, 18),
+                // a whole cow roasting on a spit
+                new View(o.getX() - 10.5, eye + 1.0, o.getZ() + 16.6, 0, 18));
+        debrisView = views.size() - 8;
         debrisAt = new BlockPos(o.getX(), o.getY() + 1, decoZ + 13);
         BloodAndBones.LOGGER.info("[showcase] built at {}", o);
     }
@@ -890,6 +924,63 @@ public final class DevShowcase {
         }
     }
 
+    /**
+     * A pair of observers watching each other in the floor east of a machine: they pulse on and off for ever, and the one
+     * against the machine gives it a rising redstone edge every few ticks, so a Guillotine drops whenever it is wound up.
+     */
+    private static void observerClock(ServerLevel level, BlockPos machine) {
+        BlockPos near = machine.east();
+        BlockPos far = near.east();
+        level.setBlockAndUpdate(far, Blocks.OBSERVER.defaultBlockState().setValue(net.minecraft.world.level.block.DirectionalBlock.FACING, Direction.WEST));
+        level.setBlockAndUpdate(near, Blocks.OBSERVER.defaultBlockState().setValue(net.minecraft.world.level.block.DirectionalBlock.FACING, Direction.EAST));
+    }
+
+    /**
+     * The four machines with nothing on them, on motors, so their parts are seen turning: the Mangler's grinders, the
+     * Deglover's rollers, the Beheader's saw; a Guillotine wound up and armed, and one stopped with its blade fallen and
+     * part-wound. Beside them a Butcher's Table and a Surgery Table with its Surgical Rig, each with a filter set.
+     */
+    private static void movingParts(ServerLevel level, BlockPos start, CarcassSavedData.Carcass cow) {
+        BlockEntry<?>[] machines = {BBBlocks.MANGLER, BBBlocks.DEGLOVER, BBBlocks.BEHEADER, BBBlocks.GUILLOTINE, BBBlocks.GUILLOTINE};
+        for (int i = 0; i < machines.length; i++) {
+            BlockPos at = start.east(i * 2);
+            level.setBlockAndUpdate(at, machines[i].getDefaultState());
+            if (i < 4) {
+                level.setBlockAndUpdate(at.below(), AllBlocks.CREATIVE_MOTOR.getDefaultState().setValue(DirectionalKineticBlock.FACING, Direction.UP));
+                if (level.getBlockEntity(at.below()) instanceof CreativeMotorBlockEntity motor) {
+                    motor.generatedSpeed.setValue(i == 1 ? 24 : 48);
+                }
+            } else if (level.getBlockEntity(at) instanceof com.avicagan.bloodandbones.machine.CarcassMachineBlockEntity stopped) {
+                // no shaft: a blade that fell and was a third of the way back up when the shaft stopped
+                stopped.wind = 0.35F;
+                stopped.sendData();
+            }
+        }
+        // the tables, a little further on, filters set: the table for heads, the rig for bodies
+        BlockPos table = start.above().south(3);
+        level.setBlockAndUpdate(table, BBBlocks.BUTCHER_TABLE.getDefaultState());
+        if (level.getBlockEntity(table) instanceof com.avicagan.bloodandbones.cooking.ButcherTableBlockEntity butcher) {
+            butcher.filtering.setFilter(partFilter(new com.avicagan.bloodandbones.registry.BBItemAttributes.PiecePart("head")));
+            if (cow != null) {
+                butcher.put(CarcassPieceItem.of(cow, "head"));
+            }
+        }
+        BlockPos rig = table.east(2);
+        level.setBlockAndUpdate(rig, BBBlocks.SURGERY_TABLE.getDefaultState()
+                .setValue(com.avicagan.bloodandbones.body.SurgeryTableBlock.ATTACHMENT, com.avicagan.bloodandbones.body.TableAttachment.SURGICAL));
+        if (level.getBlockEntity(rig) instanceof com.avicagan.bloodandbones.body.SurgeryTableBlockEntity surgery) {
+            surgery.filtering.setFilter(partFilter(new com.avicagan.bloodandbones.registry.BBItemAttributes.PieceSlot("leg.hind")));
+        }
+    }
+
+    /** Create's Attribute Filter set to one of our part attributes. */
+    private static ItemStack partFilter(com.simibubi.create.content.logistics.item.filter.attribute.ItemAttribute attribute) {
+        ItemStack filter = new ItemStack(com.simibubi.create.AllItems.ATTRIBUTE_FILTER.get());
+        filter.set(com.simibubi.create.AllDataComponents.ATTRIBUTE_FILTER_MATCHED_ATTRIBUTES, List.of(
+                new com.simibubi.create.content.logistics.item.filter.attribute.ItemAttribute.ItemAttributeEntry(attribute, false)));
+        return filter;
+    }
+
     private static void place(ServerLevel level, List<BlockPos> placed, BlockPos at, Direction facing) {
         level.setBlockAndUpdate(at, BBBlocks.RIBCAGE_ARCH.getDefaultState().setValue(net.minecraft.world.level.block.HorizontalDirectionalBlock.FACING, facing));
         placed.add(at);
@@ -917,6 +1008,11 @@ public final class DevShowcase {
                 default -> new ItemStack(BBFluids.BLOOD.getBucket().get());
             };
             player.setItemInHand(InteractionHand.MAIN_HAND, stack);
+            if (step == 1) {
+                // stand beside the nearest carcass of the front row looking at its middle, to hold the knife on it
+                faceNearestCarcass(level, player);
+                player.startUsingItem(InteractionHand.MAIN_HAND);
+            }
             return;
         }
         if (step == HANDS) {
@@ -954,6 +1050,26 @@ public final class DevShowcase {
                 }
             }
         }
+    }
+
+    /** Stand 1.6 blocks west of the nearest carcass with a hide still on, looking at its torso. */
+    private static void faceNearestCarcass(ServerLevel level, ServerPlayer player) {
+        org.joml.Vector3d best = null;
+        for (CarcassSavedData.Carcass carcass : CarcassSavedData.get(level).all()) {
+            org.joml.Vector3d at = CarcassAssembler.boneWorldPosition(level, carcass, carcass.rootBone);
+            if (at != null && !carcass.skinned && com.avicagan.bloodandbones.carcass.Blood.bloody(carcass)
+                    && (best == null || at.distanceSquared(player.getX(), player.getY(), player.getZ()) < best.distanceSquared(player.getX(), player.getY(), player.getZ()))) {
+                best = at;
+            }
+        }
+        if (best == null) {
+            return;
+        }
+        double x = best.x - 1.6;
+        double y = best.y - 0.9;
+        double dy = best.y - (y + player.getEyeHeight());
+        float pitch = (float) -Math.toDegrees(Math.atan2(dy, 1.6));
+        player.teleportTo(level, x, y, best.z, -90.0F, pitch);
     }
 
     private static ItemStack carriedPiece(ServerLevel level) {

@@ -1,0 +1,12 @@
+{
+  "kinds": {
+    "meat": 0.25,
+    "bone": 0.25,
+    "offal": 0.0,
+    "fat": 0.0,
+    "hide": 0.0,
+    "other": 0.25
+  },
+  "loot_table": true,
+  "scraps": true
+}
