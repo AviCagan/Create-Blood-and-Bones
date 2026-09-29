@@ -14,17 +14,17 @@
   "joints": {
     "root/body/head": {
       "min_degrees": [
+        -15,
         -30,
-        -45,
-        -15
+        -6
       ],
       "max_degrees": [
-        60,
-        45,
-        15
+        25,
+        30,
+        6
       ],
-      "damping": 2.5,
-      "stiffness": 0.8,
+      "damping": 4.0,
+      "stiffness": 2.0,
       "contacts": false
     },
     "root/left_leg": {

@@ -28,18 +28,18 @@
   "joints": {
     "head": {
       "min_degrees": [
+        -20,
         -30,
-        -45,
-        -15
+        -10
       ],
       "max_degrees": [
-        60,
-        45,
-        15
+        40,
+        30,
+        10
       ],
-      "damping": 2.5,
-      "stiffness": 0.8,
-      "contacts": false
+      "damping": 4.0,
+      "stiffness": 2.0,
+      "contacts": true
     }
   },
   "butchery": {

@@ -46,6 +46,8 @@ import java.util.concurrent.ConcurrentHashMap;
 public class ShackleTrolleyEntity extends Entity {
     /** Hook point below the chain line: where Create hangs packages (ChainConveyorBlockEntity#tickBoxVisuals). */
     public static final double HANG = 9 / 16.0;
+    private static final double TURN_STIFFNESS = 30.0;
+    private static final double TURN_DAMPING = 7.0;
     private static final Quaterniond IDENTITY = new Quaterniond();
 
     /** Every trolley loaded in a server level (added/removed with the entity). */
@@ -95,12 +97,6 @@ public class ShackleTrolleyEntity extends Entity {
         if (start != null) {
             trolley.setPos(start);
             trolley.anchor = trolley.prevAnchor = start.subtract(0, HANG, 0);
-            // belly sideways out of the line of travel, as the trolley's tick keeps it, and up under the trolley at once
-            Vec3 heading = cursor.heading(be);
-            trolley.outX = -heading.z;
-            trolley.outZ = heading.x;
-            com.avicagan.bloodandbones.carcass.ShackleHookBlockEntity.liftOnto(level, carcass, torso, trolley.anchorPlot, trolley.anchor,
-                    trolley.outX, trolley.outZ);
         }
         trolley.syncCarcass();
         return trolley;
@@ -294,9 +290,29 @@ public class ShackleTrolleyEntity extends Entity {
         }
     }
 
-    /** Same as a Shackle Hook: belly toward (outX, outZ), its tilt left to its weight, its swing a little damped. */
+    /** Same spring as ShackleHookBlockEntity#turn: belly toward (outX, outZ), swing damped. */
     private void turn(ServerSubLevel body, SubLevelPhysicsSystem physics, double timeStep) {
-        com.avicagan.bloodandbones.carcass.ShackleHookBlockEntity.hangTurn(body, physics, timeStep, outX, outZ);
+        Quaterniond current = new Quaterniond(body.logicalPose().orientation());
+        Quaterniond wanted = com.avicagan.bloodandbones.carcass.ShackleHookBlockEntity.hangingOrientation(outX, outZ);
+        Quaterniond error = new Quaterniond(wanted).mul(new Quaterniond(current).invert()).normalize();
+        if (error.w < 0) {
+            error.set(-error.x, -error.y, -error.z, -error.w);
+        }
+        double angle = 2.0 * Math.acos(Math.min(1.0, error.w));
+        Vector3d axis = new Vector3d(error.x, error.y, error.z);
+        if (axis.lengthSquared() > 1.0e-10) {
+            axis.normalize();
+        } else {
+            axis.set(0.0, 1.0, 0.0);
+            angle = 0.0;
+        }
+        RigidBodyHandle handle = physics.getPhysicsHandle(body);
+        Vector3d angular = handle.getAngularVelocity(new Vector3d());
+        double mass = Math.max(0.05, body.getMassTracker().getMass());
+        Vector3d torque = new Vector3d(axis).mul(angle * TURN_STIFFNESS * mass).sub(new Vector3d(angular).mul(TURN_DAMPING * mass));
+        Vector3d impulse = torque.mul(timeStep);
+        current.invert().transform(impulse);
+        handle.applyLinearAndAngularImpulse(new Vector3d(), impulse);
     }
 
 

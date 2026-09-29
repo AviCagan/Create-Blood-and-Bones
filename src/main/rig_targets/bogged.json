@@ -15,12 +15,12 @@
         -20
       ],
       "max_degrees": [
-        50,
+        40,
         60,
         20
       ],
-      "damping": 2.5,
-      "stiffness": 0.8,
+      "damping": 4.0,
+      "stiffness": 1.5,
       "contacts": true
     },
     "right_arm": {

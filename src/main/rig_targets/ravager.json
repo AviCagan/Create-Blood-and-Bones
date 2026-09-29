@@ -27,16 +27,31 @@
     "neck": {
       "min_degrees": [
         -20,
-        -30,
-        -10
+        -25,
+        -6
       ],
       "max_degrees": [
-        40,
         30,
-        10
+        25,
+        6
       ],
-      "damping": 3.0,
-      "stiffness": 1.5,
+      "damping": 4.0,
+      "stiffness": 2.0,
+      "contacts": false
+    },
+    "neck/head": {
+      "min_degrees": [
+        -15,
+        -30,
+        -6
+      ],
+      "max_degrees": [
+        25,
+        30,
+        6
+      ],
+      "damping": 4.0,
+      "stiffness": 2.0,
       "contacts": false
     }
   },

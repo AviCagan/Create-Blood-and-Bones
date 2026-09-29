@@ -172,18 +172,18 @@
         -1.0
       ],
       "joint": {
-        "damping": 2.5,
+        "damping": 4.0,
         "max_degrees": [
-          60.0,
-          45.0,
-          15.0
+          25.0,
+          30.0,
+          6.0
         ],
         "min_degrees": [
+          -15.0,
           -30.0,
-          -45.0,
-          -15.0
+          -6.0
         ],
-        "stiffness": 0.8
+        "stiffness": 2.0
       },
       "name": "body/head/head_cube",
       "offset": [

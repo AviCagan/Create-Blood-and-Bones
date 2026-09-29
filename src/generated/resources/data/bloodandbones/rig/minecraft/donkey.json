@@ -164,7 +164,7 @@
         "mouth_saddle_wrap"
       ],
       "joint": {
-        "damping": 2.5,
+        "damping": 4.0,
         "max_degrees": [
           75.0,
           35.0,

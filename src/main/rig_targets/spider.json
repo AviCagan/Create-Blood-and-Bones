@@ -136,6 +136,21 @@
       "stiffness": 0.1,
       "contacts": false
     },
+    "head": {
+      "min_degrees": [
+        -15,
+        -30,
+        -6
+      ],
+      "max_degrees": [
+        25,
+        30,
+        6
+      ],
+      "damping": 4.0,
+      "stiffness": 2.0,
+      "contacts": false
+    },
     "body0": {
       "min_degrees": [
         -20,

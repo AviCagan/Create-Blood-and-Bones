@@ -57,7 +57,7 @@
         35,
         15
       ],
-      "damping": 2.5,
+      "damping": 4.0,
       "stiffness": 1.0,
       "contacts": false
     },

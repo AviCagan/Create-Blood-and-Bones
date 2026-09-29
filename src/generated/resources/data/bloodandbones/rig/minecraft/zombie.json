@@ -63,9 +63,9 @@
       ],
       "joint": {
         "contacts": true,
-        "damping": 2.5,
+        "damping": 4.0,
         "max_degrees": [
-          50.0,
+          40.0,
           60.0,
           20.0
         ],
@@ -74,7 +74,7 @@
           -60.0,
           -20.0
         ],
-        "stiffness": 0.8
+        "stiffness": 1.5
       },
       "name": "head",
       "offset": [

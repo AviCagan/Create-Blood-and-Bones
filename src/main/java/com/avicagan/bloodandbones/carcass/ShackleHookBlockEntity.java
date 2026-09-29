@@ -35,14 +35,9 @@ import java.util.UUID;
 public class ShackleHookBlockEntity extends BlockEntity {
     /** Occupied, loaded hooks per level, driven every physics substep. */
     private static final java.util.Map<ServerLevel, java.util.Set<ShackleHookBlockEntity>> ACTIVE = new java.util.WeakHashMap<>();
-    /**
-     * Torque spring gains per unit of torso mass that turn a hung body belly-out: about the upright only, so how it tilts is
-     * left to gravity and to what is still on it (a leg cut off changes how it hangs).
-     */
-    private static final double TURN_STIFFNESS = 10.0;
-    private static final double TURN_DAMPING = 3.0;
-    /** A little drag on its swing, per unit of torso mass: knocked, it swings a few times and has settled in a few seconds. */
-    private static final double SWING_DAMPING = 1.0;
+    /** Torque spring gains per unit of torso mass: turns the hanging body belly-out and damps its swing. */
+    private static final double TURN_STIFFNESS = 30.0;
+    private static final double TURN_DAMPING = 7.0;
 
     /** Called every physics substep: applies the orientation torque to every hanging carcass in the level. */
     public static void physicsTick(ServerLevel level, double timeStep) {
@@ -70,28 +65,25 @@ public class ShackleHookBlockEntity extends BlockEntity {
 
     /** Spring torque toward the hanging orientation, as a local angular impulse over this substep. */
     private void turn(ServerSubLevel body, dev.ryanhcode.sable.sublevel.system.SubLevelPhysicsSystem physics, double timeStep) {
-        hangTurn(body, physics, timeStep, outX, outZ);
-    }
-
-    /**
-     * What holds a hung body (a Shackle Hook's, a trolley's): a spring about the upright that turns its belly (the torso's
-     * part-local -z) to face {@code out}, and a little drag on its swing. Nothing holds its tilt: it hangs from the hook
-     * however its weight takes it, head end up as it hangs by the neck, everything below loose, a knock swinging it and a
-     * leg cut off leaving it lower on the side that kept its leg.
-     */
-    public static void hangTurn(ServerSubLevel body, dev.ryanhcode.sable.sublevel.system.SubLevelPhysicsSystem physics, double timeStep, double outX, double outZ) {
         Quaterniond current = new Quaterniond(body.logicalPose().orientation());
-        Vector3d belly = current.transform(new Vector3d(0.0, 0.0, -1.0));
-        Vector3d out = new Vector3d(outX, 0.0, outZ);
-        double yaw = 0.0;
-        if (belly.x * belly.x + belly.z * belly.z > 1.0e-4 && out.lengthSquared() > 1.0e-8) {
-            // the turn about the upright that takes the belly, seen from above, to face out
-            yaw = Math.atan2(belly.z * out.x - belly.x * out.z, belly.x * out.x + belly.z * out.z);
+        Quaterniond wanted = hangingOrientation(outX, outZ);
+        // rotation that takes the current orientation to the wanted one, in world space
+        Quaterniond error = new Quaterniond(wanted).mul(new Quaterniond(current).invert()).normalize();
+        if (error.w < 0) {
+            error.set(-error.x, -error.y, -error.z, -error.w);
+        }
+        double angle = 2.0 * Math.acos(Math.min(1.0, error.w));
+        Vector3d axis = new Vector3d(error.x, error.y, error.z);
+        if (axis.lengthSquared() > 1.0e-10) {
+            axis.normalize();
+        } else {
+            axis.set(0.0, 1.0, 0.0);
+            angle = 0.0;
         }
         dev.ryanhcode.sable.api.physics.handle.RigidBodyHandle handle = physics.getPhysicsHandle(body);
         Vector3d angular = handle.getAngularVelocity(new Vector3d());
         double mass = Math.max(0.05, body.getMassTracker().getMass());
-        Vector3d torque = new Vector3d(-angular.x * SWING_DAMPING, yaw * TURN_STIFFNESS - angular.y * TURN_DAMPING, -angular.z * SWING_DAMPING).mul(mass);
+        Vector3d torque = new Vector3d(axis).mul(angle * TURN_STIFFNESS * mass).sub(new Vector3d(angular).mul(TURN_DAMPING * mass));
         Vector3d impulse = torque.mul(timeStep);
         current.invert().transform(impulse); // local frame
         handle.applyLinearAndAngularImpulse(new Vector3d(), impulse);
@@ -266,44 +258,8 @@ public class ShackleHookBlockEntity extends BlockEntity {
         outZ = out.z;
         setChanged();
         level.sendBlockUpdated(worldPosition, getBlockState(), getBlockState(), 3);
-        // put up on the tip first (a hook on a ship has its tip in the ship's own coordinates, and is left as it was)
-        if (dev.ryanhcode.sable.Sable.HELPER.getContaining(level, worldPosition) == null) {
-            liftOnto(level, carcass, torso, anchorPlot, ShackleHookBlock.tip(worldPosition, getBlockState()), outX, outZ);
-        }
         attach(level, false);
         return true;
-    }
-
-    /**
-     * Put a carcass up on a hook (a Shackle Hook's tip, a trolley's): the whole of it moved as one, not bent, so its neck
-     * junction is at the hook and its torso hangs straight down from it, belly out, everything still. Joined where it lay,
-     * the hook's joint yanked it up to the hook in one step, and with nothing holding its tilt any more (hangTurn) the
-     * yank could throw it up over the hook to lie on top of it.
-     */
-    public static void liftOnto(ServerLevel level, CarcassSavedData.Carcass carcass, ServerSubLevel torso, Vector3d anchorPlot, Vec3 hook,
-                                double outX, double outZ) {
-        ServerSubLevelContainer container = SubLevelContainer.getContainer(level);
-        if (container == null) {
-            return;
-        }
-        var pipeline = container.physicsSystem().getPipeline();
-        Vector3d anchorWorld = torso.logicalPose().transformPosition(new Vector3d(anchorPlot), new Vector3d());
-        Quaterniond turn = hangingOrientation(outX, outZ).mul(new Quaterniond(torso.logicalPose().orientation()).invert());
-        Vector3d at = new Vector3d(hook.x, hook.y, hook.z);
-        for (UUID id : carcass.bones.values()) {
-            if (!(container.getSubLevel(id) instanceof ServerSubLevel body) || body.isRemoved()) {
-                continue;
-            }
-            dev.ryanhcode.sable.companion.math.Pose3d pose = body.logicalPose();
-            Vector3d position = turn.transform(new Vector3d(pose.position()).sub(anchorWorld)).add(at);
-            Quaterniond orientation = new Quaterniond(turn).mul(pose.orientation()).normalize();
-            pose.position().set(position);
-            pose.orientation().set(orientation);
-            pipeline.teleport(body, pose.position(), pose.orientation());
-            pipeline.resetVelocity(body);
-            body.updateLastPose();
-            pipeline.wakeUp(body);
-        }
     }
 
     public void release(ServerLevel level) {

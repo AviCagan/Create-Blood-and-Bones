@@ -9,6 +9,21 @@
     "right_fin": "body_front"
   },
   "joints": {
+    "head": {
+      "min_degrees": [
+        -15,
+        -30,
+        -6
+      ],
+      "max_degrees": [
+        25,
+        30,
+        6
+      ],
+      "damping": 4.0,
+      "stiffness": 2.0,
+      "contacts": false
+    },
     "body_back": {
       "min_degrees": [
         -45,

@@ -25,6 +25,21 @@
       "stiffness": 2.0,
       "contacts": false
     },
+    "head/real_head": {
+      "min_degrees": [
+        -20,
+        -35,
+        -10
+      ],
+      "max_degrees": [
+        30,
+        35,
+        10
+      ],
+      "damping": 4.0,
+      "stiffness": 2.0,
+      "contacts": false
+    },
     "tail/real_tail": {
       "min_degrees": [
         -45,

@@ -45,18 +45,18 @@
         -5.0
       ],
       "joint": {
-        "damping": 2.5,
+        "damping": 4.0,
         "max_degrees": [
-          60.0,
-          45.0,
-          15.0
+          30.0,
+          35.0,
+          10.0
         ],
         "min_degrees": [
-          -30.0,
-          -45.0,
-          -15.0
+          -20.0,
+          -35.0,
+          -10.0
         ],
-        "stiffness": 0.8
+        "stiffness": 2.0
       },
       "name": "head/real_head",
       "offset": [
