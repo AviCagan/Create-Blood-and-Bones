@@ -3387,4 +3387,5 @@ Checked against the old code: with the old bands `fitFarmerFindsRipeCropsNoLater
 **Tests** (504 in all): `fitFarmerFindsRipeCropsNoLater`, `looksComeAsOftenAsTheScreenSays`, `wingsBuffetTheHeadBites`,
 `withMeKeepsToItsReach`, `surgeonWithNoTableSaysSo` and `reloadMovesATaskWhereItIsDone` are new;
 `tenderFillsTroughsAndCradles` fills from a tank of eight blocks, and `taskFileKindToolAndAnchorsCount` reads the tool's
-fixed fields and words. The new and changed tests passed ten times over in one world.
+fixed fields and words. The new and changed tests passed ten times over in one world, and the suite passed three full runs
+in a row.
