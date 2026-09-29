@@ -43,7 +43,7 @@ import java.util.List;
  * section's border has nothing near that section, so it goes; the leg cut off it falls back into it.
  * <p>
  * Played 32 times over four ways (hung over a section's border, over a chunk's edge, and flung off at 6 and at 16 blocks
- * a second across chunks), every leg stopped on the ground: the fall was not made to happen again (ARCHITECTURE 15.29).
+ * a second across chunks), every leg stopped on the ground: the fall was not made to happen again (ARCHITECTURE 15.30).
  */
 @GameTestHolder(BloodAndBones.MOD_ID)
 @PrefixGameTestTemplate(false)

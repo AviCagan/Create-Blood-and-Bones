@@ -335,6 +335,16 @@ public final class DevShowcase {
                     mc.player.setYHeadRot(yaw);
                     mc.player.yHeadRotO = yaw;
                 }
+                // the missing-limb shot: square on to the camera, looking level
+                if (mc.player != null && t >= 181 && t <= 188) {
+                    float yaw = mc.player.getYRot();
+                    mc.player.setYBodyRot(yaw);
+                    mc.player.yBodyRotO = yaw;
+                    mc.player.setYHeadRot(yaw);
+                    mc.player.yHeadRotO = yaw;
+                    mc.player.setXRot(0.0F);
+                    mc.player.xRotO = 0.0F;
+                }
                 if (t == 0) {
                     mc.options.setCameraType(net.minecraft.client.CameraType.THIRD_PERSON_FRONT);
                     mc.options.hideGui = true;
@@ -441,10 +451,38 @@ public final class DevShowcase {
                         player.serverLevel().addFreshEntity(surgeon);
                         com.avicagan.bloodandbones.body.BodyEffects.body(player).lose(com.avicagan.bloodandbones.body.BodyPart.LEFT_ARM, 2);
                         com.avicagan.bloodandbones.body.BodyEffects.changed(player);
+                        // what the screen offers is what they carry: prosthetics, grafts, a module, their own arm, and blood to pay with
+                        var inventory = player.getInventory();
+                        inventory.setItem(1, new ItemStack(BBItems.HOOK_HAND.get()));
+                        inventory.setItem(2, new ItemStack(BBItems.FLESH_ARM.get()));
+                        inventory.setItem(3, new ItemStack(BBItems.PEG_LEG.get()));
+                        inventory.setItem(4, new ItemStack(BBItems.CRUDE_HEART.get()));
+                        inventory.setItem(5, new ItemStack(BBItems.GLASS_EYE.get()));
+                        inventory.setItem(6, new ItemStack(BBItems.module(com.avicagan.bloodandbones.cyber.Module.MAGNET_COIL)));
+                        inventory.setItem(7, BBItems.partItem(com.avicagan.bloodandbones.body.BodyPart.Kind.ARM).of(player));
+                        // and a Cleaver of their own, which fits nothing: no green mark from it, and not in the carried row
+                        inventory.setItem(8, new ItemStack(BBItems.CLEAVER.get()));
+                        inventory.setItem(9, new ItemStack(com.avicagan.bloodandbones.registry.BBFluids.BLOOD.getBucket().get()));
                         if (com.avicagan.bloodandbones.body.SurgeryTableBlock.lieDown(player.serverLevel(), at, player)) {
                             net.neoforged.neoforge.network.PacketDistributor.sendToPlayer(player, new com.avicagan.bloodandbones.body.Surgery.OpenPayload(at, player.getId()));
                         }
                     });
+                } else if (t == 118) {
+                    // first the brass arm picked: unclip it, swap it, fit the carried module; a slot on the doll hovered
+                    if (mc.screen instanceof SurgeryScreen surgery) {
+                        surgery.select(com.avicagan.bloodandbones.body.BodyPart.RIGHT_ARM);
+                        surgery.pinHover(com.avicagan.bloodandbones.body.BodyPart.LEFT_EYE);
+                    }
+                    mc.getToasts().clear();
+                } else if (t == 124) {
+                    Screenshot.grab(mc.gameDirectory, PREFIX + "surgery_1.png", mc.getMainRenderTarget(), message -> {
+                    });
+                } else if (t == 126) {
+                    // then the ragged stump: what fits it, and what it costs
+                    if (mc.screen instanceof SurgeryScreen surgery) {
+                        surgery.select(com.avicagan.bloodandbones.body.BodyPart.LEFT_ARM);
+                        surgery.pinHover(null);
+                    }
                 } else if (t == 137) {
                     // the advancement toasts would cover the screen's corner
                     mc.getToasts().clear();
@@ -646,6 +684,38 @@ public final class DevShowcase {
                     });
                     mc.options.setCameraType(net.minecraft.client.CameraType.FIRST_PERSON);
                     mc.options.hideGui = true;
+                } else if (t == 178) {
+                    // a missing limb holds and wears nothing: the left arm gone with a shield in that hand, the right leg gone in
+                    // iron leggings and boots; the shield and that leg's armour are not drawn, the sword and the rest are
+                    server.execute(() -> {
+                        ServerPlayer player = server.getPlayerList().getPlayers().get(0);
+                        var body = com.avicagan.bloodandbones.body.BodyEffects.body(player);
+                        body.lose(com.avicagan.bloodandbones.body.BodyPart.LEFT_ARM);
+                        body.lose(com.avicagan.bloodandbones.body.BodyPart.RIGHT_LEG, 3);
+                        com.avicagan.bloodandbones.body.BodyEffects.changed(player);
+                        player.setItemSlot(net.minecraft.world.entity.EquipmentSlot.CHEST, new ItemStack(net.minecraft.world.item.Items.IRON_CHESTPLATE));
+                        player.setItemSlot(net.minecraft.world.entity.EquipmentSlot.LEGS, new ItemStack(net.minecraft.world.item.Items.IRON_LEGGINGS));
+                        player.setItemSlot(net.minecraft.world.entity.EquipmentSlot.FEET, new ItemStack(net.minecraft.world.item.Items.IRON_BOOTS));
+                        player.setItemInHand(InteractionHand.MAIN_HAND, new ItemStack(net.minecraft.world.item.Items.IRON_SWORD));
+                        player.setItemInHand(InteractionHand.OFF_HAND, new ItemStack(net.minecraft.world.item.Items.SHIELD));
+                        // turned away from the minions, so the camera in front has open ground behind it
+                        player.teleportTo(player.serverLevel(), player.getX(), player.getY(), player.getZ(), 180.0F, 0.0F);
+                    });
+                    mc.options.setCameraType(net.minecraft.client.CameraType.THIRD_PERSON_FRONT);
+                } else if (t == 188) {
+                    Screenshot.grab(mc.gameDirectory, PREFIX + "body_5.png", mc.getMainRenderTarget(), message -> {
+                    });
+                    server.execute(() -> {
+                        ServerPlayer player = server.getPlayerList().getPlayers().get(0);
+                        player.setData(com.avicagan.bloodandbones.body.BBAttachments.BODY, new com.avicagan.bloodandbones.body.Body());
+                        com.avicagan.bloodandbones.body.BodyEffects.changed(player);
+                        for (var slot : net.minecraft.world.entity.EquipmentSlot.values()) {
+                            player.setItemSlot(slot, ItemStack.EMPTY);
+                        }
+                        // facing the minions again, as their shots want
+                        player.teleportTo(player.serverLevel(), player.getX(), player.getY(), player.getZ(), 0.0F, 20.0F);
+                    });
+                    mc.options.setCameraType(net.minecraft.client.CameraType.FIRST_PERSON);
                 } else if (t == 200) {
                     Screenshot.grab(mc.gameDirectory, PREFIX + "minions_0.png", mc.getMainRenderTarget(), message -> {
                     });
@@ -1063,7 +1133,7 @@ public final class DevShowcase {
         }
     }
 
-    // ---------------------------------------------------------------- carcasses on contraptions and ships (15.29)
+    // ---------------------------------------------------------------- carcasses on contraptions and ships (15.30)
 
     /** Server time the contraption yard was started, -1 before; its corner; how far through its steps it is. */
     private static long rideAt = -1;
