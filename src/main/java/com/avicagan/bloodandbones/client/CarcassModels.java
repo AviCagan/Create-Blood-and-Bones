@@ -44,6 +44,10 @@ public final class CarcassModels {
     public static void drawBone(Rig rig, Bone bone, ResourceLocation texture, List<CarcassLook.Coat> passes, int rot,
                                 PoseStack poseStack, MultiBufferSource buffers, int packedLight) {
         boolean construct = com.avicagan.bloodandbones.config.BBClientConfig.bloodless();
+        if (rig.fitted() && !texture.equals(CarcassLook.FLESH)) {
+            // a generic body wears the skin its mob's renderer gives it, which the server cannot know
+            texture = FittedModels.skin(rig, texture);
+        }
         if (construct) {
             texture = texture.equals(CarcassLook.FLESH) ? ConstructPlating.plated(FLESH_BLOODLESS, true) : ConstructPlating.plated(texture, false);
         }
@@ -76,6 +80,10 @@ public final class CarcassModels {
     }
 
     private static void drawPass(Rig rig, Bone bone, String layer, ResourceLocation texture, int color, PoseStack poseStack, MultiBufferSource buffers, int packedLight) {
+        if (rig.fitted()) {
+            FittedModels.draw(rig, bone, texture, color, poseStack, buffers, packedLight);
+            return;
+        }
         ModelLayerLocation location = layerOf(rig, layer);
         ModelPart part = resolve(location, bone.part());
         if (part == null) {

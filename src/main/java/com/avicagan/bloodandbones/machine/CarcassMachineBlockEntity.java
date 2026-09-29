@@ -82,18 +82,22 @@ public class CarcassMachineBlockEntity extends KineticBlockEntity implements Cle
     /** How far from its zone a carcass's torso may lie and still have a part in reach (its limbs hang off it). */
     private static final double BODY_SPAN = 6.0;
 
-    private static final Map<String, Item> SKULLS = Map.of(
-            "minecraft:zombie", Items.ZOMBIE_HEAD,
-            "minecraft:husk", Items.ZOMBIE_HEAD,
-            "minecraft:drowned", Items.ZOMBIE_HEAD,
-            "minecraft:skeleton", Items.SKELETON_SKULL,
-            "minecraft:stray", Items.SKELETON_SKULL,
-            "minecraft:bogged", Items.SKELETON_SKULL,
-            "minecraft:wither_skeleton", Items.WITHER_SKELETON_SKULL,
-            "minecraft:creeper", Items.CREEPER_HEAD,
-            "minecraft:piglin", Items.PIGLIN_HEAD,
-            "minecraft:piglin_brute", Items.PIGLIN_HEAD);
-    /** Chance the Beheader keeps a skull whole; a wither skull is rarer. */
+    /**
+     * What the Beheader may keep whole from a mob's head, and how often: data (data/&lt;ns&gt;/data_maps/entity_type/
+     * beheader_skulls.json), so another mod's mob with a head item of its own can join.
+     */
+    public record Skull(Item item, float chance) {
+        public static final com.mojang.serialization.Codec<Skull> CODEC = com.mojang.serialization.codecs.RecordCodecBuilder.create(i -> i.group(
+                net.minecraft.core.registries.BuiltInRegistries.ITEM.byNameCodec().fieldOf("item").forGetter(Skull::item),
+                com.mojang.serialization.Codec.floatRange(0.0F, 1.0F).optionalFieldOf("chance", 0.5F).forGetter(Skull::chance)
+        ).apply(i, Skull::new));
+    }
+
+    public static final net.neoforged.neoforge.registries.datamaps.DataMapType<net.minecraft.world.entity.EntityType<?>, Skull> SKULLS =
+            net.neoforged.neoforge.registries.datamaps.DataMapType.builder(com.avicagan.bloodandbones.BloodAndBones.asResource("beheader_skulls"),
+                    net.minecraft.core.registries.Registries.ENTITY_TYPE, Skull.CODEC).build();
+
+    /** What the map said before it was data: the Beheader keeps a skull whole half the time, a wither skull one time in ten. */
     public static final float SKULL_CHANCE = 0.5F;
     public static final float WITHER_SKULL_CHANCE = 0.1F;
 
@@ -177,7 +181,7 @@ public class CarcassMachineBlockEntity extends KineticBlockEntity implements Cle
 
     /** Ticks a stroke takes at this speed; for the Guillotine, the wind-up. */
     public int strokeTicks() {
-        return Math.max(MIN_STROKE, Math.round(BASE_STROKE * kind().pace / processingSpeed()));
+        return Math.max(MIN_STROKE, Math.round(BASE_STROKE * com.avicagan.bloodandbones.config.BBServerConfig.machinePace(kind()) / processingSpeed()));
     }
 
     @Override
@@ -438,13 +442,12 @@ public class CarcassMachineBlockEntity extends KineticBlockEntity implements Cle
 
     /** One blade stroke through a limb's joint: it comes off at once, whole. */
     private boolean chop(ServerLevel level, CarcassSavedData.Carcass carcass, String bone, Vector3d at, boolean heads) {
-        String entity = carcass.entity.toString();
         CarcassButchery.sever(level, carcass, bone, at);
         if (heads) {
-            Item skull = SKULLS.get(entity);
-            float chance = skull == Items.WITHER_SKELETON_SKULL ? WITHER_SKULL_CHANCE : SKULL_CHANCE;
-            if (skull != null && level.random.nextFloat() < chance) {
-                store(new ItemStack(skull));
+            Skull skull = net.minecraft.core.registries.BuiltInRegistries.ENTITY_TYPE.getOptional(carcass.entity)
+                    .map(type -> type.builtInRegistryHolder().getData(SKULLS)).orElse(null);
+            if (skull != null && level.random.nextFloat() < skull.chance()) {
+                store(new ItemStack(skull.item()));
             }
         }
         level.playSound(null, at.x, at.y, at.z, BBSounds.MACHINE_BLADE.get(), SoundSource.BLOCKS, 0.4F, heads ? 1.4F : 0.8F);

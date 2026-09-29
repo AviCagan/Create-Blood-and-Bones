@@ -120,6 +120,7 @@ public class BloodAndBones {
             event.register(com.avicagan.bloodandbones.body.Vent.EFFECTS);
             event.register(com.avicagan.bloodandbones.parts.Hides.SOURCES);
             event.register(com.avicagan.bloodandbones.parts.Organs.SOURCES);
+            event.register(com.avicagan.bloodandbones.machine.CarcassMachineBlockEntity.SKULLS);
         });
 
         LOGGER.info("Create: Blood & Bones loaded");

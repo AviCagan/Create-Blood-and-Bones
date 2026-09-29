@@ -28,7 +28,13 @@ public class ImplantItem extends Item {
         this.spec = spec;
     }
 
+    /** What it is and does, with the figures its data file gives (ImplantFigures). */
     public ImplantSpec spec() {
+        return ImplantFigures.of(this, spec);
+    }
+
+    /** As it was built: what its data file's figures default to. */
+    public ImplantSpec defaultSpec() {
         return spec;
     }
 
@@ -41,11 +47,11 @@ public class ImplantItem extends Item {
     }
 
     public float walk() {
-        return spec.walk();
+        return spec().walk();
     }
 
     public float work() {
-        return spec.work();
+        return spec().work();
     }
 
     @Nullable
@@ -123,7 +129,7 @@ public class ImplantItem extends Item {
         if (anyFuel()) {
             tooltip.add(Component.translatable("bloodandbones.implant.runs_on_any").withStyle(ChatFormatting.GRAY));
         } else if (fuel != null) {
-            tooltip.add(Component.translatable("bloodandbones.implant.runs_on", new FluidStack(fuel, 1).getHoverName(), spec.drain())
+            tooltip.add(Component.translatable("bloodandbones.implant.runs_on", new FluidStack(fuel, 1).getHoverName(), spec().drain())
                     .withStyle(ChatFormatting.GRAY));
         }
         int slots = spec.slots();

@@ -125,7 +125,7 @@ public class BBBlocks {
                 .properties(p -> p.mapColor(MapColor.METAL).noOcclusion().sound(net.minecraft.world.level.block.SoundType.NETHERITE_BLOCK))
                 .transform(com.simibubi.create.foundation.data.TagGen.pickaxeOnly())
                 .blockstate((c, p) -> p.simpleBlock(c.get(), p.models().getExistingFile(p.modLoc("block/" + kind.id))))
-                .onRegister(block -> com.simibubi.create.api.stress.BlockStressValues.IMPACTS.register(block, () -> kind.stress))
+                .onRegister(block -> com.simibubi.create.api.stress.BlockStressValues.IMPACTS.register(block, () -> com.avicagan.bloodandbones.config.BBServerConfig.machineStress(kind)))
                 .lang(name)
                 // the block's own model has no moving parts (the renderer turns them); the item shows them standing still
                 .item().model((c, p) -> p.withExistingParent(c.getName(), p.modLoc("block/" + kind.id + "_item"))).build()

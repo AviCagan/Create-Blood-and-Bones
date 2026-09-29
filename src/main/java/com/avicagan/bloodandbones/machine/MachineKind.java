@@ -17,7 +17,7 @@ public enum MachineKind {
     DEGLOVER("deglover", 16.0, 0.5F, 32);
 
     public final String id;
-    /** Stress impact per RPM. */
+    /** Stress impact per RPM (this and the pace are the server config's defaults, which are read). */
     public final double stress;
     /** How long a stroke (or the Guillotine's wind-up) takes, as a share of the base time. */
     public final float pace;

@@ -26,7 +26,7 @@ import java.util.WeakHashMap;
  */
 public final class Necrosis {
     public static final int MAX = 100;
-    /** Rot from one swing (a hit or a block broken), from one block run, from one meal. */
+    /** Rot from one swing (a hit or a block broken), from one block run, from one meal (the server config's defaults, which are read). */
     public static final int SWING = 1;
     public static final double BLOCKS_PER_POINT = 4.0;
     public static final int MEAL = 3;
@@ -85,10 +85,11 @@ public final class Necrosis {
             if (!BBFluids.isBlood(FluidBacktankItem.fluid(FluidBacktankItem.wornBy(wearer)))) {
                 continue;
             }
-            if (BodyEffects.take(wearer, PERFUSE_MB) < PERFUSE_MB) {
+            int perfuse = com.avicagan.bloodandbones.config.BBServerConfig.perfuseMb();
+            if (BodyEffects.take(wearer, perfuse) < perfuse) {
                 continue;
             }
-            implant.set(BBDataComponents.NECROSIS, Math.max(0, of(implant) - PERFUSE_POINTS));
+            implant.set(BBDataComponents.NECROSIS, Math.max(0, of(implant) - com.avicagan.bloodandbones.config.BBServerConfig.perfusePoints()));
             changed = true;
         }
         return changed;
@@ -96,18 +97,18 @@ public final class Necrosis {
 
     @SubscribeEvent
     public static void onHit(AttackEntityEvent event) {
-        use(event.getEntity(), BodyEffects.armFor(event.getEntity(), InteractionHand.MAIN_HAND), SWING);
+        use(event.getEntity(), BodyEffects.armFor(event.getEntity(), InteractionHand.MAIN_HAND), com.avicagan.bloodandbones.config.BBServerConfig.necrosisPerSwing());
     }
 
     @SubscribeEvent
     public static void onBreak(BlockEvent.BreakEvent event) {
-        use(event.getPlayer(), BodyEffects.armFor(event.getPlayer(), InteractionHand.MAIN_HAND), SWING);
+        use(event.getPlayer(), BodyEffects.armFor(event.getPlayer(), InteractionHand.MAIN_HAND), com.avicagan.bloodandbones.config.BBServerConfig.necrosisPerSwing());
     }
 
     @SubscribeEvent
     public static void onEaten(LivingEntityUseItemEvent.Finish event) {
         if (event.getItem().has(net.minecraft.core.component.DataComponents.FOOD)) {
-            use(event.getEntity(), BodyPart.STOMACH, MEAL);
+            use(event.getEntity(), BodyPart.STOMACH, com.avicagan.bloodandbones.config.BBServerConfig.necrosisPerMeal());
         }
     }
 
@@ -125,8 +126,9 @@ public final class Necrosis {
         }
         double moved = Math.min(1.0, Math.sqrt((now.x - last.x) * (now.x - last.x) + (now.z - last.z) * (now.z - last.z)));
         double run = RUN.getOrDefault(player, 0.0) + moved * (player.isSprinting() ? 1.5 : 1.0);
-        while (run >= BLOCKS_PER_POINT) {
-            run -= BLOCKS_PER_POINT;
+        double perPoint = com.avicagan.bloodandbones.config.BBServerConfig.necrosisBlocksPerPoint();
+        while (run >= perPoint) {
+            run -= perPoint;
             use(player, BodyPart.LEFT_LEG, 1);
             use(player, BodyPart.RIGHT_LEG, 1);
         }

@@ -38,15 +38,15 @@ import java.util.function.Predicate;
 public final class BBItemAttributes {
     private static final DeferredRegister<ItemAttributeType> TYPES = DeferredRegister.create(CreateRegistries.ITEM_ATTRIBUTE_TYPE, BloodAndBones.MOD_ID);
 
-    /** Fresh enough that butchering it gives everything (see CarcassButchery#dropYields). */
+    /** Fresh enough that butchering it gives everything (see CarcassButchery#dropYields): the default of the server config's going_off_below. */
     public static final float FRESH = 0.6F;
-    /** Rotting: its meat comes out as rotten flesh. */
+    /** Rotting: its meat comes out as rotten flesh; the default of rotting_below. */
     public static final float ROTTING = 0.3F;
 
     public static final Holder<ItemAttributeType> FRESH_PIECE = singleton("fresh_piece", "is fresh meat", "is not fresh meat",
-            piece -> piece.freshness() >= FRESH);
+            piece -> piece.freshness() >= com.avicagan.bloodandbones.config.BBServerConfig.goingOffBelow());
     public static final Holder<ItemAttributeType> ROTTING_PIECE = singleton("rotting_piece", "is rotting", "is not rotting",
-            piece -> piece.freshness() < ROTTING);
+            piece -> piece.freshness() < com.avicagan.bloodandbones.config.BBServerConfig.rottenBelow());
     public static final Holder<ItemAttributeType> SKINNED_PIECE = singleton("skinned_piece", "is skinned", "is not skinned",
             CarcassPieceItem.Piece::skinned);
     public static final Holder<ItemAttributeType> BABY_PIECE = singleton("baby_piece", "is from a baby", "is not from a baby",

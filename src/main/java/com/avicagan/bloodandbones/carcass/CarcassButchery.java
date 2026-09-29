@@ -28,7 +28,7 @@ import java.util.UUID;
  * or {@link #byHand} for whoever holds the blade; a player's own cut or stroke with none set is by hand.
  */
 public final class CarcassButchery {
-    /** Cleaver cuts it takes to get through a joint. */
+    /** Cleaver cuts it takes to get through a joint: the default of the server config's cuts_to_sever, which is read. */
     public static final int CUTS_TO_SEVER = 3;
 
     private CarcassButchery() {
@@ -69,18 +69,18 @@ public final class CarcassButchery {
             Blood.wound(level, carcass, at, 8, 1);
             level.playSound(null, at.x, at.y, at.z, com.avicagan.bloodandbones.registry.BBSounds.CARCASS_CUT.get(), SoundSource.BLOCKS, 0.8F, 0.7F);
         }
-        if (attached && cuts >= CUTS_TO_SEVER) {
+        if (attached && cuts >= com.avicagan.bloodandbones.config.BBServerConfig.cutsToSever()) {
             sever(level, carcass, bone, at);
-        } else if (!attached && cuts >= CUTS_TO_BUTCHER) {
+        } else if (!attached && cuts >= com.avicagan.bloodandbones.config.BBServerConfig.cutsToButcher()) {
             butcher(level, carcass, bone, at);
         }
         CarcassSavedData.get(level).setDirty();
         return true;
     }
 
-    /** Cleaver cuts it takes to break a loose piece down into meat. */
+    /** Cleaver cuts it takes to break a loose piece down into meat: the default of cuts_to_butcher. */
     public static final int CUTS_TO_BUTCHER = 3;
-    /** Flensing Knife strokes it takes to take the hide off a carcass. */
+    /** Flensing Knife strokes it takes to take the hide off a carcass: the default of strokes_to_skin. */
     public static final int STROKES_TO_SKIN = 4;
 
     /** Whether any joint still ties this bone to another. */
@@ -174,7 +174,7 @@ public final class CarcassButchery {
         }
         Blood.wound(level, carcass, where, 4, 0);
         level.playSound(null, where.x, where.y, where.z, com.avicagan.bloodandbones.registry.BBSounds.CARCASS_SKIN.get(), SoundSource.BLOCKS, 0.8F, 1.2F);
-        if (carcass.skinStrokes < STROKES_TO_SKIN) {
+        if (carcass.skinStrokes < com.avicagan.bloodandbones.config.BBServerConfig.strokesToSkin()) {
             return true;
         }
         return flay(level, carcass, where);
@@ -258,6 +258,8 @@ public final class CarcassButchery {
     public static void dropYields(ServerLevel level, CarcassSavedData.Carcass carcass, java.util.List<com.avicagan.bloodandbones.carcass.butchery.Yield> yields,
                                   float scale, Vector3d at) {
         float fresh = carcass.freshness;
+        float goingOff = com.avicagan.bloodandbones.config.BBServerConfig.goingOffBelow();
+        float rotten = com.avicagan.bloodandbones.config.BBServerConfig.rottenBelow();
         scale *= babyYieldScale(carcass);
         // a poor minion butcher wastes some of each cut (see yielding)
         Float share = YIELD.get();
@@ -275,13 +277,13 @@ public final class CarcassButchery {
             float count = yield.count() * scale * path.share(yield.kind()) * hand;
             switch (yield.kind()) {
                 case "meat", "offal", "fat" -> {
-                    if (fresh < 0.3F) {
+                    if (fresh < rotten) {
                         if (!yield.kind().equals("meat")) {
                             continue;
                         }
                         id = "minecraft:rotten_flesh";
                         count *= 0.5F;
-                    } else if (fresh < 0.6F) {
+                    } else if (fresh < goingOff) {
                         count *= 0.5F;
                     }
                 }
@@ -289,7 +291,7 @@ public final class CarcassButchery {
                     if (fresh <= 0.0F) {
                         continue;
                     }
-                    if (fresh < 0.3F) {
+                    if (fresh < rotten) {
                         count *= 0.5F;
                     }
                 }
@@ -543,7 +545,7 @@ public final class CarcassButchery {
         if (skinned) {
             count *= 1.5F;
         }
-        if (freshness < 0.3F) {
+        if (freshness < com.avicagan.bloodandbones.config.BBServerConfig.rottenBelow()) {
             count *= 0.5F;
         }
         return count;
@@ -650,7 +652,7 @@ public final class CarcassButchery {
     /**
      * A body no bigger than this, as flesh (Sable mass units, a block of flesh weighing 1.0), can be picked up by hand:
      * heads, legs, a whole chicken. It goes by size, not by weight, so a skeleton's skull (bone, heavier than flesh for its
-     * size) is carried as a zombie's head is.
+     * size) is carried as a zombie's head is. The default of the server config's carry_mass, which is read.
      */
     public static final double LIGHT_MASS = 0.13;
 
@@ -666,7 +668,7 @@ public final class CarcassButchery {
             return false;
         }
         return com.avicagan.bloodandbones.carcass.rig.RigManager.forCarcass(carcass).flatMap(rig -> rig.bone(bone)).map(b -> (double) b.volume())
-                .orElse(body.getMassTracker().getMass()) <= LIGHT_MASS;
+                .orElse(body.getMassTracker().getMass()) <= com.avicagan.bloodandbones.config.BBServerConfig.carryMass();
     }
 
     /**

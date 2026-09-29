@@ -42,7 +42,7 @@ import java.util.List;
  * needs, it burns to charcoal.
  */
 public class SpitRoastBlockEntity extends KineticBlockEntity {
-    /** Fewest and most ticks a piece takes at a campfire at a Hand Crank's speed. */
+    /** Fewest and most ticks a piece takes at a campfire at a Hand Crank's speed (the server config's defaults, which are read). */
     public static final int MIN_COOK = 200;
     public static final int MAX_COOK = 1200;
     /** Most a whole carcass takes. */
@@ -97,7 +97,8 @@ public class SpitRoastBlockEntity extends KineticBlockEntity {
                 volume += size.x * size.y * size.z / 4096.0F;
             }
         }
-        return Math.max(MIN_COOK, Math.min(whole() ? MAX_COOK_WHOLE : MAX_COOK, MIN_COOK + Math.round(volume * COOK_PER_BLOCK)));
+        int min = com.avicagan.bloodandbones.config.BBServerConfig.roastMin();
+        return Math.max(min, Math.min(whole() ? com.avicagan.bloodandbones.config.BBServerConfig.roastMaxWhole() : com.avicagan.bloodandbones.config.BBServerConfig.roastMax(), min + Math.round(volume * com.avicagan.bloodandbones.config.BBServerConfig.roastPerBlock())));
     }
 
     public boolean isCooked() {

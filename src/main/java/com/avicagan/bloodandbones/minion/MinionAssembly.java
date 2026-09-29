@@ -50,7 +50,7 @@ public final class MinionAssembly {
     /** How far past the table's edges, and how high above it, a carcass counts as lying on it (the machines' rule). */
     public static final double SPREAD = 0.75;
     public static final double REACH = 2.5;
-    /** The least freshness a torso may have to be woken. */
+    /** The least freshness a torso may have to be woken: the default of the server config's rotting_below. */
     public static final float FRESH_ENOUGH = 0.3F;
 
     private MinionAssembly() {
@@ -342,7 +342,7 @@ public final class MinionAssembly {
     /** Whether a piece is light enough to be carried. */
     static boolean light(PieceRef piece) {
         return RigManager.forEntity(piece.entity(), piece.baby()).flatMap(r -> r.bone(piece.bone()))
-                .map(b -> MinionStats.volume(b) <= CarcassButchery.LIGHT_MASS).orElse(true);
+                .map(b -> MinionStats.volume(b) <= com.avicagan.bloodandbones.config.BBServerConfig.carryMass()).orElse(true);
     }
 
     /** A piece as a carried item, gone off by this much. */
@@ -374,7 +374,7 @@ public final class MinionAssembly {
             maker.displayClientMessage(Component.translatable("bloodandbones.minion.needs_sheathing").withStyle(ChatFormatting.RED), true);
             return null;
         }
-        if (build.get().torso().freshness() < FRESH_ENOUGH) {
+        if (build.get().torso().freshness() < com.avicagan.bloodandbones.config.BBServerConfig.rottenBelow()) {
             maker.displayClientMessage(Component.translatable("bloodandbones.minion.too_rotten").withStyle(ChatFormatting.RED), true);
             return null;
         }

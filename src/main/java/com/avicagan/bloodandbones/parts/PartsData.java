@@ -50,7 +50,7 @@ public final class PartsData {
     public enum Kind {
         MOB_GROUP("mob_group"), MOB_TRAITS("mob_traits"), TRAIT("trait"), SCRAP_MATERIAL("scrap_material"), BONE_SLOT_RULES("bone_slot_rules"),
         ARMOUR_TIER("armour_tier"), ORGAN("organ"), MINION_TASK("minion_task", false), MINION_DISPOSITION("minion_disposition", false),
-        GENERIC_RIG("generic_rig"), WEIGHT_CLASS("weight_class");
+        GENERIC_RIG("generic_rig"), WEIGHT_CLASS("weight_class"), IMPLANT("implant");
 
         public final String folder;
         /** Sent to clients; the server-only kinds are not. */
@@ -80,6 +80,7 @@ public final class PartsData {
         private volatile Map<ResourceLocation, com.avicagan.bloodandbones.minion.MinionDisposition> dispositions = Map.of();
         private volatile Map<ResourceLocation, com.avicagan.bloodandbones.carcass.rig.GenericRig> genericRigs = Map.of();
         private volatile Map<ResourceLocation, com.avicagan.bloodandbones.carcass.WeightClass> weightClasses = Map.of();
+        private volatile Map<ResourceLocation, JsonObject> implantFiles = Map.of();
         private final Map<String, ResolvedMob> resolved = new ConcurrentHashMap<>();
         private volatile int generation;
         /** What game tests add on top (under ids of their own): looked up like the rest, never listed, sent or linted. */
@@ -167,6 +168,12 @@ public final class PartsData {
                             MobGroup.decode(com.avicagan.bloodandbones.carcass.WeightClass.CODEC, json, ops, "weight class " + id))));
                     weightClasses = java.util.Collections.unmodifiableMap(new LinkedHashMap<>(out));
                 }
+                case IMPLANT -> {
+                    // data/<ns>/implant/<item path>.json, by the implant item's id
+                    Map<ResourceLocation, JsonObject> out = new LinkedHashMap<>();
+                    files.forEach((id, text) -> parse(id, text, json -> out.put(id, json)));
+                    implantFiles = Map.copyOf(out);
+                }
                 case BONE_SLOT_RULES -> {
                     List<PartSlots.Rule> rules = new ArrayList<>();
                     List<PartSlots.SubRule> subs = new ArrayList<>();
@@ -198,6 +205,11 @@ public final class PartsData {
         @Nullable
         public com.avicagan.bloodandbones.carcass.rig.GenericRig genericRig(ResourceLocation id) {
             return genericRigs.get(id);
+        }
+
+        /** Every implant's figures file, by item id (ImplantFigures). */
+        public Map<ResourceLocation, JsonObject> implantFiles() {
+            return implantFiles;
         }
 
         /** Every weight class, by id, sorted by id. */

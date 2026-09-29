@@ -53,6 +53,13 @@ public class GameTestServerMixin {
     }
 
     /**
+     * A batch named {@value #ALONE_FIRST} (a test that changes what every test sees, as one that takes a mob's rig away)
+     * runs before any other, so nothing any other test made is in the world while it runs.
+     */
+    @Unique
+    private static final String ALONE_FIRST = "bloodandbones_alone_first";
+
+    /**
      * The physics measurement's cost batches (RigComparisonTests, only there with its switch on) time the server's ticks,
      * so they go last, one after another with nothing else running beside them, in RigComparison's order.
      */
@@ -60,6 +67,12 @@ public class GameTestServerMixin {
     private static Collection<GameTestBatch> costLast(Collection<GameTestBatch> batches) {
         List<String> order = RigComparison.COST_ORDER;
         List<GameTestBatch> out = new ArrayList<>();
+        for (GameTestBatch batch : batches) {
+            if (batch.name().startsWith(ALONE_FIRST + ":")) {
+                out.add(batch);
+            }
+        }
+        batches = batches.stream().filter(batch -> !batch.name().startsWith(ALONE_FIRST + ":")).toList();
         List<GameTestBatch> cost = new ArrayList<>();
         for (GameTestBatch batch : batches) {
             (order.stream().anyMatch(name -> batch.name().startsWith(name + ":")) ? cost : out).add(batch);

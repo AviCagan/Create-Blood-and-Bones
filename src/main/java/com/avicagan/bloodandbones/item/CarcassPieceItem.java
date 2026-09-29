@@ -99,8 +99,8 @@ public class CarcassPieceItem extends Item {
             return;
         }
         int percent = Math.round(Math.max(0.0F, Math.min(1.0F, piece.freshness())) * 100.0F);
-        String state = piece.freshness() >= com.avicagan.bloodandbones.registry.BBItemAttributes.FRESH ? "fresh"
-                : piece.freshness() >= com.avicagan.bloodandbones.registry.BBItemAttributes.ROTTING ? "going_off" : "rotting";
+        String state = piece.freshness() >= com.avicagan.bloodandbones.config.BBServerConfig.goingOffBelow() ? "fresh"
+                : piece.freshness() >= com.avicagan.bloodandbones.config.BBServerConfig.rottenBelow() ? "going_off" : "rotting";
         net.minecraft.ChatFormatting colour = switch (state) {
             case "fresh" -> net.minecraft.ChatFormatting.GREEN;
             case "going_off" -> net.minecraft.ChatFormatting.GOLD;

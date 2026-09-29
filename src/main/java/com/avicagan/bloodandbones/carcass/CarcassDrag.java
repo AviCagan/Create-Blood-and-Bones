@@ -727,7 +727,10 @@ public final class CarcassDrag {
         return target(drag, player, hook, 1.0);
     }
 
-    /** A whole chicken's mass and a whole ravager's, the two ends the brief gives the penalty for, and their penalties. */
+    /**
+     * A whole chicken's mass and a whole ravager's, the two ends the brief gives the penalty for, and their penalties: the
+     * defaults of the server config's drag_light_* and drag_heavy_*, which are read.
+     */
     public static final double CHICKEN_MASS = 0.127;
     public static final double RAVAGER_MASS = 5.98;
     public static final double CHICKEN_PENALTY = 0.05;
@@ -742,11 +745,16 @@ public final class CarcassDrag {
      * package 2).
      */
     public static float penaltyFor(double mass) {
-        if (mass <= CHICKEN_MASS) {
-            return (float) (CHICKEN_PENALTY * Math.max(0.0, mass) / CHICKEN_MASS);
+        // the two ends are the server config's (drag_light_* and drag_heavy_*), these constants their defaults
+        double light = com.avicagan.bloodandbones.config.BBServerConfig.dragLightMass();
+        double lightPenalty = com.avicagan.bloodandbones.config.BBServerConfig.dragLightPenalty();
+        double heavy = Math.max(light * 1.0001, com.avicagan.bloodandbones.config.BBServerConfig.dragHeavyMass());
+        double heavyPenalty = com.avicagan.bloodandbones.config.BBServerConfig.dragHeavyPenalty();
+        if (mass <= light) {
+            return (float) (lightPenalty * Math.max(0.0, mass) / light);
         }
-        double along = Math.log(mass / CHICKEN_MASS) / Math.log(RAVAGER_MASS / CHICKEN_MASS);
-        return (float) Math.min(RAVAGER_PENALTY, CHICKEN_PENALTY + (RAVAGER_PENALTY - CHICKEN_PENALTY) * along);
+        double along = Math.log(mass / light) / Math.log(heavy / light);
+        return (float) Math.min(heavyPenalty, lightPenalty + (heavyPenalty - lightPenalty) * along);
     }
 
     /** What this drag costs: the curve at the mass on its hook, times its weight class's drag. */

@@ -1,0 +1,44 @@
+{
+  "values": {
+    "minecraft:zombie": {
+      "item": "minecraft:zombie_head",
+      "chance": 0.5
+    },
+    "minecraft:husk": {
+      "item": "minecraft:zombie_head",
+      "chance": 0.5
+    },
+    "minecraft:drowned": {
+      "item": "minecraft:zombie_head",
+      "chance": 0.5
+    },
+    "minecraft:skeleton": {
+      "item": "minecraft:skeleton_skull",
+      "chance": 0.5
+    },
+    "minecraft:stray": {
+      "item": "minecraft:skeleton_skull",
+      "chance": 0.5
+    },
+    "minecraft:bogged": {
+      "item": "minecraft:skeleton_skull",
+      "chance": 0.5
+    },
+    "minecraft:wither_skeleton": {
+      "item": "minecraft:wither_skeleton_skull",
+      "chance": 0.1
+    },
+    "minecraft:creeper": {
+      "item": "minecraft:creeper_head",
+      "chance": 0.5
+    },
+    "minecraft:piglin": {
+      "item": "minecraft:piglin_head",
+      "chance": 0.5
+    },
+    "minecraft:piglin_brute": {
+      "item": "minecraft:piglin_head",
+      "chance": 0.5
+    }
+  }
+}

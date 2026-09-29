@@ -263,6 +263,8 @@ public final class BBClientSetup {
     @SubscribeEvent
     public static void onReloadListeners(net.neoforged.neoforge.client.event.RegisterClientReloadListenersEvent event) {
         event.registerReloadListener((net.minecraft.server.packs.resources.ResourceManagerReloadListener) manager -> ConstructPlating.clear());
+        // and the models generic bodies wear, read again as the game bakes them again
+        event.registerReloadListener((net.minecraft.server.packs.resources.ResourceManagerReloadListener) manager -> FittedModels.clear());
     }
 
     @SubscribeEvent

@@ -37,7 +37,7 @@ import java.util.WeakHashMap;
  * The server keeps the state; the client only says when the key goes down (and for which module) and up.
  */
 public final class Throttle {
-    /** Game ticks from nothing to full spool. */
+    /** Game ticks from nothing to full spool (this and the two below are the server config's defaults, which are read). */
     public static final int SPOOL_TICKS = 40;
     /** mB of soul blood a second, held at full spool. */
     public static final float FULL_DRAIN = 150.0F;
@@ -67,12 +67,12 @@ public final class Throttle {
 
     /** The spool after this many ticks held, 0 to 1. */
     public static float level(long ticksHeld) {
-        return Math.min(1.0F, Math.max(0, ticksHeld) / (float) SPOOL_TICKS);
+        return Math.min(1.0F, Math.max(0, ticksHeld) / (float) com.avicagan.bloodandbones.config.BBServerConfig.spoolTicks());
     }
 
     /** mB a second held at this spool: steeply more at the top than at the bottom. */
     public static float drain(float level) {
-        return FULL_DRAIN * level * level * level;
+        return com.avicagan.bloodandbones.config.BBServerConfig.fullSpoolDrain() * level * level * level;
     }
 
     /** How much of the drain this wearer pays (the brass set bonus pays less). */
@@ -138,7 +138,7 @@ public final class Throttle {
         if (!fire || !Modules.still(player, state.part, state.slot, state.module)) {
             return;
         }
-        if (BodyEffects.take(player, Math.max(1, Math.round(TAP * efficiency(player)))) <= 0) {
+        if (BodyEffects.take(player, Math.max(1, Math.round(com.avicagan.bloodandbones.config.BBServerConfig.fireCost() * efficiency(player)))) <= 0) {
             choke(player);
             return;
         }

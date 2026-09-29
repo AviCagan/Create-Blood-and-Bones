@@ -50,8 +50,16 @@ public enum Module implements StringRepresentable {
         this.upkeep = upkeep;
     }
 
-    /** mB of soul blood a second it costs just to be fitted and working (the always-on part), on top of its limb's own. */
+    /**
+     * mB of soul blood a second it costs just to be fitted and working (the always-on part), on top of its limb's own: the
+     * server config's figure ({@code <module>_upkeep}).
+     */
     public int upkeep() {
+        return com.avicagan.bloodandbones.config.BBServerConfig.moduleUpkeep(this);
+    }
+
+    /** What the config gives when it says nothing: the figure the module was built with. */
+    public int defaultUpkeep() {
         return upkeep;
     }
 
