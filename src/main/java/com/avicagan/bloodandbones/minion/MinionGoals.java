@@ -211,10 +211,13 @@ public final class MinionGoals {
 
     /** It goes for its target with its arms, or its teeth if it has none. */
     public static class Bite extends MeleeAttackGoal {
+        private static final double SPEED = 1.2;
+        /** How near what it goes for must be for it to walk straight at it when its path runs out short. */
+        private static final double LAST_STRETCH = 4.0;
         private final MinionEntity minion;
 
         public Bite(MinionEntity minion) {
-            super(minion, 1.2, true);
+            super(minion, SPEED, true);
             this.minion = minion;
         }
 
@@ -225,13 +228,18 @@ public final class MinionGoals {
             return !minion.stats().mindless() && minion.stats().fights() && !minion.hasJob("sentry") && !minion.hasJob("sapper") && super.canUse();
         }
 
+        /**
+         * Its path ended out of reach of what it goes for (a body a block wide is pathed as two blocks wide, so by a wall
+         * or in a corner its path stops a block or two short, and vanilla's goal paths again only once the target moves):
+         * it walks the last of the way straight at what it can see.
+         */
         @Override
         public void tick() {
             super.tick();
             LivingEntity target = minion.getTarget();
-            if (target != null && minion.getNavigation().isDone() && !minion.isWithinMeleeAttackRange(target) && minion.tickCount % 40 == 0) {
-                com.avicagan.bloodandbones.BloodAndBones.LOGGER.info("[tmpbite] stuck: minion {} width {} target {} dist {}", minion.position(), minion.getBbWidth(),
-                        target.position(), minion.distanceTo(target));
+            if (target != null && minion.getNavigation().isDone() && !minion.isWithinMeleeAttackRange(target)
+                    && minion.distanceToSqr(target) < LAST_STRETCH * LAST_STRETCH && minion.getSensing().hasLineOfSight(target)) {
+                minion.getMoveControl().setWantedPosition(target.getX(), target.getY(), target.getZ(), SPEED);
             }
         }
     }
