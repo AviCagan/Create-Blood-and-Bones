@@ -661,7 +661,9 @@ public final class DevShowcase {
                 } else if (t == 206) {
                     Screenshot.grab(mc.gameDirectory, PREFIX + "tasks_0.png", mc.getMainRenderTarget(), message -> {
                     });
-                    // the cow on rabbit legs' task screen, opened as its maker's crouching empty hand opens it (docs/NEXT.md 1.3)
+                    // the cow on rabbit legs' task screen, opened as its maker's crouching empty hand opens it (docs/NEXT.md 1.3); each
+                    // step below is ten ticks after the last, so that a frame is drawn between them however slowly the scene draws
+                    // (a picture is the last frame drawn, and the screen comes back from the server)
                     server.execute(() -> {
                         ServerPlayer player = server.getPlayerList().getPlayers().get(0);
                         if (taskMinion != null && player.serverLevel().getEntity(taskMinion) instanceof com.avicagan.bloodandbones.minion.MinionEntity minion) {
@@ -669,12 +671,12 @@ public final class DevShowcase {
                             BloodAndBones.LOGGER.info("[showcase] task screen on the cow on rabbit legs: {}", com.avicagan.bloodandbones.minion.MinionTasks.status(minion).getString());
                         }
                     });
-                } else if (t == 210) {
+                } else if (t == 216) {
                     // its reasons for herding shown over its row, as a hovering mouse shows them
                     if (mc.screen instanceof MinionTaskScreen screen) {
                         screen.pinHover(com.avicagan.bloodandbones.minion.MinionTask.HERDER);
                     }
-                } else if (t == 213) {
+                } else if (t == 226) {
                     Screenshot.grab(mc.gameDirectory, PREFIX + "tasks_1.png", mc.getMainRenderTarget(), message -> {
                     });
                     BloodAndBones.LOGGER.info("[showcase] took task screen shot; screen {}", mc.screen == null ? "none" : mc.screen.getClass().getSimpleName());
@@ -683,26 +685,26 @@ public final class DevShowcase {
                         screen.pinHover(null);
                         screen.scrollToEnd();
                     }
-                } else if (t == 216) {
+                } else if (t == 236) {
                     Screenshot.grab(mc.gameDirectory, PREFIX + "tasks_2.png", mc.getMainRenderTarget(), message -> {
                     });
                     // and what its fitness makes of a butcher's work (docs/NEXT.md 1.2): its strokes and how much of each cut it keeps
                     if (mc.screen instanceof MinionTaskScreen screen) {
                         screen.pinHover(com.avicagan.bloodandbones.minion.MinionTask.BUTCHER);
                     }
-                } else if (t == 220) {
+                } else if (t == 246) {
                     Screenshot.grab(mc.gameDirectory, PREFIX + "tasks_3.png", mc.getMainRenderTarget(), message -> {
                     });
                     // and the Tender's (stage E): what it does, what it reads and how often it looks round
                     if (mc.screen instanceof MinionTaskScreen screen) {
                         screen.pinHover(com.avicagan.bloodandbones.minion.MinionTask.TENDER);
                     }
-                } else if (t == 223) {
+                } else if (t == 256) {
                     Screenshot.grab(mc.gameDirectory, PREFIX + "tasks_4.png", mc.getMainRenderTarget(), message -> {
                     });
                     mc.setScreen(null);
                     mc.options.hideGui = true;
-                } else if (t == 227) {
+                } else if (t == 260) {
                     Screenshot.grab(mc.gameDirectory, PREFIX + "minions_1.png", mc.getMainRenderTarget(), message -> {
                     });
                     // and near, from in front: the bowman's bow and helmet
@@ -710,7 +712,7 @@ public final class DevShowcase {
                         ServerPlayer player = server.getPlayerList().getPlayers().get(0);
                         player.teleportTo(player.serverLevel(), player.getX() + 2.0, player.getY(), player.getZ() - 3.8, -20.0F, 10.0F);
                     });
-                } else if (t == 239) {
+                } else if (t == 272) {
                     Screenshot.grab(mc.gameDirectory, PREFIX + "minions_2.png", mc.getMainRenderTarget(), message -> {
                     });
                     // then the flier's wings, from below and in front
@@ -718,7 +720,7 @@ public final class DevShowcase {
                         ServerPlayer player = server.getPlayerList().getPlayers().get(0);
                         player.teleportTo(player.serverLevel(), player.getX() + 7.0, player.getY(), player.getZ(), 0.0F, -20.0F);
                     });
-                } else if (t == 254) {
+                } else if (t == 287) {
                     Screenshot.grab(mc.gameDirectory, PREFIX + "minions_3.png", mc.getMainRenderTarget(), message -> {
                     });
                     // then the pig's head in its carved pumpkin, from in front (the row faces away from where it was made)
@@ -726,7 +728,7 @@ public final class DevShowcase {
                         ServerPlayer player = server.getPlayerList().getPlayers().get(0);
                         player.teleportTo(player.serverLevel(), player.getX(), player.getY(), player.getZ() + 1.5, 160.0F, 5.0F);
                     });
-                } else if (t == 269) {
+                } else if (t == 302) {
                     Screenshot.grab(mc.gameDirectory, PREFIX + "minions_4.png", mc.getMainRenderTarget(), message -> {
                     });
                     // then the whole cow beside it in its zombie's head, from in front the same way
@@ -734,7 +736,7 @@ public final class DevShowcase {
                         ServerPlayer player = server.getPlayerList().getPlayers().get(0);
                         player.teleportTo(player.serverLevel(), player.getX() - 3.0, player.getY(), player.getZ(), 160.0F, 5.0F);
                     });
-                } else if (t == 279) {
+                } else if (t == 312) {
                     Screenshot.grab(mc.gameDirectory, PREFIX + "minions_5.png", mc.getMainRenderTarget(), message -> {
                     });
                     // stumps, raggeder the dearer (docs/NEXT.md 1.5): the right arm a fit surgeon's (a bucket), the left leg a fair
@@ -756,7 +758,7 @@ public final class DevShowcase {
                         player.teleportTo(player.serverLevel(), player.getX() - 12.0, player.getY(), player.getZ() + 2.3, 150.0F, 15.0F);
                     });
                     mc.options.setCameraType(net.minecraft.client.CameraType.THIRD_PERSON_FRONT);
-                } else if (t == 289) {
+                } else if (t == 322) {
                     Screenshot.grab(mc.gameDirectory, PREFIX + "stumps.png", mc.getMainRenderTarget(), message -> {
                     });
                     server.execute(() -> {
@@ -792,15 +794,15 @@ public final class DevShowcase {
                     });
                     mc.options.setCameraType(net.minecraft.client.CameraType.THIRD_PERSON_FRONT);
                     mc.options.hideGui = true;
-                } else if (t == 299) {
+                } else if (t == 332) {
                     com.avicagan.bloodandbones.client.effect.RangedClient.receive(new com.avicagan.bloodandbones.parts.effect.BeamPayload(effectHost, effectTarget, 400, 16.0F, "guardian_beam"));
                     com.avicagan.bloodandbones.client.effect.SocialClient.receive(new com.avicagan.bloodandbones.parts.effect.SensePayload("reveal",
                             java.util.List.of(effectHost, effectTarget), 400));
-                } else if (t == 311) {
+                } else if (t == 344) {
                     Screenshot.grab(mc.gameDirectory, PREFIX + "effects_0.png", mc.getMainRenderTarget(), message -> {
                     });
                     mc.options.setCameraType(net.minecraft.client.CameraType.FIRST_PERSON);
-                } else if (t == 327) {
+                } else if (t == 360) {
                     Screenshot.grab(mc.gameDirectory, PREFIX + "effects_1.png", mc.getMainRenderTarget(), message -> {
                     });
                     // the backtank's gauge: a copper tank of blood worn, running a Flesh Arm and a Sinew Leg; a Hydraulic Arm
@@ -823,7 +825,7 @@ public final class DevShowcase {
                     // the night's outlines ended
                     com.avicagan.bloodandbones.client.effect.SocialClient.receive(new com.avicagan.bloodandbones.parts.effect.SensePayload("reveal",
                             java.util.List.of(effectHost, effectTarget), 0));
-                } else if (t == 355) {
+                } else if (t == 388) {
                     // the fitness lines off the chat, which would cover it
                     mc.gui.getChat().clearMessages(false);
                     // a plain click on the table: its line while building, on the action bar
@@ -839,7 +841,7 @@ public final class DevShowcase {
                             }
                         }
                     });
-                } else if (t == 363) {
+                } else if (t == 396) {
                     Screenshot.grab(mc.gameDirectory, PREFIX + "table_line.png", mc.getMainRenderTarget(), message -> {
                     });
                     // the table's line off the action bar, which would sit over the gauge
@@ -862,7 +864,7 @@ public final class DevShowcase {
                     });
                     mc.options.setCameraType(net.minecraft.client.CameraType.FIRST_PERSON);
                     mc.options.hideGui = false;
-                } else if (t == 385) {
+                } else if (t == 418) {
                     Screenshot.grab(mc.gameDirectory, PREFIX + "gauge.png", mc.getMainRenderTarget(), message -> {
                     });
                     BloodAndBones.LOGGER.info("[showcase] gauge: {} implants; bar colour {}", BacktankGauge.poweredImplants(mc.player).size(),
@@ -884,7 +886,10 @@ public final class DevShowcase {
                         player.setGameMode(GameType.SURVIVAL);
                         diveAt = dive(player.serverLevel(), player, true);
                     });
-                } else if (t == 435) {
+                } else if (t == 458) {
+                    // the recipe and advancement toasts the diving gear brings would cover the corner
+                    mc.getToasts().clear();
+                } else if (t == 468) {
                     Screenshot.grab(mc.gameDirectory, PREFIX + "gauge_diving.png", mc.getMainRenderTarget(), message -> {
                     });
                     BloodAndBones.LOGGER.info("[showcase] diving: Create's air gauge up {}, this gauge {} implants",
