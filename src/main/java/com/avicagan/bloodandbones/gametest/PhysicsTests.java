@@ -686,15 +686,19 @@ public class PhysicsTests {
             if (now < 200) {
                 return;
             }
-            // how far each one's right side points above level, degrees
+            // how far each one's right side points above level, degrees. A hung cow's head falls to one side or the other
+            // of its neck, which tips the whole of it a degree or so that way; the whole cow with its head fallen the other
+            // way from the cut one's is its mirror image, so it is compared mirrored (its right side as high as its left).
             double w = RigScenarios.sideHeightDeg(whole, "right_hind_leg");
             wholeSide.add(w);
-            rise.add(RigScenarios.sideHeightDeg(cut, "right_hind_leg") - w);
+            boolean sameSide = headSide(whole) == headSide(cut);
+            rise.add(RigScenarios.sideHeightDeg(cut, "right_hind_leg") - (sameSide ? w : -w));
             if (now == 240) {
                 double level = median(wholeSide);
                 double up = median(rise);
                 BloodAndBones.LOGGER.info("[physics] hung cows: the whole one's right side {} degrees above level; with its right hind leg off it rides {} "
-                        + "degrees higher (cut one has {}, head ends {} / {}, centres {} / {})", fmt(level), fmt(up), cut.carcass().bones.keySet(),
+                        + "degrees higher (heads fallen to their {} / {}; cut one has {}, head ends {} / {}, centres {} / {})", fmt(level), fmt(up),
+                        headSide(whole) > 0 ? "right" : "left", headSide(cut) > 0 ? "right" : "left", cut.carcass().bones.keySet(),
                         whole.headEnd(), cut.headEnd(), whole.torsoCentre(), cut.torsoCentre());
                 helper.assertTrue(Math.abs(level) <= LEVEL, "a whole cow should hang level across its hips, but it is tipped " + fmt(level) + " degrees");
                 helper.assertTrue(up >= RIDES_UP, "with its right hind leg off it should hang lower on its left, the side that kept its leg, but its right "
@@ -702,6 +706,17 @@ public class PhysicsTests {
                 helper.succeed();
             }
         });
+    }
+
+    /** Which side of its torso a hung carcass's head has fallen to: 1 its right, -1 its left. */
+    private static double headSide(Subject s) {
+        ServerSubLevel torso = s.torso();
+        String head = RigComparison.generatedHead(s.type);
+        if (torso == null || head == null) {
+            return 0.0;
+        }
+        Vector3d right = s.modelToWorld(s.torsoBody(), torso).transform(new Vector3d(Math.signum(s.bone("right_hind_leg").offset().x), 0, 0));
+        return Math.signum(new Vector3d(s.middle(head)).sub(s.torsoCentre()).dot(right));
     }
 
     /** How level a whole hung cow's hips are, and how much higher its stump's side rides with a hind leg off, in degrees. */

@@ -155,35 +155,31 @@ public class ShackleHookBlockEntity extends BlockEntity {
         hangTurn(body, physics, timeStep, outX, outZ);
     }
 
-    /** Torque spring gains per unit of torso mass that hold a body in its hanging pose while it is hoisted. */
+    /** Torque gains per unit of torso mass while a body is hoisted: the belly-out spring, and the drag on every turn. */
     private static final double HOIST_TURN_STIFFNESS = 30.0;
     private static final double HOIST_TURN_DAMPING = 7.0;
 
     /**
-     * What turns a body while it is hoisted (a Shackle Hook's, a trolley's): a spring on every axis toward its hanging pose
-     * (head end up, belly out), so it comes up as it will hang and arrives still. Hoisted loose, as it hangs once held,
-     * a body lifted from lying on its side came up swinging and twisting and was still swaying on the hook seconds later,
-     * enough to hide how a cut leg changes the hang. Once the hook holds it, hangTurn takes over and it hangs loose.
+     * What turns a body while it is hoisted (a Shackle Hook's, a trolley's): a stiff spring about the upright that turns
+     * it belly-out, and a heavy drag on every turn, so it tips into the hang its weight gives it slowly, without swinging
+     * or twisting, and arrives there nearly still. Once the hook holds it, hangTurn takes over and it hangs loose.
+     * Hoisted as it hangs, with only a light drag, a body lifted from lying on its side came up twisting and settled into
+     * one of two hangs, and was still swaying seconds later. Held in the pose a rigid body would hang in (head end straight
+     * up) and let go at the tip, it swung some 12 degrees either side of where its weight hangs it (about 29 degrees
+     * belly-down, hung by the neck), and was still swinging five seconds on.
      */
     public static void hoistTurn(ServerSubLevel body, dev.ryanhcode.sable.sublevel.system.SubLevelPhysicsSystem physics, double timeStep, double outX, double outZ) {
         Quaterniond current = new Quaterniond(body.logicalPose().orientation());
-        // the rotation that takes the current orientation to the hanging one, in world space
-        Quaterniond error = hangingOrientation(outX, outZ).mul(new Quaterniond(current).invert()).normalize();
-        if (error.w < 0) {
-            error.set(-error.x, -error.y, -error.z, -error.w);
-        }
-        double angle = 2.0 * Math.acos(Math.min(1.0, error.w));
-        Vector3d axis = new Vector3d(error.x, error.y, error.z);
-        if (axis.lengthSquared() > 1.0e-10) {
-            axis.normalize();
-        } else {
-            axis.set(0.0, 1.0, 0.0);
-            angle = 0.0;
+        Vector3d belly = current.transform(new Vector3d(0.0, 0.0, -1.0));
+        double yaw = 0.0;
+        if (belly.x * belly.x + belly.z * belly.z > 1.0e-4 && outX * outX + outZ * outZ > 1.0e-8) {
+            yaw = Math.atan2(belly.z * outX - belly.x * outZ, belly.x * outX + belly.z * outZ);
         }
         dev.ryanhcode.sable.api.physics.handle.RigidBodyHandle handle = physics.getPhysicsHandle(body);
         Vector3d angular = handle.getAngularVelocity(new Vector3d());
         double mass = Math.max(MIN_MASS, body.getMassTracker().getMass());
-        Vector3d torque = new Vector3d(axis).mul(angle * HOIST_TURN_STIFFNESS * mass).sub(new Vector3d(angular).mul(HOIST_TURN_DAMPING * mass));
+        Vector3d torque = new Vector3d(-angular.x * HOIST_TURN_DAMPING, yaw * HOIST_TURN_STIFFNESS - angular.y * HOIST_TURN_DAMPING,
+                -angular.z * HOIST_TURN_DAMPING).mul(mass);
         Vector3d impulse = torque.mul(timeStep);
         current.invert().transform(impulse); // local frame
         handle.applyLinearAndAngularImpulse(new Vector3d(), impulse);

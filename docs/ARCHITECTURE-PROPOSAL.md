@@ -3646,12 +3646,20 @@ it: that is decision 5, and it stays at the neck.
   holding its tilt any more the yank could throw it over the hook (`hangingCarcassBleedsIntoRack` failed 7 runs in 20):
   it was put up on the hook in its hanging pose first, every body moved as one and stilled (`liftOnto`). Merged with
   the checks' gentle hoist (15.18), that step is gone: the hook draws the neck junction up at 3 blocks a second and
-  only holds it fast within 0.3 of the tip, so there is no yank left to throw it. While it rises it is held in its
-  hanging pose, as `liftOnto` put it (`hoistTurn`, main's old spring on every axis), and once held it hangs loose
-  (`hangTurn`). Hoisted loose, a cow lifted from lying on its side came up twisting and settled into one of two hangs:
-  in 2 runs of 10 `legOffHangsLowerOnThatSide` measured its stump's side 0.5 degrees low instead of 1.8 high; held in
-  its pose on the way up, 10 of 10 came to 1.5 to 3.9 high. A hook mounted on a Sable ship still joins at once, as
-  before. Trolleys hoist and hang the same way. `legOffHangsLowerOnThatSide`.
+  only holds it fast within 0.3 of the tip, so there is no yank left to throw it. While it rises `hoistTurn` turns it
+  belly-out with a stiff spring about the upright and puts a heavy drag on every turn, so it tips slowly into the hang
+  its weight gives it and arrives nearly still; once held it hangs loose (`hangTurn`). Two other ways were tried.
+  Hoisted as it hangs (the light drag only), a cow lifted from lying on its side came up twisting and was still swaying
+  seconds later. Held on the way up in the pose `liftOnto` put it in (main's old spring on every axis: head end straight
+  up), it was let go at the tip some 29 degrees from where its weight hangs it, belly-down, and swung 12 degrees either
+  side of that for more than five seconds, so `shackleHookHangsCarcass`, which asks the belly to face no more than 30
+  degrees off level, read it at the edge of its swing now and then. Now it swings about 4 degrees there. A hook mounted
+  on a Sable ship still joins at once, as before. Trolleys hoist and hang the same way. `legOffHangsLowerOnThatSide`.
+- **Which way its head falls.** A hung cow's head, on its loose neck, falls to one side or the other of it and tips the
+  whole cow about a degree that way: a whole cow's right side hangs 1.0 degree low with its head fallen right and 1.05
+  high with it fallen left. `legOffHangsLowerOnThatSide` compared the cut cow with a whole one whose head could have
+  fallen the other way (0.5 degrees low instead of 1.6 high, about 1 run in 30), so it now compares it with the whole
+  cow as it would hang with its head on the same side (mirrored when it is not): 1.55 to 1.86 degrees high.
 - **Still hung by the neck.** The hook still holds a carcass where its neck meets its body (255d386), not by one
   shoulder as the brief says: that is decision 5, the owner's.
 
