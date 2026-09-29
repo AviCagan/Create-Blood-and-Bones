@@ -1,5 +1,6 @@
 package com.avicagan.bloodandbones.mixin;
 
+import com.avicagan.bloodandbones.gametest.RigComparison;
 import net.minecraft.gametest.framework.GameTestBatch;
 import net.minecraft.gametest.framework.GameTestBatchFactory;
 import net.minecraft.gametest.framework.GameTestServer;
@@ -7,11 +8,13 @@ import net.minecraft.gametest.framework.TestFunction;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.util.RandomSource;
 import org.spongepowered.asm.mixin.Mixin;
+import org.spongepowered.asm.mixin.Unique;
 import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Redirect;
 
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.Comparator;
 import java.util.List;
 import java.util.Locale;
 
@@ -36,7 +39,7 @@ public class GameTestServerMixin {
         String only = System.getProperty("bloodandbones.debug.only", "").toLowerCase(Locale.ROOT);
         int repeat = Math.max(1, Integer.getInteger("bloodandbones.debug.repeat", 1));
         if (only.isBlank() && repeat == 1) {
-            return GameTestBatchFactory.fromTestFunction(functions, level);
+            return costLast(GameTestBatchFactory.fromTestFunction(functions, level));
         }
         List<TestFunction> chosen = new ArrayList<>();
         for (int i = 0; i < repeat; i++) {
@@ -46,6 +49,24 @@ public class GameTestServerMixin {
                 }
             }
         }
-        return GameTestBatchFactory.fromTestFunction(chosen, level);
+        return costLast(GameTestBatchFactory.fromTestFunction(chosen, level));
+    }
+
+    /**
+     * The physics measurement's cost batches (RigComparisonTests, only there with its switch on) time the server's ticks,
+     * so they go last, one after another with nothing else running beside them, in RigComparison's order.
+     */
+    @Unique
+    private static Collection<GameTestBatch> costLast(Collection<GameTestBatch> batches) {
+        List<String> order = RigComparison.COST_ORDER;
+        List<GameTestBatch> out = new ArrayList<>();
+        List<GameTestBatch> cost = new ArrayList<>();
+        for (GameTestBatch batch : batches) {
+            (order.stream().anyMatch(name -> batch.name().startsWith(name + ":")) ? cost : out).add(batch);
+        }
+        cost.sort(Comparator.comparingInt((GameTestBatch batch) -> order.indexOf(batch.name().substring(0, batch.name().indexOf(':'))))
+                .thenComparing(GameTestBatch::name));
+        out.addAll(cost);
+        return out;
     }
 }

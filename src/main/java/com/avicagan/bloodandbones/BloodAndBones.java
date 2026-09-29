@@ -65,6 +65,12 @@ public class BloodAndBones {
             com.avicagan.bloodandbones.minion.BloodTroughBlockEntity.clear();
             com.avicagan.bloodandbones.minion.ChargingCradleBlockEntity.clear();
         });
+        // the physics measurement's summary, on a test run with it switched on (RigComparisonTests)
+        NeoForge.EVENT_BUS.addListener((net.neoforged.neoforge.event.server.ServerStoppingEvent event) -> {
+            if (Boolean.getBoolean(com.avicagan.bloodandbones.gametest.RigComparison.PROPERTY)) {
+                com.avicagan.bloodandbones.gametest.RigComparison.writeSummary();
+            }
+        });
         // an Analytical Lens reads machines as Create's goggles do
         com.simibubi.create.content.equipment.goggles.GogglesItem.addIsWearingPredicate(player ->
                 com.avicagan.bloodandbones.cyber.Modules.has(player, com.avicagan.bloodandbones.cyber.Module.ANALYTICAL_LENS));
