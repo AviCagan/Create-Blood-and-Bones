@@ -4769,3 +4769,25 @@ also run with its fix taken out, and failed: the hook's actor, the deck's suppor
 the Surgery Table's attachment and Sable's quiet removal; and after the review, the hook found by its carcass, the pin
 that follows its deck, the stillness on a moving deck and the moved hook that keeps its carcass. Datagen run after the
 last change changed nothing.
+
+#### 15.30.1 Merged with the surgery screen and the ritual's proofs (verified)
+
+The integration branch brought 15.29: the rebuilt surgery screen, the payload that names where its item comes from,
+the missing limb that holds and wears nothing, and `RitualTests`. Both sections had been written as "15.29 (numbered
+at merge)"; the surgery screen keeps 15.29, having reached the integration branch first, and this one is 15.30, with
+the references to it in docs/BRIEF-AUDIT.md package 8, `VoidLegTests` and `DevShowcase` changed to match.
+- **README.** Both sides changed the test list: it names the surgery screen's choices and the body through a real
+  death as well as the contraptions and ships.
+- **`SurgeryTableBlock`** merged by itself: the other side did not touch the block, so the table still keeps its
+  Surgical Rig when a contraption or a ship moves it, and the screen reads the rig as before.
+- **The showcase.** Both sides' shots are kept. The surgery shots sit in the body timeline and the contraption step
+  after the physics yard, so they did not meet.
+- **Generated resources** merged without a conflict, and datagen run after the merge changed nothing.
+- CHANGELOG and docs/BRIEF-AUDIT.md merged by themselves, every line of both kept.
+
+Nothing failed after the merge. The suite is 610 tests (598 here and the 12 in `RitualTests`) and passed three times in
+a row. The showcase was run and looked at: `showcase_body_2` (the ragged left arm picked, the Hook Hand, Flesh Arm and
+own arm offered, the zombie-headed surgeon at 141% and its 2-bucket price), `showcase_surgery_1` (the Hydraulic Arm
+picked: unclip, three swaps and the Magnet Coil; the left eye hovered), `showcase_body_5` (the sword held, no shield in
+the missing hand, no armour on the missing leg), and the contraption shots (the cow hung from a moving hook and set
+down with it, and the ship's deck carrying a resting cow, a hung one and the cow dropped on it).
