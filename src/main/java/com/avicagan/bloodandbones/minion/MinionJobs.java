@@ -1639,9 +1639,10 @@ public final class MinionJobs {
             ItemStack blade = minion.getMainHandItem();
             boolean skinning = blade.getItem() instanceof FlensingKnifeItem;
             boolean bloody = com.avicagan.bloodandbones.carcass.Blood.bloody(c);
-            // what comes off goes into its hands, as a machine's yields go to the machine
-            boolean did = CarcassButchery.capturing(stack -> keep(minion, stack),
-                    () -> skinning ? CarcassButchery.skin(level, null, c, at) : CarcassButchery.cut(level, null, c, bone, at));
+            // what comes off goes into its hands, as a machine's yields go to the machine; a blade in its hand gets what
+            // a player's would (the hand path, by its butchery yield)
+            boolean did = CarcassButchery.capturing(stack -> keep(minion, stack), () -> CarcassButchery.byHand(minion,
+                    () -> skinning ? CarcassButchery.skin(level, null, c, at) : CarcassButchery.cut(level, null, c, bone, at)));
             minion.swing(InteractionHand.MAIN_HAND);
             if (did && bloody) {
                 com.avicagan.bloodandbones.carcass.Blood.bloody(blade, level);

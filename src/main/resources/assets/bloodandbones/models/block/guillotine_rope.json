@@ -1,0 +1,61 @@
+{
+ "parent": "block/block",
+ "render_type": "minecraft:cutout",
+ "textures": {
+  "rope": "minecraft:block/chain",
+  "particle": "minecraft:block/chain"
+ },
+ "elements": [
+  {
+   "from": [
+    7.5,
+    0,
+    7.5
+   ],
+   "to": [
+    8.5,
+    1,
+    8.5
+   ],
+   "faces": {
+    "north": {
+     "texture": "#rope",
+     "uv": [
+      3,
+      0,
+      4,
+      1
+     ]
+    },
+    "south": {
+     "texture": "#rope",
+     "uv": [
+      3,
+      0,
+      4,
+      1
+     ]
+    },
+    "east": {
+     "texture": "#rope",
+     "uv": [
+      3,
+      0,
+      4,
+      1
+     ]
+    },
+    "west": {
+     "texture": "#rope",
+     "uv": [
+      3,
+      0,
+      4,
+      1
+     ]
+    }
+   },
+   "name": "rope"
+  }
+ ]
+}

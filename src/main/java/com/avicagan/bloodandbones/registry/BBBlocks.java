@@ -110,7 +110,8 @@ public class BBBlocks {
                 .blockstate((c, p) -> p.simpleBlock(c.get(), p.models().getExistingFile(p.modLoc("block/" + kind.id))))
                 .onRegister(block -> com.simibubi.create.api.stress.BlockStressValues.IMPACTS.register(block, () -> kind.stress))
                 .lang(name)
-                .simpleItem()
+                // the block's own model has no moving parts (the renderer turns them); the item shows them standing still
+                .item().model((c, p) -> p.withExistingParent(c.getName(), p.modLoc("block/" + kind.id + "_item"))).build()
                 .register();
     }
 

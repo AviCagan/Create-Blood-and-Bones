@@ -232,7 +232,7 @@ public class CookingTests {
         helper.setBlock(tablePos, BBBlocks.BUTCHER_TABLE.getDefaultState());
         var table = (com.avicagan.bloodandbones.cooking.ButcherTableBlockEntity) helper.getLevel().getBlockEntity(helper.absolutePos(tablePos));
         ItemStack cleaver = new ItemStack(com.avicagan.bloodandbones.registry.BBItems.CLEAVER.get());
-        if (table.chop(helper.getLevel(), cleaver)) {
+        if (table.chop(helper.getLevel(), cleaver, null)) {
             helper.fail("There is nothing on an empty table to chop");
         }
         // a piece of something with no butchery table stays whole rather than vanish
@@ -241,14 +241,14 @@ public class CookingTests {
                 com.avicagan.bloodandbones.BloodAndBones.asResource("nothing"), "body", net.minecraft.resources.ResourceLocation.withDefaultNamespace("textures/misc/white.png"),
                 List.of(), 1.0F, false, java.util.Map.of(), 0.0F, 0.0F, 0.0F, false));
         table.put(odd);
-        if (table.chop(helper.getLevel(), cleaver) || table.specimen().isEmpty()) {
+        if (table.chop(helper.getLevel(), cleaver, null) || table.specimen().isEmpty()) {
             helper.fail("A piece with nothing to cut it into should stay on the table");
         }
         table.take();
         if (!table.put(cowBody(helper))) {
             helper.fail("The table should take a piece");
         }
-        if (!table.chop(helper.getLevel(), cleaver) || !table.specimen().isEmpty()) {
+        if (!table.chop(helper.getLevel(), cleaver, null) || !table.specimen().isEmpty()) {
             helper.fail("Chopping should take the piece apart and leave the table empty");
         }
         if (cleaver.get(com.avicagan.bloodandbones.registry.BBDataComponents.BLOODIED_AT.get()) == null) {

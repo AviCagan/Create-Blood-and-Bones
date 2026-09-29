@@ -35,7 +35,8 @@ public final class BloodlessSwap extends BakedModelWrapper<BakedModel> {
             ResourceLocation.fromNamespaceAndPath("bloodandbones", "block/mangler_top"), ResourceLocation.fromNamespaceAndPath("bloodandbones", "block/mangler_top_clean"),
             ResourceLocation.fromNamespaceAndPath("bloodandbones", "block/butcher_blade"), ResourceLocation.fromNamespaceAndPath("bloodandbones", "block/butcher_blade_clean"),
             ResourceLocation.fromNamespaceAndPath("bloodandbones", "block/bloody_saw"), ResourceLocation.fromNamespaceAndPath("bloodandbones", "block/bloody_saw_clean"),
-            ResourceLocation.fromNamespaceAndPath("bloodandbones", "block/deglover_roller"), ResourceLocation.fromNamespaceAndPath("bloodandbones", "block/deglover_roller_clean"));
+            ResourceLocation.fromNamespaceAndPath("bloodandbones", "block/deglover_roller"), ResourceLocation.fromNamespaceAndPath("bloodandbones", "block/deglover_roller_clean"),
+            ResourceLocation.fromNamespaceAndPath("bloodandbones", "block/mangler_grinder"), ResourceLocation.fromNamespaceAndPath("bloodandbones", "block/mangler_grinder_clean"));
 
     /** The Shackle Hook's and Butcher's Hook's point, red in normal play. */
     public static final Map<ResourceLocation, ResourceLocation> HOOK = Map.of(

@@ -326,7 +326,10 @@ public final class Surgery {
      * carcass lying over it (a cow or a horse is too heavy to carry: the Assembly Frame's work zone), its torso's first,
      * then whatever is still attached. Each comes out as its organ's file says (a heart, a Gland, a rabbit's foot),
      * stamped with its mob, with anything that comes out with it (a creeper's powder sac spills gunpowder). A mob with no
-     * blood gives what it has instead (a skeleton its marrow, a blaze its core), dry.
+     * blood gives what it has instead (a skeleton its marrow, a blaze its core), dry. The Surgical Rig's own cuts
+     * (SurgicalRig) take their organs through this, and through {@link #harvest(ServerLevel, Player, SurgeryTableBlockEntity,
+     * ItemStack, com.avicagan.bloodandbones.carcass.CarcassSavedData.Carcass, String)} for a carcass lying on its top, so
+     * there is one count of what came out.
      *
      * @return whether an organ came out
      */
@@ -334,32 +337,8 @@ public final class Surgery {
         com.avicagan.bloodandbones.parts.PartsData.Store store = com.avicagan.bloodandbones.parts.PartsData.SERVER;
         ItemStack stack = table.item();
         com.avicagan.bloodandbones.item.CarcassPieceItem.Piece piece = com.avicagan.bloodandbones.item.CarcassPieceItem.piece(stack);
-        BlockPos pos = table.getBlockPos();
-        Vector3d at = new Vector3d(pos.getX() + 0.5, pos.getY() + 1.1, pos.getZ() + 0.5);
-        net.minecraft.resources.ResourceLocation entity;
-        boolean baby;
-        net.minecraft.resources.ResourceLocation organ;
-        // what the carcass kept of its mob, for the organ to keep what its data reads (a charged creeper's sac)
-        java.util.Map<String, String> kept;
-        if (piece != null) {
-            java.util.List<net.minecraft.resources.ResourceLocation> held = com.avicagan.bloodandbones.parts.Organs.held(store, piece.entity(), piece.baby(), piece.bone());
-            int taken = organsTaken(piece);
-            if (taken >= held.size()) {
-                surgeon.displayClientMessage(Component.translatable("bloodandbones.surgery.no_organs"), true);
-                return false;
-            }
-            java.util.Map<String, String> traits = new java.util.HashMap<>(piece.traits());
-            traits.put(ORGANS_TAKEN, Integer.toString(taken + 1));
-            stack.set(com.avicagan.bloodandbones.registry.BBDataComponents.PIECE.get(), new com.avicagan.bloodandbones.item.CarcassPieceItem.Piece(
-                    piece.entity(), piece.bone(), piece.texture(), piece.coats(), piece.freshness(), piece.skinned(), java.util.Map.copyOf(traits),
-                    piece.blood(), piece.bloodMax(), piece.decay(), piece.baby()));
-            table.notifyUpdate();
-            entity = piece.entity();
-            baby = piece.baby();
-            organ = held.get(taken);
-            kept = piece.traits();
-        } else {
-            com.avicagan.bloodandbones.carcass.CarcassSavedData.Carcass carcass = stack.isEmpty() ? carcassOn(level, pos) : null;
+        if (piece == null) {
+            com.avicagan.bloodandbones.carcass.CarcassSavedData.Carcass carcass = stack.isEmpty() ? carcassOn(level, table.getBlockPos()) : null;
             if (carcass == null) {
                 return false;
             }
@@ -368,19 +347,56 @@ public final class Surgery {
                 surgeon.displayClientMessage(Component.translatable("bloodandbones.surgery.no_organs"), true);
                 return false;
             }
-            java.util.List<net.minecraft.resources.ResourceLocation> held = com.avicagan.bloodandbones.parts.Organs.held(store, carcass.entity, carcass.baby, bone);
-            int taken = organsTaken(carcass.traits, bone, bone.equals(carcass.rootBone));
-            carcass.traits.put(ORGANS_TAKEN + ":" + bone, Integer.toString(taken + 1));
-            com.avicagan.bloodandbones.carcass.CarcassSavedData.get(level).setDirty();
-            Vector3d there = com.avicagan.bloodandbones.carcass.CarcassAssembler.boneWorldPosition(level, carcass, bone);
-            if (there != null) {
-                at = there;
-            }
-            entity = carcass.entity;
-            baby = carcass.baby;
-            organ = held.get(taken);
-            kept = carcass.traits;
+            return harvest(level, surgeon, table, blade, carcass, bone);
         }
+        java.util.List<net.minecraft.resources.ResourceLocation> held = com.avicagan.bloodandbones.parts.Organs.held(store, piece.entity(), piece.baby(), piece.bone());
+        int taken = organsTaken(piece);
+        if (taken >= held.size()) {
+            surgeon.displayClientMessage(Component.translatable("bloodandbones.surgery.no_organs"), true);
+            return false;
+        }
+        java.util.Map<String, String> traits = new java.util.HashMap<>(piece.traits());
+        traits.put(ORGANS_TAKEN, Integer.toString(taken + 1));
+        stack.set(com.avicagan.bloodandbones.registry.BBDataComponents.PIECE.get(), new com.avicagan.bloodandbones.item.CarcassPieceItem.Piece(
+                piece.entity(), piece.bone(), piece.texture(), piece.coats(), piece.freshness(), piece.skinned(), java.util.Map.copyOf(traits),
+                piece.blood(), piece.bloodMax(), piece.decay(), piece.baby()));
+        table.notifyUpdate();
+        BlockPos pos = table.getBlockPos();
+        Vector3d at = new Vector3d(pos.getX() + 0.5, pos.getY() + 1.1, pos.getZ() + 0.5);
+        cutOrgan(level, surgeon, pos, at, blade, held.get(taken), piece.entity(), piece.baby(), piece.traits());
+        return true;
+    }
+
+    /**
+     * The next organ out of one bone of a carcass lying whole over or on the table, counted on the carcass under that bone's
+     * own key ("organs_taken:head"), which a piece cut off it still reads.
+     *
+     * @return whether an organ came out (false if that bone has none left)
+     */
+    public static boolean harvest(ServerLevel level, Player surgeon, SurgeryTableBlockEntity table, ItemStack blade,
+                                  com.avicagan.bloodandbones.carcass.CarcassSavedData.Carcass carcass, String bone) {
+        com.avicagan.bloodandbones.parts.PartsData.Store store = com.avicagan.bloodandbones.parts.PartsData.SERVER;
+        java.util.List<net.minecraft.resources.ResourceLocation> held = com.avicagan.bloodandbones.parts.Organs.held(store, carcass.entity, carcass.baby, bone);
+        int taken = organsTaken(carcass.traits, bone, bone.equals(carcass.rootBone));
+        if (taken >= held.size()) {
+            return false;
+        }
+        carcass.traits.put(ORGANS_TAKEN + ":" + bone, Integer.toString(taken + 1));
+        com.avicagan.bloodandbones.carcass.CarcassSavedData.get(level).setDirty();
+        BlockPos pos = table.getBlockPos();
+        Vector3d at = com.avicagan.bloodandbones.carcass.CarcassAssembler.boneWorldPosition(level, carcass, bone);
+        if (at == null) {
+            at = new Vector3d(pos.getX() + 0.5, pos.getY() + 1.1, pos.getZ() + 0.5);
+        }
+        cutOrgan(level, surgeon, pos, at, blade, held.get(taken), carcass.entity, carcass.baby, carcass.traits);
+        return true;
+    }
+
+    /** One organ comes out, into the surgeon's hands, with whatever comes out with it, wet or (from a mob with no blood) dry. */
+    private static void cutOrgan(ServerLevel level, Player surgeon, BlockPos pos, Vector3d at, ItemStack blade, net.minecraft.resources.ResourceLocation organ,
+                                 net.minecraft.resources.ResourceLocation entity, boolean baby, java.util.Map<String, String> kept) {
+        com.avicagan.bloodandbones.parts.PartsData.Store store = com.avicagan.bloodandbones.parts.PartsData.SERVER;
+        // what the carcass kept of its mob goes with the organ, for what its data reads (a charged creeper's sac)
         ItemStack out = com.avicagan.bloodandbones.parts.Organs.stack(store, organ, entity, baby, kept);
         // a Deployer's stand-in would hold it and stall: it drops on the table, as the Butcher's Table's cuts do
         Player receiver = surgeon instanceof net.neoforged.neoforge.common.util.FakePlayer ? null : surgeon;
@@ -405,16 +421,28 @@ public final class Surgery {
                     new ItemStack(net.minecraft.world.item.Items.BONE_MEAL)), at.x, at.y, at.z, 8, 0.1, 0.05, 0.1, 0.06);
             level.playSound(null, pos, com.avicagan.bloodandbones.registry.BBSounds.CARCASS_SEVER.get(), SoundSource.PLAYERS, 0.8F, 1.4F);
         }
-        return true;
     }
 
     /**
      * The bone of a carcass lying whole whose organ a Cleaver takes out next, or null if every one is out: the torso's
-     * first, then the rest still attached, each counting its own. A carcass that has lain still a while is folded into its
-     * torso (CarcassRest), its limbs kept only as rest poses: they are still attached, and still hold their organs.
+     * first, then the rest still attached, each counting its own (see {@link #organBones}).
      */
     @org.jetbrains.annotations.Nullable
     public static String nextOrgan(com.avicagan.bloodandbones.parts.PartsData.Store store, com.avicagan.bloodandbones.carcass.CarcassSavedData.Carcass carcass) {
+        for (String bone : organBones(carcass)) {
+            if (organsLeft(store, carcass, bone) > 0) {
+                return bone;
+            }
+        }
+        return null;
+    }
+
+    /**
+     * The bones of a carcass lying whole that may still hold organs, in the order a Cleaver takes them: the torso's first,
+     * then the rest still attached. A carcass that has lain still a while is folded into its torso (CarcassRest), its limbs
+     * kept only as rest poses: they are still attached, and still hold their organs.
+     */
+    public static java.util.List<String> organBones(com.avicagan.bloodandbones.carcass.CarcassSavedData.Carcass carcass) {
         java.util.Set<String> bones = new java.util.LinkedHashSet<>();
         bones.add(carcass.rootBone);
         bones.addAll(carcass.bones.keySet());
@@ -423,13 +451,19 @@ public final class Surgery {
         }
         // a limb cut through is about to go its own way
         bones.removeIf(bone -> !bone.equals(carcass.rootBone) && carcass.severed.contains(bone));
-        for (String bone : bones) {
-            int held = com.avicagan.bloodandbones.parts.Organs.held(store, carcass.entity, carcass.baby, bone).size();
-            if (organsTaken(carcass.traits, bone, bone.equals(carcass.rootBone)) < held) {
-                return bone;
-            }
-        }
-        return null;
+        return java.util.List.copyOf(bones);
+    }
+
+    /** How many organs are still in one bone of a carcass, by its mob's data (Organs#held) less what was taken. */
+    public static int organsLeft(com.avicagan.bloodandbones.parts.PartsData.Store store, com.avicagan.bloodandbones.carcass.CarcassSavedData.Carcass carcass, String bone) {
+        int held = com.avicagan.bloodandbones.parts.Organs.held(store, carcass.entity, carcass.baby, bone).size();
+        return Math.max(0, held - organsTaken(carcass.traits, bone, bone.equals(carcass.rootBone)));
+    }
+
+    /** How many organs are still in a carried piece, by its mob's data (Organs#held) less what was taken. */
+    public static int organsLeft(com.avicagan.bloodandbones.parts.PartsData.Store store, com.avicagan.bloodandbones.item.CarcassPieceItem.Piece piece) {
+        int held = com.avicagan.bloodandbones.parts.Organs.held(store, piece.entity(), piece.baby(), piece.bone()).size();
+        return Math.max(0, held - organsTaken(piece));
     }
 
     /**

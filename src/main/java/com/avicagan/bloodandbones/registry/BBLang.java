@@ -267,8 +267,9 @@ public class BBLang {
         BloodAndBones.REGISTRATE.addRawLang("bloodandbones.minion.lay_body", "Lay a carcass torso on the frame to build a minion on it");
         item("surgical_rig",
                 "A Surgery Table _attachment_: an overhead arm of lamps, clamps and blades. Makes the table a place to _operate_.",
-                "When R-Clicked on a Surgery Table", "Fits it (swapping out any other attachment). Then patients can lie on the table, and carcass pieces give up their _organs_.",
+                "When R-Clicked on a Surgery Table", "Fits it (swapping out any other attachment). Then patients can lie on the table, and a carcass laid on it gives up its _organs_ to a Cleaver, then its _hide_, limbs and meat, one slow cut at a time. By hand the meat and hide come out as a hand's do, about half; a _Deployer_ with a Cleaver gets all of it.",
                 "When Sneak-R-Clicked off an Empty Table", "An empty hand takes it back off.");
+        bloodless("item.bloodandbones.surgical_rig.tooltip.behaviour1", "Fits it (swapping out any other attachment). Then patients can lie on the table, and a carcass laid on it gives up its _cores_ to a Cleaver, then its _covering_, limbs and meat, one slow cut at a time. By hand the meat and covering come out as a hand's do, about half; a _Deployer_ with a Cleaver gets all of it.");
         item("assembly_frame",
                 "A Surgery Table _attachment_: clamps and a jig for stitching bodies together. Makes the table a place to build _minions_.",
                 "When R-Clicked on a Surgery Table", "Fits it (swapping out any other attachment). Then a carcass _torso_ laid on it can be built into a minion, with the heads, legs and arms of _any_ mob.",
@@ -307,6 +308,7 @@ public class BBLang {
                 "A minion that ran out of blood, _folded up_ to carry. It keeps everything: what it is built of, its job, what it carries.",
                 "When Used on a Block", "Sets it down there, still out of blood. Give it _blood_ to wake it.");
         BloodAndBones.REGISTRATE.addRawLang("bloodandbones.surgery.no_organs", "Nothing more to take out of it");
+        BloodAndBones.REGISTRATE.addRawLang("bloodandbones.surgery.filtered", "The rig's filter passes this over");
         BloodAndBones.REGISTRATE.addRawLang("bloodandbones.surgery.empty", "Nothing on the table: lay a Cleaver, a prosthetic or a limb on it");
         BloodAndBones.REGISTRATE.addRawLang("bloodandbones.surgery.on_table", "On the table: %s");
         BloodAndBones.REGISTRATE.addRawLang("bloodandbones.surgery.state.natural", "Your own");
@@ -496,9 +498,11 @@ public class BBLang {
             BloodAndBones.REGISTRATE.addRawLang("set.bloodandbones." + set[0], set[1]);
         }
         BloodAndBones.REGISTRATE.addRawLang("attribute.bloodandbones.drag_strength", "Drag Strength");
+        BloodAndBones.REGISTRATE.addRawLang("attribute.bloodandbones.butchery_yield", "Butchery Yield");
+        bloodless("attribute.bloodandbones.butchery_yield", "Salvage Yield");
         String[][] traits = {
                 {"hardy", "Hardy"}, {"frail", "Frail"}, {"swift", "Swift"}, {"sluggish", "Sluggish"}, {"steady", "Steady"}, {"sturdy", "Sturdy"},
-                {"barrel_chest", "Barrel Chest"}, {"hooves", "Hooves"}, {"thick_hide", "Thick Hide"}, {"hauler", "Hauler"}, {"meek", "Meek"},
+                {"barrel_chest", "Barrel Chest"}, {"hooves", "Hooves"}, {"thick_hide", "Thick Hide"}, {"hauler", "Hauler"}, {"keen_butcher", "Keen Butcher"}, {"meek", "Meek"},
                 {"springy", "Springy"}, {"light_boned", "Light-Boned"}, {"fall_guard", "Fall Guard"}, {"cud_chewer", "Cud Chewer"},
                 {"alert", "Alert"}, {"prey", "Prey"},
                 {"appraiser", "Appraiser"}, {"aquaphobe", "Aquaphobe"}, {"bane_weak", "Weak to Bane"}, {"beached", "Beached"},
@@ -610,8 +614,12 @@ public class BBLang {
 
         // ---- goggles
         BloodAndBones.REGISTRATE.addRawLang("bloodandbones.gui.goggles.carcass_machine.output", "%1$s items waiting");
+        BloodAndBones.REGISTRATE.addRawLang("bloodandbones.gui.goggles.carcass_machine.too_fast", "Works no faster above %1$s RPM");
+        BloodAndBones.REGISTRATE.addRawLang("bloodandbones.gui.goggles.guillotine.winding", "Winding up: %1$s%%");
+        BloodAndBones.REGISTRATE.addRawLang("bloodandbones.gui.goggles.guillotine.armed", "Armed: a redstone pulse drops the blade");
         BloodAndBones.REGISTRATE.addRawLang("bloodandbones.gui.goggles.spit_roast.roasting", "Roasting: %1$s%%");
         BloodAndBones.REGISTRATE.addRawLang("bloodandbones.gui.goggles.spit_roast.cooked", "Cooked: take it off");
+        BloodAndBones.REGISTRATE.addRawLang("bloodandbones.gui.goggles.spit_roast.speed", "Cooking %1$sx as fast as by Hand Crank");
         // NeoForge's settings screen (Mods, Blood & Bones, Config)
         config("presentation", "Presentation", "How blood and gore look. Nothing here changes how the game plays.");
         config("bloodless_mode", "Bloodless mode", "Hides blood drops and stains, draws skinned carcasses pale, the machines and hooks clean and blood brown. A server can force it on for everyone with the bloodandbonesBloodless game rule.");
@@ -663,14 +671,14 @@ public class BBLang {
         advancement("soul_netherite", "Thirty-Two Buckets", "Make a Soul Netherite Fluid Backtank");
 
         // ---- Ponder scenes (text_N in the order each scene shows its text)
-        ponder("mangler", "Grinding Carcasses with the Mangler", "The Mangler tears the limbs off a carcass, then grinds every piece into meat, bone, offal and fat", "It is driven by a shaft from below. The faster it turns, the faster it works", "It works any carcass lying on it or hanging over it. Set it flush in a floor so a body lies across it", "What it makes waits inside. Take it with an empty hand, or pull it out with a funnel or hopper");
-        ponder("guillotine", "Taking Limbs Off with the Guillotine", "The Guillotine takes the nearest limb off a carcass in one stroke. It never takes the head", "It is driven by a shaft from below. The faster it turns, the faster it works", "It works any carcass lying on it or hanging over it. Set it flush in a floor so a body lies across it", "What it makes waits inside. Take it with an empty hand, or pull it out with a funnel or hopper");
-        ponder("beheader", "Taking Heads with the Beheader", "The Beheader takes heads off. Zombies, skeletons, creepers and piglins sometimes leave their skull whole", "It is driven by a shaft from below. The faster it turns, the faster it works", "It works any carcass lying on it or hanging over it. Set it flush in a floor so a body lies across it", "What it makes waits inside. Take it with an empty hand, or pull it out with a funnel or hopper");
-        ponder("deglover", "Skinning with the Deglover", "The Deglover strips the hide off a carcass, and a sheep's wool with it", "It is driven by a shaft from below. The faster it turns, the faster it works", "It works any carcass lying on it or hanging over it. Set it flush in a floor so a body lies across it", "What it makes waits inside. Take it with an empty hand, or pull it out with a funnel or hopper");
+        ponder("mangler", "Grinding Carcasses with the Mangler", "The Mangler tears each limb off a carcass and grinds it at once, then the body: the quickest way through a carcass. It keeps the least meat and bone, but gives armour scraps and the mob's own drops", "It is driven by a shaft from below. The faster it turns, the faster it works", "It works any carcass lying on it or hanging over it. Set it flush in a floor so a body lies across it", "What it makes waits inside. Take it with an empty hand, or pull it out with a funnel or hopper", "The filter on its top edge picks which parts it takes: an Attribute Filter set to a part, such as a hind leg, or a spawn egg for one kind of mob");
+        ponder("guillotine", "Taking Limbs Off with the Guillotine", "The Guillotine winds its blade up while it turns. A redstone pulse drops it through one limb, whole. It never takes the head", "It is driven by a shaft from below. The faster it turns, the faster it winds its blade up", "Wound up, it holds the blade at the top, armed. Only a redstone pulse drops it: a lever, a button or a clock beside it", "It works any carcass lying on it or hanging over it. Set it flush in a floor so a body lies across it", "What it makes waits inside. Take it with an empty hand, or pull it out with a funnel or hopper", "The filter on its top edge picks which parts it takes: an Attribute Filter set to a part, such as a hind leg, or a spawn egg for one kind of mob");
+        ponder("beheader", "Taking Heads with the Beheader", "The Beheader takes heads off as they come, one quick stroke each, under a line of hanging carcasses too. Zombies, skeletons, creepers and piglins sometimes leave their skull whole", "It is driven by a shaft from below. The faster it turns, the faster it works", "It works any carcass lying on it or hanging over it. Set it flush in a floor so a body lies across it", "What it makes waits inside. Take it with an empty hand, or pull it out with a funnel or hopper", "The filter on its top edge picks which parts it takes: an Attribute Filter set to a part, such as a hind leg, or a spawn egg for one kind of mob");
+        ponder("deglover", "Skinning with the Deglover", "The Deglover rolls the hide off a carcass whole, and a sheep's wool with it. It costs a lot of stress: turn it slowly", "It is driven by a shaft from below. Up to 32 RPM, the faster it turns, the faster it works; past that it works no faster", "It works any carcass lying on it or hanging over it. Set it flush in a floor so a body lies across it", "What it makes waits inside. Take it with an empty hand, or pull it out with a funnel or hopper", "The filter on its top edge picks which parts it takes: an Attribute Filter set to a part, such as a hind leg, or a spawn egg for one kind of mob");
         ponder("bleeding_rack", "Draining Blood with the Bleeding Rack", "The Bleeding Rack is a drip tray with a tank for catching blood", "Hang a carcass on a Shackle Hook up to 8 blocks above it, and its blood drips into the tray", "An Encased Fan blowing across the body drains it up to four times faster", "Pipes can pull the blood from the rack's sides and bottom. When the rack is full, the carcass stops draining");
         ponder("butcher_hook", "Hanging Meat on the Butcher's Hook", "Bloody Casing: fill an Andesite Casing with 250 mB of blood from a Spout. It joins up like any casing", "A Butcher's Hook goes on the side of a solid block", "Right-click with a carcass piece to hang it up. It keeps there, like a piece in a Specimen Jar", "Take it down with an empty hand. If the block behind it is broken, the hook falls and drops the piece");
-        ponder("butcher_table", "Chopping Pieces on the Butcher's Table", "Right-click the Butcher's Table with a carcass piece to lay it on the top", "Chop it with a Cleaver: it comes apart into meat, bone, offal and fat, spoiled as far as it had rotted", "A Deployer holding a Cleaver chops too. A funnel or hopper can lay the pieces on the table");
-        ponder("spit_roast", "Roasting on the Spit Roast", "Set the Spit Roast over heat: a campfire, fire, lava or a Blaze Burner", "A shaft turns the spit. It only roasts while it turns", "Right-click with a carcass piece to skewer it. It browns as it cooks", "Take it off with an empty hand once cooked: it comes apart into cooked meat and bones. Leave it too long and it burns");
+        ponder("butcher_table", "Chopping Pieces on the Butcher's Table", "Right-click the Butcher's Table with a carcass piece to lay it on the top", "Chop it with a Cleaver: it comes apart into meat, bone, offal and fat, spoiled as far as it had rotted. By hand you get about half", "A Deployer holding a Cleaver chops too, and gets all of it. A funnel or hopper can lay the pieces on the table", "The filter on the edge of its top picks which pieces it takes. A body too heavy to carry can be dragged onto it and chopped where it lies");
+        ponder("spit_roast", "Roasting on the Spit Roast", "Set the Spit Roast over heat: a campfire, fire, lava or a Blaze Burner", "A shaft turns the spit, or a Hand Crank, slowly. It only roasts while it turns, and a fast shaft roasts up to eight times as fast", "Right-click with a carcass piece to skewer it. It browns as it cooks", "Take it off with an empty hand once cooked: it comes apart into cooked meat and bones. Leave it too long and it burns", "A whole carcass goes on too: right-click the spit with the Meat Hook while dragging one. It takes longer, and gives all its meat cooked");
 
         // ---- JEI butchery page
         BloodAndBones.REGISTRATE.addRawLang("bloodandbones.jei.category.butchery", "Butchery");
@@ -697,7 +705,7 @@ public class BBLang {
                 "Put a Bleeding Rack under a Shackle Hook (up to 8 blocks below) and hang a carcass: its blood drips into the tray. A carcass lying still on the rack drains too, more slowly.",
                 "A cow holds about a bucket. Encased Fans blowing across the body drain it up to four times faster. Pipe the blood out of the sides or bottom.");
         jei("machines",
-                "The Mangler, Guillotine, Beheader and Deglover work any carcass lying on or hanging over them. Each takes a shaft from below; the faster it turns, the faster it works. Set them flush in a floor so a body lies across them.",
+                "The Mangler, Guillotine, Beheader and Deglover work any carcass lying on or hanging over them. Each takes a shaft from below; the faster it turns, the faster it works, but the Deglover no faster past 32 RPM, and the Guillotine only winds its blade up faster: a redstone pulse drops it. Set them flush in a floor so a body lies across them.",
                 "Guillotine: limbs off. Beheader: heads off, sometimes a skull. Deglover: hides off. Mangler: everything, down to meat and bone. Take their output with a funnel or an empty hand.",
                 "The filter slot on each machine's top edge picks what it works on: a spawn egg or a carcass piece for one kind of mob, or a Create list or attribute filter.");
         jei("display",

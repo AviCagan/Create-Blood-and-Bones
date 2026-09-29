@@ -3042,3 +3042,252 @@ blocks across (`empty_wide`) and stands in the middle of it, and fails at once i
 Run beside each other eight times, both passed every time.
 
 The suite is 466 tests (the 451 on main and the fifteen above), and passed three runs in a row.
+
+### 15.19 The machines, the three paths and the filters (docs/BRIEF-AUDIT.md packages 5, 10, 15 and 16)
+
+Built on 054cdfd. This closes audit package 16, and 15 except the Spit Roast's effects, which wait for the owner's
+decision 8. Packages 5 and 10 are partly built; what is left of them is listed at the end of 15.19.1 and 15.19.2. Decision 6
+is open, so the Flensing Knife and the Cleaver stay two tools. Main has since taken `bb-organs` (bfd6e0d), whose organs
+come from data (`Organs.held`) and whose `Surgery.harvest` also takes organs out of a carcass lying over the table.
+This branch counts organs under main's key and with main's functions (`organsTaken(traits, bone, root)`, `putDown`,
+15.19.5), so the two never keep two counts; when they meet, the rig's organ step (`SurgicalRig`, the three of a body and a
+head's two eyes from `Surgery#organs`) should give way to main's harvest, with the rig's filter asked as here.
+
+#### 15.19.1 The yield gap and three paths that stay apart (package 5)
+
+- **Paths are data.** `data/<ns>/butchery_path/<id>.json` (`ButcheryPath`: `scale`, a share per kind in `kinds`,
+  `loss`, `loot_table`, `scraps`), loaded by `ButcheryPaths`. `CarcassButchery.dropYields` multiplies each yield by
+  the path's share for its kind and by the hand's butchery yield, rolls the fraction as before, then rolls the loss once
+  for every whole item. The path is set around the work: `onPath(path, yield, action)`, or `byHand(who, action)`, where
+  a player's own hand or a minion's is the hand path at its `butchery_yield`, and a Deployer's stand-in or no one is a
+  station. A real player's `cut` or `skin` with no path set is by hand. Rot's crumbling keeps its own half, outside any
+  path. A path with no file takes everything.
+
+  | Path | Meat, bone | Offal, fat | Hide | Other | Loss | Also |
+  |---|---|---|---|---|---|---|
+  | `hand` | 0.6 | 0.6 | 0.6 | 0.6 | 15% | |
+  | `station` | 1 | 1 | 1 | 1 | none | |
+  | `mangler` | 0.25 | 0 | 0 | 0.25 | none | the mob's loot table with its torso, less what its table gives; scraps for every piece |
+  | `surgery` | 1 | 1 | 1 | 1 | none | the organs, from the rig |
+
+  By hand is 0.6 × 0.85, about half. A Flensing Knife or Cleaver in a player's hand, a Cleaver at the Butcher's Table or
+  the Surgical Rig in a player's hand and a butcher minion's blade are by hand. The Deglover, a Deployer's Cleaver at the
+  Butcher's Table and the Spit Roast's cooking are a station. The Mangler and a Deployer at the Surgical Rig have their
+  own. Every share is read somewhere: the hide share by the knife, the Deglover and the rig when they flay, and by the
+  Mangler for an unskinned piece it grinds (`CarcassButchery.groundHide`; its 0 grinds the hide away, and a datapack
+  that raises it gets hide back).
+- **`butchery_yield`** (PARTS-AND-TRAITS 5.7): an attribute from 0 to 4, 1 on players and minions. The trait
+  `keen_butcher` (+10% a level) is now data on it; no mob carries it yet.
+- **The Mangler** takes one stroke a piece. An attached limb is severed and ground in the same stroke
+  (`CarcassButchery.sever` now returns the piece's own record); a loose piece or a bare body is ground where it lies.
+  Grinding the rig's torso rolls the mob's own loot table (`CarcassButchery.rollLoot`: a fresh instance of the mob, never
+  added to the world, a generic damage source; a baby drops nothing and `doMobLoot` is obeyed, as vanilla's
+  `shouldDropLoot`). The mob is set as the carcass was where its loot reads it: a sheep's colour from its `wool` trait
+  and sheared once skinned or if it was sheared, a slime or magma cube at its size (the rig's baby is the smallest, else
+  the biggest). Any item the mob's butchery table also gives is left out of the roll: the table's quarter already
+  stands for it. Without that the drop came on top, and an iron golem's 3 to 5 ingots, a chicken's one raw chicken and a
+  cow's beef gave the "wasteful" Mangler as much as or more than a station. What is left is what no table gives: a
+  cow's leather, a zombie's rare iron, a skeleton's arrows. New sound `machine.grind` (slime, honey, bone and berry
+  bush), with a clean twin (15.19.3).
+- **Costs** (`MachineKind`: stress per RPM, stroke as a share of 80 ticks at 16 RPM, top speed):
+
+  | Machine | Stress/RPM | Stroke | Works faster up to |
+  |---|---|---|---|
+  | Mangler | 8 | 0.5 | 256 RPM |
+  | Guillotine | 4 | 1.0 (its wind-up) | 256 RPM |
+  | Beheader | 2 | 0.25 | 256 RPM |
+  | Deglover | 16 | 0.5 | 32 RPM |
+
+  The Beheader is the cheapest and quickest. The Deglover costs the most and gains nothing past 32 RPM (its goggles say
+  so), so a slow shaft is the sensible one.
+- **The Flensing Knife is held on a part.** `UseAnim.BRUSH`, a use of 72000 ticks. A right-click on a carcass part
+  starts the hold (`CarcassPartBlock`). `onUseTick` finds the part under the crosshair the way `BrushItem` does (Sable's
+  `clip` reaches into sub-levels), strokes every 10 ticks, and lets go when the hide is off after four strokes or when
+  the look leaves the carcass. A Deployer's stand-in never ticks a use, so each of its pushes is one stroke.
+- **The Surgical Rig is a whole path** (`SurgicalRig`). Each Cleaver cut takes one thing: first an organ, then the
+  hide if it is still on (all of it at once, `CarcassButchery.flay`; a carried piece its share, `pieceHide`), then a
+  limb at its joint (the end of a chain first), then the piece's whole table. It works a carried piece laid on the table
+  (once its organs and hide are out, the piece comes apart on the top), or, with nothing laid on it, a carcass lying on
+  its top (not one hanging over it from a hook or a trolley: `lyingOn` leaves those out). A Deployer's Cleaver works it
+  as a station, on the surgery path; a player's own hand gets the organs whole but the hide and meat on the hand path,
+  about half. Whoever cuts, a cut starts `SurgicalRig.PAUSE` (30 ticks) before the next may (`SurgicalRig.click`, kept
+  on the table so a Deployer is held to it too, and shown on a player's Cleaver as its cooldown), so the rig is the
+  slowest path at any speed. A carcass in the world counts each part's organs in its traits under main's key
+  (`organs_taken:<bone>`), which a piece picked up off it keeps; a carried piece counts under the plain key, and set down
+  (`CarcassPieceItem.useOn`, or off the Spit Roast) that becomes its bone's own (`Surgery.putDown`). A click that finds
+  nothing it may take lays the Cleaver on the table, as before; one the filter turned away says so.
+- **The Butcher's Table** also chops a loose piece lying on its top (`CarcassButchery.lyingOn`), so a torso too heavy
+  to carry can be dragged there. That is the full-yield end of the filtered path.
+- **Tests.** `cowDownEachPath` sends a cow down each path at 32 RPM. By hand: the knife held, then the Cleaver on each
+  joint and piece. The Mangler: until nothing is left. The stations: a Deglover, a Beheader and a Guillotine swapped in
+  under the body in turn, then a Deployer's Cleaver at a Butcher's Table swapped in under the body, with the light pieces
+  laid on it. The Surgical Rig: a Deployer's Cleaver, with the pieces that fall off laid back on, each cut the longer of
+  the Deployer's push and the rig's pause. One run:
+
+  | Path | Time at 32 RPM | At 256 RPM | What came out |
+  |---|---|---|---|
+  | By hand | 436 ticks | | 2 beef, 3 bone, 1 hide, 1 offal |
+  | Mangler | 126 ticks | 30 ticks | 2 beef, 1 bone, 1 leather (its drop), 19 scraps |
+  | Stations | 490 ticks | 135 ticks | 5 beef, 6 bone, 2 hide, 2 offal, 1 fat |
+  | Surgical Rig | 680 ticks | 510 ticks (510 by hand) | 5 beef, 2 bone, 3 hide, 1 offal, 1 fat, a heart, lungs, a stomach, 2 eyes |
+
+  It asserts that the Mangler is quickest and the Surgical Rig slowest at both speeds and by hand, that the Deglover's
+  hide is whole and so is the rig's, that the Mangler gives the cow's own drop and scraps but no hide or offal, and that
+  only the rig gives organs. It then rolls 300 cows down each path through the same code, the Mangler's with its loot.
+  By hand came to 0.51 of a station's meat and bone, the Mangler's to a quarter, and the Surgical Rig to all of it.
+  `handYieldIsAboutHalfWithRealLoss` shows the loss is real, apart from rounding: four beef exactly, by a hand whose
+  butchery yield makes up the share, still comes out short now and then, while a Deployer always gets four. It also shows
+  that a butchery yield of 2 gives about twice as much. `manglerGrindsInTheMobsOwnDrops` grinds an iron golem: no more
+  iron than its quarter of the table; a cow's loot gives leather and never beef; a black sheep's gives no wool, skinned
+  or not; a calf's nothing; a ground piece's hide goes at the path's share. `manglerKeepsTheLeastOfAnyMob` rolls 300 cows,
+  chickens and iron golems down the Mangler (loot and all) and by hand: the Mangler gets no more of any item the table
+  gives, and about half a hand's in all. `surgicalRigIsPacedWhoeverCuts` puts a real Deployer at 256 RPM over a rig
+  (three organs take at least two pauses) and a player clicking every tick at another (in three pauses, two eyes and the
+  hide, and the head still there). `surgicalRigByHandGetsAHandsShare`: a hundred cow bodies cut up at the rig by a
+  player's hand give 0.52 of a Deployer's meat and bone, and the Deployer's come to the bodies' whole table. (One cow's
+  rolls can give the rig as little as the whole numbers of its table, so `cowDownEachPath` asks no more of the one cow;
+  it asked for two bones, and one run in about seventy came up with one.) `machinesCostAsTheBriefSays` checks the costs.
+  `flensingKnifeIsHeldOnAPart` checks that a click starts the hold, three strokes are not enough, four are, and it lets
+  go. `rigTakesEachOrganOnce` (`SurgicalRigTests`) takes a cow's head's eyes as a carried piece, sets it down on the rig
+  and gets no more eyes; and takes a cow's five organs lying on the rig, cuts off its head, picks it up, lays it on the
+  rig and gets its hide, not an eye. `rigTakesTheHideAndLeavesAHungBodyAlone`: a leg's first cut flays it, a cow's sixth
+  (after its five organs) flays it whole, and a Cleaver clicked on a rig with only a hung cow over it is laid down.
+- **Not built:** nothing in survival carries `keen_butcher` yet, so `butchery_yield` is 1 on every player and minion;
+  which mobs' parts or which minion build gives it is for the balance pass (PARTS-AND-TRAITS slice 9).
+
+#### 15.19.2 Filters that pick one part (package 10)
+
+- `PartFilter` and `PartFilteringBehaviour` are taken out of the machine and shared. The filter is asked about each part
+  as the item that part would be (`CarcassPieceItem.of(carcass, bone)`, an organ as its organ item). A spawn egg or a
+  carcass piece means that mob; a list filter asks each entry, as a whitelist or a blacklist; an attribute filter asks as
+  Create would. The machine asks about every part it could take (`accepts(carcass, bone)`), and only unfolds a resting
+  carcass when one of its parts would be taken.
+- **A finer part attribute**, `piece_slot` (`BBItemAttributes.PieceSlot`), is "is a carcass hind leg / front leg /
+  middle leg / leg / tentacle / arm / wing / pair of arms / neck / back half". It comes from `PartSlots`, the slot rules
+  that are data, so a rabbit's haunch is a hind leg and a modded mob's legs sort by the same rules. Any slot key the
+  rules or a mob file give is one (a datapack's `arm.fin` too), worded from the lang file where it has words
+  (`bloodandbones.piece_slot.<key>`) and from the key's own parts where it has not ("fin arm"). It is offered for limbs
+  only: heads, bodies, tails and decoration are `piece_part`'s.
+- **The Butcher's Table and the Surgical Rig** carry the filter on the edge of their tops, on whichever side you look
+  from (`TableFilterSlot`, the Basin's pattern); the Surgery Table shows it only with the rig fitted. The table's item
+  handler takes only pieces its filter passes, so a funnel over a mixed belt pulls those and lets the rest go by. Its
+  Cleaver chops only those. The rig works only the parts its filter passes (an organ is asked about as the part it is
+  in, the hide as the body it comes off). A Create filter in the slot is the player's own item: both tables call
+  `IBE.onRemove`, as Create's blocks do, so breaking one drops it, and taking the rig off (or fitting the Assembly Frame
+  over it) hands it back and clears the slot (`SurgeryTableBlockEntity.takeFilter`).
+- **Cheap to wait.** A machine ready and idle looks every 2 ticks at first, and each look that finds nothing doubles the
+  wait, up to 10 ticks; a stroke resets it. A look passes over a record whose root lies more than 6 blocks from its zone
+  before touching the rest of it, and makes no map for a record with nothing in reach. The part filter asks the filter
+  the slot already read (`FilteringBehaviour`'s own `FilterItemStack`) rather than reading the item again each time.
+  The Mangler's `hasWork` now matches what it can take: a body counts only once nothing hangs off it, so a Mangler set
+  to bodies no longer unfolds a resting cow with its head on every stroke, for nothing.
+- **Not built, for the tasks work (decision 12):** the butchering minion's filter. The butcher job would read a filter
+  through `PartFilter.takes` the same way; which slot it lives in belongs with how a task is given (the audit says
+  package 10 needs no owner decision, but a minion's job is now a task, and how a task is given is decision 12).
+- **Not built:** a filter for single organs at the rig (take only hearts). The rig asks about the part an organ is in,
+  so the brief's "every station that removes parts carries a filter" holds for parts but not yet for organs. Organs
+  come from main's data now; the filter belongs with main's harvest when the two meet.
+- **Tests.** `partFilterAsksAboutEachPart` checks cow, pig and rabbit parts against hind-leg, head, egg and blacklist
+  filters, and what the Attribute Filter offers. `guillotineTakesOnlyHindLegs`: a Guillotine set to hind legs takes a
+  cow's two and then passes the rest over through a hundred more ticks of drops. `mixedLineSortsAtTheTables`: a
+  head-only table takes two heads out of a line of four pieces and turns the legs away; a head-only rig passes a body
+  over and takes a head's eyes.
+
+#### 15.19.3 The machines move (package 15)
+
+- **The Guillotine** keeps `wind`, `falling` and `powered`, all saved. While it turns it winds at one stroke's length
+  (80 ticks at 16 RPM, 40 at 32), on both sides (the client draws it), with a ratchet click (`machine.wind`), and holds
+  at the top, armed, with a clack. `CarcassMachineBlock.neighborChanged` hands `hasNeighborSignal` to `redstone()`: a
+  rising edge drops an armed blade (the Sequenced Gearshift's way), it falls for 4 ticks and cuts one limb at the bottom,
+  and it winds up again. A pulse while it winds is wasted, and a signal held on is not an edge. Its goggles show
+  "Winding up: N%" or "Armed".
+- **Strike when ready.** The Mangler, Beheader and Deglover count up to a stroke and then wait ready, looking every 2
+  ticks and striking as soon as something they take is in reach. A Beheader under a chain takes the head off a passing
+  trolley (`beheaderTakesHeadsOffAPassingTrolley`).
+- **Moving parts.** `CarcassMachineRenderer` follows Create's own kinetic renderers (`MechanicalMixerRenderer`): a
+  partial model per part, turned by render time and speed. The Mangler has two toothed grinders turning into each other
+  in an open pit (a new block model and a `mangler_grinder` texture). The Deglover has two rollers turning against each
+  other, the Beheader a saw at four times the shaft, and the Guillotine its blade and weight, with a rope stretched to a
+  drum on the crossbar. `BBPartialModels` has a clean twin of each bloody part, drawn in bloodless mode. The block models
+  lost their moving parts; the items keep them, standing still (`block/<kind>_item`). Every face of the machines' models
+  above the block now has its own UV; before, the Guillotine's posts and crossbar, the Mangler's rim and the Beheader's
+  slots sampled their neighbours on the texture atlas.
+- **The Spit Roast takes whole carcasses.** Right-click it with the Meat Hook while dragging one (within 3 blocks), or
+  with one lying over it. Every piece goes on and the bodies leave the world (`CarcassButchery.takeAway`). The cook time
+  goes by all its meat, up to 4800 ticks. Cooked, it gives every piece's yields cooked; raw, it is set down on the spit
+  whole again (`CarcassAssembler.assembleWhole`: its root piece laid as a carried piece is, every other piece at its place
+  on the living mob round it, joined to its parent, the whole lifted clear of the ground, built folded and unfolded at
+  once, as `CarcassRest` unfolds a still body). The spit remembers that it holds a carcass from the world (`Carcass`,
+  saved), not a count of pieces, so a torso with every limb cut off is still one: it never goes into a hand, however
+  it comes off, and cooks to the whole carcass's cap. It is drawn whole at its rest pose, head to tail along the spit,
+  turning. It now cooks
+  |RPM| / 32 times the campfire pace, up to 8 at 256 RPM (it was 1 + RPM/64, at most 2): a Hand Crank at 1, a fast shaft
+  eight times that (`shaftCooksFarFasterThanACrank`, `spitRoastTakesAWholeCarcass`).
+- **Not built, for decision 8:** effects on cooked results.
+- **Sounds in bloodless mode.** A server plays the same sound for everyone, so each client picks: `BloodlessSounds`
+  swaps a gory sound for its clean twin on `PlaySoundEvent`. Only `machine.grind` has a twin so far; the other sounds are
+  audit package 9's.
+- Ponder: the four machines' scenes say what each takes and add a line on the filter; the Spit Roast's and the Butcher's
+  Table's scenes cover whole carcasses, the crank, the hand's half and the filter. The line on the shaft is each
+  machine's own (`BBScenes.speedLine`): the Guillotine only winds faster, the Deglover is no faster past 32 RPM. The
+  Guillotine's scene puts a lever beside it, says that only a redstone pulse drops the armed blade, and drops it.
+- Showcase: row F, west of the machines, has the four machines bare with their parts turning, a Guillotine armed and one
+  stopped part-wound, and the Butcher's Table and Surgical Rig with filters set. There is also a whole cow on a spit, the
+  row B Mangler set to limbs (it grinds a cow's legs and leaves the body), an observer clock dropping row B's Guillotine,
+  and the knife held on a carcass in the second hand shot.
+  Pictures: `docs/screenshots/machines_moving.png`, `guillotine_armed_and_winding.png`, `whole_cow_roast.png`,
+  `table_filters.png`, `mangler_limb_filter.png`, `bloodless_machines_moving.png`. Since the review (15.19.5): a third spit
+  whose cow was taken off raw, standing whole over it (`spit_raw_set_down_whole.png`); a cow's hind leg flayed on the rig
+  in row F (`rig_flayed_leg.png`); and the Guillotine's Ponder with its lever (`guillotine_ponder_lever.png`).
+
+#### 15.19.4 Cold air and other addons' freezing (package 16)
+
+- `FanAirflow.processingAt` gives every fan current through a block and its processing there, not only the fastest.
+  `CarcassRot.rateAround` asks at the torso's block and the one under it (a body lies low in air along the floor). A
+  processing type tagged `#bloodandbones:preserves` stops rot; `#bloodandbones:chills` quarters it. These are tags on
+  Create's `fan_processing_type` registry. `create_dragons_plus:freezing` is in `preserves` (optional). `chills` is
+  empty, for other addons.
+- Tests. `freezingFanKeepsACarcass` uses a real encased fan blowing through powder snow, Dragons Plus's own bulk-freezing
+  set-up: a cow four blocks past the snow does not rot, and one in a plain fan's air beside it does.
+  `dragonsPlusFreezersKeepACarcass`: Dragons Plus rates ice a passive freezer, which quarters rot, and a block another
+  addon registers in Dragons Plus's `BlockFreezer` registry as freezing stops rot outright, though none of our own tags
+  name it.
+
+#### 15.19.5 What the review found
+
+A review of this section's work made 19 findings about 15 things: three were made twice, and the two about the organ
+count are one. Each was checked in the code and found real before it was fixed, and each fix has a test that fails
+without it (or, for what only a client decides, a test of the server's half).
+
+- **An organ could come out twice.** A carried piece counted its organs under `organs_taken`, a carcass lying on the rig
+  under `organs_taken.<bone>`, and neither read the other, so a head carried, cut and set down on the rig gave its eyes
+  again. Now one count, main's (`organs_taken:<bone>`, `Surgery.organsTaken(traits, bone, root)` and `putDown`, the same
+  code as main's): a piece set down turns its own count into its bone's. The dot key never left this branch, so nothing
+  reads it. `rigTakesEachOrganOnce`.
+- **Table filters were lost** when a Butcher's Table or a Surgery Table was broken, and stranded in a slot that was no
+  longer there when the rig came off. 15.19.2. `tableFiltersAreNeverLost`.
+- **The Mangler unfolded a body it could not grind**, stroke after stroke. 15.19.2. `manglerLeavesABodyItCannotGrind`.
+- **The rig by hand was full yield and unpaced**, quicker than a Mangler and richer than any station. 15.19.1: by hand is
+  the hand path, and every cut waits `SurgicalRig.PAUSE`. `surgicalRigIsPacedWhoeverCuts`, `surgicalRigByHandGetsAHandsShare`,
+  and `cowDownEachPath` at 256 RPM and by hand.
+- **Idle machines looked for work at many times the old cost.** 15.19.2.
+- **The other hand lost its turn** with a Cleaver at an empty Butcher's Table or the Meat Hook at an empty spit: the
+  client consumed the click. Both sides now decide alike from what both can see: at an empty table, a Cleaver lets a
+  piece the table would take in the other hand go on first; the hook swings only at an empty spit, while dragging or
+  with no piece in the other hand to skewer. `theOtherHandHasItsTurn` checks the server's half.
+- **A body could be carried off the spit** once only its torso was left. 15.19.3. `spitRoastKeepsAHeavyBodyABody`.
+- **The rig destroyed the hide.** It flays now, as one of its cuts (15.19.1); the Mangler's hide share is read too.
+  `rigTakesTheHideAndLeavesAHungBodyAlone`, and the rig's hide in `cowDownEachPath`.
+- **The Mangler's loot came on top of its share**, so it could beat a station. 15.19.1. `manglerKeepsTheLeastOfAnyMob`.
+- **Package 10 was claimed closed.** It and package 5 are marked partly built here and in the audit, with what is left.
+- **The loot was rolled for a mob in its default state** (a black sheep dropped white wool). 15.19.1.
+  `manglerGrindsInTheMobsOwnDrops`.
+- **`piece_slot` knew only the shipped keys.** 15.19.2. `pieceSlotTakesAnySlotTheDataGives`.
+- **The Ponder said every machine works faster the faster it turns**, and never showed the Guillotine's redstone. 15.19.3.
+- **A Cleaver on the rig did nothing and said nothing** when only a hung body or a filtered one was over it. A hung body
+  is not lying on it now; a click with nothing to take lays the blade down, and one the filter turned away says so.
+- **A raw carcass came off the spit as six pieces heaped at one spot.** It comes off whole (15.19.3), looked at in the
+  showcase. `spitRoastTakesAWholeCarcass` now checks one body, six pieces, five joints, the head off the body and the
+  legs apart.
+
+- The suite is 442 tests.

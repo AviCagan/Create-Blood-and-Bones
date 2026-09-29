@@ -17,6 +17,8 @@ public class SurgeryTableRenderer extends SafeBlockEntityRenderer<SurgeryTableBl
 
     @Override
     protected void renderSafe(SurgeryTableBlockEntity be, float partialTicks, PoseStack ms, MultiBufferSource buffer, int light, int overlay) {
+        // the Surgical Rig's filter slot on the edge of the top
+        com.simibubi.create.foundation.blockEntity.behaviour.filtering.FilteringRenderer.renderOnBlockEntity(be, partialTicks, ms, buffer, light, overlay);
         be.build().ifPresent(build -> drawBuild(be, build, ms, buffer, light));
         ItemStack item = be.item();
         if (item.isEmpty()) {

@@ -30,8 +30,9 @@ import java.util.List;
 import java.util.function.Predicate;
 
 /**
- * Carcass pieces in Create's Attribute Filter, so funnels, belts and frogports can sort meat: which mob a
- * piece came from, which part it is, whether it is still fresh or rotting, skinned, or from a baby. The
+ * Carcass pieces in Create's Attribute Filter, so funnels, belts, frogports and the machines' part filters can sort
+ * meat: which mob a piece came from, which part it is (and which limb: a hind leg, a wing), whether it is still fresh
+ * or rotting, skinned, or from a baby. The
  * wording follows Create's (its keys are {@code create.item_attributes.<mod>.<name>}, as other addons do).
  */
 public final class BBItemAttributes {
@@ -52,12 +53,17 @@ public final class BBItemAttributes {
             CarcassPieceItem.Piece::baby);
     public static final Holder<ItemAttributeType> PIECE_OF = TYPES.register("piece_of", PieceOf.Type::new);
     public static final Holder<ItemAttributeType> PIECE_PART = TYPES.register("piece_part", PiecePart.Type::new);
+    public static final Holder<ItemAttributeType> PIECE_SLOT = TYPES.register("piece_slot", PieceSlot.Type::new);
 
     static {
         lang("piece_of", "is a piece of %1$s", "is not a piece of %1$s");
         lang("piece_part", "is a carcass %1$s", "is not a carcass %1$s");
+        lang("piece_slot", "is a carcass %1$s", "is not a carcass %1$s");
         for (String kind : PiecePart.KINDS) {
             BloodAndBones.REGISTRATE.addRawLang("bloodandbones.piece_kind." + kind, kind);
+        }
+        for (String[] slot : PieceSlot.WORDS) {
+            BloodAndBones.REGISTRATE.addRawLang("bloodandbones.piece_slot." + slot[0], slot[1]);
         }
     }
 
@@ -183,6 +189,96 @@ public final class BBItemAttributes {
             public List<ItemAttribute> getAllAttributes(ItemStack stack, Level level) {
                 CarcassPieceItem.Piece piece = CarcassPieceItem.piece(stack);
                 return piece == null ? List.of() : List.of(new PiecePart(kindOf(piece, level)));
+            }
+
+            @Override
+            public MapCodec<? extends ItemAttribute> codec() {
+                return CODEC;
+            }
+
+            @Override
+            public StreamCodec<? super RegistryFriendlyByteBuf, ? extends ItemAttribute> streamCodec() {
+                return STREAM_CODEC;
+            }
+        }
+    }
+
+    /**
+     * Which limb a piece is, finer than {@link PiecePart}'s "limb": a hind leg, a front leg, a wing, a tentacle, by the
+     * slot rules that are data (PartSlots, docs/PARTS-AND-TRAITS.md section 2.2), so it works for any mob's group, and a
+     * Guillotine set to "is a carcass hind leg" takes only hind legs. Any slot key the rules give is one (a datapack's
+     * "arm.fin" too); heads, bodies and tails are PiecePart's.
+     */
+    public record PieceSlot(String slot) implements ItemAttribute {
+        /** The words for the slot keys the mod's own rules give (SlotInfo#key); any other key is worded from its parts. */
+        public static final String[][] WORDS = {
+                {"leg", "leg"}, {"leg.front", "front leg"}, {"leg.hind", "hind leg"}, {"leg.mid", "middle leg"},
+                {"leg.tentacle", "tentacle"}, {"arm", "arm"}, {"arm.wing", "wing"}, {"arm.pair", "pair of arms"},
+                {"arm.front", "front arm"}, {"arm.hind", "hind arm"}, {"arm.mid", "middle arm"},
+                {"neck", "neck"}, {"torso_ext", "back half"}};
+        /** The slots that are not limbs: PiecePart's head, body and tail, and decoration drawn with its parent. */
+        private static final java.util.Set<com.avicagan.bloodandbones.parts.PartSlot> NOT_LIMBS = java.util.EnumSet.of(
+                com.avicagan.bloodandbones.parts.PartSlot.HEAD, com.avicagan.bloodandbones.parts.PartSlot.TORSO,
+                com.avicagan.bloodandbones.parts.PartSlot.TAIL, com.avicagan.bloodandbones.parts.PartSlot.EXTRA);
+        public static final MapCodec<PieceSlot> CODEC = Codec.STRING.xmap(PieceSlot::new, PieceSlot::slot).fieldOf("value");
+        public static final StreamCodec<ByteBuf, PieceSlot> STREAM_CODEC = ByteBufCodecs.STRING_UTF8.map(PieceSlot::new, PieceSlot::slot);
+
+        /** The piece's slot key, or null for a head, a body, a tail or decoration. */
+        @org.jetbrains.annotations.Nullable
+        public static String slotOf(CarcassPieceItem.Piece piece, Level level) {
+            return slotOf(com.avicagan.bloodandbones.parts.PartsData.of(level), piece);
+        }
+
+        /** As {@link #slotOf(CarcassPieceItem.Piece, Level)}, by the slot rules of one side's data. */
+        @org.jetbrains.annotations.Nullable
+        public static String slotOf(com.avicagan.bloodandbones.parts.PartsData.Store store, CarcassPieceItem.Piece piece) {
+            java.util.Optional<Rig> rig = store.rig(piece.entity(), piece.baby());
+            if (rig.isEmpty() || rig.get().bone(piece.bone()).isEmpty()) {
+                return null;
+            }
+            com.avicagan.bloodandbones.parts.SlotInfo info = com.avicagan.bloodandbones.parts.PartSlots.of(store, piece.entity(), rig.get(), piece.bone());
+            return NOT_LIMBS.contains(info.slot()) ? null : info.key();
+        }
+
+        /** Words for a slot key with none of its own in the lang file: its form or sub-slot before its slot ("fin arm"). */
+        public static String words(String key) {
+            String[] parts = key.split("\\.", 2);
+            String slot = parts[0].replace('_', ' ');
+            return parts.length < 2 ? slot : parts[1].replace('_', ' ') + " " + slot;
+        }
+
+        @Override
+        public boolean appliesTo(ItemStack stack, Level level) {
+            CarcassPieceItem.Piece piece = CarcassPieceItem.piece(stack);
+            return piece != null && slot.equals(slotOf(piece, level));
+        }
+
+        @Override
+        public ItemAttributeType getType() {
+            return PIECE_SLOT.value();
+        }
+
+        @Override
+        public String getTranslationKey() {
+            return BloodAndBones.MOD_ID + ".piece_slot";
+        }
+
+        @Override
+        public Object[] getTranslationParameters() {
+            return new Object[]{Component.translatableWithFallback("bloodandbones.piece_slot." + slot, words(slot))};
+        }
+
+        public static class Type implements ItemAttributeType {
+            @Override
+            public @NotNull ItemAttribute createAttribute() {
+                return new PieceSlot("leg.hind");
+            }
+
+            @Override
+            public List<ItemAttribute> getAllAttributes(ItemStack stack, Level level) {
+                CarcassPieceItem.Piece piece = CarcassPieceItem.piece(stack);
+                String slot = piece == null ? null : slotOf(piece, level);
+                return slot == null ? List.of() : List.of(new PieceSlot(slot));
             }
 
             @Override

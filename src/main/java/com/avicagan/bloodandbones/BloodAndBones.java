@@ -79,6 +79,8 @@ public class BloodAndBones {
             com.avicagan.bloodandbones.client.MultiplayerShowcase.init();
             com.avicagan.bloodandbones.client.BBClientSetup.registerConfigScreen(modContainer);
             com.avicagan.bloodandbones.client.BBClientSetup.initEffects(modEventBus);
+            // the machines' moving parts are asked for before models load
+            com.avicagan.bloodandbones.client.BBPartialModels.init();
         }
         modEventBus.addListener(BBGameTests::register);
         com.avicagan.bloodandbones.gametest.MultiplayerCheck.init();

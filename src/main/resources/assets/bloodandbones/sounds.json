@@ -96,5 +96,48 @@
         "type": "event"
       }
     ]
+  },
+  "machine.grind": {
+    "subtitle": "subtitles.bloodandbones.machine.grind",
+    "sounds": [
+      {
+        "name": "minecraft:block.slime_block.break",
+        "type": "event"
+      },
+      {
+        "name": "minecraft:block.honey_block.break",
+        "type": "event"
+      },
+      {
+        "name": "minecraft:block.bone_block.break",
+        "type": "event"
+      },
+      {
+        "name": "minecraft:entity.player.hurt_sweet_berry_bush",
+        "type": "event"
+      }
+    ]
+  },
+  "machine.grind_clean": {
+    "subtitle": "subtitles.bloodandbones.machine.grind_clean",
+    "sounds": [
+      {
+        "name": "minecraft:block.grindstone.use",
+        "type": "event"
+      },
+      {
+        "name": "minecraft:block.chain.break",
+        "type": "event"
+      }
+    ]
+  },
+  "machine.wind": {
+    "subtitle": "subtitles.bloodandbones.machine.wind",
+    "sounds": [
+      {
+        "name": "minecraft:block.tripwire.click_on",
+        "type": "event"
+      }
+    ]
   }
 }

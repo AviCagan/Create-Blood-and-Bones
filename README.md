@@ -116,7 +116,7 @@ incremental. `./gradlew runClient` / `runServer` / `runData` are configured by M
 ### Development aids
 
 - `./gradlew runGameTestServer` runs the game tests headless (466: every rigged mob and baby,
-  butchery, rot, bleeding, machines and their filters, cooking and display, decoration, surgery, organs, implants, backtanks, carcass armour and its traits, trait effects, minions and their jobs, movement and mounts, chains, recipes,
+  butchery and its three yield paths, rot, cold air, bleeding, machines, their motion and their part filters, cooking and display, decoration, surgery, organs, implants, backtanks, carcass armour and its traits, trait effects, minions and their jobs, movement and mounts, chains, recipes,
   advancements and sounds, and what a dozen carcasses at once cost the server).
   `-Dbloodandbones.debug.only=name,name` runs only those tests, and `-Dbloodandbones.debug.repeat=N` runs them N times.
   To time what carcasses cost, run one of these on its own with `-Dbloodandbones.debug.cost=N`:

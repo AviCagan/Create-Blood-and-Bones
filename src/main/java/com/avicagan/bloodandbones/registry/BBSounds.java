@@ -22,6 +22,11 @@ public final class BBSounds {
     public static final DeferredHolder<SoundEvent, SoundEvent> CARCASS_CLATTER = sound("carcass.clatter", "Bones clatter");
     public static final DeferredHolder<SoundEvent, SoundEvent> CARCASS_CRUMBLE = sound("carcass.crumble", "Carcass falls apart");
     public static final DeferredHolder<SoundEvent, SoundEvent> MACHINE_BLADE = sound("machine.blade", "Blade falls");
+    /** Flesh and bone between the Mangler's grinders; bloodless mode hears its clean twin (BloodlessSounds). */
+    public static final DeferredHolder<SoundEvent, SoundEvent> MACHINE_GRIND = sound("machine.grind", "Mangler grinds flesh");
+    public static final DeferredHolder<SoundEvent, SoundEvent> MACHINE_GRIND_CLEAN = sound("machine.grind_clean", "Mangler grinds");
+    /** The Guillotine's ratchet as its blade winds up: a machine noise either way. */
+    public static final DeferredHolder<SoundEvent, SoundEvent> MACHINE_WIND = sound("machine.wind", "Guillotine winds up");
     public static final DeferredHolder<SoundEvent, SoundEvent> CYBERNETIC_SPOOL = sound("cybernetic.spool", "Cybernetic spools up");
     public static final DeferredHolder<SoundEvent, SoundEvent> CYBERNETIC_CHOKE = sound("cybernetic.choke", "Cybernetic sputters");
 

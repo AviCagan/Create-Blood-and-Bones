@@ -30,7 +30,7 @@ import plus.dragons.createdragonsplus.common.processing.freeze.FreezeCondition;
  * {@code rot_time}. Cold slows it, deep cold stops it: the biome's temperature, any block in the
  * {@code bloodandbones:chills} tag (ice, snow, and what Create: Dragons Plus calls a passive freezer) and any
  * block in {@code bloodandbones:preserves} (packed and blue ice) or a Dragons Plus freezer strong enough to
- * freeze things outright. Heat does the opposite. The torso's root cell is told the freshness now and then so
+ * freeze things outright, and a freezing fan's current blowing through it (other addons' bulk freezing too). Heat does the opposite. The torso's root cell is told the freshness now and then so
  * clients can tint the meat. Once rotten it keeps going off, and after a while (a day by default, see
  * {@link BBServerConfig}) it falls apart into bones and a little rotten flesh.
  */
@@ -254,10 +254,19 @@ public final class CarcassRot {
 
     /**
      * Rot speed multiplier for a carcass whose torso is at {@code center}: 0 when preserved, otherwise
-     * the biome's contribution, quartered when something chilling is within reach.
+     * the biome's contribution, quartered when something chilling is within reach. An encased fan's current through it
+     * counts by its processing: a Create: Dragons Plus freezing fan's preserves (the fan processing type tags
+     * bloodandbones:preserves and bloodandbones:chills).
      */
     public static float rateAround(ServerLevel level, BlockPos center) {
-        boolean chilled = false;
+        // cold air blown through it: a freezing fan's current keeps it as a freezer beside it would (ARCHITECTURE 5)
+        // (the block the torso is in, and the one under it: a body lying on the floor lies low in the air along it)
+        var air = new java.util.ArrayList<>(com.avicagan.bloodandbones.bleeding.FanAirflow.processingAt(level, center));
+        air.addAll(com.avicagan.bloodandbones.bleeding.FanAirflow.processingAt(level, center.below()));
+        if (com.avicagan.bloodandbones.bleeding.FanAirflow.any(air, BBTags.PRESERVING_AIR)) {
+            return 0.0F;
+        }
+        boolean chilled = com.avicagan.bloodandbones.bleeding.FanAirflow.any(air, BBTags.CHILLING_AIR);
         BlockPos.MutableBlockPos cursor = new BlockPos.MutableBlockPos();
         for (int x = -RADIUS; x <= RADIUS; x++) {
             for (int y = -RADIUS; y <= RADIUS; y++) {

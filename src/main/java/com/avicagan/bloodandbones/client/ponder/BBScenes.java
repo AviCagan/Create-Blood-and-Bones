@@ -25,8 +25,22 @@ public final class BBScenes {
     private BBScenes() {
     }
 
-    /** The four carcass machines share one layout: a shaft up into the machine. */
-    public static void machine(SceneBuilder builder, SceneBuildingUtil util, String id, String header, String what, ItemStack shows) {
+    /** What the shaft's speed does for each machine: the Guillotine only winds faster, the Deglover gains nothing past 32 RPM. */
+    public static String speedLine(com.avicagan.bloodandbones.machine.MachineKind kind) {
+        return switch (kind) {
+            case GUILLOTINE -> "It is driven by a shaft from below. The faster it turns, the faster it winds its blade up";
+            case DEGLOVER -> "It is driven by a shaft from below. Up to 32 RPM, the faster it turns, the faster it works; past that it works no faster";
+            default -> "It is driven by a shaft from below. The faster it turns, the faster it works";
+        };
+    }
+
+    /**
+     * The four carcass machines share one layout: a shaft up into the machine. The Guillotine's also has a lever beside
+     * it, and shows the blade dropping when it is pulled.
+     */
+    public static void machine(SceneBuilder builder, SceneBuildingUtil util, com.avicagan.bloodandbones.machine.MachineKind kind, String header,
+                               String what, ItemStack shows) {
+        String id = kind.id;
         CreateSceneBuilder scene = new CreateSceneBuilder(builder);
         scene.title(id, header);
         scene.configureBasePlate(0, 0, 5);
@@ -47,9 +61,12 @@ public final class BBScenes {
         scene.world().setKineticSpeed(kinetics, 32);
         scene.effects().indicateSuccess(machine);
         scene.overlay().showText(70).attachKeyFrame().colored(PonderPalette.GREEN)
-                .text("It is driven by a shaft from below. The faster it turns, the faster it works")
+                .text(speedLine(kind))
                 .pointAt(util.vector().blockSurface(machine, Direction.DOWN)).placeNearTarget();
         scene.idle(80);
+        if (kind == com.avicagan.bloodandbones.machine.MachineKind.GUILLOTINE) {
+            guillotineDrop(scene, util, machine);
+        }
         scene.overlay().showText(80).attachKeyFrame()
                 .text("It works any carcass lying on it or hanging over it. Set it flush in a floor so a body lies across it")
                 .pointAt(top).placeNearTarget();
@@ -59,7 +76,43 @@ public final class BBScenes {
                 .text("What it makes waits inside. Take it with an empty hand, or pull it out with a funnel or hopper")
                 .pointAt(top).placeNearTarget();
         scene.idle(90);
+        scene.overlay().showText(90).attachKeyFrame()
+                .text("The filter on its top edge picks which parts it takes: an Attribute Filter set to a part, such as a hind leg, or a spawn egg for one kind of mob")
+                .pointAt(util.vector().blockSurface(machine, Direction.UP).add(0, 0, -0.35)).placeNearTarget();
+        scene.idle(100);
         scene.markAsFinished();
+    }
+
+    /** A lever beside the Guillotine: wound up it holds the blade, armed, and a pull on the lever drops it. */
+    private static void guillotineDrop(CreateSceneBuilder scene, SceneBuildingUtil util, BlockPos machine) {
+        BlockPos support = machine.east().below();
+        BlockPos lever = machine.east();
+        scene.world().setBlock(support, com.simibubi.create.AllBlocks.ANDESITE_CASING.getDefaultState(), false);
+        scene.world().setBlock(lever, net.minecraft.world.level.block.Blocks.LEVER.defaultBlockState()
+                .setValue(net.minecraft.world.level.block.LeverBlock.FACE, net.minecraft.world.level.block.state.properties.AttachFace.FLOOR)
+                .setValue(net.minecraft.world.level.block.LeverBlock.FACING, Direction.WEST), false);
+        scene.world().showSection(util.select().fromTo(support, lever), Direction.DOWN);
+        scene.world().modifyBlockEntity(machine, com.avicagan.bloodandbones.machine.CarcassMachineBlockEntity.class, be -> be.wind = 1.0F);
+        scene.idle(15);
+        scene.overlay().showText(90).attachKeyFrame().colored(PonderPalette.RED)
+                .text("Wound up, it holds the blade at the top, armed. Only a redstone pulse drops it: a lever, a button or a clock beside it")
+                .pointAt(util.vector().topOf(lever)).placeNearTarget();
+        scene.idle(60);
+        scene.overlay().showControls(util.vector().topOf(lever), Pointing.DOWN, 20).rightClick();
+        scene.world().toggleRedstonePower(util.select().position(lever));
+        scene.effects().indicateRedstone(lever);
+        // the blade falls, a tick at a time, and lands (set here: a Ponder world never sees the redstone edge that drops it)
+        for (int left = com.avicagan.bloodandbones.machine.CarcassMachineBlockEntity.DROP_TICKS; left >= 0; left--) {
+            int falling = left;
+            scene.world().modifyBlockEntity(machine, com.avicagan.bloodandbones.machine.CarcassMachineBlockEntity.class, be -> {
+                be.falling = falling;
+                be.wind = 0.0F;
+            });
+            scene.idle(1);
+        }
+        scene.idle(35);
+        scene.world().toggleRedstonePower(util.select().position(lever));
+        scene.idle(10);
     }
 
     public static void bleedingRack(SceneBuilder builder, SceneBuildingUtil util) {
@@ -114,7 +167,7 @@ public final class BBScenes {
         scene.idle(10);
         scene.world().setKineticSpeed(kinetics, 16);
         scene.overlay().showText(70).attachKeyFrame().colored(PonderPalette.GREEN)
-                .text("A shaft turns the spit. It only roasts while it turns")
+                .text("A shaft turns the spit, or a Hand Crank, slowly. It only roasts while it turns, and a fast shaft roasts up to eight times as fast")
                 .pointAt(util.vector().centerOf(spit)).placeNearTarget();
         scene.idle(80);
         scene.overlay().showControls(util.vector().topOf(spit), Pointing.DOWN, 50).rightClick().withItem(piece);
@@ -124,6 +177,10 @@ public final class BBScenes {
         scene.idle(90);
         scene.overlay().showText(90).attachKeyFrame()
                 .text("Take it off with an empty hand once cooked: it comes apart into cooked meat and bones. Leave it too long and it burns")
+                .pointAt(util.vector().topOf(spit)).placeNearTarget();
+        scene.idle(100);
+        scene.overlay().showText(90).attachKeyFrame()
+                .text("A whole carcass goes on too: right-click the spit with the Meat Hook while dragging one. It takes longer, and gives all its meat cooked")
                 .pointAt(util.vector().topOf(spit)).placeNearTarget();
         scene.idle(100);
         scene.markAsFinished();
@@ -191,7 +248,7 @@ public final class BBScenes {
         scene.idle(10);
         chop(scene, util, table, yields);
         scene.overlay().showText(80).attachKeyFrame().colored(PonderPalette.RED)
-                .text("Chop it with a Cleaver: it comes apart into meat, bone, offal and fat, spoiled as far as it had rotted")
+                .text("Chop it with a Cleaver: it comes apart into meat, bone, offal and fat, spoiled as far as it had rotted. By hand you get about half")
                 .pointAt(util.vector().topOf(table)).placeNearTarget();
         scene.idle(90);
         scene.world().showSection(util.select().position(deployer), Direction.DOWN);
@@ -200,14 +257,18 @@ public final class BBScenes {
         scene.idle(15);
         scene.world().modifyBlockEntity(table, ButcherTableBlockEntity.class, be -> be.put(piece.copy()));
         scene.overlay().showText(80).attachKeyFrame()
-                .text("A Deployer holding a Cleaver chops too. A funnel or hopper can lay the pieces on the table")
+                .text("A Deployer holding a Cleaver chops too, and gets all of it. A funnel or hopper can lay the pieces on the table")
                 .pointAt(util.vector().centerOf(deployer)).placeNearTarget();
         scene.idle(30);
         scene.world().moveDeployer(deployer, 1, 20);
         scene.idle(20);
         chop(scene, util, table, yields);
         scene.world().moveDeployer(deployer, -1, 20);
-        scene.idle(60);
+        scene.idle(40);
+        scene.overlay().showText(90).attachKeyFrame()
+                .text("The filter on the edge of its top picks which pieces it takes. A body too heavy to carry can be dragged onto it and chopped where it lies")
+                .pointAt(util.vector().blockSurface(table, Direction.NORTH)).placeNearTarget();
+        scene.idle(100);
         scene.markAsFinished();
     }
 
