@@ -572,7 +572,8 @@ public class UnprovenTests {
     // ---- a Guillotine's limb goes all the way to a minion and to a wall hook (brief: "output feeds minion parts and mounted-limb decoration")
 
     /**
-     * A Guillotine takes two legs off a cow. Each lies on the floor as a piece of its own; a player picks both up.
+     * A Guillotine takes two legs off a cow, its blade dropped by a redstone pulse each time it is wound up (a block of
+     * redstone set beside it and taken away again). Each leg lies on the floor as a piece of its own; a player picks both up.
      * One hangs on a Butcher's Hook on a wall; the other goes into a minion's frame on the Surgery Table and the
      * minion wakes wearing it. (The Guillotine leaves the legs on the floor: nothing but a player takes them further.)
      */
@@ -604,11 +605,18 @@ public class UnprovenTests {
         // the minion's maker stands by the table: a minion follows its maker
         player.moveTo(Vec3.atBottomCenterOf(helper.absolutePos(tableAt.south())));
         Vec3 blade = Vec3.atCenterOf(helper.absolutePos(machine));
+        BlockPos pulse = machine.east();
         int[] offAt = {-1};
         boolean[] done = {false};
         helper.onEachTick(() -> {
             if (done[0]) {
                 return;
+            }
+            long t = helper.getTick();
+            if (t % 30 == 0) {
+                helper.setBlock(pulse, Blocks.REDSTONE_BLOCK);
+            } else if (t % 30 == 15) {
+                helper.setBlock(pulse, Blocks.STONE);
             }
             List<CarcassSavedData.Carcass> legs = madeNear(level, before, COW, blade, 4.0).stream()
                     .filter(c -> c.rootBone.contains("leg") && c.bones.size() == 1).toList();
