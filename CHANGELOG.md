@@ -120,12 +120,17 @@ Everything below is in development builds only; the art is placeholder (see the 
 - Both hooks ride Create contraptions with the block they hang from.
 - A carcass hung on a Shackle Hook rides a Create contraption with its hook: it goes into the hook while it moves and is
   drawn hanging there, and hangs again where the contraption stops, every piece where it was and turned as the
-  contraption turned. It used to fall off where the hook had been.
+  contraption turned; if the contraption cannot move after all, it hangs again where it was. It used to fall off where
+  the hook had been.
 - A Shackle Hook on a Sable ship holds its carcass, joined to the ship: it goes where the ship goes. Before, a hook on a
   ship could not hold a carcass at all.
 - A carcass lying still on a ship's deck rests there, pinned to the deck, and goes where the deck goes. Before, it
   unfolded again as soon as it rested (only the world's blocks counted as something under it), and a resting one was
   pinned to the world, so it hung in the air while the deck moved on.
+- A carcass dropped or dragged onto a ship that is under way comes to rest on its deck while it moves, instead of
+  staying a costly ragdoll held on only by friction.
+- A carcass resting on the ground that a ship is then built out of goes with the ship, and one whose ship was away when
+  it was pinned again is pinned back to the ship when it returns.
 - The four machines, the Bleeding Rack and its blood, the Spit Roast, the Butcher's Table, the Surgery Table, the Blood
   Trough, the Charging Cradle, a Fluid Backtank set down and the Backtank Port ride Create contraptions keeping what
   they hold. A moved machine turns at whatever drives it where it is set down, as Create's own machines do.

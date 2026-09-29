@@ -379,10 +379,14 @@ Two things stay open there: bloodless sounds (package 9), and both of a rabbit's
   contraption moved it, and every block that drops its contents when removed dropped them when a ship was built round it.
 - A hung carcass rides in its Shackle Hook's data while a contraption moves the hook, is drawn hanging there, and hangs
   again, turned as the contraption turned, where it is set down (ARCHITECTURE 3.5's plan).
-- A resting carcass on a deck counts the deck's blocks as holding it up and is pinned to the deck, not the world.
+- A resting carcass on a deck counts the deck's blocks as holding it up and is pinned to the deck, not the world; it
+  looks again once a second at what it lies on, so a ship built under it takes it along. A carcass dropped onto a
+  moving deck is still when it keeps still on the deck, so it rests there while the ship moves.
 - A Shackle Hook on a ship is joined to the ship. The checks were right: it could not hold a carcass at all (Sable refused
   its joint). It now hoists the carcass up to where the ship has carried its tip and holds it there.
-- A test on a moving deck: a ship driven four blocks with a cow resting on its deck and one hung from its gallows.
+- Tests on moving decks: a ship driven four blocks with a cow resting on its deck and one hung from its gallows; a
+  ship built round a hook already holding a cow, and under a cow already resting, each then driven; a cow dropped on a
+  ship flying along. A review's findings are put right (ARCHITECTURE 15.29, "Review findings put right").
 - **Not done:**
   - the cut leg that fell into the void was not made to happen again, in 32 tries (`VoidLegTests`, switched on only);
   - chain conveyors on sub-levels (13.11), which this section named but did not ask to be built;

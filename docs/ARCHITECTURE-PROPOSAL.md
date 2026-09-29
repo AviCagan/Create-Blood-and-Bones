@@ -4538,12 +4538,17 @@ hook had been (`movedShackleHookLetsGo` saw to it that the hook at least let go)
   again: the same record, its torso made anew and posed so the held point is on the tip, the rest unfolded and joined as a
   resting carcass unfolds (`CarcassRest.split`). Its rot counts the time it spent moving (it goes by game time).
 - If the contraption does not move after all (a piston already at its end, a way blocked), the hook still in the world
-  keeps the packed carcass too and hangs it again on its next tick.
+  keeps the packed carcass too and hangs it again on its next tick. The actor finds that hook by the carcass it holds
+  (`ShackleHookBlockEntity.holding`), not by where the contraption keeps the block: a piston with poles out keeps its
+  blocks shifted back by them, so that lookup landed on a pole (found in review, below).
 - `hungCarcassRidesAContraptionInItsHooksData`: while the hook moves the cow is out of the world and the actor has it to
   draw; set down, the same cow hangs at the moved hook's tip, skinned as it was, all six pieces back with five live
   joints, each within 0.35 blocks of where it was on the torso, and there is one cow, not two. `turnedHookTurnsItsCarcass`:
-  set down a quarter round, its belly faces the way the turn took it. With the actor taken out, the first fails ("the
-  cow is still in the world while its hook moves").
+  a real Mechanical Bearing turns a block with the hook on its side a quarter round and stops; the cow hangs again from
+  the moved hook, whole, its belly turned as far as the bearing turned (which way is read from where the hook ends up).
+  `hungCarcassStaysWhenAPistonAtItsLimitGivesUp`: a piston already out to its full length has its motor's speed changed,
+  starts the hook's actor and gives up; the cow hangs again from the same hook, made anew from its data. With the actor
+  taken out, the first fails ("the cow is still in the world while its hook moves").
 
 **Carcasses on Sable decks** (`CarcassRest`).
 - **What holds a resting carcass up**: `isSupported` read only the world's blocks, so a carcass on a deck (whose blocks are
@@ -4554,6 +4559,8 @@ hook had been (`movedShackleHookLetsGo` saw to it that the hook at least let go)
   it hung in the air while the deck went on. It is made to the deck when the carcass lies on one (a sub-level under it
   that is not a carcass, which might unfold and go), at the same point and turn in the deck's own plot and frame; the
   record says which (`restDeck`, not saved: the pin is made again after a reload, as before, and finds the deck again).
+  Once a second, with the support check, it looks again at what it lies on, and pins itself afresh if that is not what
+  it is pinned to (found in review, below).
 - `restingCarcassIsPinnedToItsDeck`: a cow on a deck standing on four posts, nothing of the world under it, rests there
   for longer than two of the support checks, pinned to the deck.
 
@@ -4565,7 +4572,8 @@ lay where it was dragged. Now:
 - the hook hoists on a ship too, up to where the ship has carried its tip, the ship's own speed at the tip added to the
   hoist's; the belly-out spring turns with the ship;
 - a ship built round a hook with a carcass on it (Sable carries the hook's data into the plot, and the body stays where
-  it hangs) keeps it: a hook read back somewhere else lets its carcass go only if the carcass is not hanging at its tip.
+  it hangs) keeps it: a hook read back somewhere else lets its carcass go only if the carcass is not hanging at its tip
+  (`shipBuiltRoundAHungHookKeepsItsCarcass`).
 - `hookOnAShipHoldsItsCarcass`: a hook under a deck on posts hoists a cow up and holds it at the tip by a joint. With the
   joint made to the world again, it fails (the hoist alone kept the cow near the tip, so the test asks for the joint).
 
@@ -4574,6 +4582,42 @@ the deck and a cow hung from the gallows' hook, driven four blocks east over thr
 a propeller would push it). The resting cow is still resting, within a quarter block of where it lay on the deck; the
 hung cow is still held fast, within half a block of where the ship has carried the tip. With the pin to the world, or the
 hook's joint to the world, it fails.
+
+**Review findings put right.**
+- *A piston at its limit lost the carcass on its hook.* Create starts a contraption's actors inside `assemble`, before
+  it checks whether it can move (`MechanicalPistonBlockEntity.assemble` gives up after that when the piston is already at
+  its limit or blocked, and throws the contraption away). The hook's actor had packed the carcass and taken its bodies
+  out of the world by then, and looked for the hook still in the world at `anchor + localPos`; a `PistonContraption`
+  keeps its blocks shifted back by the poles already out (its `addBlock` and `toLocalPos`), so for an extended piston
+  the lookup landed on a pole, the hook was never given the packed carcass, and a speed change at the limit deleted the
+  cow. The actor now finds the hook by the carcass it holds (the loaded hooks are listed as they load, not only once
+  they first tick), and falls back on the position only for a hook not found so. `hungCarcassStaysWhenAPistonAtItsLimitGivesUp`
+  fails without it ("the cow was lost when the piston gave up").
+- *The bearing test used no bearing.* `turnedHookTurnsItsCarcass` packed, moved and turned the hook's data by hand and
+  worked out the expected turn with the same hand-made transform. It now drives a real Mechanical Bearing (16 RPM for 20
+  ticks, set down a quarter round by Create's own rounding) and reads the turn from where the hook was set down.
+- *A ship built round a hung hook was not tested.* `shipBuiltRoundAHungHookKeepsItsCarcass` hangs a cow on a hook under a
+  gallows in the world, builds the gallows and its deck into a ship, finds the hook in the ship's plot holding the cow
+  fast at its tip, and drives the ship four blocks with the cow still on it. With the rule taken out (any hook read back
+  elsewhere lets go), it fails.
+- *A resting carcass kept the pin it was first given.* It was pinned once, when it folded (and again only if the pin
+  broke), and a ship's deck under it counted as support, so a cow resting on the floor that a ship was then built out of
+  (or assembled again at a dock) stayed pinned to the world, hung in the air as the deck moved away, and dropped when
+  none of it was left under it; and a carcass whose deck was away when its pin was made again (its sub-level unloaded a
+  while, or loaded after it) stayed pinned to the world when the deck came back, fixed on its own deck. `tickResting`
+  now looks at what it lies on once a second and pins it afresh when that has changed (`restDeck` is read at last).
+  Looking costs a field carcass one query of Sable's sub-levels over its own box, which finds nothing but itself.
+  `restingCarcassGoesWithAShipBuiltUnderIt` fails without it ("the cow should be pinned to the deck built under it").
+- *A carcass dragged onto a moving ship never rested.* Its stillness and whether it stayed put were measured in the
+  world, where a carcass lying on a deck under way moves as fast as the deck, so it stayed a whole ragdoll held on by
+  friction for as long as the ship moved: the costly case the brief rules out. When an awake carcass is moving in the
+  world, `CarcassRest.tick` looks for a deck under its torso, and if there is one measures each body's speed less the
+  deck's own speed at that body (as Sable works out a point's speed, `SubLevelHelper#getVelocity`), and where each lies in
+  the deck's plot. `carcassDroppedOnAMovingShipRestsOnIt`: a cow dropped on a deck flying east at a block a second rests
+  on it, pinned to it, while it flies, and stays where it lies on it. It fails without the change (it never rests).
+  The ship in it is held on course before every physics substep (`ContraptionTests.cruise`), level and at its height,
+  as a flying ship under way goes: driven once a tick while it slid on the floor, the deck jerked each tick and a cow on
+  it crept back along it by a twentieth of a block a second, which is not a ship under way but the test's own driving.
 
 **The cut leg that fell into the void** (15.18, item 4). Not made to happen again. `VoidLegTests` (off unless
 `-Dbloodandbones.debug.void=true`) builds high over its test, where no other test looks: a grass platform whose top is a
@@ -4604,12 +4648,18 @@ into the ship's plot first, and no chain longer than a hook hoists from is drawn
 a Mechanical Piston half way through pushing a stone block with a Shackle Hook under it, the cow drawn hanging from the
 hook while it rides in the hook's data (the log says one contraption and no cow in the world at that moment).
 `contraption_hook_set_down.png`: two blocks on, set down, the cow hanging there again as a body, as it hung before.
-`ship_moving_carcasses.png`: a spruce ship, a deck with a gallows, driven east with a cow hung from the gallows' hook
-and a cow resting on the deck, the camera following it. In bloodless mode (`bloodless_contraption_hook_moving.png`) the
+`ship_moving_carcasses.png`: a spruce ship, a deck with a gallows, lifted a quarter block off the ground and flown east
+with a cow hung from the gallows' hook and a cow resting on the deck, the camera following it. `ship_dropped_cow_rests.png`:
+flying on, more slowly, with a third cow dropped on the front of its deck as it went, seen once it has come to rest
+there (the log says resting and pinned to the ship, the ship still going). In bloodless mode (`bloodless_contraption_hook_moving.png`) the
 cow on the moving hook is drawn as the plated wreck every carcass is there, and no blood lies under it.
 
-**Tests.** 16 new, all in `ContraptionTests`: ten for the blocks, one for building them into a ship, two for a hook on a
-contraption and three for decks and ships. The suite is 594 tests (the switched-on-only `VoidLegTests` are not in it),
-and passed three times in a row on the final code (and once before the chain fix). Each new test that checks a fix was
+**Tests.** 20 new, all in `ContraptionTests`: ten for the blocks, one for building them into a ship, three for a hook on
+a contraption and six for decks and ships (four of them, and the real bearing, came with the review's findings). The
+suite is 598 tests (the switched-on-only `VoidLegTests` are not in it), and passed three times in a row on the final
+code (the 594 before the review's findings had passed three times too, and once before the chain fix); the contraption
+tests were also run four times over together. Each new test that checks a fix was
 also run with its fix taken out, and failed: the hook's actor, the deck's support and pin, the hook's joint to the ship,
-the Surgery Table's attachment and Sable's quiet removal. Datagen run after the last change changed nothing.
+the Surgery Table's attachment and Sable's quiet removal; and after the review, the hook found by its carcass, the pin
+that follows its deck, the stillness on a moving deck and the moved hook that keeps its carcass. Datagen run after the
+last change changed nothing.
