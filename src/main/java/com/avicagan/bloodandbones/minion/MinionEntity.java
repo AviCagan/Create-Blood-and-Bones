@@ -887,8 +887,11 @@ public class MinionEntity extends PathfinderMob implements net.minecraft.world.e
         return looksTaken;
     }
 
-    /** Why its task's work stands still (nothing to do there), said by its goal for its status line, for the next few seconds. */
-    public void idle(Component why) {
+    /**
+     * Why its task's work stands still (nothing to do there), said by its goal for its status line, for the next few seconds;
+     * null once it has work again.
+     */
+    public void idle(@Nullable Component why) {
         idle = why;
         idleUntil = tickCount + 100;
     }

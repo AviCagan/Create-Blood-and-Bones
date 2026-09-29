@@ -19,6 +19,7 @@ import com.avicagan.bloodandbones.parts.MobGroup;
 import com.avicagan.bloodandbones.parts.PartsData;
 import com.avicagan.bloodandbones.registry.BBItems;
 import com.google.gson.JsonParser;
+import net.minecraft.network.chat.Component;
 import net.minecraft.core.BlockPos;
 import net.minecraft.gametest.framework.GameTest;
 import net.minecraft.gametest.framework.GameTestHelper;
@@ -911,8 +912,11 @@ public class MinionFitnessTests {
      * makes a brave head haul at 1.25; a butcher's naming only the Flensing Knife makes a Cleaver no blade (its row waits, and
      * the goals ask the same test), and naming a stick makes no tool the goals could not use; a sentry's naming only the
      * crossbow leaves a bow no ranged attack, for the row and for the sentry's goals alike. A file may take an anchor away
-     * but not add one its goals cannot work from: a farmer "with me" is left at home, a guard "with me" only stays so. Each
-     * file is set and set back within the one tick, since the tests share one world.
+     * but not add one its goals cannot work from: a farmer "with me" is left at home, a guard "with me" only stays so. Nor
+     * can it change whether a task waits for its tool or carries it, which its goals decide (a butcher needs its blade, a
+     * fisher fishes by hand, a medic throws what it carries), nor give a tool to a task that works with none. Where a file
+     * narrows a tool, the words name its items: "waiting for Flensing Knife", "With Crossbow". Each file is set and set back
+     * within the one tick, since the tests share one world.
      */
     @GameTest(template = "empty", timeoutTicks = 20)
     public static void taskFileKindToolAndAnchorsCount(GameTestHelper helper) {
@@ -928,17 +932,22 @@ public class MinionFitnessTests {
         boolean stick;
         MinionFitness.Row bow;
         MinionFitness.Row crossbow;
+        Component waitsOwn = TaskWords.waits(store, MinionTask.BUTCHER, "bloodandbones.minion.wants.butcher");
+        Component waitsKnife;
+        Component withCrossbow;
         try {
             store.setTestTask(MinionTask.HAULER, hauler.read(JsonParser.parseString("{\"kind\": \"fight\"}").getAsJsonObject()));
             asFight = rows(brave).get(MinionTask.HAULER).disposition();
             store.setTestTask(MinionTask.BUTCHER, butcher.read(JsonParser.parseString("{\"tool\": {\"items\": \"bloodandbones:flensing_knife\"}}").getAsJsonObject()));
             cleaver = rows(brave, MinionFitness.Context.NONE.holding(new ItemStack(BBItems.CLEAVER.get()))).get(MinionTask.BUTCHER);
             knife = rows(brave, MinionFitness.Context.NONE.holding(new ItemStack(BBItems.FLENSING_KNIFE.get()))).get(MinionTask.BUTCHER);
+            waitsKnife = TaskWords.waits(store, MinionTask.BUTCHER, cleaver.waitsFor().orElse(""));
             store.setTestTask(MinionTask.BUTCHER, butcher.read(JsonParser.parseString("{\"tool\": {\"items\": \"minecraft:stick\"}}").getAsJsonObject()));
             stick = MinionFitness.isTool(MinionTask.BUTCHER, store.task(MinionTask.BUTCHER), new ItemStack(Items.STICK));
             store.setTestTask(MinionTask.SENTRY, sentry.read(JsonParser.parseString("{\"tool\": {\"items\": \"minecraft:crossbow\"}}").getAsJsonObject()));
             bow = rows(brave, MinionFitness.Context.NONE.holding(new ItemStack(Items.BOW))).get(MinionTask.SENTRY);
             crossbow = rows(brave, MinionFitness.Context.NONE.holding(new ItemStack(Items.CROSSBOW))).get(MinionTask.SENTRY);
+            withCrossbow = TaskWords.tool(store, MinionTask.SENTRY);
         } finally {
             store.setTestTask(MinionTask.HAULER, null);
             store.setTestTask(MinionTask.BUTCHER, null);
@@ -954,6 +963,29 @@ public class MinionFitnessTests {
         }
         if (bow.main().get().value() != MinionFitness.NO_RANGED || crossbow.main().get().value() != 1.0F) {
             helper.fail("A sentry's file naming only the crossbow should leave a bow no ranged attack: " + describe(bow) + " / " + describe(crossbow));
+            return;
+        }
+        if (!MinionTaskTests.names(waitsOwn, "bloodandbones.minion.wants.butcher") || !MinionTaskTests.names(waitsKnife, "bloodandbones.minion.wants.items")
+                || !MinionTaskTests.names(waitsKnife, BBItems.FLENSING_KNIFE.get().getDescriptionId()) || MinionTaskTests.names(waitsKnife, "bloodandbones.minion.wants.butcher")
+                || !MinionTaskTests.names(withCrossbow, Items.CROSSBOW.getDescriptionId()) || !MinionTaskTests.names(TaskWords.tool(store, MinionTask.SENTRY),
+                "bloodandbones.minion.tool.sentry") || !MinionTaskTests.names(TaskWords.items("#minecraft:logs"), "tag.item.minecraft.logs")) {
+            helper.fail("The words should name the file's narrowed tool, and the task's own otherwise: " + waitsOwn.getString() + " / " + waitsKnife.getString() + " / "
+                    + withCrossbow.getString());
+            return;
+        }
+        ResourceLocation tools = bb("test_tools");
+        MinionTask.Data butcherOptional = MinionTask.BUTCHER.checked(MinionTask.BUTCHER.defaults().read(JsonParser.parseString("{\"tool\": {\"required\": false}}")
+                .getAsJsonObject()), tools);
+        MinionTask.Data fisherRequired = MinionTask.FISHER.checked(MinionTask.FISHER.defaults().read(JsonParser.parseString("{\"tool\": {\"required\": true}}")
+                .getAsJsonObject()), tools);
+        MinionTask.Data medicHeld = MinionTask.MEDIC.checked(MinionTask.MEDIC.defaults().read(JsonParser.parseString("{\"tool\": {\"carried\": false,"
+                + " \"items\": \"minecraft:splash_potion\"}}").getAsJsonObject()), tools);
+        MinionTask.Data farmerTooled = MinionTask.FARMER.checked(MinionTask.FARMER.defaults().read(JsonParser.parseString("{\"tool\": {\"items\": \"minecraft:shears\","
+                + " \"required\": true}}").getAsJsonObject()), tools);
+        if (!butcherOptional.tool().orElseThrow().required() || fisherRequired.tool().orElseThrow().required() || !medicHeld.tool().orElseThrow().carried()
+                || !medicHeld.tool().orElseThrow().items().equals(Optional.of("minecraft:splash_potion")) || farmerTooled.tool().isPresent()) {
+            helper.fail("Whether a tool is required or carried is the goals', and a task with no tool gets none: " + butcherOptional.tool() + ", "
+                    + fisherRequired.tool() + ", " + medicHeld.tool() + ", " + farmerTooled.tool());
             return;
         }
         ResourceLocation file = bb("test_anchors");

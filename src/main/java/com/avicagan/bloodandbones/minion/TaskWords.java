@@ -131,7 +131,7 @@ public final class TaskWords {
     }
 
     /** An item id's name, or a "#tag"'s (its conventional name where it has one, the tag itself otherwise). */
-    static Component items(String items) {
+    public static Component items(String items) {
         if (items.startsWith("#")) {
             net.minecraft.resources.ResourceLocation tag = net.minecraft.resources.ResourceLocation.tryParse(items.substring(1));
             return tag == null ? Component.literal(items) : Component.translatableWithFallback(net.neoforged.neoforge.common.Tags.getTagTranslationKey(

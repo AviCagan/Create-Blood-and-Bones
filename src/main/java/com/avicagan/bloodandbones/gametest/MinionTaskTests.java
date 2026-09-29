@@ -1797,7 +1797,8 @@ public class MinionTaskTests {
      * into the trough, then it fills the empties at a Create Fluid Tank of blood and pours those in too; the three canisters
      * and five brass sheets in the barrel go into the cradle, and the two empty canisters in the cradle come back out. Nothing
      * is made or lost on the way: four buckets and five canisters from first to last, the buckets' 2000 mB and the tank's 2000
-     * all in the trough, the empties back in the containers, and nothing on the ground or left in its hands.
+     * all in the trough, the empties back in the containers, and nothing on the ground or left in its hands. The tank is
+     * eight blocks, two by two by two: its look finds it once, at its block nearest the Tender.
      */
     @GameTest(template = "empty", timeoutTicks = 2400)
     public static void tenderFillsTroughsAndCradles(GameTestHelper helper) {
@@ -1811,7 +1812,13 @@ public class MinionTaskTests {
         helper.setBlock(chestAt, Blocks.CHEST);
         helper.setBlock(barrelAt, Blocks.BARREL);
         helper.setBlock(troughAt, BBBlocks.BLOOD_TROUGH.getDefaultState());
-        helper.setBlock(tankAt, com.simibubi.create.AllBlocks.FLUID_TANK.getDefaultState());
+        for (int dx = 0; dx < 2; dx++) {
+            for (int dy = 0; dy < 2; dy++) {
+                for (int dz = 0; dz < 2; dz++) {
+                    helper.setBlock(tankAt.offset(dx, dy, dz), com.simibubi.create.AllBlocks.FLUID_TANK.getDefaultState());
+                }
+            }
+        }
         helper.setBlock(cradleAt, BBBlocks.CHARGING_CRADLE.getDefaultState());
         ChestBlockEntity chest = (ChestBlockEntity) helper.getBlockEntity(chestAt);
         chest.setItem(0, bloodBucket());
@@ -1825,15 +1832,30 @@ public class MinionTaskTests {
         cradle.inventory.setStackInSlot(com.avicagan.bloodandbones.minion.ChargingCradleBlockEntity.FULL + 1, new ItemStack(BBItems.EMPTY_SOUL_CANISTER.get()));
         var trough = (com.avicagan.bloodandbones.minion.BloodTroughBlockEntity) helper.getBlockEntity(troughAt);
         BlockPos tankAbs = helper.absolutePos(tankAt);
+        Maker maker = new Maker(helper, new BlockPos(4, 2, 5));
+        MinionEntity tender = minion(helper, new BlockPos(5, 2, 5), cowWith(ref("cow", "head")), maker);
         helper.runAfterDelay(1, () -> {
+            if (helper.getBlockEntity(tankAt) instanceof com.simibubi.create.content.fluids.tank.FluidTankBlockEntity corner) {
+                com.simibubi.create.api.connectivity.ConnectivityHandler.formMulti(corner);
+            }
+            var controller = helper.getBlockEntity(tankAt.offset(1, 1, 1)) instanceof com.simibubi.create.content.fluids.tank.FluidTankBlockEntity part
+                    ? part.getControllerBE() : null;
+            if (controller == null || controller.getWidth() != 2 || controller.getHeight() != 2) {
+                helper.fail("The eight tank blocks should make one tank, two by two by two");
+                return;
+            }
             var tank = level.getCapability(net.neoforged.neoforge.capabilities.Capabilities.FluidHandler.BLOCK, tankAbs, null);
             if (tank == null || tank.fill(new net.neoforged.neoforge.fluids.FluidStack(com.avicagan.bloodandbones.registry.BBFluids.blood(), 2000),
                     net.neoforged.neoforge.fluids.capability.IFluidHandler.FluidAction.EXECUTE) != 2000) {
                 helper.fail("The tank should take 2000 mB of blood");
+                return;
+            }
+            // one tank, where it is nearest
+            List<BlockPos> tanks = com.avicagan.bloodandbones.minion.MinionTender.tanksFound(level, tender);
+            if (!tanks.equals(List.of(helper.absolutePos(tankAt.offset(1, 0, 1))))) {
+                helper.fail("A Tender's look should find the tank of eight blocks once, at its block nearest it: " + tanks);
             }
         });
-        Maker maker = new Maker(helper, new BlockPos(4, 2, 5));
-        MinionEntity tender = minion(helper, new BlockPos(5, 2, 5), cowWith(ref("cow", "head")), maker);
         if (!tender.setTask(MinionTask.TENDER)) {
             helper.fail("Anything can be a Tender");
             return;
@@ -2481,6 +2503,329 @@ public class MinionTaskTests {
         }
         if (bowWith || !bowWithout) {
             helper.fail("A sentry whose file names only the crossbow should have no ranged attack with a bow: " + bowWith + ", " + bowWithout);
+            return;
+        }
+        helper.succeed();
+    }
+
+    // ---- the second review of the tasks (docs/ARCHITECTURE-PROPOSAL.md 15.23)
+
+    /**
+     * Wings only buffet (docs/NEXT.md 1.7): a farmer villager's head on a chicken's body and wings bites, as its Blow reads
+     * it, and set to Guard it hurts the husk by home. A chicken's headless body on its wings has nothing to fight with: it
+     * is offered no fight task.
+     */
+    @GameTest(template = "empty", timeoutTicks = 400)
+    public static void wingsBuffetTheHeadBites(GameTestHelper helper) {
+        pen(helper);
+        MinionBuild headless = MinionBuild.of(ref("chicken", "body")).with("right_wing", ref("chicken", "right_wing")).with("left_wing", ref("chicken", "left_wing"));
+        MinionBuild winged = headless.with("head", villagerHead("farmer"));
+        MinionStats bare = MinionStats.of(PartsData.SERVER, headless);
+        for (MinionTask task : new MinionTask[]{MinionTask.GUARD, MinionTask.SENTRY, MinionTask.HUNTER}) {
+            MinionFitness.Row row = MinionFitness.of(PartsData.SERVER, headless, bare, MinionFitness.Context.NONE, task);
+            if (bare.fights() || !bare.flaps() || row.can()) {
+                helper.fail("A headless body on wings has nothing to strike with, so no " + task + ": fights " + bare.fights() + ", " + row.cannot());
+                return;
+            }
+        }
+        Maker maker = new Maker(helper, new BlockPos(2, 2, 2));
+        MinionEntity minion = minion(helper, new BlockPos(3, 2, 5), winged, maker);
+        MinionFitness.Row row = minion.row(MinionTask.GUARD, MinionTask.Anchor.HOME);
+        MinionFitness.Body body = minion.fitnessBody();
+        if (!row.can() || !minion.stats().fights() || body == null || body.striking() != 0 || body.hardest() != minion.stats().biteDamage()
+                || !minion.setTask(MinionTask.GUARD)) {
+            helper.fail("A head on wings should guard by its bite, as its Blow reads it: " + row.cannot() + ", "
+                    + (body == null ? "no body" : body.striking() + " striking, hardest " + body.hardest()) + " for a bite of " + minion.stats().biteDamage());
+            return;
+        }
+        Husk husk = helper.spawn(EntityType.HUSK, new BlockPos(6, 2, 5));
+        husk.setNoAi(true);
+        helper.succeedWhen(() -> {
+            helper.assertTrue(husk.getHealth() < husk.getMaxHealth() || !husk.isAlive(), "the head on wings has not bitten the husk yet (target "
+                    + minion.getTarget() + ")");
+            helper.assertTrue(husk.getLastHurtByMob() == minion, "the husk was hurt by something else: " + husk.getLastHurtByMob());
+            husk.discard();
+            minion.discard();
+        });
+    }
+
+    /**
+     * The reach its maker sets counts with them too (docs/NEXT.md 1.1): a guard with its maker at reach 4 leaves be what its
+     * maker hits 8 blocks off, and goes for what they hit beside them; Idle with its maker keeps as far from them as its reach
+     * (it sets off 2 blocks past it and stops 1 short), so at 8 it stays put while they stand 9 off, and at its own 4 it
+     * follows.
+     */
+    @GameTest(template = "empty", timeoutTicks = 600)
+    public static void withMeKeepsToItsReach(GameTestHelper helper) {
+        pen(helper);
+        Maker maker = new Maker(helper, new BlockPos(2, 2, 2));
+        MinionEntity guard = minion(helper, new BlockPos(2, 2, 3), armed(ref("zombie", "head")), maker);
+        MinionEntity idle = minion(helper, new BlockPos(3, 2, 2), armed(ref("zombie", "head")), maker);
+        if (!guard.setTask(MinionTask.GUARD, MinionTask.Anchor.MAKER, 4) || !idle.setTask(MinionTask.IDLE, MinionTask.Anchor.MAKER, 0)) {
+            helper.fail("A zombie should take guarding and Idle with its maker");
+            return;
+        }
+        com.avicagan.bloodandbones.minion.MinionGoals.FollowMaker idleFollows = new com.avicagan.bloodandbones.minion.MinionGoals.FollowMaker(idle);
+        com.avicagan.bloodandbones.minion.MinionGoals.FollowMaker guardFollows = new com.avicagan.bloodandbones.minion.MinionGoals.FollowMaker(guard);
+        double ownStart = idleFollows.setOff();
+        double ownStop = idleFollows.stopAt();
+        idle.setTask(MinionTask.IDLE, MinionTask.Anchor.MAKER, 8);
+        if (ownStart != 6.0 || ownStop != 3.0 || idleFollows.setOff() != 10.0 || idleFollows.stopAt() != 7.0 || guardFollows.setOff() != 6.0
+                || guardFollows.stopAt() != 3.0) {
+            helper.fail("Idle with its maker keeps as far as its reach, 6 and 3 at its own 4, 10 and 7 at 8; the guard follows at 6 and 3: " + ownStart + " "
+                    + ownStop + " " + idleFollows.setOff() + " " + idleFollows.stopAt() + " " + guardFollows.setOff() + " " + guardFollows.stopAt());
+            return;
+        }
+        Husk[] husks = new Husk[2];
+        Vec3[] idleFrom = new Vec3[1];
+        helper.startSequence()
+                .thenExecute(() -> {
+                    // its maker hits something 8 blocks off, beyond the guard's reach of them
+                    husks[0] = helper.spawn(EntityType.HUSK, new BlockPos(8, 2, 8));
+                    husks[0].setNoAi(true);
+                    maker.tickCount += 200;
+                    maker.setLastHurtMob(husks[0]);
+                })
+                .thenIdle(60)
+                .thenExecute(() -> {
+                    helper.assertTrue(husks[0].getHealth() >= husks[0].getMaxHealth() && guard.getTarget() != husks[0],
+                            "the guard should leave be what its maker hits beyond its reach of them (its target " + guard.getTarget() + ")");
+                    husks[0].discard();
+                    // now beside them
+                    husks[1] = helper.spawn(EntityType.HUSK, new BlockPos(4, 2, 2));
+                    husks[1].setNoAi(true);
+                    maker.tickCount += 200;
+                    maker.setLastHurtMob(husks[1]);
+                })
+                .thenWaitUntil(() -> helper.assertTrue(husks[1].getHealth() < husks[1].getMaxHealth() || !husks[1].isAlive(),
+                        "the guard has not gone for what its maker hit beside them (its target " + guard.getTarget() + ")"))
+                .thenExecute(() -> {
+                    husks[1].discard();
+                    guard.discard();
+                    // its maker walks 9 blocks off: within the Idle's 10 at reach 8
+                    maker.stand(helper, new Vec3(8.5, 2.0, 8.5));
+                    idleFrom[0] = idle.position();
+                })
+                .thenIdle(60)
+                .thenExecute(() -> {
+                    helper.assertTrue(idle.distanceTo(maker) > 8.0F && idle.position().distanceTo(idleFrom[0]) < 1.0,
+                            "Idle at reach 8 should stay while its maker is 9 off: now " + idle.distanceTo(maker) + " from them");
+                    idle.setTask(MinionTask.IDLE, MinionTask.Anchor.MAKER, 0);
+                })
+                .thenWaitUntil(() -> helper.assertTrue(idle.distanceTo(maker) < 5.0F, "Idle at its own reach should follow its maker: "
+                        + idle.distanceTo(maker)))
+                .thenExecute(idle::discard)
+                .thenSucceed();
+    }
+
+    /**
+     * Its looks come as often as its screen says (docs/NEXT.md 1.2): over two minutes a 200% courier (a horse) looks round
+     * every 10 ticks and a poor one (a zombie) every so many more, counted in the world as its goal asks, which is every
+     * other tick. Each count is within four and a half of its spread of what its look ticks make; one in half the look's
+     * ticks a time is the chance, and the one-in-the-look's-ticks it had before gave half as many, far outside it.
+     */
+    @GameTest(template = "empty", timeoutTicks = 2500)
+    public static void looksComeAsOftenAsTheScreenSays(GameTestHelper helper) {
+        pen(helper);
+        Maker maker = new Maker(helper, new BlockPos(5, 2, 5));
+        MinionEntity fit = minion(helper, new BlockPos(3, 2, 3), horse(), maker);
+        MinionEntity poor = minion(helper, new BlockPos(7, 2, 7), armed(ref("zombie", "head")), maker);
+        // reaching 2, it finds nothing to fetch and so goes on looking, never working
+        if (!fit.setTask(MinionTask.COURIER, MinionTask.Anchor.HOME, 2) || !poor.setTask(MinionTask.COURIER, MinionTask.Anchor.HOME, 2)) {
+            helper.fail("Anything can carry");
+            return;
+        }
+        int[] from = new int[2];
+        int[] every = new int[2];
+        int span = 2400;
+        helper.startSequence()
+                .thenIdle(40)
+                .thenExecute(() -> {
+                    MinionTask.Data courier = PartsData.SERVER.task(MinionTask.COURIER);
+                    every[0] = MinionFitness.lookTicks(courier, fit.taskFitness());
+                    every[1] = MinionFitness.lookTicks(courier, poor.taskFitness());
+                    helper.assertTrue(every[0] == 10 && every[1] >= 30, "the horse should look every 10 ticks and the zombie every 30 or more: "
+                            + every[0] + ", " + every[1]);
+                    from[0] = fit.looksTaken();
+                    from[1] = poor.looksTaken();
+                })
+                .thenIdle(span)
+                .thenExecute(() -> {
+                    MinionEntity[] couriers = {fit, poor};
+                    StringBuilder counts = new StringBuilder();
+                    boolean right = true;
+                    for (int i = 0; i < 2; i++) {
+                        MinionTask.Data courier = PartsData.SERVER.task(MinionTask.COURIER);
+                        helper.assertTrue(MinionFitness.lookTicks(courier, couriers[i].taskFitness()) == every[i] && !couriers[i].working(),
+                                "its fitness or its work changed on the way");
+                        double chance = 1.0 / Math.max(1, (every[i] + 1) / 2);
+                        double asks = span / 2.0;
+                        double mean = asks * chance;
+                        double spread = Math.sqrt(asks * chance * (1.0 - chance));
+                        int looks = couriers[i].looksTaken() - from[i];
+                        counts.append(looks).append(" looks, expected ").append(Math.round(mean)).append(i == 0 ? "; " : "");
+                        right &= Math.abs(looks - mean) <= 4.5 * spread;
+                    }
+                    helper.assertTrue(right, "each should look about as often as its look ticks make: " + counts);
+                    fit.discard();
+                    poor.discard();
+                })
+                .thenSucceed();
+    }
+
+    /**
+     * A fitter farmer notices a newly ripe crop no later than a 100% one (docs/NEXT.md 1.2), wherever in its box it ripens.
+     * The bands first: at every reach its maker may set, a farmer at 200% and at 150% goes over its whole box in no more
+     * ticks than a 100% one, and a 50% one reads no more than FARM_SCAN blocks a tick. Then in the world: a farmer villager's
+     * head on eight zombie arms (200%), set to reach 6 by the pen's side, where a farmer looking 10 ticks apart read its box
+     * in two bands; a crop ripens on one side of the pen, then, once it is reaped, on the other, 30 times. It starts on
+     * each ripe one within its 10-tick look on average (a 100% farmer's average is 20 ticks); in two bands it took 20.
+     */
+    @GameTest(template = "empty", timeoutTicks = 3000)
+    public static void fitFarmerFindsRipeCropsNoLater(GameTestHelper helper) {
+        MinionTask.Data farming = PartsData.SERVER.task(MinionTask.FARMER);
+        int base = MinionFitness.lookTicks(farming, 1.0F);
+        for (int reach = MinionTasks.LEAST_REACH; reach <= farming.maxReach(); reach++) {
+            int width = reach * 2 + 1;
+            int baseSweep = Math.ceilDiv(width, com.avicagan.bloodandbones.minion.MinionGoals.farmColumns(width, base, base)) * base;
+            for (float fitness : new float[]{1.5F, 2.0F}) {
+                int look = MinionFitness.lookTicks(farming, fitness);
+                int sweep = Math.ceilDiv(width, com.avicagan.bloodandbones.minion.MinionGoals.farmColumns(width, look, base)) * look;
+                if (sweep > baseSweep) {
+                    helper.fail("At reach " + reach + " a farmer at " + fitness + " goes over its box in " + sweep + " ticks, a 100% one in " + baseSweep);
+                    return;
+                }
+            }
+            int slow = MinionFitness.lookTicks(farming, 0.5F);
+            int columns = com.avicagan.bloodandbones.minion.MinionGoals.farmColumns(width, slow, base);
+            if (columns > 1 && columns * width * 5 > com.avicagan.bloodandbones.minion.MinionGoals.FARM_SCAN * slow + width * 5) {
+                helper.fail("At reach " + reach + " a 50% farmer reads " + columns + " columns a look, more than its share");
+                return;
+            }
+        }
+        pen(helper);
+        BlockPos[] crops = {new BlockPos(4, 2, 5), new BlockPos(8, 2, 5)};
+        for (BlockPos crop : crops) {
+            helper.setBlock(crop.below(), Blocks.FARMLAND);
+            helper.setBlock(crop, Blocks.WHEAT);
+        }
+        Maker maker = new Maker(helper, new BlockPos(2, 2, 2));
+        MinionEntity farmer = minion(helper, new BlockPos(3, 2, 5), spiderOfArms(villagerHead("farmer")), maker);
+        if (!farmer.setTask(MinionTask.FARMER, MinionTask.Anchor.HOME, 6)) {
+            helper.fail("A farmer's head on eight arms should take farming at reach 6: " + farmer.row(MinionTask.FARMER, MinionTask.Anchor.HOME).cannot());
+            return;
+        }
+        List<Integer> waits = new ArrayList<>();
+        long[] ripened = {-1L};
+        int[] next = {0};
+        helper.onEachTick(() -> {
+            if (waits.size() >= 30 || helper.getTick() < 20) {
+                return;
+            }
+            if (ripened[0] < 0) {
+                BlockPos crop = crops[next[0] % 2];
+                if (!farmer.working() && helper.getBlockState(crop).is(Blocks.WHEAT) && helper.getBlockState(crop).getValue(net.minecraft.world.level.block.CropBlock.AGE) < 7) {
+                    helper.setBlock(crop, Blocks.WHEAT.defaultBlockState().setValue(net.minecraft.world.level.block.CropBlock.AGE, 7));
+                    ripened[0] = helper.getTick();
+                    next[0]++;
+                }
+            } else if (farmer.working()) {
+                waits.add((int) (helper.getTick() - ripened[0]));
+                ripened[0] = -1L;
+            }
+        });
+        helper.succeedWhen(() -> {
+            helper.assertTrue(MinionFitness.lookTicks(farming, farmer.taskFitness()) == 10, "the farmer should look every 10 ticks: " + farmer.taskFitness());
+            helper.assertTrue(waits.size() >= 30, "it has found " + waits.size() + " of 30 ripe crops");
+            double mean = waits.stream().mapToInt(Integer::intValue).average().orElse(0.0);
+            helper.assertTrue(mean <= 16.0, "the 200% farmer took " + mean + " ticks on average to start on a ripe crop (a 100% farmer's look is 20): " + waits);
+            farmer.discard();
+        });
+    }
+
+    /**
+     * A surgeon with no Surgery Table within its reach says so (docs/NEXT.md 1.4): "no Surgery Table within 6 of where it
+     * stands", and its status line has it "at home", not "at its table", until it has one.
+     */
+    @GameTest(template = "empty", timeoutTicks = 300)
+    public static void surgeonWithNoTableSaysSo(GameTestHelper helper) {
+        pen(helper);
+        Maker maker = new Maker(helper, new BlockPos(1, 2, 4));
+        MinionEntity surgeon = minion(helper, new BlockPos(2, 2, 5), armed(villagerHead("none")), maker);
+        if (!surgeon.setTask(MinionTask.SURGEON)) {
+            helper.fail("It should take up surgery");
+            return;
+        }
+        BlockPos tableAt = new BlockPos(5, 2, 5);
+        helper.startSequence()
+                .thenIdle(30)
+                .thenExecute(() -> helper.assertTrue(statusSays(surgeon, "bloodandbones.minion.idle.surgeon")
+                        && statusSays(surgeon, "bloodandbones.minion.where.home") && !statusSays(surgeon, "bloodandbones.minion.where.table"),
+                        "with no table in reach it should say so, at home: " + MinionTasks.status(surgeon).getString()))
+                .thenIdle(150)
+                .thenExecute(() -> {
+                    helper.assertTrue(statusSays(surgeon, "bloodandbones.minion.idle.surgeon"), "it should go on saying so between its looks: "
+                            + MinionTasks.status(surgeon).getString());
+                    helper.setBlock(tableAt, BBBlocks.SURGERY_TABLE.getDefaultState().setValue(com.avicagan.bloodandbones.body.SurgeryTableBlock.ATTACHMENT,
+                            com.avicagan.bloodandbones.body.TableAttachment.SURGICAL));
+                })
+                .thenWaitUntil(() -> helper.assertTrue(surgeon.home().equals(helper.absolutePos(tableAt)) && statusSays(surgeon, "bloodandbones.minion.where.table")
+                        && !statusSays(surgeon, "bloodandbones.minion.idle.surgeon"), "it has not taken the table yet: " + MinionTasks.status(surgeon).getString()))
+                .thenExecute(surgeon::discard)
+                .thenSucceed();
+    }
+
+    /**
+     * A data reload that leaves a task done only elsewhere moves it there (docs/NEXT.md 1.6, 1.8): a Guard saved working
+     * with its maker, loaded under a guard file allowing only home, is Guard at home; one saved at home, under a file
+     * allowing only its maker, is Guard with its maker. Each keeps its home. Each file is set and set back in the one tick.
+     */
+    @GameTest(template = "empty", timeoutTicks = 20)
+    public static void reloadMovesATaskWhereItIsDone(GameTestHelper helper) {
+        Maker maker = new Maker(helper, new BlockPos(3, 2, 3));
+        MinionEntity minion = minion(helper, new BlockPos(5, 2, 5), armed(ref("zombie", "head")), maker);
+        BlockPos home = helper.absolutePos(new BlockPos(8, 2, 1));
+        minion.setHome(home);
+        net.minecraft.nbt.CompoundTag withMaker = new net.minecraft.nbt.CompoundTag();
+        net.minecraft.nbt.CompoundTag atHome = new net.minecraft.nbt.CompoundTag();
+        if (!minion.setTask(MinionTask.GUARD, MinionTask.Anchor.MAKER, 0)) {
+            helper.fail("A zombie should guard with its maker");
+            return;
+        }
+        minion.saveWithoutId(withMaker);
+        minion.setTask(MinionTask.GUARD, MinionTask.Anchor.HOME, 0);
+        minion.setHome(home);
+        minion.saveWithoutId(atHome);
+        minion.discard();
+        PartsData.Store store = PartsData.SERVER;
+        MinionTask.Data guard = store.task(MinionTask.GUARD);
+        ResourceLocation file = ResourceLocation.fromNamespaceAndPath(BloodAndBones.MOD_ID, "test_reload_anchors");
+        MinionEntity moved;
+        MinionEntity joined;
+        MinionTask.Anchor movedWas;
+        MinionTask.Anchor joinedWas;
+        try {
+            store.setTestTask(MinionTask.GUARD, MinionTask.GUARD.checked(guard.read(com.google.gson.JsonParser.parseString("{\"anchors\": [\"home\"]}")
+                    .getAsJsonObject()), file));
+            moved = reload(helper, withMaker);
+            movedWas = moved.anchor();
+            MinionTasks.keepPossible(moved);
+            store.setTestTask(MinionTask.GUARD, MinionTask.GUARD.checked(guard.read(com.google.gson.JsonParser.parseString("{\"anchors\": [\"maker\"]}")
+                    .getAsJsonObject()), file));
+            joined = reload(helper, atHome);
+            joinedWas = joined.anchor();
+            MinionTasks.keepPossible(joined);
+        } finally {
+            store.setTestTask(MinionTask.GUARD, null);
+        }
+        if (movedWas != MinionTask.Anchor.MAKER || !moved.hasTask(MinionTask.GUARD) || moved.anchor() != MinionTask.Anchor.HOME || !moved.home().equals(home)) {
+            helper.fail("A guard saved with its maker, under a file allowing only home, should be Guard at home, its home kept: loaded " + movedWas + ", now "
+                    + moved.task() + " " + moved.anchor() + " " + moved.home());
+            return;
+        }
+        if (joinedWas != MinionTask.Anchor.HOME || !joined.hasTask(MinionTask.GUARD) || joined.anchor() != MinionTask.Anchor.MAKER || !joined.home().equals(home)) {
+            helper.fail("A guard saved at home, under a file allowing only its maker, should be Guard with its maker, its home kept: loaded " + joinedWas
+                    + ", now " + joined.task() + " " + joined.anchor() + " " + joined.home());
             return;
         }
         helper.succeed();

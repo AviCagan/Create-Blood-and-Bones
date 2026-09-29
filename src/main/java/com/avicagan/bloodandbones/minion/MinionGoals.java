@@ -879,11 +879,15 @@ public final class MinionGoals {
                     best = pos.immutable();
                 }
             }
-            // with none, it says why until it next looks: a reach set too short, or set down too far off
-            noTable = best == null ? net.minecraft.network.chat.Component.translatable("bloodandbones.minion.idle.surgeon", reach) : null;
+            // with none, it says why until it next looks (a reach set too short, or set down too far off); with one, no more
             if (best != null) {
+                if (noTable != null) {
+                    minion.idle(null);
+                }
+                noTable = null;
                 minion.setHome(best);
             } else {
+                noTable = net.minecraft.network.chat.Component.translatable("bloodandbones.minion.idle.surgeon", reach);
                 minion.idle(noTable);
             }
             return best;
@@ -1204,7 +1208,7 @@ public final class MinionGoals {
      * 5 box once a second. A far-reaching farmer's box is bigger, so each look reads a band of the box, as wide as this
      * allows.
      */
-    static final float FARM_SCAN = 17 * 17 * 5 / 20.0F;
+    public static final float FARM_SCAN = 17 * 17 * 5 / 20.0F;
 
     /**
      * How many columns of its box (each its width long and 5 high) a farmer reads a look: as many as a 100% farmer at this
@@ -1212,7 +1216,7 @@ public final class MinionGoals {
      * whole box every look); a poorer one, looking less often, reads as many more a look as keeps it to FARM_SCAN a tick.
      * So a farmer reads more blocks a second than today's only by as much as its looks are quicker, twice at most.
      */
-    static int farmColumns(int width, int lookTicks, int baseLookTicks) {
+    public static int farmColumns(int width, int lookTicks, int baseLookTicks) {
         return Mth.clamp(Math.round(FARM_SCAN * Math.max(lookTicks, baseLookTicks)) / (width * 5), 1, width);
     }
 
