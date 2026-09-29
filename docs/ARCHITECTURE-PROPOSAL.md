@@ -4779,7 +4779,7 @@ the references to it in docs/BRIEF-AUDIT.md package 8, `VoidLegTests` and `DevSh
 - **README.** Both sides changed the test list: it names the surgery screen's choices and the body through a real
   death as well as the contraptions and ships.
 - **`SurgeryTableBlock`** merged by itself: the other side did not touch the block, so the table still keeps its
-  Surgical Rig when a contraption or a ship moves it, and the screen reads the rig as before.
+  Surgical Rig when a contraption or a ship moves it; the new screen and payload do not read the rig at all.
 - **The showcase.** Both sides' shots are kept. The surgery shots sit in the body timeline and the contraption step
   after the physics yard, so they did not meet.
 - **Generated resources** merged without a conflict, and datagen run after the merge changed nothing.
