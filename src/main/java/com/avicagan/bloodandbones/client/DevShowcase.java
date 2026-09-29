@@ -460,6 +460,8 @@ public final class DevShowcase {
                         inventory.setItem(5, new ItemStack(BBItems.GLASS_EYE.get()));
                         inventory.setItem(6, new ItemStack(BBItems.module(com.avicagan.bloodandbones.cyber.Module.MAGNET_COIL)));
                         inventory.setItem(7, BBItems.partItem(com.avicagan.bloodandbones.body.BodyPart.Kind.ARM).of(player));
+                        // and a Cleaver of their own, which fits nothing: no green mark from it, and not in the carried row
+                        inventory.setItem(8, new ItemStack(BBItems.CLEAVER.get()));
                         inventory.setItem(9, new ItemStack(com.avicagan.bloodandbones.registry.BBFluids.BLOOD.getBucket().get()));
                         if (com.avicagan.bloodandbones.body.SurgeryTableBlock.lieDown(player.serverLevel(), at, player)) {
                             net.neoforged.neoforge.network.PacketDistributor.sendToPlayer(player, new com.avicagan.bloodandbones.body.Surgery.OpenPayload(at, player.getId()));
