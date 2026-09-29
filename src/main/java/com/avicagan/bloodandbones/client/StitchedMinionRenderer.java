@@ -73,15 +73,26 @@ public class StitchedMinionRenderer extends EntityRenderer<MinionEntity> {
         int shine = com.avicagan.bloodandbones.client.effect.SocialClient.minionLight(minion, light);
         MinionBody.Anchors anchors = StitchedBody.anchors(build);
         ItemStack held = minion.getMainHandItem();
+        // a second thing held beside it (a butcher's sample), where the anchors give it a second place
+        ItemStack other = anchors.other().piece() >= 0 ? minion.getOffhandItem() : ItemStack.EMPTY;
         ItemStack worn = minion.getItemBySlot(EquipmentSlot.HEAD);
         ms.pushPose();
         ms.mulPose(Axis.YP.rotationDegrees(180.0F - bodyYaw));
         // entity models are drawn upside down, their ground at 24 pixels (as LivingEntityRenderer does)
         ms.scale(-1.0F, -1.0F, 1.0F);
         ms.translate(0.0F, -1.501F, 0.0F);
-        StitchedBody.draw(build, motion, lying, tint, ms, buffers, shine, held.isEmpty() && worn.isEmpty() ? null : (piece, placement, pose) -> {
+        StitchedBody.draw(build, motion, lying, tint, ms, buffers, shine, held.isEmpty() && worn.isEmpty() && other.isEmpty() ? null : (piece, placement, pose) -> {
             if (piece == anchors.hold() && !held.isEmpty()) {
-                drawHeld(minion, held, anchors, placement, pose, buffers, shine);
+                MinionBody.Hold main = new MinionBody.Hold(anchors.hold(), anchors.holdAt(), anchors.right(), anchors.how());
+                if (!other.isEmpty() && anchors.other().piece() == anchors.hold()) {
+                    // a pair of arms holding two things: the second to one side, what is in its hand to the other
+                    Vector3f to = anchors.other().at();
+                    main = new MinionBody.Hold(main.piece(), new Vector3f(2.0F * main.at().x - to.x, main.at().y, main.at().z), main.right(), main.how());
+                }
+                drawHeld(minion, held, main, placement, pose, buffers, shine);
+            }
+            if (piece == anchors.other().piece() && !other.isEmpty()) {
+                drawHeld(minion, other, anchors.other(), placement, pose, buffers, shine);
             }
             if (piece == anchors.head() && !worn.isEmpty()) {
                 drawWorn(minion, worn, placement, pose, buffers, shine, partialTicks);
@@ -108,9 +119,9 @@ public class StitchedMinionRenderer extends EntityRenderer<MinionEntity> {
      * quarter down and a half round, drawn as a hand's item), in front of a pair of arms as a villager holds its wares, or
      * across a mouth as a fox carries things.
      */
-    private static void drawHeld(MinionEntity minion, ItemStack held, MinionBody.Anchors anchors, MinionBody.Placement placement, PoseStack ms,
+    private static void drawHeld(MinionEntity minion, ItemStack held, MinionBody.Hold anchors, MinionBody.Placement placement, PoseStack ms,
                                  MultiBufferSource buffers, int light) {
-        Vector3f at = anchors.holdAt();
+        Vector3f at = anchors.at();
         ms.pushPose();
         ms.translate(at.x / 16.0F, at.y / 16.0F, at.z / 16.0F);
         ItemDisplayContext context;

@@ -429,6 +429,8 @@ public class BBLang {
         BloodAndBones.REGISTRATE.addRawLang("bloodandbones.minion.holds", "Holding %s");
         BloodAndBones.REGISTRATE.addRawLang("bloodandbones.minion.wears", "Wearing %s");
         BloodAndBones.REGISTRATE.addRawLang("bloodandbones.minion.cannot_hold", "It has no hand or head to hold that with");
+        BloodAndBones.REGISTRATE.addRawLang("bloodandbones.minion.sample", "Holding %s beside its blade: it takes only parts like it");
+        BloodAndBones.REGISTRATE.addRawLang("bloodandbones.minion.no_second_hold", "It has no second hand or mouth to hold a sample beside its blade");
         BloodAndBones.REGISTRATE.addRawLang("bloodandbones.minion.carries", "Carrying %s");
         BloodAndBones.REGISTRATE.addRawLang("bloodandbones.minion.no_room", "It has no room left to carry that");
         BloodAndBones.REGISTRATE.addRawLang("bloodandbones.minion.status", "%s, blood %s of %s mB");

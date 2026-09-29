@@ -106,6 +106,26 @@ public final class PartFilter {
         return filter.test(level, part);
     }
 
+    /**
+     * Whether a part is like a sample held up to it (a butcher minion's other hand, docs/BRIEF-AUDIT.md package 10): a
+     * carcass piece held means that part of that mob (a cow's hind leg: cows' hind legs, by the slot rules that are data);
+     * a filter or anything else held is asked as the slot asks it.
+     */
+    public static boolean alike(Level level, ItemStack sample, ItemStack part) {
+        if (sample.isEmpty()) {
+            return true;
+        }
+        CarcassPieceItem.Piece held = CarcassPieceItem.piece(sample);
+        if (held == null) {
+            return takes(level, sample, part);
+        }
+        CarcassPieceItem.Piece piece = CarcassPieceItem.piece(part);
+        return piece != null && held.entity().equals(piece.entity()) && held.baby() == piece.baby()
+                && com.avicagan.bloodandbones.registry.BBItemAttributes.PiecePart.kindOf(held, level).equals(com.avicagan.bloodandbones.registry.BBItemAttributes.PiecePart.kindOf(piece, level))
+                && java.util.Objects.equals(com.avicagan.bloodandbones.registry.BBItemAttributes.PieceSlot.slotOf(held, level),
+                com.avicagan.bloodandbones.registry.BBItemAttributes.PieceSlot.slotOf(piece, level));
+    }
+
     /** The mob a part came from: a piece's, an organ's or a hide's stamp; null if it does not say. */
     @Nullable
     public static ResourceLocation mobOf(ItemStack part) {
