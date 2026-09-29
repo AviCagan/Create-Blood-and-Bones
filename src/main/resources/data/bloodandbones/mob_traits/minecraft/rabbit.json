@@ -91,5 +91,6 @@
         "bloodandbones:leap"
       ]
     }
-  }
+  },
+  "rot_time": 16000
 }

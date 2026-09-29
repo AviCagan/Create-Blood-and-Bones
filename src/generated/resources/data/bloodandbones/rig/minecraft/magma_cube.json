@@ -147,7 +147,6 @@
   ],
   "entity": "minecraft:magma_cube",
   "model": "minecraft:magma_cube",
-  "rot_time": 1000000,
   "scale": 4.0,
   "texture": "minecraft:textures/entity/slime/magmacube.png",
   "weight": 8.0

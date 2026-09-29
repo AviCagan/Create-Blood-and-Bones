@@ -2,7 +2,6 @@
   "entity": "minecraft:elder_guardian",
   "model": "minecraft:elder_guardian",
   "texture": "minecraft:textures/entity/guardian_elder.png",
-  "rot_time": 24000,
   "torso": "head",
   "merge": [
     "head/spike0",

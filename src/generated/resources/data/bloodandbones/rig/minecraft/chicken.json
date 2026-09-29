@@ -270,7 +270,6 @@
   ],
   "entity": "minecraft:chicken",
   "model": "minecraft:chicken",
-  "rot_time": 12000,
   "texture": "minecraft:textures/entity/chicken.png",
   "weight": 0.1274414
 }

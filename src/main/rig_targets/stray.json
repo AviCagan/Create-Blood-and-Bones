@@ -2,7 +2,6 @@
   "entity": "minecraft:stray",
   "model": "minecraft:stray",
   "texture": "minecraft:textures/entity/skeleton/stray.png",
-  "rot_time": 48000,
   "torso": "body",
   "attach": {
     "hat": "head"

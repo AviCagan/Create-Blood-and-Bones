@@ -68,7 +68,6 @@
   ],
   "entity": "minecraft:bat",
   "model": "minecraft:bat",
-  "rot_time": 12000,
   "texture": "minecraft:textures/entity/bat.png",
   "weight": 0.013183594
 }

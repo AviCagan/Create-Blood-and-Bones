@@ -194,7 +194,6 @@
   ],
   "entity": "minecraft:phantom",
   "model": "minecraft:phantom",
-  "rot_time": 6000,
   "texture": "minecraft:textures/entity/phantom.png",
   "weight": 0.12011719
 }

@@ -236,7 +236,6 @@
   ],
   "entity": "minecraft:hoglin",
   "model": "minecraft:hoglin",
-  "rot_time": 30000,
   "texture": "minecraft:textures/entity/hoglin/hoglin.png",
   "weight": 2.1918945
 }

@@ -2,7 +2,6 @@
   "entity": "minecraft:spider",
   "model": "minecraft:spider",
   "texture": "minecraft:textures/entity/spider/spider.png",
-  "rot_time": 20000,
   "torso": "body1",
   "parents": {
     "right_front_leg": "body0",

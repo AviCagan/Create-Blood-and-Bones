@@ -2,7 +2,6 @@
   "entity": "minecraft:donkey",
   "model": "minecraft:donkey",
   "texture": "minecraft:textures/entity/horse/donkey.png",
-  "rot_time": 36000,
   "torso": "body",
   "hidden": [
     "body/saddle",

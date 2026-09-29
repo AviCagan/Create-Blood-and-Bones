@@ -2,7 +2,6 @@
   "entity": "minecraft:squid",
   "model": "minecraft:squid",
   "texture": "minecraft:textures/entity/squid/squid.png",
-  "rot_time": 12000,
   "torso": "body",
   "joints": {
     "tentacle0": {

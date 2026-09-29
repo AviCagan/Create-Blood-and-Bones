@@ -1,6 +1,7 @@
 {
   "kind": "archetype",
   "priority": 0,
+  "generic_rig": "bloodandbones:floater",
   "members": [
     "minecraft:allay",
     "minecraft:vex",

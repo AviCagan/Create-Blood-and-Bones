@@ -8,7 +8,6 @@
       "texture": "minecraft:textures/entity/zombie/drowned_outer_layer.png"
     }
   ],
-  "rot_time": 6000,
   "torso": "body",
   "attach": {
     "hat": "head"

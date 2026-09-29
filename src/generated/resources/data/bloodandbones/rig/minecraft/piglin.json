@@ -317,7 +317,6 @@
   ],
   "entity": "minecraft:piglin",
   "model": "minecraft:piglin",
-  "rot_time": 20000,
   "texture": "minecraft:textures/entity/piglin/piglin.png",
   "weight": 0.4375
 }

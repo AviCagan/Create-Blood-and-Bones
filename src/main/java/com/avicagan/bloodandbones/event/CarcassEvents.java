@@ -161,6 +161,7 @@ public class CarcassEvents {
     public static void onPrePhysicsTick(ForgeSablePrePhysicsTickEvent event) {
         CarcassDrag.physicsTick(event.getPhysicsSystem().getLevel(), event.getPhysicsSystem().getPartialPhysicsTick(), event.getTimeStep());
         ShackleHookBlockEntity.physicsTick(event.getPhysicsSystem().getLevel(), event.getTimeStep());
+        com.avicagan.bloodandbones.carcass.CarcassFloat.physicsTick(event.getPhysicsSystem().getLevel(), event.getTimeStep());
         com.avicagan.bloodandbones.carcass.trolley.ShackleTrolleyEntity.physicsTick(event.getPhysicsSystem().getLevel(), event.getPhysicsSystem().getPartialPhysicsTick(), event.getTimeStep());
     }
 

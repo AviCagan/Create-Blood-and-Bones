@@ -2,7 +2,6 @@
   "entity": "minecraft:silverfish",
   "model": "minecraft:silverfish",
   "texture": "minecraft:textures/entity/silverfish.png",
-  "rot_time": 6000,
   "torso": "segment2",
   "attach": {
     "layer0": "segment2",

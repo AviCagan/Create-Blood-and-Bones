@@ -245,7 +245,6 @@
   ],
   "entity": "minecraft:wither_skeleton",
   "model": "minecraft:wither_skeleton",
-  "rot_time": 48000,
   "scale": 1.2,
   "texture": "minecraft:textures/entity/skeleton/wither_skeleton.png",
   "weight": 0.459

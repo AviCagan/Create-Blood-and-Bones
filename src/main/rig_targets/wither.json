@@ -2,7 +2,6 @@
   "entity": "minecraft:wither",
   "model": "minecraft:wither",
   "texture": "minecraft:textures/entity/wither/wither.png",
-  "rot_time": 96000,
   "torso": "shoulders",
   "parents": {
     "ribcage": "shoulders",

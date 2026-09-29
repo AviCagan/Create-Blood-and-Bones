@@ -236,7 +236,6 @@
   ],
   "entity": "minecraft:zoglin",
   "model": "minecraft:zoglin",
-  "rot_time": 8000,
   "texture": "minecraft:textures/entity/hoglin/zoglin.png",
   "weight": 2.1918945
 }

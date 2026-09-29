@@ -2,7 +2,6 @@
   "entity": "minecraft:ravager",
   "model": "minecraft:ravager",
   "texture": "minecraft:textures/entity/illager/ravager.png",
-  "rot_time": 36000,
   "torso": "body",
   "merge": [
     "neck/head/right_horn",

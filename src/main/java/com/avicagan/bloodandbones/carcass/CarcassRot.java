@@ -89,7 +89,8 @@ public final class CarcassRot {
             }
             return;
         }
-        int rotTime = RigManager.forCarcass(carcass).map(Rig::rotTime).orElse(Rig.DEFAULT_ROT_TIME);
+        // its rig's own time, else its groups', else its weight class's
+        int rotTime = CarcassBody.rotTime(carcass);
         float before = carcass.freshness;
         carcass.freshness = Math.max(0.0F, before - rate * elapsed / rotTime);
         boolean turnedRotten = carcass.freshness <= 0.0F;

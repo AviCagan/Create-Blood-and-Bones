@@ -253,7 +253,6 @@
   ],
   "entity": "minecraft:husk",
   "model": "minecraft:husk",
-  "rot_time": 12000,
   "scale": 1.0625,
   "texture": "minecraft:textures/entity/zombie/husk.png",
   "weight": 0.4872818

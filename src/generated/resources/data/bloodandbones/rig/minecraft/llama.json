@@ -280,7 +280,6 @@
   ],
   "entity": "minecraft:llama",
   "model": "minecraft:llama",
-  "rot_time": 30000,
   "texture": "minecraft:textures/entity/llama/{variant}.png",
   "weight": 1.0976562
 }

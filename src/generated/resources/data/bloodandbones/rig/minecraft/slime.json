@@ -83,7 +83,6 @@
       "texture": "minecraft:textures/entity/slime/slime.png"
     }
   ],
-  "rot_time": 1000000,
   "scale": 4.0,
   "texture": "minecraft:textures/entity/slime/slime.png",
   "weight": 3.375

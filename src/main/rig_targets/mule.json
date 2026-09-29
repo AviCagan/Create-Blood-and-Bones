@@ -2,7 +2,6 @@
   "entity": "minecraft:mule",
   "model": "minecraft:mule",
   "texture": "minecraft:textures/entity/horse/mule.png",
-  "rot_time": 36000,
   "torso": "body",
   "hidden": [
     "body/saddle",

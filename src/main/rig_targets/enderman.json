@@ -2,7 +2,6 @@
   "entity": "minecraft:enderman",
   "model": "minecraft:enderman",
   "texture": "minecraft:textures/entity/enderman/enderman.png",
-  "rot_time": 24000,
   "torso": "body",
   "attach": {
     "hat": "head"

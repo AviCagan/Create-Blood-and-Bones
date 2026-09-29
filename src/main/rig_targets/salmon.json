@@ -2,7 +2,6 @@
   "entity": "minecraft:salmon",
   "model": "minecraft:salmon",
   "texture": "minecraft:textures/entity/fish/salmon.png",
-  "rot_time": 8000,
   "torso": "body_front",
   "attach": {
     "left_fin": "body_front",

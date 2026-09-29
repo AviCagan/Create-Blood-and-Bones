@@ -2,7 +2,6 @@
   "entity": "minecraft:piglin_brute",
   "model": "minecraft:piglin_brute",
   "texture": "minecraft:textures/entity/piglin/piglin_brute.png",
-  "rot_time": 20000,
   "torso": "body",
   "hidden": [
     "cloak",

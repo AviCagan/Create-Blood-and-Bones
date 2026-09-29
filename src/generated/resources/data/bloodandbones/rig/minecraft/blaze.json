@@ -198,7 +198,6 @@
   ],
   "entity": "minecraft:blaze",
   "model": "minecraft:blaze",
-  "rot_time": 1000000,
   "texture": "minecraft:textures/entity/blaze.png",
   "weight": 0.125
 }

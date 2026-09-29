@@ -49,7 +49,8 @@ public final class PartsData {
     /** The file kinds, each a folder under data/&lt;ns&gt;/. */
     public enum Kind {
         MOB_GROUP("mob_group"), MOB_TRAITS("mob_traits"), TRAIT("trait"), SCRAP_MATERIAL("scrap_material"), BONE_SLOT_RULES("bone_slot_rules"),
-        ARMOUR_TIER("armour_tier"), ORGAN("organ"), MINION_TASK("minion_task", false), MINION_DISPOSITION("minion_disposition", false);
+        ARMOUR_TIER("armour_tier"), ORGAN("organ"), MINION_TASK("minion_task", false), MINION_DISPOSITION("minion_disposition", false),
+        GENERIC_RIG("generic_rig"), WEIGHT_CLASS("weight_class");
 
         public final String folder;
         /** Sent to clients; the server-only kinds are not. */
@@ -77,6 +78,8 @@ public final class PartsData {
         private volatile PartSlots.Rules slotRules = PartSlots.DEFAULT;
         private volatile Map<com.avicagan.bloodandbones.minion.MinionTask, com.avicagan.bloodandbones.minion.MinionTask.Data> tasks = Map.of();
         private volatile Map<ResourceLocation, com.avicagan.bloodandbones.minion.MinionDisposition> dispositions = Map.of();
+        private volatile Map<ResourceLocation, com.avicagan.bloodandbones.carcass.rig.GenericRig> genericRigs = Map.of();
+        private volatile Map<ResourceLocation, com.avicagan.bloodandbones.carcass.WeightClass> weightClasses = Map.of();
         private final Map<String, ResolvedMob> resolved = new ConcurrentHashMap<>();
         private volatile int generation;
         /** What game tests add on top (under ids of their own): looked up like the rest, never listed, sent or linted. */
@@ -152,6 +155,18 @@ public final class PartsData {
                     files.forEach((id, text) -> parse(id, text, json -> out.put(id, com.avicagan.bloodandbones.minion.MinionDisposition.read(json))));
                     dispositions = Map.copyOf(out);
                 }
+                case GENERIC_RIG -> {
+                    Map<ResourceLocation, com.avicagan.bloodandbones.carcass.rig.GenericRig> out = new LinkedHashMap<>();
+                    files.forEach((id, text) -> parse(id, text, json -> out.put(id, com.avicagan.bloodandbones.carcass.rig.GenericRig.parse(id, json))));
+                    genericRigs = Map.copyOf(out);
+                }
+                case WEIGHT_CLASS -> {
+                    // sorted, so the classes picked by size are tried smallest first, the same on every side
+                    Map<ResourceLocation, com.avicagan.bloodandbones.carcass.WeightClass> out = new java.util.TreeMap<>();
+                    files.forEach((id, text) -> parse(id, text, json -> out.put(id,
+                            MobGroup.decode(com.avicagan.bloodandbones.carcass.WeightClass.CODEC, json, ops, "weight class " + id))));
+                    weightClasses = java.util.Collections.unmodifiableMap(new LinkedHashMap<>(out));
+                }
                 case BONE_SLOT_RULES -> {
                     List<PartSlots.Rule> rules = new ArrayList<>();
                     List<PartSlots.SubRule> subs = new ArrayList<>();
@@ -177,6 +192,17 @@ public final class PartsData {
 
         public Map<ResourceLocation, MobGroup> groups() {
             return groups;
+        }
+
+        /** A generic body by id, or null. */
+        @Nullable
+        public com.avicagan.bloodandbones.carcass.rig.GenericRig genericRig(ResourceLocation id) {
+            return genericRigs.get(id);
+        }
+
+        /** Every weight class, by id, sorted by id. */
+        public Map<ResourceLocation, com.avicagan.bloodandbones.carcass.WeightClass> weightClasses() {
+            return weightClasses;
         }
 
         @Nullable
@@ -351,7 +377,10 @@ public final class PartsData {
             List<MobGroup> layers = new ArrayList<>();
             MobGroup archetype = file != null && file.archetype().isPresent() ? groups.get(file.archetype().get()) : best(MobGroup.Kind.ARCHETYPE, entity, type);
             if (archetype == null) {
-                archetype = groups.get(BloodAndBones.asResource(legs(entity, baby) >= 4 ? "quadruped" : "biped"));
+                archetype = matched(entity, type, baby);
+            }
+            if (archetype == null) {
+                archetype = groups.get(BloodAndBones.asResource(legs(entity, baby, PartSlot.LEG) >= 4 ? "quadruped" : "biped"));
             }
             if (archetype != null) {
                 layers.add(archetype);
@@ -379,6 +408,11 @@ public final class PartsData {
             com.avicagan.bloodandbones.carcass.Tissue tissue = com.avicagan.bloodandbones.carcass.Tissue.FLESH;
             int colour = 0x8a6a5a;
             Map<String, List<TraitList.Resolved>> generic = new LinkedHashMap<>();
+            Optional<ResourceLocation> genericRig = Optional.empty();
+            Optional<ResourceLocation> weightClass = Optional.empty();
+            Optional<Integer> rotTime = Optional.empty();
+            Optional<Float> babyYield = Optional.empty();
+            JsonObject butchery = new JsonObject();
             Map<String, Map<String, List<TraitList.Resolved>>> pieces = new LinkedHashMap<>();
             Map<String, List<JsonElement>> minion = new LinkedHashMap<>();
             List<TraitList.Resolved> hide = List.of();
@@ -408,6 +442,12 @@ public final class PartsData {
                 if (layer.tissue().isPresent()) {
                     tissue = layer.tissue().get();
                 }
+                MobGroup.CarcassFacts facts = layer.carcass();
+                genericRig = facts.genericRig().isPresent() ? facts.genericRig() : genericRig;
+                weightClass = facts.weightClass().isPresent() ? facts.weightClass() : weightClass;
+                rotTime = facts.rotTime().isPresent() ? facts.rotTime() : rotTime;
+                babyYield = facts.babyYield().isPresent() ? facts.babyYield() : babyYield;
+                facts.butchery().ifPresent(b -> b.entrySet().forEach(e -> butchery.add(e.getKey(), e.getValue().deepCopy())));
                 for (Map.Entry<String, MobGroup.PartEntry> e : layer.parts().entrySet()) {
                     String key = e.getKey();
                     MobGroup.PartEntry part = e.getValue();
@@ -457,8 +497,17 @@ public final class PartsData {
             Map<String, List<JsonElement>> minionCopy = new LinkedHashMap<>();
             minion.forEach((k, v) -> minionCopy.put(k, List.copyOf(v)));
             organLists.values().removeIf(List::isEmpty);
+            com.avicagan.bloodandbones.carcass.rig.ButcheryTarget target = com.avicagan.bloodandbones.carcass.rig.ButcheryTarget.DEFAULT;
+            if (butchery.size() > 0) {
+                try {
+                    target = MobGroup.decode(com.avicagan.bloodandbones.carcass.rig.ButcheryTarget.CODEC, butchery, JsonOps.INSTANCE, "butchery of " + entity);
+                } catch (RuntimeException e) {
+                    BloodAndBones.LOGGER.error("Bad butchery settings for {} in its groups: {}", entity, e.getMessage());
+                }
+            }
             return new ResolvedMob(entity, List.copyOf(ids), material, colour, Map.copyOf(parts), Map.copyOf(minionCopy), hide, Map.copyOf(organs), set,
-                    java.util.Collections.unmodifiableMap(organLists), List.copyOf(variants), tissue);
+                    java.util.Collections.unmodifiableMap(organLists), List.copyOf(variants), tissue,
+                    new ResolvedMob.Carcass(genericRig, weightClass, rotTime, target, butchery.size() > 0, babyYield));
         }
 
         /** The group of this kind that lists the mob, by id or tag; the highest priority wins. */
@@ -488,19 +537,48 @@ public final class PartsData {
             return false;
         }
 
-        /** How many legs the mob's rig has, for the fallback body shape. */
-        private int legs(ResourceLocation entity, boolean baby) {
-            Optional<Rig> rig = rig(entity, baby);
+        /**
+         * How many bones of a slot (legs, arms) the mob's own rig file has, or -1 with none: what an archetype's match rules
+         * and the last fallback read. Never a generic body, which comes from the archetype this picks.
+         */
+        private int legs(ResourceLocation entity, boolean baby, PartSlot slot) {
+            Optional<Rig> rig = this == CLIENT ? RigManager.clientFileRig(entity) : RigManager.fileRig(entity);
             if (rig.isEmpty()) {
-                return 0;
+                return -1;
             }
             int n = 0;
             for (var bone : rig.get().bones()) {
-                if (PartSlots.of(this, entity, rig.get(), bone.name()).slot() == PartSlot.LEG) {
+                if (PartSlots.of(this, entity, rig.get(), bone.name()).slot() == slot) {
                     n++;
                 }
             }
             return n;
+        }
+
+        /** The archetype whose match rules the mob passes best, for a mob no archetype lists; null if none does. */
+        @Nullable
+        private MobGroup matched(ResourceLocation entity, Optional<EntityType<?>> type, boolean baby) {
+            if (type.isEmpty()) {
+                return null;
+            }
+            int legs = legs(entity, baby, PartSlot.LEG);
+            int arms = legs < 0 ? -1 : legs(entity, baby, PartSlot.ARM);
+            MobGroup best = null;
+            int bestScore = Integer.MIN_VALUE;
+            for (MobGroup group : groups.values()) {
+                if (group.kind() != MobGroup.Kind.ARCHETYPE) {
+                    continue;
+                }
+                for (MobGroup.Match match : group.carcass().match()) {
+                    // ties go to the lower id, so every side picks the same one whatever order the files came in
+                    if (match.passes(type.get(), legs, arms) && (match.score() > bestScore
+                            || match.score() == bestScore && best != null && group.id().compareTo(best.id()) < 0)) {
+                        best = group;
+                        bestScore = match.score();
+                    }
+                }
+            }
+            return best;
         }
 
         public Optional<Rig> rig(ResourceLocation entity, boolean baby) {

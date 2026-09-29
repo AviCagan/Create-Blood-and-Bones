@@ -292,7 +292,6 @@
   ],
   "entity": "minecraft:cat",
   "model": "minecraft:cat",
-  "rot_time": 20000,
   "scale": 0.8,
   "texture": "{cat_texture}",
   "weight": 0.0775

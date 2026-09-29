@@ -2,7 +2,6 @@
   "entity": "minecraft:wither_skeleton",
   "model": "minecraft:wither_skeleton",
   "texture": "minecraft:textures/entity/skeleton/wither_skeleton.png",
-  "rot_time": 48000,
   "torso": "body",
   "attach": {
     "hat": "head"

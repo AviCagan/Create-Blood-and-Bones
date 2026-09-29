@@ -33,5 +33,6 @@
         "bloodandbones:night_swift"
       ]
     }
-  }
+  },
+  "rot_time": 6000
 }

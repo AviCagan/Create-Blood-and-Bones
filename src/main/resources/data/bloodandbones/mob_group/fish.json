@@ -1,6 +1,17 @@
 {
   "kind": "archetype",
   "priority": 0,
+  "match": [
+    {
+      "score": 30,
+      "category": [
+        "water_creature",
+        "water_ambient",
+        "underground_water_creature"
+      ]
+    }
+  ],
+  "generic_rig": "bloodandbones:fish",
   "members": [
     "minecraft:cod",
     "minecraft:salmon",
@@ -100,5 +111,15 @@
         "bloodandbones:omnivore"
       ]
     }
+  },
+  "butchery": {
+    "meat": "minecraft:cod",
+    "meat_per_block": 60.0,
+    "hide": "none",
+    "bone": "minecraft:bone_meal",
+    "bone_per_block": 5.0,
+    "bone_min": 0.1,
+    "offal_per_weight": 0.0,
+    "fat_per_weight": 0.0
   }
 }

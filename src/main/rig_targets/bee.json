@@ -2,7 +2,6 @@
   "entity": "minecraft:bee",
   "model": "minecraft:bee",
   "texture": "minecraft:textures/entity/bee/bee.png",
-  "rot_time": 8000,
   "torso": "bone/body",
   "merge": [
     "bone/body/right_antenna",

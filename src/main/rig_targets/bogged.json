@@ -2,7 +2,6 @@
   "entity": "minecraft:bogged",
   "model": "minecraft:bogged",
   "texture": "minecraft:textures/entity/skeleton/bogged.png",
-  "rot_time": 36000,
   "torso": "body",
   "attach": {
     "hat": "head"

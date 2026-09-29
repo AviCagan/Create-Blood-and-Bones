@@ -2,7 +2,6 @@
   "entity": "minecraft:llama",
   "model": "minecraft:llama",
   "texture": "minecraft:textures/entity/llama/{variant}.png",
-  "rot_time": 30000,
   "torso": "body",
   "hidden": [
     "right_chest",

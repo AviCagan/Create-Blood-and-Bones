@@ -2,7 +2,6 @@
   "entity": "minecraft:breeze",
   "model": "minecraft:breeze",
   "texture": "minecraft:textures/entity/breeze/breeze.png",
-  "rot_time": 1000000,
   "torso": "body/head",
   "hidden": [
     "wind_body",

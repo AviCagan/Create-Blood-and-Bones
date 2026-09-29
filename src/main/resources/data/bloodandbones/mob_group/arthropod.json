@@ -1,6 +1,26 @@
 {
   "kind": "archetype",
   "priority": 0,
+  "match": [
+    {
+      "score": 55,
+      "rig": {
+        "legs": [
+          6,
+          8
+        ]
+      }
+    },
+    {
+      "score": 25,
+      "aspect": [
+        1.4,
+        99
+      ],
+      "category": "monster"
+    }
+  ],
+  "generic_rig": "bloodandbones:arthropod",
   "members": [
     "minecraft:spider",
     "minecraft:cave_spider",

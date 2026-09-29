@@ -5,7 +5,6 @@
   "variant_names": {
     "gray": "grey"
   },
-  "rot_time": 16000,
   "torso": "body",
   "merge": [
     "head/beak1",

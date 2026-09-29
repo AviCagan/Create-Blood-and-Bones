@@ -80,7 +80,6 @@
   ],
   "entity": "minecraft:axolotl",
   "model": "minecraft:axolotl",
-  "rot_time": 12000,
   "texture": "minecraft:textures/entity/axolotl/axolotl_{variant}.png",
   "weight": 0.12695312
 }

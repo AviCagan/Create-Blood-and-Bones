@@ -753,7 +753,7 @@ public class MinionFitnessTests {
         ResourceLocation id = TestTraits.mob(helper, "modded_beast", "{\"archetype\": \"bloodandbones:quadruped\"}");
         Rig wolf = RigManager.forEntity(mob("wolf")).orElseThrow();
         RigManager.addTestRig(new Rig(id, wolf.model(), wolf.layer(), wolf.texture(), wolf.variantNames(), wolf.passes(), wolf.scale(), wolf.weight(),
-                wolf.rotTime(), wolf.bones(), wolf.baby()));
+                wolf.rotTime(), wolf.bones(), wolf.baby(), false));
         PartsData.SERVER.invalidate();
         MinionBuild build = MinionBuild.of(ref(id, "body", Map.of())).with("head", ref(id, "head/real_head", Map.of()));
         for (String leg : new String[]{"right_front_leg", "left_front_leg", "right_hind_leg", "left_hind_leg"}) {

@@ -314,7 +314,6 @@
   ],
   "entity": "minecraft:donkey",
   "model": "minecraft:donkey",
-  "rot_time": 36000,
   "scale": 0.87,
   "texture": "minecraft:textures/entity/horse/donkey.png",
   "weight": 0.7504618

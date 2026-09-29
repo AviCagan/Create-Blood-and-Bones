@@ -1431,7 +1431,7 @@ public class MinionTaskTests {
         ResourceLocation id = TestTraits.mob(helper, "reload_hands", "{\"archetype\": \"bloodandbones:biped\"}");
         com.avicagan.bloodandbones.carcass.rig.Rig zombie = com.avicagan.bloodandbones.carcass.rig.RigManager.forEntity(mob("zombie")).orElseThrow();
         com.avicagan.bloodandbones.carcass.rig.RigManager.addTestRig(new com.avicagan.bloodandbones.carcass.rig.Rig(id, zombie.model(), zombie.layer(),
-                zombie.texture(), zombie.variantNames(), zombie.passes(), zombie.scale(), zombie.weight(), zombie.rotTime(), zombie.bones(), zombie.baby()));
+                zombie.texture(), zombie.variantNames(), zombie.passes(), zombie.scale(), zombie.weight(), zombie.rotTime(), zombie.bones(), zombie.baby(), false));
         PartsData.SERVER.invalidate();
         Maker maker = new Maker(helper, new BlockPos(3, 2, 3));
         MinionBuild build = MinionBuild.of(new PieceRef(id, "body", ResourceLocation.withDefaultNamespace("textures/entity/zombie/zombie.png"), List.of(), 1.0F, false, Map.of(), false));

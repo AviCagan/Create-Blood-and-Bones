@@ -315,7 +315,6 @@
   ],
   "entity": "minecraft:wolf",
   "model": "minecraft:wolf",
-  "rot_time": 18000,
   "texture": "{wolf_texture}",
   "weight": 0.26171875
 }

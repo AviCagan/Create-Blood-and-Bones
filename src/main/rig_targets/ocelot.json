@@ -2,7 +2,6 @@
   "entity": "minecraft:ocelot",
   "model": "minecraft:ocelot",
   "texture": "minecraft:textures/entity/cat/ocelot.png",
-  "rot_time": 20000,
   "torso": "body",
   "attach": {
     "tail2": "tail1"

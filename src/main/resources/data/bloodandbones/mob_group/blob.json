@@ -1,6 +1,7 @@
 {
   "kind": "archetype",
   "priority": 0,
+  "generic_rig": "bloodandbones:blob",
   "members": [
     "minecraft:slime",
     "minecraft:magma_cube"

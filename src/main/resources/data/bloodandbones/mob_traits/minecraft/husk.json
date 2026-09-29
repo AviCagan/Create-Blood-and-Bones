@@ -38,5 +38,6 @@
       "bloodandbones:thirst",
       "bloodandbones:inverted_healing"
     ]
-  }
+  },
+  "rot_time": 12000
 }

@@ -75,7 +75,6 @@
   ],
   "entity": "minecraft:breeze",
   "model": "minecraft:breeze",
-  "rot_time": 1000000,
   "texture": "minecraft:textures/entity/breeze/breeze.png",
   "weight": 0.125
 }

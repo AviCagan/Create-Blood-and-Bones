@@ -188,7 +188,6 @@
   ],
   "entity": "minecraft:snow_golem",
   "model": "minecraft:snow_golem",
-  "rot_time": 1000000,
   "texture": "minecraft:textures/entity/snow_golem.png",
   "weight": 0.8144531
 }

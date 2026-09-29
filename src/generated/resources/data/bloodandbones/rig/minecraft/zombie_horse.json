@@ -312,7 +312,6 @@
   ],
   "entity": "minecraft:zombie_horse",
   "model": "minecraft:zombie_horse",
-  "rot_time": 6000,
   "texture": "minecraft:textures/entity/horse/horse_zombie.png",
   "weight": 1.1396484
 }

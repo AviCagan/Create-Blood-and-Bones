@@ -312,7 +312,6 @@
   ],
   "entity": "minecraft:skeleton_horse",
   "model": "minecraft:skeleton_horse",
-  "rot_time": 48000,
   "texture": "minecraft:textures/entity/horse/horse_skeleton.png",
   "weight": 1.1396484
 }

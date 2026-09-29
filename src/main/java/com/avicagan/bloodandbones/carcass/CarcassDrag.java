@@ -62,6 +62,8 @@ public final class CarcassDrag {
         public final Vector3d entryPlot = new Vector3d(0, -1, 0);
         /** The mass on the hook (the bodies of the record it holds), kept up to date as pieces come off it. */
         public float weight;
+        /** Its weight class's drag: what the penalty for that mass is multiplied by (1 for every class the mod ships). */
+        public float classDrag = 1.0F;
         /** Whoever drags it, refreshed every tick; not looked up by UUID because test players are not in the level. */
         @Nullable
         LivingEntity playerEntity;
@@ -198,11 +200,12 @@ public final class CarcassDrag {
         }
 
         Drag drag = new Drag(player.getUUID(), carcass.id, part.bone(), serverSubLevel.getUniqueId(), anchor, weight);
+        drag.classDrag = CarcassBody.weightClass(carcass).drag();
         drag.playerEntity = player;
         drag.groundY = player.getY();
         drag.entryPlot.set(entryDirection(serverSubLevel, player));
         DRAGS.put(player.getUUID(), drag);
-        applySlowdown(player, penaltyFor(weight));
+        applySlowdown(player, penaltyFor(drag));
         broadcast(level, sync(drag));
         Blood.wound(level, carcass, serverSubLevel.logicalPose().transformPosition(anchor, new Vector3d()), 10, 1);
         return true;
@@ -232,11 +235,12 @@ public final class CarcassDrag {
         }
         float weight = attachedMass(SubLevelContainer.getContainer(level), carcass);
         Drag drag = new Drag(player.getUUID(), carcass.id, bone, body.getUniqueId(), anchor, weight);
+        drag.classDrag = CarcassBody.weightClass(carcass).drag();
         drag.playerEntity = player;
         drag.groundY = player.getY();
         drag.entryPlot.set(entryDirection(body, player));
         DRAGS.put(player.getUUID(), drag);
-        applySlowdown(player, penaltyFor(weight));
+        applySlowdown(player, penaltyFor(drag));
         broadcast(level, sync(drag));
         Blood.wound(level, carcass, hitWorld, 10, 1);
         return true;
@@ -380,7 +384,7 @@ public final class CarcassDrag {
                 float now = attachedMass(container, held);
                 if (Math.abs(now - drag.weight) > 1.0e-3 * Math.max(1.0F, drag.weight)) {
                     drag.weight = now;
-                    applySlowdown(player, penaltyFor(now));
+                    applySlowdown(player, penaltyFor(drag));
                 }
             }
         }
@@ -745,10 +749,15 @@ public final class CarcassDrag {
         return (float) Math.min(RAVAGER_PENALTY, CHICKEN_PENALTY + (RAVAGER_PENALTY - CHICKEN_PENALTY) * along);
     }
 
+    /** What this drag costs: the curve at the mass on its hook, times its weight class's drag. */
+    private static float penaltyFor(Drag drag) {
+        return Math.min(1.0F, penaltyFor(drag.weight) * drag.classDrag);
+    }
+
     /** The penalty the dragger has now, before their drag strength eases it; 0 when they drag nothing. */
     public static float penalty(LivingEntity player) {
         Drag drag = DRAGS.get(player.getUUID());
-        return drag == null ? 0.0F : penaltyFor(drag.weight);
+        return drag == null ? 0.0F : penaltyFor(drag);
     }
 
     private static void applySlowdown(LivingEntity player, float penalty) {

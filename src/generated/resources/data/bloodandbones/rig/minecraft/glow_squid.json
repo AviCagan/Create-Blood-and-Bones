@@ -340,7 +340,6 @@
   ],
   "entity": "minecraft:glow_squid",
   "model": "minecraft:glow_squid",
-  "rot_time": 12000,
   "texture": "minecraft:textures/entity/squid/glow_squid.png",
   "weight": 0.6328125
 }

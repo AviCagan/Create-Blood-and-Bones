@@ -2,7 +2,6 @@
   "entity": "minecraft:wolf",
   "model": "minecraft:wolf",
   "texture": "{wolf_texture}",
-  "rot_time": 18000,
   "torso": "body",
   "parents": {
     "head/real_head": "upper_body",

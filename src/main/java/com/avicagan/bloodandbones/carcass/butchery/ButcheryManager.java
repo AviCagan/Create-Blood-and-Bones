@@ -16,7 +16,9 @@ import java.util.Optional;
 
 /**
  * Loads the butchery tables. Yields are rolled on the server; the client keeps the copy the server sends it,
- * which only the recipe viewer reads.
+ * which only the recipe viewer reads. A table is a mob's own, an optional override (rule 2): a mob with none (a modded
+ * one, or one a datapack took the table away from) gets one worked out from its rig and what its groups say butchery
+ * gives ({@code "butchery"} in a mob_group or mob_traits file), the same way datagen works out the vanilla mobs' tables.
  */
 public class ButcheryManager extends SimpleJsonResourceReloadListener {
     private static final Gson GSON = new GsonBuilder().create();
@@ -49,7 +51,41 @@ public class ButcheryManager extends SimpleJsonResourceReloadListener {
     }
 
     public static Optional<ButcheryTable> forEntity(ResourceLocation entity) {
+        ButcheryTable own = INSTANCE.tables.get(entity);
+        return own != null ? Optional.of(own) : byGroup(entity);
+    }
+
+    /** Only a table file's table. */
+    public static Optional<ButcheryTable> fileTable(ResourceLocation entity) {
         return Optional.ofNullable(INSTANCE.tables.get(entity));
+    }
+
+    /** Tables worked out from groups, with the rig and the parts data they came from. */
+    private static final Map<ResourceLocation, Derived> DERIVED = new java.util.concurrent.ConcurrentHashMap<>();
+
+    private record Derived(com.avicagan.bloodandbones.carcass.rig.Rig rig, int generation, Optional<ButcheryTable> table) {
+    }
+
+    /** A mob's table from its groups' butchery settings, spread over its rig (its own, or its generic body). */
+    public static Optional<ButcheryTable> byGroup(ResourceLocation entity) {
+        Optional<com.avicagan.bloodandbones.carcass.rig.Rig> rig = com.avicagan.bloodandbones.carcass.rig.RigManager.forEntity(entity);
+        if (rig.isEmpty()) {
+            return Optional.empty();
+        }
+        com.avicagan.bloodandbones.parts.PartsData.Store store = com.avicagan.bloodandbones.parts.PartsData.SERVER;
+        Derived known = DERIVED.get(entity);
+        if (known != null && known.rig() == rig.get() && known.generation() == store.generation()) {
+            return known.table();
+        }
+        Optional<ButcheryTable> table;
+        try {
+            table = Optional.of(ButcheryDerivation.derive(rig.get(), store.resolve(entity, false).carcass().butchery(), false));
+        } catch (RuntimeException e) {
+            BloodAndBones.LOGGER.error("Cannot work out a butchery table for {} from its groups: {}", entity, e.getMessage());
+            table = Optional.empty();
+        }
+        DERIVED.put(entity, new Derived(rig.get(), store.generation(), table));
+        return table;
     }
 
     /** Client side: every table the server told us about, by mob. */

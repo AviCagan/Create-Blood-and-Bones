@@ -1,6 +1,7 @@
 {
   "kind": "archetype",
   "priority": 0,
+  "generic_rig": "bloodandbones:bird",
   "members": [
     "minecraft:chicken",
     "minecraft:parrot"

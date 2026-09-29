@@ -232,7 +232,6 @@
   ],
   "entity": "minecraft:vindicator",
   "model": "minecraft:vindicator",
-  "rot_time": 20000,
   "scale": 0.9375,
   "texture": "minecraft:textures/entity/illager/vindicator.png",
   "weight": 0.47636032

@@ -41,5 +41,6 @@
     "drawback": [
       "bloodandbones:warped_dread"
     ]
-  }
+  },
+  "rot_time": 30000
 }

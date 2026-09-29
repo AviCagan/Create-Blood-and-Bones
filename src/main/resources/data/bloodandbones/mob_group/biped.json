@@ -1,6 +1,28 @@
 {
   "kind": "archetype",
   "priority": 0,
+  "match": [
+    {
+      "score": 50,
+      "rig": {
+        "legs": 2,
+        "arms": 2
+      }
+    },
+    {
+      "score": 20,
+      "aspect": [
+        0,
+        0.8
+      ],
+      "category": [
+        "monster",
+        "creature",
+        "misc"
+      ]
+    }
+  ],
+  "generic_rig": "bloodandbones:biped",
   "members": [
     "minecraft:zombie",
     "minecraft:husk",

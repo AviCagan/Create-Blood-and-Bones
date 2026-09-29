@@ -189,7 +189,6 @@
   ],
   "entity": "minecraft:witch",
   "model": "minecraft:witch",
-  "rot_time": 20000,
   "scale": 0.9375,
   "texture": "minecraft:textures/entity/witch.png",
   "weight": 0.3476143

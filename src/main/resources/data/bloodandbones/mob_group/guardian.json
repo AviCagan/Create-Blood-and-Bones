@@ -82,5 +82,6 @@
         "bloodandbones:guardian_beam"
       ]
     }
-  }
+  },
+  "rot_time": 24000
 }

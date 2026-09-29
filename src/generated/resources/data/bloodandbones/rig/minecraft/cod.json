@@ -142,7 +142,6 @@
   ],
   "entity": "minecraft:cod",
   "model": "minecraft:cod",
-  "rot_time": 8000,
   "texture": "minecraft:textures/entity/fish/cod.png",
   "weight": 0.01953125
 }

@@ -233,7 +233,6 @@
   ],
   "entity": "minecraft:warden",
   "model": "minecraft:warden",
-  "rot_time": 36000,
   "texture": "minecraft:textures/entity/warden/warden.png",
   "weight": 2.7436523
 }

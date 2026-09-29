@@ -320,7 +320,6 @@
   ],
   "entity": "minecraft:sniffer",
   "model": "minecraft:sniffer",
-  "rot_time": 40000,
   "texture": "minecraft:textures/entity/sniffer/sniffer.png",
   "weight": 8.528809
 }

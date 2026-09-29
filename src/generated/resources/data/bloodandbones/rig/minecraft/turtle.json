@@ -238,7 +238,6 @@
   ],
   "entity": "minecraft:turtle",
   "model": "minecraft:turtle",
-  "rot_time": 30000,
   "texture": "minecraft:textures/entity/turtle/big_sea_turtle.png",
   "weight": 0.9301758
 }

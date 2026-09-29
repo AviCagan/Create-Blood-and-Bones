@@ -2,7 +2,6 @@
   "entity": "minecraft:pufferfish",
   "model": "minecraft:pufferfish_big",
   "texture": "minecraft:textures/entity/fish/pufferfish.png",
-  "rot_time": 8000,
   "torso": "body",
   "attach": {
     "left_blue_fin": "body",

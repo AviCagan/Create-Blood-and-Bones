@@ -38,5 +38,6 @@
         "bloodandbones:great_fireball"
       ]
     }
-  }
+  },
+  "rot_time": 24000
 }

@@ -6,7 +6,6 @@
     "red": "fox",
     "snow": "snow_fox"
   },
-  "rot_time": 20000,
   "torso": "body",
   "merge": [
     "head/nose",

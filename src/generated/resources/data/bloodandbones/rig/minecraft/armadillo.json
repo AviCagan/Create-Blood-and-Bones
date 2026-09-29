@@ -242,7 +242,6 @@
   ],
   "entity": "minecraft:armadillo",
   "model": "minecraft:armadillo",
-  "rot_time": 20000,
   "texture": "minecraft:textures/entity/armadillo.png",
   "weight": 0.20654297
 }

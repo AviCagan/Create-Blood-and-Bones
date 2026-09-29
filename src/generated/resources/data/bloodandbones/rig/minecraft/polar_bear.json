@@ -236,7 +236,6 @@
   ],
   "entity": "minecraft:polar_bear",
   "model": "minecraft:polar_bear",
-  "rot_time": 36000,
   "scale": 1.2,
   "texture": "minecraft:textures/entity/bear/polarbear.png",
   "weight": 2.3979378

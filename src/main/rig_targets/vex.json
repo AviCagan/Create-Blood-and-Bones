@@ -2,7 +2,6 @@
   "entity": "minecraft:vex",
   "model": "minecraft:vex",
   "texture": "minecraft:textures/entity/illager/vex.png",
-  "rot_time": 6000,
   "torso": "root/body",
   "attach": {
     "root/body/right_arm": "root/body",

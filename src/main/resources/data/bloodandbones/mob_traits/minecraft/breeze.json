@@ -18,5 +18,6 @@
         "bloodandbones:wind_burst"
       ]
     }
-  }
+  },
+  "rot_time": 1000000
 }

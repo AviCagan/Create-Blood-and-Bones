@@ -232,7 +232,6 @@
   ],
   "entity": "minecraft:illusioner",
   "model": "minecraft:illusioner",
-  "rot_time": 20000,
   "scale": 0.9375,
   "texture": "minecraft:textures/entity/illager/illusioner.png",
   "weight": 0.47636032

@@ -2,7 +2,6 @@
   "entity": "minecraft:pig",
   "model": "minecraft:pig",
   "texture": "minecraft:textures/entity/pig/pig.png",
-  "rot_time": 20000,
   "butchery": {
     "meat": "minecraft:porkchop"
   },

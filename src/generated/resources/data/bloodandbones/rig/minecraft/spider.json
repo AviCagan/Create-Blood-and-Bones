@@ -428,7 +428,6 @@
   ],
   "entity": "minecraft:spider",
   "model": "minecraft:spider",
-  "rot_time": 20000,
   "texture": "minecraft:textures/entity/spider/spider.png",
   "weight": 0.5371094
 }

@@ -286,7 +286,6 @@
       "texture": "minecraft:textures/entity/llama/decor/trader_llama.png"
     }
   ],
-  "rot_time": 30000,
   "texture": "minecraft:textures/entity/llama/{variant}.png",
   "weight": 1.0976562
 }

@@ -138,7 +138,6 @@
   ],
   "entity": "minecraft:salmon",
   "model": "minecraft:salmon",
-  "rot_time": 8000,
   "texture": "minecraft:textures/entity/fish/salmon.png",
   "weight": 0.064453125
 }

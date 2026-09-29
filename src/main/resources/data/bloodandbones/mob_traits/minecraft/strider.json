@@ -44,5 +44,6 @@
         "bloodandbones:lava_soak"
       ]
     }
-  }
+  },
+  "rot_time": 20000
 }

@@ -314,7 +314,6 @@
   ],
   "entity": "minecraft:mule",
   "model": "minecraft:mule",
-  "rot_time": 36000,
   "scale": 0.92,
   "texture": "minecraft:textures/entity/horse/mule.png",
   "weight": 0.8874305

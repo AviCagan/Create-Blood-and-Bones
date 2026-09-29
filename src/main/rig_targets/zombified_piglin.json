@@ -2,7 +2,6 @@
   "entity": "minecraft:zombified_piglin",
   "model": "minecraft:zombified_piglin",
   "texture": "minecraft:textures/entity/piglin/zombified_piglin.png",
-  "rot_time": 8000,
   "torso": "body",
   "hidden": [
     "cloak",

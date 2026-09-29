@@ -2,7 +2,6 @@
   "entity": "minecraft:trader_llama",
   "model": "minecraft:trader_llama",
   "texture": "minecraft:textures/entity/llama/{variant}.png",
-  "rot_time": 30000,
   "torso": "body",
   "hidden": [
     "right_chest",

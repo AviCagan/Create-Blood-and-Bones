@@ -2,7 +2,6 @@
   "entity": "minecraft:axolotl",
   "model": "minecraft:axolotl",
   "texture": "minecraft:textures/entity/axolotl/axolotl_{variant}.png",
-  "rot_time": 12000,
   "torso": "body",
   "butchery": {
     "hide": "none",

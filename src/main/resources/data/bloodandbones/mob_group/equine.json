@@ -120,5 +120,6 @@
     "drawback": [
       "bloodandbones:hay_burner"
     ]
-  }
+  },
+  "rot_time": 36000
 }

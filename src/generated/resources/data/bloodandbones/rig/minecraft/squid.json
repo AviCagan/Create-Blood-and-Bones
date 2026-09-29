@@ -340,7 +340,6 @@
   ],
   "entity": "minecraft:squid",
   "model": "minecraft:squid",
-  "rot_time": 12000,
   "texture": "minecraft:textures/entity/squid/squid.png",
   "weight": 0.6328125
 }

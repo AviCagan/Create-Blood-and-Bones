@@ -148,7 +148,6 @@
   ],
   "entity": "minecraft:endermite",
   "model": "minecraft:endermite",
-  "rot_time": 6000,
   "texture": "minecraft:textures/entity/endermite.png",
   "weight": 0.037841797
 }

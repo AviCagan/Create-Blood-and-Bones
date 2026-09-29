@@ -2,7 +2,6 @@
   "entity": "minecraft:snow_golem",
   "model": "minecraft:snow_golem",
   "texture": "minecraft:textures/entity/snow_golem.png",
-  "rot_time": 1000000,
   "torso": "lower_body",
   "parents": {
     "head": "upper_body",

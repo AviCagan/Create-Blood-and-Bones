@@ -84,5 +84,8 @@
   },
   "hide": [
     "bloodandbones:piglin_kin"
-  ]
+  ],
+  "butchery": {
+    "meat": "minecraft:porkchop"
+  }
 }

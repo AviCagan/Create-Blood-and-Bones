@@ -108,7 +108,6 @@
   ],
   "entity": "minecraft:shulker",
   "model": "minecraft:shulker",
-  "rot_time": 1000000,
   "texture": "minecraft:textures/entity/shulker/{shulker}.png",
   "weight": 1.3027344
 }

@@ -192,7 +192,6 @@
   ],
   "entity": "minecraft:parrot",
   "model": "minecraft:parrot",
-  "rot_time": 16000,
   "texture": "minecraft:textures/entity/parrot/parrot_{variant}.png",
   "variant_names": {
     "gray": "grey"

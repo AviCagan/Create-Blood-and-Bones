@@ -2,7 +2,6 @@
   "entity": "minecraft:strider",
   "model": "minecraft:strider",
   "texture": "minecraft:textures/entity/strider/strider.png",
-  "rot_time": 20000,
   "torso": "body",
   "butchery": {
     "meat": "none",

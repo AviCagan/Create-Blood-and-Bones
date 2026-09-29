@@ -317,7 +317,6 @@
   ],
   "entity": "minecraft:zombified_piglin",
   "model": "minecraft:zombified_piglin",
-  "rot_time": 8000,
   "texture": "minecraft:textures/entity/piglin/zombified_piglin.png",
   "weight": 0.4375
 }

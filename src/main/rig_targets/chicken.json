@@ -2,7 +2,6 @@
   "entity": "minecraft:chicken",
   "model": "minecraft:chicken",
   "texture": "minecraft:textures/entity/chicken.png",
-  "rot_time": 12000,
   "attach": {
     "beak": "head",
     "red_thing": "head"

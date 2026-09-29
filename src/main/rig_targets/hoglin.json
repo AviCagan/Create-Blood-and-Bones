@@ -2,7 +2,6 @@
   "entity": "minecraft:hoglin",
   "model": "minecraft:hoglin",
   "texture": "minecraft:textures/entity/hoglin/hoglin.png",
-  "rot_time": 30000,
   "torso": "body",
   "merge": [
     "head/right_horn",

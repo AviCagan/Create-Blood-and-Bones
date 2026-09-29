@@ -1,7 +1,5 @@
-package com.avicagan.bloodandbones.datagen;
+package com.avicagan.bloodandbones.carcass.butchery;
 
-import com.avicagan.bloodandbones.carcass.butchery.ButcheryTable;
-import com.avicagan.bloodandbones.carcass.butchery.Yield;
 import com.avicagan.bloodandbones.carcass.rig.Bone;
 import com.avicagan.bloodandbones.carcass.rig.ButcheryTarget;
 import com.avicagan.bloodandbones.carcass.rig.Rig;
@@ -15,13 +13,22 @@ import java.util.Map;
 /**
  * Spreads a target's butchery settings over the rig's bones: meat and bone by each bone's volume, offal
  * and fat from the torso by the whole animal's weight, hide by weight. Counts are expected values; the
- * fraction is rolled as a chance when the carcass is taken apart.
+ * fraction is rolled as a chance when the carcass is taken apart. Datagen writes each vanilla mob's table with it from
+ * its rig target; a mob with no table of its own gets one from it at once, from its groups' settings (ButcheryManager).
  */
 public final class ButcheryDerivation {
     private ButcheryDerivation() {
     }
 
     public static ButcheryTable derive(Rig rig, ButcheryTarget target) {
+        return derive(rig, target, true);
+    }
+
+    /**
+     * @param strict whether a part extra naming a bone the rig lacks is an error (a rig target's, which names its own mob's
+     *               bones) or is left out (a group's, which many mobs share)
+     */
+    public static ButcheryTable derive(Rig rig, ButcheryTarget target, boolean strict) {
         Map<String, List<Yield>> parts = new LinkedHashMap<>();
         Bone torso = rig.root();
         for (Bone bone : rig.bones()) {
@@ -52,7 +59,7 @@ public final class ButcheryDerivation {
         }
         hide.addAll(target.hideExtras());
         for (String bone : target.partExtras().keySet()) {
-            if (rig.bone(bone).isEmpty()) {
+            if (strict && rig.bone(bone).isEmpty()) {
                 throw new IllegalStateException("part_extras names " + bone + " of " + rig.entity() + ", which is not a bone");
             }
         }

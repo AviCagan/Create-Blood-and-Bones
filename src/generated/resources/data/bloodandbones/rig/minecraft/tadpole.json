@@ -44,7 +44,6 @@
   ],
   "entity": "minecraft:tadpole",
   "model": "minecraft:tadpole",
-  "rot_time": 4000,
   "texture": "minecraft:textures/entity/tadpole/tadpole.png",
   "weight": 0.0043945312
 }

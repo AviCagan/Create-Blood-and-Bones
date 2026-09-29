@@ -1,0 +1,7 @@
+{
+  "bones": [
+    {"name": "body", "box": [-0.15, 0.1, -0.45, 0.15, 0.9, 0.45]},
+    {"name": "head", "parent": "body", "pivot": [0.0, 0.5, -0.45], "box": [-0.13, 0.15, -0.8, 0.13, 0.85, -0.45], "wears": ["head", "nose"]},
+    {"name": "tail", "parent": "body", "pivot": [0.0, 0.5, 0.45], "box": [-0.03, 0.1, 0.45, 0.03, 0.9, 0.9], "wears": ["tail", "tail_fin", "back_fin"]}
+  ]
+}

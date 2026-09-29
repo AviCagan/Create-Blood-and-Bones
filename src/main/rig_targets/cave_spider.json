@@ -2,7 +2,6 @@
   "entity": "minecraft:cave_spider",
   "model": "minecraft:cave_spider",
   "texture": "minecraft:textures/entity/spider/cave_spider.png",
-  "rot_time": 20000,
   "torso": "body1",
   "parents": {
     "right_front_leg": "body0",

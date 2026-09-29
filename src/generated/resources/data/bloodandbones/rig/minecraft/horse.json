@@ -318,7 +318,6 @@
       "unless": "no_markings"
     }
   ],
-  "rot_time": 36000,
   "scale": 1.1,
   "texture": "minecraft:textures/entity/horse/horse_{variant}.png",
   "variant_names": {

@@ -2,7 +2,6 @@
   "entity": "minecraft:turtle",
   "model": "minecraft:turtle",
   "texture": "minecraft:textures/entity/turtle/big_sea_turtle.png",
-  "rot_time": 30000,
   "torso": "body",
   "hidden": [
     "egg_belly"

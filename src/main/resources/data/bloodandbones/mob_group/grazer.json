@@ -103,5 +103,8 @@
         "bloodandbones:four_chambers"
       ]
     }
+  },
+  "butchery": {
+    "meat": "minecraft:beef"
   }
 }

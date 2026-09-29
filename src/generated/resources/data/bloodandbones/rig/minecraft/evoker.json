@@ -232,7 +232,6 @@
   ],
   "entity": "minecraft:evoker",
   "model": "minecraft:evoker",
-  "rot_time": 20000,
   "scale": 0.9375,
   "texture": "minecraft:textures/entity/illager/evoker.png",
   "weight": 0.47636032

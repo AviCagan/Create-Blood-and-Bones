@@ -98,7 +98,6 @@
   ],
   "entity": "minecraft:vex",
   "model": "minecraft:vex",
-  "rot_time": 6000,
   "texture": "minecraft:textures/entity/illager/vex.png",
   "weight": 0.037841797
 }

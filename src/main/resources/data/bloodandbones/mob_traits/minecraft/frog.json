@@ -57,5 +57,6 @@
         "bloodandbones:tongue"
       ]
     }
-  }
+  },
+  "rot_time": 16000
 }

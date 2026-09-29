@@ -18,7 +18,10 @@ import java.util.Optional;
 
 /**
  * Loads {@code data/<namespace>/rig/<entity namespace>/<entity path>.json} files on the server and keeps the
- * copy the server sends to each client, which the renderer reads.
+ * copy the server sends to each client, which the renderer reads. A mob with no rig file (a modded one nobody has heard
+ * of, a tropical fish) is built from its archetype's generic body at the size of its hitbox (GenericRig), worked out the
+ * same way on both sides from data both have, so it is never sent. A baby of a kind whose rig has no baby shape is its
+ * grown rig shrunk about the feet, as the game draws such a baby.
  */
 public class RigManager extends SimpleJsonResourceReloadListener {
     private static final Gson GSON = new GsonBuilder().create();
@@ -40,6 +43,7 @@ public class RigManager extends SimpleJsonResourceReloadListener {
                 .ifPresent(rig -> loaded.put(rig.entity(), rig)));
         rigs = Map.copyOf(loaded);
         BABIES.clear();
+        GENERIC.clear();
         BloodAndBones.LOGGER.info("Loaded {} carcass rigs", rigs.size());
     }
 
@@ -47,9 +51,78 @@ public class RigManager extends SimpleJsonResourceReloadListener {
         return forEntity(BuiltInRegistries.ENTITY_TYPE.getKey(type));
     }
 
+    /** The rig a mob's carcass is built from: its own rig file, or else its archetype's generic body at its size. */
     public static Optional<Rig> forEntity(ResourceLocation entityId) {
-        Rig rig = INSTANCE.rigs.get(entityId);
+        Optional<Rig> own = fileRig(entityId);
+        return own.isPresent() ? own : generic(entityId, com.avicagan.bloodandbones.parts.PartsData.SERVER, GENERIC);
+    }
+
+    /** Only a rig file's rig (or a test's), never a generic body. */
+    public static Optional<Rig> fileRig(ResourceLocation entityId) {
+        Rig rig = TEST_HIDDEN.containsKey(entityId) && hiddenNow(entityId) ? null : INSTANCE.rigs.get(entityId);
         return Optional.ofNullable(rig != null ? rig : TEST_RIGS.get(entityId));
+    }
+
+    /** No-carcass mobs: the ender dragon until it has a body plan (ARCHITECTURE 4.4); anything a datapack adds. */
+    public static final net.minecraft.tags.TagKey<EntityType<?>> NO_CARCASS = net.minecraft.tags.TagKey.create(
+            net.minecraft.core.registries.Registries.ENTITY_TYPE, BloodAndBones.asResource("no_carcass"));
+
+    /** Generic bodies built so far, by mob; each is built once, so it is the same object every time (see isBaby). */
+    private static final Map<ResourceLocation, Generic> GENERIC = new java.util.concurrent.ConcurrentHashMap<>();
+    private static final Map<ResourceLocation, Generic> CLIENT_GENERIC = new java.util.concurrent.ConcurrentHashMap<>();
+
+    /** A generic body, and the parts data it was built from: built again once that data has changed. */
+    private record Generic(int generation, Optional<Rig> rig) {
+    }
+
+    /**
+     * A mob's generic body: its archetype's (or the generic_rig its groups name), at its hitbox's size. None for what is
+     * not a living mob (a player never becomes a carcass, an armour stand is no mob), for the no_carcass tag, or when its
+     * groups name no generic body.
+     */
+    private static Optional<Rig> generic(ResourceLocation entityId, com.avicagan.bloodandbones.parts.PartsData.Store store, Map<ResourceLocation, Generic> cache) {
+        int generation = store.generation();
+        Generic known = cache.get(entityId);
+        if (known != null && known.generation() == generation) {
+            return known.rig();
+        }
+        Optional<Rig> built = Optional.empty();
+        Optional<EntityType<?>> type = BuiltInRegistries.ENTITY_TYPE.getOptional(entityId);
+        if (type.isPresent() && type.get() != EntityType.PLAYER && type.get() != EntityType.ARMOR_STAND && !type.get().is(NO_CARCASS)
+                && net.minecraft.world.entity.ai.attributes.DefaultAttributes.hasSupplier(type.get())) {
+            Optional<ResourceLocation> id = store.resolve(entityId, false).carcass().genericRig();
+            GenericRig body = id.map(store::genericRig).orElse(null);
+            if (body != null) {
+                net.minecraft.world.entity.EntityDimensions size = type.get().getDimensions();
+                built = Optional.of(body.build(entityId, size.width(), size.height()));
+            } else if (id.isPresent()) {
+                BloodAndBones.LOGGER.warn("{} names generic rig {}, which is not loaded", entityId, id.get());
+            }
+        }
+        cache.put(entityId, new Generic(generation, built));
+        return built;
+    }
+
+    /** Whether this rig is a generic body rather than a mob's own. */
+    public static boolean isGeneric(Rig rig) {
+        return rig.fitted();
+    }
+
+    /** For game tests: act as if this mob had no rig file until the server reaches this tick (then it has its own again). */
+    public static void hideForTest(ResourceLocation entityId, int untilTick) {
+        TEST_HIDDEN.put(entityId, untilTick);
+    }
+
+    private static final Map<ResourceLocation, Integer> TEST_HIDDEN = new java.util.concurrent.ConcurrentHashMap<>();
+
+    private static boolean hiddenNow(ResourceLocation entityId) {
+        net.minecraft.server.MinecraftServer server = net.neoforged.neoforge.server.ServerLifecycleHooks.getCurrentServer();
+        Integer until = TEST_HIDDEN.get(entityId);
+        if (until == null || server == null || server.getTickCount() >= until) {
+            TEST_HIDDEN.remove(entityId);
+            return false;
+        }
+        return true;
     }
 
     /** What game tests add: a made-up mob's rig, under an id of the test's own. Looked up like the rest; never listed or sent. */
@@ -58,28 +131,47 @@ public class RigManager extends SimpleJsonResourceReloadListener {
     /** For game tests: a rig for a made-up mob (a modded one with no data of its own), for the rest of the run. */
     public static void addTestRig(Rig rig) {
         TEST_RIGS.put(rig.entity(), rig);
-        BABIES.remove(rig.entity());
     }
 
     public static Map<ResourceLocation, Rig> all() {
         return INSTANCE.rigs;
     }
 
-    /** Baby rigs worked out from the adult ones on first use; cleared whenever the rigs change. */
-    private static final Map<ResourceLocation, Optional<Rig>> BABIES = new java.util.concurrent.ConcurrentHashMap<>();
-    private static final Map<ResourceLocation, Optional<Rig>> CLIENT_BABIES = new java.util.concurrent.ConcurrentHashMap<>();
+    /** Baby rigs worked out from the grown ones on first use; cleared whenever the rigs change. */
+    private static final Map<ResourceLocation, Baby> BABIES = new java.util.concurrent.ConcurrentHashMap<>();
+    private static final Map<ResourceLocation, Baby> CLIENT_BABIES = new java.util.concurrent.ConcurrentHashMap<>();
 
-    /** The rig for a mob, or for its baby; empty for a baby whose kind has no baby shape. */
+    /** The rig for a mob, or for its baby: its baby shape's, or its grown rig shrunk about the feet if it has none. */
     public static Optional<Rig> forEntity(ResourceLocation entityId, boolean baby) {
-        if (!baby) {
-            return forEntity(entityId);
-        }
-        return BABIES.computeIfAbsent(entityId, id -> forEntity(id).filter(rig -> rig.baby().isPresent()).map(Rig::asBaby));
+        return baby ? babyOf(entityId, forEntity(entityId), BABIES) : forEntity(entityId);
     }
+
+    /** A baby rig and the grown one it was worked out from: worked out again when the grown one is another object. */
+    private record Baby(Rig grown, Rig rig) {
+    }
+
+    private static Optional<Rig> babyOf(ResourceLocation entityId, Optional<Rig> grown, Map<ResourceLocation, Baby> cache) {
+        if (grown.isEmpty()) {
+            return Optional.empty();
+        }
+        Baby known = cache.get(entityId);
+        if (known != null && known.grown() == grown.get()) {
+            return Optional.of(known.rig());
+        }
+        Rig adult = grown.get();
+        Rig baby = (adult.baby().isPresent() ? adult : adult.withBaby(Optional.of(SHRUNK))).asBaby();
+        cache.put(entityId, new Baby(adult, baby));
+        return Optional.of(baby);
+    }
+
+    /** A baby drawn as its grown kind at half size about its feet, as the game draws a baby it has no model of its own for. */
+    public static final BabyShape SHRUNK = new BabyShape(java.util.List.of(), 1.0F, new org.joml.Vector3f(), 0.5F, 24.0F, java.util.List.of());
 
     /** Whether this rig is one worked out for a baby (its mob's own rig is another object). */
     public static boolean isBaby(Rig rig) {
-        return rig.baby().isEmpty() && forEntity(rig.entity()).map(adult -> adult != rig).orElse(false);
+        Baby server = BABIES.get(rig.entity());
+        Baby client = CLIENT_BABIES.get(rig.entity());
+        return server != null && server.rig() == rig || client != null && client.rig() == rig;
     }
 
     /** The rig a carcass was built from: its mob's, or its mob's baby's. */
@@ -89,20 +181,24 @@ public class RigManager extends SimpleJsonResourceReloadListener {
 
     /** Client side: the rig for a mob or its baby. */
     public static Optional<Rig> clientRig(ResourceLocation entityId, boolean baby) {
-        if (!baby) {
-            return clientRig(entityId);
-        }
-        return CLIENT_BABIES.computeIfAbsent(entityId, id -> clientRig(id).filter(rig -> rig.baby().isPresent()).map(Rig::asBaby));
+        return baby ? babyOf(entityId, clientRig(entityId), CLIENT_BABIES) : clientRig(entityId);
     }
 
-    /** Client side: the rig the server told us about for this mob. */
+    /** Client side: the rig the server told us about for this mob, or else its generic body, worked out here the same way. */
     public static Optional<Rig> clientRig(ResourceLocation entityId) {
+        Optional<Rig> own = clientFileRig(entityId);
+        return own.isPresent() ? own : generic(entityId, com.avicagan.bloodandbones.parts.PartsData.CLIENT, CLIENT_GENERIC);
+    }
+
+    /** Client side: only the rig the server sent for this mob. */
+    public static Optional<Rig> clientFileRig(ResourceLocation entityId) {
         return Optional.ofNullable(clientRigs.get(entityId));
     }
 
     /** An empty map clears what we had; otherwise the rigs are added to it. */
     public static void receiveClientRigs(Map<ResourceLocation, Rig> received) {
         CLIENT_BABIES.clear();
+        CLIENT_GENERIC.clear();
         if (received.isEmpty()) {
             clientRigs = Map.of();
             return;

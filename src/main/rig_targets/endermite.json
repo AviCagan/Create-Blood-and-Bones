@@ -2,7 +2,6 @@
   "entity": "minecraft:endermite",
   "model": "minecraft:endermite",
   "texture": "minecraft:textures/entity/endermite.png",
-  "rot_time": 6000,
   "torso": "segment1",
   "parents": {
     "segment0": "segment1",

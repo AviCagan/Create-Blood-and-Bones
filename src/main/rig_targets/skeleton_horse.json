@@ -2,7 +2,6 @@
   "entity": "minecraft:skeleton_horse",
   "model": "minecraft:skeleton_horse",
   "texture": "minecraft:textures/entity/horse/horse_skeleton.png",
-  "rot_time": 48000,
   "torso": "body",
   "hidden": [
     "body/saddle",

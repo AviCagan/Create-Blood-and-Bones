@@ -65,6 +65,8 @@ public class PhysicsPropertiesProvider implements DataProvider {
             defaults.addProperty("sable:mass", tissue.density);
             defaults.addProperty("sable:friction", 0.45); // wet flesh slides; high friction makes dragging stick-slip
             defaults.addProperty("sable:restitution", 0.0);
+            // no lift from Sable in water: how a carcass floats is its weight class's (CarcassFloat)
+            defaults.addProperty("sable:volume", 0.0);
             root.add("properties", defaults);
 
             JsonObject overrides = new JsonObject();

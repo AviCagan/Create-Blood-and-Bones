@@ -259,7 +259,6 @@
       "texture": "minecraft:textures/entity/zombie/drowned_outer_layer.png"
     }
   ],
-  "rot_time": 6000,
   "texture": "minecraft:textures/entity/zombie/drowned.png",
   "weight": 0.40625
 }

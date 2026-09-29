@@ -41,5 +41,6 @@
         "bloodandbones:shulker_bolt"
       ]
     }
-  }
+  },
+  "rot_time": 1000000
 }

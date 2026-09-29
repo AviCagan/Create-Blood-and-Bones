@@ -292,7 +292,6 @@
   ],
   "entity": "minecraft:ocelot",
   "model": "minecraft:ocelot",
-  "rot_time": 20000,
   "texture": "minecraft:textures/entity/cat/ocelot.png",
   "weight": 0.15136719
 }

@@ -117,6 +117,5 @@
   ],
   "entity": "minecraft:strider",
   "model": "minecraft:strider",
-  "rot_time": 20000,
   "texture": "minecraft:textures/entity/strider/strider.png"
 }

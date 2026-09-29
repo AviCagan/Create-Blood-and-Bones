@@ -1,6 +1,13 @@
 {
   "kind": "archetype",
   "priority": 0,
+  "match": [
+    {
+      "score": 30,
+      "category": "ambient"
+    }
+  ],
+  "generic_rig": "bloodandbones:flier",
   "members": [
     "minecraft:bat",
     "minecraft:phantom"

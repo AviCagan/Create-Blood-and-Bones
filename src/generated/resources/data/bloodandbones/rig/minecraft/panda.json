@@ -238,7 +238,6 @@
   ],
   "entity": "minecraft:panda",
   "model": "minecraft:panda",
-  "rot_time": 36000,
   "texture": "minecraft:textures/entity/panda/{variant}.png",
   "variant_names": {
     "aggressive": "aggressive_panda",

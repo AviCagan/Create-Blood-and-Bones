@@ -235,7 +235,6 @@
   ],
   "entity": "minecraft:pig",
   "model": "minecraft:pig",
-  "rot_time": 20000,
   "texture": "minecraft:textures/entity/pig/pig.png",
   "weight": 0.53125
 }

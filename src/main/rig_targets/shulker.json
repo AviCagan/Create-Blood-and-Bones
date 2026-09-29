@@ -2,7 +2,6 @@
   "entity": "minecraft:shulker",
   "model": "minecraft:shulker",
   "texture": "minecraft:textures/entity/shulker/{shulker}.png",
-  "rot_time": 1000000,
   "torso": "base",
   "joints": {
     "lid": {

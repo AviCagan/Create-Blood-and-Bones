@@ -2,7 +2,6 @@
   "entity": "minecraft:evoker",
   "model": "minecraft:evoker",
   "texture": "minecraft:textures/entity/illager/evoker.png",
-  "rot_time": 20000,
   "torso": "body",
   "hidden": [
     "arms",

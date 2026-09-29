@@ -20,13 +20,18 @@ import java.util.Optional;
  * @param scale        the renderer's model scale (a horse is drawn at 1.1); rig pixels are already multiplied by it
  * @param weight       its size as flesh, in Sable mass units (a full solid block is 1.0): how much animal there is, for
  *                     blood and yields; its bodies' real mass also depends on their tissue (bone and plate weigh more)
- * @param rotTime      ticks for a carcass to go from fresh to rotten in a temperate place; cold stretches it
+ * @param rotTime      ticks for a carcass to go from fresh to rotten in a temperate place (cold stretches it), when this
+ *                     mob's differs from what its groups and weight class say (CarcassBody#rotTime)
  * @param bones        bones, torso first
  * @param baby         how its baby is drawn, if it has one that becomes a carcass (see {@link #asBaby()})
+ * @param fitted       a generic body (GenericRig) rather than the mob's own model: each bone's {@code part} lists the model
+ *                     part names it may wear ("tail|tail_fin"), and the client draws the first it finds in the mob's model,
+ *                     stretched to fill the bone's box, or a box in the mob's skin if it finds none
  */
 public record Rig(ResourceLocation entity, ResourceLocation model, String layer, String texture, Map<String, String> variantNames,
-                  List<RenderPass> passes, float scale, float weight, int rotTime, List<Bone> bones, Optional<BabyShape> baby) {
-    /** One Minecraft day. */
+                  List<RenderPass> passes, float scale, float weight, Optional<Integer> rotTime, List<Bone> bones, Optional<BabyShape> baby,
+                  boolean fitted) {
+    /** One Minecraft day: what a carcass takes to rot when nothing says otherwise (the medium weight class's time). */
     public static final int DEFAULT_ROT_TIME = 24000;
 
     public static final Codec<Rig> CODEC = RecordCodecBuilder.create(i -> i.group(
@@ -38,13 +43,14 @@ public record Rig(ResourceLocation entity, ResourceLocation model, String layer,
             RenderPass.CODEC.listOf().optionalFieldOf("passes", List.of()).forGetter(Rig::passes),
             Codec.FLOAT.optionalFieldOf("scale", 1.0F).forGetter(Rig::scale),
             Codec.FLOAT.optionalFieldOf("weight", 1.0F).forGetter(Rig::weight),
-            Codec.intRange(1, Integer.MAX_VALUE).optionalFieldOf("rot_time", DEFAULT_ROT_TIME).forGetter(Rig::rotTime),
+            Codec.intRange(1, Integer.MAX_VALUE).optionalFieldOf("rot_time").forGetter(Rig::rotTime),
             Bone.CODEC.listOf().fieldOf("bones").forGetter(Rig::bones),
-            BabyShape.CODEC.optionalFieldOf("baby").forGetter(Rig::baby)
+            BabyShape.CODEC.optionalFieldOf("baby").forGetter(Rig::baby),
+            Codec.BOOL.optionalFieldOf("fitted", false).forGetter(Rig::fitted)
     ).apply(i, Rig::new));
 
     public Rig withBaby(Optional<BabyShape> shape) {
-        return new Rig(entity, model, layer, texture, variantNames, passes, scale, weight, rotTime, bones, shape);
+        return new Rig(entity, model, layer, texture, variantNames, passes, scale, weight, rotTime, bones, shape, fitted);
     }
 
     /**
@@ -70,7 +76,7 @@ public record Rig(ResourceLocation entity, ResourceLocation model, String layer,
             mass += (size.x / 16.0F) * (size.y / 16.0F) * (size.z / 16.0F);
             out.add(small);
         }
-        return new Rig(entity, model, layer, texture, variantNames, passes, scale, mass, rotTime, out, Optional.empty());
+        return new Rig(entity, model, layer, texture, variantNames, passes, scale, mass, rotTime, out, Optional.empty(), fitted);
     }
 
     public Optional<Bone> bone(String name) {

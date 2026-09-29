@@ -189,7 +189,6 @@
   ],
   "entity": "minecraft:wandering_trader",
   "model": "minecraft:wandering_trader",
-  "rot_time": 20000,
   "scale": 0.9375,
   "texture": "minecraft:textures/entity/wandering_trader.png",
   "weight": 0.3476143

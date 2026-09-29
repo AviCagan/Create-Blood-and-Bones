@@ -249,7 +249,6 @@
   ],
   "entity": "minecraft:camel",
   "model": "minecraft:camel",
-  "rot_time": 36000,
   "texture": "minecraft:textures/entity/camel/camel.png",
   "weight": 2.6391602
 }

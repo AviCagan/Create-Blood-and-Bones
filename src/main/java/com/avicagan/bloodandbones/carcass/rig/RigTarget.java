@@ -20,7 +20,7 @@ import java.util.Optional;
  * @param variantNames variant name to texture file name fix-ups
  * @param passes       extra coats
  * @param scale        the renderer's model scale (HorseRenderer draws at 1.1)
- * @param rotTime      ticks to rot
+ * @param rotTime      ticks to rot, when this mob's differs from what its groups and weight class say
  * @param torso        root bone override, otherwise the biggest top-level part
  * @param hidden       parts (and everything under them) that neither collide nor draw: saddles, baby legs
  * @param merge        parts that do not become bones but still draw with the nearest bone above them
@@ -31,7 +31,7 @@ import java.util.Optional;
  * @param butchery     what taking the carcass apart gives; defaults to generic meat, hide and bone
  */
 public record RigTarget(ResourceLocation entity, ResourceLocation model, String layer, String texture, Map<String, String> variantNames,
-                        List<RenderPass> passes, float scale, int rotTime, Optional<String> torso, List<String> hidden, List<String> merge,
+                        List<RenderPass> passes, float scale, Optional<Integer> rotTime, Optional<String> torso, List<String> hidden, List<String> merge,
                         Map<String, String> attach, Map<String, String> parents, Map<String, Box> boxes, Map<String, JointSpec> joints,
                         ButcheryTarget butchery) {
     public record Box(Vector3f min, Vector3f max) {
@@ -49,7 +49,7 @@ public record RigTarget(ResourceLocation entity, ResourceLocation model, String 
             Codec.unboundedMap(Codec.STRING, Codec.STRING).optionalFieldOf("variant_names", Map.of()).forGetter(RigTarget::variantNames),
             RenderPass.CODEC.listOf().optionalFieldOf("passes", List.of()).forGetter(RigTarget::passes),
             Codec.FLOAT.optionalFieldOf("scale", 1.0F).forGetter(RigTarget::scale),
-            Codec.intRange(1, Integer.MAX_VALUE).optionalFieldOf("rot_time", Rig.DEFAULT_ROT_TIME).forGetter(RigTarget::rotTime),
+            Codec.intRange(1, Integer.MAX_VALUE).optionalFieldOf("rot_time").forGetter(RigTarget::rotTime),
             Codec.STRING.optionalFieldOf("torso").forGetter(RigTarget::torso),
             Codec.STRING.listOf().optionalFieldOf("hidden", List.of()).forGetter(RigTarget::hidden),
             Codec.STRING.listOf().optionalFieldOf("merge", List.of()).forGetter(RigTarget::merge),

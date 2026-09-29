@@ -1,6 +1,35 @@
 {
   "kind": "archetype",
   "priority": 0,
+  "match": [
+    {
+      "score": 50,
+      "rig": {
+        "legs": [
+          4,
+          6
+        ],
+        "arms": 0
+      }
+    },
+    {
+      "score": 20,
+      "aspect": [
+        0.8,
+        99
+      ],
+      "category": "creature"
+    },
+    {
+      "score": 15,
+      "aspect": [
+        0.8,
+        99
+      ],
+      "category": "monster"
+    }
+  ],
+  "generic_rig": "bloodandbones:quadruped",
   "members": [
     "minecraft:cow",
     "minecraft:mooshroom",
@@ -30,26 +59,6 @@
     "minecraft:ravager",
     "minecraft:sniffer",
     "minecraft:axolotl"
-  ],
-  "match": [
-    {
-      "score": 50,
-      "rig": {
-        "legs": [
-          4,
-          6
-        ],
-        "arms": 0
-      }
-    },
-    {
-      "score": 20,
-      "aspect": [
-        0.8,
-        99
-      ],
-      "category": "creature"
-    }
   ],
   "scrap_material": "bloodandbones:gristle",
   "organs": {

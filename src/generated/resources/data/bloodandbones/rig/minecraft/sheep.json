@@ -243,7 +243,6 @@
       "unless": "sheared"
     }
   ],
-  "rot_time": 20000,
   "texture": "minecraft:textures/entity/sheep/sheep.png",
   "weight": 0.42773438
 }

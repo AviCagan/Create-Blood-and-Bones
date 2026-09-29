@@ -1,6 +1,7 @@
 {
   "kind": "archetype",
   "priority": 0,
+  "generic_rig": "bloodandbones:tentacled",
   "members": [
     "minecraft:squid",
     "minecraft:glow_squid",

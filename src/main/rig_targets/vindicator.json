@@ -2,7 +2,6 @@
   "entity": "minecraft:vindicator",
   "model": "minecraft:vindicator",
   "texture": "minecraft:textures/entity/illager/vindicator.png",
-  "rot_time": 20000,
   "torso": "body",
   "hidden": [
     "arms",

@@ -2,7 +2,6 @@
   "entity": "minecraft:guardian",
   "model": "minecraft:guardian",
   "texture": "minecraft:textures/entity/guardian.png",
-  "rot_time": 24000,
   "torso": "head",
   "merge": [
     "head/spike0",

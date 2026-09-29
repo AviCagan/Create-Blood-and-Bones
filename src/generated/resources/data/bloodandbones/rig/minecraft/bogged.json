@@ -251,7 +251,6 @@
       "texture": "minecraft:textures/entity/skeleton/bogged_overlay.png"
     }
   ],
-  "rot_time": 36000,
   "texture": "minecraft:textures/entity/skeleton/bogged.png",
   "weight": 0.265625
 }

@@ -2,7 +2,6 @@
   "entity": "minecraft:cod",
   "model": "minecraft:cod",
   "texture": "minecraft:textures/entity/fish/cod.png",
-  "rot_time": 8000,
   "torso": "body",
   "attach": {
     "nose": "head",

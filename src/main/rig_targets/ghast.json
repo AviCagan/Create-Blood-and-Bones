@@ -2,7 +2,6 @@
   "entity": "minecraft:ghast",
   "model": "minecraft:ghast",
   "texture": "minecraft:textures/entity/ghast/ghast.png",
-  "rot_time": 24000,
   "torso": "body",
   "scale": 4.5,
   "joints": {

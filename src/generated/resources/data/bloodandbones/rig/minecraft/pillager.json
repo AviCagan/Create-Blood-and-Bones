@@ -232,7 +232,6 @@
   ],
   "entity": "minecraft:pillager",
   "model": "minecraft:pillager",
-  "rot_time": 20000,
   "scale": 0.9375,
   "texture": "minecraft:textures/entity/illager/pillager.png",
   "weight": 0.47636032

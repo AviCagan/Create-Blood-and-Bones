@@ -2,7 +2,6 @@
   "entity": "minecraft:camel",
   "model": "minecraft:camel",
   "texture": "minecraft:textures/entity/camel/camel.png",
-  "rot_time": 36000,
   "torso": "body",
   "hidden": [
     "body/saddle",

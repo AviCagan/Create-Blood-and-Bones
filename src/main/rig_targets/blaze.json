@@ -2,7 +2,6 @@
   "entity": "minecraft:blaze",
   "model": "minecraft:blaze",
   "texture": "minecraft:textures/entity/blaze.png",
-  "rot_time": 1000000,
   "torso": "head",
   "attach": {
     "part0": "head",

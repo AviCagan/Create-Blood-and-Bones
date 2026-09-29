@@ -210,7 +210,6 @@
       "unless": "no_level"
     }
   ],
-  "rot_time": 20000,
   "scale": 0.9375,
   "texture": "minecraft:textures/entity/villager/villager.png",
   "weight": 0.3476143

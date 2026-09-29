@@ -251,7 +251,6 @@
       "texture": "minecraft:textures/entity/skeleton/stray_overlay.png"
     }
   ],
-  "rot_time": 48000,
   "texture": "minecraft:textures/entity/skeleton/stray.png",
   "weight": 0.265625
 }

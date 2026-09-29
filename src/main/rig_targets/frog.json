@@ -2,7 +2,6 @@
   "entity": "minecraft:frog",
   "model": "minecraft:frog",
   "texture": "{frog_texture}",
-  "rot_time": 16000,
   "torso": "root/body",
   "hidden": [
     "root/body/croaking_body",

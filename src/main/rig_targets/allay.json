@@ -2,7 +2,6 @@
   "entity": "minecraft:allay",
   "model": "minecraft:allay",
   "texture": "minecraft:textures/entity/allay/allay.png",
-  "rot_time": 6000,
   "torso": "root/body",
   "attach": {
     "root/body/right_arm": "root/body",

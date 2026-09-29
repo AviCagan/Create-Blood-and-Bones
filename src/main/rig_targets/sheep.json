@@ -2,7 +2,6 @@
   "entity": "minecraft:sheep",
   "model": "minecraft:sheep",
   "texture": "minecraft:textures/entity/sheep/sheep.png",
-  "rot_time": 20000,
   "passes": [
     {
       "layer": "fur",

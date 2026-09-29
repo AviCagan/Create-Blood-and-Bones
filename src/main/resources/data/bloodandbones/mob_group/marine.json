@@ -97,5 +97,6 @@
     "drawback": [
       "bloodandbones:dry_out"
     ]
-  }
+  },
+  "rot_time": 8000
 }

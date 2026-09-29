@@ -2,7 +2,6 @@
   "entity": "minecraft:husk",
   "model": "minecraft:husk",
   "texture": "minecraft:textures/entity/zombie/husk.png",
-  "rot_time": 12000,
   "torso": "body",
   "attach": {
     "hat": "head"

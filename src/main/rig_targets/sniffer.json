@@ -2,7 +2,6 @@
   "entity": "minecraft:sniffer",
   "model": "minecraft:sniffer",
   "texture": "minecraft:textures/entity/sniffer/sniffer.png",
-  "rot_time": 40000,
   "torso": "root/bone/body",
   "merge": [
     "root/bone/body/head/nose",

@@ -18,5 +18,6 @@
         "bloodandbones:spit"
       ]
     }
-  }
+  },
+  "rot_time": 30000
 }

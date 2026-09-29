@@ -25,7 +25,10 @@ import org.joml.Vector3d;
  * the body speeds it up. A bled carcass keeps longer.
  */
 public final class CarcassBleeding {
-    /** Blood per unit of rig weight, mB: a cow holds about a bucket. */
+    /**
+     * Blood per unit of rig weight, mB, before the weight classes (a cow holds about a bucket): now each class's
+     * {@code blood_per_weight} (CarcassBody#bloodPerWeight), all of which the mod ships at this.
+     */
     public static final float BLOOD_PER_WEIGHT = 1000.0F;
     /** Seconds a hanging body takes to bleed out with no fan. */
     public static final int BLEED_SECONDS = 40;
@@ -60,7 +63,7 @@ public final class CarcassBleeding {
         if (type.is(BBTags.BLOODLESS)) {
             return 0.0F;
         }
-        return Math.round(rig.weight() * BLOOD_PER_WEIGHT);
+        return Math.round(rig.weight() * CarcassBody.bloodPerWeight(carcass.entity));
     }
 
     /** Fill in blood for a record that has never had it worked out. */

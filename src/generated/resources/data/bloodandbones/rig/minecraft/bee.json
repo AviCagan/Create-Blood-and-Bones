@@ -109,7 +109,6 @@
   ],
   "entity": "minecraft:bee",
   "model": "minecraft:bee",
-  "rot_time": 8000,
   "texture": "minecraft:textures/entity/bee/bee.png",
   "weight": 0.119628906
 }

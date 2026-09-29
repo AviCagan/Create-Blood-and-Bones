@@ -2,7 +2,6 @@
   "entity": "minecraft:piglin",
   "model": "minecraft:piglin",
   "texture": "minecraft:textures/entity/piglin/piglin.png",
-  "rot_time": 20000,
   "torso": "body",
   "hidden": [
     "cloak",

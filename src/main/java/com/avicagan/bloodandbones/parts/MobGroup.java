@@ -24,13 +24,15 @@ import java.util.Optional;
  * @param variants  what a particular mob of this layer adds, by what its carcass kept of it (a snow fox's hide, a charged
  *                  creeper's sac): its hide traits and its organs' traits
  * @param tissue    what its carcass's bodies are made of, which sets how much they weigh (Tissue); a scalar, as scrap_material
+ * @param carcass   what it says about its mobs' carcasses: the generic body, the archetype's match rules, the weight class,
+ *                  the rot time, butchery yields and a baby's share of them
  */
 public record MobGroup(ResourceLocation id, Kind kind, int priority, List<String> members,
                        Optional<ResourceLocation> archetype, Optional<ResourceLocation> family, List<ResourceLocation> overlays,
                        Optional<ResourceLocation> scrapMaterial, Map<String, PartEntry> parts, Optional<TraitList> hide,
                        Map<ResourceLocation, OrganEntry> organTraits, Optional<FullSet> fullSet, Map<String, SlotInfo> boneSlots,
                        Optional<Integer> colour, Map<String, OrganList> organs, List<Variant> variants,
-                       Optional<com.avicagan.bloodandbones.carcass.Tissue> tissue) {
+                       Optional<com.avicagan.bloodandbones.carcass.Tissue> tissue, CarcassFacts carcass) {
     public enum Kind {
         ARCHETYPE, FAMILY, OVERLAY, MOB
     }
@@ -40,6 +42,114 @@ public record MobGroup(ResourceLocation id, Kind kind, int priority, List<String
      * as knacks ({@code MinionData.oldJobs}) and logged once, so a third party's datapack keeps working.
      */
     public static final java.util.concurrent.atomic.AtomicInteger OLD_JOBS = new java.util.concurrent.atomic.AtomicInteger();
+
+    /**
+     * What one layer says about its mobs' carcasses (docs/ARCHITECTURE-PROPOSAL.md 15.29). Every field is a scalar the last
+     * layer naming it wins, as scrap_material, except the butchery settings, which merge field by field.
+     *
+     * @param genericRig  the generic body (data/&lt;ns&gt;/generic_rig/&lt;id&gt;.json) a mob with no rig file is built from; an
+     *                    archetype names one
+     * @param match       an archetype's rules for claiming a mob no file lists (docs/PARTS-AND-TRAITS.md 3.1)
+     * @param weightClass the weight class (data/&lt;ns&gt;/weight_class/&lt;id&gt;.json); with none named, its size picks one
+     * @param rotTime     ticks to rot, where this layer's mobs differ from their weight class
+     * @param butchery    what taking the carcass apart gives, as a rig target's butchery section spells it (any of its fields)
+     * @param babyYield   a baby's share of a grown one's yields; with none named, its share of the grown one's size
+     */
+    public record CarcassFacts(Optional<ResourceLocation> genericRig, List<Match> match, Optional<ResourceLocation> weightClass,
+                               Optional<Integer> rotTime, Optional<JsonObject> butchery, Optional<Float> babyYield) {
+        public static final CarcassFacts NONE = new CarcassFacts(Optional.empty(), List.of(), Optional.empty(), Optional.empty(), Optional.empty(),
+                Optional.empty());
+
+        static CarcassFacts parse(ResourceLocation id, JsonObject json) {
+            List<Match> match = new ArrayList<>();
+            if (json.has("match")) {
+                for (JsonElement e : json.getAsJsonArray("match")) {
+                    match.add(Match.parse(id, e.getAsJsonObject()));
+                }
+            }
+            return new CarcassFacts(
+                    json.has("generic_rig") ? Optional.of(ResourceLocation.parse(json.get("generic_rig").getAsString())) : Optional.empty(),
+                    List.copyOf(match),
+                    json.has("weight_class") ? Optional.of(ResourceLocation.parse(json.get("weight_class").getAsString())) : Optional.empty(),
+                    json.has("rot_time") ? Optional.of(json.get("rot_time").getAsInt()) : Optional.empty(),
+                    json.has("butchery") ? Optional.of(json.getAsJsonObject("butchery").deepCopy()) : Optional.empty(),
+                    json.has("baby_yield") ? Optional.of(json.get("baby_yield").getAsFloat()) : Optional.empty());
+        }
+    }
+
+    /**
+     * One way an archetype claims a mob that no file lists: every condition given must hold, and the archetype whose
+     * passing rule scores highest wins.
+     *
+     * @param legs       how many legs and arms its rig file has, from, to (only a mob with a rig file of its own can pass)
+     * @param aspect     its hitbox's width over its height, from, to: a cow is wider than tall, a zombie taller than wide
+     * @param category   the spawn categories it may be in ("creature", "monster", "water_ambient"...)
+     * @param fireImmune whether it must be (or must not be) immune to fire
+     */
+    public record Match(int score, Optional<int[]> legs, Optional<int[]> arms, Optional<float[]> aspect, List<String> category,
+                        Optional<Boolean> fireImmune) {
+        static Match parse(ResourceLocation id, JsonObject o) {
+            Optional<int[]> legs = Optional.empty();
+            Optional<int[]> arms = Optional.empty();
+            if (o.has("rig")) {
+                JsonObject rig = o.getAsJsonObject("rig");
+                legs = rig.has("legs") ? Optional.of(range(rig.get("legs"))) : Optional.empty();
+                arms = rig.has("arms") ? Optional.of(range(rig.get("arms"))) : Optional.empty();
+            }
+            Optional<float[]> aspect = Optional.empty();
+            if (o.has("aspect")) {
+                com.google.gson.JsonArray a = o.getAsJsonArray("aspect");
+                aspect = Optional.of(new float[]{a.get(0).getAsFloat(), a.get(1).getAsFloat()});
+            }
+            List<String> category = new ArrayList<>();
+            if (o.has("category")) {
+                JsonElement c = o.get("category");
+                if (c.isJsonArray()) {
+                    c.getAsJsonArray().forEach(e -> category.add(e.getAsString()));
+                } else {
+                    category.add(c.getAsString());
+                }
+            }
+            if (legs.isEmpty() && arms.isEmpty() && aspect.isEmpty() && category.isEmpty() && !o.has("fire_immune")) {
+                throw new IllegalArgumentException(id + " match: a rule needs a condition (rig, aspect, category, fire_immune)");
+            }
+            return new Match(o.has("score") ? o.get("score").getAsInt() : 1, legs, arms, aspect, List.copyOf(category),
+                    o.has("fire_immune") ? Optional.of(o.get("fire_immune").getAsBoolean()) : Optional.empty());
+        }
+
+        /** A count, or [from, to]. */
+        private static int[] range(JsonElement e) {
+            if (e.isJsonArray()) {
+                return new int[]{e.getAsJsonArray().get(0).getAsInt(), e.getAsJsonArray().get(1).getAsInt()};
+            }
+            return new int[]{e.getAsInt(), e.getAsInt()};
+        }
+
+        /**
+         * Whether a mob passes.
+         *
+         * @param legs how many legs its rig file has, or -1 with no rig file
+         */
+        public boolean passes(net.minecraft.world.entity.EntityType<?> type, int legs, int arms) {
+            if (this.legs.isPresent() && (legs < 0 || legs < this.legs.get()[0] || legs > this.legs.get()[1])) {
+                return false;
+            }
+            if (this.arms.isPresent() && (arms < 0 || arms < this.arms.get()[0] || arms > this.arms.get()[1])) {
+                return false;
+            }
+            if (aspect.isPresent()) {
+                net.minecraft.world.entity.EntityDimensions size = type.getDimensions();
+                float ratio = size.width() / Math.max(0.01F, size.height());
+                if (ratio < aspect.get()[0] || ratio > aspect.get()[1]) {
+                    return false;
+                }
+            }
+            if (!category.isEmpty() && !category.contains(type.getCategory().getName())) {
+                return false;
+            }
+            return fireImmune.isEmpty() || fireImmune.get() == type.fireImmune();
+        }
+    }
 
     /** The armour pieces a part's traits can be aimed at. */
     public static final List<String> PIECES = List.of("helmet", "chestplate", "leggings", "boots", "shoulders", "hips");
@@ -166,7 +276,8 @@ public record MobGroup(ResourceLocation id, Kind kind, int priority, List<String
                 List.copyOf(overlays),
                 json.has("scrap_material") ? Optional.of(ResourceLocation.parse(json.get("scrap_material").getAsString())) : Optional.empty(),
                 parts, opt(json, "hide", TraitList.CODEC, ops, id), organs, set, boneSlots, colour, organLists, List.copyOf(variants),
-                json.has("tissue") ? Optional.of(com.avicagan.bloodandbones.carcass.Tissue.byName(json.get("tissue").getAsString())) : Optional.empty());
+                json.has("tissue") ? Optional.of(com.avicagan.bloodandbones.carcass.Tissue.byName(json.get("tissue").getAsString())) : Optional.empty(),
+                CarcassFacts.parse(id, json));
     }
 
     /** Whether a part's minion data here, or one of its variants, lists "jobs" and no "knacks". */

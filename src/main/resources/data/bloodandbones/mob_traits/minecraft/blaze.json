@@ -54,5 +54,6 @@
     "drawback": [
       "bloodandbones:water_hurts"
     ]
-  }
+  },
+  "rot_time": 1000000
 }

@@ -330,7 +330,6 @@
   ],
   "entity": "minecraft:rabbit",
   "model": "minecraft:rabbit",
-  "rot_time": 16000,
   "scale": 0.6,
   "texture": "minecraft:textures/entity/rabbit/{variant}.png",
   "variant_names": {

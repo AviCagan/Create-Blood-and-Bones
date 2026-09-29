@@ -279,7 +279,6 @@
   ],
   "entity": "minecraft:fox",
   "model": "minecraft:fox",
-  "rot_time": 20000,
   "texture": "minecraft:textures/entity/fox/{variant}.png",
   "variant_names": {
     "red": "fox",

@@ -2,7 +2,6 @@
   "entity": "minecraft:slime",
   "model": "minecraft:slime",
   "texture": "minecraft:textures/entity/slime/slime.png",
-  "rot_time": 1000000,
   "torso": "cube",
   "scale": 4.0,
   "attach": {

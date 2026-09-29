@@ -253,7 +253,6 @@
   ],
   "entity": "minecraft:zombie",
   "model": "minecraft:zombie",
-  "rot_time": 6000,
   "texture": "minecraft:textures/entity/zombie/zombie.png",
   "weight": 0.40625
 }

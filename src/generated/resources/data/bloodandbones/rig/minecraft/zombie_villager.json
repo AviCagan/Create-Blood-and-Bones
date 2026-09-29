@@ -266,7 +266,6 @@
       "unless": "no_level"
     }
   ],
-  "rot_time": 6000,
   "texture": "minecraft:textures/entity/zombie_villager/zombie_villager.png",
   "weight": 0.578125
 }

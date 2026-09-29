@@ -29,5 +29,6 @@
         "bloodandbones:stinger"
       ]
     }
-  }
+  },
+  "rot_time": 36000
 }

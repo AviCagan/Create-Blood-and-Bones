@@ -15,7 +15,6 @@
       "unless": "no_level"
     }
   ],
-  "rot_time": 6000,
   "torso": "body",
   "attach": {
     "hat": "head"

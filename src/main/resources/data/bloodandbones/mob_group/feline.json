@@ -90,5 +90,6 @@
         "bloodandbones:undying"
       ]
     }
-  }
+  },
+  "rot_time": 20000
 }

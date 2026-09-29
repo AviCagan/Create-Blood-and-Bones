@@ -2,7 +2,6 @@
   "entity": "minecraft:creeper",
   "model": "minecraft:creeper",
   "texture": "minecraft:textures/entity/creeper/creeper.png",
-  "rot_time": 12000,
   "torso": "body",
   "butchery": {
     "meat": "none",

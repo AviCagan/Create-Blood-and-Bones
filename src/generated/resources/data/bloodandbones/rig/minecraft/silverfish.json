@@ -316,7 +316,6 @@
   ],
   "entity": "minecraft:silverfish",
   "model": "minecraft:silverfish",
-  "rot_time": 6000,
   "texture": "minecraft:textures/entity/silverfish.png",
   "weight": 0.037353516
 }

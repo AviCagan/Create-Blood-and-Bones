@@ -11,7 +11,6 @@
     "weak": "weak_panda",
     "aggressive": "aggressive_panda"
   },
-  "rot_time": 36000,
   "torso": "body",
   "boxes": {
     "head": {

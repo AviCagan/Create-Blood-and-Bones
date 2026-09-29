@@ -1,0 +1,7 @@
+{
+  "up_to": 10.0,
+  "drag": 1.0,
+  "blood_per_weight": 1000.0,
+  "buoyancy": 0.8,
+  "rot_time": 36000
+}

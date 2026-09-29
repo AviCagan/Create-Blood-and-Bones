@@ -271,7 +271,6 @@
   ],
   "entity": "minecraft:ravager",
   "model": "minecraft:ravager",
-  "rot_time": 36000,
   "texture": "minecraft:textures/entity/illager/ravager.png",
   "weight": 5.984375
 }

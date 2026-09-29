@@ -78,5 +78,20 @@
     "drawback": [
       "bloodandbones:dry_out"
     ]
+  },
+  "rot_time": 12000,
+  "butchery": {
+    "hide": "none",
+    "bone": "none",
+    "fat_per_weight": 0.0,
+    "part_extras": {
+      "body": [
+        {
+          "item": "minecraft:ink_sac",
+          "count": 1.0,
+          "kind": "offal"
+        }
+      ]
+    }
   }
 }

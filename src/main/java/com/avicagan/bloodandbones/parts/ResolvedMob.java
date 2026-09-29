@@ -17,11 +17,22 @@ import java.util.Optional;
  * @param organLists by part key: the organs a piece of that part holds, in the order they are cut out
  * @param variants what particular mobs add, by the traits their carcass kept (a snow fox's hide, a charged creeper's sac)
  * @param tissue   what its carcass's bodies are made of (the last layer naming one), flesh when none does
+ * @param carcass  what its layers say about its carcass: the generic body, the weight class, rot time, butchery, a baby's share
  */
 public record ResolvedMob(ResourceLocation entity, List<ResourceLocation> layers, ResourceLocation material, int colour,
                           Map<String, Part> parts, Map<String, List<com.google.gson.JsonElement>> minion, List<TraitList.Resolved> hide,
                           Map<ResourceLocation, Organ> organs, Optional<FullSet> fullSet, Map<String, List<ResourceLocation>> organLists,
-                          List<Variant> variants, com.avicagan.bloodandbones.carcass.Tissue tissue) {
+                          List<Variant> variants, com.avicagan.bloodandbones.carcass.Tissue tissue, Carcass carcass) {
+    /**
+     * What its layers say about its carcass, each the last layer's to name it (the butchery settings merged field by field).
+     *
+     * @param butchery      what taking it apart gives, when it has no butchery table of its own
+     * @param butcheryNamed whether any layer said anything about butchery (else the plain defaults: meat, hide, bone)
+     */
+    public record Carcass(Optional<ResourceLocation> genericRig, Optional<ResourceLocation> weightClass, Optional<Integer> rotTime,
+                          com.avicagan.bloodandbones.carcass.rig.ButcheryTarget butchery, boolean butcheryNamed, Optional<Float> babyYield) {
+    }
+
     public record Part(List<TraitList.Resolved> armour, Map<String, List<TraitList.Resolved>> pieces) {
     }
 

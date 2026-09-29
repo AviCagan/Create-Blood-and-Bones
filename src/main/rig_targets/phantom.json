@@ -2,7 +2,6 @@
   "entity": "minecraft:phantom",
   "model": "minecraft:phantom",
   "texture": "minecraft:textures/entity/phantom.png",
-  "rot_time": 6000,
   "torso": "body",
   "merge": [
     "body/right_wing_base/right_wing_tip",

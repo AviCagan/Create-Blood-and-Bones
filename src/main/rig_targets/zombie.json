@@ -2,7 +2,6 @@
   "entity": "minecraft:zombie",
   "model": "minecraft:zombie",
   "texture": "minecraft:textures/entity/zombie/zombie.png",
-  "rot_time": 6000,
   "torso": "body",
   "attach": {
     "hat": "head"

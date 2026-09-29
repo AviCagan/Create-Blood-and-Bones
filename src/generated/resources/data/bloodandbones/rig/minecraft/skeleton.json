@@ -245,7 +245,6 @@
   ],
   "entity": "minecraft:skeleton",
   "model": "minecraft:skeleton",
-  "rot_time": 48000,
   "texture": "minecraft:textures/entity/skeleton/skeleton.png",
   "weight": 0.265625
 }

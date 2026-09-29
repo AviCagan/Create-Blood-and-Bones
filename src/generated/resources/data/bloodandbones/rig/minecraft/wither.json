@@ -228,7 +228,6 @@
   ],
   "entity": "minecraft:wither",
   "model": "minecraft:wither",
-  "rot_time": 96000,
   "scale": 2.0,
   "texture": "minecraft:textures/entity/wither/wither.png",
   "weight": 2.4765625

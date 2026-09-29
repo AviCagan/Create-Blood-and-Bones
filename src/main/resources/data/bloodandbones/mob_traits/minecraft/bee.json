@@ -28,5 +28,6 @@
         "bloodandbones:honey"
       ]
     }
-  }
+  },
+  "rot_time": 8000
 }

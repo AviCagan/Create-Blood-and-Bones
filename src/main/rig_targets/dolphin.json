@@ -2,7 +2,6 @@
   "entity": "minecraft:dolphin",
   "model": "minecraft:dolphin",
   "texture": "minecraft:textures/entity/dolphin.png",
-  "rot_time": 24000,
   "torso": "body",
   "merge": [
     "body/head/nose",

@@ -198,7 +198,6 @@
   ],
   "entity": "minecraft:pufferfish",
   "model": "minecraft:pufferfish_big",
-  "rot_time": 8000,
   "texture": "minecraft:textures/entity/fish/pufferfish.png",
   "weight": 0.125
 }

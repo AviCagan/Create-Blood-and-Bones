@@ -76,5 +76,11 @@
         }
       ]
     }
+  },
+  "butchery": {
+    "meat": "minecraft:rabbit",
+    "meat_per_block": 40.0,
+    "hide": "minecraft:rabbit_hide",
+    "hide_per_weight": 20.0
   }
 }
