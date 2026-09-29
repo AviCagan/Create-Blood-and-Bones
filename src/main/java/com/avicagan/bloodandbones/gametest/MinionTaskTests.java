@@ -1292,13 +1292,14 @@ public class MinionTaskTests {
         give(minion, maker, PotionContents.createItemStack(Items.SPLASH_POTION, Potions.HEALING));
         give(minion, maker, PotionContents.createItemStack(Items.SPLASH_POTION, Potions.HEALING));
         Vec3 start = minion.position();
-        // its maker walks to the far corner, and is hurt once there
+        // its maker walks to the far corner, and is hurt once the medic has followed it there: hurt sooner, the medic stops
+        // to throw where it is, within its following distance, and has no need to come nearer
         maker.stand(helper, new Vec3(8.5, 2.0, 8.5));
         boolean[] thrown = {false};
         List<ThrownPotion> seen = new ArrayList<>();
         AABB area = area(helper);
         helper.onEachTick(() -> {
-            if (maker.getHealth() >= maker.getMaxHealth() && minion.distanceTo(maker) < 6.0F) {
+            if (maker.getHealth() >= maker.getMaxHealth() && minion.position().distanceTo(start) > 3.0) {
                 maker.setHealth(8.0F);
             }
             for (ThrownPotion potion : level.getEntitiesOfClass(ThrownPotion.class, area, p -> p.getOwner() == minion && !seen.contains(p))) {
