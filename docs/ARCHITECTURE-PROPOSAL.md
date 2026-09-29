@@ -2657,7 +2657,12 @@ trail behind; `physics_1`, three cows struck as they stood, one from the flank (
 behind (nose down, on the right) and one in the face from in front (in the middle: down within a block of where it
 stood, its front end tipped up, not flung); `physics_2`, three cows hung under a beam by the neck, legs and heads hanging
 loose, the one on the left knocked a moment before and swinging, the middle one with its right hind leg cut off and the
-leg lying in the blood under it. The dragged cow of `physics_0` is mostly behind its dragger, only its hind legs showing.
+leg lying in the blood under it. In `physics_0` the dragged cow trails behind its dragger on its back, the hooked hind
+leg leading, in two runs of three with the walk-through fix and in both runs without it. In the third it was in front of
+them, head first: the showcase moves its player by teleporting it a little each tick rather than walking it, and the cow
+starts standing beside them and falls a different way each run; once it lies ahead of where they look, the drag holds
+it there, as it does for a player facing what they hooked. The rear-first test starts its player beside a cow already
+lying and holds; the showcase's standing start is left as it is, since it shows the drag as it happens.
 
 **Physics, before and after.** The measurement (`-Dbloodandbones.debug.rig_compare=true`, eight runs of every scenario
 on its twelve mobs, and what twelve at once cost) run on main and on this work. Mobs meeting the brief's bar in most
