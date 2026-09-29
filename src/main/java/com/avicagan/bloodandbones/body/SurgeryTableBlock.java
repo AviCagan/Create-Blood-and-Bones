@@ -119,11 +119,14 @@ public class SurgeryTableBlock extends Block implements IBE<SurgeryTableBlockEnt
             }
             return ItemInteractionResult.sidedSuccess(level.isClientSide);
         }
-        // nothing laid on it, nobody on it, and a carcass too heavy to carry lying over it: the blade goes into that
-        if (Surgery.isBlade(stack) && table.item().isEmpty() && !level.isClientSide && Surgery.patientAt(level, pos) == null
-                && Surgery.carcassOn((ServerLevel) level, pos) != null) {
-            Surgery.harvest((ServerLevel) level, player, table, stack);
-            return ItemInteractionResult.CONSUME;
+        // nothing laid on it, nobody on it, and a carcass too heavy to carry lying over it with an organ still in it: the
+        // blade goes into that (one with nothing left in it is no bar to laying the blade down, for surgery)
+        if (Surgery.isBlade(stack) && table.item().isEmpty() && !level.isClientSide && Surgery.patientAt(level, pos) == null) {
+            var carcass = Surgery.carcassOn((ServerLevel) level, pos);
+            if (carcass != null && Surgery.nextOrgan(com.avicagan.bloodandbones.parts.PartsData.SERVER, carcass) != null
+                    && Surgery.harvest((ServerLevel) level, player, table, stack)) {
+                return ItemInteractionResult.CONSUME;
+            }
         }
         if (!table.item().isEmpty()) {
             return ItemInteractionResult.PASS_TO_DEFAULT_BLOCK_INTERACTION;

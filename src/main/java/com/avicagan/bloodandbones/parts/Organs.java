@@ -86,11 +86,17 @@ public final class Organs {
      * where its data's variants read it for this organ, and makes the item a stamped one.
      */
     public static ItemStack stack(PartsData.Store store, ResourceLocation organ, ResourceLocation entity, boolean baby, Map<String, String> traits) {
-        Item item = kind(store, organ).item();
+        // a vanilla item the data map gives to this very organ of this mob is what it is, whatever the organ's file says
+        // (a spider's eye is a Spider Eye), so one fitted comes back as it went in
+        Item item = mapped(entity, organ).orElse(kind(store, organ).item());
         Map<String, String> kept = traits.isEmpty() ? Map.of() : store.resolve(entity, baby).organTraitsKept(organ, traits);
         ItemStack stack;
         if (item instanceof SeveredLimbItem limb) {
             stack = limb.of(entity, baby);
+            if (!organ.equals(store.organFor(item))) {
+                // an organ of a datapack's that comes out as a heart or an eye: the item alone would read as the plain one
+                stack.set(BBDataComponents.ORGAN.get(), organ);
+            }
         } else {
             stack = new ItemStack(item);
             OrganSource mapped = item instanceof GlandItem ? null : stack.getItemHolder().getData(SOURCES);
@@ -103,6 +109,16 @@ public final class Organs {
             stack.set(BBDataComponents.ORGAN_TRAITS.get(), kept);
         }
         return stack;
+    }
+
+    /** The item the organ_sources data map gives to this organ of this mob (a spider's eye: the Spider Eye), if any. */
+    private static Optional<Item> mapped(ResourceLocation entity, ResourceLocation organ) {
+        for (Map.Entry<net.minecraft.resources.ResourceKey<Item>, OrganSource> e : BuiltInRegistries.ITEM.getDataMap(SOURCES).entrySet()) {
+            if (e.getValue().entity().equals(entity) && e.getValue().organ().equals(organ)) {
+                return BuiltInRegistries.ITEM.getOptional(e.getKey());
+            }
+        }
+        return Optional.empty();
     }
 
     /**

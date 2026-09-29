@@ -365,58 +365,109 @@ public class OrganTests {
     /**
      * A cow too heavy to carry, lying over a Surgical Rig table with nothing laid on it: the Cleaver takes its organs out
      * where it lies, its torso's first (heart, lungs, stomach, rumen), then its head's two eyes, each bone counting its
-     * own, and then nothing; the Cleaver is never laid on the table meanwhile.
+     * own; the Cleaver is never laid on the table meanwhile. With every organ out the body is no bar to laying the Cleaver
+     * down, for surgery: the next click lays it on the table.
      */
     @GameTest(template = "empty", timeoutTicks = 100)
     public static void heavyCarcassOrgansOnRig(GameTestHelper helper) {
-        ServerLevel level = helper.getLevel();
         BlockPos at = new BlockPos(5, 2, 5);
         SurgeryTableBlockEntity table = table(helper, at, TableAttachment.SURGICAL);
-        Cow cow = helper.spawn(EntityType.COW, new BlockPos(5, 3, 5));
-        CarcassSavedData.Carcass carcass = CarcassAssembler.assemble(cow, null);
+        CarcassSavedData.Carcass carcass = cowOver(helper);
         if (carcass == null) {
-            helper.fail("Carcass assembly returned null");
             return;
         }
-        cow.discard();
-        Player butcher = helper.makeMockPlayer(GameType.SURVIVAL);
-        helper.runAfterDelay(30, () -> {
-            try {
-                if (Surgery.carcassOn(level, table.getBlockPos()) != carcass) {
-                    helper.fail("The cow should lie over the table");
-                    return;
-                }
-                List<ResourceLocation> order = new ArrayList<>();
-                for (int i = 0; i < 8; i++) {
-                    int before = butcher.getInventory().items.stream().mapToInt(ItemStack::getCount).sum();
-                    click(helper, butcher, at, new ItemStack(BBItems.CLEAVER.get()));
-                    int after = butcher.getInventory().items.stream().mapToInt(ItemStack::getCount).sum();
-                    if (after == before) {
-                        break;
-                    }
-                    ItemStack newest = butcher.getInventory().items.stream().filter(s -> !s.isEmpty() && !s.is(BBItems.CLEAVER.get()))
-                            .filter(s -> Organs.of(s, PartsData.SERVER) != null).reduce((a, b) -> b).orElse(ItemStack.EMPTY);
-                    order.add(Organs.of(newest, PartsData.SERVER) == null ? bb("none") : Organs.of(newest, PartsData.SERVER).organ());
-                }
-                if (!order.equals(List.of(bb("heart"), bb("lungs"), bb("stomach"), bb("rumen"), bb("eye"), bb("eye"))) || !table.item().isEmpty()
-                        || count(butcher, BBItems.EYE.get()) != 2 || !"4".equals(carcass.traits.get(Surgery.ORGANS_TAKEN + ":" + carcass.rootBone))) {
-                    helper.fail("The cow lying on the table should give its torso's four organs and its head's two eyes, the Cleaver kept in hand: "
-                            + order + ", table " + table.item() + ", " + carcass.traits);
-                    return;
-                }
-                helper.succeed();
-            } finally {
-                // other tests share this world's carcasses: this one goes
-                var container = dev.ryanhcode.sable.api.sublevel.SubLevelContainer.getContainer(level);
-                for (java.util.UUID id : List.copyOf(carcass.bones.values())) {
-                    if (container != null && container.getSubLevel(id) instanceof dev.ryanhcode.sable.sublevel.ServerSubLevel body && !body.isRemoved()) {
-                        ((dev.ryanhcode.sable.api.sublevel.ServerSubLevelContainer) container).removeSubLevel(body,
-                                dev.ryanhcode.sable.sublevel.storage.SubLevelRemovalReason.REMOVED);
-                    }
-                }
-                CarcassSavedData.get(level).forget(carcass);
+        helper.runAfterDelay(30, () -> harvestCow(helper, table, at, carcass, false));
+    }
+
+    /**
+     * The same once the cow has lain still long enough to fold into its torso (CarcassRest), as it does lying over the
+     * table while its butcher is away: its head, now only a rest pose, still gives its two eyes.
+     */
+    @GameTest(template = "empty", timeoutTicks = 400)
+    public static void restingCarcassOrgansOnRig(GameTestHelper helper) {
+        BlockPos at = new BlockPos(5, 2, 5);
+        SurgeryTableBlockEntity table = table(helper, at, TableAttachment.SURGICAL);
+        CarcassSavedData.Carcass carcass = cowOver(helper);
+        if (carcass == null) {
+            return;
+        }
+        boolean[] done = {false};
+        helper.onEachTick(() -> {
+            if (!done[0] && carcass.resting) {
+                done[0] = true;
+                harvestCow(helper, table, at, carcass, true);
             }
         });
+        helper.runAfterDelay(380, () -> {
+            if (!done[0]) {
+                done[0] = true;
+                remove(helper.getLevel(), carcass);
+                helper.fail("The cow never came to rest over the table");
+            }
+        });
+    }
+
+    /** A cow's carcass dropped over the table at (5, 2, 5); null, the test failed, if it would not assemble. */
+    @Nullable
+    private static CarcassSavedData.Carcass cowOver(GameTestHelper helper) {
+        Cow cow = helper.spawn(EntityType.COW, new BlockPos(5, 3, 5));
+        CarcassSavedData.Carcass carcass = CarcassAssembler.assemble(cow, null);
+        cow.discard();
+        if (carcass == null) {
+            helper.fail("Carcass assembly returned null");
+        }
+        return carcass;
+    }
+
+    /** Click a Cleaver on the table until nothing more comes out of the cow over it, and check what did, and in what order. */
+    private static void harvestCow(GameTestHelper helper, SurgeryTableBlockEntity table, BlockPos at, CarcassSavedData.Carcass carcass, boolean resting) {
+        ServerLevel level = helper.getLevel();
+        Player butcher = helper.makeMockPlayer(GameType.SURVIVAL);
+        try {
+            if (Surgery.carcassOn(level, table.getBlockPos()) != carcass || carcass.resting != resting) {
+                helper.fail("The cow should lie over the table, " + (resting ? "folded to rest" : "not yet folded") + ": resting " + carcass.resting);
+                return;
+            }
+            List<ResourceLocation> order = new ArrayList<>();
+            for (int i = 0; i < 6; i++) {
+                int before = butcher.getInventory().items.stream().mapToInt(ItemStack::getCount).sum();
+                click(helper, butcher, at, new ItemStack(BBItems.CLEAVER.get()));
+                int after = butcher.getInventory().items.stream().mapToInt(ItemStack::getCount).sum();
+                if (after <= before || !table.item().isEmpty()) {
+                    break;
+                }
+                ItemStack newest = butcher.getInventory().items.stream().filter(s -> !s.isEmpty() && !s.is(BBItems.CLEAVER.get()))
+                        .filter(s -> Organs.of(s, PartsData.SERVER) != null).reduce((a, b) -> b).orElse(ItemStack.EMPTY);
+                order.add(Organs.of(newest, PartsData.SERVER) == null ? bb("none") : Organs.of(newest, PartsData.SERVER).organ());
+            }
+            if (!order.equals(List.of(bb("heart"), bb("lungs"), bb("stomach"), bb("rumen"), bb("eye"), bb("eye"))) || !table.item().isEmpty()
+                    || count(butcher, BBItems.EYE.get()) != 2 || !"4".equals(carcass.traits.get(Surgery.ORGANS_TAKEN + ":" + carcass.rootBone))) {
+                helper.fail("The cow lying on the table should give its torso's four organs and its head's two eyes, the Cleaver kept in hand: "
+                        + order + ", table " + table.item() + ", " + carcass.traits);
+                return;
+            }
+            click(helper, butcher, at, new ItemStack(BBItems.CLEAVER.get()));
+            if (!table.item().is(BBItems.CLEAVER.get())) {
+                helper.fail("With every organ out, a Cleaver clicked on the table should be laid on it: " + table.item());
+                return;
+            }
+            helper.succeed();
+        } finally {
+            remove(level, carcass);
+        }
+    }
+
+    /** Other tests share this world's carcasses: this one goes, bodies and all. */
+    private static void remove(ServerLevel level, CarcassSavedData.Carcass carcass) {
+        com.avicagan.bloodandbones.carcass.CarcassRest.unlock(carcass);
+        var container = dev.ryanhcode.sable.api.sublevel.SubLevelContainer.getContainer(level);
+        for (java.util.UUID id : List.copyOf(carcass.bones.values())) {
+            if (container != null && container.getSubLevel(id) instanceof dev.ryanhcode.sable.sublevel.ServerSubLevel body && !body.isRemoved()) {
+                ((dev.ryanhcode.sable.api.sublevel.ServerSubLevelContainer) container).removeSubLevel(body,
+                        dev.ryanhcode.sable.sublevel.storage.SubLevelRemovalReason.REMOVED);
+            }
+        }
+        CarcassSavedData.get(level).forget(carcass);
     }
 
     // ---- fitting
@@ -664,6 +715,40 @@ public class OrganTests {
         if (inked == null || !CarcassArmourItem.armour(inked.get(0)).organ().equals(Optional.of(new CarcassArmour.Organ(bb("ink_sac"), SQUID, false)))
                 || eyed == null || !CarcassArmourItem.armour(eyed.get(0)).organ().equals(Optional.of(new CarcassArmour.Organ(bb("eye"), SPIDER, false)))) {
             helper.fail("A plain ink sac should fit a chestplate as a squid's, a spider eye a helmet as a spider's");
+            return;
+        }
+        // a spider's eye is the Spider Eye whichever way it comes: out of a spider's head, and back out of the helmet it was
+        // fitted to when another eye takes its place (a cave spider's is its own, stamped)
+        ItemStack spiders = Organs.stack(store, bb("eye"), SPIDER, false);
+        ItemStack caveSpiders = Organs.stack(store, bb("eye"), ResourceLocation.withDefaultNamespace("cave_spider"), false);
+        List<ItemStack> swapped = craft(helper, eyed.get(0), Organs.stack(store, bb("eye"), COW, false));
+        if (!spiders.is(Items.SPIDER_EYE) || !spiders.getComponentsPatch().isEmpty() || !caveSpiders.is(BBItems.EYE.get())
+                || swapped == null || swapped.size() != 2 || !swapped.get(1).is(Items.SPIDER_EYE) || !swapped.get(1).getComponentsPatch().isEmpty()) {
+            helper.fail("A spider's eye should come out, and back out of a helmet, as a plain Spider Eye: " + spiders + " " + spiders.getComponentsPatch()
+                    + ", given back " + swapped + ", a cave spider's " + caveSpiders);
+            return;
+        }
+        helper.succeed();
+    }
+
+    /**
+     * A datapack's organ that comes out as one of the mod's own organ items (a special heart on the heart item) keeps its
+     * id on the item, and a plain heart stays a plain heart: which organ an item is never hangs on the order of the
+     * organ files.
+     */
+    @GameTest(template = "empty", timeoutTicks = 20)
+    public static void datapackOrganOnAHeartKeepsItsId(GameTestHelper helper) {
+        PartsData.Store store = PartsData.SERVER;
+        ResourceLocation wyrm = bb("test/wyrm_heart");
+        store.addTestOrgan(wyrm, new OrganKind(BBItems.HEART.get(), "organ.bloodandbones.heart", Optional.empty(), "heart", 0x9A4A4A, List.of("chestplate"),
+                List.of()));
+        ItemStack plain = Organs.stack(store, bb("heart"), COW, false);
+        ItemStack special = Organs.stack(store, wyrm, COW, false);
+        if (!bb("heart").equals(store.organFor(BBItems.HEART.get())) || plain.has(BBDataComponents.ORGAN.get())
+                || !new CarcassArmour.Organ(bb("heart"), COW, false).equals(Organs.of(plain, store))
+                || !new CarcassArmour.Organ(wyrm, COW, false).equals(Organs.of(special, store))) {
+            helper.fail("A plain heart should read as the heart and the datapack's as its own: plain " + Organs.of(plain, store) + ", special "
+                    + Organs.of(special, store));
             return;
         }
         helper.succeed();

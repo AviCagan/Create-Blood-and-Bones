@@ -363,24 +363,13 @@ public final class Surgery {
             if (carcass == null) {
                 return false;
             }
-            // the torso first, then the rest still attached, each counting its own
-            java.util.List<String> bones = new java.util.ArrayList<>(java.util.List.of(carcass.rootBone));
-            carcass.bones.keySet().stream().filter(b -> !b.equals(carcass.rootBone)).forEach(bones::add);
-            String bone = null;
-            java.util.List<net.minecraft.resources.ResourceLocation> held = java.util.List.of();
-            int taken = 0;
-            for (String each : bones) {
-                held = com.avicagan.bloodandbones.parts.Organs.held(store, carcass.entity, carcass.baby, each);
-                taken = organsTaken(carcass.traits, each, each.equals(carcass.rootBone));
-                if (taken < held.size()) {
-                    bone = each;
-                    break;
-                }
-            }
+            String bone = nextOrgan(store, carcass);
             if (bone == null) {
                 surgeon.displayClientMessage(Component.translatable("bloodandbones.surgery.no_organs"), true);
                 return false;
             }
+            java.util.List<net.minecraft.resources.ResourceLocation> held = com.avicagan.bloodandbones.parts.Organs.held(store, carcass.entity, carcass.baby, bone);
+            int taken = organsTaken(carcass.traits, bone, bone.equals(carcass.rootBone));
             carcass.traits.put(ORGANS_TAKEN + ":" + bone, Integer.toString(taken + 1));
             com.avicagan.bloodandbones.carcass.CarcassSavedData.get(level).setDirty();
             Vector3d there = com.avicagan.bloodandbones.carcass.CarcassAssembler.boneWorldPosition(level, carcass, bone);
@@ -417,6 +406,30 @@ public final class Surgery {
             level.playSound(null, pos, com.avicagan.bloodandbones.registry.BBSounds.CARCASS_SEVER.get(), SoundSource.PLAYERS, 0.8F, 1.4F);
         }
         return true;
+    }
+
+    /**
+     * The bone of a carcass lying whole whose organ a Cleaver takes out next, or null if every one is out: the torso's
+     * first, then the rest still attached, each counting its own. A carcass that has lain still a while is folded into its
+     * torso (CarcassRest), its limbs kept only as rest poses: they are still attached, and still hold their organs.
+     */
+    @org.jetbrains.annotations.Nullable
+    public static String nextOrgan(com.avicagan.bloodandbones.parts.PartsData.Store store, com.avicagan.bloodandbones.carcass.CarcassSavedData.Carcass carcass) {
+        java.util.Set<String> bones = new java.util.LinkedHashSet<>();
+        bones.add(carcass.rootBone);
+        bones.addAll(carcass.bones.keySet());
+        if (carcass.resting) {
+            bones.addAll(carcass.restPoses.keySet());
+        }
+        // a limb cut through is about to go its own way
+        bones.removeIf(bone -> !bone.equals(carcass.rootBone) && carcass.severed.contains(bone));
+        for (String bone : bones) {
+            int held = com.avicagan.bloodandbones.parts.Organs.held(store, carcass.entity, carcass.baby, bone).size();
+            if (organsTaken(carcass.traits, bone, bone.equals(carcass.rootBone)) < held) {
+                return bone;
+            }
+        }
+        return null;
     }
 
     /**

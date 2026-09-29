@@ -72,6 +72,7 @@ public final class PartsData {
         /** What game tests add on top (under ids of their own): looked up like the rest, never listed, sent or linted. */
         private final Map<ResourceLocation, Trait> testTraits = new ConcurrentHashMap<>();
         private final Map<ResourceLocation, MobGroup> testMobFiles = new ConcurrentHashMap<>();
+        private final Map<ResourceLocation, OrganKind> testOrgans = new ConcurrentHashMap<>();
 
         /** Every file of one kind, as written, by id. */
         public Map<ResourceLocation, String> raw(Kind kind) {
@@ -212,7 +213,14 @@ public final class PartsData {
         /** An organ's own file (its item, names, look, the armour pieces it fits), or null if it has none. */
         @Nullable
         public OrganKind organ(ResourceLocation id) {
-            return organs.get(id);
+            OrganKind kind = organs.get(id);
+            return kind != null ? kind : testOrgans.get(id);
+        }
+
+        /** For game tests: an organ file under an id of the test's own, the same way as {@link #addTestTrait}. */
+        public void addTestOrgan(ResourceLocation id, OrganKind organ) {
+            testOrgans.put(id, organ);
+            invalidate();
         }
 
         /** Every organ file, by id. */
@@ -220,10 +228,24 @@ public final class PartsData {
             return organs;
         }
 
-        /** The organ an item is, by the file naming it as its item (the heart item is the heart), or null for none. */
+        /**
+         * The organ an item is, by the file naming it as its item (the heart item is the heart), or null for none. Where
+         * several files name it (a datapack's organ that comes out as an eye), the one of the item's own id wins, so a plain
+         * eye stays an eye; Organs#stack stamps the others' ids on their items.
+         */
         @Nullable
         public ResourceLocation organFor(net.minecraft.world.item.Item item) {
+            ResourceLocation own = net.minecraft.core.registries.BuiltInRegistries.ITEM.getKey(item);
+            OrganKind named = organ(own);
+            if (named != null && named.item() == item) {
+                return own;
+            }
             for (Map.Entry<ResourceLocation, OrganKind> e : organs.entrySet()) {
+                if (e.getValue().item() == item) {
+                    return e.getKey();
+                }
+            }
+            for (Map.Entry<ResourceLocation, OrganKind> e : testOrgans.entrySet()) {
                 if (e.getValue().item() == item) {
                     return e.getKey();
                 }
