@@ -517,51 +517,124 @@ public class ContraptionTests {
     }
 
     /**
-     * A contraption set down turned (a bearing a quarter round) turns the carcass in its hook's data with it: hung again,
-     * its belly faces the way the turn took it, not the way it faced before.
+     * A Mechanical Piston already out to its full length, with a cow hung on a Shackle Hook under the block at its head,
+     * has its motor's speed changed (Create then tries to move it, finds it at its limit and gives up). Create starts the
+     * hook's actor before it gives up, which takes the cow into the hook's data and out of the world; the hook, still where
+     * it was, must hang it again. (It found itself by where the contraption keeps it, which for a piston with poles out is
+     * shifted back by them, so it never did, and the cow was gone for good.)
      */
     @GameTest(template = "empty", timeoutTicks = 300)
-    public static void turnedHookTurnsItsCarcass(GameTestHelper helper) {
+    public static void hungCarcassStaysWhenAPistonAtItsLimitGivesUp(GameTestHelper helper) {
         ServerLevel level = helper.getLevel();
-        BlockPos hookAt = new BlockPos(5, 5, 5);
-        helper.setBlock(hookAt.above(), Blocks.STONE);
+        int y = 6;
+        // piston, pole and head out east, a stone at the head and the hook under it
+        helper.setBlock(new BlockPos(1, y, LINE), AllBlocks.MECHANICAL_PISTON.getDefaultState()
+                .setValue(DirectionalKineticBlock.FACING, Direction.EAST).setValue(DirectionalAxisKineticBlock.AXIS_ALONG_FIRST_COORDINATE, true)
+                .setValue(com.simibubi.create.content.contraptions.piston.MechanicalPistonBlock.STATE,
+                        com.simibubi.create.content.contraptions.piston.MechanicalPistonBlock.PistonState.EXTENDED));
+        helper.setBlock(new BlockPos(2, y, LINE), AllBlocks.PISTON_EXTENSION_POLE.getDefaultState().setValue(net.minecraft.world.level.block.DirectionalBlock.FACING, Direction.EAST));
+        helper.setBlock(new BlockPos(3, y, LINE), AllBlocks.MECHANICAL_PISTON_HEAD.getDefaultState().setValue(net.minecraft.world.level.block.DirectionalBlock.FACING, Direction.EAST));
+        helper.setBlock(new BlockPos(4, y, LINE), Blocks.STONE);
+        BlockPos hookAt = new BlockPos(4, y - 1, LINE);
         helper.setBlock(hookAt, BBBlocks.SHACKLE_HOOK.getDefaultState().setValue(ShackleHookBlock.FACING, Direction.UP));
-        Cow cow = helper.spawn(EntityType.COW, new BlockPos(5, 2, 5));
+        BlockPos motorAt = new BlockPos(1, y - 1, LINE);
+        motor(helper, motorAt, 0);
+        Cow cow = helper.spawn(EntityType.COW, new BlockPos(6, 2, LINE));
         CarcassSavedData.Carcass carcass = CarcassAssembler.assemble(cow, null);
         cow.discard();
         helper.assertTrue(carcass != null, "Carcass assembly returned null");
-        helper.runAfterDelay(10, () -> hang(helper, carcass, be(helper, hookAt, ShackleHookBlockEntity.class), new BlockPos(5, 2, 8)));
+        UUID id = carcass.id;
+        helper.runAfterDelay(10, () -> hang(helper, carcass, be(helper, hookAt, ShackleHookBlockEntity.class), new BlockPos(6, 2, LINE)));
+        UUID[] torsoBefore = {null};
+        helper.runAfterDelay(150, () -> {
+            ShackleHookBlockEntity hook = be(helper, hookAt, ShackleHookBlockEntity.class);
+            Vector3d gap = hookGap(level, hook, carcass);
+            helper.assertTrue(hook.holdsFast() && gap != null && gap.length() < 0.35, "the cow should hang at the hook's tip first, it is " + gap + " off");
+            torsoBefore[0] = carcass.bones.get(carcass.rootBone);
+            // a speed change: Create tries to move the piston, and gives up (it is out as far as it goes)
+            ((CreativeMotorBlockEntity) helper.getBlockEntity(motorAt)).generatedSpeed.setValue(64);
+        });
+        helper.runAfterDelay(200, () -> {
+            setDown(helper);
+            helper.assertBlockPresent(Blocks.STONE, new BlockPos(4, y, LINE));
+            helper.assertBlockPresent(BBBlocks.SHACKLE_HOOK.get(), hookAt);
+            ShackleHookBlockEntity hook = be(helper, hookAt, ShackleHookBlockEntity.class);
+            CarcassSavedData.Carcass back = CarcassSavedData.get(level).carcass(id);
+            helper.assertTrue(back != null, "the cow was lost when the piston gave up");
+            // made again from the hook's data: Create did start the hook's actor, and took the cow out of the world
+            helper.assertTrue(!torsoBefore[0].equals(back.bones.get(back.rootBone)), "the hook's actor never started, so this tested nothing");
+            helper.assertTrue(id.equals(hook.hookedCarcass()) && hook.holdsFast(), "the hook should hold the same cow again");
+            helper.assertTrue(back.bones.size() == 6 && back.liveJoints.size() == 5, "every piece should be back and joined: " + back.bones.keySet());
+            Vector3d gap = hookGap(level, hook, back);
+            helper.assertTrue(gap != null && gap.length() < 0.35, "the cow should hang at the hook's tip again, it is " + gap + " off");
+            nothingDropped(helper, BBItems.CARCASS_PIECE.get(), BBBlocks.SHACKLE_HOOK.get());
+            helper.succeed();
+        });
+    }
+
+    /**
+     * A real Mechanical Bearing turns a post with an arm and a Shackle Hook under the arm, a cow hung on it, about a
+     * quarter round and stops (ARCHITECTURE 3.5): the cow rides in the hook's data and hangs again from the hook where it
+     * was set down, whole, with its belly turned as far as the bearing turned the hook. Which way the bearing turns is
+     * read from where the hook ends up, not assumed.
+     */
+    @GameTest(template = "empty", timeoutTicks = 400)
+    public static void turnedHookTurnsItsCarcass(GameTestHelper helper) {
+        ServerLevel level = helper.getLevel();
+        BlockPos bearingAt = new BlockPos(5, 2, 5);
+        BlockPos motorAt = bearingAt.below();
+        helper.setBlock(motorAt, AllBlocks.CREATIVE_MOTOR.getDefaultState().setValue(CreativeMotorBlock.FACING, Direction.UP));
+        helper.setBlock(bearingAt, AllBlocks.MECHANICAL_BEARING.getDefaultState().setValue(com.simibubi.create.content.contraptions.bearing.BearingBlock.FACING, Direction.UP));
+        for (int y = 3; y <= 6; y++) {
+            helper.setBlock(new BlockPos(5, y, 5), Blocks.STONE);
+        }
+        helper.setBlock(new BlockPos(6, 6, 5), Blocks.STONE);
+        helper.setBlock(new BlockPos(7, 6, 5), Blocks.STONE);
+        BlockPos hookAt = new BlockPos(7, 5, 5);
+        helper.setBlock(hookAt, BBBlocks.SHACKLE_HOOK.getDefaultState().setValue(ShackleHookBlock.FACING, Direction.UP));
+        Cow cow = helper.spawn(EntityType.COW, new BlockPos(8, 2, 5));
+        CarcassSavedData.Carcass carcass = CarcassAssembler.assemble(cow, null);
+        cow.discard();
+        helper.assertTrue(carcass != null, "Carcass assembly returned null");
+        UUID id = carcass.id;
+        // hung by someone standing east of it: its belly faces east
+        helper.runAfterDelay(10, () -> hang(helper, carcass, be(helper, hookAt, ShackleHookBlockEntity.class), new BlockPos(9, 2, 5)));
         Vector3d[] belly = {null};
         helper.runAfterDelay(150, () -> {
             ShackleHookBlockEntity hook = be(helper, hookAt, ShackleHookBlockEntity.class);
-            ServerSubLevel torso = bodies(helper, level, carcass).get(carcass.rootBone);
-            belly[0] = torso.logicalPose().orientation().transform(new Vector3d(0, 0, -1));
-            // what a contraption does: the carcass into the hook's data, the hook's data carried and set down turned
-            CompoundTag packed = com.avicagan.bloodandbones.carcass.HookedCarcass.pack(level, carcass, new Vector3d(hook.hookedAnchor()));
-            helper.assertTrue(packed != null, "the carcass could not be packed");
-            com.avicagan.bloodandbones.carcass.CarcassButchery.takeAway(level, carcass);
-            CompoundTag data = hook.saveWithFullMetadata(level.registryAccess());
-            data.remove("Carcass");
-            data.remove("SubLevel");
-            data.put("Packed", packed);
-            level.removeBlockEntity(helper.absolutePos(hookAt));
-            helper.setBlock(hookAt, Blocks.AIR);
-            helper.setBlock(hookAt, BBBlocks.SHACKLE_HOOK.getDefaultState().setValue(ShackleHookBlock.FACING, Direction.UP));
-            ShackleHookBlockEntity moved = be(helper, hookAt, ShackleHookBlockEntity.class);
-            moved.loadWithComponents(data, level.registryAccess());
-            moved.transform(moved, new com.simibubi.create.content.contraptions.StructureTransform(BlockPos.ZERO, Direction.Axis.Y,
-                    net.minecraft.world.level.block.Rotation.CLOCKWISE_90, net.minecraft.world.level.block.Mirror.NONE));
-            helper.assertTrue(moved.holdsPacked(), "the hook should keep the carcass in its data");
+            helper.assertTrue(hook.holdsFast(), "the hook should hold the cow before the bearing turns");
+            belly[0] = bodies(helper, level, carcass).get(carcass.rootBone).logicalPose().orientation().transform(new Vector3d(0, 0, -1));
+            // 16 RPM turns a bearing 4.8 degrees a tick: stopped some 19 ticks after it starts, it sets down a quarter round
+            ((CreativeMotorBlockEntity) helper.getBlockEntity(motorAt)).generatedSpeed.setValue(16);
         });
-        helper.runAfterDelay(170, () -> {
-            ShackleHookBlockEntity hook = be(helper, hookAt, ShackleHookBlockEntity.class);
-            CarcassSavedData.Carcass back = CarcassSavedData.get(level).carcass(carcass.id);
-            helper.assertTrue(back != null && hook.isOccupied(), "the hook should hang the carcass again");
+        boolean[] seenMoving = {false};
+        helper.onEachTick(() -> seenMoving[0] |= !level.getEntitiesOfClass(AbstractContraptionEntity.class, helper.getBounds()).isEmpty());
+        helper.runAfterDelay(170, () -> ((CreativeMotorBlockEntity) helper.getBlockEntity(motorAt)).generatedSpeed.setValue(0));
+        helper.runAfterDelay(230, () -> {
+            setDown(helper);
+            helper.assertTrue(seenMoving[0], "the bearing never turned");
+            helper.assertBlockNotPresent(BBBlocks.SHACKLE_HOOK.get(), hookAt);
+            BlockPos movedHook = null;
+            for (BlockPos at : new BlockPos[]{new BlockPos(5, 5, 7), new BlockPos(5, 5, 3)}) {
+                if (helper.getBlockState(at).is(BBBlocks.SHACKLE_HOOK.get())) {
+                    movedHook = at;
+                }
+            }
+            helper.assertTrue(movedHook != null, "the hook should be set down a quarter round from where it was");
+            // the turn the bearing made, about the post: east of it to south (clockwise from above) or to north
+            double turn = movedHook.getZ() > 5 ? Math.PI / 2 : -Math.PI / 2;
+            ShackleHookBlockEntity hook = be(helper, movedHook, ShackleHookBlockEntity.class);
+            CarcassSavedData.Carcass back = CarcassSavedData.get(level).carcass(id);
+            helper.assertTrue(back != null && id.equals(hook.hookedCarcass()) && hook.holdsFast(), "the moved hook should hold the same cow again");
+            helper.assertTrue(back.bones.size() == 6 && back.liveJoints.size() == 5, "every piece should be back and joined: " + back.bones.keySet());
+            Vector3d gap = hookGap(level, hook, back);
+            helper.assertTrue(gap != null && gap.length() < 0.35, "the cow should hang at the moved hook's tip, it is " + gap + " off");
+            // a turn about the upright taking east to south is -90 degrees about +y (x to z)
+            Vector3d expected = new org.joml.Quaterniond().rotateY(-turn).transform(new Vector3d(belly[0]));
             Vector3d now = bodies(helper, level, back).get(back.rootBone).logicalPose().orientation().transform(new Vector3d(0, 0, -1));
-            Vec3 turned = new com.simibubi.create.content.contraptions.StructureTransform(BlockPos.ZERO, Direction.Axis.Y,
-                    net.minecraft.world.level.block.Rotation.CLOCKWISE_90, net.minecraft.world.level.block.Mirror.NONE).applyWithoutOffsetUncentered(vec(belly[0]));
-            double angle = Math.toDegrees(now.angle(new Vector3d(turned.x, turned.y, turned.z)));
-            helper.assertTrue(angle < 25.0, "its belly should face the way the turn took it; it is " + String.format("%.0f", angle) + " degrees off");
+            double angle = Math.toDegrees(new Vector3d(now.x, 0, now.z).angle(new Vector3d(expected.x, 0, expected.z)));
+            helper.assertTrue(angle < 25.0, "its belly should face the way the bearing turned it; it is " + String.format("%.0f", angle) + " degrees off");
+            nothingDropped(helper, BBItems.CARCASS_PIECE.get(), BBBlocks.SHACKLE_HOOK.get());
             helper.succeed();
         });
     }
@@ -797,6 +870,194 @@ public class ContraptionTests {
                     + gap + " off");
             SubLevelContainer.getContainer(level).removeSubLevel(ship, dev.ryanhcode.sable.sublevel.storage.SubLevelRemovalReason.REMOVED);
             helper.succeed();
+        });
+    }
+
+    /** Drive a ship east at {@code speed} blocks a second, kept level, every tick from {@code from} for {@code ticks}. */
+    private static void drive(GameTestHelper helper, java.util.function.Supplier<ServerSubLevel> shipLater, int from, int ticks, double speed) {
+        for (int t = from; t < from + ticks; t++) {
+            helper.runAfterDelay(t, () -> {
+                ServerSubLevel ship = shipLater.get();
+                if (ship == null || ship.isRemoved()) {
+                    return;
+                }
+                dev.ryanhcode.sable.api.physics.handle.RigidBodyHandle handle = dev.ryanhcode.sable.api.physics.handle.RigidBodyHandle.of(ship);
+                Vector3d v = handle.getLinearVelocity(new Vector3d());
+                Vector3d w = handle.getAngularVelocity(new Vector3d());
+                handle.addLinearAndAngularVelocity(new Vector3d(speed - v.x, 0.0, -v.z), new Vector3d(w).negate());
+            });
+        }
+    }
+
+    /** A deck lying on the floor with a gallows at its back, the hook under the gallows' beam; the hook's place is last. */
+    private static List<BlockPos> gallowsDeck(GameTestHelper helper, int z0) {
+        List<BlockPos> blocks = new ArrayList<>();
+        for (int x = 3; x <= 8; x++) {
+            for (int z = z0; z <= z0 + 5; z++) {
+                blocks.add(new BlockPos(x, 2, z));
+            }
+        }
+        for (int y = 3; y <= 5; y++) {
+            blocks.add(new BlockPos(3, y, z0));
+            blocks.add(new BlockPos(8, y, z0));
+        }
+        for (int x = 3; x <= 8; x++) {
+            blocks.add(new BlockPos(x, 6, z0));
+        }
+        for (BlockPos at : blocks) {
+            helper.setBlock(at, Blocks.STONE);
+        }
+        BlockPos hookAt = new BlockPos(5, 5, z0);
+        helper.setBlock(hookAt, BBBlocks.SHACKLE_HOOK.getDefaultState().setValue(ShackleHookBlock.FACING, Direction.UP));
+        blocks.add(hookAt);
+        return blocks;
+    }
+
+    /**
+     * A ship built round a Shackle Hook that already holds a cow (Aeronautics builds a ship out of blocks where they
+     * stand): the hook, read back in the ship's plot, keeps the cow it held (its body hangs where the tip still is), holds
+     * it fast joined to the ship, and takes it along when the ship is driven.
+     */
+    @GameTest(template = "empty_wide", timeoutTicks = 500)
+    public static void shipBuiltRoundAHungHookKeepsItsCarcass(GameTestHelper helper) {
+        ServerLevel level = helper.getLevel();
+        int z0 = 14;
+        List<BlockPos> blocks = gallowsDeck(helper, z0);
+        BlockPos hookAt = blocks.get(blocks.size() - 1);
+        Cow cow = helper.spawn(EntityType.COW, new BlockPos(5, 4, z0 + 1));
+        CarcassSavedData.Carcass carcass = CarcassAssembler.assemble(cow, null);
+        cow.discard();
+        helper.assertTrue(carcass != null, "Carcass assembly returned null");
+        UUID id = carcass.id;
+        helper.runAfterDelay(10, () -> hang(helper, carcass, be(helper, hookAt, ShackleHookBlockEntity.class), new BlockPos(5, 3, z0 + 3)));
+        ServerSubLevel[] ship = {null};
+        Vector3d[] shipFrom = {null};
+        helper.runAfterDelay(160, () -> {
+            ShackleHookBlockEntity hook = be(helper, hookAt, ShackleHookBlockEntity.class);
+            Vector3d gap = hookGap(level, hook, carcass);
+            helper.assertTrue(hook.holdsFast() && gap != null && gap.length() < 0.35, "the cow should hang at the world hook's tip first, it is " + gap + " off");
+            ship[0] = ship(helper, blocks);
+            shipFrom[0] = new Vector3d(ship[0].logicalPose().position());
+        });
+        helper.runAfterDelay(170, () -> {
+            ShackleHookBlockEntity hook = hookOn(helper, ship[0]);
+            helper.assertTrue(id.equals(hook.hookedCarcass()) && hook.holdsFast(), "the hook on the new ship should still hold its cow, fast");
+            Vector3d gap = hookGap(level, hook, carcass);
+            helper.assertTrue(gap != null && gap.length() < 0.35, "the cow should hang at the ship's hook's tip, it is " + gap + " off");
+        });
+        drive(helper, () -> ship[0], 171, 60, 4.0 * 20.0 / 60);
+        helper.runAfterDelay(261, () -> {
+            double moved = ship[0].logicalPose().position().x - shipFrom[0].x;
+            helper.assertTrue(moved > 3.0, "the ship should have gone some four blocks east, it went " + moved);
+            ShackleHookBlockEntity hook = hookOn(helper, ship[0]);
+            Vector3d gap = hookGap(level, hook, carcass);
+            helper.assertTrue(id.equals(hook.hookedCarcass()) && hook.holdsFast() && gap != null && gap.length() < 0.5,
+                    "the cow should hang at the tip where the ship took it, it is " + gap + " off");
+            SubLevelContainer.getContainer(level).removeSubLevel(ship[0], dev.ryanhcode.sable.sublevel.storage.SubLevelRemovalReason.REMOVED);
+            helper.succeed();
+        });
+    }
+
+    /**
+     * A cow resting on the floor (pinned to the world) that a ship is then built out of, as a ship is assembled again at
+     * a dock: within the second its pin moves to the deck, and when the ship is driven the cow goes with it, still resting,
+     * where it lay on the deck. (Pinned only once, when it folded, it stayed pinned to the world, hung in the air as the
+     * deck moved out from under it, and dropped once none of the deck was left under it.)
+     */
+    @GameTest(template = "empty_wide", timeoutTicks = 600)
+    public static void restingCarcassGoesWithAShipBuiltUnderIt(GameTestHelper helper) {
+        ServerLevel level = helper.getLevel();
+        int z0 = 14;
+        List<BlockPos> blocks = new ArrayList<>();
+        for (int x = 3; x <= 8; x++) {
+            for (int z = z0; z <= z0 + 5; z++) {
+                helper.setBlock(new BlockPos(x, 2, z), Blocks.STONE);
+                blocks.add(new BlockPos(x, 2, z));
+            }
+        }
+        Cow cow = helper.spawn(EntityType.COW, new BlockPos(5, 4, z0 + 2));
+        CarcassSavedData.Carcass carcass = CarcassAssembler.assemble(cow, null);
+        cow.discard();
+        helper.assertTrue(carcass != null, "Carcass assembly returned null");
+        ServerSubLevel[] ship = {null};
+        Vector3d[] onDeck = {null};
+        Vector3d[] shipFrom = {null};
+        helper.runAfterDelay(250, () -> {
+            helper.assertTrue(carcass.resting && carcass.restDeck == null, "the cow should rest pinned to the world first");
+            ship[0] = ship(helper, blocks);
+        });
+        helper.runAfterDelay(280, () -> {
+            helper.assertTrue(carcass.resting && ship[0].getUniqueId().equals(carcass.restDeck), "the cow should be pinned to the deck built under it");
+            onDeck[0] = ship[0].logicalPose().transformPositionInverse(CarcassAssembler.boneWorldPosition(level, carcass, carcass.rootBone), new Vector3d());
+            shipFrom[0] = new Vector3d(ship[0].logicalPose().position());
+        });
+        drive(helper, () -> ship[0], 281, 60, 4.0 * 20.0 / 60);
+        helper.runAfterDelay(371, () -> {
+            double moved = ship[0].logicalPose().position().x - shipFrom[0].x;
+            helper.assertTrue(moved > 3.0, "the ship should have gone some four blocks east, it went " + moved);
+            helper.assertTrue(carcass.resting && ship[0].getUniqueId().equals(carcass.restDeck), "the cow should still rest, pinned to the deck");
+            Vector3d now = ship[0].logicalPose().transformPositionInverse(CarcassAssembler.boneWorldPosition(level, carcass, carcass.rootBone), new Vector3d());
+            helper.assertTrue(now.distance(onDeck[0]) < 0.25, "the cow should lie where it lay on the deck, it slid " + now.distance(onDeck[0]));
+            SubLevelContainer.getContainer(level).removeSubLevel(ship[0], dev.ryanhcode.sable.sublevel.storage.SubLevelRemovalReason.REMOVED);
+            helper.succeed();
+        });
+    }
+
+    /**
+     * A cow dropped onto a ship that is already under way: it lies still on the deck, though not in the world, and rests
+     * there, pinned to the deck, while the ship is still moving; then it stays where it lies on the deck as the ship goes
+     * on. (Its stillness was measured in the world, so on a moving deck it never rested, and stayed a whole ragdoll held
+     * on only by friction.)
+     */
+    @GameTest(template = "empty_wide", timeoutTicks = 420)
+    public static void carcassDroppedOnAMovingShipRestsOnIt(GameTestHelper helper) {
+        ServerLevel level = helper.getLevel();
+        int z0 = 13;
+        List<BlockPos> blocks = new ArrayList<>();
+        for (int x = 1; x <= 7; x++) {
+            for (int z = z0; z <= z0 + 6; z++) {
+                helper.setBlock(new BlockPos(x, 2, z), Blocks.STONE);
+                blocks.add(new BlockPos(x, 2, z));
+            }
+        }
+        // the middle of the deck, in its plot, to drop the cow over wherever the deck has got to
+        BlockPos middle = helper.absolutePos(new BlockPos(4, 2, z0 + 3));
+        Vector3d middleWorld = new Vector3d(middle.getX() + 0.5, middle.getY() + 0.5, middle.getZ() + 0.5);
+        ServerSubLevel ship = ship(helper, blocks);
+        Vector3d plotMiddle = ship.logicalPose().transformPositionInverse(middleWorld, new Vector3d());
+        // one block a second, for as long as the test runs (twenty blocks at most)
+        double speed = 1.0;
+        drive(helper, () -> ship, 1, 400, speed);
+        CarcassSavedData.Carcass[] carcass = {null};
+        helper.runAfterDelay(40, () -> {
+            Vector3d over = ship.logicalPose().transformPosition(plotMiddle, new Vector3d()).add(0.0, 2.5, 0.0);
+            helper.assertTrue(dev.ryanhcode.sable.api.physics.handle.RigidBodyHandle.of(ship).getLinearVelocity(new Vector3d()).x > speed * 0.5, "the ship should be under way");
+            Cow cow = helper.spawn(EntityType.COW, helper.relativeVec(new Vec3(over.x, over.y, over.z)));
+            carcass[0] = CarcassAssembler.assemble(cow, null);
+            cow.discard();
+            helper.assertTrue(carcass[0] != null, "Carcass assembly returned null");
+        });
+        double[] restedAt = {-1.0};
+        Vector3d[] onDeck = {null};
+        int[] restingFor = {0};
+        helper.onEachTick(() -> {
+            if (carcass[0] == null || !carcass[0].resting) {
+                restingFor[0] = 0;
+                return;
+            }
+            if (restingFor[0]++ == 0 && restedAt[0] < 0) {
+                // how fast the ship was going when it came to rest, and where on the deck it lay
+                restedAt[0] = dev.ryanhcode.sable.api.physics.handle.RigidBodyHandle.of(ship).getLinearVelocity(new Vector3d()).x;
+                onDeck[0] = ship.logicalPose().transformPositionInverse(CarcassAssembler.boneWorldPosition(level, carcass[0], carcass[0].rootBone), new Vector3d());
+            }
+        });
+        helper.succeedWhen(() -> {
+            helper.assertTrue(restingFor[0] > 40, "the cow should rest on the moving deck (resting for " + restingFor[0] + " ticks)");
+            helper.assertTrue(restedAt[0] > speed * 0.5, "it should have come to rest while the ship was moving, the ship went " + restedAt[0] + " blocks a second");
+            helper.assertTrue(ship.getUniqueId().equals(carcass[0].restDeck), "it should be pinned to the deck");
+            Vector3d now = ship.logicalPose().transformPositionInverse(CarcassAssembler.boneWorldPosition(level, carcass[0], carcass[0].rootBone), new Vector3d());
+            helper.assertTrue(now.distance(onDeck[0]) < 0.25, "it should stay where it lies on the deck, it slid " + now.distance(onDeck[0]));
+            SubLevelContainer.getContainer(level).removeSubLevel(ship, dev.ryanhcode.sable.sublevel.storage.SubLevelRemovalReason.REMOVED);
         });
     }
 }
