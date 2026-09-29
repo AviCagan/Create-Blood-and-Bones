@@ -159,7 +159,10 @@ public final class BBClientSetup {
         for (com.tterrag.registrate.util.entry.BlockEntry<?> block : com.avicagan.bloodandbones.registry.BBBlocks.stainedPalette()) {
             swap(event, block, BloodlessSwap.PALETTE);
         }
+        // a carcass's cells, of every tissue (each tissue is a block of its own)
         swap(event, com.avicagan.bloodandbones.registry.BBBlocks.CARCASS_PART, BloodlessSwap.CARCASS);
+        swap(event, com.avicagan.bloodandbones.registry.BBBlocks.CARCASS_PART_BONE, BloodlessSwap.CARCASS);
+        swap(event, com.avicagan.bloodandbones.registry.BBBlocks.CARCASS_PART_PLATE, BloodlessSwap.CARCASS);
         swap(event, com.avicagan.bloodandbones.registry.BBBlocks.RIBCAGE_ARCH, BloodlessSwap.BONES);
         swap(event, com.avicagan.bloodandbones.registry.BBBlocks.BONE_PILE, BloodlessSwap.BONES);
     }

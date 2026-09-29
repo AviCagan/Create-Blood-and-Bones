@@ -524,6 +524,7 @@ public final class CarcassRest {
                 PUNCH_MAX_STRUCK);
         // an awake carcass counts its stillness afresh
         carcass.stillTicks = 0;
+        carcass.settledAt.clear();
         return given;
     }
 
