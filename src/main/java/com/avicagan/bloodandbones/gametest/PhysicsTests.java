@@ -377,6 +377,8 @@ public class PhysicsTests {
      * the head snaps back, no faster than a blow may set the spot it lands on moving, and the cow goes down about where
      * it stood, its joints holding. Sized for the whole cow and put on its head alone, the blow once set the head moving
      * at 23 blocks a second and the cow slid 1.7 blocks; now the head goes at 7 and the cow 1.2 (much of it folding up).
+     * Left sitting up on its front legs, its legs then give way and it goes over onto its side (CarcassSlump), which moves
+     * its torso sideways, so the blow's travel is judged along the blow (1.5) and any way at all (2).
      */
     @GameTest(template = "open_ground", timeoutTicks = 200)
     public static void blowToTheHeadSnapsItBackWithoutFlingingIt(GameTestHelper helper) {
@@ -388,7 +390,7 @@ public class PhysicsTests {
         s.carcass = kill(helper, cow, feet.add(0.0, 0.0, 2.5), headAt, "head");
         s.rig = RigManager.forCarcass(s.carcass).orElseThrow();
         watchStruck(helper, s, "head", 0, () -> {
-        }, 100, CarcassAssembler.BLOW_MAX_STRUCK + 0.5, 1.5);
+        }, 100, CarcassAssembler.BLOW_MAX_STRUCK + 0.5, 1.5, new Vector3d(0, 0, -1), 2.0);
     }
 
     /**
@@ -397,10 +399,21 @@ public class PhysicsTests {
      * (its torso no more than {@code maxTravel} from where it was, nor rising half a block).
      */
     static void watchStruck(GameTestHelper helper, Subject s, String struck, int strikeAt, Runnable strike, int ticks, double maxSpeed, double maxTravel) {
+        watchStruck(helper, s, struck, strikeAt, strike, ticks, maxSpeed, maxTravel, null, maxTravel);
+    }
+
+    /**
+     * As above, with the torso's travel judged along the way the blow went ({@code along}, level) against
+     * {@code maxTravel}, and in any direction against {@code maxAnyWay}: a cow struck in the face and knocked back a
+     * block, whose legs then give way and roll it onto its side (CarcassSlump), has not been flung sideways.
+     */
+    static void watchStruck(GameTestHelper helper, Subject s, String struck, int strikeAt, Runnable strike, int ticks, double maxSpeed, double maxTravel,
+                            @org.jetbrains.annotations.Nullable Vector3d along, double maxAnyWay) {
         Vector3d[] start = {null};
         double[] fastest = {0.0};
         double[] gap = {0.0};
         double[] travel = {0.0};
+        double[] anyWay = {0.0};
         double[] rise = {0.0};
         int[] t = {0};
         helper.onEachTick(() -> {
@@ -419,17 +432,20 @@ public class PhysicsTests {
             fastest[0] = Math.max(fastest[0], fastestPoint(s, struck));
             gap[0] = Math.max(gap[0], s.jointGap());
             Vector3d at = s.torsoCentre();
-            travel[0] = Math.max(travel[0], Math.hypot(at.x - start[0].x, at.z - start[0].z));
+            travel[0] = Math.max(travel[0], along == null ? Math.hypot(at.x - start[0].x, at.z - start[0].z)
+                    : Math.abs((at.x - start[0].x) * along.x + (at.z - start[0].z) * along.z));
+            anyWay[0] = Math.max(anyWay[0], Math.hypot(at.x - start[0].x, at.z - start[0].z));
             rise[0] = Math.max(rise[0], at.y - start[0].y);
             if (now == ticks) {
-                BloodAndBones.LOGGER.info("[physics] struck on the {}: its fastest point {} blocks a second, joints {} apart at most, torso {} off and {} up",
-                        struck, fmt(fastest[0]), fmt(gap[0]), fmt(travel[0]), fmt(rise[0]));
+                BloodAndBones.LOGGER.info("[physics] struck on the {}: its fastest point {} blocks a second, joints {} apart at most, torso {} off{} and {} up",
+                        struck, fmt(fastest[0]), fmt(gap[0]), fmt(travel[0]), along == null ? "" : " along the blow (" + fmt(anyWay[0]) + " any way)", fmt(rise[0]));
                 helper.assertTrue(fastest[0] > 0.3, "struck on the " + struck + ", it should have moved");
                 helper.assertTrue(fastest[0] <= maxSpeed, "struck on the " + struck + ", that part should go no faster than " + fmt(maxSpeed)
                         + " blocks a second, but went " + fmt(fastest[0]));
                 helper.assertTrue(gap[0] <= 0.25, "struck on the " + struck + ", its joints should hold, but one came " + fmt(gap[0]) + " blocks apart");
-                helper.assertTrue(travel[0] <= maxTravel && rise[0] <= 0.5, "struck on the " + struck + ", it should stay about where it was, but its torso "
-                        + "went " + fmt(travel[0]) + " blocks off and " + fmt(rise[0]) + " up");
+                helper.assertTrue(travel[0] <= maxTravel && anyWay[0] <= maxAnyWay && rise[0] <= 0.5, "struck on the " + struck + ", it should stay about "
+                        + "where it was, but its torso went " + fmt(travel[0]) + " blocks off" + (along == null ? "" : " along the blow, " + fmt(anyWay[0])
+                        + " any way,") + " and " + fmt(rise[0]) + " up");
                 helper.succeed();
             }
         });
@@ -509,9 +525,10 @@ public class PhysicsTests {
     /**
      * Four of a kind on the open ground, facing south: one struck in the face, one from its right flank, one from behind,
      * and one built where it stood and not struck at all (as a carcass set down on a ship's deck is). Each is watched until
-     * it has folded into its resting form (or {@link #STANDING_CAP} ticks), and then it must be down: its torso tipped
-     * 45 degrees or more from upright, or no higher off the ground than half as high as its legs held it (and no more than
-     * an eighth of a block up). A dead animal standing on stiff legs looks alive.
+     * it has folded into its resting form (or {@link #STANDING_CAP} ticks), and then it must be down
+     * ({@link RigScenarios#stood}): its torso tipped 45 degrees or more from upright, or lying no higher off the ground
+     * than a quarter as high as its legs held it (or an eighth of a block), and not sitting up on its front legs. A dead
+     * animal standing on stiff legs looks alive.
      */
     static void neverSettlesStanding(GameTestHelper helper, EntityType<? extends Mob> type) {
         double floor = helper.absolutePos(new BlockPos(0, RigComparison.FLOOR, 0)).getY();
@@ -548,7 +565,7 @@ public class PhysicsTests {
                 if (!folded.containsKey(entry.getKey()) && (s.carcass().resting || t[0] >= STANDING_CAP)) {
                     double tilt = RigComparison.angleDeg(s.up(), new Vector3d(0, 1, 0));
                     double belly = RigScenarios.belly(s, floor);
-                    folded.put(entry.getKey(), (RigScenarios.standing(tilt, belly, stood.get(entry.getKey())) ? "STANDING " : "down ")
+                    folded.put(entry.getKey(), (RigScenarios.stood(s, stood.get(entry.getKey()), floor) ? "STANDING " : "down ")
                             + "(tilted " + fmt(tilt) + " degrees, torso " + fmt(belly) + " up where it stood " + fmt(stood.get(entry.getKey())) + " up, "
                             + (s.carcass().resting ? "resting" : "not resting") + " at tick " + t[0] + ")");
                 }

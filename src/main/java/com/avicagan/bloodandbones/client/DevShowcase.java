@@ -1241,7 +1241,8 @@ public final class DevShowcase {
                     rideDropped = carcass(server.overworld(), EntityType.COW, BlockPos.containing(over.x, over.y, over.z), false, false, 0.0F);
                 }
             });
-        } else if (rideStep == 5 && age < 620) {
+        } else if (rideStep == 5 && age < 700) {
+            // set down standing, its legs give way before it rests (CarcassSlump): some 150 ticks on a moving deck
             rideView(server, 5.0 + 4.2 + (age - 440) * 0.03, 2.0, 23.0, 180.0F, 12.0F);
         } else if (rideStep == 5) {
             rideStep = 6;

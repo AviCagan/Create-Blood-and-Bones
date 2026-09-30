@@ -23,6 +23,8 @@ import net.minecraft.world.phys.Vec3;
 import org.joml.Quaterniond;
 import org.joml.Vector3d;
 
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Map;
 import java.util.function.Consumer;
 
@@ -216,9 +218,9 @@ final class RigScenarios {
     }
 
     /**
-     * How a struck carcass lies once settled: tipped how far from upright, its torso how high off the ground, and whether
-     * it was left standing on its legs (upright within 45 degrees, its torso still more than half as high as it stood and
-     * more than an eighth of a block up), which a dead animal never is.
+     * How a struck carcass lies once settled: tipped how far from upright, its torso how high off the ground (its lowest
+     * corner, and the front of its belly), and whether it was left standing on its legs ({@link #stood}), which a dead
+     * animal never is.
      *
      * @param standing how high its torso was off the ground as it stood
      */
@@ -228,12 +230,62 @@ final class RigScenarios {
         return n.put("tilt_rest_deg", tilt, "degrees")
                 .put("belly_stand", standing, "blocks")
                 .put("belly_rest", belly, "blocks")
-                .put("stood", standing(tilt, belly, standing) ? 1 : 0, "yes/no");
+                .put("front_rest", frontUp(s, floor), "blocks")
+                .put("stood", stood(s, standing, floor) ? 1 : 0, "yes/no");
     }
 
-    /** Whether a carcass tipped so far and its torso so high off the ground, having stood {@code standing} high, stands. */
-    static boolean standing(double tilt, double belly, double standing) {
-        return tilt < 45.0 && belly > Math.max(0.5 * standing, 0.125);
+    /**
+     * Whether a carcass that stood {@code standing} high is left standing on its legs: upright within 45 degrees, and
+     * either its torso still more than a quarter as high as it stood (and more than an eighth of a block up), or, on four
+     * legs, sitting up on its front ones, the front of its belly that high while its rear is lower. (It was half as high
+     * at first, and a horse on splayed legs at 0.378 of 0.757 passed, and a cow sitting up like a dog, its rear on the
+     * ground and its chest a third of a block up, passed too.)
+     */
+    static boolean stood(Subject s, double standing, double floor) {
+        double tilt = RigComparison.angleDeg(s.up(), new Vector3d(0, 1, 0));
+        if (tilt >= 45.0) {
+            return false;
+        }
+        double high = Math.max(0.25 * standing, 0.125);
+        if (belly(s, floor) > high) {
+            return true;
+        }
+        return !com.avicagan.bloodandbones.carcass.CarcassSlump.upright(s.bone(s.torsoBody())) && frontUp(s, floor) > high
+                && frontUp(s, floor) > rearUp(s, floor);
+    }
+
+    /** How high the front of the torso's belly (the lower of its two front corners, along the model's forward) is off the floor. */
+    static double frontUp(Subject s, double floor) {
+        List<Vector3d> belly = bellyCorners(s);
+        return belly.isEmpty() ? Double.NaN : Math.min(belly.get(0).y, belly.get(1).y) - floor;
+    }
+
+    /** As {@link #frontUp}, its rear. */
+    static double rearUp(Subject s, double floor) {
+        List<Vector3d> belly = bellyCorners(s);
+        return belly.isEmpty() ? Double.NaN : Math.min(belly.get(2).y, belly.get(3).y) - floor;
+    }
+
+    /** The torso's four belly corners (the side of its box its up points away from), in the world, front first. */
+    static List<Vector3d> bellyCorners(Subject s) {
+        ServerSubLevel torso = s.torso();
+        if (torso == null) {
+            return List.of();
+        }
+        Bone bone = s.bone(s.torsoBody());
+        Vector3d origin = CarcassAssembler.boneOriginInPlot(torso, bone);
+        List<Vector3d> corners = new ArrayList<>();
+        for (int i = 0; i < 8; i++) {
+            Vector3d corner = new Vector3d((i & 1) == 0 ? bone.boxMin().x : bone.boxMax().x, (i & 2) == 0 ? bone.boxMin().y : bone.boxMax().y,
+                    (i & 4) == 0 ? bone.boxMin().z : bone.boxMax().z).div(16.0).add(origin);
+            corners.add(torso.logicalPose().transformPosition(corner));
+        }
+        Vector3d up = s.up();
+        Vector3d forward = s.forward();
+        corners.sort((a, b) -> Double.compare(a.dot(up), b.dot(up)));
+        List<Vector3d> belly = new ArrayList<>(corners.subList(0, 4));
+        belly.sort((a, b) -> Double.compare(b.dot(forward), a.dot(forward)));
+        return belly;
     }
 
     /** How high the lowest corner of the torso's drawn box is off the floor, blocks. */

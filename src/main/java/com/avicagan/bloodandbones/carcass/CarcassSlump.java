@@ -35,13 +35,19 @@ import java.util.UUID;
  * hooked by; one that stands upright (a zombie) is pulled off its feet by that leg and is left to it.
  * <p>
  * It stands when its torso is within {@link #UPRIGHT} degrees of upright, some other part of it (a leg) reaches below the
- * torso by more than half as far as its legs reach when it stands, and nothing (the ground, a rack, a deck, another
- * carcass) is that close under the torso: a carcass lying on its belly, or across a Bleeding Rack with its legs hanging,
- * is down already. Hung on a hook it is lifted off its legs and never gives way.
+ * torso by more than a quarter as far as its legs reach when it stands ({@link #LIFTED}), and nothing (the ground, a
+ * rack, a deck, another carcass) is that close under the torso; or, on four legs, when it sits up on its front ones, the
+ * front of its belly held up that high, its rear lower. A carcass lying on its belly, or across a Bleeding Rack with its
+ * legs hanging, is down already. Hung on a hook it is lifted off its legs and never gives way.
  */
 public final class CarcassSlump {
     /** Ticks a carcass may stand on its legs, nearly still, before they give way. */
     public static final int STANDING_TICKS = 10;
+    /**
+     * How high its legs may hold it, as a share of how high they held it standing, and still count as down: at half, a
+     * horse held up on splayed legs at half its height stood there for good.
+     */
+    static final double LIFTED = 0.25;
     /** How far from upright its torso may lean and still stand on its legs, degrees. */
     public static final double UPRIGHT = 45.0;
     /**
@@ -230,7 +236,7 @@ public final class CarcassSlump {
         if (up.y < Math.cos(Math.toRadians(UPRIGHT))) {
             return false;
         }
-        double clear = Math.max(0.125, 0.5 * reach);
+        double clear = Math.max(0.125, LIFTED * reach);
         List<Vector3d> corners = corners(torso, torsoBone);
         double torsoLow = Double.MAX_VALUE;
         for (Vector3d corner : corners) {
@@ -248,13 +254,35 @@ public final class CarcassSlump {
                 }
             }
         }
-        if (partsLow > torsoLow - clear) {
+        // its legs reach well below it, and nothing is close under its lowest side: it is held up by its legs, not lying
+        // on something
+        List<Vector3d> lowest = new ArrayList<>(corners);
+        lowest.sort((a, b) -> Double.compare(a.y, b.y));
+        if (partsLow <= torsoLow - clear && unsupported(level, container, carcass, lowest.subList(0, 4), clear)) {
+            return true;
+        }
+        // or it sits up like a dog, its hind end down and its front held up on straight front legs (the showcase's cow
+        // struck in the face, tipped 15 degrees, its chest a third of a block up): only a body on four legs, and only its
+        // front, since one pitched onto its nose with its rear up is how a blow from behind leaves it
+        if (upright(torsoBone)) {
             return false;
         }
-        // nothing close under its lowest side: it is held up by its legs, not lying on something
-        corners.sort((a, b) -> Double.compare(a.y, b.y));
-        for (int i = 0; i < 4; i++) {
-            Vector3d corner = corners.get(i);
+        Vector3d forward = model.transform(new Vector3d(0, 0, -1));
+        List<Vector3d> belly = new ArrayList<>(corners);
+        belly.sort((a, b) -> Double.compare(a.dot(up), b.dot(up)));
+        belly = new ArrayList<>(belly.subList(0, 4));
+        belly.sort((a, b) -> Double.compare(b.dot(forward), a.dot(forward)));
+        List<Vector3d> front = belly.subList(0, 2);
+        double frontLow = Math.min(front.get(0).y, front.get(1).y);
+        double rearLow = Math.min(belly.get(2).y, belly.get(3).y);
+        return frontLow > rearLow && frontLow - partsLow > clear && unsupported(level, container, carcass, front, clear);
+    }
+
+
+    /** Whether nothing solid is under any of these corners, as far down as {@code clear}. */
+    private static boolean unsupported(ServerLevel level, ServerSubLevelContainer container, CarcassSavedData.Carcass carcass, List<Vector3d> corners,
+                                       double clear) {
+        for (Vector3d corner : corners) {
             for (double depth : new double[]{0.05, clear * 0.5, clear}) {
                 if (solidAt(level, container, carcass, new Vector3d(corner.x, corner.y - depth, corner.z))) {
                     return false;
@@ -295,7 +323,7 @@ public final class CarcassSlump {
     }
 
     /** Whether a torso stands upright, as a biped's does: taller, as the model stands, than it is long. */
-    static boolean upright(Bone torsoBone) {
+    public static boolean upright(Bone torsoBone) {
         Quaterniond turn = new Quaterniond(torsoBone.rotation());
         double lowY = Double.MAX_VALUE, highY = -Double.MAX_VALUE, lowZ = Double.MAX_VALUE, highZ = -Double.MAX_VALUE;
         for (int i = 0; i < 8; i++) {

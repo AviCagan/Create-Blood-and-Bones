@@ -1099,6 +1099,8 @@ public class ContraptionTests {
             if (restingFor[0]++ == 0 && restedAt[0] < 0) {
                 // how fast the ship was going when it came to rest, and where on the deck it lay
                 restedAt[0] = dev.ryanhcode.sable.api.physics.handle.RigidBodyHandle.of(ship).getLinearVelocity(new Vector3d()).x;
+                BloodAndBones.LOGGER.info("[contraption] the cow dropped on the moving ship rested at tick {}, {} after it was dropped", helper.getTick(),
+                        helper.getTick() - 40);
                 onDeck[0] = ship.logicalPose().transformPositionInverse(CarcassAssembler.boneWorldPosition(level, carcass[0], carcass[0].rootBone), new Vector3d());
             }
         });
