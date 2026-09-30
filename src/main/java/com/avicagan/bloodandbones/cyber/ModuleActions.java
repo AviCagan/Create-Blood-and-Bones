@@ -373,6 +373,18 @@ public final class ModuleActions {
      */
     static final double GRIP = 0.18;
 
+    /**
+     * The Grappling Spool's pull on a carcass it reels in, blocks a second a tick, for its haul speed ({@code speed}, half
+     * the reel's): {@link #GRIP} at the bottom of the throttle, rising with every step of it to a quarter of the haul speed
+     * at the top, as it was. Floored at the grip instead, the bottom half of the throttle all pulled alike, and the Soul
+     * Blood spent there bought nothing.
+     */
+    public static double carcassPull(double speed) {
+        double bottom = REEL * 0.5;
+        double top = (REEL + REEL_RAMP) * 0.5;
+        return GRIP + (0.25 * top - GRIP) * Math.max(0.0, speed - bottom) / (top - bottom);
+    }
+
     /** Speed a carcass up toward a point, all its bodies alike (a resting one unfolds first). */
     private static boolean nudge(ServerLevel level, ServerSubLevelContainer container, CarcassSavedData.Carcass carcass, Vec3 from, Vec3 to, double speed) {
         if (carcass.resting && CarcassRest.split(level, carcass) == null) {
@@ -502,7 +514,7 @@ public final class ModuleActions {
                 }
                 done = true;
             } else {
-                nudge(level, container, carcass, new Vec3(at.x, at.y, at.z), to, Math.max(GRIP, 0.25 * haul.speed));
+                nudge(level, container, carcass, new Vec3(at.x, at.y, at.z), to, carcassPull(haul.speed));
             }
         }
         if (done) {

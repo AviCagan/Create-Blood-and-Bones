@@ -194,6 +194,15 @@ public final class CarcassFloat {
         handle.getAngularVelocity(angular);
     }
 
+    /**
+     * Whether any of a body is in water or another liquid, or brushes it, as last worked out (on this tick's first physics
+     * step, or the last tick's): a carcass in water floats or sinks, and is not standing on its legs (CarcassSlump).
+     */
+    public static boolean inLiquid(UUID body) {
+        Wet wet = WET.get(body);
+        return wet != null && !wet.dry();
+    }
+
     /** Scale what was put aside for a body, if anything was (a hauler steadying a carcass in water); false if nothing was. */
     public static boolean scaleAside(ServerLevel level, UUID body, double factor) {
         Map<UUID, Vector3d[]> aside = ASIDE.get(level.dimension());

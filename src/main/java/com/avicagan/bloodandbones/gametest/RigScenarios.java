@@ -84,7 +84,16 @@ final class RigScenarios {
                 sink[0] = Math.max(sink[0], s.sink());
                 peak[0] = Math.max(peak[0], s.torsoCentre().y);
                 stillRun[0] = now > 5 && s.still() ? stillRun[0] + 1 : 0;
-                if (stillRun[0] >= RigComparison.SETTLE_RUN || now >= RigComparison.SETTLE_CAP) {
+                if (s.carcass().resting) {
+                    // folded before it was looked at: its limbs have no bodies of their own to measure
+                    settled[0] = now;
+                    ragdoll.accept(new Numbers().broken("it folded into its resting form before it was measured"));
+                    flank.accept(new Numbers().broken("it folded into its resting form before it was measured"));
+                    return;
+                }
+                // looked at once it keeps still, or the last tick before it folds into its resting form (a chicken's
+                // twitching legs let it rest, CarcassRest#TWITCH_TICKS, before it keeps still by the stricter measure here)
+                if (stillRun[0] >= RigComparison.SETTLE_RUN || now >= RigComparison.SETTLE_CAP || aboutToFold(s)) {
                     settled[0] = now;
                     Vector3d end = s.torsoCentre();
                     double mass = s.liveMass();
@@ -169,6 +178,15 @@ final class RigScenarios {
                 }
             });
         });
+    }
+
+    /**
+     * Whether a carcass folds into its resting form this tick or the next: kept still, or stayed put, all but long enough
+     * (CarcassRest). Its numbers are taken now, while its limbs still have bodies.
+     */
+    static boolean aboutToFold(Subject s) {
+        return s.carcass().stillTicks >= com.avicagan.bloodandbones.carcass.CarcassRest.STILL_TICKS - 1
+                || s.carcass().settledTicks >= com.avicagan.bloodandbones.carcass.CarcassRest.TWITCH_TICKS - 1;
     }
 
     /** The tick after a blow in the face at which how it lies is looked at. */
@@ -355,8 +373,12 @@ final class RigScenarios {
         String headBody = head;
         double[] pitchAtStart = {headBody == null ? Double.NaN : headPitch(s, headBody)};
         // held still in the air it would fold into its resting form after three seconds and its limbs would go with it;
-        // this is about how the limbs hang, so it is kept from folding
-        helper.onEachTick(() -> s.carcass().stillTicks = 0);
+        // this is about how the limbs hang, so it is kept from folding, and its legs from being made to give way under it
+        // (CarcassSlump: held up with nothing under its feet it does not stand, but how the limbs hang must not rest on that)
+        helper.onEachTick(() -> {
+            s.carcass().stillTicks = 0;
+            s.carcass().standingTicks = 0;
+        });
         helper.runAfterDelay(100, () -> {
             Numbers n = new Numbers();
             if (onItsSide) {

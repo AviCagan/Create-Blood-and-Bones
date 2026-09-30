@@ -30,17 +30,26 @@ import java.util.UUID;
  * does (the showcase's cow struck in the face, a cow set down on a ship's deck, a pig or a polar bear struck in the face).
  * Once it keeps still the resting form pins it as it stands, for good. Real legs fold at the knee; these cannot. So a
  * carcass that stands on its legs, nearly still (on a deck under way, still on the deck), for {@link #STANDING_TICKS}
- * has its legs give way ({@link #giveWay}): it goes over onto a side, the way it already leans, or, standing straight,
- * one side or the other. Until it is down it is not let rest. A carcass dragged along on its feet gives way however it
- * moves (a sheep dragged by a hind leg slid along standing, facing the wrong way), going down away from the leg it is
- * hooked by; one that stands upright (a zombie) is pulled off its feet by that leg and is left to it.
+ * has its legs give way ({@link #giveWay}): they slide out from under it, each the way it already points out from under
+ * its middle, and it comes down where it stood, onto whatever side its weight and the ground take it to. Nothing picks
+ * a side for it. Until it is down it is not let rest. A carcass dragged along on its feet gives way however it moves (a
+ * sheep dragged by a hind leg slid along standing, facing the wrong way); one that stands upright (a zombie) is pulled
+ * off its feet by the leg it is dragged by and is left to it. One that stands upright loose has no four legs to splay:
+ * it goes over the way its weight lies over its feet. And one balanced on end, on its rump or its snout, goes over the
+ * way it leans ({@link #onEnd}).
  * <p>
  * It stands when its torso is within {@link #UPRIGHT} degrees of upright, some other part of it (a leg) reaches below the
- * torso by more than a quarter as far as its legs reach when it stands ({@link #LIFTED}), and nothing (the ground, a
- * rack, a deck, another carcass) is that close under the torso; or, on four legs, when it sits up on its front ones, the
- * front of its belly held up that high, its rear lower. A carcass lying on its belly, or across a Bleeding Rack with its
- * legs hanging, is down already. Hung on a hook it is lifted off its legs and never gives way; standing on a block that
- * holds a carcass to be worked (a table, a machine: {@link BBTags#HOLDS_CARCASSES}) it is held there.
+ * torso by more than a quarter as far as its legs reach when it stands ({@link #LIFTED}), that part stands on something
+ * (a carcass held up in the air, or floating, its legs hanging, is not standing), and nothing (the ground, a rack, a
+ * deck, another carcass) is that close under the torso; or, on four legs, when it sits up on its front ones, the front of
+ * its belly held up that high, its rear lower. A carcass lying on its belly, or across a Bleeding Rack with its legs
+ * hanging, is down already; one in water floats or sinks and is never standing. Hung on a hook it is lifted off its legs
+ * and never gives way; standing with its feet on a block that holds a carcass to be worked (a table, a machine:
+ * {@link BBTags#HOLDS_CARCASSES}) it is held there.
+ * <p>
+ * Its legs give way at most {@link #MOST} times while it stands, and then a carcass wedged upright somewhere is let rest
+ * as it is. The count starts again once it has been down a while ({@link #DOWN_TICKS}), rests or is woken from resting,
+ * is hung, or is taken up or let go by a drag.
  */
 public final class CarcassSlump {
     /** Ticks a carcass may stand on its legs, nearly still, before they give way. */
@@ -52,19 +61,37 @@ public final class CarcassSlump {
     static final double LIFTED = 0.25;
     /** How far from upright its torso may lean and still stand on its legs, degrees. */
     public static final double UPRIGHT = 45.0;
+    /** How far from straight up or down the spine of a body on four legs may point and still be balanced on end, degrees. */
+    static final double ON_END = 30.0;
     /**
-     * How the legs giving way turn it over its feet: a little more than it takes to carry its middle over them, at least
-     * {@link #SPIN_LEAST} radians a second, and each time it is still standing a little more.
+     * How fast its legs slide out from under it as they give way, blocks a second, and how much faster each time it is
+     * still standing after.
+     */
+    static final double LEGS_OUT = 3.0;
+    static final double LEGS_MORE = 1.0;
+    /**
+     * How one that goes over (one standing upright, one balanced on end) is turned over its edge: a little more than it
+     * takes to carry its middle over it, at least {@link #SPIN_LEAST} radians a second, and each time it is still up a
+     * little more.
      */
     static final double TIP = 1.1;
     static final double SPIN_LEAST = 0.8;
     static final double SPIN_MORE = 0.5;
     /** Its torso slower than this, blocks a second, is nearly still. */
     private static final double NEARLY_STILL = 0.5;
-    /** Times the legs give way before a carcass that still stands (wedged upright somewhere) is let rest as it is. */
+    /** Times the legs give way while it stands before a carcass that still stands (wedged upright somewhere) is let rest as it is. */
     static final int MOST = 6;
+    /** Ticks a carcass must be down before the count of times its legs gave way starts again. */
+    static final int DOWN_TICKS = 40;
 
     private CarcassSlump() {
+    }
+
+    /** Starts the count afresh: it has come to rest or been woken, been hung, or been taken up or let go by a drag. */
+    static void reset(CarcassSavedData.Carcass carcass) {
+        carcass.standingTicks = 0;
+        carcass.slumps = 0;
+        carcass.downTicks = 0;
     }
 
     /**
@@ -72,20 +99,31 @@ public final class CarcassSlump {
      * it is pulled along on its feet). Returns true while it stands on its legs, so it is not let rest yet.
      */
     static boolean tick(ServerLevel level, ServerSubLevelContainer container, CarcassSavedData.Carcass carcass, Rig rig, boolean dragged) {
-        if (carcass.slumps >= MOST) {
-            return false;
+        if (dragged != carcass.slumpDragged) {
+            // taken up or let go: dragged or loose, it starts its count again
+            reset(carcass);
+            carcass.slumpDragged = dragged;
         }
         ServerSubLevel torso = container.getSubLevel(carcass.bones.get(carcass.rootBone)) instanceof ServerSubLevel body && !body.isRemoved() ? body : null;
         Bone torsoBone = rig.bone(carcass.rootBone).orElse(null);
         // one that stands upright (a zombie) is pulled off its feet by the leg it is dragged by, and falls feet first
-        if (torso == null || torsoBone == null || dragged && upright(torsoBone) || !standing(level, container, carcass, rig, torso, torsoBone)
-                || standsOnAHolder(level, container, carcass, rig)) {
+        boolean onEnd = torso != null && torsoBone != null && !dragged && !inLiquid(container, carcass) && onEnd(level, container, carcass, torso, torsoBone);
+        if (torso == null || torsoBone == null || dragged && upright(torsoBone) || inLiquid(container, carcass)
+                || !onEnd && !standing(level, container, carcass, rig, torso, torsoBone) || standsOnAHolder(level, container, carcass, rig)) {
             carcass.standingTicks = 0;
+            if (++carcass.downTicks >= DOWN_TICKS) {
+                carcass.slumps = 0;
+            }
+            return false;
+        }
+        carcass.downTicks = 0;
+        if (carcass.slumps >= MOST) {
             return false;
         }
         SubLevelPhysicsSystem physics = container.physicsSystem();
-        // nearly still where it stands: on a ship under way, on the deck
-        Vector3d speed = physics.getPhysicsHandle(torso).getLinearVelocity(new Vector3d());
+        // nearly still where it stands: on a ship under way, on the deck (as it really moves: CarcassFloat)
+        Vector3d speed = new Vector3d();
+        CarcassFloat.velocity(level, physics, torso, speed, new Vector3d());
         ServerSubLevel deck = deckUnderFeet(level, container, carcass, rig);
         if (deck != null) {
             Vector3d deckLinear = new Vector3d();
@@ -101,55 +139,39 @@ public final class CarcassSlump {
         }
         carcass.standingTicks = 0;
         carcass.slumps++;
-        com.avicagan.bloodandbones.BloodAndBones.LOGGER.debug("Carcass {} ({}) left standing: its legs give way ({} of at most {})", carcass.id, carcass.entity, carcass.slumps, MOST);
-        giveWay(level, container, carcass, rig, torso, torsoBone, dragged ? CarcassDrag.hookedBone(carcass.id) : null);
+        com.avicagan.bloodandbones.BloodAndBones.LOGGER.debug("Carcass {} ({}) left {}: its legs give way ({} of at most {}){}", carcass.id, carcass.entity,
+                onEnd ? "balanced on end" : "standing", carcass.slumps, MOST, dragged ? ", dragged" : "");
+        giveWay(level, container, carcass, rig, torso, torsoBone, onEnd);
         return true;
     }
 
-    /**
-     * Its legs give way: the whole carcass is set turning over the feet on one side (the side it leans to, or, standing
-     * straight, one side or the other), all its parts together, so no joint fights it, just fast enough to carry its
-     * middle over those feet, and it falls onto that side as a body pushed past its balance does, its legs sliding out
-     * from under it the other way ({@link #LEGS_OUT}). Turned about its own middle instead, the torso pressed its legs
-     * into the ground on that side, which pushed it back: a polar bear so rocked came back upright every time.
-     */
-    static void giveWay(ServerLevel level, ServerSubLevelContainer container, CarcassSavedData.Carcass carcass, Rig rig, ServerSubLevel torso, Bone torsoBone,
-                        @Nullable String hooked) {
-        SubLevelPhysicsSystem physics = container.physicsSystem();
-        Quaterniond model = modelToWorld(torso, torsoBone);
-        Vector3d up = model.transform(new Vector3d(0, -1, 0));
-        Vector3d along = model.transform(new Vector3d(0, 0, -1));
-        // about its length, level: for a body on four legs its spine, for one that stands upright (a zombie) its forward
-        along.y = 0.0;
-        if (along.lengthSquared() < 1.0e-6) {
-            along.set(model.transform(new Vector3d(-1, 0, 0)));
-            along.y = 0.0;
-        }
-        if (along.lengthSquared() < 1.0e-6) {
-            return;
-        }
-        along.normalize();
-        // the level way across it, and which way along that it goes down
-        Vector3d across = new Vector3d(0, 1, 0).cross(along).normalize();
-        double lean = across.dot(up.x, 0.0, up.z);
-        double side = Math.abs(lean) > 0.02 ? Math.signum(lean) : (carcass.id.getLeastSignificantBits() & 1L) == 0L ? 1.0 : -1.0;
-        // dragged by a leg, it goes down away from that leg, which the pull draws out from under it: the leg ends on top,
-        // free to lead, not pinned under the body
-        ServerSubLevel hookedBody = hooked == null || hooked.equals(carcass.rootBone) ? null
-                : container.getSubLevel(carcass.bones.get(hooked)) instanceof ServerSubLevel body && !body.isRemoved() ? body : null;
-        if (hookedBody != null) {
-            double off = across.dot(new Vector3d(hookedBody.logicalPose().position()).sub(torso.logicalPose().position()));
-            if (Math.abs(off) > 0.02) {
-                side = -Math.signum(off);
+    /** Whether any part of the carcass is in water or another liquid (CarcassFloat): it floats or sinks, and does not stand. */
+    private static boolean inLiquid(ServerSubLevelContainer container, CarcassSavedData.Carcass carcass) {
+        for (UUID id : carcass.bones.values()) {
+            if (CarcassFloat.inLiquid(id)) {
+                return true;
             }
         }
-        across.mul(side);
-        // its middle, by weight, and the feet it goes over: the part corners on the ground furthest that way
+        return false;
+    }
+
+    /**
+     * Its legs give way. On four legs, they slide out from under it, each the way it already points out from under the
+     * carcass's middle, faster each time it is still standing after, and nothing else is pushed: it comes down where it
+     * stood, and its weight, the way it leans and the ground take it onto its belly or a side. Turned over its feet onto
+     * a side instead (the first way this was done), a cow set down standing lay 1.7 blocks from where it stood, and which
+     * side it went to had to be picked. One that stands upright (a zombie), or one on four legs balanced on end, has no
+     * legs to splay under it: it goes over the way its weight lies ({@link #tipOver}).
+     */
+    static void giveWay(ServerLevel level, ServerSubLevelContainer container, CarcassSavedData.Carcass carcass, Rig rig, ServerSubLevel torso, Bone torsoBone,
+                        boolean onEnd) {
+        SubLevelPhysicsSystem physics = container.physicsSystem();
+        // its middle, by weight, and its parts with the corners they reach lowest
         List<ServerSubLevel> bodies = new ArrayList<>();
+        List<List<Vector3d>> bodyCorners = new ArrayList<>();
         Vector3d middle = new Vector3d();
         double mass = 0.0;
         double ground = Double.MAX_VALUE;
-        List<Vector3d> low = new ArrayList<>();
         for (Map.Entry<String, UUID> entry : carcass.bones.entrySet()) {
             Bone bone = rig.bone(entry.getKey()).orElse(null);
             if (bone == null || !(container.getSubLevel(entry.getValue()) instanceof ServerSubLevel body) || body.isRemoved()) {
@@ -161,53 +183,136 @@ public final class CarcassSlump {
                 middle.add(body.logicalPose().transformPosition(new Vector3d(tracker.getCenterOfMass())).mul(m));
                 mass += m;
             }
-            bodies.add(body);
-            for (Vector3d corner : corners(body, bone)) {
+            List<Vector3d> corners = corners(body, bone);
+            for (Vector3d corner : corners) {
                 ground = Math.min(ground, corner.y);
-                low.add(corner);
             }
+            bodies.add(body);
+            bodyCorners.add(corners);
         }
         if (mass <= 0.0 || bodies.isEmpty()) {
             return;
         }
         middle.div(mass);
-        double outer = -Double.MAX_VALUE;
-        for (Vector3d corner : low) {
-            if (corner.y < ground + FOOT) {
-                outer = Math.max(outer, across.dot(corner));
+        // where it stands: the middle of the corners on the ground
+        Vector3d feet = new Vector3d();
+        int count = 0;
+        for (List<Vector3d> corners : bodyCorners) {
+            for (Vector3d corner : corners) {
+                if (corner.y < ground + FOOT) {
+                    feet.add(corner);
+                    count++;
+                }
             }
         }
-        // the line it turns about: level, along it, at the ground, through the outermost foot that way
-        Vector3d pivot = new Vector3d(middle).add(new Vector3d(across).mul(outer - across.dot(middle)));
+        feet.div(Math.max(1, count));
+        int more = Math.max(0, carcass.slumps - 1);
+        if (onEnd || upright(torsoBone)) {
+            // the way its weight lies over what it stands on, or failing that the way its torso leans; balanced on end
+            // squarely, the way its legs stick out, their weight on that side
+            Vector3d way = new Vector3d(middle.x - feet.x, 0.0, middle.z - feet.z);
+            if (way.length() < 0.02) {
+                Vector3d up = modelToWorld(torso, torsoBone).transform(new Vector3d(0, -1, 0));
+                way.set(up.x, 0.0, up.z);
+                if (onEnd) {
+                    Vector3d forward = modelToWorld(torso, torsoBone).transform(new Vector3d(0, 0, -1));
+                    // on end its spine is near straight up, so how it leans is which way its top end points out
+                    way.set(forward.x, 0.0, forward.z).mul(Math.signum(forward.y));
+                    if (way.length() < 0.02) {
+                        way.set(-up.x, 0.0, -up.z);
+                    }
+                }
+            }
+            if (way.length() >= 1.0e-3) {
+                tipOver(level, physics, bodies, bodyCorners, middle, ground, way.normalize(), more);
+                return;
+            }
+        }
+        // on four legs (or balanced so squarely nothing says which way it would go): its legs slide out from under it
+        double out = LEGS_OUT + LEGS_MORE * more;
+        for (int i = 0; i < bodies.size(); i++) {
+            ServerSubLevel body = bodies.get(i);
+            if (body == torso) {
+                continue;
+            }
+            Vector3d low = null;
+            for (Vector3d corner : bodyCorners.get(i)) {
+                if (low == null || corner.y < low.y) {
+                    low = corner;
+                }
+            }
+            var tracker = body.getMassTracker();
+            Vector3d at = tracker.isInvalid() ? new Vector3d(body.logicalPose().position())
+                    : body.logicalPose().transformPosition(new Vector3d(tracker.getCenterOfMass()));
+            // a part above its middle (a head held up) is not a leg under it
+            if (low == null || at.y >= middle.y) {
+                continue;
+            }
+            Vector3d away = new Vector3d(low.x - middle.x, 0.0, low.z - middle.z);
+            if (away.length() < 0.02) {
+                continue;
+            }
+            physics.getPipeline().wakeUp(body);
+            physics.getPipeline().addLinearAndAngularVelocity(body, away.normalize().mul(out), new Vector3d());
+        }
+        physics.getPipeline().wakeUp(torso);
+    }
+
+    /**
+     * Turns the whole carcass over the edge of what it stands on the way {@code way} (level, of length one), all its parts
+     * together, so no joint fights it, just fast enough to carry its middle over that edge; it falls on over as a body
+     * pushed past its balance does. Turned about its own middle instead, the torso pressed its legs into the ground on
+     * that side, which pushed it back: a polar bear so rocked came back upright every time.
+     */
+    private static void tipOver(ServerLevel level, SubLevelPhysicsSystem physics, List<ServerSubLevel> bodies, List<List<Vector3d>> bodyCorners,
+                                Vector3d middle, double ground, Vector3d way, int more) {
+        double outer = -Double.MAX_VALUE;
+        for (List<Vector3d> corners : bodyCorners) {
+            for (Vector3d corner : corners) {
+                if (corner.y < ground + FOOT) {
+                    outer = Math.max(outer, way.dot(corner));
+                }
+            }
+        }
+        // the line it turns about: level, square to the way it goes, at the ground, through its outermost edge that way
+        Vector3d pivot = new Vector3d(middle).add(new Vector3d(way).mul(outer - way.dot(middle)));
         pivot.y = ground;
         double height = Math.max(0.05, middle.y - ground);
-        double inside = Math.max(0.0, outer - across.dot(middle));
+        double inside = Math.max(0.0, outer - way.dot(middle));
         double reach = Math.sqrt(height * height + inside * inside);
-        // what raising its middle over the feet takes: a body falling from there comes down at the speed it would anyway
+        // what raising its middle over the edge takes: a body falling from there comes down at the speed it would anyway
         double gravity = DimensionPhysicsData.getGravity(level).length();
-        double spin = TIP * Math.sqrt(2.0 * gravity * (reach - height)) / reach + SPIN_MORE * Math.max(0, carcass.slumps - 1);
-        spin = Math.max(SPIN_LEAST, spin);
-        Vector3d turn = new Vector3d(0, 1, 0).cross(across).mul(spin);
+        double spin = Math.max(SPIN_LEAST, TIP * Math.sqrt(2.0 * gravity * (reach - height)) / reach) + SPIN_MORE * more;
+        Vector3d turn = new Vector3d(0, 1, 0).cross(way).mul(spin);
         for (ServerSubLevel body : bodies) {
             var tracker = body.getMassTracker();
             Vector3d at = tracker.isInvalid() ? new Vector3d(body.logicalPose().position())
                     : body.logicalPose().transformPosition(new Vector3d(tracker.getCenterOfMass()));
             physics.getPipeline().wakeUp(body);
-            Vector3d kick = new Vector3d(turn).cross(new Vector3d(at).sub(pivot));
-            // and the legs under it slide out the other way, as legs giving way do: it goes down more where it stood
-            // (turned over its feet alone, a cow set down standing lay 1.8 blocks from where it stood, 1.7 with its legs
-            // sliding out at 3 blocks a second; at 5 a sheep went on over onto its back). Not while it is dragged: its
-            // legs kicked out under a cow pulled by a hind leg, and it came round rear first a little less often (60 and
-            // more degrees off 2 runs in 30, where it was none in 90 without)
-            if (hooked == null && body != torso && at.y < middle.y) {
-                kick.add(new Vector3d(across).mul(-LEGS_OUT));
-            }
-            physics.getPipeline().addLinearAndAngularVelocity(body, kick, turn);
+            physics.getPipeline().addLinearAndAngularVelocity(body, new Vector3d(turn).cross(new Vector3d(at).sub(pivot)), turn);
         }
     }
 
-    /** How fast the parts under its middle (its legs) slide out from under it as it goes over, blocks a second. */
-    static final double LEGS_OUT = 3.0;
+    /**
+     * Whether a body on four legs is balanced on end: its spine within {@link #ON_END} degrees of straight up or down, on
+     * its rump or its snout, that end resting on something (a pig struck in the face was left so, belly toward its killer).
+     */
+    static boolean onEnd(ServerLevel level, ServerSubLevelContainer container, CarcassSavedData.Carcass carcass, ServerSubLevel torso, Bone torsoBone) {
+        if (upright(torsoBone)) {
+            return false;
+        }
+        Vector3d forward = modelToWorld(torso, torsoBone).transform(new Vector3d(0, 0, -1));
+        if (Math.abs(forward.y) < Math.cos(Math.toRadians(ON_END))) {
+            return false;
+        }
+        Vector3d low = null;
+        for (Vector3d corner : corners(torso, torsoBone)) {
+            if (low == null || corner.y < low.y) {
+                low = corner;
+            }
+        }
+        return low != null && solidAt(level, container, carcass, new Vector3d(low.x, low.y - 0.05, low.z));
+    }
 
     /** How close to the lowest corner of it a corner must be to count as a foot on the ground, blocks. */
     private static final double FOOT = 0.1;
@@ -258,6 +363,7 @@ public final class CarcassSlump {
             torsoLow = Math.min(torsoLow, corner.y);
         }
         double partsLow = Double.MAX_VALUE;
+        List<Vector3d> partCorners = new ArrayList<>();
         for (Map.Entry<String, UUID> entry : carcass.bones.entrySet()) {
             if (entry.getKey().equals(carcass.rootBone)) {
                 continue;
@@ -266,8 +372,21 @@ public final class CarcassSlump {
             if (bone != null && container.getSubLevel(entry.getValue()) instanceof ServerSubLevel body && !body.isRemoved()) {
                 for (Vector3d corner : corners(body, bone)) {
                     partsLow = Math.min(partsLow, corner.y);
+                    partCorners.add(corner);
                 }
             }
+        }
+        // its feet stand on something: held up in the air (on a pin, in a machine's grip) its legs only hang
+        boolean onItsFeet = false;
+        for (Vector3d corner : partCorners) {
+            if (corner.y < partsLow + FOOT && (solidAt(level, container, carcass, new Vector3d(corner.x, corner.y - 0.05, corner.z))
+                    || solidAt(level, container, carcass, new Vector3d(corner.x, corner.y - FOOT, corner.z)))) {
+                onItsFeet = true;
+                break;
+            }
+        }
+        if (!onItsFeet) {
+            return false;
         }
         // its legs reach well below it, and nothing is close under its lowest side: it is held up by its legs, not lying
         // on something
@@ -327,38 +446,49 @@ public final class CarcassSlump {
     }
 
     /**
-     * Whether any part of it stands on a block that holds a carcass to be worked ({@link BBTags#HOLDS_CARCASSES}: a table,
-     * a machine), in the world or on a ship: set down standing on a Surgery Table or a Mangler, a block wide, it would go
-     * over the side and off it.
+     * Whether it stands with its feet on a block that holds a carcass to be worked ({@link BBTags#HOLDS_CARCASSES}: a
+     * table, a machine), in the world or on a ship: set down standing on a Surgery Table or a Mangler, a block wide, it
+     * would go over the side and off it. Its feet are the corners it reaches lowest with, and most of them must be on
+     * such a block: a cow standing on the floor beside a table, its head drooped onto the table top or a hoof on the
+     * rack's tray, stands on the floor.
      */
     static boolean standsOnAHolder(ServerLevel level, ServerSubLevelContainer container, CarcassSavedData.Carcass carcass, Rig rig) {
-        Vector3d local = new Vector3d();
+        List<Vector3d> corners = new ArrayList<>();
+        double ground = Double.MAX_VALUE;
         for (Map.Entry<String, UUID> entry : carcass.bones.entrySet()) {
             Bone bone = rig.bone(entry.getKey()).orElse(null);
-            if (bone == null || !(container.getSubLevel(entry.getValue()) instanceof ServerSubLevel body) || body.isRemoved()) {
-                continue;
-            }
-            Vector3d low = null;
-            for (Vector3d corner : corners(body, bone)) {
-                if (low == null || corner.y < low.y) {
-                    low = corner;
+            if (bone != null && container.getSubLevel(entry.getValue()) instanceof ServerSubLevel body && !body.isRemoved()) {
+                for (Vector3d corner : corners(body, bone)) {
+                    ground = Math.min(ground, corner.y);
+                    corners.add(corner);
                 }
             }
-            Vector3d point = new Vector3d(low.x, low.y - 0.05, low.z);
+        }
+        int feet = 0;
+        int held = 0;
+        Vector3d local = new Vector3d();
+        for (Vector3d corner : corners) {
+            if (corner.y >= ground + FOOT) {
+                continue;
+            }
+            feet++;
+            Vector3d point = new Vector3d(corner.x, corner.y - 0.05, corner.z);
             if (level.getBlockState(BlockPos.containing(point.x, point.y, point.z)).is(BBTags.HOLDS_CARCASSES)) {
-                return true;
+                held++;
+                continue;
             }
             BoundingBox3d reach = new BoundingBox3d(point.x - 0.05, point.y - 0.05, point.z - 0.05, point.x + 0.05, point.y + 0.05, point.z + 0.05);
             for (SubLevel other : container.queryIntersecting(reach)) {
                 if (!other.isRemoved() && !carcass.bones.containsValue(other.getUniqueId())) {
                     other.logicalPose().transformPositionInverse(point, local);
                     if (level.getBlockState(BlockPos.containing(local.x, local.y, local.z)).is(BBTags.HOLDS_CARCASSES)) {
-                        return true;
+                        held++;
+                        break;
                     }
                 }
             }
         }
-        return false;
+        return feet > 0 && held * 2 > feet;
     }
 
     /** Whether a point lies in the collision shape of the block at {@code pos}. */

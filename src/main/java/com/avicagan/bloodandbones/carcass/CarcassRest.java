@@ -67,7 +67,8 @@ public final class CarcassRest {
                     && !com.avicagan.bloodandbones.carcass.trolley.ShackleTrolleyEntity.isHanging(level, carcass.id)) {
                 CarcassSlump.tick(level, container, carcass, rig, true);
             } else {
-                carcass.standingTicks = 0;
+                // hung, it is lifted off its legs: the count of give-ways starts again when it is let down
+                CarcassSlump.reset(carcass);
             }
             return;
         }
@@ -317,6 +318,7 @@ public final class CarcassRest {
         carcass.resting = true;
         carcass.stillTicks = 0;
         carcass.settledAt.clear();
+        CarcassSlump.reset(carcass);
         lock(level, carcass, torso);
         data.setDirty();
         if (level.getBlockEntity(center) instanceof CarcassPartBlockEntity root) {
@@ -806,6 +808,7 @@ public final class CarcassRest {
         carcass.resting = false;
         carcass.stillTicks = 0;
         carcass.settledAt.clear();
+        CarcassSlump.reset(carcass);
         // the limbs' cells are new: they need the look, freshness and cut ends now, not at the next refresh
         CarcassRot.sync(level, carcass, null);
 
