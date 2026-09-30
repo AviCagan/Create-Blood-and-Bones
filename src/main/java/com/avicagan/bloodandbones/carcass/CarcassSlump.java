@@ -114,8 +114,12 @@ public final class CarcassSlump {
      */
     static boolean tick(ServerLevel level, ServerSubLevelContainer container, CarcassSavedData.Carcass carcass, Rig rig, boolean dragged) {
         if (dragged != carcass.slumpDragged) {
-            // taken up or let go: dragged or loose, it starts its count again
+            // taken up or let go: it starts its count of give-ways again, but how long it has stood carries on (started
+            // again as it was hooked, a cow dragged by a hind leg went down five ticks later than it would have, the pull
+            // had turned it, and it came round rear first less often: 6 runs in 12 more than 60 degrees off, none so)
+            int stood = carcass.standingTicks;
             reset(carcass);
+            carcass.standingTicks = stood;
             carcass.slumpDragged = dragged;
         }
         ServerSubLevel torso = container.getSubLevel(carcass.bones.get(carcass.rootBone)) instanceof ServerSubLevel body && !body.isRemoved() ? body : null;
@@ -240,6 +244,20 @@ public final class CarcassSlump {
                 double lean = across.dot(up.x, 0.0, up.z);
                 if (Math.abs(lean) < LEAST) {
                     lean = across.dot(weight);
+                }
+                // dragged by a leg, it goes down away from that leg, which the pull draws out from under it: the leg ends
+                // on top, free to lead, not pinned under the body. This one is picked, not left to the lean (an owner's
+                // decision, docs/BRIEF-AUDIT.md): left to the lean, a cow dragged by a hind leg went down onto that leg
+                // about as often as not and came round rear first less often (36 degrees off, median of eight, where it
+                // is 19 so), and to the pull, a sheep did (52, where it is 10 so)
+                String hooked = dragged ? CarcassDrag.hookedBone(carcass.id) : null;
+                ServerSubLevel hookedBody = hooked == null || hooked.equals(carcass.rootBone) ? null
+                        : container.getSubLevel(carcass.bones.get(hooked)) instanceof ServerSubLevel body && !body.isRemoved() ? body : null;
+                if (hookedBody != null) {
+                    double off = across.dot(new Vector3d(hookedBody.logicalPose().position()).sub(torso.logicalPose().position()));
+                    if (Math.abs(off) > 0.02) {
+                        lean = -off;
+                    }
                 }
                 if (Math.abs(lean) >= LEAST) {
                     way.set(across).mul(Math.signum(lean));

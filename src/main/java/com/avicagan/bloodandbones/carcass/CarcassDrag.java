@@ -158,6 +158,17 @@ public final class CarcassDrag {
         return false;
     }
 
+    /** The part a carcass is dragged by (the first drag found, if several hold it), or null if nobody drags it. */
+    @Nullable
+    public static String hookedBone(UUID carcassId) {
+        for (Drag drag : DRAGS.values()) {
+            if (drag.carcass.equals(carcassId)) {
+                return drag.bone;
+            }
+        }
+        return null;
+    }
+
     /** Whether anyone but this dragger has hold of the carcass too (a player's Meat Hook on the body a hauler tows). */
     public static boolean isDraggedByAnother(UUID carcassId, LivingEntity dragger) {
         for (Drag drag : DRAGS.values()) {
