@@ -253,12 +253,15 @@ public final class MinionBody {
                 Placement arm2 = layout.pieces().get(second);
                 other = new Hold(second, grip(arm2.bone()), arm2.pose().getTranslation(new Vector3f()).x < 0.0F, "hand");
             } else if ("pair".equals(how)) {
-                // a pair of folded arms holds the second thing to one side of its front (and what is in its hand, drawn beside
-                // it, to the other), a little out from the arms so a small thing is not lost in them
+                // a pair of folded arms holds the second thing on the other side of its middle from the first, a little out from
+                // the arms so a small thing is not lost in them. The middle is the pair's own (x = 0): a villager's arms have
+                // the box of one arm only, off to one side, where what it holds sits. With its box in the middle, the second
+                // goes to one side of it (and what is in its hand, drawn beside it, to the other).
                 Vector3f at = front(arm.bone());
                 Vector3f lo = arm.bone().boxMin();
                 Vector3f hi = arm.bone().boxMax();
-                other = new Hold(hand, new Vector3f(at.x + (hi.x - lo.x) * 0.3F, at.y, at.z - 2.0F), !right, "pair");
+                float side = Math.abs(at.x) > 1.0F ? -at.x : at.x + (hi.x - lo.x) * 0.3F;
+                other = new Hold(hand, new Vector3f(side, at.y, at.z - 2.0F), !right, "pair");
             } else if (head >= 0) {
                 other = new Hold(head, mouth(layout.pieces().get(head).bone()), true, "mouth");
             }

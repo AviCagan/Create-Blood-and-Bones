@@ -84,8 +84,9 @@ public class StitchedMinionRenderer extends EntityRenderer<MinionEntity> {
         StitchedBody.draw(build, motion, lying, tint, ms, buffers, shine, held.isEmpty() && worn.isEmpty() && other.isEmpty() ? null : (piece, placement, pose) -> {
             if (piece == anchors.hold() && !held.isEmpty()) {
                 MinionBody.Hold main = new MinionBody.Hold(anchors.hold(), anchors.holdAt(), anchors.right(), anchors.how());
-                if (!other.isEmpty() && anchors.other().piece() == anchors.hold()) {
-                    // a pair of arms holding two things: the second to one side, what is in its hand to the other
+                if (!other.isEmpty() && anchors.other().piece() == anchors.hold() && Math.abs(anchors.other().at().x + anchors.holdAt().x) > 0.01F) {
+                    // a pair of arms holding two things, the second beside where the first is held: what is in its hand moves
+                    // to the other side (MinionBody#anchors)
                     Vector3f to = anchors.other().at();
                     main = new MinionBody.Hold(main.piece(), new Vector3f(2.0F * main.at().x - to.x, main.at().y, main.at().z), main.right(), main.how());
                 }
@@ -131,7 +132,9 @@ public class StitchedMinionRenderer extends EntityRenderer<MinionEntity> {
                 // upright whatever the folded arms' own tilt
                 ms.mulPose(new org.joml.Quaternionf(placement.bone().rotation()).conjugate());
                 ms.mulPose(Axis.XP.rotationDegrees(180.0F));
-                context = ItemDisplayContext.GROUND;
+                // a carcass piece is drawn a quarter size lying on the ground, too small to see held up against folded arms
+                // (a butcher's hind leg for a sample): it is held at the size an item frame shows it
+                context = held.is(com.avicagan.bloodandbones.registry.BBItems.CARCASS_PIECE.get()) ? ItemDisplayContext.FIXED : ItemDisplayContext.GROUND;
             }
             case "mouth" -> {
                 ms.mulPose(Axis.XP.rotationDegrees(90.0F));
