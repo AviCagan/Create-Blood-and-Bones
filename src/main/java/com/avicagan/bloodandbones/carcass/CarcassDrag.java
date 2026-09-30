@@ -158,6 +158,17 @@ public final class CarcassDrag {
         return false;
     }
 
+    /** The part a carcass is dragged by (the first drag found, if several hold it), or null if nobody drags it. */
+    @Nullable
+    public static String hookedBone(UUID carcassId) {
+        for (Drag drag : DRAGS.values()) {
+            if (drag.carcass.equals(carcassId)) {
+                return drag.bone;
+            }
+        }
+        return null;
+    }
+
     /** Whether anyone but this dragger has hold of the carcass too (a player's Meat Hook on the body a hauler tows). */
     public static boolean isDraggedByAnother(UUID carcassId, LivingEntity dragger) {
         for (Drag drag : DRAGS.values()) {
@@ -636,7 +647,8 @@ public final class CarcassDrag {
         }
         Vector3d turning = physics.getPhysicsHandle(torso).getAngularVelocity(new Vector3d());
         double share = Math.min(0.5, TURN_DAMPING * timeStep);
-        physics.getPipeline().addLinearAndAngularVelocity(torso, new Vector3d(), new Vector3d(0.0, -turning.y * share, 0.0));
+        double tumble = Math.min(0.5, Double.parseDouble(System.getProperty("bloodandbones.debug.tumble", "0")) * timeStep);
+        physics.getPipeline().addLinearAndAngularVelocity(torso, new Vector3d(), new Vector3d(-turning.x * tumble, -turning.y * share, -turning.z * tumble));
     }
 
     /**

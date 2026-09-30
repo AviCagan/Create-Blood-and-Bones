@@ -66,7 +66,8 @@ public final class CarcassSlump {
         }
         ServerSubLevel torso = container.getSubLevel(carcass.bones.get(carcass.rootBone)) instanceof ServerSubLevel body && !body.isRemoved() ? body : null;
         Bone torsoBone = rig.bone(carcass.rootBone).orElse(null);
-        if (torso == null || torsoBone == null || !standing(level, container, carcass, rig, torso, torsoBone)) {
+        // one that stands upright (a zombie) is pulled off its feet by the leg it is dragged by, and falls feet first
+        if (torso == null || torsoBone == null || dragged && upright(torsoBone) || !standing(level, container, carcass, rig, torso, torsoBone)) {
             carcass.standingTicks = 0;
             return false;
         }
@@ -90,7 +91,7 @@ public final class CarcassSlump {
         carcass.standingTicks = 0;
         carcass.slumps++;
         com.avicagan.bloodandbones.BloodAndBones.LOGGER.info("[slump] {} {} gives way, time {}", carcass.entity, carcass.slumps, level.getGameTime());
-        giveWay(level, container, carcass, rig, torso, torsoBone);
+        giveWay(level, container, carcass, rig, torso, torsoBone, dragged ? CarcassDrag.hookedBone(carcass.id) : null);
         return true;
     }
 
@@ -101,7 +102,8 @@ public final class CarcassSlump {
      * middle instead, the torso pressed its legs into the ground on that side, which pushed it back: a polar bear so
      * rocked came back upright every time.
      */
-    static void giveWay(ServerLevel level, ServerSubLevelContainer container, CarcassSavedData.Carcass carcass, Rig rig, ServerSubLevel torso, Bone torsoBone) {
+    static void giveWay(ServerLevel level, ServerSubLevelContainer container, CarcassSavedData.Carcass carcass, Rig rig, ServerSubLevel torso, Bone torsoBone,
+                        @Nullable String hooked) {
         SubLevelPhysicsSystem physics = container.physicsSystem();
         Quaterniond model = modelToWorld(torso, torsoBone);
         Vector3d up = model.transform(new Vector3d(0, -1, 0));
@@ -120,6 +122,16 @@ public final class CarcassSlump {
         Vector3d across = new Vector3d(0, 1, 0).cross(along).normalize();
         double lean = across.dot(up.x, 0.0, up.z);
         double side = Math.abs(lean) > 0.02 ? Math.signum(lean) : (carcass.id.getLeastSignificantBits() & 1L) == 0L ? 1.0 : -1.0;
+        // dragged by a leg, it goes down away from that leg, which the pull draws out from under it: the leg ends on top,
+        // free to lead, not pinned under the body
+        ServerSubLevel hookedBody = hooked == null || hooked.equals(carcass.rootBone) ? null
+                : container.getSubLevel(carcass.bones.get(hooked)) instanceof ServerSubLevel body && !body.isRemoved() ? body : null;
+        if (hookedBody != null) {
+            double off = across.dot(new Vector3d(hookedBody.logicalPose().position()).sub(torso.logicalPose().position()));
+            if (Math.abs(off) > 0.02) {
+                side = -Math.signum(off);
+            }
+        }
         across.mul(side);
         // its middle, by weight, and the feet it goes over: the part corners on the ground furthest that way
         List<ServerSubLevel> bodies = new ArrayList<>();
@@ -278,6 +290,21 @@ public final class CarcassSlump {
         }
         double y = point.y - pos.getY();
         return y >= shape.min(Direction.Axis.Y) - 1.0e-3 && y <= shape.max(Direction.Axis.Y) + 1.0e-3;
+    }
+
+    /** Whether a torso stands upright, as a biped's does: taller, as the model stands, than it is long. */
+    static boolean upright(Bone torsoBone) {
+        Quaterniond turn = new Quaterniond(torsoBone.rotation());
+        double lowY = Double.MAX_VALUE, highY = -Double.MAX_VALUE, lowZ = Double.MAX_VALUE, highZ = -Double.MAX_VALUE;
+        for (int i = 0; i < 8; i++) {
+            Vector3d corner = turn.transform(new Vector3d((i & 1) == 0 ? torsoBone.boxMin().x : torsoBone.boxMax().x,
+                    (i & 2) == 0 ? torsoBone.boxMin().y : torsoBone.boxMax().y, (i & 4) == 0 ? torsoBone.boxMin().z : torsoBone.boxMax().z));
+            lowY = Math.min(lowY, corner.y);
+            highY = Math.max(highY, corner.y);
+            lowZ = Math.min(lowZ, corner.z);
+            highZ = Math.max(highZ, corner.z);
+        }
+        return highY - lowY > highZ - lowZ;
     }
 
     /** A body's model frame in the world: its orientation with its bone's own rest turn taken out. */

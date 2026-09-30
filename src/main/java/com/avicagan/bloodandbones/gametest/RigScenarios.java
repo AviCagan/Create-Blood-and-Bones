@@ -403,7 +403,7 @@ final class RigScenarios {
             if (now % 4 == 0) {
                 Vector3d tc = s.torsoCentre();
                 Vector3d pc = body == null ? null : s.middle(body);
-                com.avicagan.bloodandbones.BloodAndBones.LOGGER.info(String.format("[hookdbg] %s %s t=%d ang=%.0f tilt=%.0f up=(%.2f,%.2f,%.2f) fwd=(%.2f,%.2f,%.2f) torso=(%.2f,%.2f,%.2f) part=(%.2f,%.2f,%.2f) player=%.2f",
+                com.avicagan.bloodandbones.BloodAndBones.LOGGER.info(String.format("[hookdbg] %s %s " + helper.absolutePos(BlockPos.ZERO).toShortString().replace(" ", "") + " t=%d ang=%.0f tilt=%.0f up=(%.2f,%.2f,%.2f) fwd=(%.2f,%.2f,%.2f) torso=(%.2f,%.2f,%.2f) part=(%.2f,%.2f,%.2f) player=%.2f",
                         RigComparison.mobName(type), byTheHead ? "head" : "leg", now, angle, RigComparison.angleDeg(s.up(), new Vector3d(0, 1, 0)), s.up().x, s.up().y, s.up().z,
                         s.forward().x, s.forward().y, s.forward().z,
                         helper.relativeVec(new Vec3(tc.x, tc.y, tc.z)).x, tc.y, helper.relativeVec(new Vec3(tc.x, tc.y, tc.z)).z,
