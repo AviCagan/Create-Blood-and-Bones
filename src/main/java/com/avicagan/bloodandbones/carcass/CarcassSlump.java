@@ -196,8 +196,10 @@ public final class CarcassSlump {
             Vector3d kick = new Vector3d(turn).cross(new Vector3d(at).sub(pivot));
             // and the legs under it slide out the other way, as legs giving way do: it goes down more where it stood
             // (turned over its feet alone, a cow set down standing lay 1.8 blocks from where it stood, 1.7 with its legs
-            // sliding out at 3 blocks a second; at 5 a sheep went on over onto its back)
-            if (body != torso && at.y < middle.y) {
+            // sliding out at 3 blocks a second; at 5 a sheep went on over onto its back). Not while it is dragged: its
+            // legs kicked out under a cow pulled by a hind leg, and it came round rear first a little less often (60 and
+            // more degrees off 2 runs in 30, where it was none in 90 without)
+            if (hooked == null && body != torso && at.y < middle.y) {
                 kick.add(new Vector3d(across).mul(-LEGS_OUT));
             }
             physics.getPipeline().addLinearAndAngularVelocity(body, kick, turn);
