@@ -603,6 +603,58 @@ public class PhysicsTests {
     private static final int STANDING_CAP = 560;
 
     /**
+     * A pig balanced on end, its spine straight up and down, one on its snout and one on its rump (a pig struck in the face
+     * was once left so, belly toward its killer, and folded that way), goes over: balanced so, it is not down, and it is
+     * tipped the way it leans as a carcass left standing is (CarcassSlump#onEnd). Each comes to rest down.
+     */
+    @GameTest(template = "empty", timeoutTicks = 500)
+    public static void pigBalancedOnEndGoesOver(GameTestHelper helper) {
+        double floor = helper.absolutePos(new BlockPos(0, RigComparison.FLOOR, 0)).getY();
+        List<Subject> pigs = new ArrayList<>();
+        for (int i = 0; i < 2; i++) {
+            Subject s = RigComparison.assembled(helper, EntityType.PIG, new Vec3(3.5 + 4 * i, 4.0, 5.5), RigScenarios.SOUTH);
+            helper.assertTrue(s != null, "no carcass");
+            // turned about its middle until its snout points straight down (the first) or straight up (the second), then
+            // lowered until what it reaches lowest with just touches the floor
+            RigComparison.turn(s, s.torsoCentre(), new org.joml.Quaterniond().rotationTo(s.forward(), new Vector3d(0, i == 0 ? -1 : 1, 0)));
+            double low = Double.MAX_VALUE;
+            for (Map.Entry<String, ServerSubLevel> entry : s.bodies().entrySet()) {
+                for (Vector3d corner : com.avicagan.bloodandbones.carcass.CarcassSlump.cornersOf(entry.getValue(), s.bone(entry.getKey()))) {
+                    low = Math.min(low, corner.y);
+                }
+            }
+            var pipeline = SubLevelContainer.getContainer(helper.getLevel()).physicsSystem().getPipeline();
+            for (ServerSubLevel body : s.bodies().values()) {
+                var pose = body.logicalPose();
+                pose.position().sub(0.0, low - floor - 0.01, 0.0);
+                pipeline.teleport(body, pose.position(), pose.orientation());
+                body.updateLastPose();
+            }
+            helper.assertTrue(Math.abs(s.forward().y) > 0.99, "the pig should stand on end, but its spine is " + fmt(Math.toDegrees(Math.acos(Math.abs(s.forward().y))))
+                    + " degrees off straight up and down");
+            pigs.add(s);
+        }
+        // how high a pig's legs hold it as it stands, blocks
+        double standing = 0.375;
+        int[] t = {0};
+        helper.onEachTick(() -> {
+            if (t[0] < 0 || pigs.stream().anyMatch(s -> !s.carcass().resting) && ++t[0] < 400) {
+                return;
+            }
+            t[0] = -1;
+            for (int i = 0; i < 2; i++) {
+                Subject s = pigs.get(i);
+                String end = i == 0 ? "snout" : "rump";
+                helper.assertTrue(s.carcass().resting, "the pig set on its " + end + " should come to rest");
+                helper.assertTrue(!RigScenarios.stood(s, standing, floor), "the pig set on its " + end + " should go down, but it rests with its spine "
+                        + fmt(Math.toDegrees(Math.acos(Math.min(1.0, Math.abs(s.forward().y))))) + " degrees off straight up and down, tilted "
+                        + fmt(RigComparison.angleDeg(s.up(), new Vector3d(0, 1, 0))) + " degrees, torso " + fmt(RigScenarios.belly(s, floor)) + " up");
+            }
+            helper.succeed();
+        });
+    }
+
+    /**
      * A cow set down standing on a patch of Butcher's Tables is held there to be worked: its legs do not give way and tip
      * it off (CarcassSlump), and it rests standing on the tables.
      */

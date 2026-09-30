@@ -355,8 +355,8 @@ public final class CarcassSlump {
 
     /**
      * Whether a body on four legs (or more) is balanced on end: its spine within {@link #ON_END} degrees of straight up or
-     * down, on its rump or its snout, that end resting on something (a pig struck in the face was left so, belly toward its
-     * killer).
+     * down, on its rump or its snout, what it reaches lowest with resting on something (a pig struck in the face was left
+     * so, belly toward its killer).
      */
     static boolean onEnd(ServerLevel level, ServerSubLevelContainer container, CarcassSavedData.Carcass carcass, Rig rig, ServerSubLevel torso, Bone torsoBone) {
         if (upright(torsoBone)) {
@@ -367,10 +367,16 @@ public final class CarcassSlump {
         if (Math.abs(forward.y) < Math.cos(Math.toRadians(ON_END)) || rig.bones().stream().filter(bone -> bone.name().contains("leg")).count() < 4) {
             return false;
         }
+        // standing on that end: what it reaches lowest with (its rump, or its snout) rests on something
         Vector3d low = null;
-        for (Vector3d corner : corners(torso, torsoBone)) {
-            if (low == null || corner.y < low.y) {
-                low = corner;
+        for (Map.Entry<String, UUID> entry : carcass.bones.entrySet()) {
+            Bone bone = rig.bone(entry.getKey()).orElse(null);
+            if (bone != null && container.getSubLevel(entry.getValue()) instanceof ServerSubLevel body && !body.isRemoved()) {
+                for (Vector3d corner : corners(body, bone)) {
+                    if (low == null || corner.y < low.y) {
+                        low = corner;
+                    }
+                }
             }
         }
         return low != null && solidAt(level, container, carcass, new Vector3d(low.x, low.y - 0.05, low.z));
