@@ -516,8 +516,15 @@ public final class CarcassDrag {
     }
 
     /**
-     * The hooked body is already touching its dragger: pulling any harder would only shove them. Once they have stood
-     * still a moment, only the hooked point in them counts (see below).
+     * The hooked body is already touching its dragger: pulling any harder would only shove them. While they move, its
+     * box near theirs counts, and a cow dragged by a hind leg the way its head points comes round rear first because the
+     * pull holds off while the leg passes them (by the hooked point alone, hindLegHookComesRoundRearFirst failed 20 runs
+     * in 30). Once they have stood still a moment, only the hooked point in them counts. A body's box is square to the
+     * world and grows as the body turns: a cow's leg turned across lay in it from about arm's length, where the pull
+     * holds it, so the pull went off and on as the leg swung in and out of that, and the leg never settled in front of
+     * someone who had stopped (meatHookDragsByLeg: a second later, the middle of its distance from where it was pulled
+     * was over 1.1 blocks in about 1 run in 30 and failed the test's 1.25 now and then; by the point, the worst of 150
+     * runs was 0.84).
      */
     private static boolean isAgainstPlayer(ServerSubLevel subLevel, Drag drag, LivingEntity player) {
         net.minecraft.world.phys.AABB near = player.getBoundingBox().inflate(0.15);

@@ -36,6 +36,8 @@ Everything below is in development builds only; the art is placeholder (see the 
 - A carcass hung on a Shackle Hook comes up gently and settles into its loose hang without a jolt; a light one (a
   rabbit) no longer spins on the hook once it is up.
 - Stop while dragging a carcass and it no longer lies in your legs short of where you hold it.
+- Stop while dragging a carcass by a leg and the leg comes to where you hold it, where it used to swing in and out
+  beside you, the pull going off each time the leg turned across came near you.
 - Dragging slows you by what is actually on the hook, from about 5% for a chicken to 55% for a
   ravager; a severed leg costs what a leg weighs, not what its whole animal did.
 - A dead spider lies still at last: a carcass whose limbs only twitch where it lies now folds into its resting form

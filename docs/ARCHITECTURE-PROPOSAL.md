@@ -5136,6 +5136,21 @@ courier's sample from it.
   - `butcherVillagersHeartIsKeen` (`ButcheryPathTests`): a butcher villager's carcass keeps its profession, the rig set to
     the Village Heart takes it out keeping it, worn it gives Keen Butcher II and a butchery yield of 1.2 (a farmer's
     none), and a minion with it has the same.
+- **A drag test that failed now and then** (`meatHookDragsByLeg`, once in the first full run after the fixes above).
+  Traced tick by tick over 160 runs: after its dragger stops, the cow's leg is pulled to arm's length in front of them,
+  and the pull holds off while the hooked body touches them (`CarcassDrag.isAgainstPlayer`). That asked about the leg's
+  box, which is square to the world and grows as the leg turns: turned across, the leg lay in it from about arm's
+  length, so the pull went off and on as it swung in and out, and it never settled. A second after the stop, the middle
+  of its distance from where it was pulled was over 1.1 blocks in about 1 run in 30, and over the test's 1.25 now and
+  then. Once the dragger has stood still a moment (`STILL_BEFORE_OUT`), only the hooked point in them counts now; while
+  they move the box still does, since a cow dragged by a hind leg comes round rear first only with the pull held off
+  as the leg passes them (by the point at all times, `hindLegHookComesRoundRearFirst` failed 20 runs in 30). After: 150
+  runs, the worst 0.84; the drag tests (by leg, by body, rear first, head first, up a step, walking into it) 30 runs
+  each and every other test that drags 12 runs each, all passed. **Left:** traced, a leg held in front of someone
+  standing still still moves 0.2 to 0.5 blocks a tick for seconds, well within the test but never quite at rest. The
+  pull's spring, damping and cap are sized by the whole carcass and applied at the hooked limb, which weighs a
+  twentieth of a cow; capping the damping by the limb's own mass halved the worst distance but left the jitter. That
+  is a physics pass of its own, not this branch's.
 - **The suite** is 626 tests and passed three full runs in a row after the last change (and once before the showcase's
   drawing fix). Once, on a run started straight after source edits, the game failed to load before any test ran
   (Registrate's "found unused register callbacks"); the same run again loaded and ran, and it was not seen in the next
