@@ -5151,6 +5151,12 @@ courier's sample from it.
   pull's spring, damping and cap are sized by the whole carcass and applied at the hooked limb, which weighs a
   twentieth of a cow; capping the damping by the limb's own mass halved the worst distance but left the jitter. That
   is a physics pass of its own, not this branch's.
+- **Another** (`lavaWalkerFindsAPathOnLava`, once in the next full run; 8 times in the logs kept since 24 September).
+  The walker was found at the top of its pool's stone rim, not on the lava. The trait tests' minions (`MotionEffectTests`)
+  woke to their fittest task, and a cow's torso wakes a Hauler, reaching 24 blocks from home: in the full suite the
+  carcasses, hooks and racks of the tests beside it were in reach, and it set off after them, up onto the rim. Put by
+  the pool, a carcass and a Bleeding Rack gave the same failure word for word (task Hauler, goals Haul and LavaFooting);
+  with the minions set Idle at home, as the movement tests' already are, none. The failure now names the task.
 - **The suite** is 626 tests and passed three full runs in a row after the last change (and once before the showcase's
   drawing fix). Once, on a run started straight after source edits, the game failed to load before any test ran
   (Registrate's "found unused register callbacks"); the same run again loaded and ran, and it was not seen in the next
