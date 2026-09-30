@@ -70,6 +70,11 @@ public final class CarcassAssembler {
      * the head back and moves the rest a little. A blow to the torso, which carries most of the weight, is not held back.
      */
     public static final double BLOW_MAX_STRUCK = 7.0;
+    /**
+     * The share of what a light part struck could not take that goes on into the body: enough to rock it, not so much that
+     * every blow to a face or a tail slides the animal as far as one to its body.
+     */
+    private static final double CARRIED_ON = 0.4;
     /** How far a killer's blow reaches along their look, in blocks. */
     private static final double BLOW_REACH = 8.0;
 
@@ -274,7 +279,47 @@ public final class CarcassAssembler {
         }
         Vec3 dir = new Vec3(look.x, Math.max(look.y, 0.0) + 0.2, look.z).normalize();
         double speed = Math.max(0.5, Math.min(BLOW_MAX_SPEED, BLOW_SPEED / Math.sqrt(Math.max(mass, 0.01) / REFERENCE_WEIGHT)));
-        impulseAt(physics, hit, point, new Vector3d(dir.x, dir.y, dir.z).mul(mass * speed), BLOW_MAX_STRUCK);
+        Vector3d whole = new Vector3d(dir.x, dir.y, dir.z).mul(mass * speed);
+        Vector3d given = impulseAt(physics, hit, point, whole, BLOW_MAX_STRUCK);
+        // what a light part struck could not take goes on through its joints into the body, where they meet it: a heavy
+        // blow to the face or the tail still rocks the animal, it does not glance off (held to what the part could take, a
+        // blow to a polar bear's face moved it four hundredths of a block, and one to a horse's tail a hundredth, and both
+        // were left standing)
+        UUID struck = hit.getUniqueId();
+        CarcassJoints.Spec into = jointIntoTorso(carcass, carcass.bones.entrySet().stream()
+                .filter(e -> e.getValue().equals(struck)).map(Map.Entry::getKey).findFirst().orElse(null));
+        if (into != null && container.getSubLevel(carcass.bones.get(carcass.rootBone)) instanceof ServerSubLevel torso && !torso.isRemoved()) {
+            Vector3d rest = new Vector3d(whole).sub(given).mul(CARRIED_ON);
+            if (rest.dot(whole) > 0.0) {
+                impulseAt(physics, torso, into.anchorParent(torso), rest, BLOW_MAX_STRUCK);
+            }
+        }
+    }
+
+    /**
+     * The joint by which a part hangs from the torso, however many joints out it is (a lower leg by its leg's hip), or
+     * null for the torso itself or a part with no way back to it.
+     */
+    @Nullable
+    static CarcassJoints.Spec jointIntoTorso(CarcassSavedData.Carcass carcass, @Nullable String bone) {
+        String at = bone;
+        for (int hops = 0; at != null && !at.equals(carcass.rootBone) && hops < 64; hops++) {
+            CarcassJoints.Spec up = null;
+            for (CarcassJoints.Spec spec : carcass.joints) {
+                if (spec.child().equals(at)) {
+                    up = spec;
+                    break;
+                }
+            }
+            if (up == null) {
+                return null;
+            }
+            if (up.parent().equals(carcass.rootBone)) {
+                return up;
+            }
+            at = up.parent();
+        }
+        return null;
     }
 
     /**

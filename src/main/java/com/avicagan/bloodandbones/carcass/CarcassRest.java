@@ -76,6 +76,13 @@ public final class CarcassRest {
             }
             bodies.add(serverSubLevel);
         }
+        // a dead animal never stays on its feet: standing, its legs give way, and until it is down it does not rest
+        Rig rig = RigManager.forCarcass(carcass).orElse(null);
+        if (rig != null && CarcassSlump.tick(level, container, carcass, rig)) {
+            carcass.stillTicks = 0;
+            carcass.settledAt.clear();
+            return;
+        }
         boolean still = still(level, physics, bodies, null);
         // Lying on a deck that moves (a ship under way), it is still when it keeps still on the deck, and stays put where
         // it lies on it: measured in the world, a carcass dragged onto a moving ship never rested there, and stayed a

@@ -123,6 +123,9 @@ public class CarcassSavedData extends SavedData {
          */
         @Nullable
         public org.joml.Vector3d unfoldedUnsupported;
+        /** ticks it has stood on its legs nearly still, and how many times they have given way (CarcassSlump); not saved */
+        public int standingTicks;
+        public int slumps;
         /** fresh cuts still pouring ("parent>child" -> ticks left); not saved */
         public final Map<String, Integer> gushing = new LinkedHashMap<>();
 

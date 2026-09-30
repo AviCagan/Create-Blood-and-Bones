@@ -174,6 +174,9 @@ final class RigScenarios {
      * usual kill, walking up to an animal), on open ground. Does it go down, or is it left standing on its legs, and how
      * far does it go from where it stood? A body with no head is struck at its middle.
      */
+    /** The tick after a blow in the face at which how it lies is looked at. */
+    static final int FACE_LOOK = 160;
+
     static void killedInTheFace(GameTestHelper helper, EntityType<? extends Mob> type, Consumer<Numbers> done) {
         String head = RigComparison.generatedHead(type);
         Vec3 killer = KILLED_AT.add(0, 0, KILLER_OFF + 0.5);
@@ -183,6 +186,7 @@ final class RigScenarios {
             Vector3d start = s.torsoCentre();
             int[] t = {0};
             int[] stillRun = {0};
+            int[] settled = {-1};
             boolean[] finished = {false};
             helper.onEachTick(() -> {
                 if (finished[0] || s.torso() == null) {
@@ -190,11 +194,16 @@ final class RigScenarios {
                 }
                 int now = ++t[0];
                 stillRun[0] = now > 5 && s.still() ? stillRun[0] + 1 : 0;
-                if (stillRun[0] >= RigComparison.SETTLE_RUN || now >= RigComparison.SETTLE_CAP) {
+                if (settled[0] < 0 && stillRun[0] >= RigComparison.SETTLE_RUN) {
+                    settled[0] = now;
+                }
+                // looked at a while after the blow, not the moment it first keeps still: one left standing keeps still
+                // on its legs a moment before they give way
+                if (now >= FACE_LOOK) {
                     finished[0] = true;
                     Vector3d end = s.torsoCentre();
                     done.accept(down(new Numbers().put("struck_head", head != null && head.equals(s.carcass().hitBone) ? 1 : 0, "yes/no")
-                            .put("settle_ticks", now, "ticks")
+                            .put("settle_ticks", settled[0] < 0 ? now : settled[0], "ticks")
                             .put("travel", Math.hypot(end.x - start.x, end.z - start.z), "blocks"), s, standing, floor));
                 }
             });
