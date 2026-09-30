@@ -1885,6 +1885,8 @@ public final class DevShowcase {
                 new View(o.getX() - 1.5, eye, materialsZ + 6.8, 0, -18)));
         // the rig set to a heart, its heart out on the top and the rest left in, and the two butchers with their samples
         views.add(new View(o.getX() - 28.5, eye + 1.2, o.getZ() + 12.4, 0, 28));
+        // the two butchers close: a Cleaver and a hind leg either side of the villager's folded arms, one in each of the zombie's hands
+        views.add(new View(o.getX() - 26.5, eye + 0.4, o.getZ() + 13.6, 0, 12));
         // the view with the flying bits, wherever it falls in the list
         debrisView = views.indexOf(debris);
         debrisAt = new BlockPos(o.getX(), o.getY() + 1, decoZ + 13);
@@ -2125,15 +2127,7 @@ public final class DevShowcase {
             boolean first = com.avicagan.bloodandbones.body.SurgicalRig.cut(level, deployer, surgery, new ItemStack(BBItems.CLEAVER.get()));
             surgery.nextCut = 0;
             boolean second = com.avicagan.bloodandbones.body.SurgicalRig.cut(level, deployer, surgery, new ItemStack(BBItems.CLEAVER.get()));
-            // a Deployer's stand-in keeps what it cuts: lay the heart on the top, where a Deployer's would come out
-            for (ItemStack got : deployer.getInventory().items) {
-                if (!got.isEmpty()) {
-                    net.minecraft.world.entity.item.ItemEntity item = new net.minecraft.world.entity.item.ItemEntity(level, rig.getX() + 0.5, rig.getY() + 1.05, rig.getZ() + 0.5, got.copy());
-                    item.setDeltaMovement(net.minecraft.world.phys.Vec3.ZERO);
-                    level.addFreshEntity(item);
-                }
-            }
-            deployer.getInventory().clearContent();
+            // (a Deployer's cut drops on the table top: the heart lies there)
             CarcassPieceItem.Piece piece = CarcassPieceItem.piece(surgery.item());
             BloodAndBones.LOGGER.info("[showcase] rig set to a heart: first cut {}, second cut {}, taken {}, still in {}", first, second,
                     piece == null ? "?" : piece.traits().get(com.avicagan.bloodandbones.body.Surgery.ORGANS_TAKEN),

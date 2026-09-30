@@ -254,11 +254,11 @@ public final class MinionBody {
                 other = new Hold(second, grip(arm2.bone()), arm2.pose().getTranslation(new Vector3f()).x < 0.0F, "hand");
             } else if ("pair".equals(how)) {
                 // a pair of folded arms holds the second thing to one side of its front (and what is in its hand, drawn beside
-                // it, to the other)
+                // it, to the other), a little out from the arms so a small thing is not lost in them
                 Vector3f at = front(arm.bone());
                 Vector3f lo = arm.bone().boxMin();
                 Vector3f hi = arm.bone().boxMax();
-                other = new Hold(hand, new Vector3f(at.x + (hi.x - lo.x) * 0.25F, at.y, at.z), !right, "pair");
+                other = new Hold(hand, new Vector3f(at.x + (hi.x - lo.x) * 0.3F, at.y, at.z - 2.0F), !right, "pair");
             } else if (head >= 0) {
                 other = new Hold(head, mouth(layout.pieces().get(head).bone()), true, "mouth");
             }
