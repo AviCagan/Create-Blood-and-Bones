@@ -171,14 +171,16 @@ final class RigScenarios {
         });
     }
 
-    /**
-     * Killed by a blow in the face: the stand-in player two and a half blocks in front of it, looking at its head (the
-     * usual kill, walking up to an animal), on open ground. Does it go down, or is it left standing on its legs, and how
-     * far does it go from where it stood? A body with no head is struck at its middle.
-     */
     /** The tick after a blow in the face at which how it lies is looked at. */
     static final int FACE_LOOK = 160;
 
+    /**
+     * Killed by a blow in the face: the stand-in player two and a half blocks in front of it, looking at its head (the
+     * usual kill, walking up to an animal), on open ground. Does it go down, or is it left standing on its legs, and how
+     * far does it go from where it stood, and back along the blow? Looked at {@link #FACE_LOOK} ticks on, not the moment
+     * it first keeps still: one left standing keeps still on its legs a moment before they give way. A body with no head
+     * is struck at its middle.
+     */
     static void killedInTheFace(GameTestHelper helper, EntityType<? extends Mob> type, Consumer<Numbers> done) {
         String head = RigComparison.generatedHead(type);
         Vec3 killer = KILLED_AT.add(0, 0, KILLER_OFF + 0.5);
@@ -206,7 +208,8 @@ final class RigScenarios {
                     Vector3d end = s.torsoCentre();
                     done.accept(down(new Numbers().put("struck_head", head != null && head.equals(s.carcass().hitBone) ? 1 : 0, "yes/no")
                             .put("settle_ticks", settled[0] < 0 ? now : settled[0], "ticks")
-                            .put("travel", Math.hypot(end.x - start.x, end.z - start.z), "blocks"), s, standing, floor));
+                            .put("travel", Math.hypot(end.x - start.x, end.z - start.z), "blocks")
+                            .put("travel_along_blow", start.z - end.z, "blocks"), s, standing, floor));
                 }
             });
         };
@@ -735,10 +738,32 @@ final class RigScenarios {
         com.avicagan.bloodandbones.carcass.CarcassJoints.Spec neck = com.avicagan.bloodandbones.carcass.ShackleHookBlockEntity.jointTowardHead(s.carcass());
         String headBone = RigComparison.generatedHead(s.type);
         Vector3d head = headBone == null ? null : s.middle(headBone);
+        if (head == null && headBone != null) {
+            head = drawnMiddle(s, headBone);
+        }
         if (torso == null || neck == null || head == null) {
             return Double.NaN;
         }
         return torso.logicalPose().transformPosition(neck.anchorParent(torso), new Vector3d()).y - head.y;
+    }
+
+    /**
+     * Where a part of a carcass folded into its resting form is drawn: the middle of its box, placed by its remembered pose
+     * on the torso; null if it is not folded in. (A carcass whose limbs twitch folds while it still twitches, before it
+     * has settled by the measurement's stricter stillness, and its head then had no body to measure: the flank scenario
+     * could not be played out, about one run in ten.)
+     */
+    @org.jetbrains.annotations.Nullable
+    static Vector3d drawnMiddle(Subject s, String part) {
+        com.avicagan.bloodandbones.carcass.CarcassSavedData.RestPose pose = s.carcass().restPoses.get(part);
+        ServerSubLevel torso = s.torso();
+        if (pose == null || torso == null) {
+            return null;
+        }
+        Bone bone = s.bone(part);
+        Vector3d middle = new Vector3d(bone.boxMin()).add(new Vector3d(bone.boxMax())).div(32.0);
+        pose.orientation().transform(middle).add(pose.position()).add(CarcassAssembler.boneOriginInPlot(torso, s.bone(s.torsoBody())));
+        return torso.logicalPose().transformPosition(middle, new Vector3d());
     }
 
     /**

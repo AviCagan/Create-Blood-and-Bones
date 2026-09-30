@@ -329,6 +329,7 @@ public final class RigComparison {
             new Bar("Behind: down, not left standing", "4b_blow_behind", "stood", v -> v == 0, false),
             new Bar("Face: down, not left standing", "4c_blow_face", "stood", v -> v == 0, false),
             new Bar("Face: within 1.5 blocks of where it stood", "4c_blow_face", "travel", v -> v <= 1.5, false),
+            new Bar("Face: knocked back 1.5 blocks or less", "4c_blow_face", "travel_along_blow", v -> v <= 1.5, false),
             new Bar("Held on its side: legs within 60 degrees of straight down", "2a_legs_hang", "leg_hang_deg", v -> v < 60.0, false),
             new Bar("Held upright: head droops 5 degrees or more", "2b_head_droops", "head_droop_deg", v -> v >= 5.0, false),
             new Bar("Hind-leg hook: rear first within 45 degrees", "3a_hind_leg_hook", "rear_first_deg", v -> v <= 45.0, true),

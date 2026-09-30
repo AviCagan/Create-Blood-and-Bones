@@ -71,8 +71,9 @@ public final class CarcassAssembler {
      */
     public static final double BLOW_MAX_STRUCK = 7.0;
     /**
-     * The share of what a light part struck could not take that goes on into the body: enough to rock it, not so much that
-     * every blow to a face or a tail slides the animal as far as one to its body.
+     * The share of what a light part struck could not take that goes on into the body, where that part's limb joins it:
+     * enough to rock it, not so much that every blow to a face slides the animal as far as one to its body (at 0.4 a cow
+     * struck in the face slid 1.7 blocks, as it did before a blow was held to what the part could take).
      */
     private static final double CARRIED_ON = 0.2;
     /** How far a killer's blow reaches along their look, in blocks. */
@@ -281,10 +282,10 @@ public final class CarcassAssembler {
         double speed = Math.max(0.5, Math.min(BLOW_MAX_SPEED, BLOW_SPEED / Math.sqrt(Math.max(mass, 0.01) / REFERENCE_WEIGHT)));
         Vector3d whole = new Vector3d(dir.x, dir.y, dir.z).mul(mass * speed);
         Vector3d given = impulseAt(physics, hit, point, whole, BLOW_MAX_STRUCK);
-        // what a light part struck could not take goes on through its joints into the body, where they meet it: a heavy
-        // blow to the face or the tail still rocks the animal, it does not glance off (held to what the part could take, a
-        // blow to a polar bear's face moved it four hundredths of a block, and one to a horse's tail a hundredth, and both
-        // were left standing)
+        // what a light part struck could not take goes on through its joints into the body, where they meet it: a blow
+        // to an arm or a face still rocks the body, it does not glance off (held to what the part could take, a zombie or a
+        // villager struck from the side on its arm was left standing, and a polar bear struck in the face moved four
+        // hundredths of a block)
         UUID struck = hit.getUniqueId();
         CarcassJoints.Spec into = jointIntoTorso(carcass, carcass.bones.entrySet().stream()
                 .filter(e -> e.getValue().equals(struck)).map(Map.Entry::getKey).findFirst().orElse(null));
