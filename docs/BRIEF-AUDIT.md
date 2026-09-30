@@ -271,15 +271,15 @@ Then, either way:
 
 **Owner first.** Yes: decisions 2 and 7.
 
-### 5. The yield gap, and three paths that stay distinct (partly built 29 September 2026, `bb-machines`)
+### 5. The yield gap, and three paths that stay distinct (built 29 and 30 September 2026, `bb-machines` and `bb-leftovers`, but decision 6)
 
-**Partly built.** ARCHITECTURE 15.19.1 has the details. The paths are data, by hand is about half with real loss, the
+**Built** but decision 6. ARCHITECTURE 15.19.1 has the details, and 15.32 the Keen Butcher. The paths are data, by hand is about half with real loss, the
 Mangler is fastest with the least of anything a table gives (its loot less what its table already gives), the stations
 get all of it, and the Surgical Rig is the slowest at any speed with organs and the hide on top (a hand at the rig gets
-a hand's share). The knife is held on a part, and one test sends a cow down each path. **Not built:** nothing in
-survival carries the Keen Butcher trait, so the butchery yield is 1 for every player and minion (a balance-pass
-choice); decision 6 is still open, so the knife and the Cleaver stay two tools. The rest of this section is kept as it
-was written.
+a hand's share). The knife is held on a part, and one test sends a cow down each path. A butcher villager's Village
+Heart carries Keen Butcher II, worn in carcass armour or stitched into a minion, so the butchery yield can be raised in
+survival (30 September, 15.32). **Not built:** decision 6 is still open, so the knife and the Cleaver stay two tools.
+The rest of this section is kept as it was written.
 
 **Why.** The brief says:
 - Flensing Knife: "Roughly half the yield of a machine, with random loss … Hold on a part to take it off."
@@ -463,13 +463,14 @@ Two things stay open there: bloodless sounds (package 9), and both of a rabbit's
 
 **Owner first.** No.
 
-### 10. Filters that pick one part out of a mixed line (partly built 29 September 2026, `bb-machines`)
+### 10. Filters that pick one part out of a mixed line (done 29 and 30 September 2026, `bb-machines` and `bb-leftovers`)
 
-**Partly built.** ARCHITECTURE 15.19.2 has the details. The machines, the Butcher's Table and the Surgical Rig ask their
-filter about each part they could take, a limb attribute takes any slot the data names, and mixed lines are tested.
-**Not built:** the butchering minion's filter (a minion's job is becoming a task, and how a task is given is decision
-12); a filter for single organs at the rig (it asks about the part an organ is in, so it cannot take only hearts;
-organs are main's data now). The rest of this section is kept as it was written.
+**Done.** ARCHITECTURE 15.19.2 and 15.32 have the details. The machines, the Butcher's Table and the Surgical Rig ask
+their filter about each part they could take, a limb attribute takes any slot the data names, and mixed lines are
+tested. Since 30 September the rig's filter also picks single organs: an organ in its slot, or "is the organ Heart", takes
+only hearts, out of whatever part holds them. The butchering minion obeys a filter too: a brass one's filter slot, or a
+sample held beside its blade, as a courier's sample, and the filter of a Butcher's Table it cuts on. The rest of this
+section is kept as it was written.
 
 **Why.**
 - "A filtered machine pulls one specific part out of a mixed line and passes the rest through untouched."
@@ -809,6 +810,8 @@ One line each. Details and test names are in ARCHITECTURE sections 13 to 15.
 - **Rigs:** generated from vanilla models by a data run.
 - **The Mangler:** grinds carcasses and loose limbs into meat, bone, offal, fat, and scraps stamped with the mob and the part.
 - **The other machines:** the Beheader, Guillotine and Deglover each take their part.
+- **Filters:** every station that takes parts out picks them by its filter, one part or one organ (a heart), and so does a
+  butcher minion, by its filter or a sample held beside its blade (packages 10 and 15).
 - **The Bleeding Rack:** drains into a tank with no power; nether mobs bleed soul blood.
 - **Furniture:** the Surgery Table and its two attachments, the Specimen Jar, Steel Tables that join into a run, and Steel Racks with shelves.
 - **Blood:** blood and soul blood work as Create fluids through pipes, tanks, spouts and drains.

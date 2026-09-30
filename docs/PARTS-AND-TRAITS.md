@@ -325,7 +325,7 @@ Each entry lists: members; scrap material; minion defaults (torso, head, arm, le
 12. **villager** [villager, wandering_trader, witch, zombie_villager]. Material skin.
     - Minion: head surgeon, farmer, courier (profession variants reorder and add); meek. Arms: pair, pacifist, grip hand for two, +9 storage. Legs: walk 0.25.
     - Armour: helmet appraiser; chest hardy 1; shoulders quick_hands 1; leggings sure_footed 1; boots stealthy 1.
-    - Hide: trustworthy. Special organ: Village Heart (hero).
+    - Hide: trustworthy. Special organ: Village Heart (hero; a butcher's also keen_butcher 2).
     - Set: Elder (hero 2, lucky 2) / Meek (meek 2; zombies hunt you).
 13. **illager** [pillager, vindicator, evoker, illusioner]. Material skin.
     - Minion: head surgeon, guard, sentry; brave. Arms: punch, grip hand. Legs: walk 0.26.
@@ -1801,7 +1801,7 @@ Legend: **M** = the part fitted to a minion. **A** = the armour made from that p
   - M: walk 0.25.
   - A: leggings sure_footed 1; boots stealthy 1.
 - **Hide:** trustworthy (golem_trust).
-- **Organ:** Village Heart. M: beloved. A: hero.
+- **Organ:** Village Heart. M: beloved. A: hero. A butcher's (a variant on its `profession`) also keen_butcher 2, in both.
 - **Set:** Elder (hero 2, lucky 2) / Meek.
 
 **ZOMBIE** (biped, humanoid, rotting, undead)

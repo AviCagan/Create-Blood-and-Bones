@@ -123,6 +123,9 @@ Everything below is in development builds only; the art is placeholder (see the 
   other limb a datapack's slot rules name.
 - A Create filter set on the Butcher's Table or the Surgical Rig drops when the table is broken, and comes back
   to you when the rig is taken off.
+- The Surgical Rig's filter picks single organs: put a heart in its slot, or set an Attribute Filter to "is the organ
+  Heart", and it takes only hearts, out of whatever part holds them, and leaves the rest in; a Filter's list can name
+  several. The machines' and the Butcher's Table's slots turn an organ away, since no organ comes out there.
 - Shackle Hook and Shackle Trolley on Create chain conveyors; trolleys queue a body's length apart.
 - The Shackle Hook and the Shackle Trolley hoist a carcass up at a walking pace, the trolley waiting on the chain until
   it is up. They used to snap it there in a tick, which threw anyone standing beside it a couple of hundred blocks. A
@@ -334,6 +337,11 @@ Everything below is in development builds only; the art is placeholder (see the 
 - A butcher minion's Cleaver is in its hand, so wherever it cuts (a body in the field or a piece on the Butcher's
   Table) it gets a hand's share, as you would, less what a poor one wastes; at a table it chops only the pieces the
   table's filter takes.
+- A butcher minion takes only what it is set to. Hand it a carcass piece (or a Create filter) while it holds its
+  Cleaver and it holds it beside the blade as its sample: it then cuts off and breaks down only parts like it (a cow's
+  hind leg: cows' hind legs) and leaves the rest, as a courier with a sample fetches only its like. A brass one's filter
+  works the same way. Wherever it cuts, it leaves what a Butcher's Table's filter turns away. It needs a second hand,
+  the other side of folded arms, or a mouth to hold the sample; an empty hand takes it back.
 - Where a minion's fitness shows: the Surgery Table's line while building names its best two tasks; JEI's Body Parts
   page and a carcass piece's tooltip (hold Ctrl) show what each part brings to a minion's tasks: its knacks, what it
   holds things with and a head's disposition; `/bloodandbones minion fitness` gives the full breakdown for the minion
@@ -547,6 +555,8 @@ Everything below is in development builds only; the art is placeholder (see the 
 - JEI: a Body Parts page per mob (what each part, its hide and each organ gives, on a minion and in armour, and its
   full set), and each organ's fitting shown as a crafting recipe. `/bloodandbones traits explain <mob>` says the same
   in chat, and `/bloodandbones traits dump` writes every mob's traits to a CSV file for balancing.
+- A butcher villager's Village Heart carries Keen Butcher II (butchery yield +20%), worn in carcass armour or stitched
+  into a minion: the first thing in survival that raises what a hand gets from butchering.
 
 ### Presentation
 
