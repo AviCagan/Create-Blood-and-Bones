@@ -260,10 +260,17 @@ final class RigScenarios {
      * either its torso still more than a quarter as high as it stood (and more than an eighth of a block up), or, on four
      * legs, sitting up on its front ones, the front of its belly that high while its rear is lower. (It was half as high
      * at first, and a horse on splayed legs at 0.378 of 0.757 passed, and a cow sitting up like a dog, its rear on the
-     * ground and its chest a third of a block up, passed too.)
+     * ground and its chest a third of a block up, passed too.) Balanced on end, a body on four legs has not gone down
+     * either.
      */
     static boolean stood(Subject s, double standing, double floor) {
         double tilt = RigComparison.angleDeg(s.up(), new Vector3d(0, 1, 0));
+        // or, on four legs, balanced on end, on its rump or its snout, its spine near straight up (a pig struck in the face
+        // was once left so, and passed as down)
+        boolean fourLegs = !com.avicagan.bloodandbones.carcass.CarcassSlump.upright(s.bone(s.torsoBody()));
+        if (fourLegs && Math.abs(s.forward().y) >= Math.cos(Math.toRadians(com.avicagan.bloodandbones.carcass.CarcassSlump.ON_END))) {
+            return true;
+        }
         if (tilt >= 45.0) {
             return false;
         }

@@ -62,8 +62,12 @@ public final class CarcassSlump {
     static final double LIFTED = 0.25;
     /** How far from upright its torso may lean and still stand on its legs, degrees. */
     public static final double UPRIGHT = 45.0;
-    /** How far from straight up or down the spine of a body on four legs may point and still be balanced on end, degrees. */
-    static final double ON_END = 30.0;
+    /**
+     * How far from straight up or down the spine of a body on four legs may point and still be balanced on end, degrees:
+     * pitched onto its nose by a blow from behind, as the brief would have it, a pig lies 64 degrees nose down, its spine
+     * 26 from straight down, and that is down.
+     */
+    public static final double ON_END = 15.0;
     /**
      * How fast the legs of one on four legs slide out from under it as it goes over, blocks a second, the other way. Its
      * middle then stays nearer where it stood: set down standing, a cow lay 2.1 blocks from there with them kept under
