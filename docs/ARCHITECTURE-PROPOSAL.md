@@ -5114,6 +5114,16 @@ courier's sample from it.
   short of a station's. **Provisional:** the audit left the carrier and the level to the balance pass, so this part
   and this level are the builder's choice, awaiting that pass and the owner's word (BRIEF-AUDIT package 5 says so). It
   is one variant in the data, to keep, change or take out without touching code.
+- **What the review found, and what changed.**
+  - A head was blind at two organs taken, which the organ filter broke (above); fixed, and the blind test now takes a
+    fox's head.
+  - The butcher's look round put every part of every carcass in the world to its filter, its sample and the Butcher's
+    Tables (a block-entity lookup in a box round each part, and every carcass walked again for each part on a filtered
+    table) before asking whether the carcass was in reach, and could load a chunk to do it. Fixed as described above
+    (`turnedAway`, the reach and loaded check first). Nothing measures the cost: the butcher tests, which still pass,
+    show only that what it takes is unchanged.
+  - Keen Butcher's carrier and level were a balance-pass choice that the audit left open; they are kept and marked
+    provisional (above, and BRIEF-AUDIT package 5).
 - **Tests.** Each fails with its feature taken out (checked: the organ filter turned off, the organ allowed in every
   slot, the sample ignored, the minion's filter ignored, the table's filter ignored, the villager's variant removed).
   - `rigFilterPicksSingleOrgans` (`SurgicalRigTests`): a heart in the rig's slot takes a cow body's heart and then
@@ -5158,7 +5168,9 @@ courier's sample from it.
   the pool, a carcass and a Bleeding Rack gave the same failure word for word (task Hauler, goals Haul and LavaFooting);
   with the minions set Idle at home, as the movement tests' already are, none. The failure now names the task.
 - **The suite** is 626 tests and passed three full runs in a row after the last change (and once before the showcase's
-  drawing fix). Once, on a run started straight after source edits, the game failed to load before any test ran
+  drawing fix). After the review's fixes (a head blind by its eyes, the butcher's cheaper look round, the Keen Butcher
+  marked provisional) and the two causes above, it passed three full runs in a row again, after a data run that
+  changed nothing. Once, on a run started straight after source edits, the game failed to load before any test ran
   (Registrate's "found unused register callbacks"); the same run again loaded and ran, and it was not seen in the next
   thirteen starts (game tests, the data run and the showcase).
 - **Showcase.** Row F has a third table beside the two with filters: a Surgical Rig with a heart in its slot and a cow's

@@ -135,7 +135,9 @@ The packages are in order of how much their gap hurts the brief:
   - a hanging carcass swings when knocked;
   - one with a leg off hangs lower on that side;
   - a carcass dragged by a hind leg gets up a one-block step.
-- Find the cause of the `meatHookDragsByLeg` failure.
+- Find the cause of the `meatHookDragsByLeg` failure. (Found 30 September, `bb-leftovers`, ARCHITECTURE 15.32: the pull
+  went off and on as the leg's box swung near a dragger who had stopped. A leg held by someone standing still still
+  jitters; that is left to a physics pass.)
 
 **Size.** Large.
 
