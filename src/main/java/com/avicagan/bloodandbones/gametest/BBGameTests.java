@@ -1813,7 +1813,7 @@ public class BBGameTests {
     }
 
     /** A punch on any cell of a resting carcass unfolds it. */
-    @GameTest(template = "empty", timeoutTicks = 300)
+    @GameTest(template = "empty", timeoutTicks = 500)
     public static void punchWakesRestingCarcass(GameTestHelper helper) {
         ServerLevel level = helper.getLevel();
         Cow cow = helper.spawn(EntityType.COW, new BlockPos(5, 2, 5));
@@ -1822,45 +1822,57 @@ public class BBGameTests {
         }
         cow.discard();
         UUID[] id = new UUID[1];
-        helper.runAfterDelay(5, () -> id[0] = onlyCarcass(helper, level).id);
-        int folded = 30 + com.avicagan.bloodandbones.carcass.CarcassRest.STILL_TICKS + 40;
-        helper.runAfterDelay(folded, () -> {
-            CarcassSavedData.Carcass carcass = CarcassSavedData.get(level).carcass(id[0]);
-            if (carcass == null || !carcass.resting) {
-                helper.fail("Carcass should be resting");
+        // punched ten ticks after it folds (built standing, its legs give way first, CarcassSlump: it folds some while after
+        // the stillness alone would have it), and looked at ten ticks after that
+        long[] folded = {-1};
+        helper.onEachTick(() -> {
+            long now = helper.getTick();
+            if (now < 5) {
                 return;
             }
-            if (carcass.bones.size() != 1) {
-                helper.fail("A resting carcass should remember only its torso body, found " + carcass.bones.keySet());
+            if (id[0] == null) {
+                id[0] = onlyCarcass(helper, level).id;
             }
-            if (!carcass.restCells.isEmpty()) {
-                helper.fail("A resting carcass should be the torso body alone, no extra cells");
-            }
-            ServerSubLevelContainer container = SubLevelContainer.getContainer(level);
-            SubLevel torso = container.getSubLevel(carcass.bones.get(carcass.rootBone));
-            BlockPos cell = torso.getPlot().getCenterBlock();
-            Player player = helper.makeMockPlayer(GameType.SURVIVAL);
-            player.setPos(Vec3.atBottomCenterOf(helper.absolutePos(new BlockPos(5, 2, 5))));
-            player.setOldPosAndRot();
-            level.getBlockState(cell).attack(level, cell, player);
-        });
-        helper.runAfterDelay(folded + 10, () -> {
             CarcassSavedData.Carcass carcass = CarcassSavedData.get(level).carcass(id[0]);
-            if (carcass.resting) {
-                helper.fail("A punched carcass should have unfolded");
+            if (folded[0] < 0) {
+                if (carcass != null && carcass.resting) {
+                    folded[0] = now;
+                } else if (now > FOLD_WITHIN) {
+                    helper.fail("Carcass should be resting");
+                }
+                return;
             }
-            if (liveBones(helper, level, carcass).size() != 6) {
-                helper.fail("Expected 6 bodies after the punch");
+            if (now == folded[0] + 10) {
+                if (carcass.bones.size() != 1) {
+                    helper.fail("A resting carcass should remember only its torso body, found " + carcass.bones.keySet());
+                }
+                if (!carcass.restCells.isEmpty()) {
+                    helper.fail("A resting carcass should be the torso body alone, no extra cells");
+                }
+                ServerSubLevelContainer container = SubLevelContainer.getContainer(level);
+                SubLevel torso = container.getSubLevel(carcass.bones.get(carcass.rootBone));
+                BlockPos cell = torso.getPlot().getCenterBlock();
+                Player player = helper.makeMockPlayer(GameType.SURVIVAL);
+                player.setPos(Vec3.atBottomCenterOf(helper.absolutePos(new BlockPos(5, 2, 5))));
+                player.setOldPosAndRot();
+                level.getBlockState(cell).attack(level, cell, player);
+            } else if (now == folded[0] + 20) {
+                if (carcass.resting) {
+                    helper.fail("A punched carcass should have unfolded");
+                }
+                if (liveBones(helper, level, carcass).size() != 6) {
+                    helper.fail("Expected 6 bodies after the punch");
+                }
+                if (!carcass.restCells.isEmpty()) {
+                    helper.fail("Rest cells should be gone");
+                }
+                helper.succeed();
             }
-            if (!carcass.restCells.isEmpty()) {
-                helper.fail("Rest cells should be gone");
-            }
-            helper.succeed();
         });
     }
 
     /** Mining the floor out from under a resting carcass lets it fall again. */
-    @GameTest(template = "empty", timeoutTicks = 300)
+    @GameTest(template = "empty", timeoutTicks = 600)
     public static void restingCarcassFallsWhenUnsupported(GameTestHelper helper) {
         ServerLevel level = helper.getLevel();
         // a one-block-high stone platform on top of the floor, so there is somewhere to fall to
@@ -1876,55 +1888,59 @@ public class BBGameTests {
         cow.discard();
         UUID[] id = new UUID[1];
         double[] restY = new double[1];
-        helper.runAfterDelay(5, () -> id[0] = nearestCarcass(helper, level, new BlockPos(5, 3, 5)).id);
-        int folded = 30 + com.avicagan.bloodandbones.carcass.CarcassRest.STILL_TICKS + 40;
-        helper.runAfterDelay(folded, () -> {
-            CarcassSavedData.Carcass carcass = CarcassSavedData.get(level).carcass(id[0]);
-            if (carcass == null || !carcass.resting) {
-                helper.fail("Carcass should be resting on the platform");
+        // the floor goes once it has folded (built standing, its legs give way first, CarcassSlump), and it is looked at
+        // every twenty ticks after, and judged a hundred ticks after
+        long[] folded = {-1};
+        helper.onEachTick(() -> {
+            long now = helper.getTick();
+            if (now < 5) {
                 return;
             }
-            ServerSubLevelContainer container = SubLevelContainer.getContainer(level);
-            restY[0] = container.getSubLevel(carcass.bones.get(carcass.rootBone)).logicalPose().position().y();
-            for (int x = 2; x <= 8; x++) {
-                for (int z = 2; z <= 8; z++) {
-                    helper.setBlock(new BlockPos(x, 2, z), net.minecraft.world.level.block.Blocks.AIR);
-                }
+            if (id[0] == null) {
+                id[0] = nearestCarcass(helper, level, new BlockPos(5, 3, 5)).id;
             }
-        });
-        for (int k = 1; k <= 5; k++) {
-            int at = folded + k * 20;
-            helper.runAfterDelay(at, () -> {
-                CarcassSavedData.Carcass carcass = CarcassSavedData.get(level).carcass(id[0]);
-                if (carcass == null) {
-                    return;
+            CarcassSavedData.Carcass carcass = CarcassSavedData.get(level).carcass(id[0]);
+            if (folded[0] < 0) {
+                if (carcass != null && carcass.resting) {
+                    folded[0] = now;
+                    ServerSubLevelContainer container = SubLevelContainer.getContainer(level);
+                    restY[0] = container.getSubLevel(carcass.bones.get(carcass.rootBone)).logicalPose().position().y();
+                    for (int x = 2; x <= 8; x++) {
+                        for (int z = 2; z <= 8; z++) {
+                            helper.setBlock(new BlockPos(x, 2, z), net.minecraft.world.level.block.Blocks.AIR);
+                        }
+                    }
+                } else if (now > FOLD_WITHIN) {
+                    helper.fail("Carcass should be resting on the platform");
                 }
+                return;
+            }
+            long after = now - folded[0];
+            if (after > 0 && after < 100 && after % 20 == 0 && carcass != null) {
                 ServerSubLevelContainer container = SubLevelContainer.getContainer(level);
                 StringBuilder trace = new StringBuilder();
                 for (Map.Entry<String, UUID> bone : carcass.bones.entrySet()) {
                     SubLevel s = container.getSubLevel(bone.getValue());
                     trace.append(' ').append(bone.getKey()).append('=').append(s == null ? "?" : String.format("%.2f", s.logicalPose().position().y()));
                 }
-                com.avicagan.bloodandbones.BloodAndBones.LOGGER.info("[support test] +{} resting {} lock {} cells {}:{}", at - folded, carcass.resting,
+                com.avicagan.bloodandbones.BloodAndBones.LOGGER.info("[support test] +{} resting {} lock {} cells {}:{}", after, carcass.resting,
                         carcass.restLock == null ? "none" : carcass.restLock.isValid(), carcass.restCells.size(), trace);
-            });
-        }
-        helper.runAfterDelay(folded + 100, () -> {
-            CarcassSavedData.Carcass carcass = CarcassSavedData.get(level).carcass(id[0]);
-            if (carcass == null) {
-                helper.fail("Carcass vanished");
-                return;
+            } else if (after == 100) {
+                if (carcass == null) {
+                    helper.fail("Carcass vanished");
+                    return;
+                }
+                // by now it has unfolded, fallen and may well have gone still and folded again on the lower floor;
+                // the ragdoll may also land on its feet, so judge the fall by its lowest body
+                double lowest = Double.MAX_VALUE;
+                for (ServerSubLevel bone : liveBones(helper, level, carcass).values()) {
+                    lowest = Math.min(lowest, bone.logicalPose().position().y());
+                }
+                if (lowest > restY[0] - 0.75) {
+                    helper.fail("The carcass should have fallen to the lower floor: torso rested at " + restY[0] + ", lowest body now " + lowest + ", resting=" + carcass.resting);
+                }
+                helper.succeed();
             }
-            // by now it has unfolded, fallen and may well have gone still and folded again on the lower floor;
-            // the ragdoll may also land on its feet, so judge the fall by its lowest body
-            double lowest = Double.MAX_VALUE;
-            for (ServerSubLevel bone : liveBones(helper, level, carcass).values()) {
-                lowest = Math.min(lowest, bone.logicalPose().position().y());
-            }
-            if (lowest > restY[0] - 0.75) {
-                helper.fail("The carcass should have fallen to the lower floor: torso rested at " + restY[0] + ", lowest body now " + lowest + ", resting=" + carcass.resting);
-            }
-            helper.succeed();
         });
     }
 
