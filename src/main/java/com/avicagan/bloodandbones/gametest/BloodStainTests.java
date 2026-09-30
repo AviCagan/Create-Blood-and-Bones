@@ -5,6 +5,7 @@ import com.avicagan.bloodandbones.bleeding.BloodStainBlock;
 import com.avicagan.bloodandbones.carcass.Blood;
 import com.avicagan.bloodandbones.carcass.CarcassAssembler;
 import com.avicagan.bloodandbones.carcass.CarcassDrag;
+import com.avicagan.bloodandbones.carcass.CarcassRest;
 import com.avicagan.bloodandbones.carcass.CarcassSavedData;
 import com.avicagan.bloodandbones.carcass.ShackleHookBlock;
 import com.avicagan.bloodandbones.carcass.ShackleHookBlockEntity;
@@ -172,10 +173,12 @@ public class BloodStainTests {
     }
 
     /**
-     * Meat hitting the ground: a cow carcass dropped from high up thuds when it lands (and a hard landing
-     * splats); one built lying on the ground stays quiet.
+     * Meat hitting the ground: a cow carcass dropped from high up thuds when it lands (and a hard landing splats); one
+     * lying on the ground, a ragdoll still, stays quiet. (Built standing, a cow's legs give way and it goes over, and its
+     * head coming down onto the ground thuds, as it should; so the quiet one is looked at once it has gone down and come
+     * to rest, and been woken from resting where it lies.)
      */
-    @GameTest(template = "empty", timeoutTicks = 200)
+    @GameTest(template = "empty", timeoutTicks = 400)
     public static void droppedCarcassThuds(GameTestHelper helper) {
         ServerLevel level = helper.getLevel();
         // the test space is seven blocks high: from its top, a fall of about four
@@ -189,12 +192,31 @@ public class BloodStainTests {
             helper.fail("Carcass assembly returned null");
             return;
         }
-        helper.runAfterDelay(120, () -> {
+        int[] woken = {-1};
+        int[] thudsBefore = {0};
+        int[] t = {0};
+        helper.onEachTick(() -> {
+            t[0]++;
+            if (woken[0] < 0) {
+                if (!lying.resting) {
+                    return;
+                }
+                if (CarcassRest.split(level, lying) == null) {
+                    helper.fail("The resting cow would not unfold");
+                    return;
+                }
+                woken[0] = t[0];
+                thudsBefore[0] = lying.thuds;
+                return;
+            }
+            if (t[0] < woken[0] + 60 || t[0] < 120) {
+                return;
+            }
             if (falling.thuds == 0) {
                 helper.fail("A carcass dropped four blocks should thud when it lands");
             }
-            if (lying.thuds > 0) {
-                helper.fail("A carcass built on the ground should not thud, it did " + lying.thuds + " times");
+            if (lying.thuds > thudsBefore[0]) {
+                helper.fail("A carcass lying on the ground should not thud, it did " + (lying.thuds - thudsBefore[0]) + " times");
             }
             helper.succeed();
         });
