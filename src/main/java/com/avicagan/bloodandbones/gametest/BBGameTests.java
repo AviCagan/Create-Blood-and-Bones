@@ -1385,6 +1385,12 @@ public class BBGameTests {
         Cow cow = helper.spawn(EntityType.COW, new BlockPos(3, 2, 3));
         Cow iced = helper.spawn(EntityType.COW, new BlockPos(7, 2, 7));
         Cow still = helper.spawn(EntityType.COW, new BlockPos(2, 2, 8));
+        // facing east, so that when its legs give way (CarcassSlump) it goes over north or south, not east toward the blue
+        // ice, which (within CarcassRot.RADIUS) kept it from rotting now and then
+        still.setYRot(-90.0F);
+        still.yBodyRot = -90.0F;
+        still.yBodyRotO = -90.0F;
+        still.setYHeadRot(-90.0F);
         CarcassSavedData.Carcass rotting = CarcassAssembler.assemble(cow, null);
         CarcassSavedData.Carcass kept = CarcassAssembler.assemble(iced, null);
         CarcassSavedData.Carcass folded = CarcassAssembler.assemble(still, null);

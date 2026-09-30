@@ -105,7 +105,7 @@ public class PhysicsTests {
     /**
      * A carcass lying still has one body, its torso; its legs and head are drawn from where they lay. A Meat Hook used at
      * a drawn hind leg (the look passing through it to the floor behind) hooks that leg, unfolding the carcass, not its
-     * torso; used at the drawn head, the head.
+     * torso; used at the drawn head, the head. The hind leg is the one on top, as it lies.
      */
     @GameTest(template = "empty", timeoutTicks = 400)
     public static void lyingCarcassHooksThePartAimedAt(GameTestHelper helper) {
@@ -125,6 +125,13 @@ public class PhysicsTests {
                 return;
             }
             String part = parts[next[0]];
+            // the hind leg on top: lying on its side (its legs give way under it, CarcassSlump), the one under it is hidden
+            // behind the other from where the stand-in looks
+            if (next[0] == 0) {
+                Vector3d right = drawnMiddle(s, "right_hind_leg");
+                Vector3d left = drawnMiddle(s, "left_hind_leg");
+                part = right == null || left == null || right.y >= left.y ? "right_hind_leg" : "left_hind_leg";
+            }
             Vector3d at = drawnMiddle(s, part);
             if (at == null) {
                 helper.fail("the resting carcass does not draw its " + part);
