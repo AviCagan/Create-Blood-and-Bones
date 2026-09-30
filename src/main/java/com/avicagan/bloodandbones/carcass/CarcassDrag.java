@@ -446,7 +446,7 @@ public final class CarcassDrag {
             if (isStandingOnCarcass(level, player, drag)) {
                 continue; // no pulling the ground out from under your own feet, or riding it
             }
-            boolean against = isAgainstPlayer(subLevel, drag, player);
+            boolean against = isAgainstPlayer(subLevel, player);
             pull(drag, subLevel, player, partial, timeStep, physics, against);
             if (!against) {
                 aim(level, drag, subLevel, player, partial, timeStep, physics);
@@ -515,10 +515,9 @@ public final class CarcassDrag {
         return level.getBlockEntity(body.getPlot().getCenterBlock()) instanceof CarcassPartBlockEntity cell ? cell.carcassId() : null;
     }
 
-    /** The hooked point is already in the player: pulling any harder would only shove them. */
-    private static boolean isAgainstPlayer(ServerSubLevel subLevel, Drag drag, LivingEntity player) {
-        Vector3d hook = subLevel.logicalPose().transformPosition(drag.anchorPlot, new Vector3d());
-        return player.getBoundingBox().inflate(0.15).contains(hook.x, hook.y, hook.z);
+    /** The hooked body is already touching the player: pulling any harder would only shove them. */
+    private static boolean isAgainstPlayer(ServerSubLevel subLevel, LivingEntity player) {
+        return subLevel.boundingBox().intersects(player.getBoundingBox().inflate(0.15));
     }
 
     /** The dragger's feet, across all the width it stands on (a broad hauler's reach well past a player's), are on (or in) one of the carcass's bodies. */
