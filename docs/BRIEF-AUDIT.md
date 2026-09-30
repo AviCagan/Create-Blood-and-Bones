@@ -90,7 +90,7 @@ Each decision unblocks one or more work packages below; the package numbers are 
 13. **The fourteen defaults of ARCHITECTURE 15.1** are still unconfirmed (docs/NEXT.md). Two of them overlap with decisions above:
     - #5 (heavy pieces never become items) is decision 2;
     - #8 (other illagers and the witch also make surgeons) goes with decision 12.
-14. **Which way a dragged carcass goes down (ARCHITECTURE 15.32).**
+14. **Which way a dragged carcass goes down (ARCHITECTURE 15.33).**
     - The rigs' legs cannot fold, so a dead animal left standing is tipped over by code when its legs "give way". A loose
       one goes the way it already leans. The brief says "Nothing about which way it falls should be scripted."
     - One dragged by a leg while it is still on its feet is tipped away from that leg, so the leg ends on top and can
@@ -112,9 +112,9 @@ The packages are in order of how much their gap hurts the brief:
 
 ### 1. Physics: where you hook it and where the blow lands
 
-Built in part (ARCHITECTURE 15.28, and 15.32 "Dead animals look dead", numbered at merge): the part aimed at is hooked,
+Built in part (ARCHITECTURE 15.28, and 15.33 "Dead animals look dead"): the part aimed at is hooked,
 the blow lands where it hits, heads loll, hung carcasses swing, bone and plate weigh more, the tests check directions.
-15.32: no dead animal is left standing on its legs any more (struck in the face, set down on a ship's deck, sitting up
+15.33: no dead animal is left standing on its legs any more (struck in the face, set down on a ship's deck, sitting up
 on its front legs, balanced on end): its legs give way and it goes over onto its side, 12 of 12 mobs down after every
 blow where 7 were after a blow in the face; hooked by a hind leg, 6 of 12 come round rear first where 3 did (the sheep,
 the llama and the pig now; the horse, the polar bear and the chicken not). That its legs give way at all is made up
@@ -156,7 +156,9 @@ and 14. The rest of this section is kept as it was written.
   - a hanging carcass swings when knocked;
   - one with a leg off hangs lower on that side;
   - a carcass dragged by a hind leg gets up a one-block step.
-- Find the cause of the `meatHookDragsByLeg` failure.
+- Find the cause of the `meatHookDragsByLeg` failure. (Found 30 September, `bb-leftovers`, ARCHITECTURE 15.32: the pull
+  went off and on as the leg's box swung near a dragger who had stopped. A leg held by someone standing still still
+  jitters; that is left to a physics pass.)
 
 **Size.** Large.
 
@@ -292,15 +294,17 @@ Then, either way:
 
 **Owner first.** Yes: decisions 2 and 7.
 
-### 5. The yield gap, and three paths that stay distinct (partly built 29 September 2026, `bb-machines`)
+### 5. The yield gap, and three paths that stay distinct (built 29 and 30 September 2026, `bb-machines` and `bb-leftovers`, but decision 6 and a provisional Keen Butcher)
 
-**Partly built.** ARCHITECTURE 15.19.1 has the details. The paths are data, by hand is about half with real loss, the
+**Built** but decision 6, with the Keen Butcher's carrier provisional. ARCHITECTURE 15.19.1 has the details, and 15.32 the Keen Butcher. The paths are data, by hand is about half with real loss, the
 Mangler is fastest with the least of anything a table gives (its loot less what its table already gives), the stations
 get all of it, and the Surgical Rig is the slowest at any speed with organs and the hide on top (a hand at the rig gets
-a hand's share). The knife is held on a part, and one test sends a cow down each path. **Not built:** nothing in
-survival carries the Keen Butcher trait, so the butchery yield is 1 for every player and minion (a balance-pass
-choice); decision 6 is still open, so the knife and the Cleaver stay two tools. The rest of this section is kept as it
-was written.
+a hand's share). The knife is held on a part, and one test sends a cow down each path. A butcher villager's Village
+Heart carries Keen Butcher II, worn in carcass armour or stitched into a minion, so the butchery yield can be raised in
+survival (30 September, 15.32). **Provisional:** which part carries Keen Butcher and at what level was left to the
+balance pass. The butcher's heart at level II (a hand's yield times 1.2) is the builder's choice, not the owner's: one
+variant in `mob_group/villager.json`, for the balance pass to keep, change or take out. **Not built:** decision 6 is
+still open, so the knife and the Cleaver stay two tools. The rest of this section is kept as it was written.
 
 **Why.** The brief says:
 - Flensing Knife: "Roughly half the yield of a machine, with random loss … Hold on a part to take it off."
@@ -484,13 +488,14 @@ Two things stay open there: bloodless sounds (package 9), and both of a rabbit's
 
 **Owner first.** No.
 
-### 10. Filters that pick one part out of a mixed line (partly built 29 September 2026, `bb-machines`)
+### 10. Filters that pick one part out of a mixed line (done 29 and 30 September 2026, `bb-machines` and `bb-leftovers`)
 
-**Partly built.** ARCHITECTURE 15.19.2 has the details. The machines, the Butcher's Table and the Surgical Rig ask their
-filter about each part they could take, a limb attribute takes any slot the data names, and mixed lines are tested.
-**Not built:** the butchering minion's filter (a minion's job is becoming a task, and how a task is given is decision
-12); a filter for single organs at the rig (it asks about the part an organ is in, so it cannot take only hearts;
-organs are main's data now). The rest of this section is kept as it was written.
+**Done.** ARCHITECTURE 15.19.2 and 15.32 have the details. The machines, the Butcher's Table and the Surgical Rig ask
+their filter about each part they could take, a limb attribute takes any slot the data names, and mixed lines are
+tested. Since 30 September the rig's filter also picks single organs: an organ in its slot, or "is the organ Heart", takes
+only hearts, out of whatever part holds them. The butchering minion obeys a filter too: a brass one's filter slot, or a
+sample held beside its blade, as a courier's sample, and the filter of a Butcher's Table it cuts on. The rest of this
+section is kept as it was written.
 
 **Why.**
 - "A filtered machine pulls one specific part out of a mixed line and passes the rest through untouched."
@@ -830,6 +835,8 @@ One line each. Details and test names are in ARCHITECTURE sections 13 to 15.
 - **Rigs:** generated from vanilla models by a data run.
 - **The Mangler:** grinds carcasses and loose limbs into meat, bone, offal, fat, and scraps stamped with the mob and the part.
 - **The other machines:** the Beheader, Guillotine and Deglover each take their part.
+- **Filters:** every station that takes parts out picks them by its filter, one part or one organ (a heart), and so does a
+  butcher minion, by its filter or a sample held beside its blade (packages 10 and 15).
 - **The Bleeding Rack:** drains into a tank with no power; nether mobs bleed soul blood.
 - **Furniture:** the Surgery Table and its two attachments, the Specimen Jar, Steel Tables that join into a run, and Steel Racks with shelves.
 - **Blood:** blood and soul blood work as Create fluids through pipes, tanks, spouts and drains.

@@ -815,4 +815,84 @@ public class ButcheryPathTests {
             helper.succeed();
         });
     }
+
+    /**
+     * Keen Butcher is reachable in survival (docs/BRIEF-AUDIT.md package 5): a butcher villager's Village Heart carries it
+     * (the villager family's data, a variant on the carcass's profession). A butcher villager killed to a carcass keeps its
+     * profession; the Surgical Rig, set to the Village Heart, takes that organ out, and it keeps the profession. Fitted in a
+     * villager chestplate it gives the wearer Keen Butcher II, a butchery yield of 1.2; a farmer's heart gives none. Fitted
+     * in a minion it gives the minion the same.
+     */
+    @GameTest(template = "empty", timeoutTicks = 60)
+    public static void butcherVillagersHeartIsKeen(GameTestHelper helper) {
+        ServerLevel level = helper.getLevel();
+        com.avicagan.bloodandbones.parts.PartsData.Store store = com.avicagan.bloodandbones.parts.PartsData.SERVER;
+        ResourceLocation villagerId = ResourceLocation.withDefaultNamespace("villager");
+        ResourceLocation villageHeart = BloodAndBones.asResource("village_heart");
+        ResourceLocation keen = BloodAndBones.asResource("keen_butcher");
+        net.minecraft.world.entity.npc.Villager villager = helper.spawn(EntityType.VILLAGER, new BlockPos(3, 2, 3));
+        villager.setVillagerData(villager.getVillagerData().setProfession(net.minecraft.world.entity.npc.VillagerProfession.BUTCHER));
+        CarcassSavedData.Carcass carcass = CarcassAssembler.assemble(villager, null);
+        villager.discard();
+        if (carcass == null) {
+            helper.fail("Carcass assembly returned null");
+            return;
+        }
+        helper.assertTrue("butcher".equals(carcass.traits.get("profession")), "the carcass should keep its profession: " + carcass.traits);
+        // the rig, set to the Village Heart, takes it out of the villager's body
+        BlockPos rigAt = new BlockPos(7, 2, 3);
+        helper.setBlock(rigAt, BBBlocks.SURGERY_TABLE.getDefaultState().setValue(SurgeryTableBlock.ATTACHMENT, TableAttachment.SURGICAL));
+        SurgeryTableBlockEntity rig = (SurgeryTableBlockEntity) level.getBlockEntity(helper.absolutePos(rigAt));
+        rig.filtering.setFilter(PartFilterTests.attributeFilter(new com.avicagan.bloodandbones.registry.BBItemAttributes.OrganIs(villageHeart)));
+        rig.put(CarcassPieceItem.of(carcass, carcass.rootBone));
+        Player surgeon = helper.makeMockPlayer(GameType.SURVIVAL);
+        helper.assertTrue(SurgicalRig.cut(level, surgeon, rig, new ItemStack(BBItems.CLEAVER.get())), "the rig should take the Village Heart out");
+        ItemStack heart = surgeon.getInventory().items.stream().filter(stack -> stack.is(BBItems.GLAND.get())).findFirst().orElse(ItemStack.EMPTY);
+        com.avicagan.bloodandbones.parts.CarcassArmour.Organ organ = com.avicagan.bloodandbones.parts.Organs.of(heart, store);
+        helper.assertTrue(organ != null && organ.organ().equals(villageHeart) && "butcher".equals(organ.traits().get("profession")),
+                "the Village Heart should come out keeping the butcher's profession: " + organ);
+        // worn
+        Player wearer = helper.makeMockPlayer(GameType.SURVIVAL);
+        wearer.setItemSlot(net.minecraft.world.entity.EquipmentSlot.CHEST, chestplateWith(organ));
+        com.avicagan.bloodandbones.parts.ActiveTraits.rebuild(wearer);
+        var yield = wearer.getAttribute(com.avicagan.bloodandbones.registry.BBAttributes.BUTCHERY_YIELD);
+        helper.assertTrue(com.avicagan.bloodandbones.parts.ActiveTraits.of(wearer).level(keen) == 2 && Math.abs(yield.getValue() - 1.2) < 1.0E-6,
+                "a butcher's heart worn should give Keen Butcher II, a butchery yield of 1.2: " + com.avicagan.bloodandbones.parts.ActiveTraits.of(wearer).level(keen)
+                        + ", " + yield.getValue());
+        com.avicagan.bloodandbones.parts.CarcassArmour.Organ farmers = com.avicagan.bloodandbones.parts.Organs.of(
+                com.avicagan.bloodandbones.parts.Organs.stack(store, villageHeart, villagerId, false, Map.of("profession", "farmer")), store);
+        Player farmer = helper.makeMockPlayer(GameType.SURVIVAL);
+        farmer.setItemSlot(net.minecraft.world.entity.EquipmentSlot.CHEST, chestplateWith(farmers));
+        com.avicagan.bloodandbones.parts.ActiveTraits.rebuild(farmer);
+        helper.assertTrue(com.avicagan.bloodandbones.parts.ActiveTraits.of(farmer).level(keen) == 0
+                && farmer.getAttribute(com.avicagan.bloodandbones.registry.BBAttributes.BUTCHERY_YIELD).getValue() == 1.0, "a farmer's heart should give none");
+        // fitted in a minion
+        com.avicagan.bloodandbones.minion.MinionBuild build = com.avicagan.bloodandbones.minion.MinionBuild.of(villagerPiece("body"))
+                .with("head", villagerPiece("head")).with("arms", villagerPiece("arms")).withOrgan(java.util.Optional.of(organ));
+        helper.assertTrue(com.avicagan.bloodandbones.minion.MinionData.levels(store, build).getOrDefault(keen, 0) == 2,
+                "a minion with a butcher's heart should have Keen Butcher II: " + com.avicagan.bloodandbones.minion.MinionData.levels(store, build));
+        com.avicagan.bloodandbones.minion.MinionEntity minion = com.avicagan.bloodandbones.registry.BBEntities.MINION.get().create(level);
+        BlockPos at = helper.absolutePos(new BlockPos(3, 2, 7));
+        minion.moveTo(at.getX() + 0.5, at.getY(), at.getZ() + 0.5, 0.0F, 0.0F);
+        minion.setup(surgeon, at, build, 1000.0F);
+        level.addFreshEntity(minion);
+        helper.runAfterDelay(5, () -> {
+            double value = minion.getAttributeValue(com.avicagan.bloodandbones.registry.BBAttributes.BUTCHERY_YIELD);
+            helper.assertTrue(Math.abs(value - 1.2) < 1.0E-6, "the minion's butchery yield should be 1.2: " + value);
+            minion.discard();
+            helper.succeed();
+        });
+    }
+
+    /** A villager chestplate with this organ fitted. */
+    private static ItemStack chestplateWith(com.avicagan.bloodandbones.parts.CarcassArmour.Organ organ) {
+        ItemStack chest = TestTraits.piece("chestplate", ResourceLocation.withDefaultNamespace("villager"));
+        return com.avicagan.bloodandbones.parts.CarcassArmourItem.make(chest,
+                com.avicagan.bloodandbones.parts.CarcassArmourItem.armour(chest).withOrgan(java.util.Optional.of(organ)), com.avicagan.bloodandbones.parts.PartsData.SERVER);
+    }
+
+    private static com.avicagan.bloodandbones.minion.PieceRef villagerPiece(String bone) {
+        return new com.avicagan.bloodandbones.minion.PieceRef(ResourceLocation.withDefaultNamespace("villager"), bone,
+                ResourceLocation.withDefaultNamespace("textures/entity/villager/villager.png"), List.of(), 1.0F, false, Map.of("profession", "butcher"), false);
+    }
 }

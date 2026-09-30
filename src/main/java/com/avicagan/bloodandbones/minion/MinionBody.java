@@ -204,9 +204,16 @@ public final class MinionBody {
      *
      * @param right whether the holding arm is on its right side (drawn as a right hand's item)
      * @param how   "hand", "pair" or "mouth"
+     * @param other where it holds a second thing, its other hand's (a butcher's sample beside its blade): a second arm of
+     *              hand grip, else the other side of a pair of arms, else its mouth; {@link Hold#NONE} with nowhere else
      */
-    public record Anchors(int hold, Vector3f holdAt, boolean right, String how, int head) {
-        public static final Anchors NONE = new Anchors(-1, new Vector3f(), true, "hand", -1);
+    public record Anchors(int hold, Vector3f holdAt, boolean right, String how, int head, Hold other) {
+        public static final Anchors NONE = new Anchors(-1, new Vector3f(), true, "hand", -1, Hold.NONE);
+    }
+
+    /** One place it holds something: the piece, the point in its own frame in pixels, which side, and how ("hand", "pair", "mouth"). */
+    public record Hold(int piece, Vector3f at, boolean right, String how) {
+        public static final Hold NONE = new Hold(-1, new Vector3f(), true, "hand");
     }
 
     /** Where this build holds and wears things (see {@link Anchors}). */
@@ -214,6 +221,7 @@ public final class MinionBody {
         PieceRef headPiece = MinionStats.head(store, build);
         int head = -1;
         int hand = -1;
+        int second = -1;
         String how = "hand";
         for (int i = 0; i < layout.pieces().size(); i++) {
             Placement placement = layout.pieces().get(i);
@@ -223,23 +231,44 @@ public final class MinionBody {
             if (head < 0 && placement.piece() == headPiece) {
                 head = i;
             }
-            if (hand < 0 && placement.slot().slot() == PartSlot.ARM) {
+            if ((hand < 0 || second < 0) && placement.slot().slot() == PartSlot.ARM) {
                 var mob = store.resolve(placement.piece().entity(), placement.piece().baby());
                 String grip = MinionData.field(mob, placement.slot().key(), "grip").filter(com.google.gson.JsonElement::isJsonPrimitive)
                         .map(com.google.gson.JsonElement::getAsString).orElse("hand");
                 if ("hand".equals(grip)) {
-                    hand = i;
-                    how = "pair".equals(placement.slot().form()) ? "pair" : "hand";
+                    if (hand < 0) {
+                        hand = i;
+                        how = "pair".equals(placement.slot().form()) ? "pair" : "hand";
+                    } else if (!"pair".equals(how) && !"pair".equals(placement.slot().form())) {
+                        second = i;
+                    }
                 }
             }
         }
         if (hand >= 0) {
             Placement arm = layout.pieces().get(hand);
             boolean right = arm.pose().getTranslation(new Vector3f()).x < 0.0F;
-            return new Anchors(hand, "pair".equals(how) ? front(arm.bone()) : grip(arm.bone()), right, how, head);
+            Hold other = Hold.NONE;
+            if (second >= 0) {
+                Placement arm2 = layout.pieces().get(second);
+                other = new Hold(second, grip(arm2.bone()), arm2.pose().getTranslation(new Vector3f()).x < 0.0F, "hand");
+            } else if ("pair".equals(how)) {
+                // a pair of folded arms holds the second thing on the other side of its middle from the first, a little out from
+                // the arms so a small thing is not lost in them. The middle is the pair's own (x = 0): a villager's arms have
+                // the box of one arm only, off to one side, where what it holds sits. With its box in the middle, the second
+                // goes to one side of it (and what is in its hand, drawn beside it, to the other).
+                Vector3f at = front(arm.bone());
+                Vector3f lo = arm.bone().boxMin();
+                Vector3f hi = arm.bone().boxMax();
+                float side = Math.abs(at.x) > 1.0F ? -at.x : at.x + (hi.x - lo.x) * 0.3F;
+                other = new Hold(hand, new Vector3f(side, at.y, at.z - 2.0F), !right, "pair");
+            } else if (head >= 0) {
+                other = new Hold(head, mouth(layout.pieces().get(head).bone()), true, "mouth");
+            }
+            return new Anchors(hand, "pair".equals(how) ? front(arm.bone()) : grip(arm.bone()), right, how, head, other);
         }
         if (head >= 0) {
-            return new Anchors(head, mouth(layout.pieces().get(head).bone()), true, "mouth", head);
+            return new Anchors(head, mouth(layout.pieces().get(head).bone()), true, "mouth", head, Hold.NONE);
         }
         return Anchors.NONE;
     }

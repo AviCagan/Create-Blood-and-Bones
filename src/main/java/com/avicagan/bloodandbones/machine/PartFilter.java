@@ -21,7 +21,11 @@ import org.jetbrains.annotations.Nullable;
  * <li>A list filter: each entry asked the same way, as a whitelist or a blacklist.</li>
  * <li>An attribute filter: asked about the part as Create asks it about an item, so "is a carcass hind leg" takes
  * only hind legs (BBItemAttributes), "is a piece of Cow" only a cow's.</li>
+ * <li>An organ (a heart, a Gland, a Spider Eye): that organ, out of any mob; no part that is not one.</li>
  * </ul>
+ * A filter that names an organ ({@link #namesOrgans}: an organ in it, in its list, or "is the organ ..." among its
+ * attributes) picks organs: the Surgical Rig asks it about each organ it could take, as the item that organ comes out as,
+ * so one set to a heart takes only hearts. A filter that names only mobs and parts takes a part's organs with the part.
  */
 public final class PartFilter {
     private PartFilter() {
@@ -29,9 +33,41 @@ public final class PartFilter {
 
     /** What may go in the slot: a spawn egg, a carcass piece, or a Create filter. */
     public static boolean allowed(ItemStack stack) {
+        return allowed(stack, false);
+    }
+
+    /**
+     * The same, where organs come out (the Surgical Rig): an organ goes in too. Nothing else takes organs out, so a
+     * machine's or a Butcher's Table's slot turns one away rather than hold a filter that passes nothing.
+     */
+    public static boolean allowed(ItemStack stack, boolean organs) {
         return stack.getItem() instanceof SpawnEggItem
                 || stack.is(com.avicagan.bloodandbones.registry.BBItems.CARCASS_PIECE.get())
-                || stack.getItem() instanceof FilterItem;
+                || stack.getItem() instanceof FilterItem
+                || organs && organ(stack) != null;
+    }
+
+    /** The organ an item in the slot (or in a list) names, whoever it came out of; null for none. */
+    @Nullable
+    static ResourceLocation organ(ItemStack stack) {
+        return com.avicagan.bloodandbones.parts.Organs.idOf(stack, com.avicagan.bloodandbones.parts.CarcassArmourItem.store());
+    }
+
+    /**
+     * Whether a filter picks organs rather than parts: an organ, a list with one in it, or an Attribute Filter asking which
+     * organ an item is. The rig then asks it about each organ as itself; otherwise about the part the organ is in.
+     */
+    public static boolean namesOrgans(FilterItemStack filter) {
+        if (filter.item().isEmpty()) {
+            return false;
+        }
+        if (filter instanceof FilterItemStack.ListFilterItemStack list) {
+            return list.containedItems.stream().anyMatch(PartFilter::namesOrgans);
+        }
+        if (filter instanceof FilterItemStack.AttributeFilterItemStack attributes) {
+            return attributes.attributeTests.stream().anyMatch(test -> test.getFirst() instanceof com.avicagan.bloodandbones.registry.BBItemAttributes.OrganIs);
+        }
+        return !filter.isFilterItem() && organ(filter.item()) != null;
     }
 
     /** Whether a filter lets a station take this part of a carcass. */
@@ -63,6 +99,10 @@ public final class PartFilter {
             CarcassPieceItem.Piece piece = CarcassPieceItem.piece(item);
             return piece == null || piece.entity().equals(mobOf(part));
         }
+        ResourceLocation organ = item.getItem() instanceof FilterItem ? null : organ(item);
+        if (organ != null) {
+            return organ.equals(com.avicagan.bloodandbones.parts.Organs.idOf(part, com.avicagan.bloodandbones.parts.PartsData.of(level)));
+        }
         if (filter instanceof FilterItemStack.ListFilterItemStack list) {
             for (FilterItemStack entry : list.containedItems) {
                 if (test(level, entry, part)) {
@@ -72,6 +112,26 @@ public final class PartFilter {
             return list.isBlacklist;
         }
         return filter.test(level, part);
+    }
+
+    /**
+     * Whether a part is like a sample held up to it (a butcher minion's other hand, docs/BRIEF-AUDIT.md package 10): a
+     * carcass piece held means that part of that mob (a cow's hind leg: cows' hind legs, by the slot rules that are data);
+     * a filter or anything else held is asked as the slot asks it.
+     */
+    public static boolean alike(Level level, ItemStack sample, ItemStack part) {
+        if (sample.isEmpty()) {
+            return true;
+        }
+        CarcassPieceItem.Piece held = CarcassPieceItem.piece(sample);
+        if (held == null) {
+            return takes(level, sample, part);
+        }
+        CarcassPieceItem.Piece piece = CarcassPieceItem.piece(part);
+        return piece != null && held.entity().equals(piece.entity()) && held.baby() == piece.baby()
+                && com.avicagan.bloodandbones.registry.BBItemAttributes.PiecePart.kindOf(held, level).equals(com.avicagan.bloodandbones.registry.BBItemAttributes.PiecePart.kindOf(piece, level))
+                && java.util.Objects.equals(com.avicagan.bloodandbones.registry.BBItemAttributes.PieceSlot.slotOf(held, level),
+                com.avicagan.bloodandbones.registry.BBItemAttributes.PieceSlot.slotOf(piece, level));
     }
 
     /** The mob a part came from: a piece's, an organ's or a hide's stamp; null if it does not say. */

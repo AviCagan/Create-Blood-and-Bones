@@ -273,4 +273,100 @@ public class SurgicalRigTests {
                 })
                 .thenSucceed();
     }
+
+    private static ResourceLocation bb(String path) {
+        return BloodAndBones.asResource(path);
+    }
+
+    /**
+     * A filter for single organs (docs/BRIEF-AUDIT.md package 10: "every station that removes parts carries a filter"). An
+     * organ goes in the rig's slot, and the Attribute Filter offers "is the organ Heart" for one. Set to a heart, a cow's body
+     * laid on the rig gives its heart and then nothing, the lungs after it left in; "is the organ Stomach" takes the stomach
+     * past the lungs, the count kept as the places taken ("0,2"); a Filter holding the rumen's Gland takes the rumen; with
+     * no filter the lungs come out last, and then the hide. A whole cow lying on a rig set to eyes gives its head's two eyes
+     * and nothing of its body, and is not flayed, cut up or unfolded for it. A Butcher's Table's slot turns a heart away
+     * (organs never come out there: a Cleaver there cuts a piece into its butchery table).
+     */
+    @GameTest(template = "empty", timeoutTicks = 200)
+    public static void rigFilterPicksSingleOrgans(GameTestHelper helper) {
+        ServerLevel level = helper.getLevel();
+        BlockPos pieceRig = new BlockPos(3, 2, 3);
+        BlockPos cowRig = new BlockPos(3, 2, 10);
+        SurgeryTableBlockEntity first = rig(helper, pieceRig);
+        SurgeryTableBlockEntity second = rig(helper, cowRig);
+        FakePlayer deployer = FakePlayerFactory.getMinecraft(level);
+        ItemStack blade = new ItemStack(BBItems.CLEAVER.get());
+        helper.assertTrue(first.filtering.allows(new ItemStack(BBItems.HEART.get()))
+                && !first.filtering.allows(new ItemStack(net.minecraft.world.item.Items.STICK)), "an organ, not a stick, should go in the rig's slot");
+        helper.assertTrue(com.simibubi.create.content.logistics.item.filter.attribute.ItemAttribute.getAllAttributes(new ItemStack(BBItems.HEART.get()), level)
+                .contains(new com.avicagan.bloodandbones.registry.BBItemAttributes.OrganIs(bb("heart"))), "the Attribute Filter should offer \"is the organ Heart\"");
+        // a heart in the slot: the heart and nothing after it
+        first.filtering.setFilter(new ItemStack(BBItems.HEART.get()));
+        first.put(piece("body"));
+        helper.assertTrue(SurgicalRig.cut(level, deployer, first, blade), "a rig set to a heart should take a cow's heart");
+        helper.assertTrue(!SurgicalRig.cut(level, deployer, first, blade), "and then nothing: the lungs are next, and not a heart");
+        helper.assertTrue(Surgery.organsTaken(CarcassPieceItem.piece(first.item())) == 1 && !CarcassPieceItem.piece(first.item()).skinned(),
+                "one organ out, the piece not flayed with organs still in it");
+        // the stomach, past the lungs
+        first.filtering.setFilter(PartFilterTests.attributeFilter(new com.avicagan.bloodandbones.registry.BBItemAttributes.OrganIs(bb("stomach"))));
+        helper.assertTrue(SurgicalRig.cut(level, deployer, first, blade) && !SurgicalRig.cut(level, deployer, first, blade),
+                "\"is the organ Stomach\" should take the stomach and then nothing");
+        helper.assertTrue("0,2".equals(CarcassPieceItem.piece(first.item()).traits().get(Surgery.ORGANS_TAKEN)),
+                "the heart and the stomach out, the lungs still in: " + CarcassPieceItem.piece(first.item()).traits());
+        // a Filter holding the rumen's Gland
+        ItemStack list = new ItemStack(com.simibubi.create.AllItems.FILTER.get());
+        list.set(com.simibubi.create.AllDataComponents.FILTER_ITEMS, net.minecraft.world.item.component.ItemContainerContents.fromItems(
+                List.of(com.avicagan.bloodandbones.parts.Organs.stack(com.avicagan.bloodandbones.parts.PartsData.SERVER, bb("rumen"), COW, false))));
+        first.filtering.setFilter(list);
+        helper.assertTrue(SurgicalRig.cut(level, deployer, first, blade) && !SurgicalRig.cut(level, deployer, first, blade),
+                "a Filter holding the rumen should take the rumen and then nothing");
+        // no filter: the lungs, then the hide
+        first.filtering.setFilter(ItemStack.EMPTY);
+        helper.assertTrue(SurgicalRig.cut(level, deployer, first, blade) && Surgery.organsTaken(CarcassPieceItem.piece(first.item())) == 4,
+                "with no filter the lungs should come out last");
+        helper.assertTrue(SurgicalRig.cut(level, deployer, first, blade) && CarcassPieceItem.piece(first.item()).skinned(), "and then the hide");
+        // organs never come out at a Butcher's Table (its Cleaver cuts a piece into its butchery table) or a machine: their
+        // slots turn a heart away rather than hold a filter that passes nothing
+        BlockPos butcherAt = new BlockPos(8, 2, 3);
+        helper.setBlock(butcherAt, BBBlocks.BUTCHER_TABLE.getDefaultState());
+        var butcher = (com.avicagan.bloodandbones.cooking.ButcherTableBlockEntity) level.getBlockEntity(helper.absolutePos(butcherAt));
+        helper.assertTrue(!butcher.filtering.setFilter(new ItemStack(BBItems.HEART.get())) && butcher.filtering.getFilter().isEmpty()
+                && !butcher.filtering.allows(new ItemStack(BBItems.HEART.get())), "a Butcher's Table's slot should turn a heart away");
+        helper.assertTrue(butcher.inventory.insertItem(0, piece("body"), false).isEmpty() && !butcher.specimen().isEmpty(),
+                "and still take a piece");
+        // a whole cow lying on a rig set to eyes
+        second.filtering.setFilter(new ItemStack(BBItems.EYE.get()));
+        CarcassSavedData.Carcass cow = cow(helper, cowRig.above());
+        if (cow == null) {
+            return;
+        }
+        int bones = cow.bones.size();
+        Map<Item, Integer> swept = new java.util.HashMap<>();
+        helper.startSequence()
+                .thenIdle(2)
+                .thenExecute(() -> sweep(helper, pieceRig, swept))
+                .thenExecute(() -> {
+                    helper.assertTrue(swept.getOrDefault(BBItems.HEART.get(), 0) == 1 && swept.getOrDefault(BBItems.STOMACH.get(), 0) == 1
+                            && swept.getOrDefault(BBItems.GLAND.get(), 0) == 1 && swept.getOrDefault(BBItems.LUNGS.get(), 0) == 1,
+                            "the body should give one of each, each by its filter: " + swept);
+                    swept.clear();
+                })
+                .thenWaitUntil(() -> helper.assertTrue(!cowsOver(helper, cowRig).isEmpty(), "the cow should lie over the second rig"))
+                .thenExecute(() -> {
+                    helper.assertTrue(SurgicalRig.cut(level, deployer, second, blade) && SurgicalRig.cut(level, deployer, second, blade),
+                            "a rig set to eyes should take the cow's two eyes");
+                    helper.assertTrue(!SurgicalRig.cut(level, deployer, second, blade), "and then nothing");
+                    helper.assertTrue("2".equals(cow.traits.get(Surgery.ORGANS_TAKEN + ":head")) && !cow.traits.containsKey(Surgery.ORGANS_TAKEN + ":body"),
+                            "the head's two out and none of the body's: " + cow.traits);
+                    helper.assertTrue(!cow.skinned && cow.bones.size() + cow.restPoses.size() >= bones && CarcassSavedData.get(level).carcass(cow.id) == cow,
+                            "the cow should be left whole and unflayed");
+                })
+                .thenIdle(2)
+                .thenExecute(() -> {
+                    sweep(helper, cowRig, swept);
+                    helper.assertTrue(swept.getOrDefault(BBItems.EYE.get(), 0) == 2 && swept.getOrDefault(BBItems.HEART.get(), 0) == 0,
+                            "two eyes and no heart from the cow: " + swept);
+                })
+                .thenSucceed();
+    }
 }

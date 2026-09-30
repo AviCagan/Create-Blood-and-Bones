@@ -93,6 +93,10 @@ public class MotionEffectTests {
         minion.moveTo(at.getX() + 0.5, at.getY(), at.getZ() + 0.5, 0.0F, 0.0F);
         minion.setup(maker, at, build, 1000.0F);
         level.addFreshEntity(minion);
+        // Idle at home. Woken, a cow's torso takes the Hauler's task, which reaches 24 blocks from home: in the full suite
+        // it set off after the carcasses of the tests beside it, and the lava walker was found up on its pool's rim
+        // (lavaWalkerFindsAPathOnLava, now and then). A test that wants a task sets its own.
+        minion.setTask(com.avicagan.bloodandbones.minion.MinionTask.IDLE);
         return minion;
     }
 
@@ -717,7 +721,7 @@ public class MotionEffectTests {
                 walker.discard();
                 helper.fail("The lava walker should be standing on the lava before it sets off: " + walker.position() + " on "
                         + helper.getLevel().getBlockState(walker.blockPosition().below()) + " / " + helper.getLevel().getBlockState(walker.blockPosition())
-                        + ", pool corner " + helper.absolutePos(new BlockPos(1, 2, 1)) + ", goals " + walker.goalSelector.getAvailableGoals().stream()
+                        + ", pool corner " + helper.absolutePos(new BlockPos(1, 2, 1)) + ", task " + walker.task() + ", goals " + walker.goalSelector.getAvailableGoals().stream()
                         .filter(net.minecraft.world.entity.ai.goal.WrappedGoal::isRunning).map(g -> g.getGoal().getClass().getSimpleName()).toList());
                 return;
             }

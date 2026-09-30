@@ -12,6 +12,7 @@ import com.avicagan.bloodandbones.carcass.ShackleHookBlock;
 import com.avicagan.bloodandbones.carcass.ShackleHookBlockEntity;
 import com.avicagan.bloodandbones.carcass.rig.RigManager;
 import com.avicagan.bloodandbones.cooking.ButcherTableBlockEntity;
+import com.avicagan.bloodandbones.item.CarcassPieceItem;
 import com.avicagan.bloodandbones.item.FlensingKnifeItem;
 import com.avicagan.bloodandbones.network.MinionTaskPayload;
 import com.avicagan.bloodandbones.parts.PartsData;
@@ -66,6 +67,7 @@ import net.minecraft.world.item.alchemy.PotionContents;
 import net.minecraft.world.item.enchantment.EnchantmentHelper;
 import net.minecraft.world.item.enchantment.Enchantments;
 import net.minecraft.world.level.BlockGetter;
+import net.minecraft.world.level.Level;
 import net.minecraft.world.level.block.entity.BlockEntity;
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.level.chunk.LevelChunk;
@@ -93,6 +95,7 @@ import java.util.Comparator;
 import java.util.EnumSet;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Map;
 import java.util.Objects;
 import java.util.Optional;
 import java.util.Set;
@@ -383,6 +386,13 @@ public final class MinionTasks {
                 minion.level().playSound(null, minion.blockPosition(), SoundEvents.ARMOR_EQUIP_LEATHER.value(), SoundSource.NEUTRAL, 0.6F, 0.8F);
                 return InteractionResult.CONSUME;
             }
+            if (hand == InteractionHand.MAIN_HAND && !minion.getOffhandItem().isEmpty() && !(minion.isSaddled() && !minion.isVehicle())) {
+                // what it holds beside its blade (a butcher's sample) comes back first
+                player.getInventory().placeItemBackInInventory(minion.getOffhandItem());
+                minion.setItemSlot(EquipmentSlot.OFFHAND, ItemStack.EMPTY);
+                minion.level().playSound(null, minion.blockPosition(), SoundEvents.ITEM_PICKUP, SoundSource.NEUTRAL, 0.6F, 0.9F);
+                return InteractionResult.CONSUME;
+            }
             if (holding.isEmpty() || hand != InteractionHand.MAIN_HAND || minion.isSaddled() && !minion.isVehicle()) {
                 return null;
             }
@@ -393,6 +403,26 @@ public final class MinionTasks {
         }
         if (!takes(given)) {
             return null;
+        }
+        if (minion.hasTask(MinionTask.BUTCHER) && tool(minion, MinionTask.BUTCHER, holding) && sample(given)) {
+            // a butcher holding its blade takes a piece (or a filter) beside it as its sample: it then takes only parts like it
+            if (!secondHold(minion)) {
+                player.displayClientMessage(Component.translatable("bloodandbones.minion.no_second_hold"), true);
+                return InteractionResult.CONSUME;
+            }
+            ItemStack old = minion.getOffhandItem();
+            ItemStack one = given.copyWithCount(1);
+            if (!player.hasInfiniteMaterials()) {
+                given.shrink(1);
+            }
+            if (!old.isEmpty()) {
+                player.getInventory().placeItemBackInInventory(old);
+            }
+            minion.setItemSlot(EquipmentSlot.OFFHAND, one);
+            minion.setDropChance(EquipmentSlot.OFFHAND, 0.0F);
+            minion.level().playSound(null, minion.blockPosition(), SoundEvents.ITEM_PICKUP, SoundSource.NEUTRAL, 0.6F, 1.2F);
+            player.displayClientMessage(Component.translatable("bloodandbones.minion.sample", one.getHoverName()), true);
+            return InteractionResult.CONSUME;
         }
         if (stocks(minion, given)) {
             ItemStack left = minion.carry(given.copy());
@@ -442,6 +472,72 @@ public final class MinionTasks {
         minion.level().playSound(null, minion.blockPosition(), SoundEvents.ITEM_PICKUP, SoundSource.NEUTRAL, 0.6F, 1.2F);
         player.displayClientMessage(Component.translatable("bloodandbones.minion.holds", one.getHoverName()), true);
         return InteractionResult.CONSUME;
+    }
+
+    /** What a butcher takes as its sample: a carcass piece, or one of Create's filters. */
+    static boolean sample(ItemStack stack) {
+        return stack.is(com.avicagan.bloodandbones.registry.BBItems.CARCASS_PIECE.get())
+                || stack.getItem() instanceof com.simibubi.create.content.logistics.filter.FilterItem;
+    }
+
+    /** Whether its body has somewhere to hold a second thing beside what is in its hand (MinionBody.Anchors#other). */
+    static boolean secondHold(MinionEntity minion) {
+        PartsData.Store store = PartsData.of(minion.level());
+        return minion.build().map(build -> MinionBody.anchors(store, build, MinionBody.layout(store, build)).other().piece() >= 0).orElse(false);
+    }
+
+    /**
+     * Whether a butcher takes this part of a carcass: its filter (brass) passes it, it is like the sample in its other hand,
+     * and it is not among the parts a Butcher's Table's filter turns away ({@link #turnedAway}, gathered once for a look
+     * round).
+     */
+    static boolean butcherTakes(MinionEntity minion, CarcassSavedData.Carcass carcass, String bone, Map<UUID, Set<String>> turnedAway) {
+        Set<String> away = turnedAway.get(carcass.id);
+        if (away != null && away.contains(bone)) {
+            return false;
+        }
+        Level level = minion.level();
+        if (!minion.filter().allowsPart(level, carcass, bone)) {
+            return false;
+        }
+        ItemStack sample = minion.getOffhandItem();
+        return sample.isEmpty() || com.avicagan.bloodandbones.machine.PartFilter.alike(level, sample, CarcassPieceItem.of(carcass, bone));
+    }
+
+    /** Whether a butcher takes this piece, given as its item (one laid on a Butcher's Table): its filter and its sample. */
+    static boolean butcherTakes(MinionEntity minion, ItemStack piece) {
+        Level level = minion.level();
+        return minion.filter().allowsPart(level, piece) && com.avicagan.bloodandbones.machine.PartFilter.alike(level, minion.getOffhandItem(), piece);
+    }
+
+    /**
+     * The parts lying on the tops of Butcher's Tables within this far of home whose filter turns them away (a table set to
+     * heads, a leg on it), by carcass. Only tables with a filter set count, found among the loaded chunks' block entities,
+     * each asked once what lies on it; with none about this is empty and costs nothing more.
+     */
+    static Map<UUID, Set<String>> turnedAway(ServerLevel level, BlockPos home, double within) {
+        Map<UUID, Set<String>> out = new java.util.HashMap<>();
+        int r = Mth.ceil(within);
+        for (int cx = (home.getX() - r) >> 4; cx <= (home.getX() + r) >> 4; cx++) {
+            for (int cz = (home.getZ() - r) >> 4; cz <= (home.getZ() + r) >> 4; cz++) {
+                LevelChunk chunk = level.getChunkSource().getChunkNow(cx, cz);
+                if (chunk == null) {
+                    continue;
+                }
+                for (BlockEntity be : chunk.getBlockEntities().values()) {
+                    if (!(be instanceof ButcherTableBlockEntity table) || table.filtering == null || table.filtering.getFilter().isEmpty()
+                            || be.getBlockPos().distToCenterSqr(Vec3.atBottomCenterOf(home)) >= within * within) {
+                        continue;
+                    }
+                    for (CarcassButchery.Lying lying : CarcassButchery.lyingOn(level, be.getBlockPos(), ButcherTableBlockEntity.TOP)) {
+                        if (!table.filtering.takes(lying.carcass(), lying.bone())) {
+                            out.computeIfAbsent(lying.carcass().id, id -> new HashSet<>()).add(lying.bone());
+                        }
+                    }
+                }
+            }
+        }
+        return out;
     }
 
     /** What goes in with what it carries rather than into its hand: ammunition for the weapon it holds, healing for a medic. */
@@ -1749,6 +1845,8 @@ public final class MinionTasks {
     static class Butcher extends Goal {
         /** How far over or under its feet a piece may lie for it to cut: a resting body's torso lies a block up. */
         private static final double REACH_UP = 2.5;
+        /** How far a body's parts lie from its torso at most, with room over (a ghast's tentacles, a camel's neck). */
+        private static final double SPREAD = 8.0;
         private final MinionEntity minion;
         @Nullable
         private UUID carcass;
@@ -1806,18 +1904,31 @@ public final class MinionTasks {
                     }
                 }
             }
+            double reach = minion.reach();
+            // a body's parts lie within a few blocks of its torso: one whose torso is further than that out of reach, or
+            // not loaded, is passed over before its filter, its sample and the tables are asked about each part
+            double near = reach + SPREAD;
+            Map<UUID, Set<String>> turnedAway = null;
             for (CarcassSavedData.Carcass c : CarcassSavedData.get(level).all()) {
                 if (unreachable.contains(c.id) || CarcassDrag.isDraggingCarcass(c.id)
                         || com.avicagan.bloodandbones.carcass.trolley.ShackleTrolleyEntity.isHanging(level, c.id)) {
                     continue;
                 }
-                String work = skinning ? skinnable(c) : cuttable(c);
+                Vector3d root = CarcassAssembler.boneWorldPosition(level, c, c.rootBone);
+                if (root == null || home.distanceToSqr(root.x, root.y, root.z) >= near * near || !level.isLoaded(BlockPos.containing(root.x, root.y, root.z))) {
+                    continue;
+                }
+                if (turnedAway == null) {
+                    // a part lies on a table's top, the table under it: a block or so across, up to three down
+                    turnedAway = turnedAway(level, minion.home(), reach + 4.0);
+                }
+                Map<UUID, Set<String>> away = turnedAway;
+                String work = skinning ? skinnable(c, bone -> butcherTakes(minion, c, bone, away)) : cuttable(c, bone -> butcherTakes(minion, c, bone, away));
                 Vector3d at = work == null ? null : CarcassAssembler.boneWorldPosition(level, c, work);
                 if (at == null || !level.isLoaded(BlockPos.containing(at.x, at.y, at.z))) {
                     continue;
                 }
                 double d = home.distanceToSqr(at.x, at.y, at.z);
-                double reach = minion.reach();
                 if (d < reach * reach && d < best) {
                     best = d;
                     carcass = c.id;
@@ -1856,7 +1967,7 @@ public final class MinionTasks {
                     }
                     for (BlockEntity be : chunk.getBlockEntities().values()) {
                         if (be instanceof ButcherTableBlockEntity t && be.getBlockPos().distToCenterSqr(Vec3.atBottomCenterOf(home)) < reach * reach
-                                && t.canChop() && roomToChop(t) && !tablesOutOfReach.contains(minion, be.getBlockPos())) {
+                                && t.canChop() && butcherTakes(minion, t.specimen()) && roomToChop(t) && !tablesOutOfReach.contains(minion, be.getBlockPos())) {
                             out.add(be.getBlockPos());
                         }
                     }
@@ -1870,27 +1981,32 @@ public final class MinionTasks {
             return MinionFitness.strokeTicks(PartsData.of(minion.level()).task(MinionTask.BUTCHER), minion.taskFitness());
         }
 
-        /** A Flensing Knife's work: the torso of a carcass not yet skinned that has a hide to give. */
+        /**
+         * A Flensing Knife's work: the torso of a carcass not yet skinned that has a hide to give, where what it takes (its
+         * filter, its sample, a table's filter) passes the body the hide comes off.
+         */
         @Nullable
-        private static String skinnable(CarcassSavedData.Carcass c) {
+        private static String skinnable(CarcassSavedData.Carcass c, java.util.function.Predicate<String> takes) {
             boolean hide = com.avicagan.bloodandbones.carcass.butchery.ButcheryManager.forEntity(c.entity).map(t -> !t.hide().isEmpty()).orElse(false);
-            return !c.skinned && hide ? c.rootBone : null;
+            return !c.skinned && hide && takes.test(c.rootBone) ? c.rootBone : null;
         }
 
         /**
          * A Cleaver's work: a loose piece (nothing jointed to it) to break down, else a limb to cut off, the end of a
          * chain first (a head before its neck); the torso cannot be cut through while limbs hang off it. A resting
-         * carcass's limbs are in its rest poses; the first cut unfolds it.
+         * carcass's limbs are in its rest poses; the first cut unfolds it. Only what it takes (its filter, its sample, a
+         * table's filter) counts: a butcher set to hind legs cuts those off and leaves the rest.
          */
         @Nullable
-        private static String cuttable(CarcassSavedData.Carcass c) {
+        private static String cuttable(CarcassSavedData.Carcass c, java.util.function.Predicate<String> takes) {
             if (!CarcassButchery.isAttached(c, c.rootBone)) {
-                return c.bones.containsKey(c.rootBone) ? c.rootBone : null;
+                return c.bones.containsKey(c.rootBone) && takes.test(c.rootBone) ? c.rootBone : null;
             }
             String any = null;
             for (var joint : c.joints) {
                 String child = joint.child();
-                if (child.equals(c.rootBone) || c.severed.contains(child) || !c.bones.containsKey(child) && !c.restPoses.containsKey(child)) {
+                if (child.equals(c.rootBone) || c.severed.contains(child) || !c.bones.containsKey(child) && !c.restPoses.containsKey(child)
+                        || !takes.test(child)) {
                     continue;
                 }
                 if (c.joints.stream().noneMatch(j -> j.parent().equals(child))) {
@@ -1988,8 +2104,8 @@ public final class MinionTasks {
          * in its hands; carrying nothing, it chops whatever its room, and what it has no room for falls on the table top.
          */
         private void chopAtTable(ServerLevel level) {
-            if (!(level.getBlockEntity(table) instanceof ButcherTableBlockEntity at) || !at.canChop()) {
-                // chopped or taken off meanwhile (by a player, a Deployer, a funnel)
+            if (!(level.getBlockEntity(table) instanceof ButcherTableBlockEntity at) || !at.canChop() || !butcherTakes(minion, at.specimen())) {
+                // chopped or taken off meanwhile (by a player, a Deployer, a funnel), or swapped for one it does not take
                 done = true;
                 return;
             }

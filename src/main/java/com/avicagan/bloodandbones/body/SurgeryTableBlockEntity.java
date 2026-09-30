@@ -31,7 +31,7 @@ public class SurgeryTableBlockEntity extends SmartBlockEntity {
     @Override
     public void addBehaviours(List<BlockEntityBehaviour> behaviours) {
         filtering = new com.avicagan.bloodandbones.machine.PartFilteringBehaviour(this, new com.avicagan.bloodandbones.machine.TableFilterSlot(12.5F,
-                state -> state.hasProperty(SurgeryTableBlock.ATTACHMENT) && state.getValue(SurgeryTableBlock.ATTACHMENT) == TableAttachment.SURGICAL));
+                state -> state.hasProperty(SurgeryTableBlock.ATTACHMENT) && state.getValue(SurgeryTableBlock.ATTACHMENT) == TableAttachment.SURGICAL)).withOrgans();
         filtering.onlyActiveWhen(() -> getBlockState().hasProperty(SurgeryTableBlock.ATTACHMENT)
                 && getBlockState().getValue(SurgeryTableBlock.ATTACHMENT) == TableAttachment.SURGICAL);
         behaviours.add(filtering);

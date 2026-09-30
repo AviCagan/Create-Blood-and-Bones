@@ -144,6 +144,28 @@ public final class Organs {
         return mapped == null ? null : new CarcassArmour.Organ(mapped.organ(), mapped.entity(), false);
     }
 
+    /**
+     * Which organ an item is, whoever it came out of, or null if it is none: what a filter set to it takes. A stamped organ
+     * by its stamp (a Gland is its organ's), a vanilla item the data map gives to a mob by the organ it names (a Spider Eye
+     * an eye), and otherwise the organ whose file names the item (a heart, cut out or not, is the heart). A plain Gland
+     * names no organ.
+     */
+    @Nullable
+    public static ResourceLocation idOf(ItemStack stack, PartsData.Store store) {
+        if (stack.isEmpty()) {
+            return null;
+        }
+        ResourceLocation organ = stack.get(BBDataComponents.ORGAN.get());
+        if (organ != null) {
+            return organ;
+        }
+        if (stack.getItem() instanceof GlandItem) {
+            return null;
+        }
+        OrganSource mapped = stack.getItemHolder().getData(SOURCES);
+        return mapped != null ? mapped.organ() : store.organFor(stack.getItem());
+    }
+
     /** Whether a piece of carcass armour ("helmet", "chestplate"...) takes this organ: its file's "armour_pieces". */
     public static boolean fits(PartsData.Store store, ResourceLocation organ, String piece) {
         return kind(store, organ).armourPieces().contains(piece);
@@ -287,11 +309,13 @@ public final class Organs {
         com.avicagan.bloodandbones.item.CarcassPieceItem.Piece piece = com.avicagan.bloodandbones.item.CarcassPieceItem.piece(stack);
         if (piece != null) {
             List<ResourceLocation> held = held(store, piece.entity(), piece.baby(), piece.bone());
-            int taken = com.avicagan.bloodandbones.body.Surgery.organsTaken(piece);
-            if (taken < held.size()) {
+            java.util.BitSet taken = com.avicagan.bloodandbones.body.Surgery.taken(piece);
+            if (taken.cardinality() < held.size()) {
                 MutableComponent names = Component.empty();
-                for (int i = taken; i < held.size(); i++) {
-                    names.append(i == taken ? Component.empty() : Component.literal(", ")).append(name(store, held.get(i)));
+                boolean first = true;
+                for (int i = taken.nextClearBit(0); i < held.size(); i = taken.nextClearBit(i + 1)) {
+                    names.append(first ? Component.empty() : Component.literal(", ")).append(name(store, held.get(i)));
+                    first = false;
                 }
                 event.getToolTip().add(Component.translatable("bloodandbones.organ.inside", names).withStyle(ChatFormatting.GRAY));
             }

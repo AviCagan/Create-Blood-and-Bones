@@ -194,6 +194,30 @@
       ]
     }
   },
+  "variants": [
+    {
+      "if": {
+        "trait": "profession",
+        "equals": "butcher"
+      },
+      "organ_traits": {
+        "bloodandbones:village_heart": {
+          "armour": [
+            {
+              "trait": "bloodandbones:keen_butcher",
+              "level": 2
+            }
+          ],
+          "minion": [
+            {
+              "trait": "bloodandbones:keen_butcher",
+              "level": 2
+            }
+          ]
+        }
+      }
+    }
+  ],
   "full_set": {
     "replace": true,
     "name": "set.bloodandbones.elder",

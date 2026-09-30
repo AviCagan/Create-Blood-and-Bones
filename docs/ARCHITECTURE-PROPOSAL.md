@@ -5049,7 +5049,141 @@ Butchery by group was shadowed for every vanilla mob by its generated table; now
   from a datapack or a rig target (docs/MODDED-MOBS.md). A family by Java class (docs/PARTS-AND-TRAITS.md 3.1, through a
   throwaway instance) is not built either; tags and the archetype rules cover a modded mob meanwhile.
 
-### 15.32 (numbered at merge) Dead animals look dead: no carcass is left standing on its legs (verified)
+### 15.32 The leftovers of audit packages 5 and 10: organs by filter, the butcher's filter, Keen Butcher (verified)
+
+Built on 5c42350 (`bb-leftovers`). This closes audit package 10 and package 5 but decision 6 (the knife and the Cleaver
+stay two tools). Package 15's only open line is the Spit Roast's effects, which wait on decision 8. Nothing here needed
+an open decision: decision 12 was built as its recommended design (15.21 to 15.27), and a butcher's filter follows the
+courier's sample from it.
+
+- **A filter for single organs at the Surgical Rig.** Organs are data (`Organs.held`), so the filter is asked about each
+  organ the rig could take, as the item that organ comes out as (`Organs.stack`), through Create's own filter code.
+  - `Organs.idOf(stack, store)`: which organ an item is, from any mob. A Gland by its stamp, a vanilla item the data map
+    gives to a mob by the organ it names (a Spider Eye is an eye), and otherwise the organ whose file names the item (a
+    heart). A plain Gland names none.
+  - A new attribute, `bloodandbones:organ` (`BBItemAttributes.OrganIs`), "is the organ Heart" in the Attribute Filter.
+  - `PartFilter.namesOrgans`: a filter picks organs when it is an organ, a Filter whose list holds one, or an Attribute
+    Filter asking "is the organ ...". An organ in a filter matches that organ only (`PartFilter.test`).
+  - `SurgicalRig` with such a filter asks it about each organ left in each part (`PartFilteringBehaviour.organs`), and
+    `Surgery.harvest` takes the first one it passes, which need not be the first left: a heart, and not the lungs before
+    it. A filter that names only mobs and parts takes a part's organs with the part, as before. With organs still in a
+    piece, a rig set to organs never flays it or cuts it up, and it never unfolds a resting carcass for nothing it may
+    take (`wantsAPart`).
+  - The count of organs taken (`organs_taken`, `organs_taken:<bone>`, one count for every way of taking them) stays a
+    number while organs come out in order, as every one did before. Once a filter takes one out of order it is the places
+    taken ("0,2": the heart and the stomach, the lungs still in; a single place is "[1]"). `Surgery.taken` reads both, so
+    old saves and the readers that want only how many (`organsTaken`, the tooltip of what is still inside) are
+    unchanged. One reader wanted which: a head was blind at two organs taken (`MinionStats.blind`), which meant both
+    eyes only while they came out in order. A fox's head holds two eyes and a cheek pouch; with the pouch and one eye
+    out ("0,2") it would have been blind with an eye still in. Blind now means every place in the head's list that is
+    an eye (`bloodandbones:eye`) was taken, and a head that holds no eyes is not blind.
+  - Only the rig's slot takes an organ (`PartFilteringBehaviour.withOrgans`). No organ comes out at a machine or a
+    Butcher's Table (its Cleaver cuts a piece into its butchery table), so their slots turn an organ away, with Create's
+    "invalid item", rather than hold a filter that passes nothing.
+- **The butchering minion's filter** (`MinionTasks.butcherTakes`). A butcher takes a part only when three things pass it:
+  - its filter slot (brass), asked as a station's part filter asks (`MinionFilter.allowsPart`, `PartFilter.takes`);
+  - its sample: handed a carcass piece or a Create filter while it holds its blade, it holds it in its other hand, as
+    a courier holds its sample. A piece means that part of that mob, baby or grown, by the slot rules that are data (a
+    cow's hind leg: cows' hind legs, `PartFilter.alike`); a filter is asked as the slot asks it. An empty hand takes the
+    sample back before the blade. It needs somewhere to hold it (`MinionBody.Anchors.other`): a second hand, the other
+    side of a pair of folded arms, or a mouth. A headless body with one arm has none, and says so;
+  - the filter of a Butcher's Table the part lies on (`turnedAway`), as the table's own Cleaver obeys it.
+
+  What this costs a butcher looking round (about once a second, even with nothing to do). A body whose torso lies
+  further than its reach and 8 blocks more from home, or in a chunk not loaded, is passed over first, before any of
+  its parts is put to the filter, the sample or a table, as the look round passed bodies out of reach before. The
+  tables are asked once a look: the Butcher's Tables with a filter set within reach and 4 blocks of home, from the
+  loaded chunks' block entities as the tables to chop at are found, each asked once what lies on it and which of
+  those it turns away. With no filtered table about that is nothing more; a part is then only looked up in what they
+  turned away. No chunk is loaded to ask.
+
+  Its knife skins only a body that passes, and its Cleaver cuts off and breaks down only limbs and pieces that pass;
+  the rest is left where it lies. At a table it chops only a piece that its own filter and sample pass as well as the
+  table's. The sample is drawn: in the other hand, or at the other side of folded arms (a villager's arms' box is one
+  arm's, off to one side, so the second thing goes across the pair's middle from the first), a carcass piece there at an
+  item frame's size, since its size on the ground is too small to see against the arms.
+- **Keen Butcher in survival.** The trait (`keen_butcher`, +10% `butchery_yield` a level) had no carrier. A butcher
+  villager's Village Heart now carries it at level 2, both worn in carcass armour and stitched into a minion: a variant
+  on the villager group's `profession` trait (`mob_group/villager.json`), so it holds for any mob in that group whose
+  carcass keeps a profession (a zombie villager too), not one species. Why this part: the trait is about hand butchery,
+  and the butcher is the one creature whose trade it is; the Village Heart is already the group's special organ and
+  already takes its traits from the carcass (a charged creeper's sac works the same way). A predator's part was the
+  other choice, but a wolf or a fox kills and does not butcher, and their parts already carry hunting traits. The organ
+  comes out at the rig keeping the profession, so it is reachable in survival: kill a butcher villager with the Meat
+  Hook, take the heart at the Surgical Rig, fit it. Level 2 gives a hand 1.2 times the hand path's share, still well
+  short of a station's. **Provisional:** the audit left the carrier and the level to the balance pass, so this part
+  and this level are the builder's choice, awaiting that pass and the owner's word (BRIEF-AUDIT package 5 says so). It
+  is one variant in the data, to keep, change or take out without touching code.
+- **What the review found, and what changed.**
+  - A head was blind at two organs taken, which the organ filter broke (above); fixed, and the blind test now takes a
+    fox's head.
+  - The butcher's look round put every part of every carcass in the world to its filter, its sample and the Butcher's
+    Tables (a block-entity lookup in a box round each part, and every carcass walked again for each part on a filtered
+    table) before asking whether the carcass was in reach, and could load a chunk to do it. Fixed as described above
+    (`turnedAway`, the reach and loaded check first). Nothing measures the cost: the butcher tests, which still pass,
+    show only that what it takes is unchanged.
+  - Keen Butcher's carrier and level were a balance-pass choice that the audit left open; they are kept and marked
+    provisional (above, and BRIEF-AUDIT package 5).
+- **Tests.** Each fails with its feature taken out (checked: the organ filter turned off, the organ allowed in every
+  slot, the sample ignored, the minion's filter ignored, the table's filter ignored, the villager's variant removed).
+  - `rigFilterPicksSingleOrgans` (`SurgicalRigTests`): a heart in the rig's slot takes a cow body's heart and then
+    nothing; "is the organ Stomach" takes the stomach past the lungs ("0,2"); a Filter holding the rumen's Gland takes the
+    rumen; with no filter the lungs come out, then the hide. A Butcher's Table's slot turns a heart away and still takes a
+    piece. A whole cow lying on a rig set to eyes gives its two eyes and nothing of its body, and is left whole and
+    unflayed.
+  - `butcherWithASampleTakesOnlyItsLike` (`MinionTaskTests`): a butcher holding a cow's hind leg beside its Cleaver cuts
+    off and breaks down the cow's two hind legs and leaves the head, the front legs and the body for 200 ticks more; the
+    empty hand takes the sample back first; where each build holds a second thing (a second hand, a pair, none for one arm
+    and no head).
+  - `brassButcherTakesWhatItsFilterPasses`: a brass butcher set to "is a carcass head" takes a cow's head and leaves its
+    legs, and a body on a Butcher's Table nearer home.
+  - `butcherLeavesWhatTheTableTurnsAway`: a cow's leg lying on a table set to heads is left; one on a table with no
+    filter is broken down.
+  - `blindHeadIsPoorNotBarred` (`MinionFitnessTests`) now also takes a fox's head, whose list is checked as two eyes
+    and a cheek pouch: with the pouch alone out, the pouch and one eye, or one eye and the pouch the other way round, it
+    sees as far as a whole one; with both eyes out, by a count or by places, pouch in or out, it is blind. It failed on
+    the count of two before the fix.
+  - `butcherVillagersHeartIsKeen` (`ButcheryPathTests`): a butcher villager's carcass keeps its profession, the rig set to
+    the Village Heart takes it out keeping it, worn it gives Keen Butcher II and a butchery yield of 1.2 (a farmer's
+    none), and a minion with it has the same.
+- **A drag test that failed now and then** (`meatHookDragsByLeg`, once in the first full run after the fixes above).
+  Traced tick by tick over 160 runs: after its dragger stops, the cow's leg is pulled to arm's length in front of them,
+  and the pull holds off while the hooked body touches them (`CarcassDrag.isAgainstPlayer`). That asked about the leg's
+  box, which is square to the world and grows as the leg turns: turned across, the leg lay in it from about arm's
+  length, so the pull went off and on as it swung in and out, and it never settled. A second after the stop, the middle
+  of its distance from where it was pulled was over 1.1 blocks in about 1 run in 30, and over the test's 1.25 now and
+  then. Once the dragger has stood still a moment (`STILL_BEFORE_OUT`), only the hooked point in them counts now; while
+  they move the box still does, since a cow dragged by a hind leg comes round rear first only with the pull held off
+  as the leg passes them (by the point at all times, `hindLegHookComesRoundRearFirst` failed 20 runs in 30). After: 150
+  runs, the worst 0.84; the drag tests (by leg, by body, rear first, head first, up a step, walking into it) 30 runs
+  each and every other test that drags 12 runs each, all passed. **Left:** traced, a leg held in front of someone
+  standing still still moves 0.2 to 0.5 blocks a tick for seconds, well within the test but never quite at rest. The
+  pull's spring, damping and cap are sized by the whole carcass and applied at the hooked limb, which weighs a
+  twentieth of a cow; capping the damping by the limb's own mass halved the worst distance but left the jitter. That
+  is a physics pass of its own, not this branch's.
+- **Another** (`lavaWalkerFindsAPathOnLava`, once in the next full run; 8 times in the logs kept since 24 September).
+  The walker was found at the top of its pool's stone rim, not on the lava. The trait tests' minions (`MotionEffectTests`)
+  woke to their fittest task, and a cow's torso wakes a Hauler, reaching 24 blocks from home: in the full suite the
+  carcasses, hooks and racks of the tests beside it were in reach, and it set off after them, up onto the rim. Put by
+  the pool, a carcass and a Bleeding Rack gave the same failure word for word (task Hauler, goals Haul and LavaFooting);
+  with the minions set Idle at home, as the movement tests' already are, none. The failure now names the task.
+- **The suite** is 626 tests and passed three full runs in a row after the last change (and once before the showcase's
+  drawing fix). After the review's fixes (a head blind by its eyes, the butcher's cheaper look round, the Keen Butcher
+  marked provisional) and the two causes above, it passed three full runs in a row again, after a data run that
+  changed nothing. Once, on a run started straight after source edits, the game failed to load before any test ran
+  (Registrate's "found unused register callbacks"); the same run again loaded and ran, and it was not seen in the next
+  thirteen starts (game tests, the data run and the showcase).
+- **Showcase.** Row F has a third table beside the two with filters: a Surgical Rig with a heart in its slot and a cow's
+  body laid on it, cut twice as a Deployer cuts (the log: the first cut took the heart, the second nothing; one taken,
+  three still in). Beside it two butcher minions stand still, each with a Cleaver and a cow's hind leg as its sample: a
+  villager holding them either side of its folded arms, and a zombie with a butcher's head (in a leather cap: the torso
+  burns by day), one in each hand. Pictures: `docs/screenshots/rig_heart_filter.png` (the heart on the rig's filter edge,
+  the body on its top, the rig set to hind legs beyond), `butchers_with_samples.png` (both butchers close). The heart the
+  Deployer cut pops out onto the top and may roll off; in the last run it lay on the grass beside the rig.
+- **Left.** Decision 6 (one hand tool or two) and decision 8 (the Spit Roast's effects), for the owner. Which other mobs'
+  parts carry Keen Butcher, and how many levels, stay the balance pass's (PARTS-AND-TRAITS slice 9).
+
+### 15.33 Dead animals look dead: no carcass is left standing on its legs (verified)
 
 This takes docs/BRIEF-AUDIT.md package 1 further ("dead animals should look dead, limp and heavy"). One part of it waits
 on the owner: which way a carcass dragged on its feet goes down (BRIEF-AUDIT decision 14, below). The physics

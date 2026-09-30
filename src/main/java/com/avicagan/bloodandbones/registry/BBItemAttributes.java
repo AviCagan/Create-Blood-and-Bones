@@ -32,7 +32,7 @@ import java.util.function.Predicate;
 /**
  * Carcass pieces in Create's Attribute Filter, so funnels, belts, frogports and the machines' part filters can sort
  * meat: which mob a piece came from, which part it is (and which limb: a hind leg, a wing), whether it is still fresh
- * or rotting, skinned, or from a baby. The
+ * or rotting, skinned, or from a baby, and which organ an organ is (a heart, whoever it came out of). The
  * wording follows Create's (its keys are {@code create.item_attributes.<mod>.<name>}, as other addons do).
  */
 public final class BBItemAttributes {
@@ -54,11 +54,13 @@ public final class BBItemAttributes {
     public static final Holder<ItemAttributeType> PIECE_OF = TYPES.register("piece_of", PieceOf.Type::new);
     public static final Holder<ItemAttributeType> PIECE_PART = TYPES.register("piece_part", PiecePart.Type::new);
     public static final Holder<ItemAttributeType> PIECE_SLOT = TYPES.register("piece_slot", PieceSlot.Type::new);
+    public static final Holder<ItemAttributeType> ORGAN = TYPES.register("organ", OrganIs.Type::new);
 
     static {
         lang("piece_of", "is a piece of %1$s", "is not a piece of %1$s");
         lang("piece_part", "is a carcass %1$s", "is not a carcass %1$s");
         lang("piece_slot", "is a carcass %1$s", "is not a carcass %1$s");
+        lang("organ", "is the organ %1$s", "is not the organ %1$s");
         for (String kind : PiecePart.KINDS) {
             BloodAndBones.REGISTRATE.addRawLang("bloodandbones.piece_kind." + kind, kind);
         }
@@ -279,6 +281,58 @@ public final class BBItemAttributes {
                 CarcassPieceItem.Piece piece = CarcassPieceItem.piece(stack);
                 String slot = piece == null ? null : slotOf(piece, level);
                 return slot == null ? List.of() : List.of(new PieceSlot(slot));
+            }
+
+            @Override
+            public MapCodec<? extends ItemAttribute> codec() {
+                return CODEC;
+            }
+
+            @Override
+            public StreamCodec<? super RegistryFriendlyByteBuf, ? extends ItemAttribute> streamCodec() {
+                return STREAM_CODEC;
+            }
+        }
+    }
+
+    /**
+     * Which organ an item is (Organs#idOf): a heart cut out of any mob is "the organ Heart", a Gland the organ stamped on it.
+     * The Surgical Rig's filter set to it takes only that organ out (PartFilter#namesOrgans).
+     */
+    public record OrganIs(ResourceLocation organ) implements ItemAttribute {
+        public static final MapCodec<OrganIs> CODEC = ResourceLocation.CODEC.xmap(OrganIs::new, OrganIs::organ).fieldOf("value");
+        public static final StreamCodec<ByteBuf, OrganIs> STREAM_CODEC = ResourceLocation.STREAM_CODEC.map(OrganIs::new, OrganIs::organ);
+
+        @Override
+        public boolean appliesTo(ItemStack stack, Level level) {
+            return organ.equals(com.avicagan.bloodandbones.parts.Organs.idOf(stack, com.avicagan.bloodandbones.parts.PartsData.of(level)));
+        }
+
+        @Override
+        public ItemAttributeType getType() {
+            return ORGAN.value();
+        }
+
+        @Override
+        public String getTranslationKey() {
+            return BloodAndBones.MOD_ID + ".organ";
+        }
+
+        @Override
+        public Object[] getTranslationParameters() {
+            return new Object[]{com.avicagan.bloodandbones.parts.Organs.name(com.avicagan.bloodandbones.parts.CarcassArmourItem.store(), organ)};
+        }
+
+        public static class Type implements ItemAttributeType {
+            @Override
+            public @NotNull ItemAttribute createAttribute() {
+                return new OrganIs(BloodAndBones.asResource("heart"));
+            }
+
+            @Override
+            public List<ItemAttribute> getAllAttributes(ItemStack stack, Level level) {
+                ResourceLocation organ = com.avicagan.bloodandbones.parts.Organs.idOf(stack, com.avicagan.bloodandbones.parts.PartsData.of(level));
+                return organ == null ? List.of() : List.of(new OrganIs(organ));
             }
 
             @Override

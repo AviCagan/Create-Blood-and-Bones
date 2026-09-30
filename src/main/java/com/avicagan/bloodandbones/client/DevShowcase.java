@@ -1790,6 +1790,9 @@ public final class DevShowcase {
 
         // row F, off to the west: the machines bare, their parts turning (docs/BRIEF-AUDIT.md package 15), and the tables' filters
         movingParts(level, new BlockPos(o.getX() - 34, ground, o.getZ() + 12), roastCow);
+        // beside them, a rig set to a heart that took a cow's heart and left the rest in, and two butcher minions each holding
+        // a Cleaver and, beside it, a cow's hind leg as its sample (docs/BRIEF-AUDIT.md packages 10 and 5)
+        organFilterAndButchers(level, player, new BlockPos(o.getX() - 30, o.getY(), o.getZ() + 15), roastCow);
         // a whole cow on a second spit, most of the way cooked
         BlockPos wholeFire = new BlockPos(o.getX() - 11, o.getY(), z);
         level.setBlockAndUpdate(wholeFire, Blocks.CAMPFIRE.defaultBlockState());
@@ -1891,6 +1894,10 @@ public final class DevShowcase {
                 new View(o.getX() + 0.5, eye, materialsZ + 4.5, 0, 5),
                 // the hooks close up
                 new View(o.getX() - 1.5, eye, materialsZ + 6.8, 0, -18)));
+        // the rig set to a heart, its heart out on the top and the rest left in, and the two butchers with their samples
+        views.add(new View(o.getX() - 28.5, eye + 1.2, o.getZ() + 12.4, 0, 28));
+        // the two butchers close: a Cleaver and a hind leg either side of the villager's folded arms, one in each of the zombie's hands
+        views.add(new View(o.getX() - 26.5, eye + 0.4, o.getZ() + 13.6, 0, 12));
         // the view with the flying bits, wherever it falls in the list
         debrisView = views.indexOf(debris);
         debrisAt = new BlockPos(o.getX(), o.getY() + 1, decoZ + 13);
@@ -2112,6 +2119,62 @@ public final class DevShowcase {
                 com.avicagan.bloodandbones.body.SurgicalRig.cut(level, net.neoforged.neoforge.common.util.FakePlayerFactory.getMinecraft(level), surgery,
                         new ItemStack(BBItems.CLEAVER.get()));
             }
+        }
+    }
+
+    /**
+     * A Surgical Rig set to a heart (the organ itself in its slot), a cow's body laid on it and cut twice as a Deployer
+     * cuts: the first cut takes the heart, the second nothing, the lungs, stomach and rumen left in. Beside it two butcher
+     * minions standing still, each with a Cleaver and a cow's hind leg beside it as its sample: a villager, holding them
+     * either side of its folded arms, and a zombie with a butcher villager's head, one in each hand.
+     */
+    private static void organFilterAndButchers(ServerLevel level, ServerPlayer player, BlockPos rig, CarcassSavedData.Carcass cow) {
+        level.setBlockAndUpdate(rig, BBBlocks.SURGERY_TABLE.getDefaultState()
+                .setValue(com.avicagan.bloodandbones.body.SurgeryTableBlock.ATTACHMENT, com.avicagan.bloodandbones.body.TableAttachment.SURGICAL));
+        if (cow != null && level.getBlockEntity(rig) instanceof com.avicagan.bloodandbones.body.SurgeryTableBlockEntity surgery) {
+            surgery.filtering.setFilter(new ItemStack(BBItems.HEART.get()));
+            surgery.put(CarcassPieceItem.of(cow, "body"));
+            var deployer = net.neoforged.neoforge.common.util.FakePlayerFactory.getMinecraft(level);
+            boolean first = com.avicagan.bloodandbones.body.SurgicalRig.cut(level, deployer, surgery, new ItemStack(BBItems.CLEAVER.get()));
+            surgery.nextCut = 0;
+            boolean second = com.avicagan.bloodandbones.body.SurgicalRig.cut(level, deployer, surgery, new ItemStack(BBItems.CLEAVER.get()));
+            // (a Deployer's cut drops on the table top: the heart lies there)
+            CarcassPieceItem.Piece piece = CarcassPieceItem.piece(surgery.item());
+            BloodAndBones.LOGGER.info("[showcase] rig set to a heart: first cut {}, second cut {}, taken {}, still in {}", first, second,
+                    piece == null ? "?" : piece.traits().get(com.avicagan.bloodandbones.body.Surgery.ORGANS_TAKEN),
+                    piece == null ? "?" : com.avicagan.bloodandbones.body.Surgery.organsLeft(com.avicagan.bloodandbones.parts.PartsData.SERVER, piece));
+        }
+        java.util.function.BiFunction<String, String, com.avicagan.bloodandbones.minion.PieceRef> villager = (bone, profession) ->
+                new com.avicagan.bloodandbones.minion.PieceRef(net.minecraft.resources.ResourceLocation.withDefaultNamespace("villager"), bone,
+                        net.minecraft.resources.ResourceLocation.withDefaultNamespace("textures/entity/villager/villager.png"), List.of(), 1.0F, false,
+                        profession == null ? java.util.Map.of() : java.util.Map.of("profession", profession), false);
+        java.util.function.Function<String, com.avicagan.bloodandbones.minion.PieceRef> zombie = bone ->
+                new com.avicagan.bloodandbones.minion.PieceRef(net.minecraft.resources.ResourceLocation.withDefaultNamespace("zombie"), bone,
+                        net.minecraft.resources.ResourceLocation.withDefaultNamespace("textures/entity/zombie/zombie.png"), List.of(), 1.0F, false, java.util.Map.of(), false);
+        var folded = com.avicagan.bloodandbones.minion.MinionBuild.of(villager.apply("body", null)).with("head", villager.apply("head", "butcher"))
+                .with("arms", villager.apply("arms", null)).with("right_leg", villager.apply("right_leg", null)).with("left_leg", villager.apply("left_leg", null));
+        var handed = com.avicagan.bloodandbones.minion.MinionBuild.of(zombie.apply("body")).with("head", villager.apply("head", "butcher"))
+                .with("right_arm", zombie.apply("right_arm")).with("left_arm", zombie.apply("left_arm"))
+                .with("right_leg", zombie.apply("right_leg")).with("left_leg", zombie.apply("left_leg"));
+        List<com.avicagan.bloodandbones.minion.MinionBuild> builds = List.of(folded, handed);
+        for (int i = 0; i < builds.size(); i++) {
+            var minion = com.avicagan.bloodandbones.registry.BBEntities.MINION.get().create(level);
+            BlockPos at = rig.offset(2 + i * 2, 0, 1);
+            minion.moveTo(at.getX() + 0.5, at.getY(), at.getZ() + 0.5, 180.0F, 0.0F);
+            minion.setYHeadRot(180.0F);
+            minion.setYBodyRot(180.0F);
+            minion.setup(player, at, builds.get(i), 1000.0F);
+            minion.setNoAi(true);
+            minion.setTask(com.avicagan.bloodandbones.minion.MinionTask.BUTCHER);
+            minion.setItemSlot(net.minecraft.world.entity.EquipmentSlot.MAINHAND, new ItemStack(BBItems.CLEAVER.get()));
+            if (cow != null) {
+                minion.setItemSlot(net.minecraft.world.entity.EquipmentSlot.OFFHAND, CarcassPieceItem.of(cow, "left_hind_leg"));
+            }
+            if (i == 1) {
+                // the zombie's torso burns by day
+                minion.setItemSlot(net.minecraft.world.entity.EquipmentSlot.HEAD, new ItemStack(net.minecraft.world.item.Items.LEATHER_HELMET));
+            }
+            level.addFreshEntity(minion);
         }
     }
 

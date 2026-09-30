@@ -25,7 +25,9 @@ import java.util.List;
  * <ol>
  * <li>an organ, as its mob's data holds them (Organs#held: a cow's body its heart, lungs, stomach and rumen, a head its
  * eyes, a skeleton's torso its marrow), each taken out and counted by Surgery#harvest, the one count every way of taking
- * organs shares ("organs_taken", "organs_taken:&lt;bone&gt;");</li>
+ * organs shares ("organs_taken", "organs_taken:&lt;bone&gt;"). A filter set to organs (a heart in it, or "is the organ
+ * Heart") takes only those, out of whatever part holds them, and leaves the rest in; one set to parts takes the organs of
+ * the parts it passes;</li>
  * <li>once the organs are out, the hide, if it is still on, all of it at once;</li>
  * <li>then a limb off at its joint, the end of a chain first, cleanly;</li>
  * <li>once nothing hangs off it, the piece itself, broken down into all of its butchery table (the surgery path).</li>
@@ -89,12 +91,23 @@ public final class SurgicalRig {
     private static Result work(ServerLevel level, Player surgeon, SurgeryTableBlockEntity table, ItemStack blade) {
         CarcassPieceItem.Piece piece = CarcassPieceItem.piece(table.item());
         if (piece != null) {
-            if (!table.filtering.takes(table.item())) {
+            boolean organFilter = table.filtering.namesOrgans();
+            if (!organFilter && !table.filtering.takes(table.item())) {
                 surgeon.displayClientMessage(Component.translatable("bloodandbones.surgery.filtered"), true);
                 return Result.FILTERED;
             }
             if (Surgery.organsLeft(com.avicagan.bloodandbones.parts.PartsData.SERVER, piece) > 0) {
-                return Surgery.harvest(level, surgeon, table, blade) ? Result.CUT : Result.NOTHING;
+                // with a filter set to organs, only those it passes, and the rest stay in (the piece is not flayed or cut up
+                // with organs still in it)
+                if (Surgery.harvest(level, surgeon, table, blade, table.filtering.organs(table.item()))) {
+                    return Result.CUT;
+                }
+                surgeon.displayClientMessage(Component.translatable("bloodandbones.surgery.filtered"), true);
+                return Result.FILTERED;
+            }
+            if (organFilter && !table.filtering.takes(table.item())) {
+                surgeon.displayClientMessage(Component.translatable("bloodandbones.surgery.filtered"), true);
+                return Result.FILTERED;
             }
             if (!piece.skinned() && flay(level, surgeon, table, blade, piece)) {
                 return Result.CUT;
@@ -183,16 +196,19 @@ public final class SurgicalRig {
         boolean turnedAway = false;
         // organs: the torso's first, then the rest still attached, each part counting its own (Surgery's harvest, which also
         // reaches a carcass folded to rest where it lies, its limbs only rest poses); each asked of the filter as the part it
-        // is in
+        // is in, or, with a filter set to organs, as the organ itself (a heart and not the lungs before it)
         for (String bone : Surgery.organBones(carcass)) {
             if (Surgery.organsLeft(com.avicagan.bloodandbones.parts.PartsData.SERVER, carcass, bone) == 0) {
                 continue;
             }
-            if (!table.filtering.takes(carcass, bone)) {
+            if (!table.filtering.namesOrgans() && !table.filtering.takes(carcass, bone)) {
                 turnedAway = true;
                 continue;
             }
-            if (Surgery.harvest(level, surgeon, table, blade, carcass, bone)) {
+            if (!Surgery.harvest(level, surgeon, table, blade, carcass, bone, table.filtering.organs(carcass, bone))) {
+                // organs left in it, none of them one the filter picks
+                turnedAway = true;
+            } else {
                 Vector3d at = com.avicagan.bloodandbones.carcass.CarcassAssembler.boneWorldPosition(level, carcass, bone);
                 if (at != null && bleeds(carcass.entity)) {
                     Blood.wound(level, carcass, at, 10, 1);
@@ -200,9 +216,15 @@ public final class SurgicalRig {
                 return Result.CUT;
             }
         }
-        // the rest works on the parts as bodies: a carcass folded to rest is unfolded first
-        if (carcass.resting && com.avicagan.bloodandbones.carcass.CarcassRest.split(level, carcass) == null) {
-            return turnedAway ? Result.FILTERED : Result.NOTHING;
+        // the rest works on the parts as bodies: a carcass folded to rest is unfolded first, but only for something the
+        // filter lets it take (a rig set to hearts leaves a body with its hearts out folded where it lies)
+        if (carcass.resting) {
+            if (!wantsAPart(table, carcass, near)) {
+                return Result.FILTERED;
+            }
+            if (com.avicagan.bloodandbones.carcass.CarcassRest.split(level, carcass) == null) {
+                return turnedAway ? Result.FILTERED : Result.NOTHING;
+            }
         }
         // the hide, all of it at once, while it is still on (asked of the filter as the body it comes off)
         boolean hasHide = com.avicagan.bloodandbones.carcass.butchery.ButcheryManager.forEntity(carcass.entity).map(t -> !t.hide().isEmpty()).orElse(false);
@@ -259,6 +281,27 @@ public final class SurgicalRig {
             return Result.CUT;
         }
         return turnedAway ? Result.FILTERED : Result.NOTHING;
+    }
+
+    /**
+     * Whether the filter lets the rig take anything of a carcass but its organs: its hide (asked as the body it comes off),
+     * a limb (a resting carcass's are its rest poses), or the piece lying on the table.
+     */
+    private static boolean wantsAPart(SurgeryTableBlockEntity table, CarcassSavedData.Carcass carcass, String near) {
+        if (table.filtering.getFilter().isEmpty()) {
+            return true;
+        }
+        if (table.filtering.takes(carcass, carcass.rootBone) || table.filtering.takes(carcass, near)) {
+            return true;
+        }
+        for (CarcassJoints.Spec joint : carcass.joints) {
+            String child = joint.child();
+            if ((carcass.bones.containsKey(child) || carcass.restPoses.containsKey(child)) && !carcass.severed.contains(child)
+                    && table.filtering.takes(carcass, child)) {
+                return true;
+            }
+        }
+        return false;
     }
 
     /** What comes off drops on the table top, springing up a little. */

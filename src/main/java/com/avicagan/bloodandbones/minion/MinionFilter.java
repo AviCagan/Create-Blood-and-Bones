@@ -27,7 +27,8 @@ import org.jetbrains.annotations.Nullable;
 /**
  * A brass minion's filter slot (docs/PARTS-AND-TRAITS.md section 6.6, brass only: flesh has its hides, its mending
  * and its organs' produce instead). What is in it limits what the minion picks up (a courier or farmer), what
- * it reaps (a farmer) and what it goes for (a hunter, herder, guard or sentry), tested as Create's own filter slots test
+ * it reaps (a farmer), what it goes for (a hunter, herder, guard or sentry) and which parts it takes off a carcass (a
+ * butcher, asked as a station's part filter asks, {@link #allowsPart}), tested as Create's own filter slots test
  * ({@link FilterItemStack}), so a Filter's list, an Attribute Filter's attributes or any plain item work as they do on a
  * funnel. A mob is asked about as its spawn egg, as the carcass machines' filters ask: an egg or a carcass piece in the
  * filter (or in a Filter's list) names that mob, and an Attribute Filter is asked about the mob's egg.
@@ -59,6 +60,20 @@ public final class MinionFilter {
     /** Whether it may take this item (nothing in the slot lets everything through). */
     public boolean allows(Level level, ItemStack item) {
         return stack.isEmpty() || test.test(level, item);
+    }
+
+    /**
+     * Whether it may take this part of a carcass (a butcher's work), asked as a station's part filter asks
+     * (com.avicagan.bloodandbones.machine.PartFilter): a spawn egg or a carcass piece means that mob, "is a carcass hind leg"
+     * only hind legs.
+     */
+    public boolean allowsPart(Level level, com.avicagan.bloodandbones.carcass.CarcassSavedData.Carcass carcass, String bone) {
+        return stack.isEmpty() || com.avicagan.bloodandbones.machine.PartFilter.takes(level, test, carcass, bone);
+    }
+
+    /** The same, of a part given as the item it is (a piece on a Butcher's Table). */
+    public boolean allowsPart(Level level, ItemStack part) {
+        return stack.isEmpty() || com.avicagan.bloodandbones.machine.PartFilter.takes(level, test, part);
     }
 
     /** Whether it may go for this mob. */
