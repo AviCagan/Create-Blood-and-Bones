@@ -5121,7 +5121,7 @@ courier's sample from it.
 - **The suite** is 626 tests and passed three full runs in a row after the last change (and once before the showcase's
   drawing fix). Once, on a run started straight after source edits, the game failed to load before any test ran
   (Registrate's "found unused register callbacks"); the same run again loaded and ran, and it was not seen in the next
-  seven starts.
+  thirteen starts (game tests, the data run and the showcase).
 - **Showcase.** Row F has a third table beside the two with filters: a Surgical Rig with a heart in its slot and a cow's
   body laid on it, cut twice as a Deployer cuts (the log: the first cut took the heart, the second nothing; one taken,
   three still in). Beside it two butcher minions stand still, each with a Cleaver and a cow's hind leg as its sample: a
