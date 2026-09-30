@@ -31,13 +31,14 @@ import java.util.UUID;
  * Once it keeps still the resting form pins it as it stands, for good. Real legs fold at the knee; these cannot. So a
  * carcass that stands on its legs, nearly still (on a deck under way, still on the deck), for {@link #STANDING_TICKS}
  * has its legs give way ({@link #giveWay}): it is tipped over the way it already leans, however little, its legs sliding
- * out the other way, and comes down onto that side. Nothing picks the side: a carcass struck on one side leans away
- * from the blow, one dragged leans the way the pull takes it, and one standing so squarely that nothing says which way
- * has its legs slide out from under it, which breaks that balance. That it is tipped at all, and not left to fold at
- * knees it does not have, is made up. Until it is down it is not let rest. A carcass dragged along on its feet gives way
- * however it moves (a sheep dragged by a hind leg slid along standing, facing the wrong way); one that stands upright
- * (a zombie) is pulled off its feet by the leg it is dragged by and is left to it. One balanced on end, on its rump or
- * its snout, goes over too ({@link #onEnd}).
+ * out the other way, and comes down onto that side. That it is tipped at all, and not left to fold at knees it does not
+ * have, is made up; which side it goes to is its own: a carcass struck on one side leans away from the blow, and one
+ * standing so squarely that nothing says which way has its legs slide gently out from under it, which breaks that
+ * balance. Until it is down it is not let rest. A carcass dragged along on its feet gives way however it moves (a sheep
+ * dragged by a hind leg slid along standing, facing the wrong way), and there the side is picked: dragged by a leg, it
+ * goes down away from that leg, so the leg ends on top, free to lead (an owner's decision, docs/BRIEF-AUDIT.md). One
+ * that stands upright (a zombie) is pulled off its feet by the leg it is dragged by and is left to it. One on four legs
+ * balanced on end, on its rump or its snout, goes over too ({@link #onEnd}).
  * <p>
  * It stands when its torso is within {@link #UPRIGHT} degrees of upright, some other part of it (a leg) reaches below the
  * torso by more than a quarter as far as its legs reach when it stands ({@link #LIFTED}), that part stands on something
@@ -71,7 +72,8 @@ public final class CarcassSlump {
     /**
      * How fast the legs of one on four legs slide out from under it as it goes over, blocks a second, the other way. Its
      * middle then stays nearer where it stood: set down standing, a cow lay 2.1 blocks from there with them kept under
-     * it, 1.7 at 3 blocks a second, 0.6 to 1.2 at 7; at 9 a sheep went on sliding, 1.2.
+     * it, 1.7 at 3 blocks a second, 0.6 to 1.2 at 7; at 9 a sheep went on sliding, 1.2. At 7 a sheep set down standing
+     * now and then goes on over onto its back (2 runs in 11): its box is flatter than it is wide, and lies lower so.
      */
     static final double LEGS_OUT = 7.0;
     /**
@@ -179,8 +181,9 @@ public final class CarcassSlump {
     }
 
     /**
-     * Its legs give way, and it goes over the way it already leans, however little: nothing picks a side for it. On four
-     * legs, over onto the side its torso leans to, or failing that the side its weight lies over its feet; standing
+     * Its legs give way, and it goes over the way it already leans, however little. On four legs, over onto the side its
+     * torso leans to, or failing that the side its weight lies over its feet (dragged by a leg, away from that leg);
+     * standing
      * upright (a zombie), the way its weight lies over its feet, or failing that the way its torso leans; balanced on end,
      * the way its weight lies over the end it rests on, or failing that the way its top end leans out. Standing so
      * squarely that nothing says which way (a carcass built standing, not struck), its legs slide out from under it, each
@@ -253,7 +256,8 @@ public final class CarcassSlump {
                 // on top, free to lead, not pinned under the body. This one is picked, not left to the lean (an owner's
                 // decision, docs/BRIEF-AUDIT.md): left to the lean, a cow dragged by a hind leg went down onto that leg
                 // about as often as not and came round rear first less often (36 degrees off, median of eight, where it
-                // is 19 so), and to the pull, a sheep did (52, where it is 10 so)
+                // is 18 so; more than 60 in 3 runs of 8, which fails hindLegHookComesRoundRearFirst), and left to the way
+                // it is pulled, a sheep did (52, where it is 17 so)
                 String hooked = dragged ? CarcassDrag.hookedBone(carcass.id) : null;
                 ServerSubLevel hookedBody = hooked == null || hooked.equals(carcass.rootBone) ? null
                         : container.getSubLevel(carcass.bones.get(hooked)) instanceof ServerSubLevel body && !body.isRemoved() ? body : null;
