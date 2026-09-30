@@ -62,7 +62,15 @@ public final class DevShowcase {
     private static volatile int effectTarget = -1;
     private static final String PREFIX = BLOODLESS ? "showcase_bloodless_" : "showcase_";
 
-    private record View(double x, double y, double z, float yaw, float pitch) {
+    /**
+     * Where the camera goes for a picture. The player is not flying, so one put up in the air falls to the ground before
+     * the picture is taken, unless {@code fly} holds it where it was put (the machines from above were photographed from
+     * the ground, the machines at the top edge of the picture).
+     */
+    private record View(double x, double y, double z, float yaw, float pitch, boolean fly) {
+        View(double x, double y, double z, float yaw, float pitch) {
+            this(x, y, z, yaw, pitch, false);
+        }
     }
 
     private static int stage;
@@ -156,6 +164,8 @@ public final class DevShowcase {
                         moveAt = age;
                         server.execute(() -> {
                             ServerPlayer player = server.getPlayerList().getPlayers().get(0);
+                            player.getAbilities().flying = view.fly();
+                            player.onUpdateAbilities();
                             player.teleportTo(player.serverLevel(), view.x(), view.y(), view.z(), view.yaw(), view.pitch());
                         });
                     } else if (moved > shot && age - moveAt >= SHOT_GAP - 5) {
@@ -1818,8 +1828,8 @@ public final class DevShowcase {
         views = List.of(
                 // carcasses, from behind the row
                 new View(o.getX() + 0.5, eye, o.getZ() - 1.5, 0, 25),
-                // machines, from above
-                new View(o.getX() + 0.5, eye + 4, o.getZ() + 7.5, 0, 45),
+                // machines, from above: held up there, looking down on the row a few blocks ahead
+                new View(o.getX() + 0.5, eye + 4, o.getZ() + 6.5, 0, 45, true),
                 // mangler and guillotine close up
                 new View(o.getX() - 3.5, eye + 1.5, o.getZ() + 9.5, 0, 35),
                 // beheader and deglover close up
