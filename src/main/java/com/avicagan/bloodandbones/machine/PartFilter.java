@@ -33,10 +33,18 @@ public final class PartFilter {
 
     /** What may go in the slot: a spawn egg, a carcass piece, or a Create filter. */
     public static boolean allowed(ItemStack stack) {
+        return allowed(stack, false);
+    }
+
+    /**
+     * The same, where organs come out (the Surgical Rig): an organ goes in too. Nothing else takes organs out, so a
+     * machine's or a Butcher's Table's slot turns one away rather than hold a filter that passes nothing.
+     */
+    public static boolean allowed(ItemStack stack, boolean organs) {
         return stack.getItem() instanceof SpawnEggItem
                 || stack.is(com.avicagan.bloodandbones.registry.BBItems.CARCASS_PIECE.get())
                 || stack.getItem() instanceof FilterItem
-                || organ(stack) != null;
+                || organs && organ(stack) != null;
     }
 
     /** The organ an item in the slot (or in a list) names, whoever it came out of; null for none. */

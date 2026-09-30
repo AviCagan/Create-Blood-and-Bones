@@ -15,13 +15,28 @@ import net.minecraft.world.phys.BlockHitResult;
 import net.neoforged.neoforge.common.util.FakePlayer;
 
 /**
- * Create's filter slot, holding a {@link PartFilter}: only spawn eggs, carcass pieces and Create filters go in, and a
- * Deployer's stand-in player cannot set it. The four machines, the Butcher's Table and the Surgical Rig carry one.
+ * Create's filter slot, holding a {@link PartFilter}: only spawn eggs, carcass pieces and Create filters go in (and organs,
+ * where organs come out: {@link #withOrgans}), and a Deployer's stand-in player cannot set it. The four machines, the
+ * Butcher's Table and the Surgical Rig carry one.
  */
 public class PartFilteringBehaviour extends FilteringBehaviour {
+    /** Whether an organ may go in the slot (the Surgical Rig's). */
+    private boolean organs;
+
     public PartFilteringBehaviour(SmartBlockEntity be, ValueBoxTransform slot) {
         super(be, slot);
-        withPredicate(PartFilter::allowed);
+        withPredicate(this::allows);
+    }
+
+    /** An organ may go in too: the slot is where organs come out (the Surgical Rig), and one set to a heart takes only hearts. */
+    public PartFilteringBehaviour withOrgans() {
+        organs = true;
+        return this;
+    }
+
+    /** What may go in the slot. */
+    public boolean allows(ItemStack stack) {
+        return PartFilter.allowed(stack, organs);
     }
 
     /** Whether it lets its station take this part of a carcass (asked of the filter as the slot keeps it read, not read again). */
@@ -76,14 +91,14 @@ public class PartFilteringBehaviour extends FilteringBehaviour {
      */
     @Override
     public boolean canShortInteract(ItemStack toApply) {
-        return super.canShortInteract(toApply) && (toApply.isEmpty() || PartFilter.allowed(toApply));
+        return super.canShortInteract(toApply) && (toApply.isEmpty() || allows(toApply));
     }
 
     /** Turned away, with Create's own "invalid item" message and sound. */
     @Override
     public void onShortInteract(Player player, InteractionHand hand, Direction side, BlockHitResult hitResult) {
         ItemStack toApply = player.getItemInHand(hand);
-        if (!toApply.isEmpty() && !PartFilter.allowed(toApply)) {
+        if (!toApply.isEmpty() && !allows(toApply)) {
             if (!player.level().isClientSide) {
                 player.displayClientMessage(CreateLang.translateDirect("logistics.filter.invalid_item"), true);
                 AllSoundEvents.DENY.playOnServer(player.level(), player.blockPosition(), 1, 1);
@@ -97,7 +112,7 @@ public class PartFilteringBehaviour extends FilteringBehaviour {
     public boolean readFromClipboard(HolderLookup.Provider registries, CompoundTag tag, Player player, Direction side, boolean simulate) {
         if (tag.contains("Filter")) {
             ItemStack copied = ItemStack.parseOptional(registries, tag.getCompound("Filter"));
-            if (!copied.isEmpty() && !PartFilter.allowed(copied)) {
+            if (!copied.isEmpty() && !allows(copied)) {
                 return false;
             }
         }
