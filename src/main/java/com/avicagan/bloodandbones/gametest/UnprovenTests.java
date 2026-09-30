@@ -906,6 +906,36 @@ public class UnprovenTests {
         });
     }
 
+    /**
+     * The spool's throttle is "a player-controlled ramp that trades Soul Blood for power": its pull on a carcass it reels
+     * in beats the ground's grip at the bottom (ModuleActions#GRIP) and rises with every step above it, to what it was at
+     * the top. (Floored at the grip, the bottom half of the throttle all pulled alike.)
+     */
+    @GameTest(template = "empty")
+    public static void grapplingSpoolPullRisesWithTheThrottle(GameTestHelper helper) {
+        double before = -1.0;
+        for (int step = 0; step <= 10; step++) {
+            double level = step / 10.0;
+            // the carcass is hauled at half the reel's speed (ModuleActions.grapple)
+            double pull = ModuleActions.carcassPull((ModuleActions.REEL + ModuleActions.REEL_RAMP * level) * 0.5);
+            if (step == 0 && Math.abs(pull - ModuleActions.GRIP) > 1.0e-9) {
+                helper.fail("At the bottom of the throttle the spool should pull a carcass at the ground's grip, " + ModuleActions.GRIP + ", but pulls " + pull);
+                return;
+            }
+            if (!(pull > before)) {
+                helper.fail("Each step of the throttle should pull a carcass harder: at " + level + " it pulls " + pull + ", no more than " + before);
+                return;
+            }
+            before = pull;
+        }
+        double top = 0.25 * (ModuleActions.REEL + ModuleActions.REEL_RAMP) * 0.5;
+        if (Math.abs(before - top) > 1.0e-9) {
+            helper.fail("At the top of the throttle the spool should pull a carcass as it did, " + top + ", but pulls " + before);
+            return;
+        }
+        helper.succeed();
+    }
+
     // ---- the Grappling Spool hands a carcass to the drag tether (brief: "reuses the meat hook tether")
 
     /**

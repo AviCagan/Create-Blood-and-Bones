@@ -389,10 +389,10 @@ public class PhysicsTests {
      * the head snaps back, no faster than a blow may set the spot it lands on moving, and the cow goes down about where
      * it stood, its joints holding. Sized for the whole cow and put on its head alone, the blow once set the head moving
      * at 23 blocks a second and the cow slid 1.7 blocks; now the head goes at 7 and the cow 1.2 (much of it folding up).
-     * Left sitting up on its front legs, its legs then give way and it goes over onto its side (CarcassSlump), which moves
-     * its torso sideways, so the blow's travel is judged along the blow (1.5) and any way at all (2).
+     * Left sitting up on its front legs, its legs then give way and it goes over onto its side (CarcassSlump), and it
+     * still lies within a block and a half of where it stood.
      */
-    @GameTest(template = "open_ground", timeoutTicks = 200)
+    @GameTest(template = "open_ground", timeoutTicks = 320)
     public static void blowToTheHeadSnapsItBackWithoutFlingingIt(GameTestHelper helper) {
         Mob cow = RigComparison.standing(helper, COW, RigScenarios.KILLED_AT, RigScenarios.SOUTH);
         Bone head = RigManager.forEntity(BuiltInRegistries.ENTITY_TYPE.getKey(COW)).flatMap(rig -> rig.bone("head")).orElseThrow();
@@ -401,9 +401,22 @@ public class PhysicsTests {
         Subject s = new Subject(helper, COW);
         s.carcass = kill(helper, cow, feet.add(0.0, 0.0, 2.5), headAt, "head");
         s.rig = RigManager.forCarcass(s.carcass).orElseThrow();
+        // watched until it has gone down, not only the blow: going over onto its side moves it too
+        double floor = helper.absolutePos(new BlockPos(0, RigComparison.FLOOR, 0)).getY();
+        double stood = RigScenarios.belly(s, floor);
+        int[] t = {0};
+        helper.onEachTick(() -> {
+            if (++t[0] == FACE_DOWN_BY) {
+                helper.assertTrue(!RigScenarios.stood(s, stood, floor), "struck in the face, the cow should have gone down by tick " + FACE_DOWN_BY
+                        + ", tilted " + fmt(RigComparison.angleDeg(s.up(), new Vector3d(0, 1, 0))) + " degrees, torso " + fmt(RigScenarios.belly(s, floor)) + " up");
+            }
+        });
         watchStruck(helper, s, "head", 0, () -> {
-        }, 100, CarcassAssembler.BLOW_MAX_STRUCK + 0.5, 1.5, new Vector3d(0, 0, -1), 2.0);
+        }, FACE_DOWN_BY + 10, CarcassAssembler.BLOW_MAX_STRUCK + 0.5, 1.5);
     }
+
+    /** By when a cow struck in the face has gone down, ticks: its legs give way under it some while after the blow. */
+    private static final int FACE_DOWN_BY = 210;
 
     /**
      * Strike a carcass on one part at a tick, then watch it for some ticks: that part's fastest point never goes faster
@@ -411,21 +424,10 @@ public class PhysicsTests {
      * (its torso no more than {@code maxTravel} from where it was, nor rising half a block).
      */
     static void watchStruck(GameTestHelper helper, Subject s, String struck, int strikeAt, Runnable strike, int ticks, double maxSpeed, double maxTravel) {
-        watchStruck(helper, s, struck, strikeAt, strike, ticks, maxSpeed, maxTravel, null, maxTravel);
-    }
-
-    /**
-     * As above, with the torso's travel judged along the way the blow went ({@code along}, level) against
-     * {@code maxTravel}, and in any direction against {@code maxAnyWay}: a cow struck in the face and knocked back a
-     * block, whose legs then give way and roll it onto its side (CarcassSlump), has not been flung sideways.
-     */
-    static void watchStruck(GameTestHelper helper, Subject s, String struck, int strikeAt, Runnable strike, int ticks, double maxSpeed, double maxTravel,
-                            @org.jetbrains.annotations.Nullable Vector3d along, double maxAnyWay) {
         Vector3d[] start = {null};
         double[] fastest = {0.0};
         double[] gap = {0.0};
         double[] travel = {0.0};
-        double[] anyWay = {0.0};
         double[] rise = {0.0};
         int[] t = {0};
         helper.onEachTick(() -> {
@@ -444,20 +446,17 @@ public class PhysicsTests {
             fastest[0] = Math.max(fastest[0], fastestPoint(s, struck));
             gap[0] = Math.max(gap[0], s.jointGap());
             Vector3d at = s.torsoCentre();
-            travel[0] = Math.max(travel[0], along == null ? Math.hypot(at.x - start[0].x, at.z - start[0].z)
-                    : Math.abs((at.x - start[0].x) * along.x + (at.z - start[0].z) * along.z));
-            anyWay[0] = Math.max(anyWay[0], Math.hypot(at.x - start[0].x, at.z - start[0].z));
+            travel[0] = Math.max(travel[0], Math.hypot(at.x - start[0].x, at.z - start[0].z));
             rise[0] = Math.max(rise[0], at.y - start[0].y);
             if (now == ticks) {
-                BloodAndBones.LOGGER.info("[physics] struck on the {}: its fastest point {} blocks a second, joints {} apart at most, torso {} off{} and {} up",
-                        struck, fmt(fastest[0]), fmt(gap[0]), fmt(travel[0]), along == null ? "" : " along the blow (" + fmt(anyWay[0]) + " any way)", fmt(rise[0]));
+                BloodAndBones.LOGGER.info("[physics] struck on the {}: its fastest point {} blocks a second, joints {} apart at most, torso {} off and {} up",
+                        struck, fmt(fastest[0]), fmt(gap[0]), fmt(travel[0]), fmt(rise[0]));
                 helper.assertTrue(fastest[0] > 0.3, "struck on the " + struck + ", it should have moved");
                 helper.assertTrue(fastest[0] <= maxSpeed, "struck on the " + struck + ", that part should go no faster than " + fmt(maxSpeed)
                         + " blocks a second, but went " + fmt(fastest[0]));
                 helper.assertTrue(gap[0] <= 0.25, "struck on the " + struck + ", its joints should hold, but one came " + fmt(gap[0]) + " blocks apart");
-                helper.assertTrue(travel[0] <= maxTravel && anyWay[0] <= maxAnyWay && rise[0] <= 0.5, "struck on the " + struck + ", it should stay about "
-                        + "where it was, but its torso went " + fmt(travel[0]) + " blocks off" + (along == null ? "" : " along the blow, " + fmt(anyWay[0])
-                        + " any way,") + " and " + fmt(rise[0]) + " up");
+                helper.assertTrue(travel[0] <= maxTravel && rise[0] <= 0.5, "struck on the " + struck + ", it should stay about where it was, but its torso "
+                        + "went " + fmt(travel[0]) + " blocks off and " + fmt(rise[0]) + " up");
                 helper.succeed();
             }
         });
@@ -602,6 +601,80 @@ public class PhysicsTests {
 
     /** How long a carcass may take to fold into its resting form after its blow, ticks. */
     private static final int STANDING_CAP = 560;
+
+    /**
+     * A cow set down standing on a patch of Butcher's Tables is held there to be worked: its legs do not give way and tip
+     * it off (CarcassSlump), and it rests standing on the tables.
+     */
+    @GameTest(template = "empty", timeoutTicks = 500)
+    public static void carcassStandingOnATableIsHeldThere(GameTestHelper helper) {
+        for (int x = 3; x <= 6; x++) {
+            for (int z = 2; z <= 7; z++) {
+                helper.setBlock(new BlockPos(x, 2, z), BBBlocks.BUTCHER_TABLE.get().defaultBlockState());
+            }
+        }
+        double top = helper.absolutePos(new BlockPos(0, 3, 0)).getY();
+        Subject s = RigComparison.assembled(helper, COW, new Vec3(5.0, 3.0, 5.0), RigScenarios.SOUTH);
+        helper.assertTrue(s != null, "no carcass");
+        double stood = RigScenarios.belly(s, top);
+        Vector3d from = s.torsoCentre();
+        int[] t = {0};
+        helper.onEachTick(() -> {
+            if (t[0] < 0 || !s.carcass().resting && ++t[0] < 400) {
+                return;
+            }
+            t[0] = -1;
+            helper.assertTrue(s.carcass().resting, "set down on the tables the cow should come to rest");
+            // folded: its torso is the one body, and the drawn pose is what it stood in
+            Vector3d at = s.torsoCentre();
+            BloodAndBones.LOGGER.info("[physics] on the tables: torso {} up where it stood {} up, {} from where it stood", fmt(RigScenarios.belly(s, top)), fmt(stood),
+                    fmt(Math.hypot(at.x - from.x, at.z - from.z)));
+            helper.assertTrue(RigScenarios.stood(s, stood, top), "a cow standing on the tables should be held there, standing, but its torso is "
+                    + fmt(RigScenarios.belly(s, top)) + " up where it stood " + fmt(stood) + " up, tilted "
+                    + fmt(RigComparison.angleDeg(s.up(), new Vector3d(0, 1, 0))) + " degrees");
+            helper.assertTrue(Math.hypot(at.x - from.x, at.z - from.z) < 0.5, "held on the tables, the cow should stay where it was set down");
+            helper.succeed();
+        });
+    }
+
+    /**
+     * A cow set down standing on the floor with a Bleeding Rack under its head, its feet all on the floor, is not held
+     * there as one standing on the rack would be: its legs give way and it goes down. (Once any part of it over a block
+     * that holds a carcass held it, so a cow killed beside a table or a rack, its head over it, folded standing.)
+     */
+    @GameTest(template = "empty", timeoutTicks = 500)
+    public static void carcassStandingBesideARackGoesDown(GameTestHelper helper) {
+        double floor = helper.absolutePos(new BlockPos(0, RigComparison.FLOOR, 0)).getY();
+        Subject s = RigComparison.assembled(helper, COW, new Vec3(5.5, 2.0, 3.5), RigScenarios.SOUTH);
+        helper.assertTrue(s != null, "no carcass");
+        Vector3d head = s.middle("head");
+        helper.assertTrue(head != null, "the cow has no head");
+        BlockPos rack = BlockPos.containing(head.x, floor + 0.5, head.z);
+        // the rack is under its head, where the lowest corner of the head reaches into its block, and under none of its feet
+        double headLow = RigScenarios.lowest(s.body("head"), s.bone("head"));
+        helper.assertTrue(headLow - 0.05 < floor + 1.0, "the cow's head should reach into the rack's block, but its lowest corner is "
+                + fmt(headLow - floor) + " up");
+        for (Map.Entry<String, ServerSubLevel> entry : s.bodies().entrySet()) {
+            for (Vector3d corner : com.avicagan.bloodandbones.carcass.CarcassSlump.cornersOf(entry.getValue(), s.bone(entry.getKey()))) {
+                helper.assertTrue(corner.y > floor + 0.1 || BlockPos.containing(corner.x, floor + 0.5, corner.z).compareTo(rack) != 0,
+                        "the rack should be under the cow's head, not under its " + entry.getKey());
+            }
+        }
+        helper.getLevel().setBlockAndUpdate(rack, BBBlocks.BLEEDING_RACK.get().defaultBlockState());
+        double stood = RigScenarios.belly(s, floor);
+        int[] t = {0};
+        helper.onEachTick(() -> {
+            if (t[0] < 0 || !s.carcass().resting && ++t[0] < 400) {
+                return;
+            }
+            t[0] = -1;
+            helper.assertTrue(s.carcass().resting, "the cow beside the rack should come to rest");
+            helper.assertTrue(!RigScenarios.stood(s, stood, floor), "standing on the floor with its head over a Bleeding Rack, the cow should go down, but "
+                    + "its torso is " + fmt(RigScenarios.belly(s, floor)) + " up where it stood " + fmt(stood) + " up, tilted "
+                    + fmt(RigComparison.angleDeg(s.up(), new Vector3d(0, 1, 0))) + " degrees");
+            helper.succeed();
+        });
+    }
 
     // ---------------------------------------------------------------- limbs hang, the head lolls
 

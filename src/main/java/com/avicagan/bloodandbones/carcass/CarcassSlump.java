@@ -151,7 +151,7 @@ public final class CarcassSlump {
         carcass.slumps++;
         com.avicagan.bloodandbones.BloodAndBones.LOGGER.debug("Carcass {} ({}) left {}: its legs give way ({} of at most {}){}", carcass.id, carcass.entity,
                 onEnd ? "balanced on end" : "standing", carcass.slumps, MOST, dragged ? ", dragged" : "");
-        giveWay(level, container, carcass, rig, torso, torsoBone, onEnd);
+        giveWay(level, container, carcass, rig, torso, torsoBone, onEnd, dragged);
         return true;
     }
 
@@ -174,7 +174,7 @@ public final class CarcassSlump {
      * the way it already points out from under its middle, which breaks the balance for the next time.
      */
     static void giveWay(ServerLevel level, ServerSubLevelContainer container, CarcassSavedData.Carcass carcass, Rig rig, ServerSubLevel torso, Bone torsoBone,
-                        boolean onEnd) {
+                        boolean onEnd, boolean dragged) {
         SubLevelPhysicsSystem physics = container.physicsSystem();
         // its middle, by weight, and its parts with the corners they reach lowest
         List<ServerSubLevel> bodies = new ArrayList<>();
@@ -240,7 +240,9 @@ public final class CarcassSlump {
                     way.set(across).mul(Math.signum(lean));
                 }
             }
-            slide = LEGS_OUT;
+            // not while it is dragged: its legs kicked out under a sheep or a cow pulled by a hind leg, and it came round
+            // rear first less often (the sheep 61 degrees off where it was 9 without, over four runs)
+            slide = dragged ? 0.0 : LEGS_OUT;
         }
         if (way.lengthSquared() >= LEAST * LEAST) {
             // a little harder each time it has been tipped and still stands
@@ -547,6 +549,11 @@ public final class CarcassSlump {
     /** A body's model frame in the world: its orientation with its bone's own rest turn taken out. */
     static Quaterniond modelToWorld(ServerSubLevel body, Bone bone) {
         return new Quaterniond(body.logicalPose().orientation()).mul(new Quaterniond(bone.rotation()).invert());
+    }
+
+    /** The eight corners of a body's drawn box, in the world (for tests). */
+    public static List<Vector3d> cornersOf(ServerSubLevel body, Bone bone) {
+        return corners(body, bone);
     }
 
     /** The eight corners of a body's drawn box, in the world. */

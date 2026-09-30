@@ -202,13 +202,6 @@ public class TrolleyTests {
         UUID[] ids = new UUID[2];
         for (int i = 0; i < 2; i++) {
             Cow cow = helper.spawn(EntityType.COW, new BlockPos(3 + 3 * i, 2, 5));
-            // facing along the chain: built standing, its legs give way and it goes over onto a side (CarcassSlump), and
-            // facing across the chain the two went over onto each other now and then, one under the other where its
-            // trolley could not hoist it
-            cow.setYRot(-90.0F);
-            cow.yBodyRot = -90.0F;
-            cow.yBodyRotO = -90.0F;
-            cow.setYHeadRot(-90.0F);
             CarcassSavedData.Carcass carcass = CarcassAssembler.assemble(cow, null);
             cow.discard();
             if (carcass == null) {
@@ -306,13 +299,6 @@ public class TrolleyTests {
         UUID[] ids = new UUID[2];
         for (int i = 0; i < 2; i++) {
             Cow cow = helper.spawn(EntityType.COW, new BlockPos(3 + 3 * i, 2, 5));
-            // facing along the chain: built standing, its legs give way and it goes over onto a side (CarcassSlump), and
-            // facing across the chain the two went over onto each other now and then, one under the other where its
-            // trolley could not hoist it
-            cow.setYRot(-90.0F);
-            cow.yBodyRot = -90.0F;
-            cow.yBodyRotO = -90.0F;
-            cow.setYHeadRot(-90.0F);
             CarcassSavedData.Carcass carcass = CarcassAssembler.assemble(cow, null);
             cow.discard();
             if (carcass == null) {

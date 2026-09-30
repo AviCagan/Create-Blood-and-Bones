@@ -371,7 +371,7 @@ public final class ModuleActions {
      * standing slid along, on its feet; one lying down, as a dead one does, stayed where it lay, so the coil drew nothing
      * in and the spool's hook never reached the Meat Hook's hand (grapplingSpoolHandsACarcassToTheDrag, now and then).
      */
-    static final double GRIP = 0.18;
+    public static final double GRIP = 0.18;
 
     /**
      * The Grappling Spool's pull on a carcass it reels in, blocks a second a tick, for its haul speed ({@code speed}, half
