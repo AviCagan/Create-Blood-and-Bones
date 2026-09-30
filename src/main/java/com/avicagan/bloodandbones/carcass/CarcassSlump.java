@@ -109,9 +109,9 @@ public final class CarcassSlump {
     /**
      * Its legs give way: the whole carcass is set turning over the feet on one side (the side it leans to, or, standing
      * straight, one side or the other), all its parts together, so no joint fights it, just fast enough to carry its
-     * middle over those feet, and it falls onto that side as a body pushed past its balance does. Turned about its own
-     * middle instead, the torso pressed its legs into the ground on that side, which pushed it back: a polar bear so
-     * rocked came back upright every time.
+     * middle over those feet, and it falls onto that side as a body pushed past its balance does, its legs sliding out
+     * from under it the other way ({@link #LEGS_OUT}). Turned about its own middle instead, the torso pressed its legs
+     * into the ground on that side, which pushed it back: a polar bear so rocked came back upright every time.
      */
     static void giveWay(ServerLevel level, ServerSubLevelContainer container, CarcassSavedData.Carcass carcass, Rig rig, ServerSubLevel torso, Bone torsoBone,
                         @Nullable String hooked) {
@@ -193,9 +193,19 @@ public final class CarcassSlump {
             Vector3d at = tracker.isInvalid() ? new Vector3d(body.logicalPose().position())
                     : body.logicalPose().transformPosition(new Vector3d(tracker.getCenterOfMass()));
             physics.getPipeline().wakeUp(body);
-            physics.getPipeline().addLinearAndAngularVelocity(body, new Vector3d(turn).cross(at.sub(pivot)), turn);
+            Vector3d kick = new Vector3d(turn).cross(new Vector3d(at).sub(pivot));
+            // and the legs under it slide out the other way, as legs giving way do: it goes down more where it stood
+            // (turned over its feet alone, a cow set down standing lay 1.8 blocks from where it stood, 1.7 with its legs
+            // sliding out at 3 blocks a second; at 5 a sheep went on over onto its back)
+            if (body != torso && at.y < middle.y) {
+                kick.add(new Vector3d(across).mul(-LEGS_OUT));
+            }
+            physics.getPipeline().addLinearAndAngularVelocity(body, kick, turn);
         }
     }
+
+    /** How fast the parts under its middle (its legs) slide out from under it as it goes over, blocks a second. */
+    static final double LEGS_OUT = 3.0;
 
     /** How close to the lowest corner of it a corner must be to count as a foot on the ground, blocks. */
     private static final double FOOT = 0.1;

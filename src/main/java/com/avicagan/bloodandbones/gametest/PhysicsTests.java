@@ -548,8 +548,10 @@ public class PhysicsTests {
         Map<String, Subject> subjects = new java.util.LinkedHashMap<>();
         Map<String, Double> stood = new java.util.HashMap<>();
         Map<String, String> folded = new java.util.HashMap<>();
+        Map<String, Vector3d> from = new java.util.HashMap<>();
         java.util.function.BiConsumer<String, Subject> watch = (blow, s) -> {
             stood.put(blow, RigScenarios.belly(s, floor));
+            from.put(blow, s.torsoCentre());
             subjects.put(blow, s);
         };
         Vec3 face = new Vec3(8.5, 2, 9.5);
@@ -579,6 +581,7 @@ public class PhysicsTests {
                     double belly = RigScenarios.belly(s, floor);
                     folded.put(entry.getKey(), (RigScenarios.stood(s, stood.get(entry.getKey()), floor) ? "STANDING " : "down ")
                             + "(tilted " + fmt(tilt) + " degrees, torso " + fmt(belly) + " up where it stood " + fmt(stood.get(entry.getKey())) + " up, "
+                            + fmt(Math.hypot(s.torsoCentre().x - from.get(entry.getKey()).x, s.torsoCentre().z - from.get(entry.getKey()).z)) + " from where it stood, "
                             + (s.carcass().resting ? "resting" : "not resting") + " at tick " + t[0] + ")");
                 }
             }
