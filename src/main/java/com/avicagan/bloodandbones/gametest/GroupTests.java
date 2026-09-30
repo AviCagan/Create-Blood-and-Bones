@@ -517,6 +517,59 @@ public class GroupTests {
     }
 
     /**
+     * In water a carcass floats or sinks and is never standing on its legs, so its legs are never made to give way under it
+     * (CarcassSlump): a chicken floating up from the floor of a pool, which floated upright, and a cow sunk onto the
+     * pool's floor, which stood on it, are never tipped over by it in 300 ticks. (Water has no collision shape, so nothing
+     * was under either torso, and the chicken was spun over within half a second and the cow again and again.)
+     */
+    @GameTest(template = "empty", timeoutTicks = 400)
+    public static void carcassesInWaterAreNotMadeToGiveWay(GameTestHelper helper) {
+        pool(helper);
+        ServerLevel level = helper.getLevel();
+        Mob chicken = helper.spawn(EntityType.CHICKEN, new BlockPos(3, 2, 5));
+        Mob cow = helper.spawn(EntityType.COW, new BlockPos(7, 4, 5));
+        chicken.setNoAi(true);
+        cow.setNoAi(true);
+        CarcassSavedData.Carcass[] built = new CarcassSavedData.Carcass[2];
+        int[] seen = {0, 0};
+        int[] gaveWay = {0, 0};
+        helper.runAfterDelay(SETTLE_TICKS, () -> {
+            built[0] = CarcassAssembler.assemble(chicken, null);
+            built[1] = CarcassAssembler.assemble(cow, null);
+            chicken.discard();
+            cow.discard();
+            if (built[0] == null || built[1] == null) {
+                helper.fail("Both carcasses should build in water");
+            }
+        });
+        int[] t = {0};
+        helper.onEachTick(() -> {
+            if (built[0] == null || built[1] == null || t[0] < 0) {
+                return;
+            }
+            for (int i = 0; i < 2; i++) {
+                // every time its legs give way the count goes up (it starts again only once it is down a while)
+                if (built[i].slumps > seen[i]) {
+                    gaveWay[i] += built[i].slumps - seen[i];
+                }
+                seen[i] = built[i].slumps;
+            }
+            if (++t[0] < 300) {
+                return;
+            }
+            t[0] = -1;
+            if (gaveWay[0] > 0 || gaveWay[1] > 0) {
+                helper.fail("In water a carcass should never be made to give way, but the chicken's legs gave way " + gaveWay[0] + " times and the cow's "
+                        + gaveWay[1]);
+                return;
+            }
+            remove(level, built[0]);
+            remove(level, built[1]);
+            helper.succeed();
+        });
+    }
+
+    /**
      * Every vanilla mob's butchery table, as the rig targets' own butchery sections wrote it before they moved into groups
      * and mob files: a fingerprint of each table's every yield, bone by bone. A change here means a mob now butchers
      * differently.
