@@ -74,7 +74,7 @@ public final class CarcassAssembler {
      * The share of what a light part struck could not take that goes on into the body: enough to rock it, not so much that
      * every blow to a face or a tail slides the animal as far as one to its body.
      */
-    private static final double CARRIED_ON = 0.4;
+    private static final double CARRIED_ON = 0.2;
     /** How far a killer's blow reaches along their look, in blocks. */
     private static final double BLOW_REACH = 8.0;
 

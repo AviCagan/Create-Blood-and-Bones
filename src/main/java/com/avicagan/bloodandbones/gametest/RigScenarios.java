@@ -400,6 +400,15 @@ final class RigScenarios {
             if (now >= 36 && now <= 70) {
                 walking.add(angle);
             }
+            if (now % 4 == 0) {
+                Vector3d tc = s.torsoCentre();
+                Vector3d pc = body == null ? null : s.middle(body);
+                com.avicagan.bloodandbones.BloodAndBones.LOGGER.info(String.format("[hookdbg] %s %s t=%d ang=%.0f tilt=%.0f up=(%.2f,%.2f,%.2f) fwd=(%.2f,%.2f,%.2f) torso=(%.2f,%.2f,%.2f) part=(%.2f,%.2f,%.2f) player=%.2f",
+                        RigComparison.mobName(type), byTheHead ? "head" : "leg", now, angle, RigComparison.angleDeg(s.up(), new Vector3d(0, 1, 0)), s.up().x, s.up().y, s.up().z,
+                        s.forward().x, s.forward().y, s.forward().z,
+                        helper.relativeVec(new Vec3(tc.x, tc.y, tc.z)).x, tc.y, helper.relativeVec(new Vec3(tc.x, tc.y, tc.z)).z,
+                        pc == null ? 0 : helper.relativeVec(new Vec3(pc.x, pc.y, pc.z)).x, pc == null ? 0 : pc.y, pc == null ? 0 : helper.relativeVec(new Vec3(pc.x, pc.y, pc.z)).z, x));
+            }
             CarcassDrag.Drag drag = CarcassDrag.current(player);
             if (drag != null && SubLevelContainer.getContainer(s.level).getSubLevel(drag.subLevel) instanceof ServerSubLevel held) {
                 Vector3d point = held.logicalPose().transformPosition(drag.anchorPlot, new Vector3d());

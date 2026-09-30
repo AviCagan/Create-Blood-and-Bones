@@ -57,12 +57,20 @@ public final class CarcassRest {
         if (carcass.resting) {
             return;
         }
+        ServerSubLevelContainer container = SubLevelContainer.getContainer(level);
         if (isHeld(level, carcass)) {
             carcass.stillTicks = 0;
             carcass.settledAt.clear();
+            // dragged along on its feet, its legs give way as they do under one left standing (hung, it is lifted off them)
+            Rig rig = RigManager.forCarcass(carcass).orElse(null);
+            if (container != null && rig != null && CarcassDrag.isDraggingCarcass(carcass.id) && !ShackleHookBlockEntity.isHanging(level, carcass.id)
+                    && !com.avicagan.bloodandbones.carcass.trolley.ShackleTrolleyEntity.isHanging(level, carcass.id)) {
+                CarcassSlump.tick(level, container, carcass, rig, true);
+            } else {
+                carcass.standingTicks = 0;
+            }
             return;
         }
-        ServerSubLevelContainer container = SubLevelContainer.getContainer(level);
         if (container == null) {
             return;
         }
@@ -78,7 +86,7 @@ public final class CarcassRest {
         }
         // a dead animal never stays on its feet: standing, its legs give way, and until it is down it does not rest
         Rig rig = RigManager.forCarcass(carcass).orElse(null);
-        if (rig != null && CarcassSlump.tick(level, container, carcass, rig)) {
+        if (rig != null && CarcassSlump.tick(level, container, carcass, rig, false)) {
             carcass.stillTicks = 0;
             carcass.settledAt.clear();
             return;
