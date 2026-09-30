@@ -119,11 +119,11 @@ incremental. `./gradlew runClient` / `runServer` / `runData` are configured by M
 
 ### Development aids
 
-- `./gradlew runGameTestServer` runs the game tests headless (621: every rigged mob and baby, mobs with no rig of their own and weight classes,
+- `./gradlew runGameTestServer` runs the game tests headless (626: every rigged mob and baby, mobs with no rig of their own and weight classes,
   butchery and its three yield paths, rot, cold air, bleeding, machines, their motion and their part filters, cooking and display, decoration, surgery and its screen's choices, the body through a real death, organs, implants, backtanks, carcass armour and its traits, trait effects, minions and their tasks, movement and mounts, chains, recipes
   and the soul blood line on Create's machines, bloodless mode (no game logic reads it; no gory word or wet sound
   left), advancements and sounds, what a dozen carcasses at once cost the server, and the carcass physics: which way a
-  hooked carcass turns and a struck one falls, and every block and carcass on Create contraptions and Sable ships).
+  hooked carcass turns and a struck one falls, that no dead animal is left standing on its legs, and every block and carcass on Create contraptions and Sable ships).
   `-Dbloodandbones.debug.only=name,name` runs only those tests, and `-Dbloodandbones.debug.repeat=N` runs them N times.
   To time what carcasses cost, run one of these on its own with `-Dbloodandbones.debug.cost=N`:
   `-Dbloodandbones.debug.only=dozenCarcasses` prints the server's tick times with N dozen carcasses (one to four) made

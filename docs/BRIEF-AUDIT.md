@@ -102,6 +102,14 @@ The packages are in order of how much their gap hurts the brief:
 
 ### 1. Physics: where you hook it and where the blow lands
 
+Built in part (ARCHITECTURE 15.28, and 15.32 "Dead animals look dead", numbered at merge): the part aimed at is hooked,
+the blow lands where it hits, heads loll, hung carcasses swing, bone and plate weigh more, the tests check directions.
+15.32: no dead animal is left standing on its legs any more (struck in the face, set down on a ship's deck, sitting up
+on its front legs): its legs give way and it goes over onto its side, 12 of 12 mobs down after every blow where 7 were
+after a blow in the face; hooked by a hind leg, 6 of 12 come round rear first where 3 did (the sheep and the llama now;
+the pig nearly; the horse and the chicken not). Still open: the horse, pig and chicken hooked by a hind leg, the chicken,
+rabbit and spider struck in the flank, and decisions 4 and 5. The rest of this section is kept as it was written.
+
 **Why.** The brief says: "This is the part that's been hardest and I care about it most."
 - Hook a hind leg and the animal comes round arse-first; hook the head and it follows head-first.
 - A blow to the flank drops it sideways; one from behind pitches it onto its nose. "Nothing about which way it falls should be scripted."

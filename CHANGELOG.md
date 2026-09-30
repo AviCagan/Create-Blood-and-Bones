@@ -20,8 +20,14 @@ Everything below is in development builds only; the art is placeholder (see the 
   fall apart after a day.
 - The Meat Hook takes the part you aim at, on a carcass lying still too, but never through a wall
   or a ship's side. Hook the head and it follows head first. Hook a cow by a hind leg and walk off
-  and it comes round rear first; about half the animals do so far (a sheep or a pig still goes on
-  head first).
+  and it comes round rear first; about half the animals do so far.
+- A dead animal no longer comes to rest standing on its legs, which looked alive: one left standing
+  (struck in the face, or set down on a ship's deck), sitting up on its front legs, or held up on
+  splayed legs has its legs give way, and it goes over onto its side where it stood. One on a table
+  or a machine is held there. A zombie or a villager struck from the side on its arm now goes down.
+- Hooked by a hind leg while still on its feet, an animal goes down away from that leg and comes
+  round rear first: a sheep and a llama now do (a sheep used to be dragged along on its feet,
+  facing the wrong way); a pig about as often as before, a horse and a chicken not yet.
 - A carcass dragged along no longer swings on past the way it should trail and rocks there: a cow
   dragged by a hind leg now and then ended up crosswise.
 - The killing blow lands where it hits: struck in the flank most carcasses go down on their side,
@@ -259,6 +265,8 @@ Everything below is in development builds only; the art is placeholder (see the 
   soul blood by the block) and Barometric Vent (a puff up and a slow hover).
 - The Grappling Spool gives a carcass it reels in time to arrive. One six blocks off often stopped a step short and
   was never handed to the Meat Hook.
+- The Magnet Coil and the Grappling Spool now pull in a carcass lying on its side; their pull was
+  less than the ground's grip, so only one left standing on its feet slid along.
 - The Grappling Spool hands a carcass to the Meat Hook as soon as it is within the hook's reach. One that the ground
   stopped a little further off than arm's length was never handed over.
 - Set bonuses: four or more flesh grafts heal you from what you hit and rot half as fast; four or more

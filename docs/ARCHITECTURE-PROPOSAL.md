@@ -5048,3 +5048,162 @@ Butchery by group was shadowed for every vanilla mob by its generated table; now
 - Section 4.1's client-sent rigs and a `/bloodandbones rig export` command are not built; a modded mob's own rig comes
   from a datapack or a rig target (docs/MODDED-MOBS.md). A family by Java class (docs/PARTS-AND-TRAITS.md 3.1, through a
   throwaway instance) is not built either; tags and the archetype rules cover a modded mob meanwhile.
+
+### 15.32 (numbered at merge) Dead animals look dead: no carcass is left standing on its legs (verified)
+
+This takes docs/BRIEF-AUDIT.md package 1 further ("dead animals should look dead, limp and heavy"). It needs no open
+decision. The physics measurement (`-Dbloodandbones.debug.rig_compare=true`) was run eight times over on main's physics
+and on this work's, both with this work's measurement, and every number below is from those two runs unless it says
+otherwise.
+
+**Why a carcass stood.** The showcase's cow struck in the face stood where it was, and the cow set down on a ship's deck
+stood on it. Measured, three things held a carcass up, and the resting form then pinned it that way for good:
+- **Legs that cannot fold.** A leg is one rigid body on one joint at the hip. Four of them hold a body up: nothing tips
+  one set down standing, and splayed to the ends of their joints they prop it like a trestle. A pig struck in the face
+  swept its front legs back to the end of their swing (75 degrees) and stood on them as on struts, its torso 0.23 blocks
+  up where it had stood 0.38 up. A cow struck in the face sat up like a dog, its rear on the ground and its chest a
+  third of a block up on straight front legs, which the measurement took for down (its lowest corner touched the
+  ground).
+- **A blow too weak to topple it.** A blow to the head is held to what the head can take (15.28), and the rest of it was
+  lost: a polar bear struck in the face moved 0.04 blocks and stood, upright to within a hundredth of a degree. A zombie
+  or a villager struck from the side on its arm stood too.
+- **The resting form.** Once still for three seconds it folds into one body, pinned as it lies: standing.
+- Spinning the torso about its spine, the first thing tried, did not work: the turn pressed its legs on that side into
+  the ground, which pushed it back, and a polar bear given six such turns came back upright each time.
+
+**What was built.**
+- **Its legs give way** (`carcass/CarcassSlump`). A loose carcass stands when its torso is within 45 degrees of upright,
+  a leg reaches below it by more than a quarter as far as its legs held it (at half, a horse held up on splayed legs at
+  half its height passed), and nothing (the ground, a rack, a deck, another carcass) is that close under the torso; or,
+  on four legs, when it sits up on its front ones, the front of its belly that high and its rear lower. One pitched onto
+  its nose with its rear up is left as it is: that is how a blow from behind leaves it. After half a second standing
+  nearly still (on a ship under way, still on the deck), the whole carcass is set turning over the feet on the side it
+  leans to (standing straight, one side or the other), every part together so no joint fights it, a tenth faster than it
+  takes to carry its middle over those feet, the same for any weight, as a fall is; its legs slide out the other way at
+  3 blocks a second, so it goes down nearer where it stood (a cow set down standing lay 1.8 blocks from where it stood
+  without, 1.7 with; at 5 a sheep went on over onto its back). Until it is down it is not let rest. It tries six times,
+  each a little harder, and then a carcass wedged upright somewhere is let rest as it is. Hung on a hook it is lifted
+  off its legs and never gives way.
+- **Held where it is worked.** A carcass standing on a table or a machine is held there, not tipped off it (a new block
+  tag, `bloodandbones:holds_carcasses`: the Butcher's, Surgery and Steel Tables, the Bleeding Rack and the four
+  machines; a datapack adds its own). Tipped, a cow set down on a Surgery Table or a Mangler, a block wide, went over
+  the side.
+- **Dragged along on its feet** (a sheep hooked by a hind leg slid along standing, facing the wrong way) its legs give
+  way however it moves, and it goes down away from the hooked leg, which the pull draws out from under it, so that leg
+  ends on top, free to lead. Not a body that stands upright (a zombie): the leg it is dragged by pulls it off its feet,
+  and it already came round (a zombie 21 degrees off, a villager 9). Its legs do not slide out while it is dragged: they
+  kicked out under a cow pulled by a hind leg, and it came round rear first a little less often (60 degrees or more off
+  in 2 runs of 30; none in 90 without).
+- **A blow carries on into the body.** Of what a light part struck could not take (15.28's limit), a fifth goes on into
+  the torso where that part's limb joins it (`CarcassAssembler.blow`). At two fifths a cow struck in the face slid 1.7
+  blocks, as it did before the limit.
+
+**Tests.** `PhysicsTests.dead{Cow,Pig,PolarBear,Horse,Sheep}NeverSettlesStanding`: four of a kind on open ground, struck
+in the face, in the flank and from behind, and one built where it stood and not struck at all, each watched until it
+folds, which it must, and then down (`RigScenarios.stood`: tipped 45 degrees or more, or its torso no higher than a
+quarter of how high it stood, and not sitting up on its front legs). Run on main's physics all five failed, ten
+carcasses of the twenty standing: every one not struck; struck in the face the cow sitting up (15 degrees, its lowest
+corner 0.07 up), the pig on its swept-back legs (0.23 of 0.38 up), the polar bear untouched (0.597 of 0.601 up, 0.04
+from where it stood) and the sheep sitting up; struck from behind the horse (0.746 of 0.757 up). Now all twenty lie
+down: the struck ones and the unstruck on their sides, except those struck from behind, pitched onto the nose (the cow
+at 15 degrees, the pig at 64, the sheep at 22, the bear at 10; the horse went over onto its side), and all rest within
+200 ticks. The test's log says how far each lies from where it stood: set down standing, a sheep 0.9 blocks, a pig 1.1,
+a horse 1.2, a polar bear 1.6, a cow 1.7. `blowToTheHeadSnapsItBackWithoutFlingingIt` now judges the cow's travel along
+the blow (1.25 blocks; its limit stays 1.5) and in any direction (1.36; limit 2), since the cow then goes over onto its
+side.
+
+**Physics, before and after** (eight runs of every scenario on the twelve mobs; mobs meeting the bar in most runs, of
+twelve, runs meeting it, of 96, and the median of all runs):
+
+| Bar | Before | After |
+|---|---|---|
+| Face: down, not left standing | 7 (53) | 12 (96) |
+| Behind: down, not left standing | 10 (84) | 12 (96) |
+| Flank: down, not left standing | 11 (88) | 12 (96) |
+| Flank: on its side, fallen away from the blow | 7 (56) | 9 (72) |
+| Flank: leaning within 60 degrees of the blow's way | 8 (67), 44 degrees off | 10 (80), 33 |
+| Hind-leg hook: rear first within 45 degrees | 3 (35), 64.5 degrees off | 6 (53), 39.5 |
+| Face: knocked back 1.5 blocks or less | 11 (85), 0.90 | 10 (81), 0.94 |
+| Face: within 1.5 blocks of where it stood | 11 (82), 0.94 | 8 (64), 1.22 |
+| Behind: 20 degrees nose down at rest; head on the ground | 5 (40); 8 (65) | 5 (40); 8 (67) |
+| Head hook, held up, hung, steps, cut leg, joints, sinking, folding | within a few runs of where they were | |
+
+Left standing, by mob, before: struck in the face the cow, llama, pig, polar bear and sheep (every run), struck from
+behind the horse (every run) and the llama (half), struck in the flank the zombie. After: none. Struck in the face each
+now lies on its side, 90 degrees over, where before the cow, llama, pig and sheep sat up at 9 to 21 degrees and the bear
+stood at 0. The last bar is the price: going over onto its side moves the torso's middle sideways, so a carcass struck
+in the face lies 1.22 blocks from where it stood where it lay 0.94 (the polar bear 1.74 where it stood 0.04); knocked
+back along the blow it goes about as far as before (0.94, 0.90), and the bear 0.13.
+
+**Hooked by a hind leg** (the brief: "comes round arse-first"; degrees off rear first while dragged, median of eight):
+sheep 134 to 10, llama 77 to 19, polar bear 121 to 42, wolf 105 to 94, pig 52 to 49, horse 50 to 63, chicken 83 to 126;
+the cow (15 to 19), villager (9) and zombie (21 to 20) as they were. The measurement hooks a carcass five ticks after it
+is built standing, and the sheep and llama were dragged along on their feet; going down away from the hooked leg, they
+come round. The pig comes round at about 49 degrees, just short of the bar's 45, as before. The horse and the chicken do
+not, and the horse got worse: the horse tumbles over its back and on while dragged (its tilt from upright swung between
+30 and 160 degrees through a drag), which damping its roll as its turn is damped (3 and 8 a second) did not help; the
+chicken's leg joins its body under its middle, so which end of it leads says little (the measurement now also reports
+whether the hooked part itself leads, `part_leads_deg`: the chicken's leg is 62 degrees off leading, the sheep's 10).
+Tried and dropped, each over eight runs: falling toward the hooked leg (pig 62, horse 62), giving way sooner (3 ticks:
+pig 61, horse 71), a weaker or stronger damping of the dragged carcass's turn (1.5 and 3 a second for 6: no change
+beyond the noise), and damping its roll. So two of the five the audit named (sheep, llama) now come round rear first,
+the pig nearly, and the horse and the chicken not.
+
+**Flank blows.** The zombie and the villager, struck on the arm, now go down on their side away from the blow (the
+zombie from 0.8 degrees over to 81, 1 degree off the blow's way; the villager fell over before, but forward or back, 90
+degrees off the blow's way, and now falls away from it, 8 off). The wolf went down on its side away from the blow before
+and still does (90 degrees, 20 off). Not improved: the chicken, struck on its wing, falls forward or back rather than to
+the side, and a little less far (66 degrees over where it went 89, 80 off the blow's way both times; its two legs side
+by side hold it up sideways and its head end is the heavier); the rabbit, struck on its body with the whole blow, slides
+1.7 blocks and tips 31 degrees (its body is wider than it is tall, and its haunches and splayed front legs prop it: it
+lies down, belly to the ground, but not on its side); the spider, struck on a leg held out flat, lies flat, belly on the
+ground, legs sprawled (0.3 degrees): down, but not over. Nothing about which way it falls is scripted, so these are left
+to their shapes.
+
+**What else it changed, and why the tests changed.** Carcasses built standing are the setup of many tests, and every one
+of them now goes over before it rests:
+- The Magnet Coil and the Grappling Spool pulled a carcass by 0.12 and 0.11 blocks a second a tick, less than the
+  ground's grip on one lying on its side: only one left standing slid along, on its feet.
+  `magnetCoilAtHighSpoolDrawsInACarcass` (its cow "lying seven blocks off" had in fact been standing) drew the lying cow
+  0.15 blocks. Both now pull at least 0.18 (`ModuleActions.GRIP`): the lying cow comes in 3.5 blocks in two seconds, and
+  the spool hands it to the Meat Hook.
+- Tests that hook a named leg of a cow that has gone over hook the one on top (`lyingCarcassHooksThePartAimedAt`,
+  `meatHookDoesNotHookThroughAWall`, `meatHookDragsByLeg`): the one under it is hidden behind the other, or pinned under
+  the body (dragged by a pinned front leg, the leg trailed its target by 1.3 blocks, 1 run in 20).
+- Tests timed on a cow folding a fixed time after it is built wait for it to fold (`restingFormFoldsAndUnfolds`,
+  `punchWakesRestingCarcass`, `restingCarcassFallsWhenUnsupported`); the fold/unfold test compares with the poses of the
+  last tick before it folded. The rigged-mob assembly tests look once a falling carcass has landed (a ravager going over
+  swung a leg 2.8 blocks up mid-fall).
+- Two cows on a chain are set down facing along it (`trolleysQueueOnAChain`: facing across, they went over onto each
+  other, one under the other where its trolley could not hoist it), and the cow meant to rot in
+  `rottenCarcassFallsApart` faces away from the blue ice (going over toward it, it came within the cold's reach).
+
+**The showcase.** `showcase_1`, "machines from above", was photographed from the ground: the player was put four blocks
+up but not flying, and fell before the picture, so the machines sat at its top edge. A view can now hold the player
+where it was put (`View.fly`), and this one does: the row of machines, each with its carcass, is in the middle of the
+picture. The dropped cow on the flying ship is photographed 260 ticks after it lands, not 180 (it goes over before it
+rests; the test of it logs 169). Looked at, before (main) and after: `physics_1`, the three struck cows: before, the one
+struck in the face stood in the middle on straight legs; now it lies on its side, legs toward the camera, beside the one
+struck in the flank; the one struck from behind lies nose down as before. `contraption_3`, the flying ship: before, the
+cow dropped on the deck stood on it; now both cows on the deck lie on their sides, and the log says the dropped one
+rests pinned to the deck. `showcase_0`, the row of carcasses: before, a pig was balanced upright on its snout; now it
+lies on its side. `physics_2` (the three hung cows, one swinging, one a leg short with the leg below it) is unchanged.
+In docs/screenshots, `ship_moving_carcasses.png` (`contraption_2`: the cow resting on the flying ship's deck now lies on
+its side), `ship_dropped_cow_rests.png` (`contraption_3`) and `showcase_1.png` are the new pictures, and
+`struck_cows_down.png` is `physics_1`. `physics_0`, the cow dragged by a hind leg seen from in front of its dragger,
+shows nothing either before or after: the third-person camera in front of the player is blocked and pulled in to a
+close-up of the player (the cow, which starts standing beside the player, was ahead of them, head first, crosswise
+after), as 15.28 noted in one run of three. Left as it was.
+
+**The suite** is 626 tests (five new) and passed three times in a row. Two failures along the way were not from this
+work and did not come back: once the test server failed to start ("Found unused register callbacks" from Create's
+registration; the same run again started), and once `diggerDigsUp` found nothing in 400 ticks, its minion never leaving
+where it was made (it passed 20 runs of 20 on its own and in the next five full runs).
+
+**Left open.**
+- The horse, pig and chicken hooked by a hind leg, and the chicken, rabbit and spider struck in the flank (above).
+- A carcass going over moves its middle a block or more, more than a real body buckling at the knees would; the rigs
+  have no knees.
+- A carcass on a table or a machine still stands on it if set down standing (it is held there): the showcase's pig on
+  its Guillotine and zombie on its Beheader stand as before.
+- `physics_0`'s camera (above).
