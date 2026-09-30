@@ -90,6 +90,16 @@ Each decision unblocks one or more work packages below; the package numbers are 
 13. **The fourteen defaults of ARCHITECTURE 15.1** are still unconfirmed (docs/NEXT.md). Two of them overlap with decisions above:
     - #5 (heavy pieces never become items) is decision 2;
     - #8 (other illagers and the witch also make surgeons) goes with decision 12.
+14. **Which way a dragged carcass goes down (ARCHITECTURE 15.32).**
+    - The rigs' legs cannot fold, so a dead animal left standing is tipped over by code when its legs "give way". A loose
+      one goes the way it already leans. The brief says "Nothing about which way it falls should be scripted."
+    - One dragged by a leg while it is still on its feet is tipped away from that leg, so the leg ends on top and can
+      lead. That side is picked by code, not by the drag.
+    - Measured (eight runs, degrees off rear first while dragged by a hind leg): picked away from the leg, the cow 13, the
+      sheep 15, the llama 23; left to its lean, the cow 36 (and more than 60 in 3 runs of 8, which fails
+      `hindLegHookComesRoundRearFirst`); left to the way it is pulled, the sheep 52; not tipped while dragged, as on main,
+      the sheep 134 (dragged along on its feet, facing the wrong way).
+    - Choose one: keep the picked side (the build's default), leave it to the lean, or do not tip a dragged carcass. [1]
 
 ## Work packages
 
@@ -105,10 +115,13 @@ The packages are in order of how much their gap hurts the brief:
 Built in part (ARCHITECTURE 15.28, and 15.32 "Dead animals look dead", numbered at merge): the part aimed at is hooked,
 the blow lands where it hits, heads loll, hung carcasses swing, bone and plate weigh more, the tests check directions.
 15.32: no dead animal is left standing on its legs any more (struck in the face, set down on a ship's deck, sitting up
-on its front legs): its legs give way and it goes over onto its side, 12 of 12 mobs down after every blow where 7 were
-after a blow in the face; hooked by a hind leg, 6 of 12 come round rear first where 3 did (the sheep and the llama now;
-the pig nearly; the horse and the chicken not). Still open: the horse, pig and chicken hooked by a hind leg, the chicken,
-rabbit and spider struck in the flank, and decisions 4 and 5. The rest of this section is kept as it was written.
+on its front legs, balanced on end): its legs give way and it goes over onto its side, 12 of 12 mobs down after every
+blow where 7 were after a blow in the face; hooked by a hind leg, 6 of 12 come round rear first where 3 did (the sheep,
+the llama and the pig now; the horse, the polar bear and the chicken not). That its legs give way at all is made up
+(the rigs have no knees to fold at): a carcass left standing is tipped over by code. Which side it goes to is its own
+lean, except when it is dragged by a leg on its feet, where the side is picked (decision 14). Still open: the horse,
+polar bear and chicken hooked by a hind leg, the chicken, rabbit and spider struck in the flank, and decisions 4, 5
+and 14. The rest of this section is kept as it was written.
 
 **Why.** The brief says: "This is the part that's been hardest and I care about it most."
 - Hook a hind leg and the animal comes round arse-first; hook the head and it follows head-first.
