@@ -10,6 +10,11 @@ public final class BBTags {
     public static final TagKey<Block> CHILLS = TagKey.create(Registries.BLOCK, BloodAndBones.asResource("chills"));
     /** Blocks that stop rot entirely when near a carcass: the deep-cold ices. */
     public static final TagKey<Block> PRESERVES = TagKey.create(Registries.BLOCK, BloodAndBones.asResource("preserves"));
+    /**
+     * Blocks a carcass is worked on (the tables, the machines, the Bleeding Rack): one standing on them is held there, and
+     * its legs do not give way under it and tip it off (CarcassSlump). A datapack adds its own.
+     */
+    public static final TagKey<Block> HOLDS_CARCASSES = TagKey.create(Registries.BLOCK, BloodAndBones.asResource("holds_carcasses"));
     /** Sable's: blocks whose block entity it removes quietly before it takes the block out of the world for a ship. */
     public static final TagKey<Block> SILENT_ASSEMBLY_REMOVAL = dev.ryanhcode.sable.index.SableTags.SILENT_ASSEMBLY_REMOVAL;
 

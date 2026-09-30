@@ -518,70 +518,102 @@ public class BBGameTests {
         cow.discard();
         UUID[] id = new UUID[1];
         Map<String, org.joml.Vector3d> before = new java.util.HashMap<>();
-        helper.runAfterDelay(30, () -> {
-            CarcassSavedData.Carcass carcass = onlyCarcass(helper, level);
+        // where every body is the last tick before it folds: left standing, its legs give way first (CarcassSlump), so it
+        // lies as it will fold only some while after the thirtieth tick; then, ten ticks after it has folded, it is grabbed
+        long[] foldedAt = {-1};
+        helper.onEachTick(() -> {
+            long now = helper.getTick();
+            if (foldedAt[0] >= 0) {
+                if (now == foldedAt[0] + 10) {
+                    grab(helper, level, id[0]);
+                } else if (now == foldedAt[0] + 15) {
+                    unfoldedAsItFolded(helper, level, id[0], before);
+                }
+                return;
+            }
+            if (now < 30) {
+                return;
+            }
+            CarcassSavedData.Carcass carcass = id[0] == null ? onlyCarcass(helper, level) : CarcassSavedData.get(level).carcass(id[0]);
+            if (carcass == null) {
+                return;
+            }
             id[0] = carcass.id;
+            if (carcass.resting) {
+                foldedAt[0] = now;
+                return;
+            }
+            if (now > 30 + FOLD_WITHIN) {
+                helper.fail("Carcass should be resting after standing still, resting=false");
+                return;
+            }
             for (Map.Entry<String, ServerSubLevel> e : liveBones(helper, level, carcass).entrySet()) {
                 before.put(e.getKey(), new org.joml.Vector3d(e.getValue().logicalPose().position()));
             }
         });
-        // stillness (60 ticks) plus a margin
-        helper.runAfterDelay(30 + com.avicagan.bloodandbones.carcass.CarcassRest.STILL_TICKS + 40, () -> {
-            CarcassSavedData.Carcass carcass = CarcassSavedData.get(level).carcass(id[0]);
-            if (carcass == null || !carcass.resting) {
-                helper.fail("Carcass should be resting after standing still, resting=" + (carcass != null && carcass.resting));
-                return;
+    }
+
+    /** How long after its thirtieth tick a cow built standing may take to fold: its legs give way, it falls, then keeps still. */
+    private static final int FOLD_WITHIN = 400;
+
+    /** Grab the resting carcass (one body, drawing the rest): it must unfold. */
+    private static void grab(GameTestHelper helper, ServerLevel level, UUID id) {
+        CarcassSavedData.Carcass carcass = CarcassSavedData.get(level).carcass(id);
+        if (carcass == null || !carcass.resting) {
+            helper.fail("Carcass should be resting after standing still, resting=" + (carcass != null && carcass.resting));
+            return;
+        }
+        ServerSubLevelContainer container = SubLevelContainer.getContainer(level);
+        int loaded = 0;
+        for (UUID sub : carcass.bones.values()) {
+            if (container.getSubLevel(sub) != null) {
+                loaded++;
             }
-            ServerSubLevelContainer container = SubLevelContainer.getContainer(level);
-            int loaded = 0;
-            for (UUID sub : carcass.bones.values()) {
-                if (container.getSubLevel(sub) != null) {
-                    loaded++;
-                }
+        }
+        if (loaded != 1) {
+            helper.fail("A resting carcass should be one body, found " + loaded);
+        }
+        if (carcass.restPoses.size() != 5) {
+            helper.fail("Expected 5 remembered limb poses, got " + carcass.restPoses.size());
+        }
+        SubLevel torso = container.getSubLevel(carcass.bones.get(carcass.rootBone));
+        BlockPos center = torso.getPlot().getCenterBlock();
+        if (!(level.getBlockEntity(center) instanceof com.avicagan.bloodandbones.carcass.CarcassPartBlockEntity root) || root.merged().size() != 5) {
+            helper.fail("Torso root cell should carry 5 merged parts for rendering");
+        }
+        // now grab it: it must unfold
+        Player player = helper.makeMockPlayer(GameType.SURVIVAL);
+        player.setItemInHand(InteractionHand.MAIN_HAND, new ItemStack(BBItems.MEAT_HOOK.get()));
+        player.setPos(Vec3.atBottomCenterOf(helper.absolutePos(new BlockPos(5, 2, 5))));
+        player.setOldPosAndRot();
+        if (!CarcassDrag.start(level, player, center, null)) {
+            helper.fail("Could not grab the resting carcass");
+        }
+        CarcassDrag.stop(level, player);
+    }
+
+    /** Unfolded, it lies at the poses it folded in, with its joints back. */
+    private static void unfoldedAsItFolded(GameTestHelper helper, ServerLevel level, UUID id, Map<String, org.joml.Vector3d> before) {
+        CarcassSavedData.Carcass carcass = CarcassSavedData.get(level).carcass(id);
+        if (carcass.resting) {
+            helper.fail("Carcass should have unfolded when grabbed");
+        }
+        Map<String, ServerSubLevel> bones = liveBones(helper, level, carcass);
+        if (bones.size() != 6) {
+            helper.fail("Expected 6 bodies after unfolding, got " + bones.size());
+        }
+        requireLiveJoints(helper, carcass, 5);
+        for (Map.Entry<String, ServerSubLevel> e : bones.entrySet()) {
+            org.joml.Vector3d was = before.get(e.getKey());
+            double moved = was == null ? 0 : was.distance(e.getValue().logicalPose().position());
+            if (moved > 0.35) {
+                helper.fail("Bone " + e.getKey() + " moved " + moved + " blocks through fold/unfold");
             }
-            if (loaded != 1) {
-                helper.fail("A resting carcass should be one body, found " + loaded);
-            }
-            if (carcass.restPoses.size() != 5) {
-                helper.fail("Expected 5 remembered limb poses, got " + carcass.restPoses.size());
-            }
-            SubLevel torso = container.getSubLevel(carcass.bones.get(carcass.rootBone));
-            BlockPos center = torso.getPlot().getCenterBlock();
-            if (!(level.getBlockEntity(center) instanceof com.avicagan.bloodandbones.carcass.CarcassPartBlockEntity root) || root.merged().size() != 5) {
-                helper.fail("Torso root cell should carry 5 merged parts for rendering");
-            }
-            // now grab it: it must unfold
-            Player player = helper.makeMockPlayer(GameType.SURVIVAL);
-            player.setItemInHand(InteractionHand.MAIN_HAND, new ItemStack(BBItems.MEAT_HOOK.get()));
-            player.setPos(Vec3.atBottomCenterOf(helper.absolutePos(new BlockPos(5, 2, 5))));
-            player.setOldPosAndRot();
-            if (!CarcassDrag.start(level, player, center, null)) {
-                helper.fail("Could not grab the resting carcass");
-            }
-            CarcassDrag.stop(level, player);
-        });
-        helper.runAfterDelay(30 + com.avicagan.bloodandbones.carcass.CarcassRest.STILL_TICKS + 45, () -> {
-            CarcassSavedData.Carcass carcass = CarcassSavedData.get(level).carcass(id[0]);
-            if (carcass.resting) {
-                helper.fail("Carcass should have unfolded when grabbed");
-            }
-            Map<String, ServerSubLevel> bones = liveBones(helper, level, carcass);
-            if (bones.size() != 6) {
-                helper.fail("Expected 6 bodies after unfolding, got " + bones.size());
-            }
-            requireLiveJoints(helper, carcass, 5);
-            for (Map.Entry<String, ServerSubLevel> e : bones.entrySet()) {
-                org.joml.Vector3d was = before.get(e.getKey());
-                double moved = was == null ? 0 : was.distance(e.getValue().logicalPose().position());
-                if (moved > 0.35) {
-                    helper.fail("Bone " + e.getKey() + " moved " + moved + " blocks through fold/unfold");
-                }
-            }
-            if (!carcass.restCells.isEmpty()) {
-                helper.fail("Rest cells should be gone after unfolding");
-            }
-            helper.succeed();
-        });
+        }
+        if (!carcass.restCells.isEmpty()) {
+            helper.fail("Rest cells should be gone after unfolding");
+        }
+        helper.succeed();
     }
 
     /** Freshness falls at the rig's rate, keeps falling once the carcass is resting, and reaches the torso's root cell. */
@@ -1622,8 +1654,19 @@ public class BBGameTests {
             CarcassAssembler.blow(level, assembled, new Vec3(1, 0, 0));
         }
         mob.discard();
-        helper.runAfterDelay(SETTLE_TICKS, () -> {
+        // looked at once it is not moving fast (from SETTLE_TICKS on): built standing, its legs give way under it
+        // (CarcassSlump), and as a big body goes over its legs on the upper side swing up high for a moment (a ravager's
+        // came 2.8 blocks up, mid-fall)
+        boolean[] looked = {false};
+        helper.onEachTick(() -> {
+            if (looked[0] || helper.getTick() < SETTLE_TICKS) {
+                return;
+            }
             CarcassSavedData.Carcass carcass = nearestCarcass(helper, level, new BlockPos(5, 2, 5), type);
+            if (!carcass.resting && helper.getTick() < SETTLE_TICKS + FALL_TICKS && fastest(level, carcass) > 1.0) {
+                return;
+            }
+            looked[0] = true;
             if (carcass.bones.size() != bones) {
                 helper.fail("Expected " + bones + " bones for " + type + ", found " + carcass.bones.keySet());
             }
@@ -1646,6 +1689,21 @@ public class BBGameTests {
             }
             helper.succeed();
         });
+    }
+
+    /** Ticks past SETTLE_TICKS an animal test waits for a carcass going over to land. */
+    private static final int FALL_TICKS = 40;
+
+    /** The fastest any of a carcass's bodies goes, blocks a second. */
+    private static double fastest(ServerLevel level, CarcassSavedData.Carcass carcass) {
+        ServerSubLevelContainer container = SubLevelContainer.getContainer(level);
+        double fastest = 0.0;
+        for (UUID id : carcass.bones.values()) {
+            if (container.getSubLevel(id) instanceof ServerSubLevel body && !body.isRemoved()) {
+                fastest = Math.max(fastest, container.physicsSystem().getPhysicsHandle(body).getLinearVelocity(new org.joml.Vector3d()).length());
+            }
+        }
+        return fastest;
     }
 
     /** A sheep keeps its wool colour; a sheared one has no wool coat at all. */

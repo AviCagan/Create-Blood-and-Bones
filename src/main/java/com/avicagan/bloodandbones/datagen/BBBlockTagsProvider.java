@@ -25,6 +25,10 @@ public class BBBlockTagsProvider extends BlockTagsProvider {
                 .addOptionalTag(ResourceLocation.fromNamespaceAndPath("create_dragons_plus", "passive_block_freezers"));
         tag(BBTags.PRESERVES)
                 .add(Blocks.PACKED_ICE, Blocks.BLUE_ICE);
+        // a carcass standing on one is held there to be worked, not let fall off it (CarcassSlump)
+        tag(BBTags.HOLDS_CARCASSES).add(
+                BBBlocks.BUTCHER_TABLE.get(), BBBlocks.SURGERY_TABLE.get(), BBBlocks.STEEL_TABLE.get(), BBBlocks.BLEEDING_RACK.get(),
+                BBBlocks.MANGLER.get(), BBBlocks.GUILLOTINE.get(), BBBlocks.BEHEADER.get(), BBBlocks.DEGLOVER.get());
         // built into a Sable ship, these blocks go with what they hold: Sable takes their data along, then removes the old
         // block with its block entity already gone, so what they hold is not dropped as well (Sable's own way, for blocks
         // whose removal drops their contents)

@@ -361,7 +361,9 @@ public final class ModuleActions {
             if (at == null || at.distance(center.x, center.y, center.z) > radius || at.distance(center.x, center.y, center.z) < 2.0) {
                 continue;
             }
-            nudge(level, container, carcass, new Vec3(at.x, at.y, at.z), center, 0.12);
+            // a tick's pull that beats the ground's grip on a carcass lying on its side: at 0.12 only a carcass left
+            // standing slid (on its feet), and one lying down, as a dead one does, stayed where it lay
+            nudge(level, container, carcass, new Vec3(at.x, at.y, at.z), center, 0.18);
         }
     }
 

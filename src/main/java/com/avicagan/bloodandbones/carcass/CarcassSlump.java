@@ -2,6 +2,7 @@ package com.avicagan.bloodandbones.carcass;
 
 import com.avicagan.bloodandbones.carcass.rig.Bone;
 import com.avicagan.bloodandbones.carcass.rig.Rig;
+import com.avicagan.bloodandbones.registry.BBTags;
 import dev.ryanhcode.sable.api.sublevel.ServerSubLevelContainer;
 import dev.ryanhcode.sable.companion.math.BoundingBox3d;
 import dev.ryanhcode.sable.physics.config.dimension_physics.DimensionPhysicsData;
@@ -38,7 +39,8 @@ import java.util.UUID;
  * torso by more than a quarter as far as its legs reach when it stands ({@link #LIFTED}), and nothing (the ground, a
  * rack, a deck, another carcass) is that close under the torso; or, on four legs, when it sits up on its front ones, the
  * front of its belly held up that high, its rear lower. A carcass lying on its belly, or across a Bleeding Rack with its
- * legs hanging, is down already. Hung on a hook it is lifted off its legs and never gives way.
+ * legs hanging, is down already. Hung on a hook it is lifted off its legs and never gives way; standing on a block that
+ * holds a carcass to be worked (a table, a machine: {@link BBTags#HOLDS_CARCASSES}) it is held there.
  */
 public final class CarcassSlump {
     /** Ticks a carcass may stand on its legs, nearly still, before they give way. */
@@ -54,7 +56,7 @@ public final class CarcassSlump {
      * How the legs giving way turn it over its feet: a little more than it takes to carry its middle over them, at least
      * {@link #SPIN_LEAST} radians a second, and each time it is still standing a little more.
      */
-    static final double TIP = 1.3;
+    static final double TIP = 1.1;
     static final double SPIN_LEAST = 0.8;
     static final double SPIN_MORE = 0.5;
     /** Its torso slower than this, blocks a second, is nearly still. */
@@ -76,7 +78,8 @@ public final class CarcassSlump {
         ServerSubLevel torso = container.getSubLevel(carcass.bones.get(carcass.rootBone)) instanceof ServerSubLevel body && !body.isRemoved() ? body : null;
         Bone torsoBone = rig.bone(carcass.rootBone).orElse(null);
         // one that stands upright (a zombie) is pulled off its feet by the leg it is dragged by, and falls feet first
-        if (torso == null || torsoBone == null || dragged && upright(torsoBone) || !standing(level, container, carcass, rig, torso, torsoBone)) {
+        if (torso == null || torsoBone == null || dragged && upright(torsoBone) || !standing(level, container, carcass, rig, torso, torsoBone)
+                || standsOnAHolder(level, container, carcass, rig)) {
             carcass.standingTicks = 0;
             return false;
         }
@@ -306,6 +309,41 @@ public final class CarcassSlump {
             other.logicalPose().transformPositionInverse(point, local);
             if (solidIn(level, BlockPos.containing(local.x, local.y, local.z), local)) {
                 return true;
+            }
+        }
+        return false;
+    }
+
+    /**
+     * Whether any part of it stands on a block that holds a carcass to be worked ({@link BBTags#HOLDS_CARCASSES}: a table,
+     * a machine), in the world or on a ship: set down standing on a Surgery Table or a Mangler, a block wide, it would go
+     * over the side and off it.
+     */
+    static boolean standsOnAHolder(ServerLevel level, ServerSubLevelContainer container, CarcassSavedData.Carcass carcass, Rig rig) {
+        Vector3d local = new Vector3d();
+        for (Map.Entry<String, UUID> entry : carcass.bones.entrySet()) {
+            Bone bone = rig.bone(entry.getKey()).orElse(null);
+            if (bone == null || !(container.getSubLevel(entry.getValue()) instanceof ServerSubLevel body) || body.isRemoved()) {
+                continue;
+            }
+            Vector3d low = null;
+            for (Vector3d corner : corners(body, bone)) {
+                if (low == null || corner.y < low.y) {
+                    low = corner;
+                }
+            }
+            Vector3d point = new Vector3d(low.x, low.y - 0.05, low.z);
+            if (level.getBlockState(BlockPos.containing(point.x, point.y, point.z)).is(BBTags.HOLDS_CARCASSES)) {
+                return true;
+            }
+            BoundingBox3d reach = new BoundingBox3d(point.x - 0.05, point.y - 0.05, point.z - 0.05, point.x + 0.05, point.y + 0.05, point.z + 0.05);
+            for (SubLevel other : container.queryIntersecting(reach)) {
+                if (!other.isRemoved() && !carcass.bones.containsValue(other.getUniqueId())) {
+                    other.logicalPose().transformPositionInverse(point, local);
+                    if (level.getBlockState(BlockPos.containing(local.x, local.y, local.z)).is(BBTags.HOLDS_CARCASSES)) {
+                        return true;
+                    }
+                }
             }
         }
         return false;
