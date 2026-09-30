@@ -313,7 +313,9 @@ public class BBGameTests {
             helper.fail("Carcass assembly returned false");
         }
         cow.discard();
-        helper.runAfterDelay(10, () -> {
+        // looked at while it still stands as it was built: its legs give way under it after it has stood a while
+        // (CarcassSlump), and a leg kicked out as it goes over is not where its middle was a moment ago
+        helper.runAfterDelay(com.avicagan.bloodandbones.carcass.CarcassSlump.STANDING_TICKS - 2, () -> {
             CarcassSavedData.Carcass carcass = onlyCarcass(helper, level);
             Map<String, ServerSubLevel> bones = liveBones(helper, level, carcass);
             StringBuilder report = new StringBuilder();

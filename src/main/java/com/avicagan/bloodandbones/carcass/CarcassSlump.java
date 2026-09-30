@@ -71,6 +71,11 @@ public final class CarcassSlump {
      */
     static final double LEGS_OUT = 7.0;
     /**
+     * How high the legs of the one {@link #LEGS_OUT} is for hold it (a cow's, in blocks); a smaller one's slide out more
+     * slowly, as the square root of how high its legs hold it, as a fall's speed goes (at 7 a baby wolf slid three blocks).
+     */
+    static final double LEGS_OUT_REACH = 0.75;
+    /**
      * Standing too squarely to go either way, its legs slide out from under it this fast, blocks a second, and each time
      * it still stands {@link #SPLAY_MORE} faster: only to break the balance, so that the next time it leans some way (at
      * 7 a cow so set off went on over onto its back; at 3 a sheep splayed its legs, and then went over them and slid two
@@ -149,8 +154,8 @@ public final class CarcassSlump {
         }
         carcass.standingTicks = 0;
         carcass.slumps++;
-        com.avicagan.bloodandbones.BloodAndBones.LOGGER.debug("Carcass {} ({}) left {}: its legs give way ({} of at most {}){}", carcass.id, carcass.entity,
-                onEnd ? "balanced on end" : "standing", carcass.slumps, MOST, dragged ? ", dragged" : "");
+        com.avicagan.bloodandbones.BloodAndBones.LOGGER.debug("Carcass {} ({}) left {}: its legs give way ({} of at most {}){}, its legs {} blocks long", carcass.id,
+                carcass.entity, onEnd ? "balanced on end" : "standing", carcass.slumps, MOST, dragged ? ", dragged" : "", String.format("%.3f", legReach(rig, torsoBone)));
         giveWay(level, container, carcass, rig, torso, torsoBone, onEnd, dragged);
         return true;
     }
@@ -242,7 +247,7 @@ public final class CarcassSlump {
             }
             // not while it is dragged: its legs kicked out under a sheep or a cow pulled by a hind leg, and it came round
             // rear first less often (the sheep 61 degrees off where it was 9 without, over four runs)
-            slide = dragged ? 0.0 : LEGS_OUT;
+            slide = dragged ? 0.0 : LEGS_OUT * Math.sqrt(legReach(rig, torsoBone) / LEGS_OUT_REACH);
         }
         if (way.lengthSquared() >= LEAST * LEAST) {
             // a little harder each time it has been tipped and still stands
@@ -477,47 +482,60 @@ public final class CarcassSlump {
     /**
      * Whether it stands with its feet on a block that holds a carcass to be worked ({@link BBTags#HOLDS_CARCASSES}: a
      * table, a machine), in the world or on a ship: set down standing on a Surgery Table or a Mangler, a block wide, it
-     * would go over the side and off it. Its feet are the corners it reaches lowest with, and most of them must be on
-     * such a block: a cow standing on the floor beside a table, its head drooped onto the table top or a hoof on the
-     * rack's tray, stands on the floor.
+     * would go over the side and off it. Its feet are the parts that reach lowest (to within {@link #FOOT}), and more than
+     * half of them must rest, some corner of them, on such a block: a cow standing on the floor beside a table, its head
+     * drooped onto the table top or a hoof in a rack's tray, stands on the floor.
      */
     static boolean standsOnAHolder(ServerLevel level, ServerSubLevelContainer container, CarcassSavedData.Carcass carcass, Rig rig) {
-        List<Vector3d> corners = new ArrayList<>();
+        List<List<Vector3d>> parts = new ArrayList<>();
         double ground = Double.MAX_VALUE;
         for (Map.Entry<String, UUID> entry : carcass.bones.entrySet()) {
             Bone bone = rig.bone(entry.getKey()).orElse(null);
             if (bone != null && container.getSubLevel(entry.getValue()) instanceof ServerSubLevel body && !body.isRemoved()) {
-                for (Vector3d corner : corners(body, bone)) {
+                List<Vector3d> corners = corners(body, bone);
+                for (Vector3d corner : corners) {
                     ground = Math.min(ground, corner.y);
-                    corners.add(corner);
                 }
+                parts.add(corners);
             }
         }
         int feet = 0;
         int held = 0;
-        Vector3d local = new Vector3d();
-        for (Vector3d corner : corners) {
-            if (corner.y >= ground + FOOT) {
-                continue;
+        for (List<Vector3d> corners : parts) {
+            boolean foot = false;
+            boolean on = false;
+            for (Vector3d corner : corners) {
+                if (corner.y < ground + FOOT) {
+                    foot = true;
+                    on = on || onAHolder(level, container, carcass, new Vector3d(corner.x, corner.y - 0.05, corner.z));
+                }
             }
-            feet++;
-            Vector3d point = new Vector3d(corner.x, corner.y - 0.05, corner.z);
-            if (level.getBlockState(BlockPos.containing(point.x, point.y, point.z)).is(BBTags.HOLDS_CARCASSES)) {
-                held++;
-                continue;
-            }
-            BoundingBox3d reach = new BoundingBox3d(point.x - 0.05, point.y - 0.05, point.z - 0.05, point.x + 0.05, point.y + 0.05, point.z + 0.05);
-            for (SubLevel other : container.queryIntersecting(reach)) {
-                if (!other.isRemoved() && !carcass.bones.containsValue(other.getUniqueId())) {
-                    other.logicalPose().transformPositionInverse(point, local);
-                    if (level.getBlockState(BlockPos.containing(local.x, local.y, local.z)).is(BBTags.HOLDS_CARCASSES)) {
-                        held++;
-                        break;
-                    }
+            if (foot) {
+                feet++;
+                if (on) {
+                    held++;
                 }
             }
         }
         return feet > 0 && held * 2 > feet;
+    }
+
+    /** Whether a point is in a block that holds a carcass to be worked, of the world or of a sub-level (a ship) not this carcass. */
+    private static boolean onAHolder(ServerLevel level, ServerSubLevelContainer container, CarcassSavedData.Carcass carcass, Vector3d point) {
+        if (level.getBlockState(BlockPos.containing(point.x, point.y, point.z)).is(BBTags.HOLDS_CARCASSES)) {
+            return true;
+        }
+        BoundingBox3d reach = new BoundingBox3d(point.x - 0.05, point.y - 0.05, point.z - 0.05, point.x + 0.05, point.y + 0.05, point.z + 0.05);
+        Vector3d local = new Vector3d();
+        for (SubLevel other : container.queryIntersecting(reach)) {
+            if (!other.isRemoved() && !carcass.bones.containsValue(other.getUniqueId())) {
+                other.logicalPose().transformPositionInverse(point, local);
+                if (level.getBlockState(BlockPos.containing(local.x, local.y, local.z)).is(BBTags.HOLDS_CARCASSES)) {
+                    return true;
+                }
+            }
+        }
+        return false;
     }
 
     /** Whether a point lies in the collision shape of the block at {@code pos}. */
