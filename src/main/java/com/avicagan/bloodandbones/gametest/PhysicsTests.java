@@ -178,11 +178,12 @@ public class PhysicsTests {
     }
 
     /**
-     * A wall stops the hook. A cow lies still with a wall between a player and its drawn right hind leg, which the player
-     * looks at, within reach, and right-clicks with a Meat Hook, as the game sends it: at the wall, then in the air (a
-     * stone wall has no use of its own, so the game uses the item as well). The carcass stays folded. The same with the
-     * wall a Sable sub-level (the side of a ship), whose block the game names in its plot, far off; and while the player
-     * drags another carcass, which they keep. With the wall gone, the same click hooks the leg.
+     * A wall stops the hook. A cow lies still with a wall between a player and its drawn hind leg (the one on top),
+     * which the player looks at, within reach, and right-clicks with a Meat Hook, as the game sends it: at the wall,
+     * then in the air (a stone wall has no use of its own, so the game uses the item as well). The carcass stays
+     * folded. The same with the wall a Sable sub-level (the side of a ship), whose block the game names in its plot,
+     * far off; and while the player drags another carcass, which they keep. With the wall gone, the same click hooks
+     * the leg.
      */
     @GameTest(template = "empty", timeoutTicks = 400)
     public static void meatHookDoesNotHookThroughAWall(GameTestHelper helper) {
@@ -195,7 +196,8 @@ public class PhysicsTests {
         ServerLevel level = helper.getLevel();
         Player player = standIn(helper);
         player.setItemInHand(InteractionHand.MAIN_HAND, new ItemStack(BBItems.MEAT_HOOK.get()));
-        String part = "right_hind_leg";
+        // the hind leg on top: lying on its side (its legs give way under it, CarcassSlump), the one under it is hidden
+        String[] part = {null};
         List<BlockPos> wall = new ArrayList<>();
         ServerSubLevel[] ship = {null};
         int[] step = {0};
@@ -204,9 +206,12 @@ public class PhysicsTests {
                 if (!lying.carcass().resting || !other.carcass().resting) {
                     return;
                 }
+                Vector3d right = drawnMiddle(lying, "right_hind_leg");
+                Vector3d left = drawnMiddle(lying, "left_hind_leg");
+                part[0] = right == null || left == null || right.y >= left.y ? "right_hind_leg" : "left_hind_leg";
                 // stand three and a half blocks out from the drawn leg, away from the torso's middle, and look at it
-                Vector3d at = drawnMiddle(lying, part);
-                helper.assertTrue(at != null, "the resting carcass does not draw its " + part);
+                Vector3d at = drawnMiddle(lying, part[0]);
+                helper.assertTrue(at != null, "the resting carcass does not draw its " + part[0]);
                 Vector3d torso = lying.torsoCentre();
                 Vector3d out = new Vector3d(at.x - torso.x, 0.0, at.z - torso.z).normalize().mul(3.5);
                 player.setPos(at.x + out.x, helper.absolutePos(new BlockPos(0, 2, 0)).getY(), at.z + out.z);
@@ -214,8 +219,8 @@ public class PhysicsTests {
                 player.setOldPosAndRot();
                 // with nothing in the way the look meets the leg, within the hook's reach
                 CarcassAim.RestingHit open = CarcassAim.nearestResting(level, player.getEyePosition(), player.getLookAngle(), CarcassDrag.HOOK_REACH);
-                helper.assertTrue(open != null && lying.carcass().id.equals(open.root().carcassId()) && open.hit().bone().equals(part),
-                        "with nothing in the way the look should meet the drawn " + part);
+                helper.assertTrue(open != null && lying.carcass().id.equals(open.root().carcassId()) && open.hit().bone().equals(part[0]),
+                        "with nothing in the way the look should meet the drawn " + part[0]);
                 // a stone wall across the look, halfway, two blocks high
                 Vec3 eye = player.getEyePosition();
                 for (int i = 0; i <= 10; i++) {
@@ -260,9 +265,9 @@ public class PhysicsTests {
                 step[0] = 2;
             } else if (step[0] == 2) {
                 // nothing in the way now: the same click hooks the leg
-                helper.assertTrue(use(player), "with the wall gone, a Meat Hook used at the drawn " + part + " did nothing");
+                helper.assertTrue(use(player), "with the wall gone, a Meat Hook used at the drawn " + part[0] + " did nothing");
                 CarcassDrag.Drag drag = CarcassDrag.current(player);
-                helper.assertTrue(drag != null && drag.bone.equals(part) && !lying.carcass().resting, "with the wall gone the " + part + " should be hooked");
+                helper.assertTrue(drag != null && drag.bone.equals(part[0]) && !lying.carcass().resting, "with the wall gone the " + part[0] + " should be hooked");
                 CarcassDrag.stop(level, player);
                 step[0] = 3;
                 helper.succeed();

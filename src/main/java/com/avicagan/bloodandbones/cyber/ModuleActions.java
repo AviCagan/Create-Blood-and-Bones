@@ -361,11 +361,17 @@ public final class ModuleActions {
             if (at == null || at.distance(center.x, center.y, center.z) > radius || at.distance(center.x, center.y, center.z) < 2.0) {
                 continue;
             }
-            // a tick's pull that beats the ground's grip on a carcass lying on its side: at 0.12 only a carcass left
-            // standing slid (on its feet), and one lying down, as a dead one does, stayed where it lay
-            nudge(level, container, carcass, new Vec3(at.x, at.y, at.z), center, 0.18);
+            nudge(level, container, carcass, new Vec3(at.x, at.y, at.z), center, GRIP);
         }
     }
+
+    /**
+     * The least a tick's pull on a carcass may be, blocks a second: enough to beat the ground's grip on one lying on its
+     * side. At 0.12 (the Magnet Coil's, and the Grappling Spool's at the bottom of the throttle, 0.11) only a carcass left
+     * standing slid along, on its feet; one lying down, as a dead one does, stayed where it lay, so the coil drew nothing
+     * in and the spool's hook never reached the Meat Hook's hand (grapplingSpoolHandsACarcassToTheDrag, now and then).
+     */
+    static final double GRIP = 0.18;
 
     /** Speed a carcass up toward a point, all its bodies alike (a resting one unfolds first). */
     private static boolean nudge(ServerLevel level, ServerSubLevelContainer container, CarcassSavedData.Carcass carcass, Vec3 from, Vec3 to, double speed) {
@@ -496,7 +502,7 @@ public final class ModuleActions {
                 }
                 done = true;
             } else {
-                nudge(level, container, carcass, new Vec3(at.x, at.y, at.z), to, 0.25 * haul.speed);
+                nudge(level, container, carcass, new Vec3(at.x, at.y, at.z), to, Math.max(GRIP, 0.25 * haul.speed));
             }
         }
         if (done) {
