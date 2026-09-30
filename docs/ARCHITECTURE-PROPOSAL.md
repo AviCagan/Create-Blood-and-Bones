@@ -5048,3 +5048,86 @@ Butchery by group was shadowed for every vanilla mob by its generated table; now
 - Section 4.1's client-sent rigs and a `/bloodandbones rig export` command are not built; a modded mob's own rig comes
   from a datapack or a rig target (docs/MODDED-MOBS.md). A family by Java class (docs/PARTS-AND-TRAITS.md 3.1, through a
   throwaway instance) is not built either; tags and the archetype rules cover a modded mob meanwhile.
+
+### 15.32 (numbered at merge) The leftovers of audit packages 5 and 10: organs by filter, the butcher's filter, Keen Butcher (verified)
+
+Built on 5c42350 (`bb-leftovers`). This closes audit package 10 and package 5 but decision 6 (the knife and the Cleaver
+stay two tools). Package 15's only open line is the Spit Roast's effects, which wait on decision 8. Nothing here needed
+an open decision: decision 12 was built as its recommended design (15.21 to 15.27), and a butcher's filter follows the
+courier's sample from it.
+
+- **A filter for single organs at the Surgical Rig.** Organs are data (`Organs.held`), so the filter is asked about each
+  organ the rig could take, as the item that organ comes out as (`Organs.stack`), through Create's own filter code.
+  - `Organs.idOf(stack, store)`: which organ an item is, from any mob. A Gland by its stamp, a vanilla item the data map
+    gives to a mob by the organ it names (a Spider Eye is an eye), and otherwise the organ whose file names the item (a
+    heart). A plain Gland names none.
+  - A new attribute, `bloodandbones:organ` (`BBItemAttributes.OrganIs`), "is the organ Heart" in the Attribute Filter.
+  - `PartFilter.namesOrgans`: a filter picks organs when it is an organ, a Filter whose list holds one, or an Attribute
+    Filter asking "is the organ ...". An organ in a filter matches that organ only (`PartFilter.test`).
+  - `SurgicalRig` with such a filter asks it about each organ left in each part (`PartFilteringBehaviour.organs`), and
+    `Surgery.harvest` takes the first one it passes, which need not be the first left: a heart, and not the lungs before
+    it. A filter that names only mobs and parts takes a part's organs with the part, as before. With organs still in a
+    piece, a rig set to organs never flays it or cuts it up, and it never unfolds a resting carcass for nothing it may
+    take (`wantsAPart`).
+  - The count of organs taken (`organs_taken`, `organs_taken:<bone>`, one count for every way of taking them) stays a
+    number while organs come out in order, as every one did before. Once a filter takes one out of order it is the places
+    taken ("0,2": the heart and the stomach, the lungs still in; a single place is "[1]"). `Surgery.taken` reads both, so
+    old saves and every existing reader (`organsTaken`, the tooltip of what is still inside) are unchanged.
+  - Only the rig's slot takes an organ (`PartFilteringBehaviour.withOrgans`). No organ comes out at a machine or a
+    Butcher's Table (its Cleaver cuts a piece into its butchery table), so their slots turn an organ away, with Create's
+    "invalid item", rather than hold a filter that passes nothing.
+- **The butchering minion's filter** (`MinionTasks.butcherTakes`). A butcher takes a part only when three things pass it:
+  - its filter slot (brass), asked as a station's part filter asks (`MinionFilter.allowsPart`, `PartFilter.takes`);
+  - its sample: handed a carcass piece or a Create filter while it holds its blade, it holds it in its other hand, as
+    a courier holds its sample. A piece means that part of that mob, baby or grown, by the slot rules that are data (a
+    cow's hind leg: cows' hind legs, `PartFilter.alike`); a filter is asked as the slot asks it. An empty hand takes the
+    sample back before the blade. It needs somewhere to hold it (`MinionBody.Anchors.other`): a second hand, the other
+    side of a pair of folded arms, or a mouth. A headless body with one arm has none, and says so;
+  - the filter of a Butcher's Table the part lies on (`tableTurnsAway`), as the table's own Cleaver obeys it.
+
+  Its knife skins only a body that passes, and its Cleaver cuts off and breaks down only limbs and pieces that pass;
+  the rest is left where it lies. At a table it chops only a piece that its own filter and sample pass as well as the
+  table's. The sample is drawn: in the other hand, or at the other side of folded arms (a villager's arms' box is one
+  arm's, off to one side, so the second thing goes across the pair's middle from the first), a carcass piece there at an
+  item frame's size, since its size on the ground is too small to see against the arms.
+- **Keen Butcher in survival.** The trait (`keen_butcher`, +10% `butchery_yield` a level) had no carrier. A butcher
+  villager's Village Heart now carries it at level 2, both worn in carcass armour and stitched into a minion: a variant
+  on the villager group's `profession` trait (`mob_group/villager.json`), so it holds for any mob in that group whose
+  carcass keeps a profession (a zombie villager too), not one species. Why this part: the trait is about hand butchery,
+  and the butcher is the one creature whose trade it is; the Village Heart is already the group's special organ and
+  already takes its traits from the carcass (a charged creeper's sac works the same way). A predator's part was the
+  other choice, but a wolf or a fox kills and does not butcher, and their parts already carry hunting traits. The organ
+  comes out at the rig keeping the profession, so it is reachable in survival: kill a butcher villager with the Meat
+  Hook, take the heart at the Surgical Rig, fit it. Level 2 gives a hand 1.2 times the hand path's share, still well
+  short of a station's.
+- **Tests.** Each fails with its feature taken out (checked: the organ filter turned off, the organ allowed in every
+  slot, the sample ignored, the minion's filter ignored, the table's filter ignored, the villager's variant removed).
+  - `rigFilterPicksSingleOrgans` (`SurgicalRigTests`): a heart in the rig's slot takes a cow body's heart and then
+    nothing; "is the organ Stomach" takes the stomach past the lungs ("0,2"); a Filter holding the rumen's Gland takes the
+    rumen; with no filter the lungs come out, then the hide. A Butcher's Table's slot turns a heart away and still takes a
+    piece. A whole cow lying on a rig set to eyes gives its two eyes and nothing of its body, and is left whole and
+    unflayed.
+  - `butcherWithASampleTakesOnlyItsLike` (`MinionTaskTests`): a butcher holding a cow's hind leg beside its Cleaver cuts
+    off and breaks down the cow's two hind legs and leaves the head, the front legs and the body for 200 ticks more; the
+    empty hand takes the sample back first; where each build holds a second thing (a second hand, a pair, none for one arm
+    and no head).
+  - `brassButcherTakesWhatItsFilterPasses`: a brass butcher set to "is a carcass head" takes a cow's head and leaves its
+    legs, and a body on a Butcher's Table nearer home.
+  - `butcherLeavesWhatTheTableTurnsAway`: a cow's leg lying on a table set to heads is left; one on a table with no
+    filter is broken down.
+  - `butcherVillagersHeartIsKeen` (`ButcheryPathTests`): a butcher villager's carcass keeps its profession, the rig set to
+    the Village Heart takes it out keeping it, worn it gives Keen Butcher II and a butchery yield of 1.2 (a farmer's
+    none), and a minion with it has the same.
+- **The suite** is 626 tests and passed three full runs in a row after the last change (and once before the showcase's
+  drawing fix). Once, on a run started straight after source edits, the game failed to load before any test ran
+  (Registrate's "found unused register callbacks"); the same run again loaded and ran, and it was not seen in the next
+  seven starts.
+- **Showcase.** Row F has a third table beside the two with filters: a Surgical Rig with a heart in its slot and a cow's
+  body laid on it, cut twice as a Deployer cuts (the log: the first cut took the heart, the second nothing; one taken,
+  three still in). Beside it two butcher minions stand still, each with a Cleaver and a cow's hind leg as its sample: a
+  villager holding them either side of its folded arms, and a zombie with a butcher's head (in a leather cap: the torso
+  burns by day), one in each hand. Pictures: `docs/screenshots/rig_heart_filter.png` (the heart on the rig's filter edge,
+  the body on its top, the rig set to hind legs beyond), `butchers_with_samples.png` (both butchers close). The heart the
+  Deployer cut pops out onto the top and may roll off; in the last run it lay on the grass beside the rig.
+- **Left.** Decision 6 (one hand tool or two) and decision 8 (the Spit Roast's effects), for the owner. Which other mobs'
+  parts carry Keen Butcher, and how many levels, stay the balance pass's (PARTS-AND-TRAITS slice 9).
