@@ -4,6 +4,7 @@ import com.avicagan.bloodandbones.carcass.rig.Bone;
 import com.avicagan.bloodandbones.carcass.rig.Rig;
 import dev.ryanhcode.sable.api.sublevel.ServerSubLevelContainer;
 import dev.ryanhcode.sable.companion.math.BoundingBox3d;
+import dev.ryanhcode.sable.physics.config.dimension_physics.DimensionPhysicsData;
 import dev.ryanhcode.sable.sublevel.ServerSubLevel;
 import dev.ryanhcode.sable.sublevel.SubLevel;
 import dev.ryanhcode.sable.sublevel.system.SubLevelPhysicsSystem;
@@ -12,7 +13,6 @@ import net.minecraft.core.Direction;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.phys.shapes.VoxelShape;
-import dev.ryanhcode.sable.physics.config.dimension_physics.DimensionPhysicsData;
 import org.jetbrains.annotations.Nullable;
 import org.joml.Quaterniond;
 import org.joml.Vector3d;
@@ -24,17 +24,20 @@ import java.util.UUID;
 
 /**
  * A dead animal never stays on its feet. Its legs are rigid bodies on loose joints, and a body on four of them can stand:
- * struck square in the face or not struck at all, nothing tips it, and with its legs splayed a little they prop it like a
- * trestle, the friction under its feet holding them (the showcase's cow struck in the face, a cow set down on a ship's
- * deck, a zombie struck from the side). Real legs fold at the knee; these cannot. So a carcass that stands on its legs,
- * nearly still, for {@link #STANDING_TICKS} has its legs give way: its torso is rolled over onto a side, the way it
- * already leans (or, standing straight, one side or the other), and it goes down with its legs limp under it. Until it
- * is down it is not let rest either, or the resting form would pin it standing for good.
+ * struck square in the face or not struck at all, nothing tips it; with its legs splayed a little they prop it like a
+ * trestle, the friction under its feet holding them; and a leg swept back to the end of its joint props it as a strut
+ * does (the showcase's cow struck in the face, a cow set down on a ship's deck, a pig or a polar bear struck in the face).
+ * Once it keeps still the resting form pins it as it stands, for good. Real legs fold at the knee; these cannot. So a
+ * carcass that stands on its legs, nearly still (on a deck under way, still on the deck), for {@link #STANDING_TICKS}
+ * has its legs give way ({@link #giveWay}): it goes over onto a side, the way it already leans, or, standing straight,
+ * one side or the other. Until it is down it is not let rest. A carcass dragged along on its feet gives way however it
+ * moves (a sheep dragged by a hind leg slid along standing, facing the wrong way), going down away from the leg it is
+ * hooked by; one that stands upright (a zombie) is pulled off its feet by that leg and is left to it.
  * <p>
  * It stands when its torso is within {@link #UPRIGHT} degrees of upright, some other part of it (a leg) reaches below the
  * torso by more than half as far as its legs reach when it stands, and nothing (the ground, a rack, a deck, another
  * carcass) is that close under the torso: a carcass lying on its belly, or across a Bleeding Rack with its legs hanging,
- * is down already.
+ * is down already. Hung on a hook it is lifted off its legs and never gives way.
  */
 public final class CarcassSlump {
     /** Ticks a carcass may stand on its legs, nearly still, before they give way. */
@@ -72,7 +75,6 @@ public final class CarcassSlump {
             return false;
         }
         SubLevelPhysicsSystem physics = container.physicsSystem();
-        debug(level, container, carcass, rig, torso, torsoBone, physics);
         // nearly still where it stands: on a ship under way, on the deck
         Vector3d speed = physics.getPhysicsHandle(torso).getLinearVelocity(new Vector3d());
         ServerSubLevel deck = deckUnderFeet(level, container, carcass, rig);
@@ -90,7 +92,7 @@ public final class CarcassSlump {
         }
         carcass.standingTicks = 0;
         carcass.slumps++;
-        com.avicagan.bloodandbones.BloodAndBones.LOGGER.info("[slump] {} {} gives way, time {}", carcass.entity, carcass.slumps, level.getGameTime());
+        com.avicagan.bloodandbones.BloodAndBones.LOGGER.debug("Carcass {} ({}) left standing: its legs give way ({} of at most {})", carcass.id, carcass.entity, carcass.slumps, MOST);
         giveWay(level, container, carcass, rig, torso, torsoBone, dragged ? CarcassDrag.hookedBone(carcass.id) : null);
         return true;
     }
@@ -350,27 +352,5 @@ public final class CarcassSlump {
             }
         }
         return lowest;
-    }
-
-    static void debug(ServerLevel level, ServerSubLevelContainer container, CarcassSavedData.Carcass carcass, Rig rig, ServerSubLevel torso, Bone torsoBone, SubLevelPhysicsSystem physics) {
-        StringBuilder b = new StringBuilder();
-        Quaterniond model = modelToWorld(torso, torsoBone);
-        Vector3d up = model.transform(new Vector3d(0, -1, 0));
-        double low = Double.MAX_VALUE;
-        for (Vector3d c : corners(torso, torsoBone)) low = Math.min(low, c.y);
-        b.append(String.format("[slumpdbg] %s t=%d st=%d upy=%.3f low=%.3f v=%s w=%s", carcass.entity, level.getGameTime(), carcass.standingTicks, up.y, low,
-                physics.getPhysicsHandle(torso).getLinearVelocity(new Vector3d()).toString(new java.text.DecimalFormat("0.000")),
-                physics.getPhysicsHandle(torso).getAngularVelocity(new Vector3d()).toString(new java.text.DecimalFormat("0.000"))));
-        for (CarcassJoints.Spec spec : carcass.joints) {
-            if (!spec.parent().equals(carcass.rootBone)) continue;
-            if (!(container.getSubLevel(carcass.bones.get(spec.child())) instanceof ServerSubLevel leg)) continue;
-            Quaterniond rel = new Quaterniond(torso.logicalPose().orientation()).mul(new Quaterniond(spec.frame1())).invert().mul(leg.logicalPose().orientation());
-            Vector3d e = rel.getEulerAnglesXYZ(new Vector3d()).mul(180 / Math.PI);
-            double footY = Double.MAX_VALUE;
-            Bone lb = rig.bone(spec.child()).orElse(null);
-            if (lb != null) for (Vector3d c : corners(leg, lb)) footY = Math.min(footY, c.y);
-            b.append(String.format(" | %s e=(%.0f,%.0f,%.0f) foot=%.3f", spec.child(), e.x, e.y, e.z, footY));
-        }
-        com.avicagan.bloodandbones.BloodAndBones.LOGGER.info(b.toString());
     }
 }

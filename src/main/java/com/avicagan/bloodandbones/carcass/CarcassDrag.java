@@ -647,8 +647,7 @@ public final class CarcassDrag {
         }
         Vector3d turning = physics.getPhysicsHandle(torso).getAngularVelocity(new Vector3d());
         double share = Math.min(0.5, TURN_DAMPING * timeStep);
-        double tumble = Math.min(0.5, Double.parseDouble(System.getProperty("bloodandbones.debug.tumble", "0")) * timeStep);
-        physics.getPipeline().addLinearAndAngularVelocity(torso, new Vector3d(), new Vector3d(-turning.x * tumble, -turning.y * share, -turning.z * tumble));
+        physics.getPipeline().addLinearAndAngularVelocity(torso, new Vector3d(), new Vector3d(0.0, -turning.y * share, 0.0));
     }
 
     /**

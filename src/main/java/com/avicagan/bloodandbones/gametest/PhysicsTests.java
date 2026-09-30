@@ -476,6 +476,101 @@ public class PhysicsTests {
         return made;
     }
 
+    /** "Dead animals look dead": a cow, whatever struck it, never comes to rest on its feet. */
+    @GameTest(template = "open_ground", timeoutTicks = 700)
+    public static void deadCowNeverSettlesStanding(GameTestHelper helper) {
+        neverSettlesStanding(helper, EntityType.COW);
+    }
+
+    /** As above, a pig: short legs, a face blow once left it standing on them. */
+    @GameTest(template = "open_ground", timeoutTicks = 700)
+    public static void deadPigNeverSettlesStanding(GameTestHelper helper) {
+        neverSettlesStanding(helper, EntityType.PIG);
+    }
+
+    /** As above, a polar bear: heavy and square, a face blow once moved it four hundredths of a block. */
+    @GameTest(template = "open_ground", timeoutTicks = 700)
+    public static void deadPolarBearNeverSettlesStanding(GameTestHelper helper) {
+        neverSettlesStanding(helper, EntityType.POLAR_BEAR);
+    }
+
+    /** As above, a horse: tall, and once left standing by a blow from behind. */
+    @GameTest(template = "open_ground", timeoutTicks = 700)
+    public static void deadHorseNeverSettlesStanding(GameTestHelper helper) {
+        neverSettlesStanding(helper, EntityType.HORSE);
+    }
+
+    /** As above, a sheep: narrow. */
+    @GameTest(template = "open_ground", timeoutTicks = 700)
+    public static void deadSheepNeverSettlesStanding(GameTestHelper helper) {
+        neverSettlesStanding(helper, EntityType.SHEEP);
+    }
+
+    /**
+     * Four of a kind on the open ground, facing south: one struck in the face, one from its right flank, one from behind,
+     * and one built where it stood and not struck at all (as a carcass set down on a ship's deck is). Each is watched until
+     * it has folded into its resting form (or {@link #STANDING_CAP} ticks), and then it must be down: its torso tipped
+     * 45 degrees or more from upright, or no higher off the ground than half as high as its legs held it (and no more than
+     * an eighth of a block up). A dead animal standing on stiff legs looks alive.
+     */
+    static void neverSettlesStanding(GameTestHelper helper, EntityType<? extends Mob> type) {
+        double floor = helper.absolutePos(new BlockPos(0, RigComparison.FLOOR, 0)).getY();
+        String head = RigComparison.generatedHead(type);
+        Map<String, Subject> subjects = new java.util.LinkedHashMap<>();
+        Map<String, Double> stood = new java.util.HashMap<>();
+        Map<String, String> folded = new java.util.HashMap<>();
+        java.util.function.BiConsumer<String, Subject> watch = (blow, s) -> {
+            stood.put(blow, RigScenarios.belly(s, floor));
+            subjects.put(blow, s);
+        };
+        Vec3 face = new Vec3(8.5, 2, 9.5);
+        Vec3 flank = new Vec3(22.5, 2, 9.5);
+        Vec3 behind = new Vec3(8.5, 2, 22.5);
+        Vec3 none = new Vec3(22.5, 2, 22.5);
+        if (head == null) {
+            RigComparison.killed(helper, type, face, RigScenarios.SOUTH, face.add(0, 0, RigScenarios.KILLER_OFF + 0.5), s -> watch.accept("struck in the face", s));
+        } else {
+            RigComparison.killedAt(helper, type, face, RigScenarios.SOUTH, face.add(0, 0, RigScenarios.KILLER_OFF + 0.5), head, s -> watch.accept("struck in the face", s));
+        }
+        RigComparison.killed(helper, type, flank, RigScenarios.SOUTH, flank.add(-RigScenarios.KILLER_OFF, 0, 0), s -> watch.accept("struck in the flank", s));
+        RigComparison.killed(helper, type, behind, RigScenarios.SOUTH, behind.add(0, 0, -RigScenarios.KILLER_OFF), s -> watch.accept("struck from behind", s));
+        Subject still = RigComparison.assembled(helper, type, none, RigScenarios.SOUTH);
+        helper.assertTrue(still != null, "no carcass");
+        watch.accept("not struck", still);
+        int[] t = {0};
+        helper.onEachTick(() -> {
+            if (t[0] < 0 || subjects.size() < 4) {
+                return;
+            }
+            t[0]++;
+            for (Map.Entry<String, Subject> entry : subjects.entrySet()) {
+                Subject s = entry.getValue();
+                if (!folded.containsKey(entry.getKey()) && (s.carcass().resting || t[0] >= STANDING_CAP)) {
+                    double tilt = RigComparison.angleDeg(s.up(), new Vector3d(0, 1, 0));
+                    double belly = RigScenarios.belly(s, floor);
+                    folded.put(entry.getKey(), (RigScenarios.standing(tilt, belly, stood.get(entry.getKey())) ? "STANDING " : "down ")
+                            + "(tilted " + fmt(tilt) + " degrees, torso " + fmt(belly) + " up where it stood " + fmt(stood.get(entry.getKey())) + " up, "
+                            + (s.carcass().resting ? "resting" : "not resting") + " at tick " + t[0] + ")");
+                }
+            }
+            if (folded.size() < 4) {
+                return;
+            }
+            t[0] = -1;
+            BloodAndBones.LOGGER.info("[physics] {} left: {}", RigComparison.mobName(type), folded);
+            for (Map.Entry<String, String> entry : folded.entrySet()) {
+                helper.assertTrue(entry.getValue().startsWith("down"), "a dead " + RigComparison.mobName(type) + " " + entry.getKey()
+                        + " should not settle standing on its legs, but it did: " + entry.getValue());
+                helper.assertTrue(entry.getValue().contains(", resting"), "a dead " + RigComparison.mobName(type) + " " + entry.getKey()
+                        + " should come to rest: " + entry.getValue());
+            }
+            helper.succeed();
+        });
+    }
+
+    /** How long a carcass may take to fold into its resting form after its blow, ticks. */
+    private static final int STANDING_CAP = 560;
+
     // ---------------------------------------------------------------- limbs hang, the head lolls
 
     /** "The head lolls": a carcass lying where it fell rests its head lower than where its neck meets its body. */
