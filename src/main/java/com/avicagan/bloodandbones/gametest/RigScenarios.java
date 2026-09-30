@@ -267,7 +267,8 @@ final class RigScenarios {
         double tilt = RigComparison.angleDeg(s.up(), new Vector3d(0, 1, 0));
         // or, on four legs, balanced on end, on its rump or its snout, its spine near straight up (a pig struck in the face
         // was once left so, and passed as down)
-        boolean fourLegs = !com.avicagan.bloodandbones.carcass.CarcassSlump.upright(s.bone(s.torsoBody()));
+        boolean fourLegs = !com.avicagan.bloodandbones.carcass.CarcassSlump.upright(s.bone(s.torsoBody()))
+                && s.rig.bones().stream().filter(bone -> bone.name().contains("leg")).count() >= 4;
         if (fourLegs && Math.abs(s.forward().y) >= Math.cos(Math.toRadians(com.avicagan.bloodandbones.carcass.CarcassSlump.ON_END))) {
             return true;
         }

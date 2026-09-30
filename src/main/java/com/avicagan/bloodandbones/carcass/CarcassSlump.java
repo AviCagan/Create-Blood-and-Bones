@@ -129,7 +129,7 @@ public final class CarcassSlump {
         ServerSubLevel torso = container.getSubLevel(carcass.bones.get(carcass.rootBone)) instanceof ServerSubLevel body && !body.isRemoved() ? body : null;
         Bone torsoBone = rig.bone(carcass.rootBone).orElse(null);
         // one that stands upright (a zombie) is pulled off its feet by the leg it is dragged by, and falls feet first
-        boolean onEnd = torso != null && torsoBone != null && !dragged && !inLiquid(container, carcass) && onEnd(level, container, carcass, torso, torsoBone);
+        boolean onEnd = torso != null && torsoBone != null && !dragged && !inLiquid(container, carcass) && onEnd(level, container, carcass, rig, torso, torsoBone);
         if (torso == null || torsoBone == null || dragged && upright(torsoBone) || inLiquid(container, carcass)
                 || !onEnd && !standing(level, container, carcass, rig, torso, torsoBone) || standsOnAHolder(level, container, carcass, rig)) {
             carcass.standingTicks = 0;
@@ -350,15 +350,17 @@ public final class CarcassSlump {
     }
 
     /**
-     * Whether a body on four legs is balanced on end: its spine within {@link #ON_END} degrees of straight up or down, on
-     * its rump or its snout, that end resting on something (a pig struck in the face was left so, belly toward its killer).
+     * Whether a body on four legs (or more) is balanced on end: its spine within {@link #ON_END} degrees of straight up or
+     * down, on its rump or its snout, that end resting on something (a pig struck in the face was left so, belly toward its
+     * killer).
      */
-    static boolean onEnd(ServerLevel level, ServerSubLevelContainer container, CarcassSavedData.Carcass carcass, ServerSubLevel torso, Bone torsoBone) {
+    static boolean onEnd(ServerLevel level, ServerSubLevelContainer container, CarcassSavedData.Carcass carcass, Rig rig, ServerSubLevel torso, Bone torsoBone) {
         if (upright(torsoBone)) {
             return false;
         }
         Vector3d forward = modelToWorld(torso, torsoBone).transform(new Vector3d(0, 0, -1));
-        if (Math.abs(forward.y) < Math.cos(Math.toRadians(ON_END))) {
+        // only a body on four legs or more: a chicken knocked back onto its tail, head up, sits as a bird does
+        if (Math.abs(forward.y) < Math.cos(Math.toRadians(ON_END)) || rig.bones().stream().filter(bone -> bone.name().contains("leg")).count() < 4) {
             return false;
         }
         Vector3d low = null;
