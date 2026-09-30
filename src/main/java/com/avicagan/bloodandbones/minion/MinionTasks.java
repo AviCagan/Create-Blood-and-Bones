@@ -95,6 +95,7 @@ import java.util.Comparator;
 import java.util.EnumSet;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Map;
 import java.util.Objects;
 import java.util.Optional;
 import java.util.Set;
@@ -487,18 +488,20 @@ public final class MinionTasks {
 
     /**
      * Whether a butcher takes this part of a carcass: its filter (brass) passes it, it is like the sample in its other hand,
-     * and, lying on a Butcher's Table, the table's filter passes it too.
+     * and it is not among the parts a Butcher's Table's filter turns away ({@link #turnedAway}, gathered once for a look
+     * round).
      */
-    static boolean butcherTakes(MinionEntity minion, CarcassSavedData.Carcass carcass, String bone) {
+    static boolean butcherTakes(MinionEntity minion, CarcassSavedData.Carcass carcass, String bone, Map<UUID, Set<String>> turnedAway) {
+        Set<String> away = turnedAway.get(carcass.id);
+        if (away != null && away.contains(bone)) {
+            return false;
+        }
         Level level = minion.level();
         if (!minion.filter().allowsPart(level, carcass, bone)) {
             return false;
         }
         ItemStack sample = minion.getOffhandItem();
-        if (!sample.isEmpty() && !com.avicagan.bloodandbones.machine.PartFilter.alike(level, sample, CarcassPieceItem.of(carcass, bone))) {
-            return false;
-        }
-        return !(level instanceof ServerLevel server) || !tableTurnsAway(server, carcass, bone);
+        return sample.isEmpty() || com.avicagan.bloodandbones.machine.PartFilter.alike(level, sample, CarcassPieceItem.of(carcass, bone));
     }
 
     /** Whether a butcher takes this piece, given as its item (one laid on a Butcher's Table): its filter and its sample. */
@@ -507,21 +510,34 @@ public final class MinionTasks {
         return minion.filter().allowsPart(level, piece) && com.avicagan.bloodandbones.machine.PartFilter.alike(level, minion.getOffhandItem(), piece);
     }
 
-    /** Whether this part lies on the top of a Butcher's Table whose filter turns it away (a table set to heads, a leg on it). */
-    static boolean tableTurnsAway(ServerLevel level, CarcassSavedData.Carcass carcass, String bone) {
-        Vector3d at = CarcassAssembler.boneWorldPosition(level, carcass, bone);
-        if (at == null) {
-            return false;
-        }
-        BlockPos base = BlockPos.containing(at.x, at.y, at.z);
-        for (BlockPos pos : BlockPos.betweenClosed(base.offset(-1, -3, -1), base.offset(1, 0, 1))) {
-            if (level.getBlockEntity(pos) instanceof ButcherTableBlockEntity table && table.filtering != null && !table.filtering.getFilter().isEmpty()
-                    && !table.filtering.takes(carcass, bone) && CarcassButchery.lyingOn(level, pos, ButcherTableBlockEntity.TOP).stream()
-                    .anyMatch(l -> l.carcass().id.equals(carcass.id) && l.bone().equals(bone))) {
-                return true;
+    /**
+     * The parts lying on the tops of Butcher's Tables within this far of home whose filter turns them away (a table set to
+     * heads, a leg on it), by carcass. Only tables with a filter set count, found among the loaded chunks' block entities,
+     * each asked once what lies on it; with none about this is empty and costs nothing more.
+     */
+    static Map<UUID, Set<String>> turnedAway(ServerLevel level, BlockPos home, double within) {
+        Map<UUID, Set<String>> out = new java.util.HashMap<>();
+        int r = Mth.ceil(within);
+        for (int cx = (home.getX() - r) >> 4; cx <= (home.getX() + r) >> 4; cx++) {
+            for (int cz = (home.getZ() - r) >> 4; cz <= (home.getZ() + r) >> 4; cz++) {
+                LevelChunk chunk = level.getChunkSource().getChunkNow(cx, cz);
+                if (chunk == null) {
+                    continue;
+                }
+                for (BlockEntity be : chunk.getBlockEntities().values()) {
+                    if (!(be instanceof ButcherTableBlockEntity table) || table.filtering == null || table.filtering.getFilter().isEmpty()
+                            || be.getBlockPos().distToCenterSqr(Vec3.atBottomCenterOf(home)) >= within * within) {
+                        continue;
+                    }
+                    for (CarcassButchery.Lying lying : CarcassButchery.lyingOn(level, be.getBlockPos(), ButcherTableBlockEntity.TOP)) {
+                        if (!table.filtering.takes(lying.carcass(), lying.bone())) {
+                            out.computeIfAbsent(lying.carcass().id, id -> new HashSet<>()).add(lying.bone());
+                        }
+                    }
+                }
             }
         }
-        return false;
+        return out;
     }
 
     /** What goes in with what it carries rather than into its hand: ammunition for the weapon it holds, healing for a medic. */
@@ -1829,6 +1845,8 @@ public final class MinionTasks {
     static class Butcher extends Goal {
         /** How far over or under its feet a piece may lie for it to cut: a resting body's torso lies a block up. */
         private static final double REACH_UP = 2.5;
+        /** How far a body's parts lie from its torso at most, with room over (a ghast's tentacles, a camel's neck). */
+        private static final double SPREAD = 8.0;
         private final MinionEntity minion;
         @Nullable
         private UUID carcass;
@@ -1886,18 +1904,31 @@ public final class MinionTasks {
                     }
                 }
             }
+            double reach = minion.reach();
+            // a body's parts lie within a few blocks of its torso: one whose torso is further than that out of reach, or
+            // not loaded, is passed over before its filter, its sample and the tables are asked about each part
+            double near = reach + SPREAD;
+            Map<UUID, Set<String>> turnedAway = null;
             for (CarcassSavedData.Carcass c : CarcassSavedData.get(level).all()) {
                 if (unreachable.contains(c.id) || CarcassDrag.isDraggingCarcass(c.id)
                         || com.avicagan.bloodandbones.carcass.trolley.ShackleTrolleyEntity.isHanging(level, c.id)) {
                     continue;
                 }
-                String work = skinning ? skinnable(c, bone -> butcherTakes(minion, c, bone)) : cuttable(c, bone -> butcherTakes(minion, c, bone));
+                Vector3d root = CarcassAssembler.boneWorldPosition(level, c, c.rootBone);
+                if (root == null || home.distanceToSqr(root.x, root.y, root.z) >= near * near || !level.isLoaded(BlockPos.containing(root.x, root.y, root.z))) {
+                    continue;
+                }
+                if (turnedAway == null) {
+                    // a part lies on a table's top, the table under it: a block or so across, up to three down
+                    turnedAway = turnedAway(level, minion.home(), reach + 4.0);
+                }
+                Map<UUID, Set<String>> away = turnedAway;
+                String work = skinning ? skinnable(c, bone -> butcherTakes(minion, c, bone, away)) : cuttable(c, bone -> butcherTakes(minion, c, bone, away));
                 Vector3d at = work == null ? null : CarcassAssembler.boneWorldPosition(level, c, work);
                 if (at == null || !level.isLoaded(BlockPos.containing(at.x, at.y, at.z))) {
                     continue;
                 }
                 double d = home.distanceToSqr(at.x, at.y, at.z);
-                double reach = minion.reach();
                 if (d < reach * reach && d < best) {
                     best = d;
                     carcass = c.id;

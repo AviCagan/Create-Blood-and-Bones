@@ -271,15 +271,17 @@ Then, either way:
 
 **Owner first.** Yes: decisions 2 and 7.
 
-### 5. The yield gap, and three paths that stay distinct (built 29 and 30 September 2026, `bb-machines` and `bb-leftovers`, but decision 6)
+### 5. The yield gap, and three paths that stay distinct (built 29 and 30 September 2026, `bb-machines` and `bb-leftovers`, but decision 6 and a provisional Keen Butcher)
 
-**Built** but decision 6. ARCHITECTURE 15.19.1 has the details, and 15.32 the Keen Butcher. The paths are data, by hand is about half with real loss, the
+**Built** but decision 6, with the Keen Butcher's carrier provisional. ARCHITECTURE 15.19.1 has the details, and 15.32 the Keen Butcher. The paths are data, by hand is about half with real loss, the
 Mangler is fastest with the least of anything a table gives (its loot less what its table already gives), the stations
 get all of it, and the Surgical Rig is the slowest at any speed with organs and the hide on top (a hand at the rig gets
 a hand's share). The knife is held on a part, and one test sends a cow down each path. A butcher villager's Village
 Heart carries Keen Butcher II, worn in carcass armour or stitched into a minion, so the butchery yield can be raised in
-survival (30 September, 15.32). **Not built:** decision 6 is still open, so the knife and the Cleaver stay two tools.
-The rest of this section is kept as it was written.
+survival (30 September, 15.32). **Provisional:** which part carries Keen Butcher and at what level was left to the
+balance pass. The butcher's heart at level II (a hand's yield times 1.2) is the builder's choice, not the owner's: one
+variant in `mob_group/villager.json`, for the balance pass to keep, change or take out. **Not built:** decision 6 is
+still open, so the knife and the Cleaver stay two tools. The rest of this section is kept as it was written.
 
 **Why.** The brief says:
 - Flensing Knife: "Roughly half the yield of a machine, with random loss … Hold on a part to take it off."

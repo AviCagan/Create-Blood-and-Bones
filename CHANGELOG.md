@@ -125,7 +125,9 @@ Everything below is in development builds only; the art is placeholder (see the 
   to you when the rig is taken off.
 - The Surgical Rig's filter picks single organs: put a heart in its slot, or set an Attribute Filter to "is the organ
   Heart", and it takes only hearts, out of whatever part holds them, and leaves the rest in; a Filter's list can name
-  several. The machines' and the Butcher's Table's slots turn an organ away, since no organ comes out there.
+  several. The machines' and the Butcher's Table's slots turn an organ away, since no organ comes out there. A head
+  made blind is one with its eyes out, whatever else came out of it: a fox's with its cheek pouch and one eye out
+  still sees.
 - Shackle Hook and Shackle Trolley on Create chain conveyors; trolleys queue a body's length apart.
 - The Shackle Hook and the Shackle Trolley hoist a carcass up at a walking pace, the trolley waiting on the chain until
   it is up. They used to snap it there in a tick, which threw anyone standing beside it a couple of hundred blocks. A
@@ -556,7 +558,8 @@ Everything below is in development builds only; the art is placeholder (see the 
   full set), and each organ's fitting shown as a crafting recipe. `/bloodandbones traits explain <mob>` says the same
   in chat, and `/bloodandbones traits dump` writes every mob's traits to a CSV file for balancing.
 - A butcher villager's Village Heart carries Keen Butcher II (butchery yield +20%), worn in carcass armour or stitched
-  into a minion: the first thing in survival that raises what a hand gets from butchering.
+  into a minion: the first thing in survival that raises what a hand gets from butchering. Provisional: the carrier and
+  the level wait on the balance pass.
 
 ### Presentation
 

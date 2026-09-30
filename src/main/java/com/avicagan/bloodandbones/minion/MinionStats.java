@@ -107,6 +107,8 @@ public record MinionStats(float health, float knockbackResistance, int slots, in
     public static final float MINDLESS_SIGHT = 2.0F;
     /** How far an echolocate or tremor sense lets it notice things at least, eyes or none. */
     public static final float SENSE_SIGHT = 12.0F;
+    /** The organ a head sees with: with every one of its eyes taken out, a head is blind. */
+    private static final ResourceLocation EYE = BloodAndBones.asResource("eye");
     /** Legs lend their grips (paws, hooves, claws) to handwork only on a body standing on at least this many. */
     public static final int GRIPPING_LEGS = 4;
     /** A build's knack for a task is held between these (docs/NEXT.md 1.6). */
@@ -222,7 +224,7 @@ public record MinionStats(float health, float knockbackResistance, int slots, in
         }
         if (head != null) {
             ResolvedMob headMob = store.resolve(head.entity(), head.baby());
-            boolean blind = blind(headMob, head);
+            boolean blind = blind(store, headMob, head);
             seeing = !blind;
             bite = MinionData.number(headMob, head.traits(), "head", "bite", "damage", 1.0F + 0.25F * (float) MinionData.attribute(head.entity(), Attributes.ATTACK_DAMAGE, 0.0));
             knock = MinionData.number(headMob, head.traits(), "head", "bite", "knockback", 0.0F);
@@ -391,12 +393,26 @@ public record MinionStats(float health, float knockbackResistance, int slots, in
     }
 
     /**
-     * Whether this head is blind: both its eyes were taken out at the Surgical Rig (the piece counts the organs taken),
-     * and no sense of its data (echolocate, tremor) stands in for sight.
+     * Whether this head is blind: every eye its data gives it was taken out at the Surgical Rig (the piece keeps which of
+     * its organs were taken, and a filter may take a cheek pouch before an eye), and no sense of its data (echolocate,
+     * tremor) stands in for sight. A head that holds no eyes is not blind.
      */
-    static boolean blind(ResolvedMob headMob, PieceRef head) {
-        if (!com.avicagan.bloodandbones.machine.CarcassMachineBlockEntity.isHead(head.bone())
-                || com.avicagan.bloodandbones.body.Surgery.organsTaken(head.toPiece()) < 2) {
+    static boolean blind(PartsData.Store store, ResolvedMob headMob, PieceRef head) {
+        if (!com.avicagan.bloodandbones.machine.CarcassMachineBlockEntity.isHead(head.bone())) {
+            return false;
+        }
+        List<ResourceLocation> held = com.avicagan.bloodandbones.parts.Organs.held(store, head.entity(), head.baby(), head.bone());
+        java.util.BitSet taken = com.avicagan.bloodandbones.body.Surgery.taken(head.toPiece());
+        boolean eyes = false;
+        for (int i = 0; i < held.size(); i++) {
+            if (held.get(i).equals(EYE)) {
+                if (!taken.get(i)) {
+                    return false;
+                }
+                eyes = true;
+            }
+        }
+        if (!eyes) {
             return false;
         }
         List<ResourceLocation> senses = MinionData.ids(headMob, head.traits(), "head", "senses");

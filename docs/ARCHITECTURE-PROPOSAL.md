@@ -5072,7 +5072,11 @@ courier's sample from it.
   - The count of organs taken (`organs_taken`, `organs_taken:<bone>`, one count for every way of taking them) stays a
     number while organs come out in order, as every one did before. Once a filter takes one out of order it is the places
     taken ("0,2": the heart and the stomach, the lungs still in; a single place is "[1]"). `Surgery.taken` reads both, so
-    old saves and every existing reader (`organsTaken`, the tooltip of what is still inside) are unchanged.
+    old saves and the readers that want only how many (`organsTaken`, the tooltip of what is still inside) are
+    unchanged. One reader wanted which: a head was blind at two organs taken (`MinionStats.blind`), which meant both
+    eyes only while they came out in order. A fox's head holds two eyes and a cheek pouch; with the pouch and one eye
+    out ("0,2") it would have been blind with an eye still in. Blind now means every place in the head's list that is
+    an eye (`bloodandbones:eye`) was taken, and a head that holds no eyes is not blind.
   - Only the rig's slot takes an organ (`PartFilteringBehaviour.withOrgans`). No organ comes out at a machine or a
     Butcher's Table (its Cleaver cuts a piece into its butchery table), so their slots turn an organ away, with Create's
     "invalid item", rather than hold a filter that passes nothing.
@@ -5083,7 +5087,15 @@ courier's sample from it.
     cow's hind leg: cows' hind legs, `PartFilter.alike`); a filter is asked as the slot asks it. An empty hand takes the
     sample back before the blade. It needs somewhere to hold it (`MinionBody.Anchors.other`): a second hand, the other
     side of a pair of folded arms, or a mouth. A headless body with one arm has none, and says so;
-  - the filter of a Butcher's Table the part lies on (`tableTurnsAway`), as the table's own Cleaver obeys it.
+  - the filter of a Butcher's Table the part lies on (`turnedAway`), as the table's own Cleaver obeys it.
+
+  What this costs a butcher looking round (about once a second, even with nothing to do). A body whose torso lies
+  further than its reach and 8 blocks more from home, or in a chunk not loaded, is passed over first, before any of
+  its parts is put to the filter, the sample or a table, as the look round passed bodies out of reach before. The
+  tables are asked once a look: the Butcher's Tables with a filter set within reach and 4 blocks of home, from the
+  loaded chunks' block entities as the tables to chop at are found, each asked once what lies on it and which of
+  those it turns away. With no filtered table about that is nothing more; a part is then only looked up in what they
+  turned away. No chunk is loaded to ask.
 
   Its knife skins only a body that passes, and its Cleaver cuts off and breaks down only limbs and pieces that pass;
   the rest is left where it lies. At a table it chops only a piece that its own filter and sample pass as well as the
@@ -5099,7 +5111,9 @@ courier's sample from it.
   other choice, but a wolf or a fox kills and does not butcher, and their parts already carry hunting traits. The organ
   comes out at the rig keeping the profession, so it is reachable in survival: kill a butcher villager with the Meat
   Hook, take the heart at the Surgical Rig, fit it. Level 2 gives a hand 1.2 times the hand path's share, still well
-  short of a station's.
+  short of a station's. **Provisional:** the audit left the carrier and the level to the balance pass, so this part
+  and this level are the builder's choice, awaiting that pass and the owner's word (BRIEF-AUDIT package 5 says so). It
+  is one variant in the data, to keep, change or take out without touching code.
 - **Tests.** Each fails with its feature taken out (checked: the organ filter turned off, the organ allowed in every
   slot, the sample ignored, the minion's filter ignored, the table's filter ignored, the villager's variant removed).
   - `rigFilterPicksSingleOrgans` (`SurgicalRigTests`): a heart in the rig's slot takes a cow body's heart and then
@@ -5115,6 +5129,10 @@ courier's sample from it.
     legs, and a body on a Butcher's Table nearer home.
   - `butcherLeavesWhatTheTableTurnsAway`: a cow's leg lying on a table set to heads is left; one on a table with no
     filter is broken down.
+  - `blindHeadIsPoorNotBarred` (`MinionFitnessTests`) now also takes a fox's head, whose list is checked as two eyes
+    and a cheek pouch: with the pouch alone out, the pouch and one eye, or one eye and the pouch the other way round, it
+    sees as far as a whole one; with both eyes out, by a count or by places, pouch in or out, it is blind. It failed on
+    the count of two before the fix.
   - `butcherVillagersHeartIsKeen` (`ButcheryPathTests`): a butcher villager's carcass keeps its profession, the rig set to
     the Village Heart takes it out keeping it, worn it gives Keen Butcher II and a butchery yield of 1.2 (a farmer's
     none), and a minion with it has the same.

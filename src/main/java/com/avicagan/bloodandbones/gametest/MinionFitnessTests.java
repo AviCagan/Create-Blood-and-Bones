@@ -551,7 +551,8 @@ public class MinionFitnessTests {
 
     /**
      * Both eyes out of a head: farmer, fisher, surgeon, sentry and hunter are still possible but lower, and it sees 4
-     * blocks. One eye out changes nothing. An echolocate sense (a bat's Echo Ear in it) or a tremor sense (a warden's head)
+     * blocks. One eye out changes nothing. It is the eyes that count, not how many organs came out: a fox's head with
+     * its cheek pouch and one eye out still sees. An echolocate sense (a bat's Echo Ear in it) or a tremor sense (a warden's head)
      * finds its way 12 blocks, eyes or none.
      */
     @GameTest(template = "empty", timeoutTicks = 20)
@@ -582,6 +583,23 @@ public class MinionFitnessTests {
         if (blindStats.sight() != MinionStats.BLIND_SIGHT || MinionStats.of(PartsData.SERVER, oneEye).sight() != MinionStats.of(PartsData.SERVER, seeing).sight()) {
             helper.fail("Blind it sees 4 blocks, one eye out as far as ever: " + blindStats.sight());
             return;
+        }
+        // the rig's filter takes organs out of order: a fox's head holds two eyes and a cheek pouch, and it is the eyes
+        // themselves, not how many organs came out, that leave it blind
+        List<ResourceLocation> foxHead = com.avicagan.bloodandbones.parts.Organs.held(PartsData.SERVER, mob("fox"), false, "head");
+        if (!foxHead.equals(List.of(bb("eye"), bb("eye"), bb("cheek_pouch")))) {
+            helper.fail("A fox's head should hold two eyes and then its cheek pouch: " + foxHead);
+            return;
+        }
+        float foxSight = MinionStats.of(PartsData.SERVER, armed(ref("fox", "head"))).sight();
+        for (Map.Entry<String, Boolean> taken : List.of(Map.entry("[2]", false), Map.entry("0,2", false), Map.entry("1,2", false),
+                Map.entry("0,1", true), Map.entry("2", true), Map.entry("0,1,2", true))) {
+            float sight = MinionStats.of(PartsData.SERVER, armed(ref("fox", "head", Map.of(Surgery.ORGANS_TAKEN, taken.getKey())))).sight();
+            if (taken.getValue() ? sight != MinionStats.BLIND_SIGHT : sight != foxSight) {
+                helper.fail("A fox's head with " + taken.getKey() + " taken (its list: eye, eye, cheek pouch) should " + (taken.getValue() ? "be blind" : "still see")
+                        + ": it sees " + sight + " blocks, " + foxSight + " with nothing taken");
+                return;
+            }
         }
         MinionBuild echo = blind.withOrgan(Optional.of(new CarcassArmour.Organ(bb("echo_ear"), mob("bat"), false)));
         MinionBuild tremor = armed(ref("warden", "bone/body/head", Map.of(Surgery.ORGANS_TAKEN, "2")));
