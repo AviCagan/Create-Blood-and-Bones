@@ -397,7 +397,9 @@ final class RigScenarios {
      * carcass (not through it: the stand-in is not solid, and a drag holds off while the hooked part touches its dragger,
      * so a path through the carcass carried it along under the player's feet): seven blocks in seventy ticks. Judged on
      * the second half of the walk, while it is being dragged (the middle of how far the hooked end is off the way it is
-     * dragged, ticks 36 to 70), and once more at tick 80, stopped.
+     * dragged, ticks 36 to 70), and once more at tick 80, stopped. Beside it, whether the hooked part itself leads (the
+     * way from the torso's middle to it, against the way it goes, the same ticks): for a body whose leg joins it under its
+     * middle (a chicken) which end of the body leads says little, and the part leading says what the brief means.
      */
     static void hooked(GameTestHelper helper, EntityType<? extends Mob> type, boolean byTheHead, Consumer<Numbers> done) {
         // hind leg: facing east at x 3, dragged east; head: facing east at x 8, dragged west
@@ -422,6 +424,7 @@ final class RigScenarios {
         double[] gapSum = {0.0};
         int[] gapN = {0};
         java.util.List<Double> walking = new java.util.ArrayList<>();
+        java.util.List<Double> leads = new java.util.ArrayList<>();
         boolean[] finished = {false};
         boolean[] started = {false};
         float yaw = byTheHead ? RigScenarios.WEST : RigScenarios.EAST;
@@ -451,6 +454,15 @@ final class RigScenarios {
             }
             if (now >= 36 && now <= 70) {
                 walking.add(angle);
+                // and whether the hooked part itself leads: the way from the torso's middle to it, against the way it goes
+                Vector3d part = body == null ? null : s.middle(body);
+                if (part != null) {
+                    Vector3d ahead = new Vector3d(part).sub(s.torsoCentre());
+                    ahead.y = 0;
+                    if (ahead.lengthSquared() > 1.0e-4) {
+                        leads.add(RigComparison.angleDeg(ahead, travel));
+                    }
+                }
             }
             CarcassDrag.Drag drag = CarcassDrag.current(player);
             if (drag != null && SubLevelContainer.getContainer(s.level).getSubLevel(drag.subLevel) instanceof ServerSubLevel held) {
@@ -464,6 +476,7 @@ final class RigScenarios {
                 CarcassDrag.stop(s.level, player);
                 java.util.List<Double> sorted = walking.stream().sorted().toList();
                 done.accept(new Numbers().put(byTheHead ? "head_first_deg" : "rear_first_deg", sorted.isEmpty() ? Double.NaN : sorted.get(sorted.size() / 2), "degrees")
+                        .put("part_leads_deg", leads.isEmpty() ? Double.NaN : leads.stream().sorted().toList().get(leads.size() / 2), "degrees")
                         .put("stopped_deg", angle, "degrees")
                         .put("turn_ticks", turned[0] < 0 ? 200 : turned[0], "ticks")
                         .put("mean_gap", gapN[0] == 0 ? Double.NaN : gapSum[0] / gapN[0], "blocks")
