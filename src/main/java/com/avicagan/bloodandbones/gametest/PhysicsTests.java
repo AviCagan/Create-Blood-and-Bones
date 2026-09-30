@@ -638,26 +638,47 @@ public class PhysicsTests {
     }
 
     /**
-     * A cow set down standing on the floor with a Bleeding Rack under its head, its feet all on the floor, is not held
-     * there as one standing on the rack would be: its legs give way and it goes down. (Once any part of it over a block
-     * that holds a carcass held it, so a cow killed beside a table or a rack, its head over it, folded standing.)
+     * A cow set down standing on the floor with one front hoof in a Bleeding Rack's tray, its other feet on the floor, is
+     * not held there as one standing on the rack would be: its legs give way and it goes down. (Once any part of it over a
+     * block that holds a carcass held it, so a cow killed beside a table or a rack, a hoof or its head over it, folded
+     * standing.)
      */
     @GameTest(template = "empty", timeoutTicks = 500)
     public static void carcassStandingBesideARackGoesDown(GameTestHelper helper) {
         double floor = helper.absolutePos(new BlockPos(0, RigComparison.FLOOR, 0)).getY();
-        Subject s = RigComparison.assembled(helper, COW, new Vec3(5.5, 2.0, 3.5), RigScenarios.SOUTH);
+        // facing south, set a little above the floor (above the rack's tray, put in after), its front legs either side of a
+        // block boundary
+        Subject s = RigComparison.assembled(helper, COW, new Vec3(4.97, 2.15, 4.25), RigScenarios.SOUTH);
         helper.assertTrue(s != null, "no carcass");
-        Vector3d head = s.middle("head");
-        helper.assertTrue(head != null, "the cow has no head");
-        BlockPos rack = BlockPos.containing(head.x, floor + 0.5, head.z);
-        // the rack is under its head, where the lowest corner of the head reaches into its block, and under none of its feet
-        double headLow = RigScenarios.lowest(s.body("head"), s.bone("head"));
-        helper.assertTrue(headLow - 0.05 < floor + 1.0, "the cow's head should reach into the rack's block, but its lowest corner is "
-                + fmt(headLow - floor) + " up");
+        // the front leg with the lower x, its foot's corners
+        String leg = null;
+        List<Vector3d> foot = null;
+        for (String name : List.of("right_front_leg", "left_front_leg")) {
+            List<Vector3d> corners = com.avicagan.bloodandbones.carcass.CarcassSlump.cornersOf(s.body(name), s.bone(name));
+            if (foot == null || corners.stream().mapToDouble(c -> c.x).min().orElseThrow() < foot.stream().mapToDouble(c -> c.x).min().orElseThrow()) {
+                leg = name;
+                foot = corners;
+            }
+        }
+        double low = foot.stream().mapToDouble(c -> c.y).min().orElseThrow();
+        Vector3d sole = foot.stream().filter(c -> c.y < low + 0.01).findFirst().orElseThrow();
+        BlockPos rack = BlockPos.containing(sole.x, floor + 0.5, sole.z);
+        // that hoof is inside the tray, clear of its rim, and no other foot is over the rack
+        for (Vector3d corner : foot) {
+            if (corner.y < low + 0.01) {
+                double x = corner.x - rack.getX();
+                double z = corner.z - rack.getZ();
+                helper.assertTrue(x > 1.0 / 16.0 && x < 15.0 / 16.0 && z > 1.0 / 16.0 && z < 15.0 / 16.0, "the " + leg + " should stand in the rack's tray, "
+                        + "clear of its rim, but a corner is at " + fmt(x) + ", " + fmt(z) + " in its block");
+            }
+        }
         for (Map.Entry<String, ServerSubLevel> entry : s.bodies().entrySet()) {
+            if (entry.getKey().equals(leg)) {
+                continue;
+            }
             for (Vector3d corner : com.avicagan.bloodandbones.carcass.CarcassSlump.cornersOf(entry.getValue(), s.bone(entry.getKey()))) {
-                helper.assertTrue(corner.y > floor + 0.1 || BlockPos.containing(corner.x, floor + 0.5, corner.z).compareTo(rack) != 0,
-                        "the rack should be under the cow's head, not under its " + entry.getKey());
+                helper.assertTrue(corner.y > floor + 0.5 || BlockPos.containing(corner.x, floor + 0.5, corner.z).compareTo(rack) != 0,
+                        "the rack should be under the cow's " + leg + " only, not its " + entry.getKey());
             }
         }
         helper.getLevel().setBlockAndUpdate(rack, BBBlocks.BLEEDING_RACK.get().defaultBlockState());
@@ -669,7 +690,7 @@ public class PhysicsTests {
             }
             t[0] = -1;
             helper.assertTrue(s.carcass().resting, "the cow beside the rack should come to rest");
-            helper.assertTrue(!RigScenarios.stood(s, stood, floor), "standing on the floor with its head over a Bleeding Rack, the cow should go down, but "
+            helper.assertTrue(!RigScenarios.stood(s, stood, floor), "standing on the floor with a hoof in a Bleeding Rack, the cow should go down, but "
                     + "its torso is " + fmt(RigScenarios.belly(s, floor)) + " up where it stood " + fmt(stood) + " up, tilted "
                     + fmt(RigComparison.angleDeg(s.up(), new Vector3d(0, 1, 0))) + " degrees");
             helper.succeed();
