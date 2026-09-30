@@ -30,13 +30,14 @@ import java.util.UUID;
  * does (the showcase's cow struck in the face, a cow set down on a ship's deck, a pig or a polar bear struck in the face).
  * Once it keeps still the resting form pins it as it stands, for good. Real legs fold at the knee; these cannot. So a
  * carcass that stands on its legs, nearly still (on a deck under way, still on the deck), for {@link #STANDING_TICKS}
- * has its legs give way ({@link #giveWay}): they slide out from under it, each the way it already points out from under
- * its middle, and it comes down where it stood, onto whatever side its weight and the ground take it to. Nothing picks
- * a side for it. Until it is down it is not let rest. A carcass dragged along on its feet gives way however it moves (a
- * sheep dragged by a hind leg slid along standing, facing the wrong way); one that stands upright (a zombie) is pulled
- * off its feet by the leg it is dragged by and is left to it. One that stands upright loose has no four legs to splay:
- * it goes over the way its weight lies over its feet. And one balanced on end, on its rump or its snout, goes over the
- * way it leans ({@link #onEnd}).
+ * has its legs give way ({@link #giveWay}): it is tipped over the way it already leans, however little, its legs sliding
+ * out the other way, and comes down onto that side. Nothing picks the side: a carcass struck on one side leans away
+ * from the blow, one dragged leans the way the pull takes it, and one standing so squarely that nothing says which way
+ * has its legs slide out from under it, which breaks that balance. That it is tipped at all, and not left to fold at
+ * knees it does not have, is made up. Until it is down it is not let rest. A carcass dragged along on its feet gives way
+ * however it moves (a sheep dragged by a hind leg slid along standing, facing the wrong way); one that stands upright
+ * (a zombie) is pulled off its feet by the leg it is dragged by and is left to it. One balanced on end, on its rump or
+ * its snout, goes over too ({@link #onEnd}).
  * <p>
  * It stands when its torso is within {@link #UPRIGHT} degrees of upright, some other part of it (a leg) reaches below the
  * torso by more than a quarter as far as its legs reach when it stands ({@link #LIFTED}), that part stands on something
@@ -64,15 +65,22 @@ public final class CarcassSlump {
     /** How far from straight up or down the spine of a body on four legs may point and still be balanced on end, degrees. */
     static final double ON_END = 30.0;
     /**
-     * How fast its legs slide out from under it as they give way, blocks a second, and how much faster each time it is
-     * still standing after.
+     * How fast the legs of one on four legs slide out from under it as it goes over, blocks a second, the other way. Its
+     * middle then stays nearer where it stood: set down standing, a cow lay 2.1 blocks from there with them kept under
+     * it, 1.7 at 3 blocks a second, 0.6 to 1.2 at 7; at 9 a sheep went on sliding, 1.2.
      */
-    static final double LEGS_OUT = 3.0;
-    static final double LEGS_MORE = 1.0;
+    static final double LEGS_OUT = 7.0;
     /**
-     * How one that goes over (one standing upright, one balanced on end) is turned over its edge: a little more than it
-     * takes to carry its middle over it, at least {@link #SPIN_LEAST} radians a second, and each time it is still up a
-     * little more.
+     * Standing too squarely to go either way, its legs slide out from under it this fast, blocks a second, and each time
+     * it still stands {@link #SPLAY_MORE} faster: only to break the balance, so that the next time it leans some way (at
+     * 7 a cow so set off went on over onto its back; at 3 a sheep splayed its legs, and then went over them and slid two
+     * blocks).
+     */
+    static final double SPLAY = 1.0;
+    static final double SPLAY_MORE = 1.0;
+    /**
+     * How it is turned over its edge: a little more than it takes to carry its middle over it, at least
+     * {@link #SPIN_LEAST} radians a second, and each time it is still up a little more.
      */
     static final double TIP = 1.1;
     static final double SPIN_LEAST = 0.8;
@@ -91,6 +99,7 @@ public final class CarcassSlump {
     static void reset(CarcassSavedData.Carcass carcass) {
         carcass.standingTicks = 0;
         carcass.slumps = 0;
+        carcass.tips = 0;
         carcass.downTicks = 0;
     }
 
@@ -113,6 +122,7 @@ public final class CarcassSlump {
             carcass.standingTicks = 0;
             if (++carcass.downTicks >= DOWN_TICKS) {
                 carcass.slumps = 0;
+                carcass.tips = 0;
             }
             return false;
         }
@@ -156,12 +166,12 @@ public final class CarcassSlump {
     }
 
     /**
-     * Its legs give way. On four legs, they slide out from under it, each the way it already points out from under the
-     * carcass's middle, faster each time it is still standing after, and nothing else is pushed: it comes down where it
-     * stood, and its weight, the way it leans and the ground take it onto its belly or a side. Turned over its feet onto
-     * a side instead (the first way this was done), a cow set down standing lay 1.7 blocks from where it stood, and which
-     * side it went to had to be picked. One that stands upright (a zombie), or one on four legs balanced on end, has no
-     * legs to splay under it: it goes over the way its weight lies ({@link #tipOver}).
+     * Its legs give way, and it goes over the way it already leans, however little: nothing picks a side for it. On four
+     * legs, over onto the side its torso leans to, or failing that the side its weight lies over its feet; standing
+     * upright (a zombie), the way its weight lies over its feet, or failing that the way its torso leans; balanced on end,
+     * the way its weight lies over the end it rests on, or failing that the way its top end leans out. Standing so
+     * squarely that nothing says which way (a carcass built standing, not struck), its legs slide out from under it, each
+     * the way it already points out from under its middle, which breaks the balance for the next time.
      */
     static void giveWay(ServerLevel level, ServerSubLevelContainer container, CarcassSavedData.Carcass carcass, Rig rig, ServerSubLevel torso, Bone torsoBone,
                         boolean onEnd) {
@@ -206,30 +216,39 @@ public final class CarcassSlump {
             }
         }
         feet.div(Math.max(1, count));
-        int more = Math.max(0, carcass.slumps - 1);
-        if (onEnd || upright(torsoBone)) {
-            // the way its weight lies over what it stands on, or failing that the way its torso leans; balanced on end
-            // squarely, the way its legs stick out, their weight on that side
-            Vector3d way = new Vector3d(middle.x - feet.x, 0.0, middle.z - feet.z);
-            if (way.length() < 0.02) {
-                Vector3d up = modelToWorld(torso, torsoBone).transform(new Vector3d(0, -1, 0));
-                way.set(up.x, 0.0, up.z);
-                if (onEnd) {
-                    Vector3d forward = modelToWorld(torso, torsoBone).transform(new Vector3d(0, 0, -1));
-                    // on end its spine is near straight up, so how it leans is which way its top end points out
-                    way.set(forward.x, 0.0, forward.z).mul(Math.signum(forward.y));
-                    if (way.length() < 0.02) {
-                        way.set(-up.x, 0.0, -up.z);
-                    }
+        Vector3d weight = new Vector3d(middle.x - feet.x, 0.0, middle.z - feet.z);
+        Quaterniond model = modelToWorld(torso, torsoBone);
+        Vector3d up = model.transform(new Vector3d(0, -1, 0));
+        Vector3d forward = model.transform(new Vector3d(0, 0, -1));
+        Vector3d way = new Vector3d();
+        double slide = 0.0;
+        if (onEnd) {
+            // on end its spine is near straight up, so how it leans is which way its top end points out
+            way.set(weight.lengthSquared() >= LEAST * LEAST ? weight : new Vector3d(forward.x, 0.0, forward.z).mul(Math.signum(forward.y)));
+        } else if (upright(torsoBone)) {
+            way.set(weight.lengthSquared() >= LEAST * LEAST ? weight : new Vector3d(up.x, 0.0, up.z));
+        } else {
+            // onto a side: about its length, which way across it it leans
+            Vector3d along = new Vector3d(forward.x, 0.0, forward.z);
+            if (along.lengthSquared() > 1.0e-6) {
+                Vector3d across = new Vector3d(0, 1, 0).cross(along.normalize()).normalize();
+                double lean = across.dot(up.x, 0.0, up.z);
+                if (Math.abs(lean) < LEAST) {
+                    lean = across.dot(weight);
+                }
+                if (Math.abs(lean) >= LEAST) {
+                    way.set(across).mul(Math.signum(lean));
                 }
             }
-            if (way.length() >= 1.0e-3) {
-                tipOver(level, physics, bodies, bodyCorners, middle, ground, way.normalize(), more);
-                return;
-            }
+            slide = LEGS_OUT;
         }
-        // on four legs (or balanced so squarely nothing says which way it would go): its legs slide out from under it
-        double out = LEGS_OUT + LEGS_MORE * more;
+        if (way.lengthSquared() >= LEAST * LEAST) {
+            // a little harder each time it has been tipped and still stands
+            goOver(level, physics, torso, bodies, bodyCorners, middle, ground, way.normalize(), carcass.tips++, slide);
+            return;
+        }
+        // so square that nothing says which way: its legs slide out from under it
+        double out = SPLAY + SPLAY_MORE * Math.max(0, carcass.slumps - carcass.tips - 1);
         for (int i = 0; i < bodies.size(); i++) {
             ServerSubLevel body = bodies.get(i);
             if (body == torso) {
@@ -258,14 +277,18 @@ public final class CarcassSlump {
         physics.getPipeline().wakeUp(torso);
     }
 
+    /** The least lean, blocks of the torso's up per block, or offset of its weight over its feet, blocks, that says which way it goes. */
+    private static final double LEAST = 1.0e-4;
+
     /**
      * Turns the whole carcass over the edge of what it stands on the way {@code way} (level, of length one), all its parts
      * together, so no joint fights it, just fast enough to carry its middle over that edge; it falls on over as a body
-     * pushed past its balance does. Turned about its own middle instead, the torso pressed its legs into the ground on
-     * that side, which pushed it back: a polar bear so rocked came back upright every time.
+     * pushed past its balance does. Its legs slide out the other way at {@code slide}, blocks a second, so it goes down
+     * nearer where it stood. Turned about its own middle instead, the torso pressed its legs into the ground on that side,
+     * which pushed it back: a polar bear so rocked came back upright every time.
      */
-    private static void tipOver(ServerLevel level, SubLevelPhysicsSystem physics, List<ServerSubLevel> bodies, List<List<Vector3d>> bodyCorners,
-                                Vector3d middle, double ground, Vector3d way, int more) {
+    private static void goOver(ServerLevel level, SubLevelPhysicsSystem physics, ServerSubLevel torso, List<ServerSubLevel> bodies,
+                               List<List<Vector3d>> bodyCorners, Vector3d middle, double ground, Vector3d way, int more, double slide) {
         double outer = -Double.MAX_VALUE;
         for (List<Vector3d> corners : bodyCorners) {
             for (Vector3d corner : corners) {
@@ -274,7 +297,7 @@ public final class CarcassSlump {
                 }
             }
         }
-        // the line it turns about: level, square to the way it goes, at the ground, through its outermost edge that way
+        // the line it turns about: level, square to the way it goes, at the ground, through its outermost foot that way
         Vector3d pivot = new Vector3d(middle).add(new Vector3d(way).mul(outer - way.dot(middle)));
         pivot.y = ground;
         double height = Math.max(0.05, middle.y - ground);
@@ -289,7 +312,11 @@ public final class CarcassSlump {
             Vector3d at = tracker.isInvalid() ? new Vector3d(body.logicalPose().position())
                     : body.logicalPose().transformPosition(new Vector3d(tracker.getCenterOfMass()));
             physics.getPipeline().wakeUp(body);
-            physics.getPipeline().addLinearAndAngularVelocity(body, new Vector3d(turn).cross(new Vector3d(at).sub(pivot)), turn);
+            Vector3d kick = new Vector3d(turn).cross(new Vector3d(at).sub(pivot));
+            if (body != torso && at.y < middle.y) {
+                kick.add(new Vector3d(way).mul(-slide));
+            }
+            physics.getPipeline().addLinearAndAngularVelocity(body, kick, turn);
         }
     }
 
